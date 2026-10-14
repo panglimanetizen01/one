@@ -1,0 +1,14 @@
+nama adalah "Budi"
+umur adalah 18
+
+buat daftar belanja
+tambahkan beras ke belanja
+tambahkan telur ke belanja
+
+kalau umur sudah 17 tahun
+    tampilkan "Boleh masuk"
+kalau tidak
+    tampilkan "Belum boleh masuk"
+
+untuk setiap item di belanja
+    tampilkan item
