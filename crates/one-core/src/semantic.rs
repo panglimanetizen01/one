@@ -8,6 +8,7 @@ pub struct TypedProgram { pub program: Program }
 
 pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> {
     let mut analyzer = Analyzer { scopes: vec![HashMap::new()], functions: HashMap::new() };
+    analyzer.register_functions(&program.statements)?;
     analyzer.analyze_block(&program.statements)?;
     Ok(TypedProgram { program: program.clone() })
 }
@@ -15,6 +16,14 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> {
 struct Analyzer { scopes: Vec<HashMap<String, Type>>, functions: HashMap<String, usize> }
 
 impl Analyzer {
+    fn register_functions(&mut self, statements: &[Statement]) -> Result<(), DiagnosticBundle> {
+        for statement in statements {
+            if let Statement::Function { name, params, .. } = statement {
+                if self.functions.insert(name.clone(), params.len()).is_some() { return Err(DiagnosticBundle::single(Diagnostic::error("E2013", format!("Pekerjaan '{}' sudah dibuat.", name), None))); }
+            }
+        }
+        Ok(())
+    }
     fn current_scope(&mut self) -> &mut HashMap<String, Type> { self.scopes.last_mut().unwrap() }
     fn lookup(&self, name: &str) -> Option<Type> { self.scopes.iter().rev().find_map(|scope| scope.get(name).copied()) }
     fn analyze_block(&mut self, statements: &[Statement]) -> Result<(), DiagnosticBundle> { for statement in statements { self.analyze_statement(statement)?; } Ok(()) }
@@ -33,7 +42,7 @@ impl Analyzer {
                 LoopKind::ForEach { variable, iterable } => { let ty = self.infer(iterable)?; if !matches!(ty, Type::List | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2011", "Nilai setelah 'di' harus berupa daftar.", None))); } self.scopes.push(HashMap::new()); self.current_scope().insert(variable.clone(), Type::Any); self.analyze_block(body)?; self.scopes.pop(); }
                 LoopKind::While { condition } => { let ty = self.infer(condition)?; if !matches!(ty, Type::Boolean | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2012", "Kondisi selama harus menghasilkan boolean.", None))); } self.scopes.push(HashMap::new()); self.analyze_block(body)?; self.scopes.pop(); }
             },
-            Statement::Function { name, params, result, body, .. } => { if self.functions.insert(name.clone(), params.len()).is_some() { return Err(DiagnosticBundle::single(Diagnostic::error("E2013", format!("Pekerjaan '{}' sudah dibuat.", name), None))); } self.scopes.push(HashMap::new()); for param in params { self.current_scope().insert(param.clone(), Type::Any); } self.infer(result)?; self.analyze_block(body)?; self.scopes.pop(); }
+            Statement::Function { params, result, body, .. } => { self.scopes.push(HashMap::new()); for param in params { self.current_scope().insert(param.clone(), Type::Any); } self.infer(result)?; self.analyze_block(body)?; self.scopes.pop(); }
             Statement::Event { body, .. } => { self.scopes.push(HashMap::new()); self.analyze_block(body)?; self.scopes.pop(); }
         }
         Ok(())
