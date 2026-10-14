@@ -1,0 +1,12 @@
+name: Runner Smoke
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner
+        run: echo "One runner is available"
