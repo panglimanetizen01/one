@@ -13,19 +13,57 @@
 - Ambiguity is rejected rather than guessed
 - Human-readable diagnostics
 - Windows and Linux as first-class platforms
-- Complete project lifecycle support
-- Deep interoperability with existing ecosystems
+- Complete project lifecycle is an architectural goal
+- Deep interoperability with existing ecosystems is an architectural goal
 - LLM-independent compiler/runtime semantics
 - Progressive complexity from beginner programs to large systems
 
+## Current v0.1 implementation
+
+The canonical repository now contains the first executable language core:
+
+```text
+Localized source
+    -> Lexer
+    -> AST parser
+    -> Semantic analyzer
+    -> One Semantic IR
+    -> Reference interpreter
+    -> CLI
+```
+
+The v0.1 CLI currently provides:
+
+```text
+one check <file.one>
+one run <file.one>
+one ast <file.one>
+```
+
+The implementation includes the six core constructs, structured diagnostics, a capability model, cross-platform process-interoperability primitives, and a Linux/Windows CI matrix. Native FFI, a full optimizing compiler backend, package registry, IDE tooling, and additional human-language grammars remain follow-on milestones and are not represented as complete until their contracts and tests exist.
+
+## Example
+
+```text
+nama adalah "Budi"
+umur adalah 18
+
+kalau umur sudah 17 tahun
+    tampilkan "Boleh masuk"
+kalau tidak
+    tampilkan "Belum boleh masuk"
+```
+
 ## Repository status
 
-The repository is currently in the language-design and specification phase. Implementation must follow the approved specification and dependency-ordered engineering plan.
+One v0.1 is under active implementation and verification. The dependency-ordered plan is the execution contract; unsupported features must not be claimed as complete.
 
 See:
 
 - `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
-- `docs/foundation/one-v0.1-foundation.md`
+- `docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md`
+- `docs/spec/one-v0.1-lexical.md`
+- `docs/spec/one-v0.1-grammar.md`
 
 ## Canonical source
 
