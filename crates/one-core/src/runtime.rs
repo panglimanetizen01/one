@@ -1,0 +1,41 @@
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Value {
+    Text(String),
+    Number(i64),
+    Boolean(bool),
+    List(Vec<Value>),
+    Nothing,
+}
+
+impl Value {
+    pub fn display(&self) -> String {
+        match self {
+            Value::Text(v) => v.clone(),
+            Value::Number(v) => v.to_string(),
+            Value::Boolean(v) => if *v { "benar".into() } else { "salah".into() },
+            Value::List(values) => format!("[{}]", values.iter().map(Value::display).collect::<Vec<_>>().join(", ")),
+            Value::Nothing => "tidak ada".into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Environment {
+    scopes: Vec<HashMap<String, Value>>,
+}
+
+impl Environment {
+    pub fn new() -> Self { Self { scopes: vec![HashMap::new()] } }
+    pub fn push(&mut self) { self.scopes.push(HashMap::new()); }
+    pub fn pop(&mut self) { if self.scopes.len() > 1 { self.scopes.pop(); } }
+    pub fn define(&mut self, name: impl Into<String>, value: Value) { self.scopes.last_mut().unwrap().insert(name.into(), value); }
+    pub fn assign(&mut self, name: &str, value: Value) -> bool {
+        for scope in self.scopes.iter_mut().rev() {
+            if scope.contains_key(name) { scope.insert(name.to_string(), value); return true; }
+        }
+        false
+    }
+    pub fn get(&self, name: &str) -> Option<Value> { self.scopes.iter().rev().find_map(|scope| scope.get(name).cloned()) }
+}
