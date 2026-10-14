@@ -1,0 +1,13 @@
+[package]
+name = "one-cli"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Command-line interface for One"
+
+[[bin]]
+name = "one"
+path = "src/main.rs"
+
+[dependencies]
+one-core = { path = "../one-core" }
