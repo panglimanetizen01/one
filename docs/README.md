@@ -8,7 +8,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
 - `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger, rulings, and remaining release gate.
 
-## Language contracts
+## Language/tooling contracts
 
 - `spec/one-v0.1-lexical.md` — tokens, indentation, literals, comments, and lexical errors.
 - `spec/one-v0.1-grammar.md` — normative Indonesian v0.1 concrete grammar.
@@ -17,6 +17,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `spec/one-v0.1-diagnostics.md` — diagnostic codes, spans, and source-preserving behavior.
 - `spec/one-v0.1-stdlib.md` — v0.1 standard-library surface.
 - `spec/one-v0.1-interop.md` — explicit foreign-process interoperability boundary.
+- `spec/one-v0.1-cli.md` — CLI commands, exit codes, scaffold, and determinism rules.
 
 ## Verification and release
 
