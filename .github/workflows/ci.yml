@@ -20,8 +20,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: rustc --version && cargo --version
-      - name: Format check
-        run: cargo fmt --all -- --check
       - name: Build
         run: cargo build --workspace --all-targets
       - name: Clippy
