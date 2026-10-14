@@ -1,6 +1,6 @@
 # One v0.1 Lexical Specification
 
-Status: normative for v0.1 implementation.
+Status: **normative** for v0.1 implementation.
 
 ## Source encoding
 
@@ -14,7 +14,7 @@ Status: normative for v0.1 implementation.
 - Blank lines are ignored for statement/block structure.
 - A line containing only spaces is blank.
 - A comment begins with `#` outside a string and continues to end of line.
-- Newline terminates a statement unless the grammar explicitly requires a continuation phrase; v0.1 avoids implicit multiline expressions.
+- Newline terminates a statement; v0.1 avoids implicit multiline expressions.
 
 ## Indentation
 
@@ -27,9 +27,11 @@ Status: normative for v0.1 implementation.
 
 ## Identifiers
 
-Identifiers use Unicode letters followed by zero or more Unicode letters, decimal digits, or `_`. Identifiers may contain spaces only when they are represented by an explicitly defined multi-word semantic phrase; arbitrary whitespace-separated names are not identifiers.
+Identifiers are single lexical words consisting of a Unicode alphabetic character or `_`, followed by zero or more Unicode alphanumeric characters or `_`.
 
-The v0.1 implementation initially accepts ASCII identifiers plus Unicode letters/digits where the Rust Unicode character predicates provide deterministic behavior. Reserved phrases are recognized contextually by the parser rather than by allowing arbitrary natural-language prose.
+v0.1 does **not** treat arbitrary whitespace-separated words as a multi-word identifier. Multi-word semantic phrases such as `buat pekerjaan`, `untuk setiap`, and `hasilnya adalah` are grammar phrases composed from separate tokens. Multi-word user-defined names are reserved for a future explicit name grammar and must not be guessed by the implementation.
+
+The v0.1 lexer uses deterministic character predicates supplied by Rust; numeric literals remain ASCII decimal digits.
 
 ## Literals
 
@@ -76,7 +78,7 @@ The initial Indonesian grammar recognizes these semantic phrases:
 - `hasilnya adalah`
 - `ketika`
 
-These are not intended to make the language arbitrary; each phrase has a defined production in the concrete grammar.
+These are not arbitrary natural-language aliases; each phrase has a defined production in the concrete grammar.
 
 ## Error principle
 
