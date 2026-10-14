@@ -1,0 +1,9 @@
+nama adalah "Budi"
+umur adalah 18
+umur menjadi 19
+
+tampilkan nama
+kalau umur sudah 17 tahun
+    tampilkan "Boleh masuk"
+kalau tidak
+    tampilkan "Belum boleh masuk"
