@@ -12,12 +12,11 @@
 
 Observed GitHub Actions evidence:
 
-- One CI run 39: both Ubuntu and Windows jobs failed before usable step/log evidence was available.
-- One CI run 40: both Ubuntu and Windows jobs failed before usable step/log evidence was available.
-- One CI run 41: both Ubuntu and Windows jobs failed before usable step/log evidence was available after removing the third-party Rust toolchain action.
-- A temporary runner-only workflow was also executed; its Ubuntu job failed before usable step/log evidence was available. It was removed after diagnosis.
+- One CI runs 39, 40, and 41: both Ubuntu and Windows jobs failed before usable step/log evidence was available.
+- A temporary runner-only workflow was executed independently; its Ubuntu job also failed before usable step/log evidence was available. The temporary workflow was removed after diagnosis.
+- One CI run 49, the latest recorded CI run after the temporary workflow was removed, again failed on both platform jobs without usable step/log evidence.
 
-This means the repository must **not** claim that the current Rust implementation is CI-green yet. The code is implemented, but the external runner failure prevents an evidence-based green-build claim.
+The failure pattern also affects the runner-only smoke workflow, so the evidence does not currently identify a source-code failure. The repository must nevertheless **not** claim that the Rust implementation is CI-green until an actual successful build/test run is observed.
 
 ## Local verification policy
 
@@ -27,7 +26,7 @@ No user local/Termux synchronization is part of this implementation stage. Once 
 
 Before declaring One v0.1 fully verified:
 
-1. Linux CI build, clippy, formatting, unit tests, integration tests, and conformance tests are green.
+1. Linux CI build, clippy, unit tests, integration tests, and conformance tests are green.
 2. Windows CI equivalents are green.
 3. CLI `new`, `check`, `run`, `build`, and `ast` smoke tests are green.
 4. Core DATA, ACTION, CONDITION, LOOP, FUNCTION, and EVENT tests are green.
