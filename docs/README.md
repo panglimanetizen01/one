@@ -27,6 +27,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
+- `../tools/check_contract.py` — static repository contract consistency check.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 
