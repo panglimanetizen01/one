@@ -1,0 +1,10 @@
+[package]
+name = "one-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Core language implementation for One"
+
+[lib]
+name = "one_core"
+path = "src/lib.rs"
