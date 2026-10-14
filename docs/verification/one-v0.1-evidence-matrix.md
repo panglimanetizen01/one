@@ -14,7 +14,8 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / execution pending |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / execution pending |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | portable process-boundary tests | IMPLEMENTED / execution pending |
-| CLI | `crates/one-cli/src/main.rs` | CLI integration tests | IMPLEMENTED / execution pending |
+| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli.md` | CLI integration + smoke tests | IMPLEMENTED / execution pending |
+| Contract consistency | `tools/check_contract.py` | required-artifact/index/fixture scan | ADDED / execution pending |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | ADDED / execution pending |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | ADDED / execution pending |
 | Linux portability | `.github/workflows/ci.yml` + offline verifier | actual Linux run | BLOCKED by hosted runner evidence |
