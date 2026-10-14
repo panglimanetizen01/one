@@ -1,44 +1,26 @@
 use crate::ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 use crate::diagnostic::{Diagnostic, DiagnosticBundle};
-use crate::token::{Span, Token, TokenKind};
+use crate::token::{Token, TokenKind};
 
 pub fn parse(source: &str) -> Result<Program, DiagnosticBundle> {
     let tokens = crate::lexer::lex(source)?;
     Parser::new(tokens).parse_program()
 }
 
-struct Parser {
-    tokens: Vec<Token>,
-    pos: usize,
-}
+struct Parser { tokens: Vec<Token>, pos: usize }
 
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self { Self { tokens, pos: 0 } }
-
     fn current(&self) -> &Token { &self.tokens[self.pos] }
     fn at(&self, kind: TokenKind) -> bool { self.current().kind == kind }
     fn lexeme_is(&self, value: &str) -> bool { self.current().lexeme == value }
     fn advance(&mut self) -> Token { let token = self.current().clone(); self.pos += 1; token }
-
-    fn skip_newlines(&mut self) {
-        while self.at(TokenKind::Newline) { self.advance(); }
-    }
-
-    fn expect_newline(&mut self) -> Result<(), DiagnosticBundle> {
-        if self.at(TokenKind::Newline) { self.advance(); Ok(()) } else { Err(self.error("E1001", "Baris pernyataan harus diakhiri newline.")) }
-    }
-
-    fn expect_indent(&mut self) -> Result<(), DiagnosticBundle> {
-        if self.at(TokenKind::Indent) { self.advance(); Ok(()) } else { Err(self.error("E1002", "Blok harus dimulai dengan indentasi empat spasi.")) }
-    }
-
-    fn expect_dedent(&mut self) -> Result<(), DiagnosticBundle> {
-        if self.at(TokenKind::Dedent) { self.advance(); Ok(()) } else { Err(self.error("E1003", "Blok belum ditutup dengan dedent yang valid.")) }
-    }
-
-    fn error(&self, code: &'static str, message: impl Into<String>) -> DiagnosticBundle {
-        DiagnosticBundle::single(Diagnostic::error(code, message, Some(self.current().span.clone())))
-    }
+    fn peek_lexeme(&self, distance: usize) -> Option<&str> { self.tokens.get(self.pos + distance).map(|t| t.lexeme.as_str()) }
+    fn skip_newlines(&mut self) { while self.at(TokenKind::Newline) { self.advance(); } }
+    fn error(&self, code: &'static str, message: impl Into<String>) -> DiagnosticBundle { DiagnosticBundle::single(Diagnostic::error(code, message, Some(self.current().span.clone()))) }
+    fn expect_newline(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Newline) { self.advance(); Ok(()) } else { Err(self.error("E1001", "Baris pernyataan harus diakhiri newline.")) } }
+    fn expect_indent(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Indent) { self.advance(); Ok(()) } else { Err(self.error("E1002", "Blok harus dimulai dengan indentasi empat spasi.")) } }
+    fn expect_dedent(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Dedent) { self.advance(); Ok(()) } else { Err(self.error("E1003", "Blok belum ditutup dengan dedent yang valid.")) } }
 
     fn parse_program(mut self) -> Result<Program, DiagnosticBundle> {
         let mut statements = Vec::new();
@@ -57,8 +39,7 @@ impl Parser {
         if self.lexeme_is("selama") { return self.parse_while(); }
         if self.lexeme_is("ketika") { return self.parse_event(); }
         if self.lexeme_is("buat") && self.peek_lexeme(1) == Some("pekerjaan") { return self.parse_function(); }
-
-        if self.current().kind == TokenKind::Identifier {
+        if matches!(self.current().kind, TokenKind::Identifier | TokenKind::Keyword) {
             let name = self.current().lexeme.clone();
             let span = self.current().span.clone();
             if self.peek_lexeme(1) == Some("adalah") {
@@ -74,7 +55,6 @@ impl Parser {
                 return Ok(Statement::Assignment { name, value, span });
             }
         }
-
         self.parse_action()
     }
 
@@ -82,9 +62,7 @@ impl Parser {
         let first = self.advance();
         let name = first.lexeme.clone();
         let mut args = Vec::new();
-        if !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) {
-            args.push(self.parse_expression_until_newline()?);
-        }
+        if !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) { args.push(self.parse_expression_until_newline()?); }
         self.expect_newline()?;
         Ok(Statement::Action { name, args, span: first.span })
     }
@@ -144,9 +122,7 @@ impl Parser {
             params.push(self.expect_word("E1009", "Parameter membutuhkan nama.")?);
             self.expect_newline()?;
         }
-        if !self.lexeme_is("hasilnya") || self.peek_lexeme(1) != Some("adalah") {
-            return Err(self.error("E1010", "Pekerjaan membutuhkan baris 'hasilnya adalah ...'."));
-        }
+        if !self.lexeme_is("hasilnya") || self.peek_lexeme(1) != Some("adalah") { return Err(self.error("E1010", "Pekerjaan membutuhkan baris 'hasilnya adalah ...'.")); }
         self.advance(); self.advance();
         let result = self.parse_expression_until_newline()?;
         self.expect_newline()?;
@@ -158,9 +134,7 @@ impl Parser {
     fn parse_event(&mut self) -> Result<Statement, DiagnosticBundle> {
         let start = self.advance().span;
         let mut trigger = Vec::new();
-        while !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) {
-            trigger.push(self.advance().lexeme);
-        }
+        while !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) { trigger.push(self.advance().lexeme); }
         if trigger.is_empty() { return Err(self.error("E1011", "Event membutuhkan pemicu yang eksplisit.")); }
         self.expect_newline()?;
         self.expect_indent()?;
@@ -182,31 +156,30 @@ impl Parser {
     }
 
     fn parse_expression_until_newline(&mut self) -> Result<Expr, DiagnosticBundle> {
-        if self.at(TokenKind::Newline) || self.at(TokenKind::Eof) || self.at(TokenKind::Dedent) {
-            return Err(self.error("E1013", "Pernyataan membutuhkan nilai atau ekspresi."));
-        }
+        if self.at(TokenKind::Newline) || self.at(TokenKind::Eof) || self.at(TokenKind::Dedent) { return Err(self.error("E1013", "Pernyataan membutuhkan nilai atau ekspresi.")); }
         let mut expr = self.parse_primary()?;
         loop {
             if self.at(TokenKind::Newline) || self.at(TokenKind::Eof) || self.at(TokenKind::Dedent) { break; }
-            let op = if self.lexeme_is("ditambah") { Some(BinaryOp::Add) }
-                else if self.lexeme_is("dikurangi") { Some(BinaryOp::Subtract) }
-                else if self.lexeme_is("dikali") { Some(BinaryOp::Multiply) }
-                else if self.lexeme_is("dibagi") { Some(BinaryOp::Divide) }
-                else if self.lexeme_is("sudah") { Some(BinaryOp::AtLeast) }
-                else if self.lexeme_is("belum") { Some(BinaryOp::Less) }
-                else if self.lexeme_is("sama") && self.peek_lexeme(1) == Some("dengan") { self.advance(); Some(BinaryOp::Equal) }
-                else if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("besar") && self.peek_lexeme(2) == Some("dari") { self.advance(); self.advance(); Some(BinaryOp::Greater) }
-                else if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("kecil") && self.peek_lexeme(2) == Some("dari") { self.advance(); self.advance(); Some(BinaryOp::Less) }
-                else { None };
-            if let Some(op) = op {
-                self.advance();
-                let right = self.parse_primary()?;
-                expr = Expr::Binary { left: Box::new(expr), op, right: Box::new(right) };
-            } else {
-                return Err(self.error("E1014", "Ekspresi mengandung kata yang tidak sesuai grammar."));
-            }
+            let (op, consumed) = self.match_operator().ok_or_else(|| self.error("E1014", "Ekspresi mengandung kata yang tidak sesuai grammar."))?;
+            for _ in 0..consumed { self.advance(); }
+            let right = self.parse_primary()?;
+            expr = Expr::Binary { left: Box::new(expr), op, right: Box::new(right) };
+            if matches!(op, BinaryOp::AtLeast | BinaryOp::AtMost) && self.lexeme_is("tahun") { self.advance(); }
         }
         Ok(expr)
+    }
+
+    fn match_operator(&self) -> Option<(BinaryOp, usize)> {
+        if self.lexeme_is("ditambah") { return Some((BinaryOp::Add, 1)); }
+        if self.lexeme_is("dikurangi") { return Some((BinaryOp::Subtract, 1)); }
+        if self.lexeme_is("dikali") { return Some((BinaryOp::Multiply, 1)); }
+        if self.lexeme_is("dibagi") { return Some((BinaryOp::Divide, 1)); }
+        if self.lexeme_is("sudah") { return Some((BinaryOp::AtLeast, 1)); }
+        if self.lexeme_is("belum") { return Some((BinaryOp::AtMost, 1)); }
+        if self.lexeme_is("sama") && self.peek_lexeme(1) == Some("dengan") { return Some((BinaryOp::Equal, 2)); }
+        if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("besar") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Greater, 3)); }
+        if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("kecil") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Less, 3)); }
+        None
     }
 
     fn parse_primary(&mut self) -> Result<Expr, DiagnosticBundle> {
@@ -229,9 +202,5 @@ impl Parser {
             TokenKind::Identifier | TokenKind::Keyword => Ok(self.advance().lexeme),
             _ => Err(self.error(code, message)),
         }
-    }
-
-    fn peek_lexeme(&self, distance: usize) -> Option<&str> {
-        self.tokens.get(self.pos + distance).map(|t| t.lexeme.as_str())
     }
 }
