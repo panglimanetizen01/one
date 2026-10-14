@@ -1,0 +1,20 @@
+# Valid One v0.1 examples
+nama adalah "Budi"
+umur adalah 25
+umur menjadi 26
+tampilkan nama
+
+kalau umur sudah 17 tahun
+    tampilkan "Boleh masuk"
+kalau tidak
+    tampilkan "Belum boleh masuk"
+
+untuk setiap nama di teman
+    tampilkan nama
+
+buat pekerjaan sapa
+    terima nama
+    hasilnya adalah nama
+
+ketika pengguna menekan tombol beli
+    tampilkan "dibeli"
