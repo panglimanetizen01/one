@@ -6,6 +6,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
+- `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger, rulings, and remaining release gate.
 
 ## Language contracts
 
@@ -24,6 +25,8 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `verification/one-v0.1-implementation-status.md` — implementation inventory.
 - `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
+- `../tools/verify_offline.sh` — independent Linux verification path.
+- `../tools/verify_offline.ps1` — independent Windows verification path.
 
 ## Canonical rule
 
