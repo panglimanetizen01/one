@@ -9,12 +9,19 @@ kalau umur sudah 17 tahun
 kalau tidak
     tampilkan "Belum boleh masuk"
 
-untuk setiap nama di teman
-    tampilkan nama
+buat daftar belanja
+tambahkan "beras" ke belanja
+hapus "beras" dari belanja
 
-buat pekerjaan sapa
-    terima nama
-    hasilnya adalah nama
+untuk setiap barang di belanja
+    sapa barang
+
+buat pekerjaan hitung
+    terima harga
+    terima pajak
+    hasilnya adalah harga ditambah pajak
+
+total adalah hitung dengan 100 dan 10
 
 ketika pengguna menekan tombol beli
     tampilkan "dibeli"
