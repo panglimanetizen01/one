@@ -11,5 +11,15 @@ One is specification-driven. Contributions must preserve the approved semantic c
 5. Run formatting, linting, unit, integration, and conformance checks.
 6. Do not silently change language semantics to make an example pass.
 7. Update the specification when behavior intentionally changes.
+8. Record verification evidence with the exact commit, toolchain, platform, command, and result.
+
+## Verification without paid hosted CI
+
+If GitHub-hosted runners are unavailable or GitHub presents a paid-upgrade requirement, do not purchase capacity merely to validate One. Run the canonical offline verifier in an independent environment:
+
+- Linux: `bash tools/verify_offline.sh`
+- Windows PowerShell: `./tools/verify_offline.ps1`
+
+Independent results are execution evidence, but they must not be reported as GitHub-hosted CI results. Keep the hosted-CI blocker documented until it is actually resolved.
 
 GitHub `main` is the canonical source of truth. Local environments are for verification and validation.
