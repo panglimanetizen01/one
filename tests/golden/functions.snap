@@ -1,0 +1,3 @@
+# fixture: tests/conformance/valid/functions.one
+# expected stdout
+110
