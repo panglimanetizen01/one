@@ -18,9 +18,9 @@
 - LLM-independent compiler/runtime semantics
 - Progressive complexity from beginner programs to large systems
 
-## Current v0.1 implementation
+## v0.1 implementation
 
-The canonical repository now contains the first executable language core:
+The canonical repository contains the first executable language core:
 
 ```text
 Localized source
@@ -32,15 +32,19 @@ Localized source
     -> CLI
 ```
 
-The v0.1 CLI currently provides:
+The v0.1 CLI provides:
 
 ```text
+one new <folder>
 one check <file.one>
 one run <file.one>
+one build <file.one>
 one ast <file.one>
 ```
 
-The implementation includes the six core constructs, structured diagnostics, a capability model, cross-platform process-interoperability primitives, and a Linux/Windows CI matrix. Native FFI, a full optimizing compiler backend, package registry, IDE tooling, and additional human-language grammars remain follow-on milestones and are not represented as complete until their contracts and tests exist.
+The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, and conformance/golden fixtures.
+
+`one build` currently emits a deterministic `.oneir` IR/debug artifact. It is not yet a native executable compiler.
 
 ## Example
 
@@ -54,16 +58,23 @@ kalau tidak
     tampilkan "Belum boleh masuk"
 ```
 
-## Repository status
+## Documentation
 
-One v0.1 is under active implementation and verification. The dependency-ordered plan is the execution contract; unsupported features must not be claimed as complete.
-
-See:
+Start with `docs/README.md`, then read:
 
 - `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
-- `docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md`
 - `docs/spec/one-v0.1-lexical.md`
 - `docs/spec/one-v0.1-grammar.md`
+- `docs/spec/one-v0.1-ast.md`
+- `docs/testing/conformance.md`
+- `docs/release/one-v0.1.md`
+- `docs/verification/one-v0.1-evidence-matrix.md`
+
+## Verification state
+
+The source, contracts, fixtures, and offline verification paths are maintained in the canonical repository. GitHub-hosted CI has a documented runner blocker: recent Linux and Windows jobs failed before usable step/log evidence was available. That means the project must **not** claim CI-green or fully verified status until actual execution evidence exists.
+
+If hosted GitHub runners require an account upgrade, do not purchase one merely for this project. Use `tools/verify_offline.sh` on Linux or `tools/verify_offline.ps1` on Windows, record the exact toolchain/commit/results, and keep hosted-CI status explicitly marked as blocked.
 
 ## Canonical source
 
