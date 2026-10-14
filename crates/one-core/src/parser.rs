@@ -7,20 +7,24 @@ pub fn parse(source: &str) -> Result<Program, DiagnosticBundle> {
     Parser::new(tokens).parse_program()
 }
 
-struct Parser { tokens: Vec<Token>, pos: usize }
+struct Parser {
+    tokens: Vec<Token>,
+    pos: usize,
+}
 
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self { Self { tokens, pos: 0 } }
     fn current(&self) -> &Token { &self.tokens[self.pos] }
     fn at(&self, kind: TokenKind) -> bool { self.current().kind == kind }
     fn lexeme_is(&self, value: &str) -> bool { self.current().lexeme == value }
-    fn advance(&mut self) -> Token { let token = self.current().clone(); self.pos += 1; token }
     fn peek_lexeme(&self, distance: usize) -> Option<&str> { self.tokens.get(self.pos + distance).map(|t| t.lexeme.as_str()) }
+    fn advance(&mut self) -> Token { let token = self.current().clone(); self.pos += 1; token }
     fn skip_newlines(&mut self) { while self.at(TokenKind::Newline) { self.advance(); } }
     fn error(&self, code: &'static str, message: impl Into<String>) -> DiagnosticBundle { DiagnosticBundle::single(Diagnostic::error(code, message, Some(self.current().span.clone()))) }
     fn expect_newline(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Newline) { self.advance(); Ok(()) } else { Err(self.error("E1001", "Baris pernyataan harus diakhiri newline.")) } }
     fn expect_indent(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Indent) { self.advance(); Ok(()) } else { Err(self.error("E1002", "Blok harus dimulai dengan indentasi empat spasi.")) } }
     fn expect_dedent(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Dedent) { self.advance(); Ok(()) } else { Err(self.error("E1003", "Blok belum ditutup dengan dedent yang valid.")) } }
+    fn expect_word(&mut self, code: &'static str, message: &'static str) -> Result<String, DiagnosticBundle> { match self.current().kind { TokenKind::Identifier | TokenKind::Keyword => Ok(self.advance().lexeme), _ => Err(self.error(code, message)) } }
 
     fn parse_program(mut self) -> Result<Program, DiagnosticBundle> {
         let mut statements = Vec::new(); self.skip_newlines();
@@ -44,17 +48,10 @@ impl Parser {
 
     fn parse_action(&mut self) -> Result<Statement, DiagnosticBundle> {
         let first = self.advance(); let name = first.lexeme.clone(); let mut args = Vec::new();
-        if name == "buat" && self.lexeme_is("daftar") {
-            self.advance(); args.push(self.parse_primary()?);
-        } else if name == "tambahkan" {
-            args.push(self.parse_primary()?);
-            if !self.lexeme_is("ke") { return Err(self.error("E1017", "'tambahkan' membutuhkan kata 'ke' sebelum nama daftar.")); }
-            self.advance(); args.push(self.parse_primary()?);
-        } else if name == "hapus" {
-            args.push(self.parse_primary()?);
-            if !self.lexeme_is("dari") { return Err(self.error("E1018", "'hapus' membutuhkan kata 'dari' sebelum nama daftar.")); }
-            self.advance(); args.push(self.parse_primary()?);
-        } else if !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) { args.push(self.parse_expression_until_newline()?); }
+        if name == "buat" && self.lexeme_is("daftar") { self.advance(); args.push(self.parse_primary()?); }
+        else if name == "tambahkan" { args.push(self.parse_primary()?); if !self.lexeme_is("ke") { return Err(self.error("E1017", "'tambahkan' membutuhkan kata 'ke' sebelum nama daftar.")); } self.advance(); args.push(self.parse_primary()?); }
+        else if name == "hapus" { args.push(self.parse_primary()?); if !self.lexeme_is("dari") { return Err(self.error("E1018", "'hapus' membutuhkan kata 'dari' sebelum nama daftar.")); } self.advance(); args.push(self.parse_primary()?); }
+        else if !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) { args.push(self.parse_expression_until_newline()?); }
         self.expect_newline()?;
         let action_name = if name == "buat" && args.len() == 1 { "buat daftar".into() } else { name };
         Ok(Statement::Action { name: action_name, args, span: first.span })
@@ -82,9 +79,12 @@ impl Parser {
 
     fn parse_function(&mut self) -> Result<Statement, DiagnosticBundle> {
         let start = self.advance().span; self.advance(); let name = self.expect_word("E1008", "Pekerjaan membutuhkan nama.")?; self.expect_newline()?; self.expect_indent()?;
-        let mut params = Vec::new(); while self.lexeme_is("terima") { self.advance(); params.push(self.expect_word("E1009", "Parameter membutuhkan nama.")?); self.expect_newline()?; }
+        let mut params = Vec::new();
+        while self.lexeme_is("terima") { self.advance(); params.push(self.expect_word("E1009", "Parameter membutuhkan nama.")?); self.expect_newline()?; }
         if !self.lexeme_is("hasilnya") || self.peek_lexeme(1) != Some("adalah") { return Err(self.error("E1010", "Pekerjaan membutuhkan baris 'hasilnya adalah ...'.")); }
-        self.advance(); self.advance(); let result = self.parse_expression_until_newline()?; self.expect_newline()?; let body = self.parse_block()?; self.expect_dedent()?;
+        self.advance(); self.advance(); let result = self.parse_expression_until_newline()?; self.expect_newline()?;
+        let body = if self.at(TokenKind::Dedent) { Vec::new() } else { self.parse_block()? };
+        self.expect_dedent()?;
         Ok(Statement::Function { name, params, result, body, span: start })
     }
 
@@ -131,17 +131,7 @@ impl Parser {
             TokenKind::Identifier | TokenKind::Keyword => match token.lexeme.as_str() { "benar" => Expr::Boolean(true), "salah" => Expr::Boolean(false), "tidak" if self.lexeme_is("ada") => { self.advance(); Expr::Nothing }, name => Expr::Identifier(name.to_string()) },
             _ => return Err(self.error("E1016", "Token ini tidak dapat menjadi ekspresi.")),
         };
-        if let Expr::Identifier(name) = &base {
-            if self.lexeme_is("dengan") {
-                self.advance(); let mut args = Vec::new(); args.push(self.parse_primary()?);
-                while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary()?); }
-                return Ok(Expr::Call { name: name.clone(), args });
-            }
-        }
+        if let Expr::Identifier(name) = &base { if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary()?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary()?); } return Ok(Expr::Call { name: name.clone(), args }); } }
         Ok(base)
-    }
-
-    fn expect_word(&mut self, code: &'static str, message: &'static str) -> Result<String, DiagnosticBundle> {
-        match self.current().kind { TokenKind::Identifier | TokenKind::Keyword => Ok(self.advance().lexeme), _ => Err(self.error(code, message)) }
     }
 }
