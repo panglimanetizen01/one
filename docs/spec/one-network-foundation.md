@@ -1,16 +1,16 @@
 # One Network Foundation v0.1
 
-Status: **Implemented only for the foundation slice; broader network support remains future work.**
+Status: **Implemented and independently verified for the currently implemented runtime slices; broader network support remains future work.**
 
 ## Scope
 
-This contract defines the first One-owned network semantic slice. It does not claim that One v0.1 already implements the complete Internet, industrial, storage, mesh, DTN, or management protocol inventory.
+This contract defines the first One-owned network semantic slice and the currently verified native runtime slices. It does not claim that One v0.1 already implements the complete Internet, industrial, storage, mesh, DTN, management, or physical protocol inventory.
 
 The canonical pipeline remains:
 
-`source → lexer → parser → AST → name/scope analysis → type/semantic analysis → CSIR → reference interpreter`
+`source → lexer → parser → AST → name/scope analysis → type/semantic analysis → CSIR → runtime/backend`
 
-The network foundation adds a typed semantic boundary that can be lowered into network IR and checked against explicit capabilities before a backend is considered.
+The network foundation adds a typed semantic boundary that can be lowered into network IR and checked against explicit capabilities before a backend executes.
 
 ## Typed semantic model
 
@@ -19,7 +19,7 @@ The foundation defines typed values for:
 - address kind: IPv4, IPv6, or name;
 - transport: reliable or unreliable;
 - security: explicit insecure or TLS mode;
-- protocol family: name resolution, TCP, UDP, TLS, HTTP, or QUIC;
+- protocol family: name resolution, TCP, UDP, TLS, HTTP, QUIC, application, session, network, data-link, physical, industrial, storage, mesh, delay-tolerant, or management;
 - target: host, address, or host/service port;
 - validated timeout;
 - connection identity;
@@ -40,11 +40,27 @@ Network authority is explicit:
 
 The existing coarse `Network` capability remains a compatibility grant for ordinary connect/send/receive operations. It never implies `NetworkAdmin`.
 
-## Protocol registry
+## Verified native runtime boundary
 
-The registry is compatibility metadata, not language syntax. The initial entries are DNS, TCP, UDP, TLS, HTTP, and QUIC/HTTP3. Registry status is represented as `Specified`, `Designed`, `Implemented`, `Verified`, or `Supported`.
+The canonical registry currently marks these protocol/runtime slices as `Verified` only after executable evidence:
 
-The foundation registry intentionally does not claim real protocol adapters are implemented or supported.
+- DNS/system resolution;
+- TCP;
+- UDP;
+- TLS/HTTPS;
+- HTTP/1.1;
+- HTTP/2;
+- QUIC;
+- TFTP;
+- NTP;
+- FTP;
+- SMTP;
+- POP3;
+- IMAP.
+
+HTTP/2 uses the native `h2` implementation with real loopback HTTP/2 frames. Its runtime acceptance coverage includes capability-gate ordering, request/response round-trip, and cross-platform loopback execution.
+
+The registry remains compatibility metadata, not language syntax. All other inventory entries remain explicitly unverified/future unless corresponding implementation and evidence are added.
 
 ## Network IR
 
@@ -54,7 +70,7 @@ Network operations are represented as typed IR. Canonical rendering preserves ta
 
 The reference interpreter validates a network operation, checks capabilities, and returns a deterministic delegation result. It does **not** perform external network I/O. Capability denial occurs before backend delegation.
 
-This boundary is an execution oracle for semantics, not a claim of production network transport support.
+Native runtime adapters are separate from the reference interpreter. Their real I/O is feature-gated and must pass capability, framing, timeout, malformed-input, resource-cleanup, and platform-portability tests before a registry entry may become `Verified`.
 
 ## Diagnostics
 
@@ -68,13 +84,12 @@ A protocol or platform capability may only advance to `Implemented`, `Verified`,
 
 This foundation does not yet claim implementation of:
 
-- real DNS resolution or socket I/O;
-- HTTP client/server runtime;
-- QUIC/HTTP3 runtime;
+- HTTP/3 runtime;
 - local service discovery;
 - routing, VPN, industrial, storage, mesh, DTN, telemetry, or remote-access adapters;
 - platform-specific network drivers;
 - a complete network source grammar;
-- the full protocol inventory described by the end-to-end network platform architecture.
+- the full protocol inventory described by the end-to-end network platform architecture;
+- production-complete support for every RFC extension of the verified application protocols.
 
 Those are subsequent vertical slices and must preserve the same deterministic semantic and capability boundaries.
