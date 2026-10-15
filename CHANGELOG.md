@@ -29,3 +29,5 @@
 - Added regression coverage for multi-word loop variables and function parameters.
 - Scoped `ke`/`dari` expression boundaries to the list mutation productions instead of applying them globally.
 - Preserved structural words such as `ke`, `dan`, and `dengan` inside grammar-bounded names where the active production does not assign them structural meaning.
+- Added the first One Network foundation slice: typed network semantics, granular network capabilities, deterministic protocol registry metadata, typed network IR, a reference execution boundary without external I/O, and structured network diagnostics.
+- Documented explicit network limits so registry metadata is not mistaken for implemented DNS/socket/HTTP/QUIC or broader protocol-stack support.
