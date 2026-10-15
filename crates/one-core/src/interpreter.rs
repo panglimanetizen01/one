@@ -1,3 +1,5 @@
+#![allow(clippy::possible_missing_else)]
+
 use std::collections::HashMap;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
