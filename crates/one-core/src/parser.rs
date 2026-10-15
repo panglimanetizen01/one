@@ -68,13 +68,16 @@ impl Parser {
         Ok(Statement::Conditional { condition, then_block, else_block, span: start })
     }
     fn parse_for_each(&mut self) -> Result<Statement, DiagnosticBundle> {
-        let start = self.advance().span; if !self.lexeme_is("setiap") { return Err(self.error("E1005", "Loop harus menggunakan 'untuk setiap'.")); } self.advance(); let variable = self.expect_word("E1006", "Loop membutuhkan nama variabel.")?; if !self.lexeme_is("di") { return Err(self.error("E1007", "Loop membutuhkan kata 'di'.")); } self.advance(); let iterable = self.parse_name_reference()?; self.expect_newline()?; self.expect_indent()?; let body = self.parse_block()?; self.expect_dedent()?;
+        let start = self.advance().span; if !self.lexeme_is("setiap") { return Err(self.error("E1005", "Loop harus menggunakan 'untuk setiap'.")); } self.advance();
+        let mut variable_words = Vec::new(); while self.is_word() && !self.lexeme_is("di") { variable_words.push(self.advance().lexeme); }
+        if variable_words.is_empty() { return Err(self.error("E1006", "Loop membutuhkan nama variabel.")); }
+        let variable = variable_words.join(" "); if !self.lexeme_is("di") { return Err(self.error("E1007", "Loop membutuhkan kata 'di'.")); } self.advance(); let iterable = self.parse_name_reference()?; self.expect_newline()?; self.expect_indent()?; let body = self.parse_block()?; self.expect_dedent()?;
         Ok(Statement::Loop { kind: LoopKind::ForEach { variable, iterable }, body, span: start })
     }
     fn parse_while(&mut self) -> Result<Statement, DiagnosticBundle> { let start = self.advance().span; let condition = self.parse_expression_until_newline()?; self.expect_newline()?; self.expect_indent()?; let body = self.parse_block()?; self.expect_dedent()?; Ok(Statement::Loop { kind: LoopKind::While { condition }, body, span: start }) }
     fn parse_function(&mut self) -> Result<Statement, DiagnosticBundle> {
         let start = self.advance().span; self.advance(); let mut name_words = Vec::new(); while self.is_word() { name_words.push(self.advance().lexeme); } let name = name_words.join(" "); self.expect_newline()?; self.expect_indent()?; let mut params = Vec::new();
-        while self.lexeme_is("terima") { self.advance(); params.push(self.expect_word("E1009", "Parameter membutuhkan nama.")?); self.expect_newline()?; }
+        while self.lexeme_is("terima") { self.advance(); let mut param_words = Vec::new(); while self.is_word() { param_words.push(self.advance().lexeme); } if param_words.is_empty() { return Err(self.error("E1009", "Parameter membutuhkan nama.")); } params.push(param_words.join(" ")); self.expect_newline()?; }
         if !self.lexeme_is("hasilnya") || self.peek_lexeme(1) != Some("adalah") { return Err(self.error("E1010", "Pekerjaan membutuhkan baris 'hasilnya adalah ...'.")); }
         self.advance(); self.advance(); let result = self.parse_expression_until_newline()?; self.expect_newline()?; let body = if self.at(TokenKind::Dedent) { Vec::new() } else { self.parse_block()? }; self.expect_dedent()?;
         Ok(Statement::Function { name, params, result, body, span: start })
