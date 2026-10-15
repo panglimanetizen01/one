@@ -16,7 +16,7 @@ fn permit(capabilities: &CapabilitySet) -> Result<(), DatagramProtocolError> {
     if capabilities.permits(Capability::NetworkConnect) { Ok(()) } else { Err(DatagramProtocolError::CapabilityDenied) }
 }
 
-fn timeout(error: std::io::Error) -> DatagramProtocolError {
+fn map_io_error(error: std::io::Error) -> DatagramProtocolError {
     if matches!(error.kind(), std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock) { DatagramProtocolError::Timeout } else { DatagramProtocolError::Io(error.to_string()) }
 }
 
@@ -54,7 +54,7 @@ pub fn tftp_read(socket: &UdpSocket, server: SocketAddr, filename: &str, timeout
     let mut output = Vec::new();
     let mut buffer = [0u8; 4 + 512];
     loop {
-        let (size, from) = socket.recv_from(&mut buffer).map_err(timeout)?;
+        let (size, from) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
         let peer = from;
         let (opcode, block, payload) = parse_tftp_packet(&buffer[..size])?;
         match opcode {
@@ -82,7 +82,7 @@ pub fn tftp_write(socket: &UdpSocket, server: SocketAddr, filename: &str, data: 
     let request = tftp_request(2, filename)?;
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut buffer = [0u8; 4 + 512];
-    let (size, peer) = socket.recv_from(&mut buffer).map_err(timeout)?;
+    let (size, peer) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
     let (opcode, block, payload) = parse_tftp_packet(&buffer[..size])?;
     if opcode == 5 { return Err(tftp_error(payload)); }
     if opcode != 4 || block != 0 { return Err(DatagramProtocolError::InvalidPacket); }
@@ -97,7 +97,7 @@ pub fn tftp_write(socket: &UdpSocket, server: SocketAddr, filename: &str, data: 
         packet.extend_from_slice(&block_number.to_be_bytes());
         packet.extend_from_slice(&data[offset..offset + chunk_len]);
         socket.send_to(&packet, peer).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
-        let (size, _) = socket.recv_from(&mut buffer).map_err(timeout)?;
+        let (size, _) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
         let (ack_opcode, ack_block, ack_payload) = parse_tftp_packet(&buffer[..size])?;
         if ack_opcode == 5 { return Err(tftp_error(ack_payload)); }
         if ack_opcode != 4 || ack_block != block_number { return Err(DatagramProtocolError::InvalidPacket); }
@@ -115,7 +115,7 @@ pub fn ntp_query(socket: &UdpSocket, server: SocketAddr, timeout: Duration, capa
     request[0] = 0x23;
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut response = [0u8; 512];
-    let (size, _) = socket.recv_from(&mut response).map_err(timeout)?;
+    let (size, _) = socket.recv_from(&mut response).map_err(map_io_error)?;
     if size < 48 || (response[0] & 0x07) != 4 { return Err(DatagramProtocolError::InvalidPacket); }
     if response[1] > 15 { return Err(DatagramProtocolError::InvalidPacket); }
     Ok(u64::from_be_bytes(response[40..48].try_into().expect("NTP timestamp is 8 bytes")))
@@ -135,7 +135,7 @@ mod tests {
         let handle = thread::spawn(move || {
             let mut buf = [0u8; 1024];
             let (n, peer) = server.recv_from(&mut buf).expect("rrq");
-            assert_eq!(&buf[..2], b"\0\1");
+            assert_eq!(&buf[..2], b"\x00\x01");
             assert_eq!(&buf[2..n], b"hello.txt\0octet\0");
             server.send_to(&[0, 3, 0, 1, b'h', b'e', b'l', b'l', b'o'], peer).expect("data");
             let (n, _) = server.recv_from(&mut buf).expect("ack");
@@ -154,7 +154,7 @@ mod tests {
         let handle = thread::spawn(move || {
             let mut buf = [0u8; 1024];
             let (n, peer) = server.recv_from(&mut buf).expect("wrq");
-            assert_eq!(&buf[..2], b"\0\2");
+            assert_eq!(&buf[..2], b"\x00\x02");
             assert_eq!(&buf[2..n], b"hello.txt\0octet\0");
             server.send_to(&[0, 4, 0, 0], peer).expect("ack0");
             let (n, _) = server.recv_from(&mut buf).expect("data");
