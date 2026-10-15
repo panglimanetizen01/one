@@ -4,6 +4,7 @@
 use std::collections::HashMap;
 use crate::ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 use crate::diagnostic::{Diagnostic, DiagnosticBundle};
+use crate::network::NetworkOperation;
 use crate::types::Type;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,17 +17,12 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> {
     Ok(TypedProgram { program: program.clone() })
 }
 
+pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
+
 struct Analyzer { scopes: Vec<HashMap<String, Type>>, functions: HashMap<String, usize> }
 
 impl Analyzer {
-    fn register_functions(&mut self, statements: &[Statement]) -> Result<(), DiagnosticBundle> {
-        for statement in statements {
-            if let Statement::Function { name, params, .. } = statement {
-                if self.functions.insert(name.clone(), params.len()).is_some() { return Err(DiagnosticBundle::single(Diagnostic::error("E2013", format!("Pekerjaan '{}' sudah dibuat.", name), None))); }
-            }
-        }
-        Ok(())
-    }
+    fn register_functions(&mut self, statements: &[Statement]) -> Result<(), DiagnosticBundle> { for statement in statements { if let Statement::Function { name, params, .. } = statement { if self.functions.insert(name.clone(), params.len()).is_some() { return Err(DiagnosticBundle::single(Diagnostic::error("E2013", format!("Pekerjaan '{}' sudah dibuat.", name), None))); } } } Ok(()) }
     fn current_scope(&mut self) -> &mut HashMap<String, Type> { self.scopes.last_mut().unwrap() }
     fn lookup(&self, name: &str) -> Option<Type> { self.scopes.iter().rev().find_map(|scope| scope.get(name).copied()) }
     fn analyze_block(&mut self, statements: &[Statement]) -> Result<(), DiagnosticBundle> { for statement in statements { self.analyze_statement(statement)?; } Ok(()) }
