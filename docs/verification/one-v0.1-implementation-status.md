@@ -7,7 +7,7 @@
 | Concrete grammar | COMPLETE | `docs/spec/one-v0.1-grammar.md` |
 | AST | IMPLEMENTED | `crates/one-core/src/ast.rs` + AST contract |
 | Lexer | IMPLEMENTED | `crates/one-core/src/lexer.rs` + lexer tests |
-| Parser | IMPLEMENTED | `crates/one-core/src/parser.rs` + pipeline tests |
+| Parser | IMPLEMENTED | `crates/one-core/src/parser.rs` + pipeline/name-boundary tests |
 | Name/scope analysis | IMPLEMENTED | `crates/one-core/src/semantic.rs` |
 | Initial type system | IMPLEMENTED | `crates/one-core/src/types.rs` |
 | Semantic IR | IMPLEMENTED | `crates/one-core/src/ir.rs` |
@@ -25,8 +25,8 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Linux independent execution verification | VERIFIED | `docs/verification/one-v0.1-linux-windows-2026-10-15.md` |
-| Windows independent execution verification | VERIFIED | `docs/verification/one-v0.1-linux-windows-2026-10-15.md` |
+| Linux independent execution verification | VERIFIED | run `38753437740`, job `116485529987` |
+| Windows independent execution verification | VERIFIED | run `38753437740`, job `116485530381` |
 | Private canonical hosted CI execution | BLOCKED | GitHub runner jobs fail before usable step/log evidence |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -39,8 +39,10 @@
 
 ## Release interpretation
 
-`IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means independent execution evidence exists for the exact recorded canonical source commit.
+`IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means independent execution evidence exists for the exact recorded source commit.
 
-For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, Linux and Windows execution verification is recorded as green. The private canonical hosted-CI condition remains separately and honestly marked as blocked because runner jobs fail before usable step/log evidence.
+The independently verified implementation commit is `d17f2829187ec28031a4b4a94dd0e0af282f66b8`. The verification run completed successfully on Linux and Windows Server 2025, including contract checks, build, Clippy, all workspace tests, and platform-specific offline verification.
+
+Documentation-only commits after that implementation checkpoint preserve the same verified source lineage and are included in the final repository verification pass.
 
 No GitHub paid upgrade is required for the verification result.
