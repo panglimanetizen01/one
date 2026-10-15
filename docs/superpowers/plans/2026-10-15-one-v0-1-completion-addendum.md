@@ -15,37 +15,39 @@ This addendum records the execution state of `docs/superpowers/plans/2026-10-15-
 | 7. Reference interpreter | IMPLEMENTED | runtime/interpreter + execution tests |
 | 8. Diagnostics | IMPLEMENTED | structured diagnostic model + tests |
 | 9. Capability/platform boundary | IMPLEMENTED | capability/platform modules + security tests |
-| 10. CLI | IMPLEMENTED | `new/check/run/build/ast` + CLI tests |
+| 10. CLI | IMPLEMENTED | conversational commands plus technical aliases |
 | 11. Standard library/project support | IMPLEMENTED | stdlib + project scaffolding |
 | 12. Process interoperability | IMPLEMENTED | explicit process boundary + tests |
 | 13. Conformance/golden suite | COMPLETE AS ARTIFACTS | fixtures, runner, golden outputs, contract docs |
-| 14. Documentation/security/release contract | COMPLETE AS ARTIFACTS | release docs, evidence matrix, README/security docs, documentation index |
-| 15. Full release verification | COMPLETE | Linux and Windows independent execution evidence recorded for canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0` |
+| 14. Documentation/security/release contract | AUDITED | contract closure checker strengthened; stale verification claims corrected |
+| 15. Network native runtime slices | VERIFIED | DNS/TCP/UDP/TLS/HTTP/1.1/HTTP/2/QUIC/TFTP/NTP/FTP/SMTP/POP3/IMAP have executable runtime evidence |
+| 16. Current full release verification | PENDING | exact-SHA Linux/Windows rerun required after the post-HTTP/2 audit changes |
 
 ## Artifact closure
 
-The normative Markdown contracts and their repository derivatives are now explicitly indexed and mechanically checked. The canonical derivative set includes:
+The normative Markdown contracts and their repository derivatives are indexed by `docs/README.md` and checked by `tools/check_contract.py`. The checker now validates every concrete artifact referenced by the documentation index rather than relying only on a manually maintained subset.
 
-- formal foundation/specification and dependency-ordered plan;
-- lexical, grammar, AST, localization, diagnostics, standard-library, interop, and CLI contracts;
+The derivative set includes:
+
+- formal foundation/specification and dependency-ordered plans;
+- lexical, grammar, AST, localization, diagnostics, runtime, capability, module, package/build, standard-library, interop, CLI, and network contracts;
 - conformance/release/verification documentation;
 - valid/invalid One fixtures and golden outputs;
-- executable conformance tests;
+- executable conformance and CLI tests;
+- network runtime acceptance tests;
 - static contract-artifact consistency checker;
 - independent Linux and Windows verification scripts;
-- CI/release workflows that invoke the contract checks before claiming execution evidence;
-- recorded Linux and Windows execution evidence for the release candidate.
-
-The repository's documentation index is the navigation surface for these artifacts, while `tools/check_contract.py` is the machine-checkable presence/consistency gate.
+- CI/release workflows;
+- recorded independent verification evidence.
 
 ## Rulings
 
-- **Ruling:** Do not purchase a GitHub upgrade solely to obtain hosted CI execution — the release contract explicitly permits independent offline verification and requires hosted-CI status to remain honestly marked as blocked.
-- **Ruling:** The repository root remains a virtual Cargo workspace, so the executable conformance integration test lives under `crates/one-core/tests/conformance.rs`; a root `tests/conformance.rs` would not be compiled automatically by Cargo.
-- **Ruling:** v0.1 does not silently accept multi-word user identifiers or the conversational `selama masih ada ...` loop form; both are documented as future syntax extensions.
-- **Ruling:** `one build` is documented as an IR/debug artifact generator, not a native compiler, until a native backend contract and verification exist.
-- **Ruling:** Independent verification evidence may close the execution gate without changing historical hosted-CI results. The exact commit SHA, OS, commands, and results are recorded in `docs/verification/one-v0.1-linux-windows-2026-10-15.md`.
+- **Ruling:** Do not purchase a GitHub upgrade solely to obtain hosted CI execution. Use the independent verification path when private hosted runners are unavailable.
+- **Ruling:** The repository root remains a virtual Cargo workspace, so the executable conformance integration test lives under `crates/one-core/tests/conformance.rs`.
+- **Ruling:** v0.1 does not silently accept multi-word user identifiers or the conversational `selama masih ada ...` loop form; both remain governed by the documented grammar boundary.
+- **Ruling:** `one build` is an IR/debug artifact generator, not a native compiler, until a native backend contract and verification exist.
+- **Ruling:** Protocol-registry status is evidence-driven. Inventory membership alone cannot advance a protocol to `Verified` or `Supported`.
 
-## Completion gate
+## Current release gate
 
-Source, normative documentation, fixtures, executable conformance artifacts, verification tooling, and independent Linux/Windows execution evidence are complete for the defined v0.1 implementation scope. Private hosted GitHub CI remains historically blocked before usable steps; that condition is recorded separately and is not required for the no-upgrade verification path.
+Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The current release gate remains **PENDING** until the exact post-audit canonical `main` commit passes the independent Linux/Windows verification matrix.
