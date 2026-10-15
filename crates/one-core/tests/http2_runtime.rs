@@ -29,7 +29,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
             )
             .await
             .expect("h2 handshake");
-            if let Some(Ok((request, respond))) = connection.accept().await {
+            if let Some(Ok((request, mut respond))) = connection.accept().await {
                 assert_eq!(request.method(), "GET");
                 assert_eq!(request.uri().path(), "/hello");
                 let response = http::Response::builder()
