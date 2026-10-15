@@ -45,8 +45,9 @@ if "do not purchase an upgrade" not in release.lower():
 
 index = (ROOT / "docs/README.md").read_text(encoding="utf-8")
 for path in required[9:]:
-    if path not in index:
-        raise SystemExit(f"DOC INDEX: missing reference to {path}")
+    index_path = path.removeprefix("docs/") if path.startswith("docs/") else f"../{path}"
+    if index_path not in index:
+        raise SystemExit(f"DOC INDEX: missing reference to {path} (expected {index_path})")
 
 valid = sorted((ROOT / "tests/conformance/valid").glob("*.one"))
 invalid = sorted((ROOT / "tests/conformance/invalid").glob("*.one"))
