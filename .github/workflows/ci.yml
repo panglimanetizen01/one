@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: rustc --version && cargo --version
+      - name: Contract artifacts
+        run: python tools/check_contract.py
       - name: Build
         run: cargo build --workspace --all-targets
       - name: Clippy
