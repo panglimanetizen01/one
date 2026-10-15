@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED** for the canonical source lineage verified by independent Linux and Windows execution.
+Status: **VERIFICATION-PENDING** for the current canonical source while the post-HTTP/2 contract-artifact audit is reverified at an exact SHA.
 
 ## Scope
 
@@ -26,6 +26,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - Strict v0.1 project manifest validation for `nama` and `versi`.
 - Conformance fixtures and golden-output tests.
 - Linux/Windows CI definition.
+- Verified native network runtime slices: DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP, within the explicit runtime limits documented by the network contract.
 
 ## Explicit v0.1 limits
 
@@ -35,42 +36,41 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - Native C/C++ FFI is future work.
 - Python, Node.js, and Java/JVM integration is currently process-boundary interoperability, not native language bindings.
+- HTTP/3, broad discovery/routing/VPN/industrial/storage/mesh/DTN/telemetry/remote-access adapters, physical network drivers, complete network source grammar, and the remaining protocol inventory are future work.
+- The verified application-protocol implementations are bounded runtime slices, not claims of complete RFC feature coverage.
 - Package registry, full dependency registry, IDE/editor tooling, GUI framework integration, and additional locale grammars are future work.
 
 ## Release acceptance checklist
 
-The independently verified source execution used canonical implementation commit `d17f2829187ec28031a4b4a94dd0e0af282f66b8`.
+A fresh exact-SHA verification run is required after the current audit changes.
 
-- [x] Linux compilation succeeds.
-- [x] Windows compilation succeeds.
-- [x] Linux unit/integration/conformance tests succeed.
-- [x] Windows unit/integration/conformance tests succeed.
-- [x] CLI smoke tests succeed through the platform-specific offline verification scripts.
-- [x] Capability/security tests succeed.
-- [x] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities.
-- [x] Documentation and grammar are aligned with the implemented multi-word name and explicit-action behavior.
-- [x] Regression tests cover multi-word loop variables and function parameters.
-- [x] No known failing test remains in the recorded source verification run.
+- [ ] Linux compilation succeeds on the current canonical SHA.
+- [ ] Windows compilation succeeds on the current canonical SHA.
+- [ ] Linux unit/integration/conformance tests succeed on the current canonical SHA.
+- [ ] Windows unit/integration/conformance tests succeed on the current canonical SHA.
+- [ ] Linux real-network runtime tests succeed on the current canonical SHA.
+- [ ] Windows real-network runtime tests succeed on the current canonical SHA.
+- [ ] Linux offline verification succeeds on the current canonical SHA.
+- [ ] Windows offline verification succeeds on the current canonical SHA.
+- [ ] Contract-artifact closure check succeeds on the current canonical SHA.
+- [ ] Deterministic `.oneir` and `.onepkg` checks succeed.
+- [ ] Capability/security tests succeed.
+- [ ] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities.
+- [ ] Documentation and grammar are aligned with the implemented language behavior and verified network boundary.
+- [ ] No known failing test remains in the fresh current-SHA verification run.
 
 ## Evidence
 
-Independent verification run: `38753437740` in `panglimanetizen01/one-windows-verification`.
+Previous independent verification run `38781871063` verified canonical implementation commit `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`, including HTTP/2. It is retained as historical evidence and is not used as proof for the current post-audit SHA.
 
-- Linux job: `116485529987` — success.
-- Windows Server 2025 job: `116485530381` — success.
+The current release gate will use `panglimanetizen01/one-windows-verification` to execute the exact current canonical commit on Ubuntu and Windows Server 2025.
 
-Both jobs checked out the canonical private repository at the exact implementation commit above and completed contract checks, build, Clippy, all workspace tests, and the platform-specific offline verification script.
-
-The temporary public repository is execution infrastructure only. The private canonical repository remains the source of truth.
-
-The private canonical GitHub Actions environment remains separately recorded as blocked because its hosted jobs historically failed before usable workflow-step evidence. No paid GitHub upgrade was purchased or required.
-
-If GitHub-hosted runners require an account upgrade, **do not purchase an upgrade merely to satisfy this contract**; use the portable offline verification path instead.
+The private canonical GitHub Actions environment may remain blocked if its hosted jobs fail before usable workflow-step evidence. That does not authorize purchasing an upgrade. The portable independent verification path is the project contract's fallback.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
-- **VERIFICATION-PENDING:** required execution evidence is incomplete.
-- **VERIFIED:** all acceptance checklist items have actual recorded evidence.
+- **VERIFICATION-PENDING:** required execution evidence is incomplete for the current canonical SHA.
+- **VERIFIED:** all acceptance checklist items have actual current-SHA evidence.
 
-Current state: **VERIFIED**.
+Current state: **VERIFICATION-PENDING**.
