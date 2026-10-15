@@ -15,9 +15,9 @@ The primary user-facing vocabulary is conversational Indonesian. Technical alias
 | `one buat <folder>` | `one new <folder>` | create a project skeleton |
 | `one periksa <file.one>` | `one check <file.one>` | validate source without executing it |
 | `one jalankan <file.one>` | `one run <file.one>` | execute through the reference interpreter |
-| `one test <folder>` | — | validate and execute the project's main program through the reference interpreter |
-| `one bangun <file.one>` | `one build <file.one>` | lower source and write a `.oneir` artifact |
-| `one package <folder>` | — | validate a project and write a `.onepkg` package artifact |
+| `one test <folder>` | — | execute the project's main program and any sorted project-local conformance fixtures through the reference interpreter |
+| `one bangun <file.one>` | `one build <file.one>` | lower source and write a deterministic `.oneir` artifact |
+| `one package <folder>` | — | validate a project and write a deterministic `.onepkg` package artifact |
 | `one lihat struktur <file.one>` | `one ast <file.one>` | print the parsed AST |
 | `one version` | — | report tool/language version |
 | `one help` | — | explain supported commands |
@@ -52,7 +52,7 @@ Source checking, parsing, semantic analysis, tests that use deterministic local 
 
 ## 8. Determinism
 
-Command behavior must not depend on terminal history, shell aliases, editor state, filesystem enumeration order, or LLM output.
+Command behavior must not depend on terminal history, shell aliases, editor state, filesystem enumeration order, or LLM output. Fixture discovery is sorted explicitly before execution.
 
 ## 9. Project scaffold
 
