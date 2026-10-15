@@ -21,11 +21,11 @@ This addendum records the execution state of `docs/superpowers/plans/2026-10-15-
 | 13. Conformance/golden suite | COMPLETE AS ARTIFACTS | fixtures, runner, golden outputs, contract docs |
 | 14. Documentation/security/release contract | AUDITED | contract closure checker strengthened; stale verification claims corrected |
 | 15. Network native runtime slices | VERIFIED | DNS/TCP/UDP/TLS/HTTP/1.1/HTTP/2/QUIC/TFTP/NTP/FTP/SMTP/POP3/IMAP have executable runtime evidence |
-| 16. Current full release verification | PENDING | exact-SHA Linux/Windows rerun required after the post-HTTP/2 audit changes |
+| 16. Current full release verification | PENDING FINAL EXACT-SHA RUN | the synchronized documentation set must be executed at its resulting exact canonical SHA |
 
 ## Artifact closure
 
-The normative Markdown contracts and their repository derivatives are indexed by `docs/README.md` and checked by `tools/check_contract.py`. The checker now validates every concrete artifact referenced by the documentation index rather than relying only on a manually maintained subset.
+The normative Markdown contracts and their repository derivatives are indexed by `docs/README.md` and checked by `tools/check_contract.py`. The checker validates every concrete artifact referenced by the documentation index rather than relying only on a manually maintained subset.
 
 The derivative set includes:
 
@@ -47,7 +47,8 @@ The derivative set includes:
 - **Ruling:** v0.1 does not silently accept multi-word user identifiers or the conversational `selama masih ada ...` loop form; both remain governed by the documented grammar boundary.
 - **Ruling:** `one build` is an IR/debug artifact generator, not a native compiler, until a native backend contract and verification exist.
 - **Ruling:** Protocol-registry status is evidence-driven. Inventory membership alone cannot advance a protocol to `Verified` or `Supported`.
+- **Ruling:** FTP/SMTP/POP3/IMAP command fields reject CR/LF injection, and bounded framing/body limits are enforced before unsafe allocation or network side effects where applicable.
 
 ## Current release gate
 
-Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The current release gate remains **PENDING** until the exact post-audit canonical `main` commit passes the independent Linux/Windows verification matrix.
+Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The final release gate is **PENDING** until the resulting exact canonical `main` commit passes the independent Linux/Windows verification matrix.
