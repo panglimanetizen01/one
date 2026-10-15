@@ -33,3 +33,25 @@ fn expression_name_can_contain_structural_words() {
     let result = interpreter.execute(&ir).expect("name should execute");
     assert_eq!(result.output, vec!["Kunci"]);
 }
+
+#[test]
+fn expression_name_can_contain_dan() {
+    let source = "nama dan catatan adalah \"Kunci\"\ntampilkan nama dan catatan\n";
+    let program = parse(source).expect("dan should remain name content outside call argument context");
+    let typed = analyze(&program).expect("name should analyze");
+    let ir = lower(&typed).expect("name should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let result = interpreter.execute(&ir).expect("name should execute");
+    assert_eq!(result.output, vec!["Kunci"]);
+}
+
+#[test]
+fn list_name_can_contain_dan() {
+    let source = "buat daftar nama dan catatan\ntampilkan nama dan catatan\n";
+    let program = parse(source).expect("list name should parse");
+    let typed = analyze(&program).expect("list name should analyze");
+    let ir = lower(&typed).expect("list name should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let result = interpreter.execute(&ir).expect("list name should execute");
+    assert_eq!(result.output, vec!["[]"]);
+}
