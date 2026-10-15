@@ -14,16 +14,14 @@ fn complete_inventory_contains_the_architectural_protocol_set() {
         "Modbus", "PROFINET", "EtherCAT", "CAN", "MQTT", "CoAP", "Fibre Channel", "iSCSI", "RoCE", "NVMe-oF", "MPLS", "Segment Routing",
         "BATMAN", "OLSR", "AODV", "IPFS", "BitTorrent", "DTN Bundle", "WireGuard", "OpenVPN", "IPsec IKEv2",
         "NETCONF", "YANG", "gRPC", "sFlow", "NetFlow", "IPFIX",
-    ] {
-        assert!(names.contains(&required), "missing protocol inventory entry: {required}");
-    }
+    ] { assert!(names.contains(&required), "missing protocol inventory entry: {required}"); }
 }
 
 #[test]
 fn verified_registry_entries_match_wire_implemented_protocols() {
     let registry = ProtocolRegistry::builtin();
     let verified: Vec<&str> = registry.entries().iter().filter(|entry| matches!(entry.status, ProtocolSupportStatus::Verified | ProtocolSupportStatus::Supported)).map(|entry| entry.name).collect();
-    assert_eq!(verified, vec!["DNS", "TCP", "UDP", "TLS", "HTTP", "QUIC", "TFTP", "NTP"]);
+    assert_eq!(verified, vec!["DNS", "TCP", "UDP", "TLS", "HTTP", "QUIC", "TFTP", "NTP", "FTP", "SMTP"]);
 }
 
 #[test]
@@ -31,7 +29,7 @@ fn only_real_implementations_can_be_verified_or_supported() {
     let registry = ProtocolRegistry::builtin();
     for entry in registry.entries() {
         if matches!(entry.status, ProtocolSupportStatus::Verified | ProtocolSupportStatus::Supported) {
-            assert!(matches!(entry.name, "DNS" | "TCP" | "UDP" | "TLS" | "HTTP" | "QUIC" | "TFTP" | "NTP"));
+            assert!(matches!(entry.name, "DNS" | "TCP" | "UDP" | "TLS" | "HTTP" | "QUIC" | "TFTP" | "NTP" | "FTP" | "SMTP"));
             assert!(matches!(entry.family, NetworkProtocolFamily::NameResolution | NetworkProtocolFamily::Tcp | NetworkProtocolFamily::Udp | NetworkProtocolFamily::Tls | NetworkProtocolFamily::Http | NetworkProtocolFamily::Quic | NetworkProtocolFamily::Application));
         }
     }
