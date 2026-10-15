@@ -5,8 +5,10 @@ This directory is the normative documentation surface for One v0.1. When code an
 ## Foundation
 
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
+- `superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md` — approved end-to-end network/platform architecture.
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
 - `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger, rulings, and remaining release gate.
+- `superpowers/plans/2026-10-15-one-network-foundation.md` — implementation plan for the first One Network semantic vertical slice.
 
 ## Language/tooling contracts
 
@@ -29,6 +31,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `spec/one-v0.1-cli-contract.md` — canonical CLI commands, aliases, exit codes, project operations, and determinism.
 - `spec/one-v0.1-cli.md` — retained v0.1 CLI contract artifact.
 - `spec/one-v0.1-interop.md` — explicit foreign-process interoperability boundary.
+- `spec/one-network-foundation.md` — implemented typed network semantic/IR/reference boundary and its explicit limits.
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
 ## Verification and release
@@ -49,6 +52,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `../tests/conformance/valid/*.one` — accepted-language fixtures.
 - `../tests/conformance/invalid/*.one` — rejected-language fixtures.
 - `../tests/golden/*.snap` — deterministic execution outputs.
+- `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
