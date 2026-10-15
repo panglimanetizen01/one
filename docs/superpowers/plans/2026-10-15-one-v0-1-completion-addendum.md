@@ -20,7 +20,7 @@ This addendum records the execution state of `docs/superpowers/plans/2026-10-15-
 | 12. Process interoperability | IMPLEMENTED | explicit process boundary + tests |
 | 13. Conformance/golden suite | COMPLETE AS ARTIFACTS | fixtures, runner, golden outputs, contract docs |
 | 14. Documentation/security/release contract | COMPLETE AS ARTIFACTS | release docs, evidence matrix, README/security docs, documentation index |
-| 15. Full release verification | BLOCKED | hosted Linux/Windows runners fail before usable step evidence; offline verifiers are the no-upgrade path |
+| 15. Full release verification | COMPLETE | Linux and Windows independent execution evidence recorded for canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0` |
 
 ## Artifact closure
 
@@ -33,7 +33,8 @@ The normative Markdown contracts and their repository derivatives are now explic
 - executable conformance tests;
 - static contract-artifact consistency checker;
 - independent Linux and Windows verification scripts;
-- CI/release workflows that invoke the contract checks before claiming execution evidence.
+- CI/release workflows that invoke the contract checks before claiming execution evidence;
+- recorded Linux and Windows execution evidence for the release candidate.
 
 The repository's documentation index is the navigation surface for these artifacts, while `tools/check_contract.py` is the machine-checkable presence/consistency gate.
 
@@ -43,8 +44,8 @@ The repository's documentation index is the navigation surface for these artifac
 - **Ruling:** The repository root remains a virtual Cargo workspace, so the executable conformance integration test lives under `crates/one-core/tests/conformance.rs`; a root `tests/conformance.rs` would not be compiled automatically by Cargo.
 - **Ruling:** v0.1 does not silently accept multi-word user identifiers or the conversational `selama masih ada ...` loop form; both are documented as future syntax extensions.
 - **Ruling:** `one build` is documented as an IR/debug artifact generator, not a native compiler, until a native backend contract and verification exist.
-- **Ruling:** Independent offline verification evidence may close the execution gate without changing historical hosted-CI results. The exact commit SHA, OS, Rust/Cargo versions, commands, and results must be recorded.
+- **Ruling:** Independent verification evidence may close the execution gate without changing historical hosted-CI results. The exact commit SHA, OS, commands, and results are recorded in `docs/verification/one-v0.1-linux-windows-2026-10-15.md`.
 
 ## Completion gate
 
-Source, normative documentation, fixtures, executable conformance artifacts, and verification tooling are complete for the defined v0.1 implementation scope. The only remaining release-gate work is actual execution evidence on Linux and Windows. If hosted GitHub runners remain unavailable, record independent offline verifier results rather than paying for an upgrade or fabricating CI evidence.
+Source, normative documentation, fixtures, executable conformance artifacts, verification tooling, and independent Linux/Windows execution evidence are complete for the defined v0.1 implementation scope. Private hosted GitHub CI remains historically blocked before usable steps; that condition is recorded separately and is not required for the no-upgrade verification path.
