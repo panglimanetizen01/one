@@ -1,6 +1,8 @@
-# One v0.1 Diagnostics Contract
+# One v0.1 — Diagnostics Contract
 
-Every diagnostic has a stable error code, severity, human-readable message, and source span when a source location exists. Notes and suggestions are optional.
+**Status:** Normative cross-layer contract for v0.1 review
+
+Every diagnostic has a stable error code, severity, human-readable message, and source span when a source location exists. Notes and suggestions are optional. Human-facing wording is localizable; diagnostic identity and structured parameters are not.
 
 ## Required behavior
 
@@ -11,15 +13,28 @@ Every diagnostic has a stable error code, severity, human-readable message, and 
 - For unresolved names, explain that the name must be created or clarified.
 - For ambiguous or unsupported syntax, reject the source instead of selecting an interpretation.
 - Runtime errors remain distinct from parse and semantic errors.
+- Diagnostics must be deterministic for identical source, language version, localization contract, and semantic inputs.
+- Related spans identify declarations/conflicts when relevant.
 
-## Error families
+## Stable error families
 
-- `E000x`: lexical errors
-- `E100x`: parser/grammar errors
-- `E200x`: semantic/type/name errors
-- `R300x`: runtime/capability errors
+Existing v0.1 implementation codes remain stable. New contracts use these semantic families for future additions:
 
-## v0.1 stable codes in the reference implementation
+- `ELEXxxx`: lexical
+- `EPARSExxx`: parser/grammar
+- `EAMBxxx`: ambiguity
+- `ENAMExxx`: name/scope
+- `ETYPExxx`: type
+- `ESEMxxx`: semantic
+- `ECAPxxx`: capability/effect
+- `EIRxxx`: invalid CSIR
+- `ERUNxxx`: runtime
+- `EPLATxxx`: platform
+- `ETOOLxxx`: tooling/configuration
+
+The existing numeric codes below remain valid for the current reference implementation and are not silently renumbered.
+
+## Existing v0.1 stable codes
 
 ### Lexical
 
@@ -79,4 +94,35 @@ Every diagnostic has a stable error code, severity, human-readable message, and 
 - `R3019` — runtime function missing.
 - `R3020` — runtime function arity mismatch.
 
-Codes are part of the diagnostic contract and must not be reused for unrelated failures without a documented v0.1 contract change.
+## Machine-readable structure
+
+Conceptual form:
+
+```text
+Diagnostic {
+  code,
+  severity,
+  primary_span?,
+  related_spans[],
+  message_key,
+  parameters,
+  notes[],
+  hint?
+}
+```
+
+Serialization is implementation-defined until the CLI/tooling contract fixes it.
+
+## No hidden repair
+
+Diagnostics must never imply that the compiler silently changed source, reordered declarations, selected a fuzzy name, inserted an implicit conversion, granted a capability, or recovered from ambiguity unless an explicit later contract defines that behavior.
+
+## Acceptance criteria
+
+- stable codes are preserved;
+- spans are preserved from AST/semantic provenance;
+- ambiguity is rejected;
+- diagnostics are deterministic;
+- localization does not alter diagnostic identity;
+- runtime and capability errors remain distinguishable;
+- machine-readable structure is sufficient for CLI/editor tooling.
