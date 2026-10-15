@@ -4,7 +4,7 @@ use one_core::{analyze, lower, parse, CapabilitySet, Interpreter};
 const VERSION: &str = "0.1.0";
 
 fn usage() {
-    println!("One v{VERSION}\n\nPenggunaan:\n  one new <folder>\n  one check <file.one>\n  one run <file.one>\n  one test <folder>\n  one build <file.one>\n  one package <folder>\n  one version\n  one help");
+    println!("One v{VERSION}\n\nPenggunaan:\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one>\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one>\n  one build <file.one>\n  one ast <file.one>");
 }
 
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) {
@@ -55,18 +55,33 @@ fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgra
 
 fn main() -> ExitCode {
     let mut args = env::args().skip(1);
-    let Some(command) = args.next() else { usage(); return ExitCode::from(2); };
+    let Some(first) = args.next() else { usage(); return ExitCode::from(2); };
 
-    if command == "help" {
+    if first == "help" {
         if args.next().is_some() { usage(); return ExitCode::from(2); }
         usage();
         return ExitCode::SUCCESS;
     }
-    if command == "version" {
+    if first == "version" {
         if args.next().is_some() { usage(); return ExitCode::from(2); }
         println!("one {VERSION}");
         return ExitCode::SUCCESS;
     }
+
+    let command = match first.as_str() {
+        "buat" | "new" => "new",
+        "periksa" | "check" => "check",
+        "jalankan" | "run" => "run",
+        "bangun" | "build" => "build",
+        "ast" => "ast",
+        "test" => "test",
+        "package" => "package",
+        "lihat" => {
+            if args.next().as_deref() == Some("struktur") { "ast" } else { usage(); return ExitCode::from(2); }
+        }
+        _ => { usage(); return ExitCode::from(2); }
+    };
+
     if command == "new" {
         let Some(folder) = args.next() else { usage(); return ExitCode::from(2); };
         if args.next().is_some() { usage(); return ExitCode::from(2); }
@@ -127,7 +142,7 @@ fn main() -> ExitCode {
             Ok(value) => value,
             Err(error) => { print_diagnostics(&error); return ExitCode::from(1); }
         };
-        match command.as_str() {
+        match command {
             "check" => { println!("OK: {}", path.display()); ExitCode::SUCCESS }
             "ast" => { println!("{:#?}", program); ExitCode::SUCCESS }
             "run" => match lower(&typed) {

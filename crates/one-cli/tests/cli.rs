@@ -39,6 +39,32 @@ fn help_and_version_commands_are_standalone() {
 }
 
 #[test]
+fn conversational_commands_are_equivalent_to_technical_aliases() {
+    let dir = std::env::temp_dir().join(format!("one-alias-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("main.one");
+    fs::write(&file, "tampilkan \"Halo\"\n").unwrap();
+    let path = file.to_str().unwrap();
+    for (technical, conversational) in [("run", "jalankan"), ("check", "periksa"), ("build", "bangun")] {
+        let a = run(&[technical, path]);
+        let b = run(&[conversational, path]);
+        assert_eq!(a.status.code(), b.status.code());
+        assert_eq!(a.stdout, b.stdout);
+    }
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn conversational_project_creation_works() {
+    let root = std::env::temp_dir().join(format!("one-buat-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    let output = run(&["buat", root.to_str().unwrap()]);
+    assert!(output.status.success());
+    assert!(root.join("one.toml").is_file());
+    assert!(root.join("src/main.one").is_file());
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
 fn test_command_runs_project_tests() {
     let root = std::env::temp_dir().join(format!("one-project-test-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
     fs::create_dir_all(root.join("src")).unwrap();
