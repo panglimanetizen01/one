@@ -23,7 +23,7 @@ pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrPro
 pub use lexer::lex;
 pub use network::{NetworkAddressKind, NetworkConnectionId, NetworkConstraints, NetworkDiagnosticStage, NetworkFailure, NetworkOperation, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport, ProtocolCapability, ProtocolRegistry, ProtocolSupportStatus};
 pub use parser::parse;
-pub use semantic::{analyze, TypedProgram};
+pub use semantic::{analyze, analyze_network, TypedProgram};
 pub use token::{Span, Token, TokenKind};
 pub use types::Type;
 
