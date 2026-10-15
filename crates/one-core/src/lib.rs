@@ -18,7 +18,7 @@ pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
 pub use interop::{run_process, ProcessResult, ProcessSpec};
-pub use interpreter::{ExecutionResult, Interpreter, RuntimeError};
+pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, RuntimeError};
 pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
 pub use lexer::lex;
 pub use network::{NetworkAddressKind, NetworkConnectionId, NetworkConstraints, NetworkDiagnosticStage, NetworkFailure, NetworkOperation, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport, ProtocolCapability, ProtocolRegistry, ProtocolSupportStatus};
