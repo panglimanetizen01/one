@@ -49,11 +49,12 @@ impl Parser {
     }
     fn parse_action(&mut self) -> Result<Statement, DiagnosticBundle> {
         let first = self.advance(); let name = first.lexeme.clone(); let mut args = Vec::new();
-        if name == "buat" && self.lexeme_is("daftar") { self.advance(); args.push(self.parse_name_reference()?); }
+        if name == "tampilkan" { args.push(self.parse_expression_until_newline()?); }
+        else if name == "buat" && self.lexeme_is("daftar") { self.advance(); args.push(self.parse_name_reference()?); }
         else if name == "tambahkan" { args.push(self.parse_primary()?); if !self.lexeme_is("ke") { return Err(self.error("E1017", "'tambahkan' membutuhkan kata 'ke' sebelum nama daftar.")); } self.advance(); args.push(self.parse_name_reference()?); }
         else if name == "hapus" { args.push(self.parse_primary()?); if !self.lexeme_is("dari") { return Err(self.error("E1018", "'hapus' membutuhkan kata 'dari' sebelum nama daftar.")); } self.advance(); args.push(self.parse_name_reference()?); }
-        else if !self.at(TokenKind::Newline) && !self.at(TokenKind::Eof) { args.push(self.parse_expression_until_newline()?); }
-        self.expect_newline()?; let action_name = if name == "buat" && args.len() == 1 { "buat daftar".into() } else { name };
+        else { return Err(self.error("E1016", format!("Aksi '{}' tidak termasuk grammar One v0.1.", name))); }
+        self.expect_newline()?; let action_name = if name == "buat" { "buat daftar".into() } else { name };
         Ok(Statement::Action { name: action_name, args, span: first.span })
     }
     fn parse_name_reference(&mut self) -> Result<Expr, DiagnosticBundle> {
