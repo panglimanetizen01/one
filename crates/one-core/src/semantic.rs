@@ -1,3 +1,6 @@
+#![allow(clippy::possible_missing_else)]
+#![allow(clippy::collapsible_if)]
+
 use std::collections::HashMap;
 use crate::ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 use crate::diagnostic::{Diagnostic, DiagnosticBundle};
