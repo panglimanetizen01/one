@@ -17,21 +17,27 @@ pub struct Interpreter {
     pub max_steps: usize,
     functions: HashMap<String, (Vec<String>, IrExpr, Vec<IrStatement>)>,
     events: HashMap<String, Vec<IrStatement>>,
+    environment: Option<Environment>,
     steps: usize,
 }
 
 impl Interpreter {
-    pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), steps: 0 } }
+    pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0 } }
     pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> {
-        self.functions.clear(); self.events.clear(); self.steps = 0;
+        self.functions.clear(); self.events.clear(); self.environment = None; self.steps = 0;
         self.register_definitions(&program.statements);
         let mut env = Environment::new(); let mut output = Vec::new();
         self.exec_block(&program.statements, &mut env, &mut output)?;
+        self.environment = Some(env);
         Ok(ExecutionResult { output })
     }
     pub fn dispatch_event(&mut self, trigger: &str) -> Result<ExecutionResult, RuntimeError> {
         let body = self.events.get(trigger).cloned().ok_or_else(|| RuntimeError { code: "R3001", message: format!("Event '{}' belum terdaftar.", trigger) })?;
-        let mut env = Environment::new(); let mut output = Vec::new(); self.steps = 0; self.exec_block(&body, &mut env, &mut output)?; Ok(ExecutionResult { output })
+        let mut env = self.environment.take().ok_or_else(|| RuntimeError { code: "R3021", message: "Program belum dijalankan; jalankan program sebelum memicu event.".into() })?;
+        let mut output = Vec::new(); self.steps = 0;
+        let result = self.exec_block(&body, &mut env, &mut output);
+        self.environment = Some(env);
+        result.map(|()| ExecutionResult { output })
     }
     fn register_definitions(&mut self, statements: &[IrStatement]) { for statement in statements { match statement { IrStatement::Function { name, params, result, body } => { self.functions.insert(name.clone(), (params.clone(), result.clone(), body.clone())); }, IrStatement::Event { trigger, body } => { self.events.insert(trigger.join(" "), body.clone()); }, _ => {} } } }
     fn tick(&mut self) -> Result<(), RuntimeError> { self.steps += 1; if self.steps > self.max_steps { Err(RuntimeError { code: "R3002", message: "Program melebihi batas langkah eksekusi yang aman.".into() }) } else { Ok(()) } }
