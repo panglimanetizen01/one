@@ -15,6 +15,7 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `spec/one-v0.1-grammar.md` — normative Indonesian v0.1 concrete grammar.
 - `spec/one-v0.1-ast.md` — language-independent AST shape.
 - `spec/one-v0.1-localization-contract.md` — locale architecture and semantic equivalence rules.
+- `spec/one-v0.1-localization.md` — retained v0.1 localization contract artifact.
 - `spec/one-v0.1-diagnostics.md` — diagnostic codes, spans, and source-preserving behavior.
 - `spec/one-v0.1-effect-capability.md` — explicit effect/capability boundary.
 - `spec/one-v0.1-runtime-model.md` — runtime state, execution, errors, and determinism.
@@ -24,12 +25,15 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `spec/one-v0.1-module-system.md` — module identity, imports, exports, and initialization.
 - `spec/one-v0.1-package-build.md` — project manifests, dependency resolution, and build/package model.
 - `spec/one-v0.1-standard-library.md` — v0.1 standard-library boundary.
+- `spec/one-v0.1-stdlib.md` — retained v0.1 standard-library contract artifact.
 - `spec/one-v0.1-cli-contract.md` — canonical CLI commands, aliases, exit codes, project operations, and determinism.
+- `spec/one-v0.1-cli.md` — retained v0.1 CLI contract artifact.
 - `spec/one-v0.1-interop.md` — explicit foreign-process interoperability boundary.
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
 ## Verification and release
 
+- `testing/conformance.md` — retained v0.1 conformance contract artifact.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory.
 - `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
