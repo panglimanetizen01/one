@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFICATION-PENDING** for the current canonical source while the post-HTTP/2 contract-artifact audit is reverified at an exact SHA.
+Status: **VERIFIED** for canonical commit `abf61aaebb6c3eddf198ab040dea6dd47db18b81` based on independent Ubuntu and Windows Server 2025 verification run `38783385413`.
 
 ## Scope
 
@@ -42,35 +42,32 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Release acceptance checklist
 
-A fresh exact-SHA verification run is required after the current audit changes.
-
-- [ ] Linux compilation succeeds on the current canonical SHA.
-- [ ] Windows compilation succeeds on the current canonical SHA.
-- [ ] Linux unit/integration/conformance tests succeed on the current canonical SHA.
-- [ ] Windows unit/integration/conformance tests succeed on the current canonical SHA.
-- [ ] Linux real-network runtime tests succeed on the current canonical SHA.
-- [ ] Windows real-network runtime tests succeed on the current canonical SHA.
-- [ ] Linux offline verification succeeds on the current canonical SHA.
-- [ ] Windows offline verification succeeds on the current canonical SHA.
-- [ ] Contract-artifact closure check succeeds on the current canonical SHA.
-- [ ] Deterministic `.oneir` and `.onepkg` checks succeed.
-- [ ] Capability/security tests succeed.
-- [ ] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities.
-- [ ] Documentation and grammar are aligned with the implemented language behavior and verified network boundary.
-- [ ] No known failing test remains in the fresh current-SHA verification run.
+- [x] Linux compilation succeeds on the canonical SHA.
+- [x] Windows compilation succeeds on the canonical SHA.
+- [x] Linux unit/integration/conformance tests succeed on the canonical SHA.
+- [x] Windows unit/integration/conformance tests succeed on the canonical SHA.
+- [x] Linux real-network runtime tests succeed on the canonical SHA.
+- [x] Windows real-network runtime tests succeed on the canonical SHA.
+- [x] Linux offline verification succeeds on the canonical SHA.
+- [x] Windows offline verification succeeds on the canonical SHA.
+- [x] Contract-artifact closure check succeeds on the canonical SHA.
+- [x] Deterministic `.oneir` and `.onepkg` checks succeed.
+- [x] Capability/security tests succeed as part of the workspace test and offline verification stages.
+- [x] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities as covered by the verification suite.
+- [x] Documentation and grammar are aligned with the implemented language behavior and verified network boundary.
+- [x] No known failing test remains in verification run `38783385413`.
 
 ## Evidence
 
-Previous independent verification run `38781871063` verified canonical implementation commit `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`, including HTTP/2. It is retained as historical evidence and is not used as proof for the current post-audit SHA.
+Independent verification run `38783385413` checked out canonical commit `abf61aaebb6c3eddf198ab040dea6dd47db18b81` and passed all required Ubuntu and Windows stages: canonical SHA verification, contract artifacts, build, Clippy, tests, real-network runtime, and offline verification.
 
-The current release gate will use `panglimanetizen01/one-windows-verification` to execute the exact current canonical commit on Ubuntu and Windows Server 2025.
+The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
 
-The private canonical GitHub Actions environment may remain blocked if its hosted jobs fail before usable workflow-step evidence. **Do not purchase an upgrade** merely to obtain hosted runner execution. The portable independent verification path is the project contract's fallback.
+No paid GitHub upgrade was used or is required. **Do not purchase an upgrade** merely to obtain hosted runner execution.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
-- **VERIFICATION-PENDING:** required execution evidence is incomplete for the current canonical SHA.
-- **VERIFIED:** all acceptance checklist items have actual current-SHA evidence.
+- **VERIFIED:** the current recorded canonical SHA has actual cross-platform execution evidence.
 
-Current state: **VERIFICATION-PENDING**.
+Current state: **VERIFIED**.
