@@ -29,7 +29,7 @@ pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, Runt
 pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
 pub use lexer::lex;
 pub use network::{NetworkAddressKind, NetworkConnectionId, NetworkConstraints, NetworkDiagnosticStage, NetworkFailure, NetworkOperation, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport, ProtocolCapability, ProtocolRegistry, ProtocolSupportStatus};
-pub use network_application::{ftp_login, smtp_send, ApplicationProtocolError};
+pub use network_application::{ftp_login, smtp_send, ApplicationProtocolError, FtpClient, FtpDataMode};
 pub use network_datagrams::{ntp_query, tftp_read, tftp_write, DatagramProtocolError};
 pub use network_runtime::{execute_http11, parse_http_response, HttpRequest, HttpResponse, NetworkEndpoint, NetworkRuntimeError, NetworkRuntimeResult, RealNetworkRuntime};
 #[cfg(feature = "real-network")]
