@@ -24,3 +24,8 @@
 - Added deterministic artifact checks to both offline verification paths.
 - Added a manual v0.1 release-check workflow.
 - Recorded the current GitHub-hosted runner blocker without claiming CI-green status.
+- Added regression coverage and parser enforcement for explicit v0.1 action productions, including `sapa`.
+- Aligned the normative grammar with the implemented `sapa` action and removed the stale single-word identifier limitation from the release contract.
+- Added regression coverage for multi-word loop variables and function parameters.
+- Scoped `ke`/`dari` expression boundaries to the list mutation productions instead of applying them globally.
+- Preserved structural words such as `ke`, `dan`, and `dengan` inside grammar-bounded names where the active production does not assign them structural meaning.
