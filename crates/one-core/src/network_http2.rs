@@ -64,7 +64,7 @@ async fn execute_http2_async(
         .map_err(|error| NetworkRuntimeError::Connection(error.to_string()))?;
 
     let (mut sender, connection) = h2::client::Builder::new()
-        .handshake(stream)
+        .handshake::<_, bytes::Bytes>(stream)
         .await
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
     tokio::spawn(async move {
@@ -75,7 +75,7 @@ async fn execute_http2_async(
         .method("GET")
         .uri(&path)
         .header("host", &authority)
-        .body(())
+        .body(bytes::Bytes::new())
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
     let (response_future, _send_stream) = sender
         .send_request(request, true)
