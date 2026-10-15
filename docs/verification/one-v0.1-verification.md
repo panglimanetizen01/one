@@ -10,6 +10,8 @@
 
 **Contract artifacts:** closed for the defined v0.1 implementation scope; the repository contains normative Markdown contracts, indexed derivatives, fixtures, executable conformance tests, and static/offline verification tooling.
 
+**Independent Linux/Termux execution evidence:** recorded for commit `db9af51149596a8b7f2a38d0a157c2ccf6f3e4a0` in `docs/verification/one-v0.1-linux-termux-2026-10-15.md`. That run passed contract consistency, build, clippy, workspace tests, CLI smoke, and deterministic `.oneir`/`.onepkg` checks.
+
 **Hosted GitHub CI:** blocked by the GitHub-hosted runner environment at the time of this record.
 
 Observed GitHub Actions evidence:
@@ -41,8 +43,8 @@ The GitHub repository remains canonical. A clean local/Termux checkout may be us
 
 Before declaring One v0.1 fully verified:
 
-1. Linux compilation and test evidence is green.
-2. Windows compilation and test evidence is green.
+1. Linux compilation and test evidence is green for the final canonical commit being released.
+2. Windows compilation and test evidence is green for the final canonical commit being released.
 3. CLI `new`, `check`, `run`, `build`, and `ast` smoke tests are green.
 4. Core DATA, ACTION, CONDITION, LOOP, FUNCTION, and EVENT tests are green.
 5. Capability/interoperability tests are green.
@@ -50,4 +52,6 @@ Before declaring One v0.1 fully verified:
 7. Conformance and golden tests are green.
 8. The contract-artifact consistency checker passes on the same commit being verified.
 
-Until these conditions are evidenced, the release remains **implementation-complete but verification-pending** rather than falsely marked complete.
+The recorded Linux evidence is therefore evidence for its exact recorded commit, not a blanket claim about later documentation commits. After canonical changes, the final release candidate must be synchronized and independently re-verified.
+
+Until all release conditions are evidenced on the final canonical commit, the release remains **implementation-complete but verification-pending** rather than falsely marked complete.
