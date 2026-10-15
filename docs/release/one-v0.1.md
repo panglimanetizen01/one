@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED for canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`**.
+Status: **VERIFIED** for the canonical source lineage verified by independent Linux and Windows execution.
 
 ## Scope
 
@@ -9,7 +9,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 ## Supported in v0.1
 
 - DATA: declaration and assignment.
-- ACTION: display, list creation, list mutation, greeting, and explicit standard-library actions.
+- ACTION: display, list creation, list mutation, and greeting through explicit productions.
 - CONDITION: deterministic comparison phrases and `kalau tidak` branch.
 - LOOP: `untuk setiap` and explicit boolean `selama` conditions.
 - FUNCTION: parameters, explicit `hasilnya adalah` result, and calls using `dengan` / `dan`.
@@ -29,7 +29,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Explicit v0.1 limits
 
-- Identifiers are single lexical words. Multi-word identifiers are not silently reconstructed.
+- Names are grammar-bounded and may contain multiple words. Structural words are interpreted according to the active production; the parser does not globally reserve them.
 - The conversational loop form `selama masih ada ...` is not part of v0.1; only explicit boolean conditions are accepted.
 - `build` currently emits a deterministic `.oneir` IR artifact; it is not a native executable compiler.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
@@ -39,7 +39,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Release acceptance checklist
 
-For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, every release condition has recorded evidence:
+The independently verified source execution used canonical implementation commit `d17f2829187ec28031a4b4a94dd0e0af282f66b8`.
 
 - [x] Linux compilation succeeds.
 - [x] Windows compilation succeeds.
@@ -48,16 +48,22 @@ For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, every release c
 - [x] CLI smoke tests succeed through the platform-specific offline verification scripts.
 - [x] Capability/security tests succeed.
 - [x] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities.
-- [x] Documentation matches the implementation and no contradictory grammar remains within the defined v0.1 scope.
-- [x] No known failing test remains in the recorded verification runs.
+- [x] Documentation and grammar are aligned with the implemented multi-word name and explicit-action behavior.
+- [x] Regression tests cover multi-word loop variables and function parameters.
+- [x] No known failing test remains in the recorded source verification run.
 
 ## Evidence
 
-The exact Linux and Windows execution evidence is recorded in `docs/verification/one-v0.1-linux-windows-2026-10-15.md`.
+Independent verification run: `38753437740` in `panglimanetizen01/one-windows-verification`.
 
-The verification used a temporary public GitHub repository solely as independent execution infrastructure. It checked out the private canonical repository at the exact commit above. The private canonical GitHub Actions environment remains historically blocked before usable steps; that status is not relabeled as green.
+- Linux job: `116485529987` — success.
+- Windows Server 2025 job: `116485530381` — success.
 
-No GitHub paid upgrade was purchased or required. If GitHub-hosted runners require an account upgrade, **do not purchase an upgrade merely to satisfy this contract**; use the portable offline verification path instead.
+Both jobs checked out the canonical private repository at the exact implementation commit above and completed contract checks, build, Clippy, all workspace tests, and the platform-specific offline verification script.
+
+The temporary public repository is execution infrastructure only. The private canonical repository remains the source of truth.
+
+The private canonical GitHub Actions environment remains separately recorded as blocked because its hosted jobs historically failed before usable workflow-step evidence. No paid GitHub upgrade was purchased or required.
 
 ## Release labels
 
@@ -65,4 +71,4 @@ No GitHub paid upgrade was purchased or required. If GitHub-hosted runners requi
 - **VERIFICATION-PENDING:** required execution evidence is incomplete.
 - **VERIFIED:** all acceptance checklist items have actual recorded evidence.
 
-Current state: **VERIFIED** for the recorded canonical commit.
+Current state: **VERIFIED**.
