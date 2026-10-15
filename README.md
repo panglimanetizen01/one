@@ -20,7 +20,7 @@
 
 ## v0.1 implementation
 
-The canonical repository contains the first executable language core:
+The canonical repository contains the executable language core:
 
 ```text
 Localized source
@@ -32,19 +32,25 @@ Localized source
     -> CLI
 ```
 
-The v0.1 CLI provides:
+The v0.1 CLI uses Indonesian conversational commands as its primary interface while retaining technical aliases:
 
 ```text
-one new <folder>
-one check <file.one>
-one run <file.one>
-one build <file.one>
-one ast <file.one>
+one buat <folder>              # alias: one new
+one periksa <file.one>         # alias: one check
+one jalankan <file.one>        # alias: one run
+one test <folder>
+one bangun <file.one>          # alias: one build
+one package <folder>
+one lihat struktur <file.one> # alias: one ast
+one version
+one help
 ```
 
-The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, and conformance/golden fixtures.
+The command vocabulary is bounded and deterministic; One does not interpret arbitrary natural-language instructions as CLI commands.
 
-`one build` currently emits a deterministic `.oneir` IR/debug artifact. It is not yet a native executable compiler.
+The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, package/build boundaries, and conformance/golden fixtures.
+
+`one bangun` currently emits a deterministic `.oneir` IR/debug artifact. `one package` emits a validated `.onepkg` artifact. Neither is yet a native executable compiler or platform installer.
 
 ## Example
 
@@ -63,16 +69,18 @@ kalau tidak
 Start with `docs/README.md`, then read:
 
 - `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
+- `docs/spec/one-v0.1-language-invariants.md`
 - `docs/spec/one-v0.1-lexical.md`
 - `docs/spec/one-v0.1-grammar.md`
 - `docs/spec/one-v0.1-ast.md`
-- `docs/testing/conformance.md`
+- `docs/spec/one-v0.1-cli-contract.md`
+- `docs/spec/one-v0.1-conformance-suite.md`
 - `docs/release/one-v0.1.md`
 - `docs/verification/one-v0.1-evidence-matrix.md`
 
 ## Verification state
 
-The source, contracts, fixtures, and offline verification paths are maintained in the canonical repository. GitHub-hosted CI has a documented runner blocker: recent Linux and Windows jobs failed before usable step/log evidence was available. That means the project must **not** claim CI-green or fully verified status until actual execution evidence exists.
+The source, contracts, fixtures, and offline verification paths are maintained in the canonical repository. GitHub-hosted CI has a documented runner blocker: recent Linux and Windows jobs failed before usable step/log evidence was available. The project therefore must **not** claim CI-green or fully verified status until actual execution evidence exists.
 
 If hosted GitHub runners require an account upgrade, do not purchase one merely for this project. Use `tools/verify_offline.sh` on Linux or `tools/verify_offline.ps1` on Windows, record the exact toolchain/commit/results, and keep hosted-CI status explicitly marked as blocked.
 
