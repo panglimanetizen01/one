@@ -27,7 +27,15 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
-- `../tools/check_contract.py` — static repository contract consistency check.
+
+## Derivative artifacts
+
+- `../tests/spec/grammar_examples.one` — canonical valid-source examples derived from the grammar contract.
+- `../crates/one-core/tests/conformance.rs` — executable conformance runner derived from the fixture contract.
+- `../tests/conformance/valid/*.one` — accepted-language fixtures.
+- `../tests/conformance/invalid/*.one` — rejected-language fixtures.
+- `../tests/golden/*.snap` — deterministic execution outputs.
+- `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 
