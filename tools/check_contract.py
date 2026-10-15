@@ -13,24 +13,42 @@ required = [
     ".github/workflows/release-check.yml",
     "docs/README.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
+    "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
     "docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md",
     "docs/superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md",
+    "docs/superpowers/plans/2026-10-15-one-network-foundation.md",
+    "docs/spec/README.md",
+    "docs/spec/one-v0.1-language-invariants.md",
     "docs/spec/one-v0.1-lexical.md",
     "docs/spec/one-v0.1-grammar.md",
     "docs/spec/one-v0.1-ast.md",
+    "docs/spec/one-v0.1-localization-contract.md",
     "docs/spec/one-v0.1-localization.md",
     "docs/spec/one-v0.1-diagnostics.md",
+    "docs/spec/one-v0.1-effect-capability.md",
+    "docs/spec/one-v0.1-runtime-model.md",
+    "docs/spec/one-v0.1-reference-interpreter.md",
+    "docs/spec/one-v0.1-conformance-suite.md",
+    "docs/spec/one-v0.1-platform-abstraction.md",
+    "docs/spec/one-v0.1-module-system.md",
+    "docs/spec/one-v0.1-package-build.md",
+    "docs/spec/one-v0.1-standard-library.md",
     "docs/spec/one-v0.1-stdlib.md",
-    "docs/spec/one-v0.1-interop.md",
+    "docs/spec/one-v0.1-cli-contract.md",
     "docs/spec/one-v0.1-cli.md",
+    "docs/spec/one-v0.1-interop.md",
+    "docs/spec/one-network-foundation.md",
+    "docs/implementation/one-v0.1-core-implementation-gate.md",
     "docs/testing/conformance.md",
-    "docs/release/one-v0.1.md",
     "docs/verification/one-v0.1-implementation-status.md",
     "docs/verification/one-v0.1-verification.md",
     "docs/verification/one-v0.1-evidence-matrix.md",
     "docs/verification/one-v0.1-offline-evidence-template.md",
+    "docs/verification/one-v0.1-linux-windows-2026-10-15.md",
+    "docs/release/one-v0.1.md",
     "tests/spec/grammar_examples.one",
     "crates/one-core/tests/conformance.rs",
+    "tools/check_contract.py",
     "tools/verify_offline.sh",
     "tools/verify_offline.ps1",
 ]
@@ -54,15 +72,15 @@ for line in index.splitlines():
     if end > start:
         index_references.add(stripped[start:end])
 
-for path in required[9:]:
-    if path.startswith("docs/"):
-        expected = path.removeprefix("docs/")
-    elif path.startswith("tests/") or path.startswith("crates/") or path.startswith("tools/"):
-        expected = "../" + path
-    else:
+for reference in sorted(index_references):
+    if "*" in reference:
         continue
-    if expected not in index_references:
-        raise SystemExit(f"DOC INDEX: missing reference to {path}")
+    if reference.startswith("../"):
+        path = ROOT / reference.removeprefix("../")
+    else:
+        path = ROOT / "docs" / reference
+    if not path.is_file():
+        raise SystemExit(f"DOC INDEX: referenced artifact is missing: {reference}")
 
 valid = sorted((ROOT / "tests/conformance/valid").glob("*.one"))
 invalid = sorted((ROOT / "tests/conformance/invalid").glob("*.one"))
@@ -77,6 +95,7 @@ for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika 
 
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")
+print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
 print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
 print(f"golden fixtures: {len(golden)}")
