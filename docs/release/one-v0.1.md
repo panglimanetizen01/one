@@ -65,7 +65,7 @@ Previous independent verification run `38781871063` verified canonical implement
 
 The current release gate will use `panglimanetizen01/one-windows-verification` to execute the exact current canonical commit on Ubuntu and Windows Server 2025.
 
-The private canonical GitHub Actions environment may remain blocked if its hosted jobs fail before usable workflow-step evidence. That does not authorize purchasing an upgrade. The portable independent verification path is the project contract's fallback.
+The private canonical GitHub Actions environment may remain blocked if its hosted jobs fail before usable workflow-step evidence. **Do not purchase an upgrade** merely to obtain hosted runner execution. The portable independent verification path is the project contract's fallback.
 
 ## Release labels
 
