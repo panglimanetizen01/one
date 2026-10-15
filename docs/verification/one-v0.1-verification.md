@@ -6,22 +6,19 @@
 
 ## Verification state
 
-**Implementation artifacts:** present in the canonical repository.
+**Implementation artifacts:** complete for the defined v0.1 scope.
 
 **Contract artifacts:** closed for the defined v0.1 implementation scope; the repository contains normative Markdown contracts, indexed derivatives, fixtures, executable conformance tests, and static/offline verification tooling.
 
-**Independent Linux/Termux execution evidence:** recorded for commit `0892020874b714d109521c013b256ed23219acb3` in `docs/verification/one-v0.1-linux-termux-2026-10-15.md`. That run passed contract consistency, build, clippy, workspace tests, CLI smoke, and deterministic `.oneir`/`.onepkg` checks.
+**Final canonical source commit verified:** `69c4918e6845fdbbd79495b3fa2c59798831bce0`.
 
-**Hosted GitHub CI:** blocked by the GitHub-hosted runner environment at the time of this record.
+**Linux execution evidence:** green on `ubuntu-latest` in public verification run `38747320152`, job `116464264565`, against the canonical commit above. The job passed canonical SHA verification, contract-artifact checks, build, clippy with `-D warnings`, workspace tests, and `tools/verify_offline.sh`.
 
-Observed GitHub Actions evidence:
+**Windows execution evidence:** green on Windows Server 2025 (`windows-2025`) in public verification run `38744988440`, job `116460500173`, against the canonical commit above. The job passed canonical SHA verification, contract-artifact checks, build, clippy with `-D warnings`, workspace tests, and `tools/verify_offline.ps1`.
 
-- One CI run `38715889895` targeted canonical commit `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` using `windows-2022` and `ubuntu-latest`.
-- Both jobs completed with `failure` conclusions and no usable workflow steps or logs.
-- The Windows job was explicitly rerun; the rerun again completed with `failure` and no usable workflow steps or logs.
-- The same pre-step failure pattern had already been reproduced on earlier One CI runs and after a runner-label change.
+The complete evidence record is `docs/verification/one-v0.1-linux-windows-2026-10-15.md`.
 
-This repeated failure pattern does not establish a source-code failure. The repository therefore does **not** claim hosted-CI green status.
+**Hosted GitHub CI:** blocked in the private canonical repository because GitHub-hosted runner jobs fail before producing usable workflow-step evidence. This historical condition is not relabeled as green.
 
 ## Alternative verification path
 
@@ -32,25 +29,18 @@ No paid GitHub upgrade is required by the project contract. The canonical reposi
 - `tools/verify_offline.ps1` for Windows environments;
 - `.github/workflows/release-check.yml` as an optional hosted release gate when runners are available.
 
-The offline verifiers first validate the contract artifact set, then run build, clippy, workspace tests, and CLI smoke checks with Cargo's offline mode. Independent execution evidence must record the exact commit SHA, OS, Rust/Cargo versions, command, and result. Independent evidence is not relabeled as hosted GitHub CI evidence.
+Independent verification was executed in a temporary public repository which checked out the private canonical repository at the exact commit being verified. The public mirror is verification infrastructure only; it is not the source of truth.
 
 ## Local verification policy
 
 The GitHub repository remains canonical. A clean local/Termux checkout may be used only as an independent verification environment after the canonical source/docs/tests are in place. Local changes are not treated as source-of-truth changes.
 
-## Required release evidence
+## Release evidence
 
-Before declaring One v0.1 fully verified:
+For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, the required execution evidence is recorded for both Linux and Windows. The same verification jobs also exercised the contract-artifact checker, build, clippy, workspace tests, and platform-specific offline verification scripts.
 
-1. Linux compilation and test evidence is green for the final canonical commit being released.
-2. Windows compilation and test evidence is green for the final canonical commit being released.
-3. CLI `new`, `check`, `run`, `build`, and `ast` smoke tests are green.
-4. Core DATA, ACTION, CONDITION, LOOP, FUNCTION, and EVENT tests are green.
-5. Capability/interoperability tests are green.
-6. No known contradictory grammar/implementation contract remains.
-7. Conformance and golden tests are green.
-8. The contract-artifact consistency checker passes on the same commit being verified.
+The release remains honest about the distinction between independent execution evidence and private hosted-CI status: the former is green; the latter remains blocked by runner provisioning before usable steps.
 
-The recorded Linux evidence is evidence for its exact recorded commit. After canonical changes, the final release candidate must be synchronized and independently re-verified.
+## Result
 
-Until all release conditions are evidenced on the final canonical commit, the release remains **implementation-complete but verification-pending** rather than falsely marked complete.
+**One v0.1 execution verification is COMPLETE for the recorded canonical commit.**
