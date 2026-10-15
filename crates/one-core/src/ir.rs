@@ -88,10 +88,15 @@ mod tests {
 
     #[test]
     fn network_ir_preserves_security_and_transport_constraints() {
-        let ir = IrNetworkOperation::semantic(network());
-        let NetworkOperation::Connect { constraints, .. } = ir.operation();
-        assert_eq!(constraints.transport, NetworkTransport::Reliable);
-        assert_eq!(constraints.security, Some(NetworkSecurity::Tls));
-        assert_eq!(constraints.address_kind, Some(NetworkAddressKind::Ipv6));
+        match ir_operation() {
+            NetworkOperation::Connect { constraints, .. } => {
+                assert_eq!(constraints.transport, NetworkTransport::Reliable);
+                assert_eq!(constraints.security, Some(NetworkSecurity::Tls));
+                assert_eq!(constraints.address_kind, Some(NetworkAddressKind::Ipv6));
+            }
+            NetworkOperation::Send { .. } | NetworkOperation::Receive { .. } => panic!("test fixture must remain a connect operation"),
+        }
     }
+
+    fn ir_operation() -> NetworkOperation { network() }
 }
