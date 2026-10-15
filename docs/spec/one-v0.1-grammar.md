@@ -2,9 +2,9 @@
 
 Status: **normative** for the initial Indonesian implementation.
 
-This grammar intentionally defines a bounded programming language rather than accepting arbitrary Indonesian prose. The implementation must reject incomplete, ambiguous, or unsupported phrases instead of guessing.
+This grammar defines a bounded programming language rather than accepting arbitrary Indonesian prose. The implementation MUST reject incomplete, unsupported, or semantically ambiguous source instead of guessing.
 
-## Notation
+## 1. Notation
 
 EBNF-like notation is used:
 
@@ -12,68 +12,126 @@ EBNF-like notation is used:
 - `|` means alternative.
 - `?` means optional.
 - `*` means zero or more.
-- Quoted text is a literal phrase.
+- Quoted text is a literal word or phrase component.
 - `INDENT` and `DEDENT` are lexical structure tokens.
+- `NEWLINE` terminates a physical statement.
 
-## Program
+The grammar is defined over lexical `WORD`, `NUMBER`, `TEXT`, `NEWLINE`, `INDENT`, and `DEDENT` tokens. A multi-word user-defined name is never a lexical token; it is constructed by a production below.
+
+## 2. Program
 
 ```text
 program = { statement | blank_line } ;
-statement = declaration | assignment | action | conditional | loop | function | event ;
+statement = declaration
+          | assignment
+          | action
+          | conditional
+          | loop
+          | function
+          | event ;
 ```
 
 A physical source line is terminated by `NEWLINE`. Blank lines and comment-only lines do not create statements.
 
-## Data
+## 3. Names
+
+### 3.1 General name model
 
 ```text
-declaration = identifier, "adalah", expression, NEWLINE ;
-assignment = identifier, "menjadi", expression, NEWLINE ;
+name = name_word, { name_word } ;
+name_word = WORD eligible at the current production position ;
 ```
 
-v0.1 identifiers are **single lexical words** (`nama`, `umur`, `belanja`). Multi-word user-facing names such as `daftar belanja` are a future grammar extension; v0.1 uses a single identifier for the collection name.
+`name` is a grammar-level construct, not a lexer token.
+
+The parser MUST determine a name boundary from the enclosing production. It MUST NOT consume all remaining words merely because they could form a plausible name.
+
+A structural word such as `adalah`, `menjadi`, `ke`, or `dari` terminates a name when the active production requires that word as its boundary.
+
+A structural spelling is not globally prohibited inside every possible name. Its interpretation is determined by the active grammar production.
+
+### 3.2 Name boundary rule
+
+For each production, the parser MUST identify the complete syntactic role containing `name` and its terminator.
+
+If exactly one complete semantic parse exists, it is accepted.
+
+If no complete parse exists, parsing fails.
+
+If multiple complete parses remain and their semantic structures differ, parsing fails with `EAMBxxx`.
+
+The parser MUST NOT resolve this ambiguity using longest-match heuristics, frequency, editor history, filesystem state, execution history, machine learning, or an LLM.
+
+Equivalent parses that normalize to the same semantic structure MAY be collapsed before ambiguity reporting.
+
+## 4. Data
+
+```text
+declaration = name, "adalah", expression, NEWLINE ;
+assignment = name, "menjadi", expression, NEWLINE ;
+```
 
 Examples:
 
 ```text
 nama adalah "Budi"
-umur adalah 25
-umur menjadi 26
+nama pengguna adalah "Budi"
+saldo rekening menjadi 100000
 ```
 
-## Action
+For `nama pengguna adalah "Budi"`, the declaration name is `nama pengguna`; `adalah` is the structural boundary and is not part of the name.
+
+## 5. Action
+
+Core v0.1 actions are explicit productions. There is **no generic action production** that turns an arbitrary identifier into an executable command.
 
 ```text
 action = display_action
         | create_list_action
         | add_list_action
-        | remove_list_action
-        | generic_action ;
+        | remove_list_action ;
 
-display_action = "tampilkan", expression ;
-create_list_action = "buat", "daftar", expression ;
-add_list_action = "tambahkan", expression, "ke", expression ;
-remove_list_action = "hapus", expression, "dari", expression ;
-generic_action = identifier, [ expression ] ;
+display_action = "tampilkan", expression, NEWLINE ;
+create_list_action = "buat", "daftar", name, NEWLINE ;
+add_list_action = "tambahkan", expression, "ke", name, NEWLINE ;
+remove_list_action = "hapus", expression, "dari", name, NEWLINE ;
 ```
 
-Core examples:
+Examples:
 
 ```text
 buat daftar belanja
-tambahkan beras ke belanja
-hapus telur dari belanja
-tampilkan belanja
+tambahkan apel ke daftar buah
+hapus telur dari daftar belanja
+tampilkan nama pengguna
 ```
 
-The first line above is represented semantically as an action named `buat daftar` whose argument is `belanja`. The words `beras` and `telur` in the examples are identifiers; if literal text is intended, quote it explicitly.
+The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions.
 
-## Condition
+The source line:
+
+```text
+apel ke daftar buah
+```
+
+is not an action merely because it contains an `ke` phrase. No core action production begins with `apel`.
+
+The source line:
+
+```text
+tambahkan apel entah ke mana
+```
+
+is rejected because no complete `add_list_action` target production is established by the grammar.
+
+## 6. Condition
 
 ```text
 conditional = "kalau", condition, NEWLINE, INDENT, block, DEDENT,
               [ "kalau", "tidak", NEWLINE, INDENT, block, DEDENT ] ;
+
 condition = expression, comparison_operator, expression ;
+
 comparison_operator = "sudah"
                     | "belum"
                     | "sama", "dengan"
@@ -90,50 +148,82 @@ kalau tidak
     tampilkan "Belum boleh masuk"
 ```
 
-The optional trailing word `tahun` is accepted only for `sudah`/`belum` age-style comparisons. The parser does not infer other omitted units.
+The optional trailing word `tahun` is accepted only for the approved `sudah`/`belum` age-style comparison form. The parser does not infer other omitted units.
 
-## Loop
+Unsupported conversational modifiers remain invalid.
+
+For example:
+
+```text
+kalau nama pengguna mungkin benar
+    tampilkan nama pengguna
+```
+
+is rejected because `mungkin` is not a comparison operator.
+
+## 7. Loop
 
 ```text
 loop = for_each | while_loop ;
-for_each = "untuk", "setiap", identifier, "di", expression,
+
+for_each = "untuk", "setiap", name, "di", name,
            NEWLINE, INDENT, block, DEDENT ;
-while_loop = "selama", condition, NEWLINE, INDENT, block, DEDENT ;
+
+while_loop = "selama", condition,
+             NEWLINE, INDENT, block, DEDENT ;
 ```
 
-`selama` in v0.1 uses the same explicit comparison grammar as `kalau`. The more conversational form `selama masih ada barang di daftar belanja` is reserved for a future loop-condition extension and is not silently accepted by v0.1.
-
-## Function
+Examples:
 
 ```text
-function = "buat", "pekerjaan", identifier, NEWLINE, INDENT,
+untuk setiap teman di daftar teman
+    tampilkan teman
+```
+
+The form:
+
+```text
+selama masih ada barang di daftar belanja
+    tampilkan barang
+```
+
+remains invalid in v0.1 because no explicit production assigns semantics to `masih ada ... di ...`. It is a future loop-condition extension and MUST NOT be inferred.
+
+## 8. Function
+
+```text
+function = "buat", "pekerjaan", name, NEWLINE, INDENT,
            { parameter_decl }, result_decl, { body_statement }, DEDENT ;
-parameter_decl = "terima", identifier, NEWLINE ;
+
+parameter_decl = "terima", name, NEWLINE ;
 result_decl = "hasilnya", "adalah", expression, NEWLINE ;
 ```
 
-A function may end immediately after its result declaration, or may contain additional body statements. The result expression is explicit and deterministic.
-
-Example:
+Examples:
 
 ```text
-buat pekerjaan hitung
-    terima harga
+buat pekerjaan hitung total
+    terima harga barang
     terima pajak
-    hasilnya adalah harga ditambah pajak
+    hasilnya adalah harga barang ditambah pajak
 ```
 
-Calls use the explicit `dengan` / `dan` form:
+The fixed phrase `buat pekerjaan` ends the function header prefix; the following eligible words form the function name until the production's `NEWLINE` boundary.
+
+Function calls use the explicit `dengan` / `dan` form:
 
 ```text
-total adalah hitung dengan harga dan pajak
+total adalah hitung total dengan harga dan pajak
 ```
 
-## Event
+Call syntax is explicit. The parser does not treat an arbitrary sentence as a function call.
+
+## 9. Event
 
 ```text
 event = "ketika", event_trigger, NEWLINE, INDENT, block, DEDENT ;
-event_trigger = identifier, { identifier | literal } ;
+
+event_trigger = name, { event_word | literal } ;
 ```
 
 Event trigger matching is exact after token normalization. Free-form event descriptions are not accepted as hidden semantics.
@@ -145,83 +235,192 @@ ketika pengguna menekan tombol beli
     tampilkan "dibeli"
 ```
 
-## Expressions
+The event grammar still requires an explicit production and semantic event representation. It must not be implemented as arbitrary natural-language intent recognition.
+
+## 10. Expressions
 
 ```text
 expression = primary, { binary_operator, primary } ;
-primary = literal | identifier | call_expression ;
-call_expression = identifier, "dengan", primary, { "dan", primary } ;
+
+primary = literal
+        | name_reference
+        | call_expression ;
+
+name_reference = name ;
+
+call_expression = name, "dengan", primary,
+                  { "dan", primary } ;
+
+binary_operator = "ditambah"
+                | "dikurangi"
+                | "dikali"
+                | "dibagi" ;
 ```
 
-Core arithmetic operators:
+Comparison operators are defined separately by `comparison_operator`.
 
-```text
-ditambah
-dikurangi
-dikali
-dibagi
-```
+v0.1 evaluation is left-associative for repeated binary operators. Parentheses are not part of the core v0.1 grammar.
 
-Comparison operators are listed above. v0.1 evaluation is left-associative for repeated binary operators; parentheses are not part of the v0.1 grammar.
+A `name` may appear as an expression only because `name_reference` explicitly permits it. This rule prevents arbitrary sentence tails from silently becoming identifiers.
 
-## Literals
+## 11. Literals
 
 ```text
 literal = text | integer | boolean | nothing ;
-text = quoted UTF-8 string with the supported escapes;
-integer = one or more ASCII decimal digits;
-boolean = "benar" | "salah";
-nothing = the explicit absence value used by runtime semantics;
+text = quoted UTF-8 string with the supported escapes ;
+integer = one or more ASCII decimal digits ;
+boolean = "benar" | "salah" ;
+nothing = "tidak", "ada" ;
 ```
 
-## Lists
+The lexical layer emits the component words of `tidak ada`; the grammar gives the phrase its value-level meaning.
 
-v0.1 list construction and mutation use dedicated action forms rather than punctuation-heavy list literals. This keeps the beginner surface consistent. A list name is a normal single-word identifier.
+## 12. Lists
 
-## Block rules
+v0.1 list construction and mutation use dedicated action forms rather than punctuation-heavy list literals.
 
-A block begins after a block-introducing statement and must be indented exactly one level relative to its parent. One indentation level is exactly four spaces. Tabs are rejected. A block cannot be empty.
+A collection target is represented by `name` where the action production explicitly requires a target name.
 
-## Comments and blank lines
+Examples:
+
+```text
+buat daftar belanja
+tambahkan beras ke daftar belanja
+hapus telur dari daftar belanja
+tampilkan isi daftar belanja
+```
+
+`isi` is a defined part of the collection-read surface when the corresponding expression/action production is added to the normative collection grammar. It is not a semantic search term.
+
+## 13. Block rules
+
+A block begins after a block-introducing statement and must be indented exactly one level relative to its parent. One indentation level is exactly four spaces. Tabs are rejected.
+
+A block cannot be empty.
+
+`kalau tidak` is a structural two-word phrase inside the conditional production, not a lexical identifier.
+
+## 14. Comments and blank lines
 
 - `#` begins a comment outside a quoted string.
 - A comment-only line is ignored.
 - Blank lines are ignored.
 - Indentation on a comment-only or blank line does not alter block structure.
 
-## Ambiguity rules
+## 15. Ambiguity rules
 
-1. A phrase is recognized only when it matches a complete grammar production.
-2. Longest defined phrase wins only when the grammar makes the alternative unambiguous.
-3. If two complete productions remain possible, parsing fails with an ambiguity diagnostic.
-4. The parser never invokes an LLM or fuzzy matching to choose an interpretation.
-5. Unsupported conversational variants are rejected rather than treated as aliases.
+The following rules are normative:
 
-## Invalid examples
+1. A phrase is accepted only when it matches a complete grammar production.
+2. Multi-word names are bounded by the production that contains them.
+3. A structural keyword required by the active production terminates the corresponding name role.
+4. No general longest-name or longest-phrase heuristic is allowed.
+5. If two complete parses produce the same semantic structure, they may be normalized to one result.
+6. If two complete parses produce different semantic structures, parsing fails with `EAMBxxx`.
+7. If zero complete parses exist, parsing fails with the appropriate parse diagnostic.
+8. The parser never invokes an LLM, fuzzy matching, probability, editor history, filesystem order, or execution history to select a meaning.
+9. Unsupported conversational variants are rejected rather than treated as aliases.
+10. Arbitrary leading words never become executable actions without an explicit action production.
+
+## 16. Invalid examples
+
+Missing comparison operator:
 
 ```text
 kalau umur 17
     tampilkan "..."
 ```
 
-Invalid because the comparison operator phrase is missing.
+Invalid indentation:
 
 ```text
 kalau umur sudah 17 tahun
   tampilkan "..."
 ```
 
-Invalid because indentation is not four spaces.
+Missing assignment expression:
 
 ```text
 nama menjadi
 ```
 
-Invalid because the assignment has no expression.
+Unsupported conversational loop condition:
 
 ```text
-selama masih ada barang di belanja
+selama masih ada barang di daftar belanja
     tampilkan barang
 ```
 
-Invalid in v0.1 because this conversational loop condition is reserved for a future grammar extension.
+Arbitrary prose mistaken for a name/action:
+
+```text
+saya ingin kamu menampilkan nama pengguna
+```
+
+Implicit action:
+
+```text
+apel
+```
+
+Unresolved target wording:
+
+```text
+tambahkan apel entah ke mana
+```
+
+Ambiguous name boundary, where two complete semantic parses are possible under an extension, MUST produce `EAMBxxx` rather than silently selecting the longer or shorter name.
+
+## 17. Required grammar acceptance tests
+
+The conformance suite MUST include, at minimum:
+
+### Valid
+
+1. single-word declaration names;
+2. two-word declaration names;
+3. three-or-more-word declaration names;
+4. multi-word assignment names;
+5. multi-word collection targets after `ke`;
+6. multi-word collection targets after `dari`;
+7. multi-word references after `tampilkan`;
+8. multi-word function names;
+9. multi-word parameter names;
+10. nested blocks containing multi-word references;
+11. reserved multi-word phrases such as `kalau tidak` and `buat pekerjaan`;
+12. repeated parsing of identical input with identical semantic output.
+
+### Invalid
+
+13. tabs in indentation;
+14. incomplete declaration/assignment;
+15. unsupported natural-language filler;
+16. arbitrary first-word actions;
+17. unsupported loop-condition prose;
+18. malformed reserved phrases;
+19. ambiguous multi-word boundaries that yield different semantics;
+20. names swallowing structural keywords;
+21. missing action targets;
+22. source spans that cannot cover the complete multi-word name.
+
+## 18. Compatibility and implementation gate
+
+This document supersedes the previous normative assumption that v0.1 identifiers are only single lexical words.
+
+The implementation MUST NOT claim conformance to grammar-bounded multi-word names until:
+
+1. this grammar and the lexical specification agree;
+2. the AST contract defines the representation of `Name`/name references;
+3. parser tests cover the required boundary cases;
+4. ambiguity and diagnostic tests exist;
+5. the reference semantic representation preserves the complete name span.
+
+No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
+
+## 19. Design decision
+
+**Approved direction:** controlled Indonesian surface syntax with lexical `WORD` tokens, grammar-bounded multi-word names, explicit action productions, deterministic ambiguity rejection, and no implicit natural-language intent inference.
+
+Principle:
+
+> Natural on the surface; formal underneath.
