@@ -56,9 +56,11 @@ The v0.1 grammar and parser support grammar-bounded multi-word names, explicit a
 
 ## One Network foundation
 
-The first One-owned network vertical slice is implemented as a typed semantic model with explicit address, transport, security, protocol-family, target, timeout, connection, and connect/send/receive operation types. Network authority is granular (`NetworkConnect`, `NetworkListen`, `NetworkDiscover`, `NetworkAdmin`) and the existing coarse `Network` capability remains a compatibility grant without implying administrative authority.
+The first One-owned network vertical slice is implemented and independently verified as a typed semantic model with explicit address, transport, security, protocol-family, target, timeout, connection, and connect/send/receive operation types. Network authority is granular (`NetworkConnect`, `NetworkListen`, `NetworkDiscover`, `NetworkAdmin`) and the existing coarse `Network` capability remains a compatibility grant without implying administrative authority.
 
 The network foundation also provides deterministic typed network IR, a protocol compatibility registry, structured network diagnostics, and a reference-interpreter boundary that validates and checks capabilities without performing external network I/O. The registry does not make protocol names into language keywords and does not imply that real DNS/socket/HTTP/QUIC adapters are implemented.
+
+Verified checkpoint: `d05eab5a103b63949e1dfaa9b97a479115c27a8c`. Independent Linux and Windows Server 2025 verification run: `38763329481`.
 
 See `docs/spec/one-network-foundation.md` for the exact implemented boundary and explicit unsupported scope.
 
@@ -92,13 +94,11 @@ Start with `docs/README.md`, then read:
 
 ## Verification state
 
-The v0.1 source, contracts, fixtures, README, changelog, and offline verification paths are maintained in the canonical repository. The independently verified source checkpoint is `d17f2829187ec28031a4b4a94dd0e0af282f66b8`; independent Linux and Windows Server 2025 execution completed successfully in workflow run `38753437740`.
+The v0.1 source, contracts, fixtures, README, changelog, and offline verification paths are maintained in the canonical repository. The current One Network checkpoint is independently verified on Linux and Windows Server 2025 through the temporary public verification mirror, without purchasing a GitHub upgrade.
 
 The audit also closed the previously identified parser/contract mismatches: explicit action boundaries, the valid `sapa` action, multi-word loop/function names, and production-scoped structural-word boundaries are now covered by regression tests and aligned documentation.
 
-The current network foundation is implemented in the canonical source and is intentionally not described here as broad protocol-stack support until independent verification of the new source checkpoint is complete.
-
-Earlier private hosted-runner provisioning failures remain historical evidence and are not relabeled as green. Independent Linux and Windows Server 2025 executions completed successfully through the verification infrastructure without purchasing a GitHub upgrade.
+Earlier private hosted-runner provisioning failures remain historical evidence and are not relabeled as green. The independent verification run is the evidence for the exact network checkpoint recorded above.
 
 If GitHub-hosted runners require an account upgrade, do not purchase one merely for this project. Use `tools/verify_offline.sh` on Linux or `tools/verify_offline.ps1` on Windows and record exact execution evidence.
 
