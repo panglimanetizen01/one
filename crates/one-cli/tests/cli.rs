@@ -7,10 +7,14 @@ fn fixture(name: &str, source: &str) -> std::path::PathBuf {
     path
 }
 
+fn run(args: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_one")).args(args).output().unwrap()
+}
+
 #[test]
 fn run_command_executes_program() {
     let path = fixture("run", "nama adalah \"Budi\"\ntampilkan nama\n");
-    let output = Command::new(env!("CARGO_BIN_EXE_one")).arg("run").arg(&path).output().unwrap();
+    let output = run(&["run", path.to_str().unwrap()]);
     let _ = fs::remove_file(&path);
     assert!(output.status.success());
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Budi");
@@ -19,7 +23,42 @@ fn run_command_executes_program() {
 #[test]
 fn check_command_rejects_invalid_program() {
     let path = fixture("invalid", "tampilkan nama\n");
-    let output = Command::new(env!("CARGO_BIN_EXE_one")).arg("check").arg(&path).output().unwrap();
+    let output = run(&["check", path.to_str().unwrap()]);
     let _ = fs::remove_file(&path);
     assert!(!output.status.success());
+}
+
+#[test]
+fn help_and_version_commands_are_standalone() {
+    let help = run(&["help"]);
+    assert!(help.status.success());
+    assert!(String::from_utf8_lossy(&help.stdout).contains("one new"));
+    let version = run(&["version"]);
+    assert!(version.status.success());
+    assert!(String::from_utf8_lossy(&version.stdout).contains("0.1.0"));
+}
+
+#[test]
+fn test_command_runs_project_tests() {
+    let root = std::env::temp_dir().join(format!("one-project-test-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"uji\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["test", root.to_str().unwrap()]);
+    let _ = fs::remove_dir_all(&root);
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("Tests berhasil"));
+}
+
+#[test]
+fn package_command_writes_manifested_artifact() {
+    let root = std::env::temp_dir().join(format!("one-project-package-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"paket\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"paket\"\n").unwrap();
+    let output = run(&["package", root.to_str().unwrap()]);
+    let artifact = root.join("target/paket-0.1.0.onepkg");
+    assert!(output.status.success());
+    assert!(artifact.is_file());
+    let _ = fs::remove_dir_all(&root);
 }
