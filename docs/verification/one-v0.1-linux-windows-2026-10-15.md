@@ -4,70 +4,54 @@
 
 Repository: `panglimanetizen01/one`
 
-Implementation commit independently verified:
+This document records historical and current verification evidence. It must never claim a source SHA that was not actually checked out by the verification runner.
 
-`d17f2829187ec28031a4b4a94dd0e0af282f66b8`
+## Latest fully green independent network verification
 
-This source commit contains the parser/name-boundary fixes, explicit action enforcement, multi-word loop/function coverage, and structural-word boundary tests. Documentation-only commits follow this verified source commit.
+Temporary verification mirror: `panglimanetizen01/one-windows-verification`
 
-## Linux
+Workflow run: `38781871063`
 
-Independent public-runner verification mirror: `panglimanetizen01/one-windows-verification`
+Canonical implementation commit checked out: `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`
 
-Workflow run: `38753437740`
-Job: `verify (ubuntu-latest)` (`116485529987`)
+Ubuntu job: `116583878787` — success.
+Windows Server 2025 job: `116583878563` — success.
 
-The job checked out the canonical implementation commit directly and completed successfully.
+Both jobs completed:
 
-Successful stages:
+- canonical SHA verification;
+- contract-artifact check;
+- build;
+- Clippy;
+- all workspace tests;
+- real network runtime tests;
+- platform-specific offline verification.
 
-- canonical commit checkout and SHA verification;
-- Rust/Cargo/Python toolchain detection;
-- contract-artifact consistency check;
-- `cargo build --workspace --all-targets`;
-- `cargo clippy --workspace --all-targets -- -D warnings`;
-- `cargo test --workspace --all-targets`;
-- `tools/verify_offline.sh`.
+The real-network stage included the verified HTTP/2 loopback runtime tests. This run is the latest fully green evidence before the current post-HTTP/2 contract-audit changes.
 
-## Windows
+## Current audit gate
 
-Independent public-runner verification mirror: `panglimanetizen01/one-windows-verification`
+After that green run, the canonical repository received a contract-artifact closure audit and documentation corrections. The current `main` commit therefore requires a fresh exact-SHA verification run before the release documents may return to `VERIFIED`.
 
-Workflow run: `38753437740`
-Job: `verify (windows-2025)` (`116485530381`)
-Runner: Windows Server 2025 (`windows-2025`)
+Required current-SHA stages are:
 
-The job checked out the canonical implementation commit directly and completed successfully.
-
-Successful stages:
-
-- canonical commit checkout and SHA verification;
-- Rust/Cargo/Python toolchain detection;
-- contract-artifact consistency check;
-- `cargo build --workspace --all-targets`;
-- `cargo clippy --workspace --all-targets -- -D warnings`;
-- `cargo test --workspace --all-targets`;
-- `tools/verify_offline.ps1`.
-
-## Regression coverage added in this audit
-
-The verified source includes regression tests for:
-
-- arbitrary first-word/implicit actions being rejected;
-- the explicit `sapa` action remaining valid and aligned with the grammar;
-- multi-word loop variables;
-- multi-word function parameters;
-- structural words such as `ke` remaining valid name content outside their active production boundary;
-- `dan` remaining valid name content outside function-call argument context;
-- list names containing `dan`;
-- deterministic invalid-fixture error codes.
+- contract-artifact closure;
+- workspace build with all targets;
+- Clippy with `-D warnings`;
+- all workspace tests with all targets;
+- real network runtime tests;
+- Linux offline verification;
+- Windows offline verification;
+- deterministic `.oneir` and `.onepkg` smoke checks included by the offline scripts.
 
 ## Interpretation
 
 These are independent GitHub-hosted executions in a temporary public verification repository, not executions of the private canonical repository's hosted workflow. The canonical repository remains the source of truth.
 
-The private canonical GitHub Actions environment remains separately recorded as blocked because its jobs failed before usable step/log evidence. No paid GitHub upgrade is required or used for this verification path.
+The private canonical GitHub Actions environment may remain blocked if its runner jobs fail before usable step/log evidence. No paid GitHub upgrade is required or authorized for this verification path.
 
 ## Result
 
-For implementation commit `d17f2829187ec28031a4b4a94dd0e0af282f66b8`, Linux and Windows execution evidence is green for build, Clippy, tests, contract artifacts, and the platform-specific offline verification scripts.
+Historical HTTP/2 verification: **GREEN** at `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`.
+
+Current post-audit canonical verification: **PENDING exact-SHA rerun**.
