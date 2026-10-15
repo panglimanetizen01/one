@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
 use crate::ir::{IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
-use crate::network::NetworkOperation;
 use crate::runtime::{Environment, Value};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,7 +37,6 @@ impl Interpreter {
                 return Err(RuntimeError { code: "N3101", message: format!("Kemampuan jaringan {:?} belum diberikan kepada program.", capability) });
             }
         }
-        let _ = match semantic { NetworkOperation::Connect { .. } | NetworkOperation::Send { .. } | NetworkOperation::Receive { .. } => () };
         Ok(NetworkExecutionResult { description: "network operation delegated to reference backend".into(), performed_external_io: false })
     }
     pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> {
