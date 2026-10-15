@@ -110,11 +110,11 @@ mod tests {
             let (mut stream, _) = listener.accept().expect("accept");
             stream.write_all(b"220 ready\r\n").expect("greeting");
             let mut buf = [0u8; 256];
-            stream.read(&mut buf).expect("user");
-            assert!(String::from_utf8_lossy(&buf).starts_with("USER alice\r\n"));
+            stream.read_exact(&mut buf[..11]).expect("user");
+            assert!(String::from_utf8_lossy(&buf[..11]).starts_with("USER alice\r\n"));
             stream.write_all(b"331 password\r\n").expect("user reply");
-            let n = stream.read(&mut buf).expect("pass");
-            assert_eq!(&buf[..n], b"PASS secret\r\n");
+            stream.read_exact(&mut buf[..12]).expect("pass");
+            assert_eq!(&buf[..12], b"PASS secret\r\n");
             stream.write_all(b"230 logged in\r\n").expect("pass reply");
         });
         ftp_login(&addr.to_string(), "alice", "secret", Duration::from_secs(2), &caps()).expect("ftp login");
