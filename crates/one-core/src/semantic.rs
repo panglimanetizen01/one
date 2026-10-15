@@ -34,7 +34,10 @@ impl Analyzer {
             Statement::Assignment { name, value, span } => { let expected = self.lookup(name).ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2002", format!("Saya belum menemukan '{}'. Anda mungkin ingin membuatnya terlebih dahulu.", name), Some(span.clone()))))?; let actual = self.infer(value)?; if !compatible(expected, actual) { return Err(DiagnosticBundle::single(Diagnostic::error("E2003", format!("Nilai '{}' bertipe {}, tetapi membutuhkan {}.", name, actual.name(), expected.name()), Some(span.clone())))); } }
             Statement::Action { name, args, span } => match name.as_str() {
                 "tampilkan" | "sapa" => { if args.len() != 1 { return Err(DiagnosticBundle::single(Diagnostic::error("E2004", format!("'{}' membutuhkan tepat satu nilai.", name), Some(span.clone())))); } self.infer(&args[0])?; }
-                "buat daftar" => { if args.len() != 1 || !matches!(&args[0], Expr::Identifier(_)) { return Err(DiagnosticBundle::single(Diagnostic::error("E2005", "'buat daftar' membutuhkan nama daftar.", Some(span.clone())))); } if let Expr::Identifier(name) = &args[0] { self.current_scope().insert(name.clone(), Type::List); } }
+                "buat daftar" => {
+                    if args.len() != 1 || !matches!(&args[0], Expr::Identifier(_)) { return Err(DiagnosticBundle::single(Diagnostic::error("E2005", "'buat daftar' membutuhkan nama daftar.", Some(span.clone())))); }
+                    if let Expr::Identifier(name) = &args[0] { self.current_scope().insert(name.clone(), Type::List); }
+                }
                 "tambahkan" | "hapus" => {
                     if args.len() != 2 { return Err(DiagnosticBundle::single(Diagnostic::error("E2006", format!("'{}' membutuhkan nilai dan nama daftar.", name), Some(span.clone())))); }
                     if let Expr::Identifier(list_name) = &args[1] {
