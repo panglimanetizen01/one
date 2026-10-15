@@ -21,6 +21,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
     listener.set_nonblocking(true).expect("nonblocking");
     let address = listener.local_addr().expect("address");
     let expected_authority = format!("{}:{}", address.ip(), address.port());
+    let server_expected_authority = expected_authority.clone();
 
     let server = std::thread::spawn(move || {
         let runtime = tokio::runtime::Runtime::new().expect("runtime");
@@ -43,7 +44,10 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
                 assert_eq!(request.version(), http::Version::HTTP_2);
                 assert_eq!(request.method(), "GET");
                 assert_eq!(request.uri().path(), "/hello");
-                assert_eq!(request.uri().authority().map(|value| value.as_str()), Some(expected_authority.as_str()));
+                assert_eq!(
+                    request.uri().authority().map(|value| value.as_str()),
+                    Some(server_expected_authority.as_str())
+                );
                 let response = http::Response::builder()
                     .status(200)
                     .body(())
