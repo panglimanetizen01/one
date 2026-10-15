@@ -74,7 +74,7 @@ async fn execute_http2_async(
     let request = http::Request::builder()
         .method("GET")
         .version(http::Version::HTTP_2)
-        .uri(&path)
+        .uri(format!("http://{authority}{path}"))
         .header("host", &authority)
         .body(())
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
