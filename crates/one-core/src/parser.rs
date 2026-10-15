@@ -20,7 +20,6 @@ impl Parser {
     fn expect_indent(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Indent) { self.advance(); Ok(()) } else { Err(self.error("E1002", "Blok harus dimulai dengan indentasi empat spasi.")) } }
     fn expect_dedent(&mut self) -> Result<(), DiagnosticBundle> { if self.at(TokenKind::Dedent) { self.advance(); Ok(()) } else { Err(self.error("E1003", "Blok belum ditutup dengan dedent yang valid.")) } }
     fn is_word(&self) -> bool { matches!(self.current().kind, TokenKind::Identifier | TokenKind::Keyword) }
-    fn expect_word(&mut self, code: &'static str, message: &'static str) -> Result<String, DiagnosticBundle> { if self.is_word() { Ok(self.advance().lexeme) } else { Err(self.error(code, message)) } }
 
     fn parse_program(mut self) -> Result<Program, DiagnosticBundle> {
         let mut statements = Vec::new(); self.skip_newlines();
