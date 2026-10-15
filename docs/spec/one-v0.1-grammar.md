@@ -87,11 +87,13 @@ Core v0.1 actions are explicit productions. There is **no generic action product
 
 ```text
 action = display_action
+        | greet_action
         | create_list_action
         | add_list_action
         | remove_list_action ;
 
 display_action = "tampilkan", expression, NEWLINE ;
+greet_action = "sapa", expression, NEWLINE ;
 create_list_action = "buat", "daftar", name, NEWLINE ;
 add_list_action = "tambahkan", expression, "ke", name, NEWLINE ;
 remove_list_action = "hapus", expression, "dari", name, NEWLINE ;
@@ -104,6 +106,7 @@ buat daftar belanja
 tambahkan apel ke daftar buah
 hapus telur dari daftar belanja
 tampilkan nama pengguna
+sapa teman
 ```
 
 The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions.
@@ -115,14 +118,6 @@ apel ke daftar buah
 ```
 
 is not an action merely because it contains an `ke` phrase. No core action production begins with `apel`.
-
-The source line:
-
-```text
-tambahkan apel entah ke mana
-```
-
-is rejected because no complete `add_list_action` target production is established by the grammar.
 
 ## 6. Condition
 
@@ -388,20 +383,21 @@ The conformance suite MUST include, at minimum:
 9. multi-word parameter names;
 10. nested blocks containing multi-word references;
 11. reserved multi-word phrases such as `kalau tidak` and `buat pekerjaan`;
-12. repeated parsing of identical input with identical semantic output.
+12. explicit `sapa` actions;
+13. repeated parsing of identical input with identical semantic output.
 
 ### Invalid
 
-13. tabs in indentation;
-14. incomplete declaration/assignment;
-15. unsupported natural-language filler;
-16. arbitrary first-word actions;
-17. unsupported loop-condition prose;
-18. malformed reserved phrases;
-19. ambiguous multi-word boundaries that yield different semantics;
-20. names swallowing structural keywords;
-21. missing action targets;
-22. source spans that cannot cover the complete multi-word name.
+14. tabs in indentation;
+15. incomplete declaration/assignment;
+16. unsupported natural-language filler;
+17. arbitrary first-word actions;
+18. unsupported loop-condition prose;
+19. malformed reserved phrases;
+20. ambiguous multi-word boundaries that yield different semantics;
+21. names swallowing structural keywords;
+22. missing action targets;
+23. source spans that cannot cover the complete multi-word name.
 
 ## 18. Compatibility and implementation gate
 
