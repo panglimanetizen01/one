@@ -42,7 +42,14 @@ impl Interpreter {
             IrStatement::Action { name, args } => self.exec_action(name, args, env, output)?,
             IrStatement::Conditional { condition, then_block, else_block } => match self.eval(condition, env)? { Value::Boolean(true) => { env.push(); self.exec_block(then_block, env, output)?; env.pop(); }, Value::Boolean(false) => { env.push(); self.exec_block(else_block, env, output)?; env.pop(); }, _ => return Err(RuntimeError { code: "R3004", message: "Kondisi harus menghasilkan boolean.".into() }) },
             IrStatement::Loop { kind, body } => match kind {
-                IrLoopKind::ForEach { variable, iterable } => { let list = self.eval(iterable, env)?; if let Value::List(values) = list { for value in values { env.push(); env.define(variable.clone(), value); self.exec_block(body, env, output)?; env.pop(); } } else { return Err(RuntimeError { code: "R3005", message: "Loop 'untuk setiap' membutuhkan daftar.".into() }); } }
+                IrLoopKind::ForEach { variable, iterable } => {
+                    let list = self.eval(iterable, env)?;
+                    if let Value::List(values) = list {
+                        for value in values { env.push(); env.define(variable.clone(), value); self.exec_block(body, env, output)?; env.pop(); }
+                    } else {
+                        return Err(RuntimeError { code: "R3005", message: "Loop 'untuk setiap' membutuhkan daftar.".into() });
+                    }
+                }
                 IrLoopKind::While { condition } => loop { if !matches!(self.eval(condition, env)?, Value::Boolean(true)) { break; } env.push(); self.exec_block(body, env, output)?; env.pop(); self.tick()?; }
             },
             IrStatement::Function { .. } | IrStatement::Event { .. } => {}
@@ -54,7 +61,14 @@ impl Interpreter {
         match name {
             "tampilkan" => { if args.len() != 1 { return Err(RuntimeError { code: "R3006", message: "'tampilkan' membutuhkan tepat satu nilai.".into() }); } output.push(self.eval(&args[0], env)?.display()); }
             "sapa" => { if args.len() != 1 { return Err(RuntimeError { code: "R3007", message: "'sapa' membutuhkan satu nama.".into() }); } output.push(format!("Halo, {}!", self.eval(&args[0], env)?.display())); }
-            "buat daftar" => { if args.len() != 1 { return Err(RuntimeError { code: "R3008", message: "'buat daftar' membutuhkan nama daftar.".into() }); } if let IrExpr::Identifier(name) = &args[0] { env.define(name.clone(), Value::List(Vec::new())); } else { return Err(RuntimeError { code: "R3009", message: "Nama daftar harus berupa identifier.".into() }); } }
+            "buat daftar" => {
+                if args.len() != 1 { return Err(RuntimeError { code: "R3008", message: "'buat daftar' membutuhkan nama daftar.".into() }); }
+                if let IrExpr::Identifier(name) = &args[0] {
+                    env.define(name.clone(), Value::List(Vec::new()));
+                } else {
+                    return Err(RuntimeError { code: "R3009", message: "Nama daftar harus berupa identifier.".into() });
+                }
+            }
             "tambahkan" | "hapus" => {
                 if args.len() != 2 { return Err(RuntimeError { code: "R3010", message: format!("'{}' membutuhkan nilai dan nama daftar.", name) }); }
                 let item = match &args[0] { IrExpr::Identifier(word) => env.get(word).unwrap_or_else(|| Value::Text(word.clone())), _ => self.eval(&args[0], env)? };
