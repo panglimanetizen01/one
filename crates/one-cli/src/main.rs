@@ -132,7 +132,7 @@ fn main() -> ExitCode {
             if let Err(error) = fs::create_dir_all(&target) { eprintln!("Gagal membuat target: {}", error); return ExitCode::from(2); }
             let artifact = target.join(format!("{name}-{version}.onepkg"));
             let manifest = fs::read_to_string(root.join("one.toml")).unwrap_or_default();
-            let contents = format!("One package v0.1\n\n[manifest]\n{manifest}\n[ir]\n{ir:#?}\n");
+            let contents = format!("One package v0.1\n\n[manifest]\n{manifest}\n[ir]\n{}", ir.canonical_text());
             if let Err(error) = fs::write(&artifact, contents) { eprintln!("Gagal menulis paket: {}", error); return ExitCode::from(2); }
             println!("Paket berhasil: {}", artifact.display());
             ExitCode::SUCCESS
@@ -161,7 +161,7 @@ fn main() -> ExitCode {
                     let target = parent.join("target");
                     if let Err(error) = fs::create_dir_all(&target) { eprintln!("Gagal membuat target: {}", error); return ExitCode::from(2); }
                     let output = target.join(format!("{}.oneir", path.file_stem().and_then(|v| v.to_str()).unwrap_or("program")));
-                    if let Err(error) = fs::write(&output, format!("{ir:#?}\n")) { eprintln!("Gagal menulis artefak build: {}", error); return ExitCode::from(2); }
+                    if let Err(error) = fs::write(&output, ir.canonical_text()) { eprintln!("Gagal menulis artefak build: {}", error); return ExitCode::from(2); }
                     println!("Build berhasil: {}", output.display()); ExitCode::SUCCESS
                 }
                 Err(error) => { print_diagnostics(&error); ExitCode::from(1) }
