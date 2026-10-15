@@ -20,10 +20,12 @@ impl<'a> Lexer<'a> {
             let line_start = offset;
             offset += raw_line.len() + 1;
             let line = raw_line.strip_suffix('\r').unwrap_or(raw_line);
-            let trimmed = line.trim_start_matches(' ');
+            let leading = line.bytes().take_while(|byte| matches!(byte, b' ' | b'\t')).count();
+            if line[..leading].contains('\t') {
+                return Err(DiagnosticBundle::single(Diagnostic::error("E0001", "Indentasi menggunakan tab tidak didukung. Gunakan empat spasi per tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1)))));
+            }
+            let trimmed = &line[leading..];
             if trimmed.trim().is_empty() || trimmed.starts_with('#') { line_no += 1; continue; }
-            let leading = line.len() - trimmed.len();
-            if line[..leading].contains('\t') { return Err(DiagnosticBundle::single(Diagnostic::error("E0001", "Indentasi menggunakan tab tidak didukung. Gunakan empat spasi per tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1))))); }
             if leading % INDENT_WIDTH != 0 { return Err(DiagnosticBundle::single(Diagnostic::error("E0002", "Indentasi harus menggunakan kelipatan empat spasi.", Some(Span::new(line_start, line_start + leading, line_no, 1))))); }
             let current = *indent_stack.last().unwrap();
             if leading > current {
