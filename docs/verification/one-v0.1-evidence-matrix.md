@@ -8,11 +8,11 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Concrete grammar | `docs/spec/one-v0.1-grammar.md` | parser tests + valid/invalid fixtures | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
 | Normative grammar examples | `tests/spec/grammar_examples.one` | fixture scan + parser/conformance execution | ADDED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
 | AST | `docs/spec/one-v0.1-ast.md`, `crates/one-core/src/ast.rs` | AST parser tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
-| Semantic analysis | `crates/one-core/src/semantic.rs` | scope/type tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
-| Semantic IR | `crates/one-core/src/ir.rs` | IR tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
-| Reference interpreter | `crates/one-core/src/interpreter.rs` | core execution tests + golden tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
-| Diagnostics | `docs/spec/one-v0.1-diagnostics.md`, `diagnostic.rs` | stable diagnostic-code tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
-| Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` |
+| Semantic analysis | `crates/one-core/src/semantic.rs` | scope/type tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
+| Semantic IR | `crates/one-core/src/ir.rs` | IR tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
+| Reference interpreter | `crates/one-core/src/interpreter.rs` | core execution tests + golden tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
+| Diagnostics | `docs/spec/one-v0.1-diagnostics.md`, `diagnostic.rs` | stable diagnostic-code tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
+| Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | portable process-boundary tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
 | CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli.md` | CLI integration + smoke tests | IMPLEMENTED / Linux execution evidenced on `95e01d2b2fcee6af7088ed7e` |
