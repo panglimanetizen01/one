@@ -6,6 +6,7 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 |---|---|---|---|
 | Lexical rules | `docs/spec/one-v0.1-lexical.md` | lexer tests + negative lexical fixtures | IMPLEMENTED / execution pending |
 | Concrete grammar | `docs/spec/one-v0.1-grammar.md` | parser tests + valid/invalid fixtures | IMPLEMENTED / execution pending |
+| Normative grammar examples | `tests/spec/grammar_examples.one` | fixture scan + parser/conformance execution | ADDED / execution pending |
 | AST | `docs/spec/one-v0.1-ast.md`, `crates/one-core/src/ast.rs` | AST parser tests | IMPLEMENTED / execution pending |
 | Semantic analysis | `crates/one-core/src/semantic.rs` | scope/type tests | IMPLEMENTED / execution pending |
 | Semantic IR | `crates/one-core/src/ir.rs` | IR tests | IMPLEMENTED / execution pending |
