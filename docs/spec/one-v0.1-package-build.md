@@ -1,6 +1,6 @@
 # One v0.1 — Package and Build Contract
 
-**Status:** Draft normative contract for review
+**Status:** Approved normative contract
 
 ## 1. Purpose
 
