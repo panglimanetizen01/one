@@ -26,9 +26,7 @@ fn package_rejects_duplicate_manifest_fields() { let root = std::env::temp_dir()
 
 #[test]
 fn test_command_executes_sorted_conformance_fixtures_when_present() {
-    let root = std::env::temp_dir().join(format!("one-project-conformance-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
-    fs::create_dir_all(root.join("src")).unwrap(); fs::create_dir_all(root.join("tests/conformance/valid")).unwrap(); fs::create_dir_all(root.join("tests/conformance/invalid")).unwrap();
-    fs::write(root.join("one.toml"), "nama = \"uji\"\nversi = \"0.1.0\"\n").unwrap(); fs::write(root.join("src/main.one"), "tampilkan \"main\"\n").unwrap();
-    fs::write(root.join("tests/conformance/valid/b.one"), "tampilkan \"b\"\n").unwrap(); fs::write(root.join("tests/conformance/valid/a.one"), "tampilkan \"a\"\n").unwrap(); fs::write(root.join("tests/conformance/invalid/b.one"), "tampilkan tidak_ada\n").unwrap();
-    let output = run(&["test", root.to_str().unwrap()]); let _ = fs::remove_dir_all(&root); assert!(output.status.success()); assert!(String::from_utf8_lossy(&output.stdout).contains("3 fixture"));
+    let root = std::env::temp_dir().join(format!("one-project-conformance-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos())); fs::create_dir_all(root.join("src")).unwrap(); fs::create_dir_all(root.join("tests/conformance/valid")).unwrap(); fs::create_dir_all(root.join("tests/conformance/invalid")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"uji\"\nversi = \"0.1.0\"\n").unwrap(); fs::write(root.join("src/main.one"), "tampilkan \"main\"\n").unwrap(); fs::write(root.join("tests/conformance/valid/b.one"), "tampilkan \"b\"\n").unwrap(); fs::write(root.join("tests/conformance/valid/a.one"), "tampilkan \"a\"\n").unwrap(); fs::write(root.join("tests/conformance/invalid/b.one"), "tampilkan tidak_ada\n").unwrap();
+    let output = run(&["test", root.to_str().unwrap()]); let _ = fs::remove_dir_all(&root); assert!(output.status.success()); assert!(String::from_utf8_lossy(&output.stdout).contains("4 fixture"));
 }
