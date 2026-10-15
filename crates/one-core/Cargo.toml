@@ -15,8 +15,8 @@ default = []
 real-network = ["dep:rustls", "dep:webpki-roots", "dep:quinn", "dep:tokio", "dep:rcgen"]
 
 [dependencies]
-rustls = { version = "0.23", optional = true }
+rustls = { version = "0.23", default-features = false, features = ["std", "ring"], optional = true }
 webpki-roots = { version = "0.26", optional = true }
-quinn = { version = "0.11", optional = true }
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"], optional = true }
 tokio = { version = "1", features = ["rt-multi-thread", "time", "macros", "net", "io-util"], optional = true }
 rcgen = { version = "0.13", optional = true }
