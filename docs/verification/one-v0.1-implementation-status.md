@@ -25,7 +25,9 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Linux/Windows hosted CI execution | BLOCKED | GitHub runner jobs fail before usable step/log evidence |
+| Linux independent execution verification | VERIFIED | `docs/verification/one-v0.1-linux-windows-2026-10-15.md` |
+| Windows independent execution verification | VERIFIED | `docs/verification/one-v0.1-linux-windows-2026-10-15.md` |
+| Private canonical hosted CI execution | BLOCKED | GitHub runner jobs fail before usable step/log evidence |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
 | Node.js binding | FUTURE | contract required before support claim |
@@ -37,8 +39,8 @@
 
 ## Release interpretation
 
-`IMPLEMENTED` means the canonical source contains the implementation and associated tests. It does **not** mean that cross-platform execution has been independently verified.
+`IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means independent execution evidence exists for the exact recorded canonical source commit.
 
-The source/documentation/fixture contract for v0.1 is present. The release gate remains open until actual Linux and Windows execution evidence is recorded. Hosted GitHub CI is not treated as green while its jobs fail before producing usable step/log evidence.
+For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, Linux and Windows execution verification is recorded as green. The private canonical hosted-CI condition remains separately and honestly marked as blocked because runner jobs fail before usable step/log evidence.
 
-If hosted runners require an account upgrade, the project does not require that purchase: use the portable offline verification scripts on independent Linux and Windows environments and record the evidence. That alternate evidence must not be misrepresented as a green hosted-CI run.
+No GitHub paid upgrade is required for the verification result.
