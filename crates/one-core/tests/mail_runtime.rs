@@ -7,6 +7,16 @@ use one_core::{Capability, CapabilitySet, ImapClient, Pop3Client};
 
 fn caps() -> CapabilitySet { CapabilitySet::none().allow(Capability::NetworkConnect) }
 
+fn read_line(stream: &mut std::net::TcpStream) -> Vec<u8> {
+    let mut line = Vec::new();
+    let mut byte = [0u8; 1];
+    loop {
+        stream.read_exact(&mut byte).expect("line");
+        line.push(byte[0]);
+        if line.ends_with(b"\r\n") { return line; }
+    }
+}
+
 #[test]
 fn pop3_authenticates_and_lists_messages() {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
@@ -14,12 +24,11 @@ fn pop3_authenticates_and_lists_messages() {
     let server = thread::spawn(move || {
         let (mut stream, _) = listener.accept().expect("accept");
         stream.write_all(b"+OK ready\r\n").expect("greeting");
-        let mut buf = [0u8; 256];
-        let _ = stream.read(&mut buf).expect("USER");
+        assert_eq!(read_line(&mut stream), b"USER alice\r\n");
         stream.write_all(b"+OK user\r\n").expect("USER reply");
-        let _ = stream.read(&mut buf).expect("PASS");
+        assert_eq!(read_line(&mut stream), b"PASS secret\r\n");
         stream.write_all(b"+OK logged in\r\n").expect("PASS reply");
-        let _ = stream.read(&mut buf).expect("LIST");
+        assert_eq!(read_line(&mut stream), b"LIST\r\n");
         stream.write_all(b"+OK 2 messages\r\n1 42\r\n2 84\r\n.\r\n").expect("LIST reply");
     });
     let mut client = Pop3Client::connect(&addr.to_string(), Duration::from_secs(2), &caps()).expect("connect");
@@ -35,12 +44,11 @@ fn imap_authenticates_selects_and_fetches_message() {
     let server = thread::spawn(move || {
         let (mut stream, _) = listener.accept().expect("accept");
         stream.write_all(b"* OK ready\r\n").expect("greeting");
-        let mut buf = [0u8; 1024];
-        let _ = stream.read(&mut buf).expect("LOGIN");
+        assert_eq!(read_line(&mut stream), b"a001 LOGIN alice secret\r\n");
         stream.write_all(b"a001 OK LOGIN completed\r\n").expect("LOGIN reply");
-        let _ = stream.read(&mut buf).expect("SELECT");
+        assert_eq!(read_line(&mut stream), b"a002 SELECT INBOX\r\n");
         stream.write_all(b"* 2 EXISTS\r\na002 OK SELECT completed\r\n").expect("SELECT reply");
-        let _ = stream.read(&mut buf).expect("FETCH");
+        assert_eq!(read_line(&mut stream), b"a003 FETCH 1 BODY[]\r\n");
         stream.write_all(b"* 1 FETCH (BODY[] {5}\r\nhello)\r\na003 OK FETCH completed\r\n").expect("FETCH reply");
     });
     let mut client = ImapClient::connect(&addr.to_string(), Duration::from_secs(2), &caps()).expect("connect");
