@@ -65,6 +65,8 @@ The temporary public repository is execution infrastructure only. The private ca
 
 The private canonical GitHub Actions environment remains separately recorded as blocked because its hosted jobs historically failed before usable workflow-step evidence. No paid GitHub upgrade was purchased or required.
 
+If GitHub-hosted runners require an account upgrade, **do not purchase an upgrade merely to satisfy this contract**; use the portable offline verification path instead.
+
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
