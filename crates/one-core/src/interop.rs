@@ -23,16 +23,23 @@ mod tests {
 
     #[test]
     fn denied_process_capability_never_spawns() {
-        let spec = ProcessSpec { program: std::env::current_exe().unwrap().to_string_lossy().into_owned(), args: vec![], working_directory: None };
+        let spec = ProcessSpec { program: "one-test-process-that-must-not-run".into(), args: vec![], working_directory: None };
         let error = run_process(&spec, &CapabilitySet::none()).expect_err("process must be denied");
         assert_eq!(error, "Kemampuan proses belum diberikan kepada program.");
     }
 
     #[test]
     fn allowed_process_preserves_exit_status_and_streams() {
-        let spec = ProcessSpec { program: std::env::current_exe().unwrap().to_string_lossy().into_owned(), args: vec!["--one-process-test".into()], working_directory: None };
+        let (program, args) = if cfg!(windows) {
+            ("cmd".to_owned(), vec!["/C".into(), "echo stdout & echo stderr 1>&2 & exit /B 7".into()])
+        } else {
+            ("sh".to_owned(), vec!["-c".into(), "printf stdout; printf stderr >&2; exit 7".into()])
+        };
+        let spec = ProcessSpec { program, args, working_directory: None };
         let result = run_process(&spec, &CapabilitySet::none().allow(Capability::Process)).expect("process capability permits execution");
         assert!(!result.success);
-        assert_eq!(result.status_code, Some(101));
+        assert_eq!(result.status_code, Some(7));
+        assert!(result.stdout.contains("stdout"));
+        assert!(result.stderr.contains("stderr"));
     }
 }
