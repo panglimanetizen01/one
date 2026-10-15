@@ -39,14 +39,7 @@ fn main() -> ExitCode {
         "periksa" | "check" => "check",
         "bangun" | "build" => "build",
         "ast" => "ast",
-        "lihat" => {
-            if args.next().as_deref() == Some("struktur") {
-                "ast"
-            } else {
-                usage();
-                return ExitCode::from(2);
-            }
-        }
+        "lihat" if args.next().as_deref() == Some("struktur") => "ast",
         _ => {
             usage();
             return ExitCode::from(2);
