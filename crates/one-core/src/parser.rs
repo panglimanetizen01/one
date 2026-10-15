@@ -1,3 +1,5 @@
+#![allow(clippy::possible_missing_else)]
+
 use crate::ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 use crate::diagnostic::{Diagnostic, DiagnosticBundle};
 use crate::token::{Token, TokenKind};
