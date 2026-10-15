@@ -75,7 +75,7 @@ async fn execute_http2_async(
         .method("GET")
         .uri(&path)
         .header("host", &authority)
-        .body(bytes::Bytes::new())
+        .body(())
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
     let (response_future, _send_stream) = sender
         .send_request(request, true)
