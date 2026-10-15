@@ -58,7 +58,16 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
     Ok((code, text))
 }
 
+fn validate_command_field(value: &str) -> Result<(), ApplicationProtocolError> {
+    if value.contains('\r') || value.contains('\n') {
+        Err(ApplicationProtocolError::InvalidResponse)
+    } else {
+        Ok(())
+    }
+}
+
 fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), ApplicationProtocolError> {
+    validate_command_field(command)?;
     stream.write_all(command.as_bytes()).map_err(io_error)?;
     stream.write_all(b"\r\n").map_err(io_error)?;
     read_ftp_reply(stream)
@@ -76,6 +85,9 @@ pub fn ftp_login(address: &str, user: &str, password: &str, timeout: Duration, c
 }
 
 pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, body: &str, timeout: Duration, caps: &CapabilitySet) -> Result<(), ApplicationProtocolError> {
+    validate_command_field(sender)?;
+    validate_command_field(recipient)?;
+    validate_command_field(subject)?;
     let mut stream = connect(address, timeout, caps)?;
     let (code, _) = read_ftp_reply(&mut stream)?;
     if code != 220 { return Err(ApplicationProtocolError::Server(code, "SMTP greeting rejected".into())); }
@@ -85,8 +97,12 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
     }
     let (code, _) = ftp_command(&mut stream, "DATA")?;
     if code != 354 { return Err(ApplicationProtocolError::Server(code, "SMTP DATA rejected".into())); }
-    let normalized = body.replace('\r', "").replace('\n', "\r\n").replace("\r\n.", "\r\n..");
-    let message = format!("From: <{sender}>\r\nTo: <{recipient}>\r\nSubject: {subject}\r\n\r\n{normalized}\r\n.\r\n");
+    let normalized = body.replace('\r', "").replace('\n', "\r\n");
+    let stuffed = normalized
+        .split_inclusive("\r\n")
+        .map(|line| if line.starts_with('.') { format!(".{line}") } else { line.to_string() })
+        .collect::<String>();
+    let message = format!("From: <{sender}>\r\nTo: <{recipient}>\r\nSubject: {subject}\r\n\r\n{stuffed}\r\n.\r\n");
     stream.write_all(message.as_bytes()).map_err(io_error)?;
     let (code, text) = read_ftp_reply(&mut stream)?;
     if code != 250 { return Err(ApplicationProtocolError::Server(code, text)); }
@@ -136,6 +152,18 @@ mod tests {
         });
         ftp_login(&addr.to_string(), "alice", "secret", Duration::from_secs(2), &caps()).expect("ftp login");
         handle.join().expect("server");
+    }
+
+    #[test]
+    fn ftp_login_rejects_command_injection_before_connecting() {
+        let result = ftp_login("127.0.0.1:1", "alice\r\nNOOP", "secret", Duration::from_millis(10), &caps());
+        assert!(matches!(result, Err(ApplicationProtocolError::InvalidResponse)));
+    }
+
+    #[test]
+    fn smtp_send_rejects_header_injection_before_connecting() {
+        let result = smtp_send("127.0.0.1:1", "a@example.test", "b@example.test", "safe\r\nBcc: attacker@example.test", "hello", Duration::from_millis(10), &caps());
+        assert!(matches!(result, Err(ApplicationProtocolError::InvalidResponse)));
     }
 
     #[test]
