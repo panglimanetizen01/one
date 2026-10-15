@@ -253,6 +253,26 @@ mod tests {
 
     fn caps() -> CapabilitySet { CapabilitySet::none().allow(Capability::NetworkConnect) }
 
+    fn read_test_line(stream: &mut TcpStream) -> Vec<u8> {
+        let mut line = Vec::new();
+        let mut byte = [0u8; 1];
+        loop {
+            stream.read_exact(&mut byte).expect("line");
+            line.push(byte[0]);
+            if line.ends_with(b"\r\n") { return line; }
+        }
+    }
+
+    fn read_test_until(stream: &mut TcpStream, marker: &[u8]) -> Vec<u8> {
+        let mut data = Vec::new();
+        let mut byte = [0u8; 1];
+        while !data.ends_with(marker) {
+            stream.read_exact(&mut byte).expect("data");
+            data.push(byte[0]);
+        }
+        data
+    }
+
     #[test]
     fn ftp_login_speaks_real_control_channel() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
@@ -260,12 +280,9 @@ mod tests {
         let handle = thread::spawn(move || {
             let (mut stream, _) = listener.accept().expect("accept");
             stream.write_all(b"220 ready\r\n").expect("greeting");
-            let mut buf = [0u8; 256];
-            stream.read_exact(&mut buf[..11]).expect("user");
-            assert_eq!(&buf[..11], b"USER alice\r\n");
+            assert_eq!(read_test_line(&mut stream), b"USER alice\r\n");
             stream.write_all(b"331 password\r\n").expect("user reply");
-            stream.read_exact(&mut buf[..12]).expect("pass");
-            assert_eq!(&buf[..12], b"PASS secret\r\n");
+            assert_eq!(read_test_line(&mut stream), b"PASS secret\r\n");
             stream.write_all(b"230 logged in\r\n").expect("pass reply");
         });
         ftp_login(&addr.to_string(), "alice", "secret", Duration::from_secs(2), &caps()).expect("ftp login");
@@ -327,15 +344,17 @@ mod tests {
         let handle = thread::spawn(move || {
             let (mut stream, _) = listener.accept().expect("accept");
             stream.write_all(b"220 ready\r\n").expect("greeting");
-            let mut buf = [0u8; 4096];
             for reply in [b"250 hello\r\n".as_slice(), b"250 sender\r\n".as_slice(), b"250 recipient\r\n".as_slice()] {
-                let _ = stream.read(&mut buf).expect("command");
+                let _ = read_test_line(&mut stream);
                 stream.write_all(reply).expect("reply");
             }
-            let n = stream.read(&mut buf).expect("data");
-            assert!(String::from_utf8_lossy(&buf[..n]).contains("Subject: test"));
+            assert_eq!(read_test_line(&mut stream), b"DATA\r\n");
+            stream.write_all(b"354 continue\r\n").expect("data reply");
+            let message = read_test_until(&mut stream, b"\r\n.\r\n");
+            assert!(String::from_utf8_lossy(&message).contains("Subject: test"));
             stream.write_all(b"250 queued\r\n").expect("queued");
-            let _ = stream.read(&mut buf);
+            assert_eq!(read_test_line(&mut stream), b"QUIT\r\n");
+            stream.write_all(b"221 bye\r\n").expect("quit reply");
         });
         smtp_send(&addr.to_string(), "a@example.test", "b@example.test", "test", "hello", Duration::from_secs(2), &caps()).expect("smtp");
         handle.join().expect("server");
