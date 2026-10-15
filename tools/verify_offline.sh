@@ -11,6 +11,9 @@ echo "commit: $(git rev-parse HEAD 2>/dev/null || echo unknown)"
 echo "rust: $(rustc --version)"
 echo "cargo: $(cargo --version)"
 
+echo "=== CONTRACT ARTIFACTS ==="
+python3 tools/check_contract.py
+
 echo "=== BUILD ==="
 cargo build --workspace --all-targets
 
