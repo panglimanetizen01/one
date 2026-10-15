@@ -73,6 +73,7 @@ async fn execute_http2_async(
 
     let request = http::Request::builder()
         .method("GET")
+        .version(http::Version::HTTP_2)
         .uri(&path)
         .header("host", &authority)
         .body(())
