@@ -48,9 +48,9 @@ one help
 
 The command vocabulary is bounded and deterministic; One does not interpret arbitrary natural-language instructions as CLI commands.
 
-The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, package/build boundaries, and conformance/golden fixtures.
+The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, strict v0.1 manifest validation, deterministic `.oneir`/`.onepkg` artifacts, and conformance/golden fixtures. `one test` can also execute sorted project-local conformance fixtures when present.
 
-`one bangun` currently emits a deterministic `.oneir` IR/debug artifact. `one package` emits a validated `.onepkg` artifact. Neither is yet a native executable compiler or platform installer.
+`one bangun` currently emits a deterministic `.oneir` IR/debug artifact. `one package` emits a validated deterministic `.onepkg` artifact. Neither is yet a native executable compiler or platform installer.
 
 ## Example
 

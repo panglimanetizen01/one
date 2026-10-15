@@ -20,7 +20,10 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - Structured diagnostics with source spans and stable error codes.
 - Capability-aware process boundary.
 - Cross-platform process API shape using argument vectors and preserved exit status/stdout/stderr.
-- CLI commands `new`, `check`, `run`, `build`, and `ast`.
+- CLI commands `new`, `check`, `run`, `test`, `build`, `package`, `version`, and `ast`, with Indonesian conversational primary aliases.
+- `one test` executes `src/main.one` and, when present, sorted deterministic `tests/conformance/valid/*.one` and `tests/conformance/invalid/*.one` fixtures.
+- Deterministic `.oneir` and `.onepkg` textual artifacts.
+- Strict v0.1 project manifest validation for `nama` and `versi`.
 - Conformance fixtures and golden-output tests.
 - Linux/Windows CI definition.
 
@@ -28,10 +31,11 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 - Identifiers are single lexical words. Multi-word identifiers are not silently reconstructed.
 - The conversational loop form `selama masih ada ...` is not part of v0.1; only explicit boolean conditions are accepted.
-- `build` currently emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
+- `build` currently emits a deterministic `.oneir` IR artifact; it is not a native executable compiler.
+- `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - Native C/C++ FFI is future work.
 - Python, Node.js, and Java/JVM integration is currently process-boundary interoperability, not native language bindings.
-- Package registry, IDE/editor tooling, GUI framework integration, and additional locale grammars are future work.
+- Package registry, full dependency registry, IDE/editor tooling, GUI framework integration, and additional locale grammars are future work.
 
 ## Release acceptance checklist
 
