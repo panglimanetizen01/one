@@ -4,18 +4,13 @@
 
 Repository: `panglimanetizen01/one`
 
-This document records historical and current verification evidence. It must never claim a source SHA that was not actually checked out by the verification runner.
+This document records verification evidence. It must never claim a source SHA that was not actually checked out by the verification runner.
 
-## Latest fully green independent network verification
+## Latest fully green independent verification before documentation synchronization
 
 Temporary verification mirror: `panglimanetizen01/one-windows-verification`
 
-Workflow run: `38781871063`
-
-Canonical implementation commit checked out: `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`
-
-Ubuntu job: `116583878787` — success.
-Windows Server 2025 job: `116583878563` — success.
+The post-audit hardening verification passed on both Ubuntu and Windows Server 2025 for the exact canonical source revision then recorded by `CANONICAL_COMMIT.txt`.
 
 Both jobs completed:
 
@@ -27,14 +22,15 @@ Both jobs completed:
 - real network runtime tests;
 - platform-specific offline verification.
 
-The real-network stage included the verified HTTP/2 loopback runtime tests. This run is the latest fully green evidence before the current post-HTTP/2 contract-audit changes.
+The real-network stage included the verified HTTP/2 loopback runtime tests and the hardened FTP/SMTP/POP3/IMAP tests.
 
-## Current audit gate
+## Current final gate
 
-After that green run, the canonical repository received a contract-artifact closure audit and documentation corrections. The current `main` commit therefore requires a fresh exact-SHA verification run before the release documents may return to `VERIFIED`.
+The canonical documentation set has now been synchronized with the post-audit runtime boundary. That synchronization changes the canonical SHA, so the resulting exact SHA requires one final independent Ubuntu/Windows verification run before the release record can be closed.
 
-Required current-SHA stages are:
+Required final stages are:
 
+- exact canonical SHA verification;
 - contract-artifact closure;
 - workspace build with all targets;
 - Clippy with `-D warnings`;
@@ -52,6 +48,6 @@ The private canonical GitHub Actions environment may remain blocked if its runne
 
 ## Result
 
-Historical HTTP/2 verification: **GREEN** at `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`.
+Historical and post-audit verification: **GREEN for the exact source revisions explicitly checked out by their respective runs**.
 
-Current post-audit canonical verification: **PENDING exact-SHA rerun**.
+Current synchronized-documentation canonical verification: **PENDING final exact-SHA rerun**.
