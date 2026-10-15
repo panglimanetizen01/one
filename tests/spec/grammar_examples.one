@@ -1,20 +1,27 @@
-# Valid One v0.1 examples
+# Canonical v0.1 grammar example fixture.
+# This file is intentionally composed only from normative Indonesian forms.
+
 nama adalah "Budi"
 umur adalah 25
 umur menjadi 26
 tampilkan nama
+
+buat daftar belanja
+tambahkan "beras" ke belanja
+tambahkan "telur" ke belanja
+hapus "telur" dari belanja
+tampilkan belanja
 
 kalau umur sudah 17 tahun
     tampilkan "Boleh masuk"
 kalau tidak
     tampilkan "Belum boleh masuk"
 
-buat daftar belanja
-tambahkan "beras" ke belanja
-hapus "beras" dari belanja
-
 untuk setiap barang di belanja
     sapa barang
+
+selama umur lebih kecil dari 30
+    umur menjadi umur ditambah 1
 
 buat pekerjaan hitung
     terima harga
