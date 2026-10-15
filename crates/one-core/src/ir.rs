@@ -35,6 +35,97 @@ pub enum IrExpr {
     Call { name: String, args: Vec<IrExpr> },
 }
 
+impl IrProgram {
+    pub fn canonical_text(&self) -> String {
+        let mut out = String::new();
+        write_statements(&mut out, &self.statements, 0);
+        out
+    }
+}
+
+fn write_statements(out: &mut String, statements: &[IrStatement], indent: usize) {
+    for statement in statements {
+        write_indent(out, indent);
+        match statement {
+            IrStatement::Declaration { name, value } => {
+                out.push_str("declare "); out.push_str(name); out.push_str(" = "); write_expr(out, value); out.push('\n');
+            }
+            IrStatement::Assignment { name, value } => {
+                out.push_str("assign "); out.push_str(name); out.push_str(" = "); write_expr(out, value); out.push('\n');
+            }
+            IrStatement::Action { name, args } => {
+                out.push_str("action "); out.push_str(name); write_expr_list(out, args); out.push('\n');
+            }
+            IrStatement::Conditional { condition, then_block, else_block } => {
+                out.push_str("if "); write_expr(out, condition); out.push('\n');
+                write_statements(out, then_block, indent + 1);
+                if !else_block.is_empty() {
+                    write_indent(out, indent); out.push_str("else\n");
+                    write_statements(out, else_block, indent + 1);
+                }
+                write_indent(out, indent); out.push_str("end\n");
+            }
+            IrStatement::Loop { kind, body } => {
+                match kind {
+                    IrLoopKind::ForEach { variable, iterable } => { out.push_str("foreach "); out.push_str(variable); out.push_str(" in "); write_expr(out, iterable); out.push('\n'); }
+                    IrLoopKind::While { condition } => { out.push_str("while "); write_expr(out, condition); out.push('\n'); }
+                }
+                write_statements(out, body, indent + 1);
+                write_indent(out, indent); out.push_str("end\n");
+            }
+            IrStatement::Function { name, params, result, body } => {
+                out.push_str("function "); out.push_str(name); out.push('(');
+                for (index, param) in params.iter().enumerate() { if index > 0 { out.push(','); } out.push_str(param); }
+                out.push_str(") = "); write_expr(out, result); out.push('\n');
+                write_statements(out, body, indent + 1);
+                write_indent(out, indent); out.push_str("end\n");
+            }
+            IrStatement::Event { trigger, body } => {
+                out.push_str("event ");
+                for (index, word) in trigger.iter().enumerate() { if index > 0 { out.push(' '); } out.push_str(word); }
+                out.push('\n');
+                write_statements(out, body, indent + 1);
+                write_indent(out, indent); out.push_str("end\n");
+            }
+        }
+    }
+}
+
+fn write_expr_list(out: &mut String, args: &[IrExpr]) {
+    if args.is_empty() { return; }
+    out.push(' ');
+    for (index, arg) in args.iter().enumerate() { if index > 0 { out.push_str(", "); } write_expr(out, arg); }
+}
+
+fn write_expr(out: &mut String, expr: &IrExpr) {
+    match expr {
+        IrExpr::Text(value) => { out.push('"'); for ch in value.chars() { match ch { '\\' => out.push_str("\\\\"), '"' => out.push_str("\\\""), '\n' => out.push_str("\\n"), '\r' => out.push_str("\\r"), '\t' => out.push_str("\\t"), other => out.push(other) } } out.push('"'); }
+        IrExpr::Number(value) => out.push_str(&value.to_string()),
+        IrExpr::Boolean(value) => out.push_str(if *value { "true" } else { "false" }),
+        IrExpr::Nothing => out.push_str("nothing"),
+        IrExpr::Identifier(value) => out.push_str(value),
+        IrExpr::Binary { left, op, right } => { out.push('('); write_expr(out, left); out.push(' '); out.push_str(binary_op_name(*op)); out.push(' '); write_expr(out, right); out.push(')'); }
+        IrExpr::Call { name, args } => { out.push_str(name); out.push('('); for (index, arg) in args.iter().enumerate() { if index > 0 { out.push_str(", "); } write_expr(out, arg); } out.push(')'); }
+    }
+}
+
+fn binary_op_name(op: BinaryOp) -> &'static str {
+    match op {
+        BinaryOp::Add => "add",
+        BinaryOp::Subtract => "subtract",
+        BinaryOp::Multiply => "multiply",
+        BinaryOp::Divide => "divide",
+        BinaryOp::Equal => "equal",
+        BinaryOp::NotEqual => "not_equal",
+        BinaryOp::LessThan => "less_than",
+        BinaryOp::LessOrEqual => "less_or_equal",
+        BinaryOp::GreaterThan => "greater_than",
+        BinaryOp::GreaterOrEqual => "greater_or_equal",
+    }
+}
+
+fn write_indent(out: &mut String, indent: usize) { for _ in 0..indent { out.push_str("  "); } }
+
 pub fn lower(program: &TypedProgram) -> Result<IrProgram, DiagnosticBundle> {
     Ok(IrProgram { statements: program.program.statements.iter().map(lower_statement).collect() })
 }
