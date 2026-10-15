@@ -30,6 +30,7 @@ fn invalid_fixtures_fail_with_stable_codes() {
         (include_str!("../../../tests/conformance/invalid/undefined-name.one"), "E2014"),
         (include_str!("../../../tests/conformance/invalid/bad-indentation.one"), "E0002"),
         (include_str!("../../../tests/conformance/invalid/empty-block.one"), "E1002"),
+        (include_str!("../../../tests/conformance/invalid/implicit-action.one"), "E1016"),
     ];
 
     for (source, expected_code) in cases {
