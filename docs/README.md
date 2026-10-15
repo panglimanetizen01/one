@@ -10,28 +10,37 @@ This directory is the normative documentation surface for One v0.1. When code an
 
 ## Language/tooling contracts
 
+- `spec/one-v0.1-language-invariants.md` — immutable v0.1 language invariants.
 - `spec/one-v0.1-lexical.md` — tokens, indentation, literals, comments, and lexical errors.
 - `spec/one-v0.1-grammar.md` — normative Indonesian v0.1 concrete grammar.
 - `spec/one-v0.1-ast.md` — language-independent AST shape.
-- `spec/one-v0.1-localization.md` — locale architecture and semantic equivalence rules.
+- `spec/one-v0.1-localization-contract.md` — locale architecture and semantic equivalence rules.
 - `spec/one-v0.1-diagnostics.md` — diagnostic codes, spans, and source-preserving behavior.
-- `spec/one-v0.1-stdlib.md` — v0.1 standard-library surface.
+- `spec/one-v0.1-effect-capability.md` — explicit effect/capability boundary.
+- `spec/one-v0.1-runtime-model.md` — runtime state, execution, errors, and determinism.
+- `spec/one-v0.1-reference-interpreter.md` — executable semantic oracle contract.
+- `spec/one-v0.1-conformance-suite.md` — layered conformance and golden-test contract.
+- `spec/one-v0.1-platform-abstraction.md` — Windows/Linux host boundary.
+- `spec/one-v0.1-module-system.md` — module identity, imports, exports, and initialization.
+- `spec/one-v0.1-package-build.md` — project manifests, dependency resolution, and build/package model.
+- `spec/one-v0.1-standard-library.md` — v0.1 standard-library boundary.
+- `spec/one-v0.1-cli-contract.md` — canonical CLI commands, aliases, exit codes, project operations, and determinism.
 - `spec/one-v0.1-interop.md` — explicit foreign-process interoperability boundary.
-- `spec/one-v0.1-cli.md` — CLI commands, exit codes, scaffold, and determinism rules.
+- `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
 ## Verification and release
 
-- `testing/conformance.md` — fixture and golden-test contract.
-- `release/one-v0.1.md` — release acceptance contract and supported/future matrix.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory.
 - `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
+- `release/one-v0.1.md` — release acceptance contract and supported/future matrix.
 
 ## Derivative artifacts
 
 - `../tests/spec/grammar_examples.one` — canonical valid-source examples derived from the grammar contract.
 - `../crates/one-core/tests/conformance.rs` — executable conformance runner derived from the fixture contract.
+- `../crates/one-cli/tests/cli.rs` — CLI integration tests derived from the CLI contract.
 - `../tests/conformance/valid/*.one` — accepted-language fixtures.
 - `../tests/conformance/invalid/*.one` — rejected-language fixtures.
 - `../tests/golden/*.snap` — deterministic execution outputs.
