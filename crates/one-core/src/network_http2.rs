@@ -1,9 +1,10 @@
 #![cfg(feature = "real-network")]
 
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
-use crate::network_runtime::{resolve_for_http, HttpResponse, NetworkRuntimeError};
+use crate::network_runtime::{HttpResponse, NetworkRuntimeError};
 
 const MAX_BODY: usize = 16 * 1024 * 1024;
 
@@ -30,16 +31,17 @@ pub fn execute_http2(
         ));
     }
 
-    let host = authority
+    let (host, port) = authority
         .rsplit_once(':')
-        .map(|(host, _)| host)
-        .filter(|host| !host.is_empty())
-        .unwrap_or(authority);
-    let port = authority
-        .rsplit_once(':')
-        .and_then(|(_, port)| port.parse::<u16>().ok())
-        .unwrap_or(80);
-    let address = resolve_for_http(host, port)?;
+        .and_then(|(host, port)| port.parse::<u16>().ok().map(|port| (host, port)))
+        .unwrap_or((authority, 80));
+    let address = format!("{host}:{port}")
+        .to_socket_addrs()
+        .map_err(|error| NetworkRuntimeError::Resolution(error.to_string()))?
+        .next()
+        .ok_or_else(|| {
+            NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))
+        })?;
     let authority = authority.to_owned();
     let path = path.to_owned();
 
@@ -53,7 +55,7 @@ pub fn execute_http2(
 }
 
 async fn execute_http2_async(
-    address: std::net::SocketAddr,
+    address: SocketAddr,
     authority: String,
     path: String,
 ) -> Result<HttpResponse, NetworkRuntimeError> {
