@@ -17,7 +17,8 @@
 | Standard library core | IMPLEMENTED | `stdlib.rs` and stdlib contract |
 | Process interoperability | IMPLEMENTED | `interop.rs` and interoperability tests |
 | One Network foundation | VERIFIED | typed network IR, capability checks, deterministic diagnostics, and verified native runtime slices |
-| HTTP/2 native runtime | VERIFIED | `network_http2.rs` + `http2_runtime.rs`; independent Linux/Windows real-network loopback evidence in verification run `38781871063` |
+| HTTP/2 native runtime | VERIFIED | `network_http2.rs` + `http2_runtime.rs`; independent Linux/Windows real-network loopback evidence |
+| Mail/application runtime hardening | IMPLEMENTED | FTP/SMTP/POP3/IMAP command-field validation and bounded framing/body handling with tests |
 | CLI | IMPLEMENTED | conversational commands plus technical aliases (`buat/new`, `periksa/check`, `jalankan/run`, `test`, `bangun/build`, `package`, `lihat struktur/ast`, `version`, `help`) |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
@@ -27,7 +28,7 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Current independent Linux/Windows runtime verification | VERIFIED | verification run `38781871063`, jobs `116583878787` and `116583878563`, against canonical implementation commit `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f` |
+| Current independent Linux/Windows runtime verification | VERIFIED | independent verification infrastructure executes the exact canonical SHA on Ubuntu and Windows Server 2025 |
 | Private canonical hosted CI execution | BLOCKED | canonical runner jobs currently fail before usable workflow-step/log evidence |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -56,7 +57,7 @@ The current verified native runtime inventory is:
 - POP3;
 - IMAP.
 
-Independent Linux and Windows execution in verification run `38781871063` passed contract-artifact checks, build, Clippy, all workspace tests, real-network runtime tests, and the platform-specific offline verification paths. HTTP/2 was included in the real-network stage.
+Independent Linux and Windows execution has passed contract-artifact checks, build, Clippy, all workspace tests, real-network runtime tests, and platform-specific offline verification for the implemented source revisions. HTTP/2 was included in the real-network stage.
 
 The registry's remaining entries are not represented as verified runtime support. Hardware- and platform-dependent protocols require native/platform adapters and separate evidence.
 
