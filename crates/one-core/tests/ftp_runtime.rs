@@ -26,7 +26,7 @@ fn ftp_active_store_completes_real_data_channel() {
             line.push(byte[0]);
             if line.ends_with(b"\r\n") { break; }
         }
-        let command = String::from_utf8(line).expect("utf8");
+        let command = String::from_utf8(std::mem::take(&mut line)).expect("utf8");
         assert!(command.starts_with("PORT 127,0,0,1,"));
         let port_fields: Vec<u16> = command.trim_end_matches("\r\n").split(' ').nth(1).expect("port args").split(',').map(|v| v.parse().expect("port field")).collect();
         assert_eq!(port_fields.len(), 6);
