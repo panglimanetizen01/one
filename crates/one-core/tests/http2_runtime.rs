@@ -35,7 +35,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
                     Err(error) => panic!("accept: {error}"),
                 }
             };
-            let mut stream = stream;
+            let stream = stream;
             stream.set_nonblocking(true).expect("accepted stream nonblocking");
             let mut connection = h2::server::handshake(
                 tokio::net::TcpStream::from_std(stream).expect("tcp"),
@@ -59,6 +59,14 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
                     .expect("response headers");
                 send.send_data(bytes::Bytes::from_static(b"hello"), true)
                     .expect("response body");
+
+                // Keep polling the connection after queueing the response so h2 can
+                // actually flush the response frames before the server task exits.
+                while let Some(result) = connection.accept().await {
+                    if result.is_err() {
+                        break;
+                    }
+                }
             }
         });
     });
