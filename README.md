@@ -54,6 +54,14 @@ The v0.1 grammar and parser support grammar-bounded multi-word names, explicit a
 
 `one bangun` currently emits a deterministic `.oneir` IR/debug artifact. `one package` emits a validated deterministic `.onepkg` artifact. Neither is yet a native executable compiler or platform installer.
 
+## One Network foundation
+
+The first One-owned network vertical slice is implemented as a typed semantic model with explicit address, transport, security, protocol-family, target, timeout, connection, and connect/send/receive operation types. Network authority is granular (`NetworkConnect`, `NetworkListen`, `NetworkDiscover`, `NetworkAdmin`) and the existing coarse `Network` capability remains a compatibility grant without implying administrative authority.
+
+The network foundation also provides deterministic typed network IR, a protocol compatibility registry, structured network diagnostics, and a reference-interpreter boundary that validates and checks capabilities without performing external network I/O. The registry does not make protocol names into language keywords and does not imply that real DNS/socket/HTTP/QUIC adapters are implemented.
+
+See `docs/spec/one-network-foundation.md` for the exact implemented boundary and explicit unsupported scope.
+
 ## Example
 
 ```text
@@ -71,11 +79,13 @@ kalau tidak
 Start with `docs/README.md`, then read:
 
 - `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
+- `docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md`
 - `docs/spec/one-v0.1-language-invariants.md`
 - `docs/spec/one-v0.1-lexical.md`
 - `docs/spec/one-v0.1-grammar.md`
 - `docs/spec/one-v0.1-ast.md`
 - `docs/spec/one-v0.1-cli-contract.md`
+- `docs/spec/one-network-foundation.md`
 - `docs/spec/one-v0.1-conformance-suite.md`
 - `docs/release/one-v0.1.md`
 - `docs/verification/one-v0.1-linux-windows-2026-10-15.md`
@@ -85,6 +95,8 @@ Start with `docs/README.md`, then read:
 The v0.1 source, contracts, fixtures, README, changelog, and offline verification paths are maintained in the canonical repository. The independently verified source checkpoint is `d17f2829187ec28031a4b4a94dd0e0af282f66b8`; independent Linux and Windows Server 2025 execution completed successfully in workflow run `38753437740`.
 
 The audit also closed the previously identified parser/contract mismatches: explicit action boundaries, the valid `sapa` action, multi-word loop/function names, and production-scoped structural-word boundaries are now covered by regression tests and aligned documentation.
+
+The current network foundation is implemented in the canonical source and is intentionally not described here as broad protocol-stack support until independent verification of the new source checkpoint is complete.
 
 Earlier private hosted-runner provisioning failures remain historical evidence and are not relabeled as green. Independent Linux and Windows Server 2025 executions completed successfully through the verification infrastructure without purchasing a GitHub upgrade.
 
