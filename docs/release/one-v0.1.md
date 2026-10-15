@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED** for canonical commit `abf61aaebb6c3eddf198ab040dea6dd47db18b81` based on independent Ubuntu and Windows Server 2025 verification run `38783385413`.
+Status: **VERIFIED** for canonical commit `d17143f4f109d1f8b866393431b1e0fb78ae3fdc` based on independent Ubuntu and Windows Server 2025 verification run `38785876520`.
 
 ## Scope
 
@@ -55,11 +55,11 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - [x] Capability/security tests succeed as part of the workspace test and offline verification stages.
 - [x] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities as covered by the verification suite.
 - [x] Documentation and grammar are aligned with the implemented language behavior and verified network boundary.
-- [x] No known failing test remains in verification run `38783385413`.
+- [x] No known failing test remains in verification run `38785876520`.
 
 ## Evidence
 
-Independent verification run `38783385413` checked out canonical commit `abf61aaebb6c3eddf198ab040dea6dd47db18b81` and passed all required Ubuntu and Windows stages: canonical SHA verification, contract artifacts, build, Clippy, tests, real-network runtime, and offline verification.
+Independent verification run `38785876520` checked out canonical commit `d17143f4f109d1f8b866393431b1e0fb78ae3fdc` and passed all required Ubuntu and Windows stages: canonical SHA verification, contract artifacts, build, Clippy, tests, real-network runtime, and offline verification.
 
 The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
 
