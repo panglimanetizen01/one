@@ -26,11 +26,13 @@ cargo test --workspace --all-targets
 echo "=== CLI SMOKE ==="
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
-cargo run --quiet --package one-cli -- new "$TMP_DIR/sample"
+cargo run --quiet --package one-cli -- buat "$TMP_DIR/sample"
 printf 'nama adalah "Budi"\ntampilkan nama\n' > "$TMP_DIR/sample/src/main.one"
-cargo run --quiet --package one-cli -- check "$TMP_DIR/sample/src/main.one"
-cargo run --quiet --package one-cli -- run "$TMP_DIR/sample/src/main.one"
-cargo run --quiet --package one-cli -- ast "$TMP_DIR/sample/src/main.one" >/dev/null
-cargo run --quiet --package one-cli -- build "$TMP_DIR/sample/src/main.one"
+cargo run --quiet --package one-cli -- periksa "$TMP_DIR/sample/src/main.one"
+cargo run --quiet --package one-cli -- jalankan "$TMP_DIR/sample/src/main.one"
+cargo run --quiet --package one-cli -- lihat struktur "$TMP_DIR/sample/src/main.one" >/dev/null
+cargo run --quiet --package one-cli -- bangun "$TMP_DIR/sample/src/main.one"
+cargo run --quiet --package one-cli -- test "$TMP_DIR/sample"
+cargo run --quiet --package one-cli -- package "$TMP_DIR/sample"
 
 echo "OFFLINE VERIFICATION: PASS"
