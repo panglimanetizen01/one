@@ -59,11 +59,7 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
 }
 
 fn validate_command_field(value: &str) -> Result<(), ApplicationProtocolError> {
-    if value.contains('\r') || value.contains('\n') {
-        Err(ApplicationProtocolError::InvalidResponse)
-    } else {
-        Ok(())
-    }
+    if value.contains('\r') || value.contains('\n') { Err(ApplicationProtocolError::InvalidResponse) } else { Ok(()) }
 }
 
 fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), ApplicationProtocolError> {
@@ -74,6 +70,8 @@ fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), A
 }
 
 pub fn ftp_login(address: &str, user: &str, password: &str, timeout: Duration, caps: &CapabilitySet) -> Result<(), ApplicationProtocolError> {
+    validate_command_field(user)?;
+    validate_command_field(password)?;
     let mut stream = connect(address, timeout, caps)?;
     let (code, _) = read_ftp_reply(&mut stream)?;
     if code / 100 != 2 { return Err(ApplicationProtocolError::Server(code, "FTP greeting rejected".into())); }
