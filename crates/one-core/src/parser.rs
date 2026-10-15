@@ -114,12 +114,33 @@ impl Parser {
     }
 
     fn match_operator(&self) -> Option<(BinaryOp, usize)> {
-        if self.lexeme_is("ditambah") { return Some((BinaryOp::Add, 1)); } if self.lexeme_is("dikurangi") { return Some((BinaryOp::Subtract, 1)); }
-        if self.lexeme_is("dikali") { return Some((BinaryOp::Multiply, 1)); } if self.lexeme_is("dibagi") { return Some((BinaryOp::Divide, 1)); }
-        if self.lexeme_is("sudah") { return Some((BinaryOp::AtLeast, 1)); } if self.lexeme_is("belum") { return Some((BinaryOp::AtMost, 1)); }
-        if self.lexeme_is("sama") && self.peek_lexeme(1) == Some("dengan") { return Some((BinaryOp::Equal, 2)); }
-        if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("besar") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Greater, 3)); }
-        if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("kecil") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Less, 3)); }
+        if self.lexeme_is("ditambah") {
+            return Some((BinaryOp::Add, 1));
+        }
+        if self.lexeme_is("dikurangi") {
+            return Some((BinaryOp::Subtract, 1));
+        }
+        if self.lexeme_is("dikali") {
+            return Some((BinaryOp::Multiply, 1));
+        }
+        if self.lexeme_is("dibagi") {
+            return Some((BinaryOp::Divide, 1));
+        }
+        if self.lexeme_is("sudah") {
+            return Some((BinaryOp::AtLeast, 1));
+        }
+        if self.lexeme_is("belum") {
+            return Some((BinaryOp::AtMost, 1));
+        }
+        if self.lexeme_is("sama") && self.peek_lexeme(1) == Some("dengan") {
+            return Some((BinaryOp::Equal, 2));
+        }
+        if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("besar") && self.peek_lexeme(2) == Some("dari") {
+            return Some((BinaryOp::Greater, 3));
+        }
+        if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("kecil") && self.peek_lexeme(2) == Some("dari") {
+            return Some((BinaryOp::Less, 3));
+        }
         None
     }
 
@@ -131,7 +152,13 @@ impl Parser {
             TokenKind::Identifier | TokenKind::Keyword => match token.lexeme.as_str() { "benar" => Expr::Boolean(true), "salah" => Expr::Boolean(false), "tidak" if self.lexeme_is("ada") => { self.advance(); Expr::Nothing }, name => Expr::Identifier(name.to_string()) },
             _ => return Err(self.error("E1016", "Token ini tidak dapat menjadi ekspresi.")),
         };
-        if let Expr::Identifier(name) = &base { if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary()?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary()?); } return Ok(Expr::Call { name: name.clone(), args }); } }
+        if let Expr::Identifier(name) = &base
+            && self.lexeme_is("dengan") {
+            self.advance();
+            let mut args = vec![self.parse_primary()?];
+            while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary()?); }
+            return Ok(Expr::Call { name: name.clone(), args });
+        }
         Ok(base)
     }
 }
