@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-The conformance suite proves that lexer, parser, AST, semantic analysis, CSIR, reference interpreter, compiler backends, and platform adapters implement the same v0.1 contracts.
+The conformance suite proves that lexer, parser, AST, semantic analysis, CSIR, the reference interpreter, each supported execution backend, and platform adapters implement the same v0.1 contracts. A component is included in conformance only when it is part of the supported v0.1 implementation boundary; future backends are not treated as implemented by documentation alone.
 
 ## 2. Test layers
 
@@ -20,7 +20,7 @@ Tests are grouped into:
 8. reference interpreter;
 9. effect/capability enforcement;
 10. diagnostics;
-11. cross-backend equivalence;
+11. equivalence across supported backends;
 12. localization equivalence.
 
 A failure is reported at the earliest violated contract boundary.
@@ -77,7 +77,7 @@ Cover declaration, assignment, display, list creation/mutation, conditions, loop
 
 ## 10. Required CSIR cases
 
-Every valid semantic construct must have a valid CSIR representation. Invalid combinations must be rejected before runtime. Provenance must survive lowering sufficiently for diagnostics and backend comparison.
+Every valid semantic construct must have a valid CSIR representation. Invalid combinations must be rejected before runtime. Provenance must survive lowering sufficiently for diagnostics and comparison across supported execution backends.
 
 ## 11. Required runtime cases
 
@@ -100,9 +100,9 @@ A denied effect must have no external side effect.
 
 Diagnostics must assert stable error code and primary span. Related spans are asserted when required by the contract. Message wording may evolve only if the stable diagnostic identity and semantic information remain intact.
 
-## 14. Backend equivalence
+## 14. Supported-backend equivalence
 
-The same validated CSIR fixture is executed by the reference interpreter and each backend. Compare semantic results, observable outputs, defined effects, and defined errors. Do not compare implementation-specific memory, timing, or allocation details.
+The same validated CSIR fixture is executed by the reference interpreter and each additional supported backend. Compare semantic results, observable outputs, defined effects, and defined errors. Do not compare implementation-specific memory, timing, or allocation details. In v0.1, the reference interpreter is the required execution oracle; no native compiler backend is implied until it is explicitly implemented and added to the supported-backend set.
 
 ## 15. Localization equivalence
 
