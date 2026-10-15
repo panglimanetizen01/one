@@ -148,7 +148,6 @@ impl ImapClient {
         let length: usize = line[open + 1..close].parse().map_err(|_| MailProtocolError::InvalidResponse)?;
         let mut body = vec![0u8; length];
         self.stream.read_exact(&mut body).map_err(io_error)?;
-        line.clear();
         line = read_line(&mut self.stream)?;
         if !line.trim_end().ends_with(')') { return Err(MailProtocolError::InvalidResponse); }
         let completion = read_line(&mut self.stream)?;
@@ -163,7 +162,7 @@ mod tests {
 
     #[test]
     fn mail_clients_require_network_connect_capability_before_io() {
-        assert_eq!(Pop3Client::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied));
-        assert_eq!(ImapClient::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied));
+        assert!(matches!(Pop3Client::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
+        assert!(matches!(ImapClient::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
     }
 }
