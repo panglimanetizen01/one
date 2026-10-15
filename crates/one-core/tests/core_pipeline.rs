@@ -26,6 +26,12 @@ fn executes_list_loop() {
 }
 
 #[test]
+fn executes_multi_word_loop_variable() {
+    let source = "buat daftar belanja\ntambahkan beras ke belanja\nuntuk setiap nama barang di belanja\n    tampilkan nama barang\n";
+    assert_eq!(run(source), vec!["beras"]);
+}
+
+#[test]
 fn rejects_undefined_name() {
     let program = parse("tampilkan nama\n").expect("parse");
     assert!(analyze(&program).is_err());
