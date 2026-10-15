@@ -3,11 +3,15 @@
 use std::collections::HashMap;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
-use crate::ir::{IrExpr, IrLoopKind, IrProgram, IrStatement};
+use crate::ir::{IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
+use crate::network::NetworkOperation;
 use crate::runtime::{Environment, Value};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExecutionResult { pub output: Vec<String> }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NetworkExecutionResult { pub description: String, pub performed_external_io: bool }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RuntimeError { pub code: &'static str, pub message: String }
@@ -23,6 +27,20 @@ pub struct Interpreter {
 
 impl Interpreter {
     pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0 } }
+    pub fn execute_network(&mut self, operation: &IrNetworkOperation) -> Result<NetworkExecutionResult, RuntimeError> {
+        let semantic = operation.operation();
+        if let Err(bundle) = semantic.validate() {
+            let diagnostic = &bundle.0[0];
+            return Err(RuntimeError { code: diagnostic.code, message: diagnostic.message.clone() });
+        }
+        for capability in semantic.required_capabilities() {
+            if !self.capabilities.permits(capability) {
+                return Err(RuntimeError { code: "N3101", message: format!("Kemampuan jaringan {:?} belum diberikan kepada program.", capability) });
+            }
+        }
+        let _ = match semantic { NetworkOperation::Connect { .. } | NetworkOperation::Send { .. } | NetworkOperation::Receive { .. } => () };
+        Ok(NetworkExecutionResult { description: "network operation delegated to reference backend".into(), performed_external_io: false })
+    }
     pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> {
         self.functions.clear(); self.events.clear(); self.environment = None; self.steps = 0;
         self.register_definitions(&program.statements);
@@ -54,6 +72,7 @@ impl Interpreter {
                 IrLoopKind::While { condition } => loop { if !matches!(self.eval(condition, env)?, Value::Boolean(true)) { break; } env.push(); self.exec_block(body, env, output)?; env.pop(); self.tick()?; }
             },
             IrStatement::Function { .. } | IrStatement::Event { .. } => {}
+            IrStatement::Network { operation } => { let _ = self.execute_network(operation)?; }
         }
         Ok(())
     }
@@ -68,11 +87,7 @@ impl Interpreter {
                 let item = match &args[0] { IrExpr::Identifier(word) => env.get(word).unwrap_or_else(|| Value::Text(word.clone())), _ => self.eval(&args[0], env)? };
                 let list_name = match &args[1] { IrExpr::Identifier(value) => value, _ => return Err(RuntimeError { code: "R3011", message: "Nama daftar harus berupa identifier.".into() }) };
                 let mut list = env.get(list_name).ok_or_else(|| RuntimeError { code: "R3012", message: format!("Saya belum menemukan daftar '{}'.", list_name) })?;
-                match &mut list {
-                    Value::List(values) if name == "tambahkan" => values.push(item),
-                    Value::List(values) => { if let Some(index) = values.iter().position(|v| v == &item) { values.remove(index); } }
-                    _ => return Err(RuntimeError { code: "R3013", message: format!("'{}' bukan daftar.", list_name) }),
-                }
+                match &mut list { Value::List(values) if name == "tambahkan" => values.push(item), Value::List(values) => { if let Some(index) = values.iter().position(|v| v == &item) { values.remove(index); } }, _ => return Err(RuntimeError { code: "R3013", message: format!("'{}' bukan daftar.", list_name) }) }
                 let _ = env.assign(list_name, list);
             }
             "gunakan proses" => { if !self.capabilities.permits(Capability::Process) { return Err(RuntimeError { code: "R3014", message: "Kemampuan proses belum diberikan kepada program.".into() }); } }
