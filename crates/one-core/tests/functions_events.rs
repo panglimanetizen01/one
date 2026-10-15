@@ -16,6 +16,15 @@ fn executes_function_result() {
 }
 
 #[test]
+fn executes_multi_word_function_parameter() {
+    let source = "buat pekerjaan hitung total\n    terima harga barang\n    terima pajak\n    hasilnya adalah harga barang ditambah pajak\n\ntotal adalah hitung total dengan 100 dan 10\ntampilkan total\n";
+    let ir = compile(source);
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let result = interpreter.execute(&ir).expect("execute");
+    assert_eq!(result.output, vec!["110"]);
+}
+
+#[test]
 fn registers_and_dispatches_event() {
     let source = "ketika pengguna menekan tombol beli\n    tampilkan \"dibeli\"\n";
     let ir = compile(source);
