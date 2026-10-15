@@ -6,7 +6,7 @@ Date: 2026-10-15
 
 - Repository: `panglimanetizen01/one`
 - Branch: `main`
-- Verified commit: `db9af51149596a8b7f2a38d0a157c2ccf6f3e4a0`
+- Verified commit: `95e01d2b2fcee6af935e52b55867fdaf7088ed7e`
 - Local verification checkout: `/storage/emulated/0/master one/one`
 - Local `HEAD` matched `origin/main` before verification.
 - Working tree was clean before verification.
@@ -24,8 +24,13 @@ The source checkout is on Android shared storage. The Cargo target directory was
 
 ```text
 cd "/storage/emulated/0/master one/one"
+git fetch origin main
+git reset --hard origin/main
+git clean -fd
 test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
 test -z "$(git status --porcelain)"
+rm -rf "$HOME/.one-target"
+mkdir -p "$HOME/.one-target"
 CARGO_TARGET_DIR="$HOME/.one-target" bash tools/verify_offline.sh
 ```
 
