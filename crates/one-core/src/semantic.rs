@@ -18,8 +18,9 @@ struct Analyzer { scopes: Vec<HashMap<String, Type>>, functions: HashMap<String,
 impl Analyzer {
     fn register_functions(&mut self, statements: &[Statement]) -> Result<(), DiagnosticBundle> {
         for statement in statements {
-            if let Statement::Function { name, params, .. } = statement {
-                if self.functions.insert(name.clone(), params.len()).is_some() { return Err(DiagnosticBundle::single(Diagnostic::error("E2013", format!("Pekerjaan '{}' sudah dibuat.", name), None))); }
+            if let Statement::Function { name, params, .. } = statement
+                && self.functions.insert(name.clone(), params.len()).is_some() {
+                return Err(DiagnosticBundle::single(Diagnostic::error("E2013", format!("Pekerjaan '{}' sudah dibuat.", name), None)));
             }
         }
         Ok(())
@@ -34,7 +35,18 @@ impl Analyzer {
             Statement::Action { name, args, span } => match name.as_str() {
                 "tampilkan" | "sapa" => { if args.len() != 1 { return Err(DiagnosticBundle::single(Diagnostic::error("E2004", format!("'{}' membutuhkan tepat satu nilai.", name), Some(span.clone())))); } self.infer(&args[0])?; }
                 "buat daftar" => { if args.len() != 1 || !matches!(&args[0], Expr::Identifier(_)) { return Err(DiagnosticBundle::single(Diagnostic::error("E2005", "'buat daftar' membutuhkan nama daftar.", Some(span.clone())))); } if let Expr::Identifier(name) = &args[0] { self.current_scope().insert(name.clone(), Type::List); } }
-                "tambahkan" | "hapus" => { if args.len() != 2 { return Err(DiagnosticBundle::single(Diagnostic::error("E2006", format!("'{}' membutuhkan nilai dan nama daftar.", name), Some(span.clone())))); } if let Expr::Identifier(list_name) = &args[1] { match self.lookup(list_name) { Some(Type::List | Type::Any) => {}, Some(_) => return Err(DiagnosticBundle::single(Diagnostic::error("E2007", format!("'{}' bukan daftar.", list_name), Some(span.clone())))), None => return Err(DiagnosticBundle::single(Diagnostic::error("E2008", format!("Saya belum menemukan daftar '{}'.", list_name), Some(span.clone())))), } } else { return Err(DiagnosticBundle::single(Diagnostic::error("E2009", "Nama daftar harus berupa identifier.", Some(span.clone())))); } }
+                "tambahkan" | "hapus" => {
+                    if args.len() != 2 { return Err(DiagnosticBundle::single(Diagnostic::error("E2006", format!("'{}' membutuhkan nilai dan nama daftar.", name), Some(span.clone())))); }
+                    if let Expr::Identifier(list_name) = &args[1] {
+                        match self.lookup(list_name) {
+                            Some(Type::List | Type::Any) => {},
+                            Some(_) => return Err(DiagnosticBundle::single(Diagnostic::error("E2007", format!("'{}' bukan daftar.", list_name), Some(span.clone())))),
+                            None => return Err(DiagnosticBundle::single(Diagnostic::error("E2008", format!("Saya belum menemukan daftar '{}'.", list_name), Some(span.clone())))),
+                        }
+                    } else {
+                        return Err(DiagnosticBundle::single(Diagnostic::error("E2009", "Nama daftar harus berupa identifier.", Some(span.clone()))));
+                    }
+                }
                 _ => { for arg in args { self.infer(arg)?; } }
             },
             Statement::Conditional { condition, then_block, else_block, .. } => { let ty = self.infer(condition)?; if !matches!(ty, Type::Boolean | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2010", "Kondisi harus menghasilkan boolean.", None))); } self.scopes.push(HashMap::new()); self.analyze_block(then_block)?; self.scopes.pop(); if !else_block.is_empty() { self.scopes.push(HashMap::new()); self.analyze_block(else_block)?; self.scopes.pop(); } }
