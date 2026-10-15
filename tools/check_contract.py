@@ -44,7 +44,7 @@ if "do not purchase an upgrade" not in release.lower():
     raise SystemExit("RELEASE CONTRACT: missing no-upgrade rule")
 
 index = (ROOT / "docs/README.md").read_text(encoding="utf-8")
-for path in required[8:27]:
+for path in required[9:]:
     if path not in index:
         raise SystemExit(f"DOC INDEX: missing reference to {path}")
 
