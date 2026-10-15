@@ -50,6 +50,8 @@ The command vocabulary is bounded and deterministic; One does not interpret arbi
 
 The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, strict v0.1 manifest validation, deterministic `.oneir`/`.onepkg` artifacts, and conformance/golden fixtures. `one test` can also execute sorted project-local conformance fixtures when present.
 
+The v0.1 grammar and parser support grammar-bounded multi-word names, explicit action productions including `sapa`, and production-scoped structural boundaries. Unsupported arbitrary first-word actions are rejected rather than interpreted implicitly.
+
 `one bangun` currently emits a deterministic `.oneir` IR/debug artifact. `one package` emits a validated deterministic `.onepkg` artifact. Neither is yet a native executable compiler or platform installer.
 
 ## Example
@@ -80,7 +82,9 @@ Start with `docs/README.md`, then read:
 
 ## Verification state
 
-The v0.1 source, contracts, fixtures, and offline verification paths are maintained in the canonical repository. The v0.1 release contract is **VERIFIED** based on independent Linux and Windows execution evidence for the canonical implementation commit lineage.
+The v0.1 source, contracts, fixtures, README, changelog, and offline verification paths are maintained in the canonical repository. The independently verified source checkpoint is `d17f2829187ec28031a4b4a94dd0e0af282f66b8`; independent Linux and Windows Server 2025 execution completed successfully in workflow run `38753437740`.
+
+The audit also closed the previously identified parser/contract mismatches: explicit action boundaries, the valid `sapa` action, multi-word loop/function names, and production-scoped structural-word boundaries are now covered by regression tests and aligned documentation.
 
 Earlier private hosted-runner provisioning failures remain historical evidence and are not relabeled as green. Independent Linux and Windows Server 2025 executions completed successfully through the verification infrastructure without purchasing a GitHub upgrade.
 
