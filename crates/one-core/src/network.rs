@@ -16,7 +16,7 @@ pub enum NetworkProtocolFamily { NameResolution, Tcp, Udp, Tls, Http, Quic }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NetworkTarget { Host(String), Address(String), Service { host: String, port: u16 } }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NetworkConnectionId(pub u64);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -82,12 +82,12 @@ pub struct ProtocolRegistry { entries: Vec<ProtocolCapability> }
 impl ProtocolRegistry {
     pub fn builtin() -> Self {
         Self { entries: vec![
-            ProtocolCapability { name: "DNS", family: NetworkProtocolFamily::NameResolution, status: ProtocolSupportStatus::Designed },
-            ProtocolCapability { name: "TCP", family: NetworkProtocolFamily::Tcp, status: ProtocolSupportStatus::Designed },
-            ProtocolCapability { name: "UDP", family: NetworkProtocolFamily::Udp, status: ProtocolSupportStatus::Designed },
-            ProtocolCapability { name: "TLS", family: NetworkProtocolFamily::Tls, status: ProtocolSupportStatus::Designed },
-            ProtocolCapability { name: "HTTP", family: NetworkProtocolFamily::Http, status: ProtocolSupportStatus::Designed },
-            ProtocolCapability { name: "QUIC/HTTP3", family: NetworkProtocolFamily::Quic, status: ProtocolSupportStatus::Specified },
+            ProtocolCapability { name: "DNS", family: NetworkProtocolFamily::NameResolution, status: ProtocolSupportStatus::Implemented },
+            ProtocolCapability { name: "TCP", family: NetworkProtocolFamily::Tcp, status: ProtocolSupportStatus::Implemented },
+            ProtocolCapability { name: "UDP", family: NetworkProtocolFamily::Udp, status: ProtocolSupportStatus::Implemented },
+            ProtocolCapability { name: "TLS", family: NetworkProtocolFamily::Tls, status: ProtocolSupportStatus::Implemented },
+            ProtocolCapability { name: "HTTP", family: NetworkProtocolFamily::Http, status: ProtocolSupportStatus::Implemented },
+            ProtocolCapability { name: "QUIC/HTTP3", family: NetworkProtocolFamily::Quic, status: ProtocolSupportStatus::Designed },
         ] }
     }
 
