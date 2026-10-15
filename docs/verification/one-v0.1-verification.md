@@ -10,17 +10,16 @@
 
 **Contract artifacts:** closed for the defined v0.1 implementation scope; the repository contains normative Markdown contracts, indexed derivatives, fixtures, executable conformance tests, and static/offline verification tooling.
 
-**Independent Linux/Termux execution evidence:** recorded for commit `db9af51149596a8b7f2a38d0a157c2ccf6f3e4a0` in `docs/verification/one-v0.1-linux-termux-2026-10-15.md`. That run passed contract consistency, build, clippy, workspace tests, CLI smoke, and deterministic `.oneir`/`.onepkg` checks.
+**Independent Linux/Termux execution evidence:** recorded for commit `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` in `docs/verification/one-v0.1-linux-termux-2026-10-15.md`. That run passed contract consistency, build, clippy, workspace tests, CLI smoke, and deterministic `.oneir`/`.onepkg` checks.
 
 **Hosted GitHub CI:** blocked by the GitHub-hosted runner environment at the time of this record.
 
 Observed GitHub Actions evidence:
 
-- One CI runs 39, 40, and 41: both Ubuntu and Windows jobs failed before usable step/log evidence was available.
-- A temporary runner-only workflow was executed independently; its Ubuntu job also failed before usable step/log evidence was available. The temporary workflow was removed after diagnosis.
-- One CI run `38623737388`: both platform jobs failed without usable step/log evidence.
-- A retry of the failed jobs in run `38623737388` was attempted without changing source; the retried Linux and Windows jobs again failed without usable step data.
-- After the contract-artifact updates, One CI run `38661412982` again produced completed Ubuntu and Windows jobs with `failure` conclusions and no usable step data. This reproduces the same runner-level evidence pattern.
+- One CI run `38715889895` targeted canonical commit `95e01d2b2fcee6af935e52b55867fdaf7088ed7e` using `windows-2022` and `ubuntu-latest`.
+- Both jobs completed with `failure` conclusions and no usable workflow steps or logs.
+- The Windows job was explicitly rerun; the rerun again completed with `failure` and no usable workflow steps or logs.
+- The same pre-step failure pattern had already been reproduced on earlier One CI runs and after a runner-label change.
 
 This repeated failure pattern does not establish a source-code failure. The repository therefore does **not** claim hosted-CI green status.
 
@@ -52,6 +51,6 @@ Before declaring One v0.1 fully verified:
 7. Conformance and golden tests are green.
 8. The contract-artifact consistency checker passes on the same commit being verified.
 
-The recorded Linux evidence is therefore evidence for its exact recorded commit, not a blanket claim about later documentation commits. After canonical changes, the final release candidate must be synchronized and independently re-verified.
+The recorded Linux evidence is evidence for its exact recorded commit. After canonical changes, the final release candidate must be synchronized and independently re-verified.
 
 Until all release conditions are evidenced on the final canonical commit, the release remains **implementation-complete but verification-pending** rather than falsely marked complete.
