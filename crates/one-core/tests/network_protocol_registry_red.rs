@@ -21,7 +21,7 @@ fn complete_inventory_contains_the_architectural_protocol_set() {
 fn verified_registry_entries_match_wire_implemented_protocols() {
     let registry = ProtocolRegistry::builtin();
     let verified: Vec<&str> = registry.entries().iter().filter(|entry| matches!(entry.status, ProtocolSupportStatus::Verified | ProtocolSupportStatus::Supported)).map(|entry| entry.name).collect();
-    assert_eq!(verified, vec!["DNS", "TCP", "UDP", "TLS", "HTTP", "HTTP/2", "QUIC", "TFTP", "NTP", "FTP", "SMTP", "POP3", "IMAP"]);
+    assert_eq!(verified, vec!["DNS", "TCP", "UDP", "TLS", "HTTP", "QUIC", "TFTP", "NTP", "FTP", "SMTP", "POP3", "IMAP", "HTTP/2"]);
 }
 
 #[test]
