@@ -7,6 +7,8 @@ pub mod ir;
 pub mod lexer;
 pub mod network;
 pub mod network_runtime;
+#[cfg(feature = "real-network")]
+pub mod network_tls;
 pub mod parser;
 pub mod platform;
 pub mod runtime;
@@ -24,6 +26,8 @@ pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrPro
 pub use lexer::lex;
 pub use network::{NetworkAddressKind, NetworkConnectionId, NetworkConstraints, NetworkDiagnosticStage, NetworkFailure, NetworkOperation, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport, ProtocolCapability, ProtocolRegistry, ProtocolSupportStatus};
 pub use network_runtime::{execute_http11, parse_http_response, HttpRequest, HttpResponse, NetworkEndpoint, NetworkRuntimeError, NetworkRuntimeResult, RealNetworkRuntime};
+#[cfg(feature = "real-network")]
+pub use network_tls::execute_https11;
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
 pub use token::{Span, Token, TokenKind};
