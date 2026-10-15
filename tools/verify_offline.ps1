@@ -22,12 +22,14 @@ cargo test --workspace --all-targets
 Write-Host '=== CLI SMOKE ==='
 $tmp = Join-Path $env:TEMP ('one-verify-' + [guid]::NewGuid().ToString())
 try {
-    cargo run --quiet --package one-cli -- new $tmp
+    cargo run --quiet --package one-cli -- buat $tmp
     Set-Content -Path (Join-Path $tmp 'src/main.one') -Value @('nama adalah "Budi"','tampilkan nama') -Encoding UTF8
-    cargo run --quiet --package one-cli -- check (Join-Path $tmp 'src/main.one')
-    cargo run --quiet --package one-cli -- run (Join-Path $tmp 'src/main.one')
-    cargo run --quiet --package one-cli -- ast (Join-Path $tmp 'src/main.one') | Out-Null
-    cargo run --quiet --package one-cli -- build (Join-Path $tmp 'src/main.one')
+    cargo run --quiet --package one-cli -- periksa (Join-Path $tmp 'src/main.one')
+    cargo run --quiet --package one-cli -- jalankan (Join-Path $tmp 'src/main.one')
+    cargo run --quiet --package one-cli -- 'lihat' 'struktur' (Join-Path $tmp 'src/main.one') | Out-Null
+    cargo run --quiet --package one-cli -- bangun (Join-Path $tmp 'src/main.one')
+    cargo run --quiet --package one-cli -- test $tmp
+    cargo run --quiet --package one-cli -- package $tmp
 }
 finally {
     if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
