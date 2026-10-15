@@ -18,12 +18,21 @@ fn http2_capability_gate_rejects_before_io() {
 #[test]
 fn http2_loopback_round_trip_uses_real_h2_frames() {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind");
+    listener.set_nonblocking(true).expect("nonblocking");
     let address = listener.local_addr().expect("address");
 
     let server = std::thread::spawn(move || {
         let runtime = tokio::runtime::Runtime::new().expect("runtime");
         runtime.block_on(async move {
-            let (stream, _) = listener.accept().expect("accept");
+            let stream = loop {
+                match listener.accept() {
+                    Ok((stream, _)) => break stream,
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        tokio::time::sleep(Duration::from_millis(5)).await;
+                    }
+                    Err(error) => panic!("accept: {error}"),
+                }
+            };
             let mut connection = h2::server::handshake(
                 tokio::net::TcpStream::from_std(stream).expect("tcp"),
             )
@@ -33,6 +42,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
                 assert_eq!(request.version(), http::Version::HTTP_2);
                 assert_eq!(request.method(), "GET");
                 assert_eq!(request.uri().path(), "/hello");
+                assert_eq!(request.uri().authority(), Some(&format!("{}:{}", address.ip(), address.port())));
                 let response = http::Response::builder()
                     .status(200)
                     .body(())
