@@ -20,6 +20,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind");
     listener.set_nonblocking(true).expect("nonblocking");
     let address = listener.local_addr().expect("address");
+    let expected_authority = format!("{}:{}", address.ip(), address.port());
 
     let server = std::thread::spawn(move || {
         let runtime = tokio::runtime::Runtime::new().expect("runtime");
@@ -42,7 +43,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
                 assert_eq!(request.version(), http::Version::HTTP_2);
                 assert_eq!(request.method(), "GET");
                 assert_eq!(request.uri().path(), "/hello");
-                assert_eq!(request.uri().authority(), Some(&format!("{}:{}", address.ip(), address.port())));
+                assert_eq!(request.uri().authority().map(|value| value.as_str()), Some(expected_authority.as_str()));
                 let response = http::Response::builder()
                     .status(200)
                     .body(())
@@ -58,7 +59,7 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
 
     let capabilities = CapabilitySet::none().allow(one_core::Capability::NetworkConnect);
     let response: HttpResponse = execute_http2(
-        &format!("{}:{}", address.ip(), address.port()),
+        &expected_authority,
         "/hello",
         &capabilities,
         Duration::from_secs(2),
