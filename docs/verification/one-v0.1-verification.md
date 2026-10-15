@@ -10,7 +10,7 @@
 
 **Contract artifacts:** closed for the defined v0.1 implementation scope; the repository contains normative Markdown contracts, indexed derivatives, fixtures, executable conformance tests, and static/offline verification tooling.
 
-**Independent Linux/Termux execution evidence:** recorded for commit `b4b60c82656a2564894cf7398e47984cd5d9e388` in `docs/verification/one-v0.1-linux-termux-2026-10-15.md`. That run passed contract consistency, build, clippy, workspace tests, CLI smoke, and deterministic `.oneir`/`.onepkg` checks.
+**Independent Linux/Termux execution evidence:** recorded for commit `0892020874b714d109521c013b256ed23219acb3` in `docs/verification/one-v0.1-linux-termux-2026-10-15.md`. That run passed contract consistency, build, clippy, workspace tests, CLI smoke, and deterministic `.oneir`/`.onepkg` checks.
 
 **Hosted GitHub CI:** blocked by the GitHub-hosted runner environment at the time of this record.
 
