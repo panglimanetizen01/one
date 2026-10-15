@@ -4,6 +4,9 @@ use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
 
+const MAX_MAIL_LINE: usize = 64 * 1024;
+const MAX_IMAP_BODY: usize = 16 * 1024 * 1024;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MailProtocolError {
     CapabilityDenied,
@@ -30,6 +33,10 @@ fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet
     Ok(stream)
 }
 
+fn validate_command_field(value: &str) -> Result<(), MailProtocolError> {
+    if value.contains('\r') || value.contains('\n') { Err(MailProtocolError::InvalidResponse) } else { Ok(()) }
+}
+
 fn read_line(stream: &mut TcpStream) -> Result<String, MailProtocolError> {
     let mut bytes = Vec::new();
     let mut byte = [0u8; 1];
@@ -37,12 +44,13 @@ fn read_line(stream: &mut TcpStream) -> Result<String, MailProtocolError> {
         stream.read_exact(&mut byte).map_err(io_error)?;
         bytes.push(byte[0]);
         if bytes.ends_with(b"\r\n") { break; }
-        if bytes.len() > 64 * 1024 { return Err(MailProtocolError::InvalidResponse); }
+        if bytes.len() > MAX_MAIL_LINE { return Err(MailProtocolError::InvalidResponse); }
     }
     String::from_utf8(bytes).map_err(|_| MailProtocolError::InvalidResponse)
 }
 
 fn command(stream: &mut TcpStream, command: &str) -> Result<String, MailProtocolError> {
+    validate_command_field(command)?;
     stream.write_all(command.as_bytes()).map_err(io_error)?;
     stream.write_all(b"\r\n").map_err(io_error)?;
     read_line(stream)
@@ -63,6 +71,8 @@ impl Pop3Client {
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
+        validate_command_field(user)?;
+        validate_command_field(password)?;
         require_ok(&command(&mut self.stream, &format!("USER {user}"))?, "+OK")?;
         require_ok(&command(&mut self.stream, &format!("PASS {password}"))?, "+OK")
     }
@@ -102,6 +112,7 @@ impl ImapClient {
     }
 
     fn send(&mut self, command_text: &str) -> Result<(String, Vec<String>), MailProtocolError> {
+        validate_command_field(command_text)?;
         let tag = self.tag();
         self.stream.write_all(format!("{tag} {command_text}\r\n").as_bytes()).map_err(io_error)?;
         let mut untagged = Vec::new();
@@ -115,11 +126,14 @@ impl ImapClient {
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
+        validate_command_field(user)?;
+        validate_command_field(password)?;
         let (status, _) = self.send(&format!("LOGIN {user} {password}"))?;
         if status.starts_with("OK") { Ok(()) } else { Err(MailProtocolError::Server(status)) }
     }
 
     pub fn select(&mut self, mailbox: &str) -> Result<u32, MailProtocolError> {
+        validate_command_field(mailbox)?;
         let (status, lines) = self.send(&format!("SELECT {mailbox}"))?;
         if !status.starts_with("OK") { return Err(MailProtocolError::Server(status)); }
         for line in lines {
@@ -139,6 +153,7 @@ impl ImapClient {
         let open = line.rfind('{').ok_or(MailProtocolError::InvalidResponse)?;
         let close = line[open..].find('}').map(|offset| open + offset).ok_or(MailProtocolError::InvalidResponse)?;
         let length: usize = line[open + 1..close].parse().map_err(|_| MailProtocolError::InvalidResponse)?;
+        if length > MAX_IMAP_BODY { return Err(MailProtocolError::InvalidResponse); }
         let mut body = vec![0u8; length];
         self.stream.read_exact(&mut body).map_err(io_error)?;
         if !read_line(&mut self.stream)?.trim_end().ends_with(')') { return Err(MailProtocolError::InvalidResponse); }
@@ -156,5 +171,11 @@ mod tests {
     fn mail_clients_require_network_connect_capability_before_io() {
         assert!(matches!(Pop3Client::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
         assert!(matches!(ImapClient::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
+    }
+
+    #[test]
+    fn mail_commands_reject_crlf_injection() {
+        assert!(matches!(validate_command_field("safe\r\nNOOP"), Err(MailProtocolError::InvalidResponse)));
+        assert!(validate_command_field("safe value").is_ok());
     }
 }
