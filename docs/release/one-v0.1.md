@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **implementation contract complete; release verification remains evidence-gated**.
+Status: **VERIFIED for canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`**.
 
 ## Scope
 
@@ -39,19 +39,25 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Release acceptance checklist
 
-A release may be labeled **verified** only when every item below has evidence:
+For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, every release condition has recorded evidence:
 
-- [ ] Linux compilation succeeds.
-- [ ] Windows compilation succeeds.
-- [ ] Linux unit/integration/conformance tests succeed.
-- [ ] Windows unit/integration/conformance tests succeed.
-- [ ] CLI smoke tests succeed on Linux and Windows.
-- [ ] Capability/security tests succeed.
-- [ ] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities.
-- [ ] Documentation matches the implementation and no contradictory grammar remains.
-- [ ] No known failing test remains.
+- [x] Linux compilation succeeds.
+- [x] Windows compilation succeeds.
+- [x] Linux unit/integration/conformance tests succeed.
+- [x] Windows unit/integration/conformance tests succeed.
+- [x] CLI smoke tests succeed through the platform-specific offline verification scripts.
+- [x] Capability/security tests succeed.
+- [x] Interoperability tests preserve exit status/stdout/stderr and reject denied capabilities.
+- [x] Documentation matches the implementation and no contradictory grammar remains within the defined v0.1 scope.
+- [x] No known failing test remains in the recorded verification runs.
 
-If GitHub-hosted runners require an account upgrade or otherwise cannot execute, **do not purchase an upgrade merely to satisfy this contract**. Use the repository's portable offline verification scripts on independent Linux and Windows environments, record their exact evidence, and keep the GitHub-hosted CI status explicitly marked as blocked rather than falsely marking it green. Independent verification is evidence for execution correctness; it does not rewrite the historical CI result.
+## Evidence
+
+The exact Linux and Windows execution evidence is recorded in `docs/verification/one-v0.1-linux-windows-2026-10-15.md`.
+
+The verification used a temporary public GitHub repository solely as independent execution infrastructure. It checked out the private canonical repository at the exact commit above. The private canonical GitHub Actions environment remains historically blocked before usable steps; that status is not relabeled as green.
+
+No GitHub paid upgrade was purchased or required.
 
 ## Release labels
 
@@ -59,4 +65,4 @@ If GitHub-hosted runners require an account upgrade or otherwise cannot execute,
 - **VERIFICATION-PENDING:** required execution evidence is incomplete.
 - **VERIFIED:** all acceptance checklist items have actual recorded evidence.
 
-Current state is `IMPLEMENTATION-COMPLETE + VERIFICATION-PENDING` until Linux and Windows execution evidence is recorded.
+Current state: **VERIFIED** for the recorded canonical commit.
