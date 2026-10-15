@@ -13,7 +13,9 @@
 - Added explicit capability model.
 - Added cross-platform process interoperability primitive.
 - Added core standard-library primitives.
-- Added `one new`, `one check`, `one run`, `one build`, and `one ast` commands.
+- Added deterministic multi-word name boundary enforcement and end-to-end core pipeline conformance coverage.
+- Added the complete v0.1 CLI command surface: conversational Indonesian commands plus technical aliases, testing, packaging, version, and help.
+- Added deterministic `.oneir` build and `.onepkg` package artifacts within the v0.1 implementation boundary.
 - Added core pipeline, function/event, security, project, and CLI integration tests.
 - Added executable conformance fixtures and golden output contracts.
 - Added Linux/Windows offline verification scripts so verification does not depend on purchasing hosted CI capacity.
