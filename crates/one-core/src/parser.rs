@@ -93,7 +93,7 @@ impl Parser {
             TokenKind::Text => Ok(Expr::Text(token.lexeme)), TokenKind::Number => token.lexeme.parse::<i64>().map(Expr::Number).map_err(|_| self.error("E1015", "Angka tidak valid.")),
             TokenKind::Identifier | TokenKind::Keyword => match token.lexeme.as_str() {
                 "benar" => Ok(Expr::Boolean(true)), "salah" => Ok(Expr::Boolean(false)), "tidak" if self.lexeme_is("ada") => { self.advance(); Ok(Expr::Nothing) },
-                _ => { let mut words = vec![token.lexeme]; while self.is_word() && !self.lexeme_is("dengan") && self.match_operator().is_none() { words.push(self.advance().lexeme); } let name = words.join(" "); if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary()?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary()?); } return Ok(Expr::Call { name, args }); } Ok(Expr::Identifier(name)) }
+                _ => { let mut words = vec![token.lexeme]; while self.is_word() && !self.lexeme_is("dengan") && !self.lexeme_is("ke") && !self.lexeme_is("dari") && self.match_operator().is_none() { words.push(self.advance().lexeme); } let name = words.join(" "); if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary()?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary()?); } return Ok(Expr::Call { name, args }); } Ok(Expr::Identifier(name)) }
             },
             _ => Err(self.error("E1016", "Token ini tidak dapat menjadi ekspresi.")),
         }
