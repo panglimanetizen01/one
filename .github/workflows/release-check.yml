@@ -16,8 +16,8 @@ jobs:
         run: bash tools/verify_offline.sh
 
   windows:
-    name: release-check (windows-latest)
-    runs-on: windows-latest
+    name: release-check (windows-2022)
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - name: Run offline verification contract
