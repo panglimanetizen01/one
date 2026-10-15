@@ -50,13 +50,12 @@ pub fn tftp_read(socket: &UdpSocket, server: SocketAddr, filename: &str, timeout
     socket.set_write_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let request = tftp_request(1, filename)?;
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
-    let mut peer = server;
     let mut expected_block = 1u16;
     let mut output = Vec::new();
     let mut buffer = [0u8; 4 + 512];
     loop {
         let (size, from) = socket.recv_from(&mut buffer).map_err(timeout)?;
-        peer = from;
+        let peer = from;
         let (opcode, block, payload) = parse_tftp_packet(&buffer[..size])?;
         match opcode {
             3 if block == expected_block => {
@@ -82,10 +81,8 @@ pub fn tftp_write(socket: &UdpSocket, server: SocketAddr, filename: &str, data: 
     socket.set_write_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let request = tftp_request(2, filename)?;
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
-    let mut peer = server;
     let mut buffer = [0u8; 4 + 512];
-    let (size, from) = socket.recv_from(&mut buffer).map_err(timeout)?;
-    peer = from;
+    let (size, peer) = socket.recv_from(&mut buffer).map_err(timeout)?;
     let (opcode, block, payload) = parse_tftp_packet(&buffer[..size])?;
     if opcode == 5 { return Err(tftp_error(payload)); }
     if opcode != 4 || block != 0 { return Err(DatagramProtocolError::InvalidPacket); }
