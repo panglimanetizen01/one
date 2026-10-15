@@ -59,7 +59,7 @@ impl Parser {
     }
     fn parse_name_reference(&mut self) -> Result<Expr, DiagnosticBundle> {
         if !self.is_word() { return Err(self.error("E1016", "Nama harus berupa kata atau nama gabungan.")); }
-        let mut words = Vec::new(); while self.is_word() && !self.lexeme_is("dengan") && !self.lexeme_is("dan") { words.push(self.advance().lexeme); }
+        let mut words = Vec::new(); while self.is_word() { words.push(self.advance().lexeme); }
         Ok(Expr::Identifier(words.join(" ")))
     }
     fn parse_conditional(&mut self) -> Result<Statement, DiagnosticBundle> {
@@ -88,12 +88,12 @@ impl Parser {
     fn parse_expression_until_boundary(&mut self, boundary: &str) -> Result<Expr, DiagnosticBundle> { self.parse_expression_until(Some(boundary)) }
     fn parse_expression_until(&mut self, boundary: Option<&str>) -> Result<Expr, DiagnosticBundle> {
         if self.at(TokenKind::Newline) || self.at(TokenKind::Eof) || self.at(TokenKind::Dedent) || boundary.is_some_and(|value| self.lexeme_is(value)) { return Err(self.error("E1013", "Pernyataan membutuhkan nilai atau ekspresi.")); }
-        let mut expr = self.parse_primary_with_boundary(boundary)?;
+        let mut expr = self.parse_primary_with_boundary(boundary, false)?;
         loop {
             if self.at(TokenKind::Newline) || self.at(TokenKind::Eof) || self.at(TokenKind::Dedent) || boundary.is_some_and(|value| self.lexeme_is(value)) { break; }
             let (op, consumed) = self.match_operator().ok_or_else(|| self.error("E1014", "Ekspresi mengandung kata yang tidak sesuai grammar."))?;
             for _ in 0..consumed { self.advance(); }
-            let right = self.parse_primary_with_boundary(boundary)?;
+            let right = self.parse_primary_with_boundary(boundary, false)?;
             expr = Expr::Binary { left: Box::new(expr), op, right: Box::new(right) };
             if matches!(op, BinaryOp::AtLeast | BinaryOp::AtMost) && self.lexeme_is("tahun") { self.advance(); }
         }
@@ -102,12 +102,12 @@ impl Parser {
     fn match_operator(&self) -> Option<(BinaryOp, usize)> {
         if self.lexeme_is("ditambah") { return Some((BinaryOp::Add, 1)); } if self.lexeme_is("dikurangi") { return Some((BinaryOp::Subtract, 1)); } if self.lexeme_is("dikali") { return Some((BinaryOp::Multiply, 1)); } if self.lexeme_is("dibagi") { return Some((BinaryOp::Divide, 1)); } if self.lexeme_is("sudah") { return Some((BinaryOp::AtLeast, 1)); } if self.lexeme_is("belum") { return Some((BinaryOp::AtMost, 1)); } if self.lexeme_is("sama") && self.peek_lexeme(1) == Some("dengan") { return Some((BinaryOp::Equal, 2)); } if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("besar") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Greater, 3)); } if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("kecil") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Less, 3)); } None
     }
-    fn parse_primary_with_boundary(&mut self, boundary: Option<&str>) -> Result<Expr, DiagnosticBundle> {
+    fn parse_primary_with_boundary(&mut self, boundary: Option<&str>, stop_at_and: bool) -> Result<Expr, DiagnosticBundle> {
         let token = self.advance(); match token.kind {
             TokenKind::Text => Ok(Expr::Text(token.lexeme)), TokenKind::Number => token.lexeme.parse::<i64>().map(Expr::Number).map_err(|_| self.error("E1015", "Angka tidak valid.")),
             TokenKind::Identifier | TokenKind::Keyword => match token.lexeme.as_str() {
                 "benar" => Ok(Expr::Boolean(true)), "salah" => Ok(Expr::Boolean(false)), "tidak" if self.lexeme_is("ada") => { self.advance(); Ok(Expr::Nothing) },
-                _ => { let mut words = vec![token.lexeme]; while self.is_word() && !self.lexeme_is("dengan") && !self.lexeme_is("dan") && !self.match_operator().is_some() && !boundary.is_some_and(|value| self.lexeme_is(value)) { words.push(self.advance().lexeme); } let name = words.join(" "); if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary_with_boundary(None)?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary_with_boundary(None)?); } return Ok(Expr::Call { name, args }); } Ok(Expr::Identifier(name)) }
+                _ => { let mut words = vec![token.lexeme]; while self.is_word() && !self.lexeme_is("dengan") && !self.match_operator().is_some() && !boundary.is_some_and(|value| self.lexeme_is(value)) && !(stop_at_and && self.lexeme_is("dan")) { words.push(self.advance().lexeme); } let name = words.join(" "); if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary_with_boundary(None, true)?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary_with_boundary(None, true)?); } return Ok(Expr::Call { name, args }); } Ok(Expr::Identifier(name)) }
             },
             _ => Err(self.error("E1016", "Token ini tidak dapat menjadi ekspresi.")),
         }
