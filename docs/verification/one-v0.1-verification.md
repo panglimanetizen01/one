@@ -4,43 +4,49 @@
 
 `panglimanetizen01/one`, branch `main`.
 
-## Verification state
+## Current audit state
 
-**Implementation artifacts:** complete for the defined v0.1 scope.
+The repository has been audited after integration of the native HTTP/2 runtime. The contract-artifact checker was strengthened to require the concrete artifacts referenced by `docs/README.md`, including retained and derivative contracts.
 
-**Contract artifacts:** closed for the defined v0.1 implementation scope; the repository contains normative Markdown contracts, indexed derivatives, fixtures, executable conformance tests, and static/offline verification tooling.
+The current canonical source has not yet received a fresh exact-SHA verification run after these audit/documentation changes. Therefore this record remains **VERIFICATION-PENDING** until the temporary public verification mirror checks out the exact current `main` commit and passes all stages.
 
-**Final canonical source commit verified:** `69c4918e6845fdbbd79495b3fa2c59798831bce0`.
+## Required execution gate
 
-**Linux execution evidence:** green on `ubuntu-latest` in public verification run `38747320152`, job `116464264565`, against the canonical commit above. The job passed canonical SHA verification, contract-artifact checks, build, clippy with `-D warnings`, workspace tests, and `tools/verify_offline.sh`.
+The exact current canonical commit must pass, on both Ubuntu and Windows Server 2025:
 
-**Windows execution evidence:** green on Windows Server 2025 (`windows-2025`) in public verification run `38744988440`, job `116460500173`, against the canonical commit above. The job passed canonical SHA verification, contract-artifact checks, build, clippy with `-D warnings`, workspace tests, and `tools/verify_offline.ps1`.
+- canonical SHA verification;
+- contract-artifact consistency check;
+- workspace build with all targets;
+- Clippy with `-D warnings`;
+- all workspace tests with all targets;
+- real network runtime tests;
+- platform-specific offline verification;
+- deterministic `.oneir` and `.onepkg` smoke checks included by the offline verifiers.
 
-The complete evidence record is `docs/verification/one-v0.1-linux-windows-2026-10-15.md`.
+## Contract-artifact gate
 
-**Hosted GitHub CI:** blocked in the private canonical repository because GitHub-hosted runner jobs fail before producing usable workflow-step evidence. This historical condition is not relabeled as green.
+`tools/check_contract.py` now checks:
 
-## Alternative verification path
+- root release/security/contribution/CI artifacts;
+- normative foundation, language, network, implementation, verification, and release contracts;
+- retained v0.1 contract artifacts;
+- executable conformance and CLI derivatives;
+- offline verification scripts;
+- every concrete artifact referenced by `docs/README.md`;
+- valid/invalid/golden fixture minimums;
+- normative grammar fixture markers;
+- the no-GitHub-upgrade rule.
 
-No paid GitHub upgrade is required by the project contract. The canonical repository contains:
+## Independent verification infrastructure
 
-- `tools/check_contract.py` for static contract-artifact consistency checks;
-- `tools/verify_offline.sh` for Linux environments;
-- `tools/verify_offline.ps1` for Windows environments;
-- `.github/workflows/release-check.yml` as an optional hosted release gate when runners are available.
+The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. It checks out the private canonical repository at an exact SHA. GitHub `main` remains the source of truth.
 
-Independent verification was executed in a temporary public repository which checked out the private canonical repository at the exact commit being verified. The public mirror is verification infrastructure only; it is not the source of truth.
+No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
 
-## Local verification policy
+## Historical evidence
 
-The GitHub repository remains canonical. A clean local/Termux checkout may be used only as an independent verification environment after the canonical source/docs/tests are in place. Local changes are not treated as source-of-truth changes.
-
-## Release evidence
-
-For canonical commit `69c4918e6845fdbbd79495b3fa2c59798831bce0`, the required execution evidence is recorded for both Linux and Windows. The same verification jobs also exercised the contract-artifact checker, build, clippy, workspace tests, and platform-specific offline verification scripts.
-
-The release remains honest about the distinction between independent execution evidence and private hosted-CI status: the former is green; the latter remains blocked by runner provisioning before usable steps.
+Previous independent verification runs remain historical evidence only and must not be relabeled as verification of the current canonical SHA. The latest fully green network verification before the current audit was run `38781871063`, against canonical implementation commit `c2fecc0a488d335c73ff3abcc37f2f5d28a59a1f`, with both Linux and Windows passing contract checks, build, Clippy, all workspace tests, real-network runtime tests, and offline verification.
 
 ## Result
 
-**One v0.1 execution verification is COMPLETE for the recorded canonical commit.**
+**Current canonical verification: PENDING fresh exact-SHA audit run.**
