@@ -35,6 +35,8 @@ fn http2_loopback_round_trip_uses_real_h2_frames() {
                     Err(error) => panic!("accept: {error}"),
                 }
             };
+            let mut stream = stream;
+            stream.set_nonblocking(true).expect("accepted stream nonblocking");
             let mut connection = h2::server::handshake(
                 tokio::net::TcpStream::from_std(stream).expect("tcp"),
             )
