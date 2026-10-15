@@ -57,7 +57,7 @@ The exact Linux and Windows execution evidence is recorded in `docs/verification
 
 The verification used a temporary public GitHub repository solely as independent execution infrastructure. It checked out the private canonical repository at the exact commit above. The private canonical GitHub Actions environment remains historically blocked before usable steps; that status is not relabeled as green.
 
-No GitHub paid upgrade was purchased or required.
+No GitHub paid upgrade was purchased or required. If GitHub-hosted runners require an account upgrade, **do not purchase an upgrade merely to satisfy this contract**; use the portable offline verification path instead.
 
 ## Release labels
 
