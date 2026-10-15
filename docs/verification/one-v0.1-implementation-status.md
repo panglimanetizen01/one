@@ -16,7 +16,7 @@
 | Capability boundary | IMPLEMENTED | `capability.rs`, `platform.rs`, security tests |
 | Standard library core | IMPLEMENTED | `stdlib.rs` and stdlib contract |
 | Process interoperability | IMPLEMENTED | `interop.rs` and interoperability tests |
-| CLI | IMPLEMENTED | `one new/check/run/build/ast` |
+| CLI | IMPLEMENTED | conversational commands plus technical aliases (`buat/new`, `periksa/check`, `jalankan/run`, `test`, `bangun/build`, `package`, `lihat struktur/ast`, `version`, `help`) |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
 | Conformance runner | ADDED | `crates/one-core/tests/conformance.rs` |
