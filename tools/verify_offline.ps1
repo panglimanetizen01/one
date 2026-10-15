@@ -7,6 +7,9 @@ try { Write-Host "commit: $(git rev-parse HEAD)" } catch { Write-Host 'commit: u
 Write-Host "rust: $(rustc --version)"
 Write-Host "cargo: $(cargo --version)"
 
+Write-Host '=== CONTRACT ARTIFACTS ==='
+python tools/check_contract.py
+
 Write-Host '=== BUILD ==='
 cargo build --workspace --all-targets
 
