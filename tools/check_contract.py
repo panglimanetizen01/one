@@ -44,8 +44,24 @@ if "do not purchase an upgrade" not in release.lower():
     raise SystemExit("RELEASE CONTRACT: missing no-upgrade rule")
 
 index = (ROOT / "docs/README.md").read_text(encoding="utf-8")
+index_references = set()
+for line in index.splitlines():
+    stripped = line.strip()
+    if not stripped.startswith("-") or "`" not in stripped:
+        continue
+    start = stripped.find("`") + 1
+    end = stripped.find("`", start)
+    if end > start:
+        index_references.add(stripped[start:end])
+
 for path in required[9:]:
-    if path not in index:
+    if path.startswith("docs/"):
+        expected = path.removeprefix("docs/")
+    elif path.startswith("tests/") or path.startswith("crates/") or path.startswith("tools/"):
+        expected = "../" + path
+    else:
+        continue
+    if expected not in index_references:
         raise SystemExit(f"DOC INDEX: missing reference to {path}")
 
 valid = sorted((ROOT / "tests/conformance/valid").glob("*.one"))
