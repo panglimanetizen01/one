@@ -81,7 +81,6 @@ async fn execute_http2_async(
         .send_request(request, true)
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
     let mut response = response_future
-        .await
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
 
     let status = response.status().as_u16();
