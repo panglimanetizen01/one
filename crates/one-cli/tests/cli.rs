@@ -88,3 +88,22 @@ fn package_command_writes_manifested_artifact() {
     assert!(artifact.is_file());
     let _ = fs::remove_dir_all(&root);
 }
+
+#[test]
+fn build_and_package_artifacts_are_byte_deterministic() {
+    let root = std::env::temp_dir().join(format!("one-project-deterministic-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"deterministik\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "nama adalah \"Budi\"\ntampilkan nama\n").unwrap();
+    let source = root.join("src/main.one");
+    let source_arg = source.to_str().unwrap();
+    assert!(run(&["bangun", source_arg]).status.success());
+    let build_artifact = fs::read(root.join("src/target/main.oneir")).unwrap();
+    assert!(run(&["bangun", source_arg]).status.success());
+    assert_eq!(build_artifact, fs::read(root.join("src/target/main.oneir")).unwrap());
+    assert!(run(&["package", root.to_str().unwrap()]).status.success());
+    let package_artifact = fs::read(root.join("target/deterministik-0.1.0.onepkg")).unwrap();
+    assert!(run(&["package", root.to_str().unwrap()]).status.success());
+    assert_eq!(package_artifact, fs::read(root.join("target/deterministik-0.1.0.onepkg")).unwrap());
+    let _ = fs::remove_dir_all(&root);
+}
