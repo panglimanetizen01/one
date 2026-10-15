@@ -76,13 +76,15 @@ Start with `docs/README.md`, then read:
 - `docs/spec/one-v0.1-cli-contract.md`
 - `docs/spec/one-v0.1-conformance-suite.md`
 - `docs/release/one-v0.1.md`
-- `docs/verification/one-v0.1-evidence-matrix.md`
+- `docs/verification/one-v0.1-linux-windows-2026-10-15.md`
 
 ## Verification state
 
-The source, contracts, fixtures, and offline verification paths are maintained in the canonical repository. GitHub-hosted CI has a documented runner blocker: recent Linux and Windows jobs failed before usable step/log evidence was available. The project therefore must **not** claim CI-green or fully verified status until actual execution evidence exists.
+The v0.1 source, contracts, fixtures, and offline verification paths are maintained in the canonical repository. The v0.1 release contract is **VERIFIED** based on independent Linux and Windows execution evidence for the canonical implementation commit lineage.
 
-If hosted GitHub runners require an account upgrade, do not purchase one merely for this project. Use `tools/verify_offline.sh` on Linux or `tools/verify_offline.ps1` on Windows, record the exact toolchain/commit/results, and keep hosted-CI status explicitly marked as blocked.
+Earlier private hosted-runner provisioning failures remain historical evidence and are not relabeled as green. Independent Linux and Windows Server 2025 executions completed successfully through the verification infrastructure without purchasing a GitHub upgrade.
+
+If GitHub-hosted runners require an account upgrade, do not purchase one merely for this project. Use `tools/verify_offline.sh` on Linux or `tools/verify_offline.ps1` on Windows and record exact execution evidence.
 
 ## Canonical source
 
