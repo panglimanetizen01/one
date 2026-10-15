@@ -159,6 +159,9 @@ fn main() -> ExitCode {
                 ExitCode::from(1)
             }
         },
-        _ => unreachable!("command is normalized before dispatch"),
+        _ => {
+            usage();
+            ExitCode::from(2)
+        }
     }
 }
