@@ -20,11 +20,19 @@ fn complete_inventory_contains_the_architectural_protocol_set() {
 }
 
 #[test]
+fn verified_registry_entries_match_wire_implemented_protocols() {
+    let registry = ProtocolRegistry::builtin();
+    let verified: Vec<&str> = registry.entries().iter().filter(|entry| matches!(entry.status, ProtocolSupportStatus::Verified | ProtocolSupportStatus::Supported)).map(|entry| entry.name).collect();
+    assert_eq!(verified, vec!["DNS", "TCP", "UDP", "TLS", "HTTP", "QUIC", "TFTP", "NTP"]);
+}
+
+#[test]
 fn only_real_implementations_can_be_verified_or_supported() {
     let registry = ProtocolRegistry::builtin();
     for entry in registry.entries() {
         if matches!(entry.status, ProtocolSupportStatus::Verified | ProtocolSupportStatus::Supported) {
-            assert!(matches!(entry.family, NetworkProtocolFamily::NameResolution | NetworkProtocolFamily::Tcp | NetworkProtocolFamily::Udp | NetworkProtocolFamily::Tls | NetworkProtocolFamily::Http | NetworkProtocolFamily::Quic));
+            assert!(matches!(entry.name, "DNS" | "TCP" | "UDP" | "TLS" | "HTTP" | "QUIC" | "TFTP" | "NTP"));
+            assert!(matches!(entry.family, NetworkProtocolFamily::NameResolution | NetworkProtocolFamily::Tcp | NetworkProtocolFamily::Udp | NetworkProtocolFamily::Tls | NetworkProtocolFamily::Http | NetworkProtocolFamily::Quic | NetworkProtocolFamily::Application));
         }
     }
 }
