@@ -22,3 +22,14 @@ fn assignment_keeps_multi_word_name_boundary() {
     let result = interpreter.execute(&ir).expect("multi-word assignment should execute");
     assert_eq!(result.output, vec!["Siti"]);
 }
+
+#[test]
+fn expression_name_can_contain_structural_words() {
+    let source = "nama ke adalah \"Kunci\"\ntampilkan nama ke\n";
+    let program = parse(source).expect("structural word should remain name content outside its active boundary");
+    let typed = analyze(&program).expect("name should analyze");
+    let ir = lower(&typed).expect("name should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let result = interpreter.execute(&ir).expect("name should execute");
+    assert_eq!(result.output, vec!["Kunci"]);
+}
