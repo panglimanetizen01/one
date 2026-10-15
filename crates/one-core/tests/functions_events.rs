@@ -24,3 +24,13 @@ fn registers_and_dispatches_event() {
     let result = interpreter.dispatch_event("pengguna menekan tombol beli").expect("dispatch");
     assert_eq!(result.output, vec!["dibeli"]);
 }
+
+#[test]
+fn dispatched_event_uses_program_state() {
+    let source = "nama adalah \"Budi\"\nketika pengguna menekan tombol beli\n    tampilkan nama\n";
+    let ir = compile(source);
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    interpreter.execute(&ir).expect("execute");
+    let result = interpreter.dispatch_event("pengguna menekan tombol beli").expect("dispatch");
+    assert_eq!(result.output, vec!["Budi"]);
+}
