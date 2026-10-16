@@ -14,19 +14,6 @@ CLI adalah pintu masuk command-line One v0.1.
 | `one version` | — | melihat versi |
 | `one help` | — | melihat bantuan |
 
-## Urutan umum
-
-Untuk project baru:
-
-```text
-one buat project-saya
-one periksa project-saya/src/main.one
-one jalankan project-saya/src/main.one
-one test project-saya
-```
-
-Perintah harus dijalankan dengan argumen yang sesuai kontrak. CLI tidak menafsirkan kalimat natural-language bebas sebagai command.
-
 ## Menjalankan orchestration DNS
 
 Vertical slice orchestration pertama yang tersedia secara eksperimental adalah pencarian alamat DNS melalui source One `cari alamat`.
@@ -68,14 +55,6 @@ Pada v0.1 saat ini:
 
 Keduanya **belum** boleh disebut sebagai native executable compiler atau platform installer.
 
-## Exit status
-
-- `0` — command berhasil;
-- `1` — kegagalan source, semantic, runtime, atau build-domain;
-- `2` — kesalahan penggunaan CLI atau environment/tool.
-
-Untuk kontrak lengkap, lihat `docs/spec/one-v0.1-cli-contract.md`.
-
 ## Verification boundary
 
-Current exact-SHA cross-platform evidence is recorded in `docs/verification/one-v0.1-verification.md` for canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, independently executed in run `38895405559` on Ubuntu and Windows Server 2025.
+Current exact-SHA cross-platform evidence is recorded in `docs/verification/one-v0.1-verification.md` for canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`, independently executed in run `38896135846` on Ubuntu and Windows Server 2025.
