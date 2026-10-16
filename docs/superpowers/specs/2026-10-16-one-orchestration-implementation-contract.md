@@ -1,6 +1,6 @@
 # One Orchestration Implementation Contract
 
-Status: Verified on canonical `main` tree and merged into `main` at `8a8a3af449782b457ca1fc109b71fe9fdb006373`.
+Status: Verified on canonical `main` through independent exact-SHA cross-platform run `38895405559` against canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`.
 
 ## Semantic boundary
 
@@ -49,12 +49,12 @@ Current conformance fixtures cover Indonesian and English aliases for network co
 
 The first real adapter is `network.dns.resolve`. It uses the platform resolver directly, accepts a typed target scope, performs no shell/command-string substitution, and is exercised with a loopback target for deterministic integration evidence.
 
-## Verification evidence
+## Exact-SHA verification evidence
 
-The implementation tree at exact head `8231b62d7b7d964b5bc3e270eb27a71eaae38187` was independently verified by `one-windows-verification` run `38855607871` on Ubuntu and Windows. The verified stages were build, Clippy, workspace tests, real-network runtime tests, offline verification, and contract-artifact checks. The subsequent canonical merge commit `8a8a3af449782b457ca1fc109b71fe9fdb006373` preserves the same tree SHA `ba2fc7f6af9b4c0e29b10d6313dfb71464f4e136`.
+Independent run `38895405559` in `panglimanetizen01/one-windows-verification` checked out canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877` exactly. Ubuntu job `116954563036` and Windows job `116954563246` passed build, Clippy, workspace tests, real-network runtime tests, offline verification, contract-artifact checks, deterministic artifact tests, DNS success/failure classification, and orchestration runtime tests.
 
-The canonical GitHub CI workflow has also been retried. Its jobs currently terminate before exposing any executable workflow step or log data; therefore no source-level root cause is asserted for that infrastructure-side CI result. The independent exact-tree cross-platform evidence above remains the executable verification record for this implementation.
+The independent mirror is verification infrastructure only; GitHub `main` remains the source of truth. The canonical hosted runner is not used as the sole evidence path.
 
 ## Evidence rule
 
-`Verified` here means the implementation tree has executable cross-platform evidence matching the recorded tree. `Supported` remains platform/backend-specific and must only be asserted where the relevant runtime evidence exists.
+`Verified` means the implementation has executable evidence matching the recorded exact source SHA. `Supported` remains platform/backend-specific and must only be asserted where the relevant runtime evidence exists.
