@@ -18,6 +18,10 @@
 - LLM-independent compiler/runtime semantics
 - Progressive complexity from beginner programs to large systems
 
+## Untuk pengguna baru
+
+Mulai dari **[Panduan Pengguna One](docs/panduan-pengguna/README.md)**. Panduan tersebut menjelaskan langkah penggunaan dengan bahasa yang lebih sederhana dan secara eksplisit membedakan fitur yang sudah tersedia dari fitur yang masih dikembangkan.
+
 ## v0.1 implementation
 
 The canonical repository contains the executable language core:
@@ -78,7 +82,13 @@ kalau tidak
 
 ## Documentation
 
-Start with `docs/README.md`, then read:
+User-facing documentation:
+
+- `docs/panduan-pengguna/README.md` — beginner entry point and documentation rules.
+- `docs/panduan-pengguna/status-fitur.md` — explicit capability status vocabulary.
+- `docs/README.md` — complete engineering documentation map.
+
+Normative engineering documents:
 
 - `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
 - `docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md`
