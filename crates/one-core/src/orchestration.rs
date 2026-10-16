@@ -191,4 +191,30 @@ mod tests {
         );
         assert_eq!(request.validate(), Err(OrchestrationValidationError::EmptyScope));
     }
+
+    #[test]
+    fn equivalent_localized_aliases_resolve_to_one_semantic_capability() {
+        assert_eq!(resolve_localized_alias("id", "hubungkan"), Ok(SemanticCapabilityId::NetworkConnect));
+        assert_eq!(resolve_localized_alias("en", "connect"), Ok(SemanticCapabilityId::NetworkConnect));
+    }
+
+    #[test]
+    fn localized_alias_cannot_reduce_required_effect() {
+        let semantic = resolve_localized_alias("id", "hubungkan").expect("known alias");
+        let request = CapabilityRequest::new(
+            semantic,
+            Capability::NetworkConnect,
+            ExecutionScope::target("server.example"),
+            EffectClass::Admin,
+        );
+        assert_eq!(request.validate(), Err(OrchestrationValidationError::IncompatibleCapabilityEffect));
+    }
+
+    #[test]
+    fn materially_different_candidates_are_rejected_as_ambiguous() {
+        assert_eq!(
+            resolve_candidates(&[SemanticCapabilityId::NetworkConnect, SemanticCapabilityId::ProcessExecute]),
+            Err(CapabilityResolutionError::Ambiguous)
+        );
+    }
 }
