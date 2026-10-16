@@ -4,30 +4,49 @@
 
 `panglimanetizen01/one`, branch `main`.
 
-## Last independently verified feature baseline
+## Current exact-SHA verification
 
-The last independently verified source revision containing the language-level DNS orchestration and CLI permission vertical slice is `3c033aaa85b957d4ecf7ccba5a5eeda10f1e6ab1`. Independent run `38874287857` checked out that exact private-source SHA and passed the full release matrix on Ubuntu and Windows Server 2025.
+Canonical source revision: `78fc1ecfe520bc35584e4fae36fb13ffa3226877`.
 
-That verified feature baseline contains the general-purpose orchestration foundation plus the first source-level path: `cari alamat` → parser → semantic validation → typed orchestration IR → target-scoped governance → `network.dns.resolve` → normalized result → CLI output.
+Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38895405559`, branch `verification`.
 
-## Exact-SHA evidence
+The mirror checked out the verification branch at `f5e3c81edd38c32781ee8c45535e2511874c4e27`, read `CANONICAL_COMMIT.txt`, checked out the canonical One source at the exact SHA above, and asserted `git rev-parse HEAD` against that SHA on both Ubuntu and Windows Server 2025.
 
-Independent verification run `38874287857` in `panglimanetizen01/one-windows-verification` checked out canonical source commit `3c033aaa85b957d4ecf7ccba5a5eeda10f1e6ab1` and passed on both Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real-network runtime tests, and platform-specific offline verification. The offline verifiers also checked deterministic `.oneir` and `.onepkg` artifacts.
+## P0 evidence
 
-The source-level CLI test explicitly verified `--izinkan network.discover --target <alamat>`, while the core runtime tests verified success with explicit grant and policy denial without it.
+### Ubuntu — job `116954563036`
 
-## Contract-artifact gate
+- OS: Ubuntu 24.04.5 LTS / `ubuntu-24.04`.
+- Exact canonical SHA assertion: PASS.
+- Toolchain: `rustc 1.99.0`, `cargo 1.99.0`, Python 3.12.3.
+- Contract verification: `python3 tools/check_contract.py` → `CONTRACT CHECK: PASS`.
+- Build: `cargo build --workspace --all-targets` → PASS.
+- Clippy: `cargo clippy --workspace --all-targets -- -D warnings` → PASS.
+- Workspace tests: `cargo test --workspace --all-targets` → PASS.
+- Real-network tests: `cargo test -p one-core --features real-network --all-targets` → PASS.
+- Offline verification: `bash tools/verify_offline.sh` → `OFFLINE VERIFICATION: PASS`.
+- Deterministic `.oneir` and `.onepkg`: the offline verifier passed two-build/two-package byte-determinism checks; the workspace CLI test `build_and_package_artifacts_are_byte_deterministic` also passed.
+- DNS success: `network_dns_adapter::tests::real_dns_adapter_resolves_loopback_without_external_command_text` → PASS.
+- DNS failure classification: `network_dns_adapter::tests::dns_adapter_reports_resolution_failure_as_resolution_failure` → PASS.
+- Orchestration runtime: `orchestrator::tests::approved_request_selects_compatible_adapter_and_invokes_once`, `denied_request_never_reaches_adapter_invocation`, and source-level DNS integration tests → PASS.
 
-`tools/check_contract.py` checks root release/security/contribution/CI artifacts, normative contracts, retained v0.1 artifacts, executable derivatives, offline scripts, documented artifacts, fixture minimums, grammar markers, and the no-GitHub-upgrade rule.
+### Windows — job `116954563246`
 
-## Independent verification infrastructure
-
-The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. It checks out the private canonical repository at an exact SHA. GitHub `main` remains the source of truth.
-
-No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
+- OS: Microsoft Windows Server 2025, `windows-2025`.
+- Exact canonical SHA assertion: PASS.
+- Toolchain: `rustc 1.99.0`, `cargo 1.99.0`, Python 3.12.10.
+- Contract verification: `python tools/check_contract.py` → `CONTRACT CHECK: PASS`.
+- Build: `cargo build --workspace --all-targets` → PASS.
+- Clippy: `cargo clippy --workspace --all-targets -- -D warnings` → PASS.
+- Workspace tests: `cargo test --workspace --all-targets` → PASS.
+- Real-network tests: `cargo test -p one-core --features real-network --all-targets` → PASS.
+- Offline verification: `.\tools\verify_offline.ps1` → `OFFLINE VERIFICATION: PASS`.
+- Deterministic `.oneir` and `.onepkg`: the offline verifier passed the deterministic artifact checks; the workspace CLI test `build_and_package_artifacts_are_byte_deterministic` also passed.
+- DNS success and failure classification: both DNS adapter tests passed.
+- Orchestration runtime: approved, denied, and incompatible-adapter orchestration runtime tests passed; source-level DNS integration tests passed.
 
 ## Verification boundary
 
-`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. A later canonical SHA requires a fresh exact-SHA verification before that later SHA is called verified.
+`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. The evidence above verifies `78fc1ecfe520bc35584e4fae36fb13ffa3226877`; it does not automatically verify later commits.
 
-The current documentation synchronization is deliberately treated as a later canonical revision and receives its own fresh exact-SHA verification before it is called the verified current head.
+The independent public mirror is verification infrastructure only. GitHub `main` remains the canonical source of truth. No paid GitHub upgrade was used or required.
