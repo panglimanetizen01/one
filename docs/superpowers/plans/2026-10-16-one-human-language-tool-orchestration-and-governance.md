@@ -43,7 +43,7 @@ one jalankan main.one --izinkan network.discover --target 127.0.0.1
 
 The runtime denies orchestration without an explicit capability grant and rejects targets outside the granted scope. The CLI-facing permission boundary is implemented and tested.
 
-Independent mirror run `38895405559` passed this source-to-runtime slice on Ubuntu and Windows Server 2025 against canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, including build, Clippy, workspace tests, real-network runtime tests, contract checks, deterministic artifact checks, DNS success/failure classification, orchestration runtime tests, and offline verification.
+Independent mirror run `38896135846` passed this source-to-runtime slice on Ubuntu and Windows Server 2025 against canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`, including build, Clippy, workspace tests, real-network runtime tests, contract checks, deterministic artifact checks, DNS success/failure classification, orchestration runtime tests, and offline verification.
 
 The feature is intentionally **Eksperimental**: only DNS discovery is exposed through this source-level boundary. The existence of this slice does not imply that the broader orchestration catalog is supported.
 
