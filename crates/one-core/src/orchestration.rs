@@ -38,10 +38,8 @@ pub enum ExecutionScope {
 impl ExecutionScope {
     pub const fn global() -> Self { Self::Global }
     pub const fn local() -> Self { Self::Local }
-
     pub fn target(value: impl Into<String>) -> Self { Self::Target(value.into()) }
     pub fn resource(value: impl Into<String>) -> Self { Self::Resource(value.into()) }
-
     pub fn as_str(&self) -> String {
         match self {
             Self::Global => "global".to_owned(),
@@ -50,7 +48,6 @@ impl ExecutionScope {
             Self::Resource(value) => format!("resource:{value}"),
         }
     }
-
     fn is_valid(&self) -> bool {
         match self {
             Self::Global | Self::Local => true,
@@ -94,9 +91,7 @@ impl CapabilityRequest {
         capability: Capability,
         scope: ExecutionScope,
         effect: EffectClass,
-    ) -> Self {
-        Self { semantic, capability, scope, effect }
-    }
+    ) -> Self { Self { semantic, capability, scope, effect } }
 
     pub fn validate(&self) -> Result<(), OrchestrationValidationError> {
         if !self.scope.is_valid() {
@@ -121,19 +116,11 @@ pub enum OrchestrationValidationError {
 
 fn semantic_matches_capability(semantic: SemanticCapabilityId, capability: Capability) -> bool {
     match semantic {
-        SemanticCapabilityId::FilesystemRead | SemanticCapabilityId::FilesystemWrite => {
-            matches!(capability, Capability::Filesystem)
-        }
+        SemanticCapabilityId::FilesystemRead | SemanticCapabilityId::FilesystemWrite => matches!(capability, Capability::Filesystem),
         SemanticCapabilityId::ProcessExecute => matches!(capability, Capability::Process),
-        SemanticCapabilityId::NetworkConnect => {
-            matches!(capability, Capability::Network | Capability::NetworkConnect)
-        }
-        SemanticCapabilityId::NetworkListen => {
-            matches!(capability, Capability::Network | Capability::NetworkListen)
-        }
-        SemanticCapabilityId::NetworkDiscover => {
-            matches!(capability, Capability::Network | Capability::NetworkDiscover)
-        }
+        SemanticCapabilityId::NetworkConnect => matches!(capability, Capability::Network | Capability::NetworkConnect),
+        SemanticCapabilityId::NetworkListen => matches!(capability, Capability::Network | Capability::NetworkListen),
+        SemanticCapabilityId::NetworkDiscover => matches!(capability, Capability::Network | Capability::NetworkDiscover),
         SemanticCapabilityId::NetworkAdmin => matches!(capability, Capability::NetworkAdmin),
         SemanticCapabilityId::Native => matches!(capability, Capability::Native),
     }
@@ -143,13 +130,7 @@ fn capability_matches_effect(capability: Capability, effect: EffectClass) -> boo
     match capability {
         Capability::Filesystem => matches!(effect, EffectClass::Read | EffectClass::Write),
         Capability::Process | Capability::Native => matches!(effect, EffectClass::Execute),
-        Capability::Network => matches!(
-            effect,
-            EffectClass::Connect
-                | EffectClass::Listen
-                | EffectClass::Discover
-                | EffectClass::Admin
-        ),
+        Capability::Network => matches!(effect, EffectClass::Connect | EffectClass::Listen | EffectClass::Discover | EffectClass::Admin),
         Capability::NetworkConnect => matches!(effect, EffectClass::Connect),
         Capability::NetworkListen => matches!(effect, EffectClass::Listen),
         Capability::NetworkDiscover => matches!(effect, EffectClass::Discover),
@@ -197,9 +178,17 @@ mod tests {
             ExecutionScope::target("server.example"),
             EffectClass::Admin,
         );
-        assert_eq!(
-            request.validate(),
-            Err(OrchestrationValidationError::IncompatibleCapabilityEffect)
+        assert_eq!(request.validate(), Err(OrchestrationValidationError::IncompatibleCapabilityEffect));
+    }
+
+    #[test]
+    fn capability_request_rejects_empty_target_scope() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::NetworkConnect,
+            Capability::NetworkConnect,
+            ExecutionScope::target(""),
+            EffectClass::Connect,
         );
+        assert_eq!(request.validate(), Err(OrchestrationValidationError::EmptyScope));
     }
 }
