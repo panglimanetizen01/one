@@ -114,6 +114,51 @@ pub enum OrchestrationValidationError {
     IncompatibleCapabilityEffect,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ResolvedCapability {
+    pub semantic: SemanticCapabilityId,
+    pub capability: Capability,
+    pub effect: EffectClass,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CapabilityResolutionError {
+    UnknownAlias,
+    Ambiguous,
+    InvalidRequest(OrchestrationValidationError),
+}
+
+pub fn resolve_localized_alias(locale: &str, label: &str) -> Result<SemanticCapabilityId, CapabilityResolutionError> {
+    match (locale, label) {
+        ("id", "hubungkan") | ("en", "connect") => Ok(SemanticCapabilityId::NetworkConnect),
+        ("id", "dengarkan") | ("en", "listen") => Ok(SemanticCapabilityId::NetworkListen),
+        ("id", "cari perangkat") | ("en", "discover devices") => Ok(SemanticCapabilityId::NetworkDiscover),
+        ("id", "jalankan proses") | ("en", "execute process") => Ok(SemanticCapabilityId::ProcessExecute),
+        _ => Err(CapabilityResolutionError::UnknownAlias),
+    }
+}
+
+pub fn resolve_candidates(candidates: &[SemanticCapabilityId]) -> Result<SemanticCapabilityId, CapabilityResolutionError> {
+    let Some(first) = candidates.first().copied() else {
+        return Err(CapabilityResolutionError::UnknownAlias);
+    };
+    if candidates.iter().any(|candidate| *candidate != first) {
+        return Err(CapabilityResolutionError::Ambiguous);
+    }
+    Ok(first)
+}
+
+pub fn resolve_capability_request(request: &CapabilityRequest) -> Result<ResolvedCapability, CapabilityResolutionError> {
+    request
+        .validate()
+        .map_err(CapabilityResolutionError::InvalidRequest)?;
+    Ok(ResolvedCapability {
+        semantic: request.semantic,
+        capability: request.capability,
+        effect: request.effect,
+    })
+}
+
 fn semantic_matches_capability(semantic: SemanticCapabilityId, capability: Capability) -> bool {
     match semantic {
         SemanticCapabilityId::FilesystemRead | SemanticCapabilityId::FilesystemWrite => matches!(capability, Capability::Filesystem),
@@ -216,5 +261,19 @@ mod tests {
             resolve_candidates(&[SemanticCapabilityId::NetworkConnect, SemanticCapabilityId::ProcessExecute]),
             Err(CapabilityResolutionError::Ambiguous)
         );
+    }
+
+    #[test]
+    fn resolved_request_preserves_semantic_capability_and_effect() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::NetworkConnect,
+            Capability::NetworkConnect,
+            ExecutionScope::target("server.example"),
+            EffectClass::Connect,
+        );
+        let resolved = resolve_capability_request(&request).expect("request should resolve");
+        assert_eq!(resolved.semantic, SemanticCapabilityId::NetworkConnect);
+        assert_eq!(resolved.capability, Capability::NetworkConnect);
+        assert_eq!(resolved.effect, EffectClass::Connect);
     }
 }
