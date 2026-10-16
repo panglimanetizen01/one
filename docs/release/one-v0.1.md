@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE `dba4fad49854952e256ae41744f57f93e39167a8`**.
+Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS ORCHESTRATION**.
 
 ## Scope
 
@@ -19,24 +19,38 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - Conformance fixtures and golden-output tests.
 - Verified native network runtime slices: DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits.
 - General-purpose orchestration runtime foundation: typed capability requests, deterministic governance, governed adapters, normalized results/evidence, audit records, localized semantic-resolution fixtures, and `network.dns.resolve`.
+- Experimental source-level DNS orchestration through `cari alamat`, explicit `network.discover` permission, exact target scope, governed adapter execution, normalized result, and CLI output.
 
 ## Explicit v0.1 limits
 
 - `build` emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
-- The orchestration foundation is verified at the runtime-library boundary, but **language-level One-source orchestration is not yet supported**. The current CLI still follows the established parse → analyze → lower → interpreter path without a verified source-to-Orchestrator bridge.
+- The language-level orchestration catalog is not complete. Only the DNS discovery vertical slice is currently experimental and verified through the source/CLI boundary.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and the remaining protocol inventory are future work.
 
-## Release acceptance evidence
+## Experimental DNS orchestration
 
-Independent verification run `38872070590` in `panglimanetizen01/one-windows-verification` checked out canonical source baseline `dba4fad49854952e256ae41744f57f93e39167a8` and passed on Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. The offline verifiers included deterministic `.oneir` and `.onepkg` comparisons.
+Source:
 
-The later documentation-only synchronization revision is intentionally treated as a separate canonical revision and receives its own fresh exact-SHA verification before it is called the verified current head.
+```text
+cari alamat "127.0.0.1"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan network.discover --target 127.0.0.1
+```
+
+No explicit permission means denial. A different target is outside the granted scope.
+
+Independent verification run `38874287857` checked the exact source revision containing this vertical slice on Ubuntu and Windows Server 2025 and passed contract checks, build, Clippy, workspace tests, real-network runtime tests, and offline verification.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** in-scope source/docs/tests are present.
 - **VERIFIED:** exact source revision has executable cross-platform evidence.
+- **EXPERIMENTAL:** the declared vertical slice is verified but intentionally limited in coverage.
 - **SUPPORTED:** reserved for a stronger platform/support claim.
 
 ## Verification infrastructure rule
