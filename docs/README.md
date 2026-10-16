@@ -2,6 +2,30 @@
 
 This directory is the normative documentation surface for One v0.1. When code and prose disagree, the implementation status document must identify the discrepancy; a silent contract change is not allowed.
 
+## User documentation
+
+For people who want to **use One**, start here:
+
+- `panduan-pengguna/README.md` — official beginner entry point.
+- `panduan-pengguna/mulai-dari-nol.md` — first-run orientation.
+- `panduan-pengguna/instalasi.md` — current installation/distribution boundary.
+- `panduan-pengguna/program-pertama.md` — first usable program.
+- `panduan-pengguna/konsep-dasar.md` — current language concepts.
+- `panduan-pengguna/data-dan-nama.md` — data and multi-word names.
+- `panduan-pengguna/kondisi-dan-perulangan.md` — conditions and loops.
+- `panduan-pengguna/fungsi-dan-event.md` — functions and events.
+- `panduan-pengguna/membuat-project.md` — project creation and layout.
+- `panduan-pengguna/perintah-cli.md` — current CLI commands.
+- `panduan-pengguna/test-build-package.md` — testing, build, and package boundaries.
+- `panduan-pengguna/kesalahan-dan-debugging.md` — common mistakes and debugging.
+- `panduan-pengguna/jaringan.md` — verified network boundary.
+- `panduan-pengguna/interoperabilitas.md` — current interoperability boundary.
+- `panduan-pengguna/faq.md` — common user questions.
+- `panduan-pengguna/status-fitur.md` — capability status vocabulary.
+- `panduan-pengguna/memperbarui-dokumentasi.md` — how documentation evolves with One.
+
+User documentation is intentionally separate from normative engineering contracts. It is editable and versioned, but it does not override language semantics or verification evidence.
+
 ## Foundation
 
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
