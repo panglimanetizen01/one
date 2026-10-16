@@ -23,9 +23,9 @@
 | Language-level DNS orchestration | EXPERIMENTAL | `cari alamat` → parser → semantic validation → typed orchestration IR → governed DNS adapter → normalized CLI result; explicit target-scoped permission required |
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; independently verified on Ubuntu + Windows Server 2025 at `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via `38903950612` |
 | Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; exact-SHA Linux + Windows verified at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
-| Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; canonical `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d` verified on Termux/Android; cross-platform evidence for this SHA is still pending |
+| Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; latest executable evidence `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; cross-platform evidence for this executable revision is still pending |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
-| CLI | VERIFIED | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; filesystem.write CLI additionally verified on current `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android |
+| CLI | VERIFIED | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
 | Conformance runner | ADDED | `crates/one-core/tests/conformance.rs` |
@@ -34,7 +34,7 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Latest exact-SHA executable verification | VERIFIED / PLATFORM-BOUND | canonical `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d`; Termux/Android contract, build, Clippy, targeted filesystem-write CLI test, workspace tests, and offline verification all passed; this is not Ubuntu/Windows evidence |
+| Latest exact-SHA executable verification | VERIFIED / PLATFORM-BOUND | latest executable evidence `f4b4edc2e408928fb697fb355c3c69c88c62e09d`; Termux/Android contract, build, Clippy, targeted filesystem-write CLI test, workspace tests, and offline verification all passed; this is not Ubuntu/Windows evidence |
 | Latest cross-platform exact-SHA verification | VERIFIED | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent execution paths provide evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
@@ -68,18 +68,19 @@ tulis ke berkas "<path>" dengan "<isi>"
 → parser → semantic → typed IR → target-scoped governance → filesystem.write → CLI
 ```
 
-DNS and filesystem-read are backed by the recorded cross-platform evidence. Process execution is backed by exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`. Filesystem write is backed by exact-SHA Termux/Android evidence at current `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d`; it is intentionally not labeled cross-platform verified.
+DNS and filesystem-read are backed by the recorded cross-platform evidence. Process execution is backed by exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`. Filesystem write is backed by latest executable evidence at `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; it is intentionally not labeled cross-platform verified.
 
 ## Current checkpoint
 
-- Canonical `main`: `f4b4edc2e408928fb697fb355c3c69c88c62e09d`.
+- Latest exact-SHA executable verification: `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all PASS.
+- Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` / mirror `38929072800`.
 - PR #49: filesystem-write vertical slice merged before the CLI work.
 - PR #50: filesystem.write CLI support merged into `main`.
 - PR #51: documentation synchronized with filesystem.write verification evidence.
-- Latest exact-SHA executable verification: `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all PASS.
-- Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` / mirror `38929072800`.
+- PR #52: consistency audit synchronized the normative CLI contract and grammar with the implementation.
 - GitHub hosted CI for the filesystem-write PR remained an infrastructure evidence failure with zero executed steps; it is not source-failure evidence.
 - Filesystem write status: `EXPERIMENTAL`, limited to one text payload to one explicitly targeted file, with explicit `filesystem.write` permission.
+- Documentation-only commits after the latest executable verification do not change that executable evidence boundary.
 
 ## Release interpretation
 

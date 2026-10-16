@@ -10,7 +10,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 The latest cross-platform source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025.
 
-The current canonical `main` is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`. This SHA has executable verification on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. That evidence does not establish Ubuntu/Windows support for the current SHA.
+The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, verified on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. Later documentation-only commits do not change that executable evidence boundary and do not establish Ubuntu/Windows support for it.
 
 ## Verified baseline
 
@@ -28,7 +28,7 @@ The current canonical `main` is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`. This
 - Experimental source-level DNS orchestration through `cari alamat`.
 - Experimental source-level filesystem-read orchestration through `baca berkas`.
 - Experimental source-level process-execution orchestration through `jalankan proses`, limited to one explicitly targeted program without arguments and backed by cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`.
-- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission. The current exact-SHA evidence is Termux/Android only.
+- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission. The latest exact-SHA executable evidence is Termux/Android only.
 
 ## Current experimental filesystem-write boundary
 
@@ -48,7 +48,7 @@ Explicit permission:
 one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
-Exact-SHA evidence: `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this SHA is still pending.
+Latest exact-SHA evidence: `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
 
 ## Explicit v0.1 limits
 
