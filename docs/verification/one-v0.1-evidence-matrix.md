@@ -15,22 +15,24 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / independently exercised |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
 | CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli.md` | CLI integration + smoke tests | IMPLEMENTED / independently exercised |
-| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED by independent run |
+| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED in run `38872070590` |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
-| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED on exact SHA |
-| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED on exact SHA |
+| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED in baseline run `38872070590` |
+| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED in baseline run `38872070590` |
 | Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | IMPLEMENTED / independently exercised |
-| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + real-network runtime | VERIFIED on exact SHA |
+| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + real-network runtime | VERIFIED in baseline run `38872070590` |
 | Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | IMPLEMENTED / independently exercised |
 | Language-level orchestration | parser → semantic → capability → governance → adapter → One result | end-to-end One-source execution test | NOT YET VERIFIED / next implementation boundary |
-| Linux portability | verification mirror workflow | actual Linux run | GREEN in independent run `38871435579` |
-| Windows portability | verification mirror workflow | actual Windows run | GREEN in independent run `38871435579` |
-| Release gate | `.github/workflows/release-check.yml` + mirror workflow | green exact-SHA matrix | GREEN in independent run `38871435579` |
+| Linux portability | verification mirror workflow | actual Linux run | GREEN in baseline run `38872070590` |
+| Windows portability | verification mirror workflow | actual Windows run | GREEN in baseline run `38872070590` |
+| Release gate | `.github/workflows/release-check.yml` + mirror workflow | green exact-SHA matrix | GREEN in baseline run `38872070590` |
 
-## Final verification boundary
+## Verified baseline
 
-Independent run `38871435579` checked exact canonical source SHA `be2e65852e9a4be833e659524a12c6359769665b` on Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract artifacts, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. The offline scripts also passed deterministic `.oneir` and `.onepkg` checks.
+Independent run `38872070590` checked exact canonical source SHA `dba4fad49854952e256ae41744f57f93e39167a8` on Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract artifacts, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. The offline scripts also passed deterministic `.oneir` and `.onepkg` checks.
+
+The final documentation-only synchronization revision is intentionally verified separately; it does not retroactively change the evidence for the baseline source.
 
 ## Evidence rules
 
