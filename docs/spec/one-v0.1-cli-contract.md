@@ -54,7 +54,21 @@ Technical alias:
 one run <file.one> --allow filesystem.read --target <path>
 ```
 
-### Process execution — development boundary
+### Filesystem write
+
+```text
+one jalankan <file.one> --izinkan filesystem.write --target <path>
+```
+
+Technical alias:
+
+```text
+one run <file.one> --allow filesystem.write --target <path>
+```
+
+The `tulis ke berkas "<path>" dengan "<isi>"` source operation maps to semantic capability `filesystem.write`, effect `Write`, and the governed `filesystem.write` adapter. The current boundary accepts one text payload for one explicitly targeted file. No permission means denial and a different target is outside the granted scope. This slice is **EXPERIMENTAL** and currently has exact-SHA Termux/Android evidence only.
+
+### Process execution — experimental boundary
 
 ```text
 one jalankan <file.one> --izinkan process.execute --target <program>
@@ -66,7 +80,7 @@ Technical alias:
 one run <file.one> --allow process.execute --target <program>
 ```
 
-The `jalankan proses "<program>"` source operation maps to semantic capability `process.execute`, effect `Execute`, and the governed `process.execute` adapter. The current implementation executes the selected program without additional arguments and normalizes its stdout (or stderr when stdout is empty) as UTF-8 text. This slice remains **IN DEVELOPMENT** until exact-SHA executable evidence exists.
+The `jalankan proses "<program>"` source operation maps to semantic capability `process.execute`, effect `Execute`, and the governed `process.execute` adapter. The current implementation executes the selected program without additional arguments and normalizes its stdout (or stderr when stdout is empty) as UTF-8 text. This slice is **EXPERIMENTAL** within the one-program/no-arguments boundary and has exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`.
 
 Rules for current orchestration permission surfaces:
 
@@ -78,8 +92,11 @@ Rules for current orchestration permission surfaces:
 - unknown capabilities are rejected as CLI usage errors;
 - these permission syntaxes are controlled adapter boundaries, not One language grammar;
 - the filesystem-read slice currently reads UTF-8 text and does not constitute general filesystem support;
+- the filesystem-write slice currently writes one text payload to one explicitly targeted file and does not constitute general filesystem management or sandbox/path-confinement support;
 - the process-execution slice currently executes one explicitly targeted program without arguments and does not constitute general process-management support;
-- DNS and filesystem-read are experimental/verified at the recorded baseline; process execution is still in development.
+- DNS and filesystem-read are experimental within their recorded evidence boundaries;
+- filesystem write is experimental and currently verified only on Termux/Android;
+- process execution is experimental within its recorded cross-platform boundary.
 
 ## 4. Exit status
 
