@@ -6,13 +6,13 @@
 
 ## Latest exact-SHA executable verification
 
-Canonical source revision: `a332dc5e58760460c26ebebb33f32f910bfdf4b3`.
+Canonical source revision: `f4b4edc2e408928fb697fb355c3c69c88c62e09d`.
 
 Environment: Termux/Android.
 
 The exact-SHA checkout passed contract checks, build, Clippy with `-D warnings`, targeted filesystem-write CLI regression test, full workspace tests, and offline verification. The filesystem-write CLI test executed a One source program with `--izinkan filesystem.write --target <path>` and verified the target file contained the expected text.
 
-This evidence is platform-bound to Termux/Android. It does not establish Ubuntu/Windows support for `a332dc5e58760460c26ebebb33f32f910bfdf4b3`.
+This evidence is platform-bound to Termux/Android. It does not establish Ubuntu/Windows support for `f4b4edc2e408928fb697fb355c3c69c88c62e09d`.
 
 ## Latest cross-platform exact-SHA verification
 
