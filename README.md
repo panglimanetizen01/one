@@ -49,7 +49,7 @@ Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTP
 
 ## Experimental language-level orchestration
 
-Two source-level orchestration vertical slices are currently real and independently verified at canonical implementation revision `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`:
+Two source-level orchestration vertical slices are currently real and independently verified at canonical implementation revision `f482c6b75505d9965dd33f4f25bb0cd04072cedb` through mirror run `38903950612`:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -87,6 +87,29 @@ one run main.one --allow filesystem.read --target data/contoh.txt
 
 No explicit permission means denial. A different target is outside the granted scope. These slices are **Eksperimental**, not a claim that the full orchestration catalog is supported.
 
+## Process/System development boundary
+
+A third source-level slice is implemented on the development branch but is not yet verified:
+
+```text
+One source: jalankan proses "rustc"
+ -> parser
+ -> semantic validation
+ -> typed orchestration IR
+ -> target-scoped governance
+ -> process.execute
+ -> normalized process output
+ -> CLI output
+```
+
+Explicit permission surface:
+
+```text
+one jalankan main.one --izinkan process.execute --target rustc
+```
+
+The current implementation executes one explicitly targeted program without additional arguments and has TDD coverage for success, denial, and missing-program backend failure. It remains **Dalam pengembangan** until exact-SHA Linux/Windows execution evidence exists.
+
 ## Documentation
 
 - `docs/panduan-pengguna/README.md`
@@ -101,8 +124,8 @@ No explicit permission means denial. A different target is outside the granted s
 
 ## Verification boundary
 
-Canonical implementation revision `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b` was independently verified in mirror run `38901366447` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, filesystem-read orchestration runtime, and offline verification.
+Canonical implementation revision `f482c6b75505d9965dd33f4f25bb0cd04072cedb` was independently verified in mirror run `38903950612` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, filesystem-read orchestration runtime, and offline verification.
 
-The current canonical `main` is `f482c6b75505d9965dd33f4f25bb0cd04072cedb`, four commits ahead of that verified implementation revision. The GitHub comparison shows those four later commits modify only `CHANGELOG.md`, `docs/panduan-pengguna/perintah-cli.md`, and `docs/verification/one-v0.1-implementation-status.md`; therefore the independent evidence does not by itself constitute exact-SHA verification of the current `main` commit.
+The current canonical `main` is `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`. The documentation synchronization merge is documentation-only relative to the previous main baseline, but the exact-SHA evidence rule still requires a new executable verification for the new main SHA. The process/system development branch contains source/runtime changes and likewise requires fresh exact-SHA evidence before merge or promotion.
 
 The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
