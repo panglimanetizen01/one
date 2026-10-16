@@ -6,11 +6,11 @@ Repository: `panglimanetizen01/one`
 
 This document records verification evidence. It must never claim a source SHA that was not actually checked out by the verification runner.
 
-## Latest fully green independent verification before documentation synchronization
+## Latest fully green independent verification
 
 Temporary verification mirror: `panglimanetizen01/one-windows-verification`
 
-The post-audit hardening verification passed on both Ubuntu and Windows Server 2025 for the exact canonical source revision then recorded by `CANONICAL_COMMIT.txt`.
+Independent run `38848143359` checked out the exact canonical source revision `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` and passed on both Ubuntu and Windows Server 2025.
 
 Both jobs completed:
 
@@ -24,21 +24,11 @@ Both jobs completed:
 
 The real-network stage included the verified HTTP/2 loopback runtime tests and the hardened FTP/SMTP/POP3/IMAP tests.
 
-## Current final gate
+## Current result
 
-The canonical documentation set has now been synchronized with the post-audit runtime boundary. That synchronization changes the canonical SHA, so the resulting exact SHA requires one final independent Ubuntu/Windows verification run before the release record can be closed.
+The exact current canonical SHA has now passed the independent Ubuntu/Windows matrix. The release documentation is therefore allowed to identify this SHA as verified.
 
-Required final stages are:
-
-- exact canonical SHA verification;
-- contract-artifact closure;
-- workspace build with all targets;
-- Clippy with `-D warnings`;
-- all workspace tests with all targets;
-- real network runtime tests;
-- Linux offline verification;
-- Windows offline verification;
-- deterministic `.oneir` and `.onepkg` smoke checks included by the offline scripts.
+Any later canonical commit requires another exact-SHA verification before it can be labeled verified.
 
 ## Interpretation
 
@@ -48,6 +38,4 @@ The private canonical GitHub Actions environment may remain blocked if its runne
 
 ## Result
 
-Historical and post-audit verification: **GREEN for the exact source revisions explicitly checked out by their respective runs**.
-
-Current synchronized-documentation canonical verification: **PENDING final exact-SHA rerun**.
+Current canonical source revision `38dc98fcee49fa04c589d5a3c825b0d4006d6d61`: **GREEN / VERIFIED** by independent run `38848143359` on Ubuntu and Windows Server 2025.
