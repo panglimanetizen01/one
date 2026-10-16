@@ -1,6 +1,6 @@
 # One Orchestration Implementation Contract
 
-Status: Verified on canonical `main` through independent exact-SHA cross-platform run `38896135846` against canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`.
+Status: **Verified foundation boundary** on canonical `main` through independent exact-SHA cross-platform run `38903950612` against canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb`. Later source changes require fresh exact-SHA evidence.
 
 ## Semantic boundary
 
@@ -20,6 +20,8 @@ A `CapabilityRequest` carries the semantic operation, required capability, execu
 
 An adapter cannot execute a request unless its metadata declares the requested capability and the request itself is valid.
 
+The process/system development slice adds `process.execute` as a typed adapter boundary. Its current implementation uses the explicit target scope as the executable program and does not accept additional arguments through the source-level operation.
+
 ## Orchestration boundary
 
 `Orchestrator` performs request validation, governance evaluation, deterministic compatible-adapter selection, and only then adapter invocation. A denied request never reaches the adapter invocation boundary.
@@ -27,6 +29,8 @@ An adapter cannot execute a request unless its metadata declares the requested c
 ## Result and evidence boundary
 
 External output is normalized through an explicit expectation. Invalid UTF-8 is a deterministic normalization error. Execution evidence preserves adapter identity and distinguishes observed success, observed failure, and uncertainty.
+
+The process adapter currently returns its captured stdout as the primary normalized text output, falling back to stderr when stdout is empty. A failed backend invocation is surfaced as an adapter failure; a successful process result is still subject to the same normalization/evidence boundary.
 
 ## Audit boundary
 
@@ -36,16 +40,22 @@ Audit records distinguish policy decisions from attempted execution. A denied op
 
 Current conformance fixtures cover Indonesian and English aliases for network connect/listen/discover and process execution. Materially different semantic candidates are rejected as ambiguous; repeated equivalent candidates are accepted.
 
+The new source-level `jalankan proses` production is an explicit grammar operation, not arbitrary natural-language intent recognition.
+
 ## First real adapter
 
-The first real adapter is `network.dns.resolve`. It uses the platform resolver directly, accepts a typed target scope, performs no shell/command-string substitution, and is exercised with a loopback target for deterministic integration evidence.
+The first verified real adapter is `network.dns.resolve`. It uses the platform resolver directly, accepts a typed target scope, performs no shell/command-string substitution, and is exercised with a loopback target for deterministic integration evidence.
+
+The process adapter is a later development boundary and must not be promoted to verified status until its own exact-SHA execution evidence exists.
 
 ## Exact-SHA verification evidence
 
-Independent run `38896135846` in `panglimanetizen01/one-windows-verification` checked out canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` exactly. Ubuntu job `116954563036` and Windows job `116956935967` passed build, Clippy, workspace tests, real-network runtime tests, offline verification, contract-artifact checks, deterministic artifact tests, DNS success/failure classification, and orchestration runtime tests.
+Independent run `38903950612` in `panglimanetizen01/one-windows-verification` checked out canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` exactly. The recorded Ubuntu and Windows verification passed build, Clippy, workspace tests, real-network runtime tests, offline verification, contract-artifact checks, deterministic artifact tests, DNS success/failure classification, filesystem-read orchestration runtime, and orchestration runtime tests.
+
+That run does **not** verify the later process/system source changes. A fresh exact-SHA run is required before the process slice can be labeled `Verified` or `Experimental`.
 
 The independent mirror is verification infrastructure only; GitHub `main` remains the source of truth. The canonical hosted runner is not used as the sole evidence path.
 
 ## Evidence rule
 
-`Verified` means the implementation has executable evidence matching the recorded exact source SHA. `Supported` remains platform/backend-specific and must only be asserted where the relevant runtime evidence exists.
+`Verified` means the implementation has executable evidence matching the recorded exact source SHA. `Experimental` means a declared slice has that evidence but remains intentionally limited. `Supported` remains platform/backend-specific and must only be asserted where the relevant runtime evidence exists.
