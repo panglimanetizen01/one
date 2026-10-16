@@ -47,7 +47,7 @@ The available mirror branches currently document the canonical SHA boundary, but
 
 ## Canonical CI status
 
-The repository's canonical CI workflow is defined for Ubuntu and Windows pull requests, but the connector currently returns no workflow runs for the process-vertical-slice commits. This means there is no usable hosted CI job evidence for the current branch yet. Do not reinterpret absence of a run as a source pass or failure.
+PR #48 produced GitHub Actions run `38927364159` against head `90086153f01275bbc2cc968c66c9646a525014e0`. Both Ubuntu job `117062224733` and Windows job `117062225163` failed with zero job steps; retrying the failed jobs produced queued jobs `117062384884` and `117062384610`, and both ultimately failed again with no steps/logs. This is an infrastructure evidence failure, not evidence of a Rust source failure. The current branch therefore still lacks executable test evidence.
 
 ## Evidence rules
 
