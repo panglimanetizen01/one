@@ -27,7 +27,7 @@ pub mod stdlib;
 pub mod token;
 pub mod types;
 
-pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, PlatformKind};
+pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
@@ -51,6 +51,7 @@ pub use orchestration::{
     resolve_candidates,
     resolve_capability_request,
     resolve_localized_alias,
+    AdapterId,
     AdapterStatus,
     CapabilityRequest,
     CapabilityResolutionError,
