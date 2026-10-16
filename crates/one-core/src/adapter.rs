@@ -67,6 +67,7 @@ pub enum AdapterError {
     UndeclaredCapability,
     InvalidArguments,
     UnsupportedPlatform,
+    ResolutionFailed,
 }
 
 pub trait ToolAdapter {
