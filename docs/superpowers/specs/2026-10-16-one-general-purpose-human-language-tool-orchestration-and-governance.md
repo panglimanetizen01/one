@@ -8,7 +8,7 @@
 
 The architecture is executable through a verified runtime foundation and its first source-level vertical slice. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, the real `network.dns.resolve` adapter, and a source-level `cari alamat` operation that reaches that adapter through governed runtime execution.
 
-Exact-SHA cross-platform evidence for canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` is recorded by independent mirror run `38896135846` on Ubuntu and Windows Server 2025. The run passed contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact verification, DNS success/failure classification, orchestration runtime tests, and offline verification.
+Exact-SHA cross-platform evidence for canonical source `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` is recorded by independent mirror run `38896533761` on Ubuntu and Windows Server 2025. The run passed contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact verification, DNS success/failure classification, orchestration runtime tests, and offline verification.
 
 ## 1. Purpose
 
