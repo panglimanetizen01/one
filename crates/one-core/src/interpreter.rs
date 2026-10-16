@@ -1,4 +1,5 @@
 #![allow(clippy::possible_missing_else)]
+#![allow(unused_imports)]
 use std::collections::HashMap;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
