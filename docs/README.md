@@ -74,6 +74,8 @@ User documentation is intentionally separate from normative engineering contract
 - `../tests/spec/grammar_examples.one` — canonical valid-source examples derived from the grammar contract.
 - `../crates/one-core/tests/conformance.rs` — executable conformance runner derived from the fixture contract.
 - `../crates/one-cli/tests/cli.rs` — CLI integration tests derived from the CLI contract.
+- `../crates/one-core/tests/process_orchestration.rs` — source-to-runtime process-execution TDD tests.
+- `../crates/one-cli/tests/process_orchestration.rs` — CLI process-execution integration tests.
 - `../tests/conformance/valid/*.one` — accepted-language fixtures.
 - `../tests/conformance/invalid/*.one` — rejected-language fixtures.
 - `../tests/golden/*.snap` — deterministic execution outputs.
@@ -85,4 +87,4 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Canonical rule
 
-GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run.
+GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. The current process/system implementation therefore remains a development-stage capability until exact-SHA execution evidence exists.
