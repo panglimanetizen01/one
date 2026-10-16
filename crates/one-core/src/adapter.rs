@@ -1,5 +1,5 @@
-use crate::capability::Capability;
-use crate::interop::{run_process, CapabilitySet, ProcessSpec};
+use crate::capability::{Capability, CapabilitySet};
+use crate::interop::{run_process, ProcessSpec};
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
