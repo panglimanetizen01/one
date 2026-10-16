@@ -87,9 +87,9 @@ one run main.one --allow filesystem.read --target data/contoh.txt
 
 No explicit permission means denial. A different target is outside the granted scope. These slices are **Eksperimental**, not a claim that the full orchestration catalog is supported.
 
-## Process/System development boundary
+## Process/System experimental boundary
 
-A third source-level slice is implemented on the development branch but is not yet verified:
+A third source-level slice is implemented and independently verified, but intentionally limited in scope:
 
 ```text
 One source: jalankan proses "rustc"
@@ -102,13 +102,15 @@ One source: jalankan proses "rustc"
  -> CLI output
 ```
 
+Exact-SHA evidence: canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2`, independent mirror run `38929072800`, with Ubuntu and Windows Server 2025 passing contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification.
+
 Explicit permission surface:
 
 ```text
 one jalankan main.one --izinkan process.execute --target rustc
 ```
 
-The current implementation executes one explicitly targeted program without additional arguments and has TDD coverage for success, denial, and missing-program backend failure. It remains **Dalam pengembangan** until exact-SHA Linux/Windows execution evidence exists.
+The current implementation executes one explicitly targeted program without additional arguments and has TDD coverage for success, denial, and missing-program backend failure. This is **Eksperimental** within that boundary; it is not a claim of general process management, service management, shell scripting, or arbitrary command orchestration support.
 
 ## Documentation
 
@@ -124,8 +126,8 @@ The current implementation executes one explicitly targeted program without addi
 
 ## Verification boundary
 
-Canonical implementation revision `f482c6b75505d9965dd33f4f25bb0cd04072cedb` was independently verified in mirror run `38903950612` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, filesystem-read orchestration runtime, and offline verification.
+Process/System source revision `9038ac75f197753ff1ab6af7478e63e4831903a2` was independently verified in mirror run `38929072800` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification.
 
-The current canonical `main` is `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`. The documentation synchronization merge is documentation-only relative to the previous main baseline, but the exact-SHA evidence rule still requires a new executable verification for the new main SHA. The process/system development branch contains source/runtime changes and likewise requires fresh exact-SHA evidence before merge or promotion.
+Canonical `main` is now `6d5a3ee7900a0705ebdcc9a4df4bfb3794ba7f6d`; this is the documentation checkpoint following merge commit `123df544f15d7eec8d74ca231b5e55ccebf4a7ee`. The documentation checkpoint was independently verified in mirror run `38929461255` on Ubuntu and Windows Server 2025.
 
 The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
