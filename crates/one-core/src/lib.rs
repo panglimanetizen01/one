@@ -43,7 +43,19 @@ pub use network_http2::execute_http2;
 pub use network_quic::execute_quic;
 #[cfg(feature = "real-network")]
 pub use network_tls::execute_https11;
-pub use orchestration::{AdapterStatus, CapabilityRequest, EffectClass, ExecutionScope, OrchestrationValidationError, SemanticCapabilityId};
+pub use orchestration::{
+    resolve_candidates,
+    resolve_capability_request,
+    resolve_localized_alias,
+    AdapterStatus,
+    CapabilityRequest,
+    CapabilityResolutionError,
+    EffectClass,
+    ExecutionScope,
+    OrchestrationValidationError,
+    ResolvedCapability,
+    SemanticCapabilityId,
+};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
 pub use token::{Span, Token, TokenKind};
