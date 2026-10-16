@@ -3,123 +3,25 @@ use crate::capability::Capability;
 use crate::diagnostic::DiagnosticBundle;
 use crate::network::{NetworkConnectionId, NetworkOperation};
 use crate::orchestration::{EffectClass, SemanticCapabilityId};
+use crate::orchestration_result::NormalizationExpectation;
 use crate::semantic::TypedProgram;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct IrProgram { pub statements: Vec<IrStatement> }
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum IrStatement {
-    Declaration { name: String, value: IrExpr }, Assignment { name: String, value: IrExpr }, Action { name: String, args: Vec<IrExpr> },
-    Conditional { condition: IrExpr, then_block: Vec<IrStatement>, else_block: Vec<IrStatement> }, Loop { kind: IrLoopKind, body: Vec<IrStatement> },
-    Function { name: String, params: Vec<String>, result: IrExpr, body: Vec<IrStatement> }, Event { trigger: Vec<String>, body: Vec<IrStatement> },
-    Network { operation: IrNetworkOperation },
-    Orchestration { semantic: SemanticCapabilityId, capability: Capability, effect: EffectClass, target: IrExpr },
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum IrNetworkOperation { Semantic(NetworkOperation) }
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum IrLoopKind { ForEach { variable: String, iterable: IrExpr }, While { condition: IrExpr } }
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum IrExpr {
-    Text(String), Number(i64), Boolean(bool), Nothing, Identifier(String), Binary { left: Box<IrExpr>, op: BinaryOp, right: Box<IrExpr> }, Call { name: String, args: Vec<IrExpr> },
-}
-
-impl IrNetworkOperation {
-    pub fn semantic(operation: NetworkOperation) -> Self { Self::Semantic(operation) }
-    pub fn operation(&self) -> &NetworkOperation { match self { Self::Semantic(operation) => operation } }
-}
-
-impl IrProgram {
-    pub fn canonical_text(&self) -> String { let mut out = String::new(); write_statements(&mut out, &self.statements, 0); out }
-}
-
-fn write_statements(out: &mut String, statements: &[IrStatement], indent: usize) {
-    for statement in statements {
-        write_indent(out, indent);
-        match statement {
-            IrStatement::Declaration { name, value } => { out.push_str("declare "); out.push_str(name); out.push_str(" = "); write_expr(out, value); out.push('\n'); }
-            IrStatement::Assignment { name, value } => { out.push_str("assign "); out.push_str(name); out.push_str(" = "); write_expr(out, value); out.push('\n'); }
-            IrStatement::Action { name, args } => { out.push_str("action "); out.push_str(name); write_expr_list(out, args); out.push('\n'); }
-            IrStatement::Conditional { condition, then_block, else_block } => { out.push_str("if "); write_expr(out, condition); out.push('\n'); write_statements(out, then_block, indent + 1); if !else_block.is_empty() { write_indent(out, indent); out.push_str("else\n"); write_statements(out, else_block, indent + 1); } write_indent(out, indent); out.push_str("end\n"); }
-            IrStatement::Loop { kind, body } => { match kind { IrLoopKind::ForEach { variable, iterable } => { out.push_str("foreach "); out.push_str(variable); out.push_str(" in "); write_expr(out, iterable); out.push('\n'); }, IrLoopKind::While { condition } => { out.push_str("while "); write_expr(out, condition); out.push('\n'); } } write_statements(out, body, indent + 1); write_indent(out, indent); out.push_str("end\n"); }
-            IrStatement::Function { name, params, result, body } => { out.push_str("function "); out.push_str(name); out.push('('); for (index, param) in params.iter().enumerate() { if index > 0 { out.push(','); } out.push_str(param); } out.push_str(") = "); write_expr(out, result); out.push('\n'); write_statements(out, body, indent + 1); write_indent(out, indent); out.push_str("end\n"); }
-            IrStatement::Event { trigger, body } => { out.push_str("event "); out.push_str(&trigger.join(" ")); out.push('\n'); write_statements(out, body, indent + 1); write_indent(out, indent); out.push_str("end\n"); }
-            IrStatement::Network { operation } => { out.push_str("network "); write_network_operation(out, operation); out.push('\n'); }
-            IrStatement::Orchestration { semantic, capability, effect, target } => { out.push_str("orchestrate "); out.push_str(semantic.as_str()); out.push_str(" capability="); out.push_str(&format!("{:?}", capability)); out.push_str(" effect="); out.push_str(&format!("{:?}", effect)); out.push_str(" target="); write_expr(out, target); out.push('\n'); }
-        }
-    }
-}
-
-fn write_network_operation(out: &mut String, operation: &IrNetworkOperation) {
-    match operation {
-        IrNetworkOperation::Semantic(NetworkOperation::Connect { target, constraints }) => {
-            out.push_str("connect "); write_target(out, target); out.push_str(" protocol="); write_debug_enum(out, constraints.protocol); out.push_str(" transport="); write_debug_enum(out, constraints.transport); out.push_str(" security="); write_debug_enum(out, constraints.security); out.push_str(" address="); write_debug_enum(out, constraints.address_kind); out.push_str(" timeout_ms="); out.push_str(&constraints.timeout_ms.to_string());
-        }
-        IrNetworkOperation::Semantic(NetworkOperation::Send { connection: NetworkConnectionId(id), data }) => { out.push_str("send connection="); out.push_str(&id.to_string()); out.push_str(" bytes="); out.push_str(&data.len().to_string()); }
-        IrNetworkOperation::Semantic(NetworkOperation::Receive { connection: NetworkConnectionId(id) }) => { out.push_str("receive connection="); out.push_str(&id.to_string()); }
-    }
-}
-
+#[derive(Debug, Clone, PartialEq)] pub struct IrProgram { pub statements: Vec<IrStatement> }
+#[derive(Debug, Clone, PartialEq)] pub enum IrStatement { Declaration { name: String, value: IrExpr }, Assignment { name: String, value: IrExpr }, Action { name: String, args: Vec<IrExpr> }, Conditional { condition: IrExpr, then_block: Vec<IrStatement>, else_block: Vec<IrStatement> }, Loop { kind: IrLoopKind, body: Vec<IrStatement> }, Function { name: String, params: Vec<String>, result: IrExpr, body: Vec<IrStatement> }, Event { trigger: Vec<String>, body: Vec<IrStatement> }, Network { operation: IrNetworkOperation }, Orchestration { semantic: SemanticCapabilityId, capability: Capability, effect: EffectClass, target: IrExpr, adapter: String, expectation: NormalizationExpectation } }
+#[derive(Debug, Clone, PartialEq)] pub enum IrNetworkOperation { Semantic(NetworkOperation) }
+#[derive(Debug, Clone, PartialEq)] pub enum IrLoopKind { ForEach { variable: String, iterable: IrExpr }, While { condition: IrExpr } }
+#[derive(Debug, Clone, PartialEq)] pub enum IrExpr { Text(String), Number(i64), Boolean(bool), Nothing, Identifier(String), Binary { left: Box<IrExpr>, op: BinaryOp, right: Box<IrExpr> }, Call { name: String, args: Vec<IrExpr> } }
+impl IrNetworkOperation { pub fn semantic(operation: NetworkOperation) -> Self { Self::Semantic(operation) } pub fn operation(&self) -> &NetworkOperation { match self { Self::Semantic(operation) => operation } } }
+impl IrProgram { pub fn canonical_text(&self) -> String { let mut out = String::new(); write_statements(&mut out, &self.statements, 0); out } }
+fn write_statements(out: &mut String, statements: &[IrStatement], indent: usize) { for statement in statements { write_indent(out, indent); match statement { IrStatement::Declaration { name, value } => { out.push_str("declare "); out.push_str(name); out.push_str(" = "); write_expr(out, value); out.push('\n'); }, IrStatement::Assignment { name, value } => { out.push_str("assign "); out.push_str(name); out.push_str(" = "); write_expr(out, value); out.push('\n'); }, IrStatement::Action { name, args } => { out.push_str("action "); out.push_str(name); write_expr_list(out, args); out.push('\n'); }, IrStatement::Conditional { condition, then_block, else_block } => { out.push_str("if "); write_expr(out, condition); out.push('\n'); write_statements(out, then_block, indent + 1); if !else_block.is_empty() { write_indent(out, indent); out.push_str("else\n"); write_statements(out, else_block, indent + 1); } write_indent(out, indent); out.push_str("end\n"); }, IrStatement::Loop { kind, body } => { match kind { IrLoopKind::ForEach { variable, iterable } => { out.push_str("foreach "); out.push_str(variable); out.push_str(" in "); write_expr(out, iterable); out.push('\n'); }, IrLoopKind::While { condition } => { out.push_str("while "); write_expr(out, condition); out.push('\n'); } } write_statements(out, body, indent + 1); write_indent(out, indent); out.push_str("end\n"); }, IrStatement::Function { name, params, result, body } => { out.push_str("function "); out.push_str(name); out.push('('); for (index, param) in params.iter().enumerate() { if index > 0 { out.push(','); } out.push_str(param); } out.push_str(") = "); write_expr(out, result); out.push('\n'); write_statements(out, body, indent + 1); write_indent(out, indent); out.push_str("end\n"); }, IrStatement::Event { trigger, body } => { out.push_str("event "); out.push_str(&trigger.join(" ")); out.push('\n'); write_statements(out, body, indent + 1); write_indent(out, indent); out.push_str("end\n"); }, IrStatement::Network { operation } => { out.push_str("network "); write_network_operation(out, operation); out.push('\n'); }, IrStatement::Orchestration { semantic, capability, effect, target, adapter, expectation } => { out.push_str("orchestrate "); out.push_str(semantic.as_str()); out.push_str(" capability="); out.push_str(&format!("{:?}", capability)); out.push_str(" effect="); out.push_str(&format!("{:?}", effect)); out.push_str(" target="); write_expr(out, target); out.push_str(" adapter="); out.push_str(adapter); out.push_str(" expectation="); out.push_str(&format!("{:?}", expectation)); out.push('\n'); } } } }
+fn write_network_operation(out: &mut String, operation: &IrNetworkOperation) { match operation { IrNetworkOperation::Semantic(NetworkOperation::Connect { target, constraints }) => { out.push_str("connect "); write_target(out, target); out.push_str(" protocol="); write_debug_enum(out, constraints.protocol); out.push_str(" transport="); write_debug_enum(out, constraints.transport); out.push_str(" security="); write_debug_enum(out, constraints.security); out.push_str(" address="); write_debug_enum(out, constraints.address_kind); out.push_str(" timeout_ms="); out.push_str(&constraints.timeout_ms.to_string()); }, IrNetworkOperation::Semantic(NetworkOperation::Send { connection: NetworkConnectionId(id), data }) => { out.push_str("send connection="); out.push_str(&id.to_string()); out.push_str(" bytes="); out.push_str(&data.len().to_string()); }, IrNetworkOperation::Semantic(NetworkOperation::Receive { connection: NetworkConnectionId(id) }) => { out.push_str("receive connection="); out.push_str(&id.to_string()); } } }
 fn write_target(out: &mut String, target: &crate::network::NetworkTarget) { match target { crate::network::NetworkTarget::Host(value) => { out.push_str("host:"); out.push_str(value); }, crate::network::NetworkTarget::Address(value) => { out.push_str("address:"); out.push_str(value); }, crate::network::NetworkTarget::Service { host, port } => { out.push_str("service:"); out.push_str(host); out.push(':'); out.push_str(&port.to_string()); } } }
 fn write_debug_enum<T: std::fmt::Debug>(out: &mut String, value: T) { out.push_str(&format!("{:?}", value)); }
 fn write_expr_list(out: &mut String, args: &[IrExpr]) { if args.is_empty() { return; } out.push(' '); for (index, arg) in args.iter().enumerate() { if index > 0 { out.push_str(", "); } write_expr(out, arg); } }
 fn write_expr(out: &mut String, expr: &IrExpr) { match expr { IrExpr::Text(value) => { out.push('"'); for ch in value.chars() { match ch { '\\' => out.push_str("\\\\"), '"' => out.push_str("\\\""), '\n' => out.push_str("\\n"), '\r' => out.push_str("\\r"), '\t' => out.push_str("\\t"), other => out.push(other) } } out.push('"'); }, IrExpr::Number(value) => out.push_str(&value.to_string()), IrExpr::Boolean(value) => out.push_str(if *value { "true" } else { "false" }), IrExpr::Nothing => out.push_str("nothing"), IrExpr::Identifier(value) => out.push_str(value), IrExpr::Binary { left, op, right } => { out.push('('); write_expr(out, left); out.push(' '); out.push_str(binary_op_name(*op)); out.push(' '); write_expr(out, right); out.push(')'); }, IrExpr::Call { name, args } => { out.push_str(name); out.push('('); for (index, arg) in args.iter().enumerate() { if index > 0 { out.push_str(", "); } write_expr(out, arg); } out.push(')'); } } }
 fn binary_op_name(op: BinaryOp) -> &'static str { match op { BinaryOp::Add => "add", BinaryOp::Subtract => "subtract", BinaryOp::Multiply => "multiply", BinaryOp::Divide => "divide", BinaryOp::Equal => "equal", BinaryOp::Greater => "greater", BinaryOp::Less => "less", BinaryOp::AtLeast => "at_least", BinaryOp::AtMost => "at_most" } }
 fn write_indent(out: &mut String, indent: usize) { for _ in 0..indent { out.push_str("  "); } }
-
 pub fn lower(program: &TypedProgram) -> Result<IrProgram, DiagnosticBundle> { Ok(IrProgram { statements: program.program.statements.iter().map(lower_statement).collect() }) }
 pub fn lower_network(operation: NetworkOperation) -> Result<IrStatement, DiagnosticBundle> { operation.validate()?; Ok(IrStatement::Network { operation: IrNetworkOperation::semantic(operation) }) }
-fn lower_statement(statement: &Statement) -> IrStatement {
-    match statement {
-        Statement::Declaration { name, value, .. } => IrStatement::Declaration { name: name.clone(), value: lower_expr(value) },
-        Statement::Assignment { name, value, .. } => IrStatement::Assignment { name: name.clone(), value: lower_expr(value) },
-        Statement::Action { name, args, .. } if name == "cari alamat" => IrStatement::Orchestration { semantic: SemanticCapabilityId::NetworkDiscover, capability: Capability::NetworkDiscover, effect: EffectClass::Discover, target: lower_expr(&args[0]) },
-        Statement::Action { name, args, .. } => IrStatement::Action { name: name.clone(), args: args.iter().map(lower_expr).collect() },
-        Statement::Conditional { condition, then_block, else_block, .. } => IrStatement::Conditional { condition: lower_expr(condition), then_block: then_block.iter().map(lower_statement).collect(), else_block: else_block.iter().map(lower_statement).collect() },
-        Statement::Loop { kind, body, .. } => IrStatement::Loop { kind: match kind { LoopKind::ForEach { variable, iterable } => IrLoopKind::ForEach { variable: variable.clone(), iterable: lower_expr(iterable) }, LoopKind::While { condition } => IrLoopKind::While { condition: lower_expr(condition) } }, body: body.iter().map(lower_statement).collect() },
-        Statement::Function { name, params, result, body, .. } => IrStatement::Function { name: name.clone(), params: params.clone(), result: lower_expr(result), body: body.iter().map(lower_statement).collect() },
-        Statement::Event { trigger, body, .. } => IrStatement::Event { trigger: trigger.clone(), body: body.iter().map(lower_statement).collect() },
-    }
-}
+fn lower_statement(statement: &Statement) -> IrStatement { match statement { Statement::Declaration { name, value, .. } => IrStatement::Declaration { name: name.clone(), value: lower_expr(value) }, Statement::Assignment { name, value, .. } => IrStatement::Assignment { name: name.clone(), value: lower_expr(value) }, Statement::Action { name, args, .. } if name == "cari alamat" => IrStatement::Orchestration { semantic: SemanticCapabilityId::NetworkDiscover, capability: Capability::NetworkDiscover, effect: EffectClass::Discover, target: lower_expr(&args[0]), adapter: "network.dns.resolve".into(), expectation: NormalizationExpectation::Utf8Text }, Statement::Action { name, args, .. } if name == "baca berkas" => IrStatement::Orchestration { semantic: SemanticCapabilityId::FilesystemRead, capability: Capability::Filesystem, effect: EffectClass::Read, target: lower_expr(&args[0]), adapter: "filesystem.file.read".into(), expectation: NormalizationExpectation::Utf8Text }, Statement::Action { name, args, .. } => IrStatement::Action { name: name.clone(), args: args.iter().map(lower_expr).collect() }, Statement::Conditional { condition, then_block, else_block, .. } => IrStatement::Conditional { condition: lower_expr(condition), then_block: then_block.iter().map(lower_statement).collect(), else_block: else_block.iter().map(lower_statement).collect() }, Statement::Loop { kind, body, .. } => IrStatement::Loop { kind: match kind { LoopKind::ForEach { variable, iterable } => IrLoopKind::ForEach { variable: variable.clone(), iterable: lower_expr(iterable) }, LoopKind::While { condition } => IrLoopKind::While { condition: lower_expr(condition) } }, body: body.iter().map(lower_statement).collect() }, Statement::Function { name, params, result, body, .. } => IrStatement::Function { name: name.clone(), params: params.clone(), result: lower_expr(result), body: body.iter().map(lower_statement).collect() }, Statement::Event { trigger, body, .. } => IrStatement::Event { trigger: trigger.clone(), body: body.iter().map(lower_statement).collect() } } }
 fn lower_expr(expr: &Expr) -> IrExpr { match expr { Expr::Text(v) => IrExpr::Text(v.clone()), Expr::Number(v) => IrExpr::Number(*v), Expr::Boolean(v) => IrExpr::Boolean(*v), Expr::Nothing => IrExpr::Nothing, Expr::Identifier(v) => IrExpr::Identifier(v.clone()), Expr::Binary { left, op, right } => IrExpr::Binary { left: Box::new(lower_expr(left)), op: *op, right: Box::new(lower_expr(right)) }, Expr::Call { name, args } => IrExpr::Call { name: name.clone(), args: args.iter().map(lower_expr).collect() } } }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::network::{NetworkAddressKind, NetworkConstraints, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport};
-
-    fn network() -> NetworkOperation { NetworkOperation::Connect { target: NetworkTarget::Service { host: "example.com".into(), port: 443 }, constraints: NetworkConstraints { address_kind: Some(NetworkAddressKind::Ipv6), transport: NetworkTransport::Reliable, security: Some(NetworkSecurity::Tls), timeout_ms: 5_000, protocol: Some(NetworkProtocolFamily::Http) } } }
-
-    #[test]
-    fn network_ir_canonical_text_is_stable() {
-        let ir = IrProgram { statements: vec![IrStatement::Network { operation: IrNetworkOperation::semantic(network()) }] };
-        assert_eq!(ir.canonical_text(), "network connect service:example.com:443 protocol=Some(Http) transport=Reliable security=Some(Tls) address=Some(Ipv6) timeout_ms=5000\n");
-        assert_eq!(ir.canonical_text(), ir.canonical_text());
-    }
-
-    #[test]
-    fn network_ir_preserves_security_and_transport_constraints() {
-        match ir_operation() {
-            NetworkOperation::Connect { constraints, .. } => {
-                assert_eq!(constraints.transport, NetworkTransport::Reliable);
-                assert_eq!(constraints.security, Some(NetworkSecurity::Tls));
-                assert_eq!(constraints.address_kind, Some(NetworkAddressKind::Ipv6));
-            }
-            NetworkOperation::Send { .. } | NetworkOperation::Receive { .. } => panic!("test fixture must remain a connect operation"),
-        }
-    }
-
-    #[test]
-    fn cari_alamat_lowers_to_typed_orchestration_request() {
-        let program = crate::parse("cari alamat \"127.0.0.1\"\n").expect("source should parse");
-        let typed = crate::analyze(&program).expect("source should analyze");
-        let ir = lower(&typed).expect("source should lower");
-        assert!(matches!(ir.statements.first(), Some(IrStatement::Orchestration { semantic: SemanticCapabilityId::NetworkDiscover, capability: Capability::NetworkDiscover, effect: EffectClass::Discover, target: IrExpr::Text(value) }) if value == "127.0.0.1"));
-    }
-
-    fn ir_operation() -> NetworkOperation { network() }
-}
+#[cfg(test)] mod tests { use super::*; use crate::network::{NetworkAddressKind, NetworkConstraints, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport}; fn network() -> NetworkOperation { NetworkOperation::Connect { target: NetworkTarget::Service { host: "example.com".into(), port: 443 }, constraints: NetworkConstraints { address_kind: Some(NetworkAddressKind::Ipv6), transport: NetworkTransport::Reliable, security: Some(NetworkSecurity::Tls), timeout_ms: 5_000, protocol: Some(NetworkProtocolFamily::Http) } } } #[test] fn network_ir_canonical_text_is_stable() { let ir = IrProgram { statements: vec![IrStatement::Network { operation: IrNetworkOperation::semantic(network()) }] }; assert_eq!(ir.canonical_text(), "network connect service:example.com:443 protocol=Some(Http) transport=Reliable security=Some(Tls) address=Some(Ipv6) timeout_ms=5000\n"); assert_eq!(ir.canonical_text(), ir.canonical_text()); } #[test] fn network_ir_preserves_security_and_transport_constraints() { match ir_operation() { NetworkOperation::Connect { constraints, .. } => { assert_eq!(constraints.transport, NetworkTransport::Reliable); assert_eq!(constraints.security, Some(NetworkSecurity::Tls)); assert_eq!(constraints.address_kind, Some(NetworkAddressKind::Ipv6)); }, NetworkOperation::Send { .. } | NetworkOperation::Receive { .. } => panic!("test fixture must remain a connect operation") } } #[test] fn cari_alamat_lowers_to_typed_orchestration_request() { let program = crate::parse("cari alamat \"127.0.0.1\"\n").expect("source should parse"); let typed = crate::analyze(&program).expect("source should analyze"); let ir = lower(&typed).expect("source should lower"); assert!(matches!(ir.statements.first(), Some(IrStatement::Orchestration { semantic: SemanticCapabilityId::NetworkDiscover, capability: Capability::NetworkDiscover, effect: EffectClass::Discover, target: IrExpr::Text(value), adapter, expectation: NormalizationExpectation::Utf8Text }) if value == "127.0.0.1" && adapter == "network.dns.resolve"); } #[test] fn baca_berkas_lowers_to_generic_filesystem_orchestration() { let program = crate::parse("baca berkas \"Cargo.toml\"\n").expect("source should parse"); let typed = crate::analyze(&program).expect("source should analyze"); let ir = lower(&typed).expect("source should lower"); assert!(matches!(ir.statements.first(), Some(IrStatement::Orchestration { semantic: SemanticCapabilityId::FilesystemRead, capability: Capability::Filesystem, effect: EffectClass::Read, target: IrExpr::Text(value), adapter, expectation: NormalizationExpectation::Utf8Text }) if value == "Cargo.toml" && adapter == "filesystem.file.read"); } fn ir_operation() -> NetworkOperation { network() } }
