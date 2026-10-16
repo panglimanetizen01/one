@@ -31,7 +31,7 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Current exact-SHA cross-platform verification | VERIFIED | independent run `38895405559` checked out `78fc1ecfe520bc35584e4fae36fb13ffa3226877` exactly and passed Ubuntu + Windows build, Clippy, workspace tests, real-network tests, contract checks, deterministic artifacts, orchestration runtime, and offline verification |
+| Current exact-SHA cross-platform verification | VERIFIED | independent run `38896135846` checked out `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` exactly and passed Ubuntu + Windows build, Clippy, workspace tests, real-network tests, contract checks, deterministic artifacts, orchestration runtime, and offline verification |
 | Private canonical hosted CI execution | BLOCKED | canonical runner jobs remain an unreliable source of executable evidence; independent mirror is the valid verified path |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -44,7 +44,7 @@
 
 ## Verified network boundary
 
-The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent run `38895405559` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification on Ubuntu and Windows Server 2025.
+The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent run `38896135846` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification on Ubuntu and Windows Server 2025.
 
 ## Orchestration boundary
 
