@@ -1,18 +1,20 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS ORCHESTRATION**.
+Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS AND FILESYSTEM-READ ORCHESTRATION**.
 
 ## Scope
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
 
-## Current exact-SHA evidence
+## Current exact-SHA evidence boundary
 
-Canonical source revision independently verified: `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a`.
+The latest independently verified implementation revision is `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`.
 
-Independent mirror run: `38896533761` in `panglimanetizen01/one-windows-verification`.
+Independent mirror run: `38901366447` in `panglimanetizen01/one-windows-verification`.
 
-Ubuntu job `116958230147` and Windows Server 2025 job `116958229777` both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, DNS success/failure classification, orchestration runtime, and platform-specific offline verification.
+Ubuntu and Windows Server 2025 both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, DNS success/failure classification, filesystem-read orchestration runtime, and platform-specific offline verification.
+
+The canonical `main` is newer than that evidence revision. Evidence for one commit does not automatically verify a later commit. The current post-verification commits must therefore not be described as independently exact-SHA verified until a new verification run records the later SHA.
 
 ## Verified baseline
 
@@ -28,17 +30,18 @@ Ubuntu job `116958230147` and Windows Server 2025 job `116958229777` both checke
 - Verified native network runtime slices: DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits.
 - General-purpose orchestration runtime foundation: typed capability requests, deterministic governance, governed adapters, normalized results/evidence, audit records, localized semantic-resolution fixtures, and `network.dns.resolve`.
 - Experimental source-level DNS orchestration through `cari alamat`, explicit `network.discover` permission, exact target scope, governed adapter execution, normalized result, and CLI output.
+- Experimental source-level filesystem-read orchestration through `baca berkas`, explicit `filesystem.read` permission, exact target scope, governed adapter execution, normalized UTF-8 result, and CLI output.
 
 ## Explicit v0.1 limits
 
 - `build` emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
-- The language-level orchestration catalog is not complete. Only the DNS discovery vertical slice is currently experimental and verified through the source/CLI boundary.
-- Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and the remaining protocol inventory are future work.
+- The language-level orchestration catalog is not complete. Only the DNS discovery and filesystem-read vertical slices are currently experimental and independently verified through the source/CLI boundary.
+- Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
 
-## Experimental DNS orchestration
+## Experimental orchestration
 
-Source:
+DNS source:
 
 ```text
 cari alamat "127.0.0.1"
@@ -50,7 +53,19 @@ Explicit CLI permission:
 one jalankan main.one --izinkan network.discover --target 127.0.0.1
 ```
 
-No explicit permission means denial. A different target is outside the granted scope.
+Filesystem-read source:
+
+```text
+baca berkas "data/contoh.txt"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
+```
+
+For both slices, no explicit permission means denial and a different target is outside the granted scope.
 
 ## Release labels
 
