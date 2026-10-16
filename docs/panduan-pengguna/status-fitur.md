@@ -42,6 +42,6 @@ Boundary saat ini: satu payload teks ke satu file target yang diberikan secara e
 
 Database orchestration, HTTP orchestration tambahan, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
 
-Filesystem write tetap **Eksperimental**, bukan **Didukung**, karena bukti lintas-platform untuk revision `f4b4edc2e408928fb697fb355c3c69c88c62e09d` belum ada. Later documentation-only commits do not change this executable evidence boundary.
+Filesystem write tetap **Eksperimental**, bukan **Didukung**, karena bukti lintas-platform untuk revision `f4b4edc2e408928fb697fb355c3c69c88c62e09d` belum ada. Commit dokumentasi setelah verifikasi executable tidak mengubah boundary bukti tersebut.
 
 Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implementation-status.md` dan `docs/verification/one-v0.1-evidence-matrix.md`.
