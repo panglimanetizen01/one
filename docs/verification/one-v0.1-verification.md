@@ -10,9 +10,9 @@ The repository was audited after integration of the native HTTP/2 runtime. The c
 
 ## Exact-SHA evidence
 
-Independent verification run `38785876520` checked out the then-current canonical source commit and passed on both Ubuntu and Windows Server 2025. All required stages passed: canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real network runtime tests, platform-specific offline verification, and deterministic artifact checks.
+Independent verification run `38786708863` checked out canonical source commit `abee462cb3941dbad4bddca1737027263c040d6e` and passed on both Ubuntu and Windows Server 2025. All required stages passed: canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real network runtime tests, platform-specific offline verification, and deterministic artifact checks.
 
-Because subsequent documentation updates change the canonical SHA, one final exact-SHA verification run is required after the documentation set is synchronized. The release record must not be interpreted as evidence for a later SHA that has not itself been executed.
+The documentation synchronization following that run is deliberately treated as a new source revision. The final release gate therefore requires one fresh independent Ubuntu/Windows matrix against the resulting canonical SHA; no earlier run is substituted for that gate.
 
 ## Contract-artifact gate
 
@@ -36,10 +36,10 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
 ## Historical evidence
 
-Previous fully green runs remain historical evidence for their exact commits. The latest pre-hardening network verification was run `38781871063`. The post-audit hardening verification was run `38785876520`.
+Previous fully green runs remain historical evidence for their exact commits. The latest completed pre-synchronization run was `38786708863`. The final release decision must use the fresh matrix against the documentation-synchronized SHA.
 
 ## Final gate
 
-The synchronized documentation set changes the canonical SHA again. The final gate is the same independent Ubuntu/Windows matrix against the resulting exact `main` SHA. No final VERIFIED claim is made until that exact SHA passes all required stages.
+The final gate is the same independent Ubuntu/Windows matrix against the exact canonical SHA produced by the documentation synchronization. The gate must pass contract artifacts, build, Clippy, tests, real network runtime, and platform-specific offline verification on both platforms before this record is interpreted as final verification evidence.
 
-**Current canonical verification: PENDING final exact-SHA run after documentation synchronization.**
+**Current canonical verification: FINAL VERIFICATION GATE.**
