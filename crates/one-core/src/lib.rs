@@ -13,6 +13,7 @@ pub mod network_datagrams;
 pub mod network_mail;
 pub mod network_runtime;
 pub mod orchestration;
+pub mod orchestrator;
 #[cfg(feature = "real-network")]
 pub mod network_http2;
 #[cfg(feature = "real-network")]
@@ -61,6 +62,7 @@ pub use orchestration::{
     ResolvedCapability,
     SemanticCapabilityId,
 };
+pub use orchestrator::{OrchestrationError, Orchestrator};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
 pub use token::{Span, Token, TokenKind};
