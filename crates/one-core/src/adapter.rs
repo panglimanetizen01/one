@@ -25,14 +25,10 @@ impl AdapterMetadata {
     pub fn id(&self) -> &AdapterId { &self.id }
     pub const fn status(&self) -> AdapterStatus { self.status }
     pub fn declares(&self, capability: Capability) -> bool { self.capabilities.contains(&capability) }
-    pub fn available_on(&self, platform: PlatformKind) -> bool {
-        self.platforms.contains(&PlatformKind::Any) || self.platforms.contains(&platform)
-    }
+    pub fn available_on(&self, platform: PlatformKind) -> bool { self.platforms.contains(&PlatformKind::Any) || self.platforms.contains(&platform) }
     pub fn validate_request(&self, request: &CapabilityRequest) -> Result<(), AdapterError> {
         request.validate().map_err(AdapterError::InvalidRequest)?;
-        if !self.declares(request.capability) {
-            return Err(AdapterError::UndeclaredCapability);
-        }
+        if !self.declares(request.capability) { return Err(AdapterError::UndeclaredCapability); }
         Ok(())
     }
 }
@@ -53,13 +49,8 @@ pub struct AdapterRequest {
 }
 
 impl AdapterRequest {
-    pub fn new(capability: CapabilityRequest) -> Self {
-        Self { capability, arguments: Vec::new() }
-    }
-    pub fn with_argument(mut self, argument: AdapterArgument) -> Self {
-        self.arguments.push(argument);
-        self
-    }
+    pub fn new(capability: CapabilityRequest) -> Self { Self { capability, arguments: Vec::new() } }
+    pub fn with_argument(mut self, argument: AdapterArgument) -> Self { self.arguments.push(argument); self }
     pub const fn capability(&self) -> &CapabilityRequest { &self.capability }
     pub fn arguments(&self) -> &[AdapterArgument] { &self.arguments }
 }
@@ -74,6 +65,7 @@ pub struct AdapterResult {
 pub enum AdapterError {
     InvalidRequest(crate::orchestration::OrchestrationValidationError),
     UndeclaredCapability,
+    InvalidArguments,
     UnsupportedPlatform,
 }
 
@@ -88,13 +80,8 @@ mod tests {
     use crate::capability::Capability;
     use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, EffectClass, ExecutionScope, SemanticCapabilityId};
 
-    fn request() -> CapabilityRequest {
-        CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect)
-    }
-
-    fn metadata() -> AdapterMetadata {
-        AdapterMetadata::new(AdapterId::new("network.native"), AdapterStatus::Implemented, vec![Capability::NetworkConnect], vec![PlatformKind::Linux, PlatformKind::Windows])
-    }
+    fn request() -> CapabilityRequest { CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect) }
+    fn metadata() -> AdapterMetadata { AdapterMetadata::new(AdapterId::new("network.native"), AdapterStatus::Implemented, vec![Capability::NetworkConnect], vec![PlatformKind::Linux, PlatformKind::Windows]) }
 
     #[test]
     fn adapter_identity_and_capability_metadata_are_stable() {
@@ -115,8 +102,7 @@ mod tests {
     #[test]
     fn adapter_request_requires_declared_capability() {
         let metadata = metadata();
-        let request = request();
-        assert!(metadata.validate_request(&request).is_ok());
+        assert!(metadata.validate_request(&request()).is_ok());
         let undeclared = CapabilityRequest::new(SemanticCapabilityId::NetworkAdmin, Capability::NetworkAdmin, ExecutionScope::target("server.example"), EffectClass::Admin);
         assert_eq!(metadata.validate_request(&undeclared), Err(AdapterError::UndeclaredCapability));
     }
