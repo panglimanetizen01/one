@@ -6,20 +6,9 @@
 
 ## Current implementation boundary
 
-The architectural design in this document is now partially executable through a verified runtime foundation. The canonical source contains:
+The architectural design in this document is now partially executable through a verified runtime foundation. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic-to-capability resolution, deterministic governance, typed external adapters, deterministic adapter selection, normalized results/evidence, audit records, localized semantic-resolution conformance coverage, and the real `network.dns.resolve` adapter.
 
-- typed semantic capability identifiers and requests;
-- execution scopes and effect classes;
-- deterministic semantic-to-capability resolution;
-- deterministic execution governance with allow/deny/approval decisions;
-- typed external adapter contracts and platform metadata;
-- deterministic compatible-adapter selection;
-- normalized results with explicit evidence certainty;
-- audit records that distinguish policy decisions from attempted execution;
-- Indonesian/English semantic-resolution conformance coverage;
-- the first real adapter, `network.dns.resolve`.
-
-Independent run `38871435579` verified this foundation at canonical source SHA `be2e65852e9a4be833e659524a12c6359769665b` on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
+Independent run `38872070590` verified this foundation at source baseline `dba4fad49854952e256ae41744f57f93e39167a8` on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
 
 This does **not** yet mean that a normal One source program can invoke the orchestration runtime end-to-end. The current CLI still follows the established source → parser → semantic analysis → IR → reference interpreter path. The missing language-level bridge is explicitly the next implementation boundary.
 
@@ -78,43 +67,19 @@ The orchestration layer must consume this pipeline rather than creating a parall
 
 One may eventually permit beginner-oriented semantic operations expressed in ordinary language. Examples in this document are design examples unless an accompanying grammar/semantic contract and executable evidence says otherwise.
 
-Illustrative examples do not define grammar by themselves.
-
 ## 5. Intent is not authority
 
-For every external effect, the runtime evaluates the required capability, requested scope, and execution policy before invoking an adapter.
-
-```text
-intent
-  ↓
-required capability
-  ↓
-requested scope
-  ↓
-execution policy
-  ↓
-allow / deny / require approval
-  ↓
-adapter invocation
-```
-
-Changing wording or localization must not change the authorization requirements for the same semantic operation.
+For every external effect, the runtime evaluates the required capability, requested scope, and execution policy before invoking an adapter. Changing wording or localization must not change the authorization requirements for the same semantic operation.
 
 ## 6. Capability model
 
-Every external operation exposed to One must have a machine-readable capability declaration covering, as applicable, semantic identity, effects, input/output schema, scope, privilege requirements, platform/backend availability, adapter identity, audit requirements, determinism, and verification status.
+Every external operation exposed to One must have a machine-readable capability declaration covering semantic identity, effects, input/output schema, scope, privilege requirements, platform/backend availability, adapter identity, audit requirements, determinism, and verification status as applicable.
 
 ## 7. Tool Capability Registry
 
 The registry maps semantic capability contracts to available adapters. Registry presence does not prove implementation, verification, or support.
 
-Status remains:
-
-- **Specified** — semantic contract exists.
-- **Designed** — adapter boundary exists.
-- **Implemented** — adapter code exists.
-- **Verified** — required tests and execution evidence pass.
-- **Supported** — verified for declared platforms/backends.
+Status remains **Specified → Designed → Implemented → Verified → Supported**.
 
 ## 8. Tool abstraction
 
@@ -144,7 +109,7 @@ This is an architectural inventory, not a v0.1 implementation claim.
 
 ## 14. Governance plane
 
-The runtime governance plane may grant/withhold capabilities, restrict scope, require approval, restrict/disable adapters, and record execution/audit events. Governance state must remain separate from language semantics.
+The runtime governance plane may grant/withhold capabilities, restrict scope, require approval, restrict/disable adapters, and record execution/audit events. Governance state remains separate from language semantics.
 
 ## 15. No language-level privilege escalation
 
@@ -177,13 +142,11 @@ Audit data records observed/requested runtime facts such as capability identity,
 
 ## 18. Failure semantics
 
-Orchestration failures must remain typed and distinguish invalid source/parameters, ambiguity, missing capability, policy denial, out-of-scope target, unavailable adapter, unsupported platform, adapter failure, malformed output, timeout, interruption, and uncertainty where applicable.
+Orchestration failures remain typed and distinguish invalid source/parameters, ambiguity, missing capability, policy denial, out-of-scope target, unavailable adapter, unsupported platform, adapter failure, malformed output, timeout, interruption, and uncertainty where applicable.
 
 ## 19. Testing and conformance
 
-The architecture requires language, capability, adapter, and end-to-end tests. No adapter is marked Verified without executable evidence appropriate to its backend.
-
-The current foundation has executable tests for the runtime layers and a real DNS adapter. The missing end-to-end language-level test is a release boundary for the next implementation phase.
+The architecture requires language, capability, adapter, and end-to-end tests. No adapter is marked Verified without executable evidence appropriate to its backend. The current foundation has executable tests for the runtime layers and a real DNS adapter; the missing end-to-end language-level test is the next release boundary.
 
 ## 20. Compatibility with existing One architecture
 
@@ -199,18 +162,7 @@ This specification does not make every external tool part of the standard librar
 
 ## 23. Success criteria
 
-The architecture succeeds when:
-
-1. useful programming intent can be expressed in understandable language;
-2. localization preserves semantic identity;
-3. One can orchestrate real external capabilities through typed adapters;
-4. external tools remain implementation backends;
-5. advanced users retain precise controls;
-6. capability/policy enforcement is independent of wording;
-7. results are normalized without invented facts;
-8. supported adapters have executable evidence;
-9. One remains general-purpose;
-10. platform/owner governance can control execution without changing language meaning.
+The architecture succeeds when useful programming intent can be expressed in understandable language, localization preserves semantic identity, One can orchestrate real external capabilities through typed adapters, external tools remain implementation backends, advanced users retain precise controls, capability/policy enforcement is independent of wording, results are normalized without invented facts, supported adapters have executable evidence, One remains general-purpose, and platform/owner governance can control execution without changing language meaning.
 
 ## 24. Implementation gate
 
