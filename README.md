@@ -62,7 +62,7 @@ Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTP
 
 ## General-purpose orchestration foundation
 
-One now has a verified runtime foundation for general-purpose human-language tool orchestration:
+One has a verified runtime foundation for general-purpose human-language tool orchestration:
 
 ```text
 semantic capability request
@@ -116,8 +116,8 @@ Normative engineering documents:
 
 ## Verification state
 
-Canonical source SHA `be2e65852e9a4be833e659524a12c6359769665b` passed independent Ubuntu and Windows Server 2025 verification run `38871435579`, including build, Clippy, workspace tests, real-network runtime tests, contract-artifact checks, offline verification, and deterministic `.oneir`/`.onepkg` checks.
+The last independently verified source baseline is `dba4fad49854952e256ae41744f57f93e39167a8`, verified by run `38872070590` on Ubuntu and Windows Server 2025 through build, Clippy, workspace tests, real-network runtime tests, contract-artifact checks, offline verification, and deterministic `.oneir`/`.onepkg` checks.
 
-A later canonical documentation commit must receive fresh exact-SHA verification before it is called verified. The private canonical GitHub repository remains the source of truth; the public verification mirror is verification infrastructure only.
+Documentation-only synchronization revisions are treated as new canonical revisions and receive fresh exact-SHA verification before they are called the verified current head.
 
-No paid GitHub upgrade is required for this workflow.
+The private canonical GitHub repository remains the source of truth; the public verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
