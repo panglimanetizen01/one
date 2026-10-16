@@ -112,4 +112,9 @@ mod tests {
         let request = AdapterRequest::new(request()).with_argument(AdapterArgument::Text("server.example".into()));
         assert_eq!(request.arguments(), &[AdapterArgument::Text("server.example".into())]);
     }
+
+    #[test]
+    fn adapter_errors_distinguish_backend_resolution_failure_from_platform_unavailability() {
+        assert_ne!(AdapterError::ResolutionFailed, AdapterError::UnsupportedPlatform);
+    }
 }
