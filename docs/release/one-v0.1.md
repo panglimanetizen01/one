@@ -8,11 +8,11 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Current exact-SHA evidence
 
-Canonical source revision independently verified: `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`.
+Canonical source revision independently verified: `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a`.
 
-Independent mirror run: `38896135846` in `panglimanetizen01/one-windows-verification`.
+Independent mirror run: `38896533761` in `panglimanetizen01/one-windows-verification`.
 
-Ubuntu job `116956935554` and Windows Server 2025 job `116956935967` both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. Deterministic `.oneir` and `.onepkg` checks, DNS success/failure classification, and orchestration runtime/source-level DNS tests also passed.
+Ubuntu job `116958230147` and Windows Server 2025 job `116958229777` both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, DNS success/failure classification, orchestration runtime, and platform-specific offline verification.
 
 ## Verified baseline
 
