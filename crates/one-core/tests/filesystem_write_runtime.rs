@@ -1,7 +1,8 @@
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use one_core::capability::CapabilitySet;
+use one_core::capability::Capability;
+use one_core::governance::{ExecutionPolicy, ScopeRule};
 use one_core::interpreter::Interpreter;
 use one_core::ir::lower;
 use one_core::parser::parse;
@@ -20,13 +21,15 @@ fn filesystem_write_requires_explicit_capability_and_writes_target() {
     let typed = analyze(&program).expect("filesystem write should pass semantic analysis");
     let ir = lower(&typed).expect("filesystem write should lower to IR");
 
-    let mut denied = Interpreter::with_orchestration_policy(Default::default());
+    let mut denied = Interpreter::with_orchestration_policy(ExecutionPolicy::default());
     let error = denied.execute(&ir).expect_err("filesystem write must be denied without explicit capability");
     assert_eq!(error.code, "N3209");
 
-    let mut allowed = Interpreter::with_orchestration_policy(Default::default());
-    allowed.capabilities = CapabilitySet::none().allow(one_core::capability::Capability::Filesystem);
-    allowed.execute(&ir).expect("filesystem write should execute with explicit filesystem capability");
+    let policy = ExecutionPolicy::default()
+        .grant(Capability::Filesystem)
+        .allow_scope(Capability::Filesystem, ScopeRule::Target(path.clone()));
+    let mut allowed = Interpreter::with_orchestration_policy(policy);
+    allowed.execute(&ir).expect("filesystem write should execute with explicit filesystem capability and target scope");
     assert_eq!(fs::read_to_string(&path).unwrap(), "halo dari One");
     let _ = fs::remove_file(path);
 }
