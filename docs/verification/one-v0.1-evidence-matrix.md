@@ -19,15 +19,15 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Contract consistency | `tools/check_contract.py` | required-artifact/index/fixture scan | ADDED / independently exercised by the verification matrix |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | ADDED / independently exercised by the verification matrix |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | ADDED / independently exercised by the verification matrix |
-| Linux portability | `.github/workflows/ci.yml` + offline verifier | actual Linux run | GREEN in independent run `38786708863` for pre-documentation-sync source |
-| Windows portability | `.github/workflows/ci.yml` + offline verifier | actual Windows run | GREEN in independent run `38786708863` for pre-documentation-sync source |
-| Release gate | `.github/workflows/release-check.yml` | green gate run | PENDING final exact-SHA verification |
+| Linux portability | `.github/workflows/ci.yml` + offline verifier | actual Linux run | GREEN for source commit `e58da6393e53094f29a5121cb440c94973f71b6a` in independent run `38846301365` |
+| Windows portability | `.github/workflows/ci.yml` + offline verifier | actual Windows run | GREEN for source commit `e58da6393e53094f29a5121cb440c94973f71b6a` in independent run `38846301365` |
+| Release gate | `.github/workflows/release-check.yml` | green gate run | PENDING fresh exact-SHA verification of current documentation-synchronized `main` |
 
 ## Final verification boundary
 
-The canonical `main` branch currently points to a documentation-synchronized commit. The last independent matrix run `38786708863` was fully green on Ubuntu and Windows Server 2025, including canonical SHA verification, contract artifacts, build, Clippy, tests, real-network runtime, and platform-specific offline verification, but it executed the preceding canonical source revision.
+The independently verified source revision is `e58da6393e53094f29a5121cb440c94973f71b6a`. Independent run `38846301365` passed on Ubuntu and Windows Server 2025, including canonical SHA verification, contract artifacts, build, Clippy, workspace tests, real-network runtime, and platform-specific offline verification; the real-network suite reported `38 passed; 0 failed` on both platforms.
 
-The current release candidate therefore remains **PENDING FINAL EXACT-SHA VERIFICATION**. The next independent run must check out the exact current `main` SHA and pass every required stage before any `VERIFIED` release claim is made.
+Canonical `main` subsequently received documentation synchronization commits, currently headed by `1ebb596535d8367b64af0fbaae787ac50436519e`. Those documentation changes have not been silently promoted to verified status. The current release candidate remains **PENDING FINAL EXACT-SHA VERIFICATION** until an independent Ubuntu/Windows matrix checks the exact resulting canonical SHA.
 
 ## Evidence rules
 
