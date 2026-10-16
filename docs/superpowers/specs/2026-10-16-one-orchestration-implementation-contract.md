@@ -1,6 +1,6 @@
 # One Orchestration Implementation Contract
 
-Status: Implemented on `feature/one-orchestration-native`; final exact-SHA cross-platform verification remains a release gate.
+Status: Verified on canonical `main` tree and merged into `main` at `8a8a3af449782b457ca1fc109b71fe9fdb006373`.
 
 ## Semantic boundary
 
@@ -49,6 +49,12 @@ Current conformance fixtures cover Indonesian and English aliases for network co
 
 The first real adapter is `network.dns.resolve`. It uses the platform resolver directly, accepts a typed target scope, performs no shell/command-string substitution, and is exercised with a loopback target for deterministic integration evidence.
 
+## Verification evidence
+
+The implementation tree at exact head `8231b62d7b7d964b5bc3e270eb27a71eaae38187` was independently verified by `one-windows-verification` run `38855607871` on Ubuntu and Windows. The verified stages were build, Clippy, workspace tests, real-network runtime tests, offline verification, and contract-artifact checks. The subsequent canonical merge commit `8a8a3af449782b457ca1fc109b71fe9fdb006373` preserves the same tree SHA `ba2fc7f6af9b4c0e29b10d6313dfb71464f4e136`.
+
+The canonical GitHub CI workflow has also been retried. Its jobs currently terminate before exposing any executable workflow step or log data; therefore no source-level root cause is asserted for that infrastructure-side CI result. The independent exact-tree cross-platform evidence above remains the executable verification record for this implementation.
+
 ## Evidence rule
 
-The implementation status of each component is not equivalent to Verified or Supported. Final release status requires exact-SHA Linux and Windows verification through the independent verification repository and its build, Clippy, test, real-network, offline, and contract stages.
+`Verified` here means the implementation tree has executable cross-platform evidence matching the recorded tree. `Supported` remains platform/backend-specific and must only be asserted where the relevant runtime evidence exists.
