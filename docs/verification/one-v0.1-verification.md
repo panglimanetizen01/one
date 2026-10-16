@@ -10,9 +10,9 @@ The repository was audited after integration of the native HTTP/2 runtime. The c
 
 ## Exact-SHA evidence
 
-Independent verification run `38846301365` checked out canonical source commit `e58da6393e53094f29a5121cb440c94973f71b6a` and passed on both Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real network runtime tests, platform-specific offline verification, and deterministic artifact checks. The real-network suite reported `38 passed; 0 failed` on both platforms, including the HTTPS/TLS loopback regression and HTTP/2 runtime tests.
+Independent verification run `38848143359` checked out canonical source commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` and passed on both Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real network runtime tests, platform-specific offline verification, and deterministic artifact checks.
 
-This documentation synchronization records that evidence. The source revision itself was independently verified before this documentation commit; any later documentation-only revision must not be represented as tested unless a fresh exact-SHA matrix checks it.
+This documentation synchronization records that fresh exact-SHA evidence. The prior independently verified source revision `e58da6393e53094f29a5121cb440c94973f71b6a` remains historical evidence from run `38846301365`.
 
 ## Contract-artifact gate
 
@@ -36,10 +36,10 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
 ## Historical evidence
 
-Previous fully green runs remain historical evidence for their exact commits. Run `38846301365` is the latest completed independent matrix and directly verifies `e58da6393e53094f29a5121cb440c94973f71b6a` on Ubuntu and Windows Server 2025.
+Previous fully green runs remain historical evidence for their exact commits. Run `38848143359` is the latest completed independent matrix and directly verifies `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` on Ubuntu and Windows Server 2025.
 
 ## Final gate
 
-A documentation-only revision after a verified source revision is not silently treated as verified. If this file or the release contract changes again, the resulting canonical SHA requires a fresh independent Ubuntu/Windows matrix before that new SHA is called verified.
+The current canonical source revision has a completed independent Ubuntu/Windows verification matrix. Any later canonical change must receive a new exact-SHA verification before that later SHA is called verified.
 
-**Current evidence status: source commit `e58da6393e53094f29a5121cb440c94973f71b6a` has a completed independent Ubuntu/Windows verification matrix.**
+**Current evidence status: canonical commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` is VERIFIED by independent run `38848143359`.**
