@@ -13,18 +13,9 @@
 - Ambiguity is rejected rather than guessed
 - Human-readable diagnostics
 - Windows and Linux as first-class platforms
-- Complete project lifecycle is an architectural goal
-- Deep interoperability with existing ecosystems is an architectural goal
 - LLM-independent compiler/runtime semantics
-- Progressive complexity from beginner programs to large systems
-
-## Untuk pengguna baru
-
-Mulai dari **Panduan Pengguna One** di `docs/panduan-pengguna/README.md`. Panduan tersebut membedakan fitur yang sudah tersedia dari fitur yang masih dikembangkan.
 
 ## v0.1 implementation
-
-The canonical repository contains the executable language core:
 
 ```text
 Localized source
@@ -36,7 +27,7 @@ Localized source
     -> CLI
 ```
 
-The v0.1 CLI uses Indonesian conversational commands as its primary interface while retaining technical aliases:
+CLI primary commands:
 
 ```text
 one buat <folder>              # alias: one new
@@ -50,74 +41,55 @@ one version
 one help
 ```
 
-The implementation includes the six core constructs, structured diagnostics, a capability model, explicit process interoperability, project scaffolding, strict v0.1 manifest validation, deterministic `.oneir`/`.onepkg` artifacts, and conformance/golden fixtures.
-
-`one bangun` emits a deterministic `.oneir` IR/debug artifact. `one package` emits a deterministic `.onepkg` artifact. Neither is yet a native executable compiler or platform installer.
+The implementation includes the six core constructs, structured diagnostics, capability model, explicit process interoperability, project scaffolding, strict v0.1 manifest validation, deterministic `.oneir`/`.onepkg` artifacts, and conformance/golden fixtures.
 
 ## One Network foundation
 
-The first One-owned network vertical slice is implemented as a typed semantic model with explicit address, transport, security, protocol-family, target, timeout, connection, and connect/send/receive operation types. Network authority is granular and capability-aware.
+Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits.
 
-Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within their explicit runtime limits. Registry entries do not by themselves imply runtime support.
+## Experimental language-level orchestration
 
-## General-purpose orchestration foundation
-
-One has a verified runtime foundation for general-purpose human-language tool orchestration:
+The first source-level orchestration vertical slice is now real and verified:
 
 ```text
-semantic capability request
-    -> scope validation
-    -> execution governance
-    -> compatible typed adapter
-    -> normalized result/evidence
-    -> audit record
-```
-
-The first real adapter is `network.dns.resolve`. Indonesian/English semantic-resolution fixtures, governance tests, adapter tests, result normalization, audit behavior, and real DNS runtime evidence are present.
-
-**Important boundary:** this is a verified runtime-library foundation, not yet a claim that arbitrary One source code can invoke orchestration end-to-end. The next implementation target is:
-
-```text
-One source
+One source: cari alamat "127.0.0.1"
  -> parser
- -> semantic operation
- -> capability resolution
- -> governance
- -> adapter
+ -> semantic validation
+ -> typed orchestration IR
+ -> target-scoped governance
+ -> network.dns.resolve
  -> normalized result
- -> One value/diagnostic
- -> CLI/runtime
+ -> CLI output
 ```
+
+Run it with explicit permission and exact target scope:
+
+```text
+one jalankan main.one --izinkan network.discover --target 127.0.0.1
+```
+
+Technical alias:
+
+```text
+one run main.one --allow network.discover --target 127.0.0.1
+```
+
+No explicit permission means denial. A different target is outside the granted scope. This is **Eksperimental**, not a claim that the full orchestration catalog is supported.
 
 ## Documentation
 
-User-facing documentation:
-
 - `docs/panduan-pengguna/README.md`
 - `docs/panduan-pengguna/status-fitur.md`
-- `docs/README.md`
-
-Normative engineering documents:
-
-- `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
-- `docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md`
+- `docs/panduan-pengguna/perintah-cli.md`
+- `docs/spec/one-v0.1-cli-contract.md`
 - `docs/superpowers/specs/2026-10-16-one-general-purpose-human-language-tool-orchestration-and-governance.md`
 - `docs/superpowers/plans/2026-10-16-one-human-language-tool-orchestration-and-governance.md`
-- `docs/superpowers/specs/2026-10-16-one-orchestration-implementation-contract.md`
-- `docs/spec/one-v0.1-language-invariants.md`
-- `docs/spec/one-v0.1-lexical.md`
-- `docs/spec/one-v0.1-grammar.md`
-- `docs/spec/one-v0.1-cli-contract.md`
-- `docs/spec/one-network-foundation.md`
-- `docs/spec/one-v0.1-conformance-suite.md`
-- `docs/release/one-v0.1.md`
-- `docs/verification/one-v0.1-verification.md`
+- `docs/verification/one-v0.1-implementation-status.md`
 - `docs/verification/one-v0.1-evidence-matrix.md`
+- `docs/release/one-v0.1.md`
 
-## Verification state
+## Verification boundary
 
-The last independently verified source baseline is `dba4fad49854952e256ae41744f57f93e39167a8`, verified by run `38872070590` on Ubuntu and Windows Server 2025 through build, Clippy, workspace tests, real-network runtime tests, contract-artifact checks, offline verification, and deterministic `.oneir`/`.onepkg` checks.
+Independent run `38874287857` verified the first source-to-runtime DNS orchestration slice on Ubuntu and Windows Server 2025, including contract checks, build, Clippy, workspace tests, real-network runtime tests, and offline verification. Documentation-only changes in this branch receive a fresh exact-SHA verification before the resulting canonical head is called verified.
 
-Documentation-only synchronization revisions are treated as new canonical revisions and receive fresh exact-SHA verification before they are called the verified current head.
-
-The private canonical GitHub repository remains the source of truth; the public verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
+The private GitHub repository remains the source of truth. The public verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
