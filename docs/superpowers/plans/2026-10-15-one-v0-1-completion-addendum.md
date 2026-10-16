@@ -21,7 +21,7 @@ This addendum records the execution state of `docs/superpowers/plans/2026-10-15-
 | 13. Conformance/golden suite | COMPLETE AS ARTIFACTS | fixtures, runner, golden outputs, contract docs |
 | 14. Documentation/security/release contract | AUDITED | contract closure checker strengthened; stale verification claims corrected |
 | 15. Network native runtime slices | VERIFIED | DNS/TCP/UDP/TLS/HTTP/1.1/HTTP/2/QUIC/TFTP/NTP/FTP/SMTP/POP3/IMAP have executable runtime evidence |
-| 16. Current full release verification | PENDING FINAL EXACT-SHA RUN | the synchronized documentation set must be executed at its resulting exact canonical SHA |
+| 16. Current full release verification | VERIFIED | canonical SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` passed independent Ubuntu/Windows run `38848143359` |
 
 ## Artifact closure
 
@@ -51,4 +51,4 @@ The derivative set includes:
 
 ## Current release gate
 
-Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The final release gate is **PENDING** until the resulting exact canonical `main` commit passes the independent Linux/Windows verification matrix.
+Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The current canonical release gate is **VERIFIED** for exact SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` by independent run `38848143359` on Ubuntu and Windows Server 2025. Any later canonical commit requires a new exact-SHA matrix.
