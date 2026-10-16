@@ -62,9 +62,22 @@ Tanpa permission tersebut, policy menolak orchestration. Target yang berbeda dar
 
 Filesystem read slice tersebut telah diverifikasi pada canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui independent mirror run `38903950612` pada Ubuntu dan Windows Server 2025. Status ini hanya mencakup filesystem read pada boundary tersebut; bukan klaim bahwa filesystem write, database, atau seluruh orchestration catalog sudah tersedia.
 
-**Dalam pengembangan — process execution source-to-runtime vertical slice:** Implementasi `jalankan proses` sudah melewati parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output dan memiliki TDD tests pada development branch. Exact-SHA execution evidence untuk implementasi terbaru masih pending, sehingga fitur ini belum boleh disebut eksperimental atau verified.
+**Eksperimental — process execution source-to-runtime vertical slice:** Implementasi `jalankan proses` telah diverifikasi pada exact-SHA cross-platform evidence:
 
-Permission CLI yang ditargetkan:
+```text
+One source
+→ parser
+→ semantic validation
+→ typed orchestration IR
+→ governed Orchestrator
+→ process.execute adapter
+→ normalized process output
+→ CLI output
+```
+
+Evidence: canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2`, independent mirror run `38929072800`, Ubuntu + Windows Server 2025, dengan contract check, build, Clippy, workspace tests, real-network runtime tests, dan offline verification lulus.
+
+Permission CLI:
 
 ```text
 one jalankan main.one --izinkan process.execute --target <program>
