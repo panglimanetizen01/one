@@ -21,8 +21,9 @@
 | Mail/application runtime hardening | IMPLEMENTED | FTP/SMTP/POP3/IMAP validation and bounded framing/body handling with tests |
 | Human-language orchestration foundation | VERIFIED | typed capability requests, deterministic governance, governed adapters, result normalization, audit records, localization fixtures, and `network.dns.resolve` |
 | Language-level DNS orchestration | EXPERIMENTAL | `cari alamat` → parser → semantic validation → typed orchestration IR → governed DNS adapter → normalized CLI result; explicit target-scoped permission required |
+| Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; explicit target-scoped permission required; independently verified on Ubuntu + Windows Server 2025 at `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b` via run `38901366447` |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
-| CLI | IMPLEMENTED | conversational commands, technical aliases, and explicit DNS orchestration permission surface |
+| CLI | IMPLEMENTED | conversational commands, technical aliases, and explicit target-scoped orchestration permission surfaces |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
 | Conformance runner | ADDED | `crates/one-core/tests/conformance.rs` |
@@ -31,7 +32,7 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Current exact-SHA cross-platform verification | VERIFIED | independent run `38896533761` checked out `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, deterministic artifacts, orchestration runtime, and offline verification |
+| Current exact-SHA cross-platform verification | VERIFIED | independent run `38901366447` checked out `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, deterministic artifacts, orchestration runtime, and platform-specific offline verification |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent mirror provides exact-SHA executable evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -44,11 +45,11 @@
 
 ## Verified network boundary
 
-The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent run `38896533761` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification on Ubuntu and Windows Server 2025.
+The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent run `38901366447` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification on Ubuntu and Windows Server 2025.
 
 ## Orchestration boundary
 
-The runtime foundation is verified. The first language-level vertical slice is experimental and verified:
+Two language-level vertical slices are now independently verified and remain experimental:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -59,15 +60,18 @@ One source: cari alamat "127.0.0.1"
 → network.dns.resolve adapter
 → normalized text result
 → CLI output
+
+One source: baca berkas "data/contoh.txt"
+→ parser
+→ semantic validation
+→ typed orchestration IR
+→ explicit target-scoped governance
+→ filesystem.read adapter
+→ normalized UTF-8 text result
+→ CLI output
 ```
 
-The CLI requires explicit permission:
-
-```text
-one jalankan main.one --izinkan network.discover --target 127.0.0.1
-```
-
-No permission means denial; a different target is outside the granted scope. This is not a claim that the complete orchestration catalog is supported.
+The CLI requires explicit permission for both slices. No permission means denial; a different target is outside the granted scope. This is not a claim that the complete orchestration catalog is supported.
 
 ## Release interpretation
 
