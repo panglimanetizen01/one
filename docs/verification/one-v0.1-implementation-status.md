@@ -32,8 +32,9 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Current exact-SHA cross-platform verification | VERIFIED | independent run `38901366447` checked out `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, deterministic artifacts, orchestration runtime, and platform-specific offline verification |
-| Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent mirror provides exact-SHA executable evidence; canonical main remains source of truth |
+| Latest independently verified implementation revision | VERIFIED | exact-SHA `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b` in independent run `38901366447` |
+| Current canonical main exact-SHA verification | GAP | current main has moved beyond the independently verified revision; a new exact-SHA run is required |
+| Canonical hosted CI execution | BLOCKED / INCONCLUSIVE | latest main run `38903908051` reports failed Ubuntu/Windows jobs, but no job steps were exposed and log retrieval returned `404 BlobNotFound`; this is not evidence of a Rust source failure |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
 | Node.js binding | FUTURE | contract required before support claim |
@@ -45,11 +46,11 @@
 
 ## Verified network boundary
 
-The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent run `38901366447` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification on Ubuntu and Windows Server 2025.
+The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent run `38901366447` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification on Ubuntu and Windows Server 2025 for exact SHA `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`.
 
 ## Orchestration boundary
 
-Two language-level vertical slices are now independently verified and remain experimental:
+Two language-level vertical slices are independently verified and remain experimental:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -73,8 +74,8 @@ One source: baca berkas "data/contoh.txt"
 
 The CLI requires explicit permission for both slices. No permission means denial; a different target is outside the granted scope. This is not a claim that the complete orchestration catalog is supported.
 
-## Release interpretation
+## Current canonical verification gap
 
-`IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means independent execution evidence exists for the exact recorded source revision. `EXPERIMENTAL` means the declared vertical slice is executable and verified but intentionally limited in scope. `Supported` is reserved for a stronger support claim.
+The current canonical `main` has advanced beyond exact SHA `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`. The canonical comparison shows the intervening changes were limited to documentation/changelog files, but the evidence policy still requires a fresh exact-SHA verification before the current main commit can be labeled `VERIFIED`.
 
 The independent verification infrastructure is the temporary public mirror `panglimanetizen01/one-windows-verification`. No GitHub paid upgrade was used.
