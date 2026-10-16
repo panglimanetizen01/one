@@ -16,77 +16,32 @@ One v0.1 memiliki executable language core, grammar, parser, semantic pipeline, 
 
 ### Orchestration
 
-**Eksperimental — DNS source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk operasi `cari alamat` dengan izin CLI eksplisit:
+**Eksperimental — DNS source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk operasi `cari alamat` dengan izin CLI eksplisit.
+
+**Eksperimental — filesystem read source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk operasi `baca berkas` dengan izin CLI eksplisit. Boundary ini telah diverifikasi lintas Ubuntu + Windows Server 2025 pada canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui mirror run `38903950612`.
+
+**Eksperimental — process execution source-to-runtime vertical slice:** `jalankan proses` telah diverifikasi lintas Ubuntu + Windows Server 2025 pada source `9038ac75f197753ff1ab6af7478e63e4831903a2` melalui mirror run `38929072800`. Slice ini dibatasi pada satu program yang ditargetkan secara eksplisit tanpa argumen tambahan.
+
+**Eksperimental — filesystem write source-to-runtime vertical slice:** One sekarang memiliki jalur bahasa yang dapat dieksekusi untuk `tulis ke berkas` dengan permission `filesystem.write` dan target file yang sama. Exact-SHA verification untuk canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` lulus di Termux/Android melalui verifikasi lokal berikut: contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification. Bukti ini belum merupakan verifikasi Ubuntu/Windows untuk SHA tersebut.
+
+Source:
 
 ```text
-One source
-→ parser
-→ semantic validation
-→ typed orchestration IR
-→ governed Orchestrator
-→ DNS adapter
-→ normalized result
-→ CLI output
+tulis ke berkas "<path>" dengan "<isi>"
 ```
-
-Permission CLI saat ini:
-
-```text
-one jalankan main.one --izinkan network.discover --target 127.0.0.1
-```
-
-Tanpa permission tersebut, policy menolak orchestration. Target juga dibatasi secara eksplisit.
-
-Status **Eksperimental** berarti vertical slice DNS ini nyata dan terverifikasi pada exact-SHA cross-platform evidence untuk canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui mirror run `38903950612`. Ini tidak berarti seluruh katalog capability/orchestration sudah tersedia atau didukung.
-
-**Eksperimental — filesystem read source-to-runtime vertical slice:** One juga memiliki jalur bahasa yang dapat dieksekusi untuk operasi `baca berkas` dengan izin CLI eksplisit:
-
-```text
-One source
-→ parser
-→ semantic validation
-→ typed orchestration IR
-→ governed Orchestrator
-→ filesystem.read adapter
-→ normalized UTF-8 text result
-→ CLI output
-```
-
-Permission CLI saat ini menggunakan capability dan target eksplisit:
-
-```text
-one jalankan main.one --izinkan filesystem.read --target <path>
-```
-
-Tanpa permission tersebut, policy menolak orchestration. Target yang berbeda dari target yang diberi izin berada di luar scope.
-
-Filesystem read slice tersebut telah diverifikasi pada canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui independent mirror run `38903950612` pada Ubuntu dan Windows Server 2025. Status ini hanya mencakup filesystem read pada boundary tersebut; bukan klaim bahwa filesystem write, database, atau seluruh orchestration catalog sudah tersedia.
-
-**Eksperimental — process execution source-to-runtime vertical slice:** Implementasi `jalankan proses` telah diverifikasi pada exact-SHA cross-platform evidence:
-
-```text
-One source
-→ parser
-→ semantic validation
-→ typed orchestration IR
-→ governed Orchestrator
-→ process.execute adapter
-→ normalized process output
-→ CLI output
-```
-
-Evidence: canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2`, independent mirror run `38929072800`, Ubuntu + Windows Server 2025, dengan contract check, build, Clippy, workspace tests, real-network runtime tests, dan offline verification lulus.
 
 Permission CLI:
 
 ```text
-one jalankan main.one --izinkan process.execute --target <program>
+one jalankan main.one --izinkan filesystem.write --target <path>
 ```
 
-Slice saat ini hanya mengeksekusi satu program yang ditargetkan secara eksplisit tanpa argumen tambahan. Ini bukan klaim dukungan umum untuk process management, service management, shell scripting, atau arbitrary command orchestration.
+Boundary saat ini: satu payload teks ke satu file target yang diberikan secara eksplisit; tidak ada klaim sandbox/path confinement tambahan, shell expansion, delete, rename, directory traversal policy, atau filesystem management umum.
 
 ### Kemampuan yang masih future
 
-Filesystem write, database orchestration, HTTP orchestration tambahan, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
+Database orchestration, HTTP orchestration tambahan, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
+
+Filesystem write tetap **Eksperimental**, bukan **Didukung**, karena bukti lintas-platform untuk revision `a332dc5e58760460c26ebebb33f32f910bfdf4b3` belum ada.
 
 Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implementation-status.md` dan `docs/verification/one-v0.1-evidence-matrix.md`.
