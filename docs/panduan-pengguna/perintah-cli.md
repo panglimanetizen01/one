@@ -63,7 +63,7 @@ Aturan boundary:
 - tanpa permission, policy menolak orchestration sebelum adapter filesystem dipanggil;
 - fitur ini tidak boleh diperlakukan sebagai filesystem management umum atau sandbox/path-confinement guarantee.
 
-Evidence saat ini: canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3`, Termux/Android. Contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification lulus. Belum ada exact-SHA Ubuntu/Windows evidence untuk SHA ini.
+Evidence saat ini: canonical `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, Termux/Android. Contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification lulus. Belum ada exact-SHA Ubuntu/Windows evidence untuk SHA ini.
 
 ## Menjalankan proses — eksperimental
 
@@ -90,6 +90,6 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for filesystem write/CLI is canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
+Latest exact-SHA executable evidence for filesystem write/CLI is canonical `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
 
 The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write CLI changes.
