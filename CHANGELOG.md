@@ -10,8 +10,9 @@
 - Added Linux/Windows offline verification scripts and deterministic artifact checks so verification does not depend on purchasing hosted CI capacity.
 - Added the One Network semantic/runtime foundation and verified native runtime slices for DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit limits.
 - Added the general-purpose human-language orchestration foundation: typed semantic capability requests, scoped deterministic governance, typed adapters, deterministic orchestration, normalized evidence, audit records, Indonesian/English conformance fixtures, and the first real `network.dns.resolve` adapter.
-- Recorded the orchestration boundary explicitly: the runtime foundation is verified, but language-level One-source orchestration is not yet supported.
-- Independently verified canonical source baseline `dba4fad49854952e256ae41744f57f93e39167a8` on Ubuntu and Windows Server 2025 through build, Clippy, workspace tests, real-network runtime tests, contract-artifact checks, offline verification, and deterministic `.oneir`/`.onepkg` checks in run `38872070590`.
-- Synchronized v0.1 verification, evidence matrix, implementation status, release contract, orchestration specification/plan, documentation map, README, and user feature status to the evidence boundary.
+- Added the first experimental language-level orchestration slice: `cari alamat` reaches the governed DNS adapter through typed IR and returns a normalized CLI result when `network.discover` is explicitly granted for an exact target.
+- Added policy-denial and out-of-scope protection for the source-level DNS orchestration path.
+- Independently verified the source-level orchestration/CLI revision on Ubuntu and Windows Server 2025 through contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, offline verification, and deterministic artifact verification in run `38874287857`.
+- Synchronized the CLI contract, user guide, implementation status, release boundary, orchestration specification/plan, README, and feature-status documentation with the experimental DNS source-level boundary.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
