@@ -6,13 +6,15 @@
 
 ## Current audit state
 
-The repository was audited after integration of the native HTTP/2 runtime. The contract-artifact checker was strengthened to require the concrete artifacts referenced by `docs/README.md`, including retained and derivative contracts. The FTP/SMTP/POP3/IMAP application-runtime boundary was also hardened for command-field injection and bounded line/body framing. The HTTPS loopback fixture was then made address-family deterministic by using IPv4 loopback and a certificate containing both `localhost` and `127.0.0.1` identities.
+The canonical source at `be2e65852e9a4be833e659524a12c6359769665b` has a completed independent cross-platform verification. The verification mirror checked out that exact private-source SHA and executed the existing release gates on Ubuntu and Windows Server 2025.
+
+The canonical source also contains the general-purpose orchestration foundation: typed semantic capability requests, deterministic governance, governed typed adapters, deterministic adapter selection, normalized results/evidence, audit records, localized semantic-resolution fixtures, and the first real `network.dns.resolve` adapter. This foundation is implemented and verified as a runtime library boundary; language-level One-source orchestration is not yet claimed as supported.
 
 ## Exact-SHA evidence
 
-Independent verification run `38848143359` checked out canonical source commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` and passed on both Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real network runtime tests, platform-specific offline verification, and deterministic artifact checks.
+Independent verification run `38871435579` in `panglimanetizen01/one-windows-verification` checked out canonical source commit `be2e65852e9a4be833e659524a12c6359769665b` and passed on both Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact consistency, workspace build, Clippy, all workspace tests, real-network runtime tests, and platform-specific offline verification. The offline verifiers also checked deterministic `.oneir` and `.onepkg` artifacts.
 
-This documentation synchronization records that fresh exact-SHA evidence. The prior independently verified source revision `e58da6393e53094f29a5121cb440c94973f71b6a` remains historical evidence from run `38846301365`.
+The canonical GitHub Actions run for this SHA remains unusable as source-failure evidence because its jobs terminated without runner IDs, executable steps, or logs. The independent mirror is the executable evidence for this exact SHA.
 
 ## Contract-artifact gate
 
@@ -34,12 +36,10 @@ The temporary public repository `panglimanetizen01/one-windows-verification` is 
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
 
-## Historical evidence
+## Verification boundary
 
-Previous fully green runs remain historical evidence for their exact commits. Run `38848143359` is the latest completed independent matrix and directly verifies `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` on Ubuntu and Windows Server 2025.
+`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. Evidence for `be2e65852e9a4be833e659524a12c6359769665b` does not automatically verify a later canonical SHA.
 
-## Final gate
+The next canonical change must therefore receive a fresh exact-SHA verification before the later SHA is called verified.
 
-The current canonical source revision has a completed independent Ubuntu/Windows verification matrix. Any later canonical change must receive a new exact-SHA verification before that later SHA is called verified.
-
-**Current evidence status: canonical commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` is VERIFIED by independent run `38848143359`.**
+**Current evidence status: canonical commit `be2e65852e9a4be833e659524a12c6359769665b` is VERIFIED by independent run `38871435579`.**
