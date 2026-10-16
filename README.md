@@ -49,7 +49,7 @@ Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTP
 
 ## Experimental language-level orchestration
 
-The first source-level orchestration vertical slice is real and independently verified at canonical revision `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` in mirror run `38896533761`:
+Two source-level orchestration vertical slices are currently real and independently verified at canonical implementation revision `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -60,21 +60,32 @@ One source: cari alamat "127.0.0.1"
  -> network.dns.resolve
  -> normalized result
  -> CLI output
+
+One source: baca berkas "data/contoh.txt"
+ -> parser
+ -> semantic validation
+ -> typed orchestration IR
+ -> target-scoped governance
+ -> filesystem.read
+ -> normalized UTF-8 text result
+ -> CLI output
 ```
 
-Run it with explicit permission and exact target scope:
+Run them with explicit permission and exact target scope:
 
 ```text
 one jalankan main.one --izinkan network.discover --target 127.0.0.1
+one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
 ```
 
-Technical alias:
+Technical aliases:
 
 ```text
 one run main.one --allow network.discover --target 127.0.0.1
+one run main.one --allow filesystem.read --target data/contoh.txt
 ```
 
-No explicit permission means denial. A different target is outside the granted scope. This is **Eksperimental**, not a claim that the full orchestration catalog is supported.
+No explicit permission means denial. A different target is outside the granted scope. These slices are **Eksperimental**, not a claim that the full orchestration catalog is supported.
 
 ## Documentation
 
@@ -90,6 +101,8 @@ No explicit permission means denial. A different target is outside the granted s
 
 ## Verification boundary
 
-Canonical source `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` was independently verified in mirror run `38896533761` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, orchestration runtime, and offline verification.
+Canonical implementation revision `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b` was independently verified in mirror run `38901366447` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, filesystem-read orchestration runtime, and offline verification.
+
+The current canonical `main` is `f482c6b75505d9965dd33f4f25bb0cd04072cedb`, four commits ahead of that verified implementation revision. The GitHub comparison shows those four later commits modify only `CHANGELOG.md`, `docs/panduan-pengguna/perintah-cli.md`, and `docs/verification/one-v0.1-implementation-status.md`; therefore the independent evidence does not by itself constitute exact-SHA verification of the current `main` commit.
 
 The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
