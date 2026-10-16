@@ -29,6 +29,7 @@ pub mod types;
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
+pub use governance::{DenyReason, ExecutionPolicy, PolicyDecision, ScopeRule};
 pub use interop::{run_process, ProcessResult, ProcessSpec};
 pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, RuntimeError};
 pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
