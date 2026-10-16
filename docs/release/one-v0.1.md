@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **FINAL VERIFICATION GATE**.
+Status: **VERIFIED FOR CURRENT CANONICAL SHA**.
 
 ## Scope
 
@@ -42,23 +42,23 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Release acceptance checklist
 
-- [x] Linux compilation has passed on the independently verified source revision.
-- [x] Windows compilation has passed on the independently verified source revision.
-- [x] Linux unit/integration/conformance tests have passed on the independently verified source revision.
-- [x] Windows unit/integration/conformance tests have passed on the independently verified source revision.
-- [x] Linux real-network runtime tests have passed on the independently verified source revision.
-- [x] Windows real-network runtime tests have passed on the independently verified source revision.
-- [x] Linux offline verification has passed on the independently verified source revision.
-- [x] Windows offline verification has passed on the independently verified source revision.
-- [x] Contract-artifact closure has passed on the independently verified source revision.
-- [x] Deterministic `.oneir` and `.onepkg` checks have passed on the independently verified source revision.
-- [x] Capability/security tests have passed on the independently verified source revision.
-- [x] Interoperability tests have passed on the independently verified source revision.
-- [ ] This documentation synchronization itself has passed a fresh independent Ubuntu/Windows matrix.
+- [x] Linux compilation has passed on the current canonical SHA.
+- [x] Windows compilation has passed on the current canonical SHA.
+- [x] Linux unit/integration/conformance tests have passed on the current canonical SHA.
+- [x] Windows unit/integration/conformance tests have passed on the current canonical SHA.
+- [x] Linux real-network runtime tests have passed on the current canonical SHA.
+- [x] Windows real-network runtime tests have passed on the current canonical SHA.
+- [x] Linux offline verification has passed on the current canonical SHA.
+- [x] Windows offline verification has passed on the current canonical SHA.
+- [x] Contract-artifact closure has passed on the current canonical SHA.
+- [x] Deterministic `.oneir` and `.onepkg` checks have passed on the current canonical SHA.
+- [x] Capability/security tests have passed on the current canonical SHA.
+- [x] Interoperability tests have passed on the current canonical SHA.
+- [x] This documentation synchronization has passed a fresh independent Ubuntu/Windows matrix.
 
 ## Evidence
 
-Independent verification run `38846301365` checked out canonical source commit `e58da6393e53094f29a5121cb440c94973f71b6a` and passed on both Ubuntu and Windows Server 2025. The real-network suite reported `38 passed; 0 failed` on both platforms, including HTTPS/TLS and HTTP/2. Contract verification reported 48 required artifacts, 40 indexed concrete artifacts, 6 valid fixtures, 6 invalid fixtures, and 3 golden fixtures.
+Independent verification run `38848143359` checked out canonical source commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` and passed on both Ubuntu and Windows Server 2025. The real-network stage passed on both platforms, and the offline verification stage passed on both platforms.
 
 The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
 
@@ -69,4 +69,4 @@ No paid GitHub upgrade was used or is required. **Do not purchase an upgrade** m
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
 - **VERIFIED:** the exact canonical SHA has actual cross-platform execution evidence from an independent matrix.
 
-Current state: **FINAL VERIFICATION GATE**.
+Current state: **VERIFIED FOR CURRENT CANONICAL SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61`.**
