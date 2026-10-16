@@ -27,6 +27,38 @@ one test project-saya
 
 Perintah harus dijalankan dengan argumen yang sesuai kontrak. CLI tidak menafsirkan kalimat natural-language bebas sebagai command.
 
+## Menjalankan orchestration DNS
+
+Vertical slice orchestration pertama yang tersedia secara eksperimental adalah pencarian alamat DNS melalui source One `cari alamat`.
+
+Program:
+
+```text
+cari alamat "127.0.0.1"
+```
+
+Jalankan dengan izin eksplisit dan target yang sama:
+
+```text
+one jalankan main.one --izinkan network.discover --target 127.0.0.1
+```
+
+Alias teknis:
+
+```text
+one run main.one --allow network.discover --target 127.0.0.1
+```
+
+Aturan keamanan:
+
+- tanpa `--izinkan`, orchestration ditolak;
+- `network.discover` adalah capability yang saat ini tersedia melalui permission CLI ini;
+- `--target` membatasi policy ke target tersebut;
+- target lain ditolak oleh governance;
+- permission CLI bukan bagian dari grammar One dan tidak mengubah makna program.
+
+Fitur ini **Eksperimental**, bukan klaim bahwa seluruh katalog orchestration sudah didukung.
+
 ## `bangun` dan `package`
 
 Pada v0.1 saat ini:

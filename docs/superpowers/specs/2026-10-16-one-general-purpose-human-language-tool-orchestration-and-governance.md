@@ -1,16 +1,14 @@
 # One — General-Purpose Human-Language Tool Orchestration and Governance
 
-**Status:** Implemented orchestration foundation; language-level One-source orchestration remains in development.
+**Status:** Runtime orchestration foundation verified; DNS source-level orchestration is experimental and verified; broader language-level capability coverage remains in development.
 **Date:** 2026-10-16
 **Scope:** General-purpose One language, human-language programming, external-tool orchestration, capability/runtime governance, localization, interoperability, auditability, and platform control
 
 ## Current implementation boundary
 
-The architectural design in this document is now partially executable through a verified runtime foundation. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic-to-capability resolution, deterministic governance, typed external adapters, deterministic adapter selection, normalized results/evidence, audit records, localized semantic-resolution conformance coverage, and the real `network.dns.resolve` adapter.
+The architecture is executable through a verified runtime foundation and its first source-level vertical slice. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, the real `network.dns.resolve` adapter, and a source-level `cari alamat` operation that reaches that adapter through governed runtime execution.
 
-Independent run `38872070590` verified this foundation at source baseline `dba4fad49854952e256ae41744f57f93e39167a8` on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
-
-This does **not** yet mean that a normal One source program can invoke the orchestration runtime end-to-end. The current CLI still follows the established source → parser → semantic analysis → IR → reference interpreter path. The missing language-level bridge is explicitly the next implementation boundary.
+Independent run `38874287857` verified the source-level DNS slice at its exact canonical source revision on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
 
 ## 1. Purpose
 
@@ -22,31 +20,25 @@ One separates language semantics from capability semantics, runtime governance, 
 
 > **One is a human-language programming language, not a human-language disguise for technical commands.**
 
-The intended translation chain is:
+The verified DNS path is:
 
 ```text
-Human-readable One source
+One source: cari alamat "127.0.0.1"
         ↓
-Localized lexical/grammar layer
+Localized parser / semantic validation
         ↓
-Intent and program semantics
+Typed orchestration IR
         ↓
-One semantic model
+Explicit target-scoped governance
         ↓
-CSIR / capability-aware IR
-        ↓
-Runtime governance
-        ↓
-Tool / library / OS / platform adapter
-        ↓
-External capability
+network.dns.resolve adapter
         ↓
 Normalized result
         ↓
-One value / diagnostic / human-readable explanation
+CLI output
 ```
 
-The chain above is the architectural target. The verified runtime foundation currently implements the lower capability/governance/adapter/result layers; the source-language bridge is not yet verified.
+This is the first executable vertical slice, not the complete orchestration catalog.
 
 ## 3. Existing One semantic pipeline remains authoritative
 
@@ -61,15 +53,17 @@ source
  → runtime/compiler backend
 ```
 
-The orchestration layer must consume this pipeline rather than creating a parallel interpreter or semantic authority.
+The orchestration layer consumes this pipeline rather than creating a parallel interpreter or semantic authority.
 
 ## 4. Human-language programming model
 
-One may eventually permit beginner-oriented semantic operations expressed in ordinary language. Examples in this document are design examples unless an accompanying grammar/semantic contract and executable evidence says otherwise.
+One may express semantic operations in understandable language. Examples are normative only when covered by grammar/semantic contracts and executable tests.
+
+The first source-level operation is `cari alamat <target>`. It resolves to the network-discovery capability used by the DNS adapter.
 
 ## 5. Intent is not authority
 
-For every external effect, the runtime evaluates the required capability, requested scope, and execution policy before invoking an adapter. Changing wording or localization must not change the authorization requirements for the same semantic operation.
+For every external effect, the runtime evaluates the required capability, requested scope, and execution policy before invoking an adapter. Changing wording or localization must not change authorization requirements for the same semantic operation.
 
 ## 6. Capability model
 
@@ -83,7 +77,7 @@ Status remains **Specified → Designed → Implemented → Verified → Support
 
 ## 8. Tool abstraction
 
-Users address semantic capabilities rather than external command syntax. Adapter selection must be deterministic and must reject materially incompatible substitutions.
+Users address semantic capabilities rather than external command syntax. Adapter selection must be deterministic and reject materially incompatible substitutions.
 
 ## 9. Technical control
 
@@ -91,7 +85,7 @@ Progressive precision remains an architectural goal: beginner semantic operation
 
 ## 10. Result normalization
 
-External results are normalized into typed semantic results without inventing facts. Material uncertainty must remain uncertainty.
+External results are normalized into typed semantic results without inventing facts. Material uncertainty remains uncertainty.
 
 ## 11. Human-readable explanations
 
@@ -105,7 +99,7 @@ Localized surfaces may use different vocabulary and grammar but must preserve ca
 
 The architecture is domain-neutral and can later cover filesystem/storage, processes/system services, networking, databases, HTTP/API clients, build/package tools, version control, media, graphics/design, testing, scientific/data tools, OS APIs, devices, developer tooling, security/network-analysis tooling, cloud services, and native libraries.
 
-This is an architectural inventory, not a v0.1 implementation claim.
+This is an architectural inventory, not a claim that all listed capabilities are currently implemented or supported.
 
 ## 14. Governance plane
 
@@ -134,7 +128,7 @@ The required lifecycle is:
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-Steps 1–12 are implemented at the runtime foundation boundary. A verified One-source program path into these steps is the next implementation task.
+All twelve stages exist in the runtime foundation. The DNS source-level vertical slice now drives those stages from One source through CLI/runtime. Additional capabilities require their own source grammar/semantic boundary and evidence.
 
 ## 17. Audit model
 
@@ -146,7 +140,7 @@ Orchestration failures remain typed and distinguish invalid source/parameters, a
 
 ## 19. Testing and conformance
 
-The architecture requires language, capability, adapter, and end-to-end tests. No adapter is marked Verified without executable evidence appropriate to its backend. The current foundation has executable tests for the runtime layers and a real DNS adapter; the missing end-to-end language-level test is the next release boundary.
+The DNS source-level slice has executable success and policy-denial tests plus full Linux/Windows verification. No additional adapter is marked Verified without executable evidence appropriate to its backend.
 
 ## 20. Compatibility with existing One architecture
 
@@ -154,7 +148,7 @@ This architecture extends, rather than replaces, the lexer/parser, AST/name-scop
 
 ## 21. v0.1 boundary
 
-The verified v0.1 boundary is the orchestration runtime foundation, not a claim that arbitrary human-language source can already invoke every external capability. Tool-specific support is incremental and evidence-based.
+The verified v0.1 boundary includes an experimental DNS source-to-runtime orchestration slice. It does not claim arbitrary human-language source can already invoke every external capability.
 
 ## 22. Non-goals
 
@@ -164,9 +158,11 @@ This specification does not make every external tool part of the standard librar
 
 The architecture succeeds when useful programming intent can be expressed in understandable language, localization preserves semantic identity, One can orchestrate real external capabilities through typed adapters, external tools remain implementation backends, advanced users retain precise controls, capability/policy enforcement is independent of wording, results are normalized without invented facts, supported adapters have executable evidence, One remains general-purpose, and platform/owner governance can control execution without changing language meaning.
 
+The DNS slice satisfies the first executable vertical boundary. Broader capability coverage remains future work.
+
 ## 24. Implementation gate
 
-The generic orchestration foundation is implemented and independently verified. The next implementation gate is language-level integration:
+The next implementation gate is broader language-level integration using the proven DNS pattern:
 
 ```text
 One source
@@ -180,4 +176,4 @@ One source
 → CLI/runtime
 ```
 
-Production changes for this bridge must use fail-first/TDD, evidence-first debugging, and a fresh exact-SHA cross-platform verification before the language-level feature is called Verified or Supported.
+Production changes for each new capability must use fail-first/TDD, evidence-first debugging, explicit policy/scope, and a fresh exact-SHA Linux/Windows verification before the capability is called Verified or Supported.
