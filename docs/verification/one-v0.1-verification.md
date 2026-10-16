@@ -4,44 +4,24 @@
 
 `panglimanetizen01/one`, branch `main`.
 
-## Current exact-SHA verification
+## Latest independently executable exact-SHA verification
 
-Canonical source revision: `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a`.
+Canonical source revision: `f482c6b75505d9965dd33f4f25bb0cd04072cedb`.
 
-Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38896533761`, branch `verification`.
+Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38903950612`.
 
-The mirror read `CANONICAL_COMMIT.txt` containing the exact SHA above, checked out the canonical One source at that SHA, and asserted `git rev-parse HEAD` against it on both Ubuntu and Windows Server 2025.
+The independent mirror checked out the canonical One source at the exact recorded SHA and verified the source revision on Ubuntu and Windows Server 2025. The run passed the recorded contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification.
 
-## P0 evidence
+The verified orchestration boundary in this run includes the DNS source-level slice and the filesystem-read source-level slice. It does not include the later process-execution implementation.
 
-### Ubuntu — job `116958230147`
+## Evidence boundary
 
-- Exact canonical SHA assertion: PASS.
-- Contract verification: `python3 tools/check_contract.py` → PASS.
-- Build: `cargo build --workspace --all-targets` → PASS.
-- Clippy: `cargo clippy --workspace --all-targets -- -D warnings` → PASS.
-- Workspace tests: `cargo test --workspace --all-targets` → PASS.
-- Real-network tests: `cargo test -p one-core --features real-network --all-targets` → PASS.
-- Offline verification: `bash tools/verify_offline.sh` → PASS.
-- Deterministic `.oneir`/`.onepkg`: deterministic artifact checks passed.
-- DNS success and DNS resolution-failure classification: PASS.
-- Orchestration runtime: allow/deny/incompatible-adapter tests and source-level DNS path: PASS.
+`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. The evidence above verifies `f482c6b75505d9965dd33f4f25bb0cd04072cedb`; it does not automatically verify later commits.
 
-### Windows — job `116958229777`
+Canonical `main` is now `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`. The documentation synchronization merge is documentation-only relative to the previous main baseline, but no new exact-SHA executable run has yet been recorded for `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`.
 
-- Exact canonical SHA assertion: PASS.
-- Contract verification: `python tools/check_contract.py` → PASS.
-- Build: `cargo build --workspace --all-targets` → PASS.
-- Clippy: `cargo clippy --workspace --all-targets -- -D warnings` → PASS.
-- Workspace tests: `cargo test --workspace --all-targets` → PASS.
-- Real-network tests: `cargo test -p one-core --features real-network --all-targets` → PASS.
-- Offline verification: `.\tools\verify_offline.ps1` → PASS.
-- Deterministic `.oneir`/`.onepkg`: deterministic artifact checks passed.
-- DNS success and DNS resolution-failure classification: PASS.
-- Orchestration runtime: allow/deny/incompatible-adapter tests and source-level DNS path: PASS.
+The process/system vertical-slice branch contains source/runtime changes and therefore requires a fresh exact-SHA run before its process-execution capability can be labeled `EXPERIMENTAL`, `VERIFIED`, or `SUPPORTED`.
 
-## Verification boundary
+## Verification infrastructure status
 
-`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. The evidence above verifies `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a`; it does not automatically verify later commits.
-
-The independent verification mirror is verification infrastructure only. GitHub `main` remains the canonical source of truth. No paid GitHub upgrade was used or required.
+The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. The currently available mirror branches explicitly state that execution is not valid until their source tree exactly matches the canonical SHA recorded for the verification attempt. No paid GitHub upgrade was used or required.
