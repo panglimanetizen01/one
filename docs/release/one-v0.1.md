@@ -10,7 +10,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 The latest cross-platform source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025.
 
-The current canonical `main` is `a332dc5e58760460c26ebebb33f32f910bfdf4b3`. This newer SHA has executable verification on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. That evidence does not establish Ubuntu/Windows support for the newer SHA.
+The current canonical `main` is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`. This SHA has executable verification on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. That evidence does not establish Ubuntu/Windows support for the current SHA.
 
 ## Verified baseline
 
@@ -48,7 +48,7 @@ Explicit permission:
 one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
-Exact-SHA evidence: `a332dc5e58760460c26ebebb33f32f910bfdf4b3`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this SHA is still pending.
+Exact-SHA evidence: `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this SHA is still pending.
 
 ## Explicit v0.1 limits
 
