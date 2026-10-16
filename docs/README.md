@@ -31,8 +31,11 @@ User documentation is intentionally separate from normative engineering contract
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
 - `superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md` — approved end-to-end network/platform architecture.
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
-- `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger, rulings, and remaining release gate.
-- `superpowers/plans/2026-10-15-one-network-foundation.md` — implementation plan for the first One Network semantic vertical slice.
+- `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger and release gate.
+- `superpowers/plans/2026-10-15-one-network-foundation.md` — One Network semantic vertical slice.
+- `superpowers/specs/2026-10-16-one-general-purpose-human-language-tool-orchestration-and-governance.md` — orchestration architecture and current implemented boundary.
+- `superpowers/plans/2026-10-16-one-human-language-tool-orchestration-and-governance.md` — orchestration implementation plan and next language-level gate.
+- `superpowers/specs/2026-10-16-one-orchestration-implementation-contract.md` — executable orchestration contract.
 
 ## Language/tooling contracts
 
@@ -41,7 +44,6 @@ User documentation is intentionally separate from normative engineering contract
 - `spec/one-v0.1-grammar.md` — normative Indonesian v0.1 concrete grammar.
 - `spec/one-v0.1-ast.md` — language-independent AST shape.
 - `spec/one-v0.1-localization-contract.md` — locale architecture and semantic equivalence rules.
-- `spec/one-v0.1-localization.md` — retained v0.1 localization contract artifact.
 - `spec/one-v0.1-diagnostics.md` — diagnostic codes, spans, and source-preserving behavior.
 - `spec/one-v0.1-effect-capability.md` — explicit effect/capability boundary.
 - `spec/one-v0.1-runtime-model.md` — runtime state, execution, errors, and determinism.
@@ -51,22 +53,20 @@ User documentation is intentionally separate from normative engineering contract
 - `spec/one-v0.1-module-system.md` — module identity, imports, exports, and initialization.
 - `spec/one-v0.1-package-build.md` — project manifests, dependency resolution, and build/package model.
 - `spec/one-v0.1-standard-library.md` — v0.1 standard-library boundary.
-- `spec/one-v0.1-stdlib.md` — retained v0.1 standard-library contract artifact.
 - `spec/one-v0.1-cli-contract.md` — canonical CLI commands, aliases, exit codes, project operations, and determinism.
-- `spec/one-v0.1-cli.md` — retained v0.1 CLI contract artifact.
 - `spec/one-v0.1-interop.md` — explicit foreign-process interoperability boundary.
-- `spec/one-network-foundation.md` — implemented typed network semantic/IR/reference boundary and its explicit limits.
+- `spec/one-network-foundation.md` — implemented typed network semantic/IR/reference boundary and explicit limits.
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
-- `verification/one-v0.1-implementation-status.md` — implementation inventory.
-- `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
+- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration boundary.
+- `verification/one-v0.1-verification.md` — current exact-SHA evidence record.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
-- `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded 2026-10-15 source revision.
-- `verification/one-v0.1-linux-windows-2026-10-15.md` — recorded independent Linux/Windows execution evidence for its explicitly recorded source revision.
+- `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded source revision.
+- `verification/one-v0.1-linux-windows-2026-10-15.md` — historical independent Linux/Windows execution evidence for its explicitly recorded source revision.
 - `release/one-v0.1.md` — release acceptance contract and supported/future matrix.
 
 ## Derivative artifacts
@@ -78,6 +78,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../tests/conformance/invalid/*.one` — rejected-language fixtures.
 - `../tests/golden/*.snap` — deterministic execution outputs.
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
+- `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
