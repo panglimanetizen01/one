@@ -83,6 +83,18 @@ One source: jalankan proses "rustc"
 
 The CLI requires explicit permission for all three slices. No permission means denial; a different target is outside the granted scope. The process slice currently executes one explicitly targeted program without arguments. Its exact-SHA executable verification is not yet recorded, so it must not be promoted to `EXPERIMENTAL` or `VERIFIED` until that evidence exists. This is not a claim that the complete orchestration catalog is supported.
 
+## Current checkpoint
+
+- Canonical `main`: `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`.
+- Latest proven exact-SHA baseline: `f482c6b75505d9965dd33f4f25bb0cd04072cedb`, mirror run `38903950612`.
+- Process/System branch: `feature/process-system-vertical-slice`.
+- Current process branch head: `09aff2680661316f66222923863eae8f0e422296`.
+- PR: #48, open and mergeable; source merge is blocked by the exact-SHA evidence rule, not by a documented source failure.
+- CI run `38927364159` failed on Ubuntu and Windows with zero job steps; retry also failed with zero steps/logs. Classified as infrastructure evidence failure.
+- Public verification mirror remains non-executable until its source tree exactly matches the recorded canonical SHA.
+- Process execution status: `IN DEVELOPMENT`.
+- Next gate: fresh exact-SHA Linux/Windows executable verification of the process branch, then reverify → review → merge → read-back main → checkpoint.
+
 ## Release interpretation
 
 `IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means independent execution evidence exists for the exact recorded source revision. `EXPERIMENTAL` means the declared vertical slice is executable and verified but intentionally limited in scope. `Supported` is reserved for a stronger support claim.
