@@ -54,7 +54,7 @@ Technical alias:
 one run <file.one> --allow filesystem.read --target <path>
 ```
 
-### Process execution
+### Process execution — development boundary
 
 ```text
 one jalankan <file.one> --izinkan process.execute --target <program>
@@ -66,9 +66,9 @@ Technical alias:
 one run <file.one> --allow process.execute --target <program>
 ```
 
-The `jalankan proses "<program>"` source operation maps to semantic capability `process.execute`, effect `Execute`, and the governed `process.execute` adapter. The current slice executes the selected program without additional arguments and normalizes its stdout (or stderr when stdout is empty) as UTF-8 text.
+The `jalankan proses "<program>"` source operation maps to semantic capability `process.execute`, effect `Execute`, and the governed `process.execute` adapter. The current implementation executes the selected program without additional arguments and normalizes its stdout (or stderr when stdout is empty) as UTF-8 text. This slice remains **IN DEVELOPMENT** until exact-SHA executable evidence exists.
 
-Rules for all experimental slices:
+Rules for current orchestration permission surfaces:
 
 - the capability must be explicitly granted;
 - `--target` is mandatory when an orchestration capability is granted;
@@ -79,7 +79,7 @@ Rules for all experimental slices:
 - these permission syntaxes are controlled adapter boundaries, not One language grammar;
 - the filesystem-read slice currently reads UTF-8 text and does not constitute general filesystem support;
 - the process-execution slice currently executes one explicitly targeted program without arguments and does not constitute general process-management support;
-- the DNS, filesystem-read, and process-execution slices are experimental and do not imply that the broader orchestration catalog is supported.
+- DNS and filesystem-read are experimental/verified at the recorded baseline; process execution is still in development.
 
 ## 4. Exit status
 
