@@ -10,7 +10,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 The latest cross-platform source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025.
 
-The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `68381052b9c744fca97fd8b25505d8878e7c2df4`, verified on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. This evidence does not establish Ubuntu/Windows support for it.
+The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. This evidence does not establish Ubuntu/Windows support for it.
 
 ## Verified baseline
 
@@ -48,7 +48,7 @@ Explicit permission:
 one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
-Latest exact-SHA evidence: `68381052b9c744fca97fd8b25505d8878e7c2df4`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
+Latest exact-SHA evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
 
 ## Explicit v0.1 limits
 
