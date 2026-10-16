@@ -28,7 +28,8 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Current independent Linux/Windows runtime verification | VERIFIED | independent verification infrastructure executes the exact canonical SHA on Ubuntu and Windows Server 2025 |
+| Independently verified Linux/Windows source revision | VERIFIED | source commit `e58da6393e53094f29a5121cb440c94973f71b6a` passed independent run `38846301365` on Ubuntu and Windows Server 2025 |
+| Current documentation-synchronized canonical SHA | PENDING | current `main` documentation synchronization requires a fresh exact-SHA independent matrix |
 | Private canonical hosted CI execution | BLOCKED | canonical runner jobs currently fail before usable workflow-step/log evidence |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
