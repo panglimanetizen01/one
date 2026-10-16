@@ -20,6 +20,6 @@
 - Added the filesystem-write source-level slice: `tulis ke berkas` → parser → semantic validation → typed orchestration IR → target-scoped governance → `filesystem.write` adapter → CLI.
 - Added a CLI regression test proving `filesystem.write` permission reaches the adapter and writes the expected text to the exact target. The filesystem-write CLI verification was first recorded at canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` on Termux/Android.
 - Filesystem write remains **Eksperimental** and platform-bound to the Android/Termux evidence until exact-SHA Ubuntu/Windows verification exists.
-- Consistency audit synchronized the normative CLI contract and grammar with the implemented `filesystem.write` surface and refreshed all current-main verification references to exact SHA `68381052b9c744fca97fd8b25505d8878e7c2df4` after exact-SHA Termux/Android verification of the current main.
+- Consistency audit synchronized the normative CLI contract and grammar with the implemented `filesystem.write` surface and refreshed all current-main verification references to exact SHA `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` after exact-SHA Termux/Android verification of the current executable revision.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
