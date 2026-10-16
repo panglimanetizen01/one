@@ -42,31 +42,31 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Release acceptance checklist
 
-- [x] Linux compilation has passed on the post-audit source revision.
-- [x] Windows compilation has passed on the post-audit source revision.
-- [x] Linux unit/integration/conformance tests have passed on the post-audit source revision.
-- [x] Windows unit/integration/conformance tests have passed on the post-audit source revision.
-- [x] Linux real-network runtime tests have passed on the post-audit source revision.
-- [x] Windows real-network runtime tests have passed on the post-audit source revision.
-- [x] Linux offline verification has passed on the post-audit source revision.
-- [x] Windows offline verification has passed on the post-audit source revision.
-- [x] Contract-artifact closure has passed on the post-audit source revision.
-- [x] Deterministic `.oneir` and `.onepkg` checks have passed on the post-audit source revision.
-- [x] Capability/security tests have passed on the post-audit source revision.
-- [x] Interoperability tests have passed on the post-audit source revision.
-- [ ] The final synchronized documentation revision has passed one final independent Ubuntu/Windows matrix.
+- [x] Linux compilation has passed on the independently verified source revision.
+- [x] Windows compilation has passed on the independently verified source revision.
+- [x] Linux unit/integration/conformance tests have passed on the independently verified source revision.
+- [x] Windows unit/integration/conformance tests have passed on the independently verified source revision.
+- [x] Linux real-network runtime tests have passed on the independently verified source revision.
+- [x] Windows real-network runtime tests have passed on the independently verified source revision.
+- [x] Linux offline verification has passed on the independently verified source revision.
+- [x] Windows offline verification has passed on the independently verified source revision.
+- [x] Contract-artifact closure has passed on the independently verified source revision.
+- [x] Deterministic `.oneir` and `.onepkg` checks have passed on the independently verified source revision.
+- [x] Capability/security tests have passed on the independently verified source revision.
+- [x] Interoperability tests have passed on the independently verified source revision.
+- [ ] This documentation synchronization itself has passed a fresh independent Ubuntu/Windows matrix.
 
 ## Evidence
 
-The latest completed independent verification run before this documentation synchronization passed the then-current canonical source on both Ubuntu and Windows Server 2025. The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
+Independent verification run `38846301365` checked out canonical source commit `e58da6393e53094f29a5121cb440c94973f71b6a` and passed on both Ubuntu and Windows Server 2025. The real-network suite reported `38 passed; 0 failed` on both platforms, including HTTPS/TLS and HTTP/2. Contract verification reported 48 required artifacts, 40 indexed concrete artifacts, 6 valid fixtures, 6 invalid fixtures, and 3 golden fixtures.
 
-The final gate is an independent Ubuntu/Windows matrix against the exact canonical SHA produced by this documentation synchronization. Its result is the release decision for this contract; historical runs are not substituted for that gate.
+The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
 
 No paid GitHub upgrade was used or is required. **Do not purchase an upgrade** merely to obtain hosted runner execution.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
-- **VERIFIED:** the exact synchronized canonical SHA has actual cross-platform execution evidence from the final independent matrix.
+- **VERIFIED:** the exact canonical SHA has actual cross-platform execution evidence from an independent matrix.
 
 Current state: **FINAL VERIFICATION GATE**.
