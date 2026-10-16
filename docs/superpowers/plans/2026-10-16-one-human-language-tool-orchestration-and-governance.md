@@ -1,6 +1,6 @@
 # One Human-Language Tool Orchestration and Governance Implementation Plan
 
-> **Current status:** Tasks 1–11 are complete for the orchestration runtime foundation and have fresh exact-SHA cross-platform evidence. The next dependency-ordered boundary is language-level One-source orchestration.
+> **Current status:** Tasks 1–11 and the first language-level DNS vertical slice are complete and independently verified. The next dependency-ordered boundary is broader language-level capability coverage.
 
 **Goal:** Add a deterministic, general-purpose human-language tool-orchestration foundation to One so semantic operations can invoke typed external capabilities through governed adapters without making tool command syntax the language semantics.
 
@@ -10,69 +10,52 @@
 
 ## Completed foundation tasks
 
-### Task 1 — Typed orchestration domain model — COMPLETE
+### Tasks 1–11 — COMPLETE
 
-Implemented `SemanticCapabilityId`, `CapabilityRequest`, `ExecutionScope`, `EffectClass`, `AdapterId`, `AdapterStatus`, and deterministic validation in `crates/one-core/src/orchestration.rs`.
+The typed orchestration domain model, semantic capability vocabulary, execution scopes/effects, deterministic governance, typed adapter contract, orchestration lifecycle, result normalization, audit records, DNS adapter, localization/conformance, cross-contract integration, and exact-SHA Linux/Windows verification are complete.
 
-### Task 2 — Semantic-to-capability resolution — COMPLETE
+Independent baseline evidence includes run `38872070590` for the verified source baseline before language-level integration.
 
-Implemented deterministic semantic resolution and Indonesian/English localized equivalence/ambiguity fixtures. Localization does not change capability identity or required effects.
+## Task 12 — Language-level DNS orchestration — COMPLETE / EXPERIMENTAL
 
-### Task 3 — Execution scope and governance policy — COMPLETE
-
-Implemented `ExecutionPolicy`, `PolicyDecision`, `ScopeRule`, explicit deny/allow/approval behavior, and deterministic policy tests in `governance.rs`.
-
-### Task 4 — External adapter contract — COMPLETE
-
-Implemented typed `ToolAdapter`, `AdapterRequest`, `AdapterResult`, `AdapterMetadata`, platform compatibility, and rejection of undeclared capabilities. No free-form command-string field is used as the semantic execution boundary.
-
-### Task 5 — Orchestration lifecycle — COMPLETE
-
-Implemented `Orchestrator` with request validation → policy evaluation → deterministic compatible-adapter selection → adapter invocation. Denied requests do not reach adapter invocation.
-
-### Task 6 — Result normalization — COMPLETE
-
-Implemented `NormalizedResult`, explicit normalization expectations, evidence certainty, deterministic failure classification, and normalization tests.
-
-### Task 7 — Audit records — COMPLETE
-
-Implemented orchestration audit records distinguishing policy denial from attempted execution and preserving observed failure/uncertainty without inventing external facts.
-
-### Task 8 — First real adapter — COMPLETE
-
-Implemented `network.dns.resolve` using the platform resolver with typed target scope. The adapter has success/failure classification tests and governed end-to-end runtime coverage.
-
-### Task 9 — Localization/conformance — COMPLETE
-
-Added Indonesian/English semantic-equivalence and ambiguity coverage for orchestration capabilities.
-
-### Task 10 — Cross-contract integration — COMPLETE
-
-Added the orchestration implementation contract and synchronized capability/runtime/verification boundaries. Contract-artifact checks pass in the independent matrix.
-
-### Task 11 — Exact-SHA cross-platform verification — COMPLETE
-
-Independent verification run `38872070590` checked out canonical One source baseline `dba4fad49854952e256ae41744f57f93e39167a8` and passed on Ubuntu and Windows Server 2025:
-
-- canonical SHA checkout and equality check;
-- contract-artifact verification;
-- workspace build;
-- Clippy with `-D warnings`;
-- workspace tests;
-- real-network runtime tests;
-- offline verification;
-- deterministic `.oneir` and `.onepkg` checks through the offline verifiers.
-
-## Next dependency boundary: language-level orchestration
-
-### Task 12 — Connect One source semantics to the orchestration runtime — IN DEVELOPMENT
-
-**Target path:**
+The first source-level vertical slice is now executable:
 
 ```text
 One source
 → parser
-→ AST
+→ semantic validation
+→ typed orchestration IR
+→ target-scoped governance
+→ network.dns.resolve adapter
+→ normalized result
+→ CLI/runtime
+```
+
+Source form:
+
+```text
+cari alamat "127.0.0.1"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan network.discover --target 127.0.0.1
+```
+
+The runtime denies orchestration without an explicit capability grant and rejects targets outside the granted scope. The CLI-facing test initially failed because the permission arguments were not accepted; the minimal CLI permission boundary was then implemented and verified.
+
+Independent run `38874287857` passed this source-to-runtime slice on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
+
+The feature is intentionally **Eksperimental**: only DNS discovery is exposed through this source-level boundary. The existence of this slice does not imply that the broader orchestration catalog is supported.
+
+## Task 13 — Broader language-level capability coverage — IN DEVELOPMENT
+
+Extend the same dependency chain without creating a second semantic authority:
+
+```text
+One source
+→ parser
 → semantic operation
 → capability resolution
 → governance
@@ -82,35 +65,7 @@ One source
 → CLI/runtime
 ```
 
-**Required constraints:**
-
-- Do not create a second interpreter or parallel semantic authority.
-- Reuse the existing parser, semantic model, capability model, IR/runtime, diagnostics, `Orchestrator`, and normalization layer.
-- Ambiguous source must be rejected deterministically.
-- Policy must execute before any adapter invocation.
-- Adapter command syntax must remain outside One semantic meaning.
-- A denied or unavailable operation must become a deterministic One diagnostic/result.
-- Existing non-orchestration programs must remain compatible.
-
-**Required TDD sequence:**
-
-1. Write a failing end-to-end test for a concrete One source operation that should resolve to a typed capability request.
-2. Prove the current pipeline fails to reach `Orchestrator`.
-3. Implement the smallest semantic/IR/runtime bridge necessary.
-4. Add policy-denied, out-of-scope, unavailable-adapter, adapter-failure, and successful-result cases.
-5. Prove the successful path reaches the real DNS adapter and returns a normalized One result.
-6. Add CLI/runtime integration evidence.
-7. Run workspace tests and Clippy.
-8. Run independent exact-SHA verification after the implementation is merged.
-9. Only then change language-level orchestration status from `Dalam pengembangan` to `Verified` or `Supported`, as justified by evidence.
-
-## Later capability expansion
-
-After Task 12 is verified, extend the same dependency chain per capability:
-
-`foundation → semantic → runtime → capability → adapter → CLI → test → verification → documentation`.
-
-Prioritized families:
+Priority:
 
 1. filesystem/storage;
 2. process/system services;
@@ -124,8 +79,23 @@ Prioritized families:
 10. desktop/mobile adapters;
 11. localization.
 
-Each family remains subject to the same evidence status model. A registry entry or architectural specification is not an implementation or support claim.
+For every capability family:
 
-## Completion gate
+1. write a failing end-to-end source test;
+2. reproduce the current gap;
+3. implement the smallest semantic/IR/runtime bridge;
+4. enforce explicit policy and scope;
+5. exercise success, denial, out-of-scope, unavailable-adapter, and adapter-failure cases;
+6. verify CLI/runtime behavior;
+7. run Clippy and workspace tests;
+8. run fresh exact-SHA Linux/Windows verification;
+9. only then promote status.
 
-The original orchestration foundation plan is complete through Task 11. The overall orchestration feature is not complete until the language-level end-to-end path in Task 12 has executable evidence and the resulting canonical SHA has fresh Linux/Windows verification.
+## Status boundary
+
+- `Implemented` means code exists.
+- `Verified` means executable evidence exists for the exact source revision.
+- `Eksperimental` means a verified slice exists but coverage/support is intentionally limited.
+- `Didukung` is reserved for a stronger support claim.
+
+The DNS vertical slice is **Eksperimental**. Broader language-level orchestration remains **Dalam pengembangan**.
