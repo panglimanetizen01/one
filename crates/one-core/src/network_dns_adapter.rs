@@ -39,13 +39,13 @@ impl ToolAdapter for DnsResolveAdapter {
         };
         let mut addresses = (host.as_str(), 0u16)
             .to_socket_addrs()
-            .map_err(|_| AdapterError::UnsupportedPlatform)?
+            .map_err(|_| AdapterError::ResolutionFailed)?
             .map(|address| address.to_string())
             .collect::<Vec<_>>();
         addresses.sort();
         addresses.dedup();
         if addresses.is_empty() {
-            return Err(AdapterError::UnsupportedPlatform);
+            return Err(AdapterError::ResolutionFailed);
         }
         Ok(AdapterResult { success: true, output: addresses.join("\n").into_bytes() })
     }
