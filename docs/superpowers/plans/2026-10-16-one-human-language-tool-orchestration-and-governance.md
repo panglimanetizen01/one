@@ -14,11 +14,9 @@
 
 The typed orchestration domain model, semantic capability vocabulary, execution scopes/effects, deterministic governance, typed adapter contract, orchestration lifecycle, result normalization, audit records, DNS adapter, localization/conformance, cross-contract integration, and exact-SHA Linux/Windows verification are complete.
 
-Independent baseline evidence includes run `38872070590` for the verified source baseline before language-level integration.
-
 ## Task 12 — Language-level DNS orchestration — COMPLETE / EXPERIMENTAL
 
-The first source-level vertical slice is now executable:
+The first source-level vertical slice is executable:
 
 ```text
 One source
@@ -43,9 +41,9 @@ Explicit CLI permission:
 one jalankan main.one --izinkan network.discover --target 127.0.0.1
 ```
 
-The runtime denies orchestration without an explicit capability grant and rejects targets outside the granted scope. The CLI-facing test initially failed because the permission arguments were not accepted; the minimal CLI permission boundary was then implemented and verified.
+The runtime denies orchestration without an explicit capability grant and rejects targets outside the granted scope. The CLI-facing permission boundary is implemented and tested.
 
-Independent run `38874287857` passed this source-to-runtime slice on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
+Independent mirror run `38895405559` passed this source-to-runtime slice on Ubuntu and Windows Server 2025 against canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, including build, Clippy, workspace tests, real-network runtime tests, contract checks, deterministic artifact checks, DNS success/failure classification, orchestration runtime tests, and offline verification.
 
 The feature is intentionally **Eksperimental**: only DNS discovery is exposed through this source-level boundary. The existence of this slice does not imply that the broader orchestration catalog is supported.
 
