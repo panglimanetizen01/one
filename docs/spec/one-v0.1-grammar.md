@@ -90,13 +90,17 @@ action = display_action
         | greet_action
         | create_list_action
         | add_list_action
-        | remove_list_action ;
+        | remove_list_action
+        | dns_discovery_action
+        | filesystem_read_action ;
 
 display_action = "tampilkan", expression, NEWLINE ;
 greet_action = "sapa", expression, NEWLINE ;
 create_list_action = "buat", "daftar", name, NEWLINE ;
 add_list_action = "tambahkan", expression, "ke", name, NEWLINE ;
 remove_list_action = "hapus", expression, "dari", name, NEWLINE ;
+dns_discovery_action = "cari", "alamat", expression, NEWLINE ;
+filesystem_read_action = "baca", "berkas", expression, NEWLINE ;
 ```
 
 Examples:
@@ -107,9 +111,13 @@ tambahkan apel ke daftar buah
 hapus telur dari daftar belanja
 tampilkan nama pengguna
 sapa teman
+cari alamat "127.0.0.1"
+baca berkas "data/contoh.txt"
 ```
 
-The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions.
+`cari alamat` and `baca berkas` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
+
+The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat` and `baca berkas` likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
 
 The source line:
 
@@ -384,20 +392,23 @@ The conformance suite MUST include, at minimum:
 10. nested blocks containing multi-word references;
 11. reserved multi-word phrases such as `kalau tidak` and `buat pekerjaan`;
 12. explicit `sapa` actions;
-13. repeated parsing of identical input with identical semantic output.
+13. explicit `cari alamat` source orchestration;
+14. explicit `baca berkas` source orchestration;
+15. repeated parsing of identical input with identical semantic output.
 
 ### Invalid
 
-14. tabs in indentation;
-15. incomplete declaration/assignment;
-16. unsupported natural-language filler;
-17. arbitrary first-word actions;
-18. unsupported loop-condition prose;
-19. malformed reserved phrases;
-20. ambiguous multi-word boundaries that yield different semantics;
-21. names swallowing structural keywords;
-22. missing action targets;
-23. source spans that cannot cover the complete multi-word name.
+16. tabs in indentation;
+17. incomplete declaration/assignment;
+18. unsupported natural-language filler;
+19. arbitrary first-word actions;
+20. unsupported loop-condition prose;
+21. malformed reserved phrases;
+22. ambiguous multi-word boundaries that yield different semantics;
+23. names swallowing structural keywords;
+24. missing action targets;
+25. source spans that cannot cover the complete multi-word name;
+26. orchestration source without the required explicit two-word operation prefix.
 
 ## 18. Compatibility and implementation gate
 
@@ -411,11 +422,13 @@ The implementation MUST NOT claim conformance to grammar-bounded multi-word name
 4. ambiguity and diagnostic tests exist;
 5. the reference semantic representation preserves the complete name span.
 
+The `cari alamat` and `baca berkas` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
+
 No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
 
 ## 19. Design decision
 
-**Approved direction:** controlled Indonesian surface syntax with lexical `WORD` tokens, grammar-bounded multi-word names, explicit action productions, deterministic ambiguity rejection, and no implicit natural-language intent inference.
+**Approved direction:** controlled Indonesian surface syntax with lexical `WORD` tokens, grammar-bounded multi-word names, explicit action productions including the currently verified orchestration forms, deterministic ambiguity rejection, and no implicit natural-language intent inference.
 
 Principle:
 
