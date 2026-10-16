@@ -10,7 +10,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 The latest cross-platform source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025.
 
-The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, verified on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. Later documentation-only commits do not change that executable evidence boundary and do not establish Ubuntu/Windows support for it.
+The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `68381052b9c744fca97fd8b25505d8878e7c2df4`, verified on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. This evidence does not establish Ubuntu/Windows support for it.
 
 ## Verified baseline
 
@@ -48,7 +48,7 @@ Explicit permission:
 one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
-Latest exact-SHA evidence: `f4b4edc2e408928fb697fb355c3c69c88c62e09d`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
+Latest exact-SHA evidence: `68381052b9c744fca97fd8b25505d8878e7c2df4`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
 
 ## Explicit v0.1 limits
 
@@ -80,7 +80,7 @@ For the filesystem-write slice, no explicit permission means denial and a differ
 - **IMPLEMENTATION-COMPLETE:** in-scope source/docs/tests are present.
 - **VERIFIED:** exact source revision has executable evidence for the stated platform boundary.
 - **EXPERIMENTAL:** the declared vertical slice is verified but intentionally limited in coverage or platform boundary.
-- **SUPPORTED:** reserved for a stronger platform/support claim.
+- **SUPPORTED:** reserved for a stronger support claim.
 
 ## Verification infrastructure rule
 
