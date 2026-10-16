@@ -1,6 +1,6 @@
 # One Human-Language Tool Orchestration and Governance Implementation Plan
 
-> **Current status:** Tasks 1–11 and the first language-level DNS vertical slice are complete and independently verified. The next dependency-ordered boundary is broader language-level capability coverage.
+> **Current status:** Tasks 1–11, the language-level DNS vertical slice, and the language-level filesystem-read vertical slice are complete and independently verified at their recorded implementation revision. The next dependency-ordered boundary is broader language-level capability coverage.
 
 **Goal:** Add a deterministic, general-purpose human-language tool-orchestration foundation to One so semantic operations can invoke typed external capabilities through governed adapters without making tool command syntax the language semantics.
 
@@ -43,11 +43,40 @@ one jalankan main.one --izinkan network.discover --target 127.0.0.1
 
 The runtime denies orchestration without an explicit capability grant and rejects targets outside the granted scope. The CLI-facing permission boundary is implemented and tested.
 
-Independent mirror run `38896533761` passed this source-to-runtime slice on Ubuntu and Windows Server 2025 against canonical source `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a`, including build, Clippy, workspace tests, real-network runtime tests, contract checks, deterministic artifact checks, DNS success/failure classification, orchestration runtime tests, and offline verification.
+## Task 13 — Language-level filesystem-read orchestration — COMPLETE / EXPERIMENTAL
 
-The feature is intentionally **Eksperimental**: only DNS discovery is exposed through this source-level boundary. The existence of this slice does not imply that the broader orchestration catalog is supported.
+The second source-level vertical slice is executable:
 
-## Task 13 — Broader language-level capability coverage — IN DEVELOPMENT
+```text
+One source
+→ parser
+→ semantic validation
+→ typed orchestration IR
+→ target-scoped governance
+→ filesystem.read adapter
+→ normalized UTF-8 text result
+→ CLI/runtime
+```
+
+Source form:
+
+```text
+baca berkas "data/contoh.txt"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
+```
+
+The runtime denies the operation without an explicit capability grant, rejects targets outside the granted scope, and has explicit backend failure/unavailable-adapter coverage.
+
+Independent mirror run `38901366447` passed this source-to-runtime slice on Ubuntu and Windows Server 2025 against canonical source `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`, including build, Clippy, workspace tests, contract checks, deterministic artifact checks, filesystem-read success/denial/out-of-scope/backend/unavailable-adapter coverage, and offline verification.
+
+The feature is intentionally **Eksperimental**: only the declared filesystem-read boundary is exposed through this source-level path. The existence of this slice does not imply that broader filesystem or orchestration support is complete.
+
+## Task 14 — Broader language-level capability coverage — IN DEVELOPMENT
 
 Extend the same dependency chain without creating a second semantic authority:
 
@@ -65,7 +94,7 @@ One source
 
 Priority:
 
-1. filesystem/storage;
+1. filesystem/storage beyond the verified read slice;
 2. process/system services;
 3. database;
 4. HTTP/API;
@@ -96,4 +125,4 @@ For every capability family:
 - `Eksperimental` means a verified slice exists but coverage/support is intentionally limited.
 - `Didukung` is reserved for a stronger support claim.
 
-The DNS vertical slice is **Eksperimental**. Broader language-level orchestration remains **Dalam pengembangan**.
+The DNS and filesystem-read vertical slices are **Eksperimental**. Broader language-level orchestration remains **Dalam pengembangan**.
