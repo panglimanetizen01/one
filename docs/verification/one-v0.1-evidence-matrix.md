@@ -14,40 +14,38 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / independently exercised |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / independently exercised |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
-| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED in independently exercised revision `f482c6b75505d9965dd33f4f25bb0cd04072cedb`; newer source changes are pending exact-SHA verification |
-| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
+| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
-| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + real-network runtime | VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end One-source execution + explicit permission test | EXPERIMENTAL / VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Language-level filesystem-read orchestration | parser → semantic → typed IR → governance → filesystem.read adapter → normalized result → CLI | end-to-end One-source execution + allow/deny/out-of-scope/backend/unavailable-adapter tests | EXPERIMENTAL / VERIFIED in independent run `38903950612` against `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Language-level process execution orchestration | parser → semantic → typed IR → governance → process.execute adapter → normalized result → CLI | end-to-end One-source execution + explicit permission + denial + backend-failure tests | IN DEVELOPMENT / implementation and TDD tests present; exact-SHA execution evidence pending |
-| DNS success | `network_dns_adapter.rs` | real resolver success test | VERIFIED in independent run `38903950612` |
-| DNS failure classification | `network_dns_adapter.rs` | resolution-failure classification test | VERIFIED in independent run `38903950612` |
-| Filesystem-read policy denial | `crates/one-cli/tests/cli.rs` + orchestration runtime tests | no-permission execution must fail with denial diagnostic | VERIFIED in independent run `38903950612` |
-| Filesystem-read out-of-scope | `crates/one-cli/tests/cli.rs` + governance tests | target mismatch must be denied | VERIFIED in independent run `38903950612` |
-| Filesystem-read backend failure/unavailable adapter | filesystem orchestration tests | backend failure and unavailable-adapter paths must fail deterministically | VERIFIED in independent run `38903950612` |
-| Process-execution policy denial/backend failure | `crates/one-core/tests/process_orchestration.rs` + `crates/one-cli/tests/process_orchestration.rs` | no-permission denial and missing-program backend failure | IMPLEMENTED / TDD tests present; execution evidence pending |
+| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + real-network runtime | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end One-source execution + explicit permission test | EXPERIMENTAL / VERIFIED in independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Language-level filesystem-read orchestration | parser → semantic → typed IR → governance → filesystem.read adapter → normalized result → CLI | end-to-end One-source execution + allow/deny/out-of-scope/backend/unavailable-adapter tests | EXPERIMENTAL / VERIFIED in independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Language-level process execution orchestration | parser → semantic → typed IR → governance → process.execute adapter → normalized result → CLI | end-to-end One-source execution + explicit permission + denial + backend-failure tests | EXPERIMENTAL / VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2`; intentionally limited to one targeted program without arguments |
+| DNS success | `network_dns_adapter.rs` | real resolver success test | VERIFIED in independent run `38929072800` |
+| DNS failure classification | `network_dns_adapter.rs` | resolution-failure classification test | VERIFIED in independent run `38929072800` |
+| Filesystem-read policy denial | `crates/one-cli/tests/cli.rs` + orchestration runtime tests | no-permission execution must fail with denial diagnostic | VERIFIED in independent run `38929072800` |
+| Filesystem-read out-of-scope | `crates/one-cli/tests/cli.rs` + governance tests | target mismatch must be denied | VERIFIED in independent run `38929072800` |
+| Filesystem-read backend failure/unavailable adapter | filesystem orchestration tests | backend failure and unavailable-adapter paths must fail deterministically | VERIFIED in independent run `38929072800` |
+| Process-execution policy denial/backend failure | `crates/one-core/tests/process_orchestration.rs` + `crates/one-cli/tests/process_orchestration.rs` | no-permission denial and missing-program backend failure | VERIFIED in exact-SHA independent run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
-| Linux portability | verification mirror workflow | actual Linux run | GREEN in independent run `38903950612` for `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Windows portability | verification mirror workflow | actual Windows run | GREEN in independent run `38903950612` for `f482c6b75505d9965dd33f4f25bb0cd04072cedb` |
-| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN in independent run `38903950612` for `f482c6b75505d9965dd33f4f25bb0cd04072cedb`; newer source changes still require exact-SHA verification |
+| Linux portability | verification mirror workflow | actual Linux run | GREEN in independent run `38929072800` for `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Windows portability | verification mirror workflow | actual Windows run | GREEN in independent run `38929072800` for `9038ac75f197753ff1ab6af7478e63e4831903a2` |
+| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN in independent run `38929072800` for `9038ac75f197753ff1ab6af7478e63e4831903a2` |
 
 ## Current exact-SHA evidence
 
-Independent run `38903950612` in `panglimanetizen01/one-windows-verification` checked out canonical One source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` exactly. Ubuntu and Windows Server 2025 both passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, DNS success/failure classification, filesystem-read orchestration runtime, and platform-specific offline verification.
+Independent run `38929072800` in `panglimanetizen01/one-windows-verification` checked out canonical One source `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly. Ubuntu and Windows Server 2025 both passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. The Windows job explicitly reported Microsoft Windows Server 2025.
 
-Canonical `main` is now `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`. The merge from the documentation synchronization PR is documentation-only relative to the pre-merge `main`, but this does not by itself constitute an exact-SHA executable verification for the new `main` commit. The process/system vertical-slice branch also contains source changes and therefore requires its own exact-SHA executable evidence before merge or promotion.
-
-The available mirror branches currently document the canonical SHA boundary, but the mirror itself is explicitly marked non-executable until its source tree exactly matches the recorded canonical commit. That is an infrastructure/evidence gap, not source-pass evidence.
+PR #48 was then merged into canonical `main` as merge commit `123df544f15d7eec8d74ca231b5e55ccebf4a7ee`, whose second parent is the independently verified source commit `9038ac75f197753ff1ab6af7478e63e4831903a2`. Documentation-only synchronization commits now follow that merge and require their own exact-SHA executable verification before they can be used as new executable evidence.
 
 ## Canonical CI status
 
-PR #48 produced GitHub Actions run `38927364159` against head `90086153f01275bbc2cc968c66c9646a525014e0`. Both Ubuntu job `117062224733` and Windows job `117062225163` failed with zero job steps; retrying the failed jobs produced queued jobs `117062384884` and `117062384610`, and both ultimately failed again with no steps/logs. This is an infrastructure evidence failure, not evidence of a Rust source failure. The current branch therefore still lacks executable test evidence.
+PR #48 produced GitHub Actions run `38927364159` against an earlier head. Both Ubuntu and Windows jobs failed before executing any steps and a retry produced the same zero-step infrastructure failure. This is infrastructure evidence, not evidence of a Rust source failure. The independent verification mirror, not that failed hosted run, is the executable evidence for the process/system source revision.
 
 ## Evidence rules
 
@@ -58,4 +56,4 @@ PR #48 produced GitHub Actions run `38927364159` against head `90086153f01275bbc
 - `VERIFIED` is reserved for claims backed by actual evidence.
 - Evidence for one commit does not automatically verify later commits.
 - The DNS and filesystem-read source-level slices are experimental and do not imply that all orchestration capabilities are supported.
-- The process-execution slice remains `IN DEVELOPMENT` until an exact-SHA executable run proves the full source-to-runtime path.
+- The process-execution slice is `EXPERIMENTAL` only within its verified boundary: one explicitly targeted program without arguments and explicit `process.execute` permission.
