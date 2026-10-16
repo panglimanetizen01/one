@@ -1,7 +1,8 @@
 use crate::adapter::{AdapterError, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 use crate::capability::Capability;
-use crate::governance::{ExecutionPolicy, PolicyDecision};
+use crate::governance::{DenyReason, ExecutionPolicy, PolicyDecision};
 use crate::orchestration::{AdapterStatus, CapabilityRequest, OrchestrationValidationError};
+use crate::orchestration_audit::AuditRecord;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OrchestrationError {
@@ -37,6 +38,43 @@ impl Orchestrator {
         adapter.invoke(&AdapterRequest::new(request.clone())).map_err(OrchestrationError::Adapter)
     }
 
+    pub fn execute_with_audit(
+        &self,
+        request: &CapabilityRequest,
+        platform: PlatformKind,
+        audit: &mut Vec<AuditRecord>,
+    ) -> Result<AdapterResult, OrchestrationError> {
+        let sequence = audit.len() as u64 + 1;
+        if let Err(error) = request.validate() {
+            audit.push(AuditRecord::denied(sequence, request.semantic, "invalid request"));
+            return Err(OrchestrationError::InvalidRequest(error));
+        }
+
+        match self.policy.evaluate(request) {
+            PolicyDecision::Allow => {}
+            PolicyDecision::RequireApproval => {
+                audit.push(AuditRecord::denied(sequence, request.semantic, "approval required"));
+                return Err(OrchestrationError::ApprovalRequired);
+            }
+            decision => {
+                audit.push(AuditRecord::denied(sequence, request.semantic, "policy denied"));
+                return Err(OrchestrationError::PolicyDenied(decision));
+            }
+        }
+
+        let adapter = self.select_adapter(request, platform).ok_or_else(|| {
+            audit.push(AuditRecord::denied(sequence, request.semantic, "no compatible adapter"));
+            OrchestrationError::NoCompatibleAdapter
+        })?;
+        let adapter_id = adapter.metadata().id().clone();
+        let result = adapter.invoke(&AdapterRequest::new(request.clone()));
+        match &result {
+            Ok(value) => audit.push(AuditRecord::invocation_finished(sequence, request.semantic, adapter_id, value.success)),
+            Err(_) => audit.push(AuditRecord::invocation_finished(sequence, request.semantic, adapter_id, false)),
+        }
+        result.map_err(OrchestrationError::Adapter)
+    }
+
     fn select_adapter(&self, request: &CapabilityRequest, platform: PlatformKind) -> Option<&dyn ToolAdapter> {
         self.adapters
             .iter()
@@ -55,7 +93,7 @@ impl Orchestrator {
 mod tests {
     use super::*;
     use crate::adapter::AdapterMetadata;
-    use crate::governance::{DenyReason, ScopeRule};
+    use crate::governance::ScopeRule;
     use crate::orchestration::{AdapterId, EffectClass, ExecutionScope, SemanticCapabilityId};
     use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
 
@@ -73,12 +111,7 @@ mod tests {
     }
 
     fn request() -> CapabilityRequest {
-        CapabilityRequest::new(
-            SemanticCapabilityId::NetworkConnect,
-            Capability::NetworkConnect,
-            ExecutionScope::target("server.example"),
-            EffectClass::Connect,
-        )
+        CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect)
     }
 
     fn adapter(id: &str, invocations: Arc<AtomicUsize>) -> TestAdapter {
@@ -93,19 +126,14 @@ mod tests {
         let invocations = Arc::new(AtomicUsize::new(0));
         let mut orchestrator = Orchestrator::new(ExecutionPolicy::default());
         orchestrator.register(Box::new(adapter("network.native", Arc::clone(&invocations))));
-        assert_eq!(
-            orchestrator.execute(&request(), PlatformKind::Linux),
-            Err(OrchestrationError::PolicyDenied(PolicyDecision::Deny(DenyReason::MissingCapability)))
-        );
+        assert_eq!(orchestrator.execute(&request(), PlatformKind::Linux), Err(OrchestrationError::PolicyDenied(PolicyDecision::Deny(DenyReason::MissingCapability))));
         assert_eq!(invocations.load(Ordering::SeqCst), 0);
     }
 
     #[test]
     fn approved_request_selects_compatible_adapter_and_invokes_once() {
         let invocations = Arc::new(AtomicUsize::new(0));
-        let policy = ExecutionPolicy::default()
-            .grant(Capability::NetworkConnect)
-            .allow_scope(Capability::NetworkConnect, ScopeRule::Target("server.example".into()));
+        let policy = ExecutionPolicy::default().grant(Capability::NetworkConnect).allow_scope(Capability::NetworkConnect, ScopeRule::Target("server.example".into()));
         let mut orchestrator = Orchestrator::new(policy);
         orchestrator.register(Box::new(adapter("network.native", Arc::clone(&invocations))));
         let result = orchestrator.execute(&request(), PlatformKind::Linux).expect("request should execute");
@@ -117,9 +145,7 @@ mod tests {
     #[test]
     fn materially_incompatible_adapter_is_rejected_before_invocation() {
         let invocations = Arc::new(AtomicUsize::new(0));
-        let policy = ExecutionPolicy::default()
-            .grant(Capability::NetworkConnect)
-            .allow_scope(Capability::NetworkConnect, ScopeRule::Target("server.example".into()));
+        let policy = ExecutionPolicy::default().grant(Capability::NetworkConnect).allow_scope(Capability::NetworkConnect, ScopeRule::Target("server.example".into()));
         let mut orchestrator = Orchestrator::new(policy);
         orchestrator.register(Box::new(TestAdapter {
             metadata: AdapterMetadata::new(AdapterId::new("network.admin-only"), AdapterStatus::Implemented, vec![Capability::NetworkAdmin], vec![PlatformKind::Linux]),
