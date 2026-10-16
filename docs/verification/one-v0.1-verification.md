@@ -6,15 +6,15 @@
 
 ## Current exact-SHA verification
 
-Canonical source revision: `78fc1ecfe520bc35584e4fae36fb13ffa3226877`.
+Canonical source revision: `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`.
 
-Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38895405559`, branch `verification`.
+Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38896135846`, branch `verification`.
 
-The mirror checked out the verification branch at `f5e3c81edd38c32781ee8c45535e2511874c4e27`, read `CANONICAL_COMMIT.txt`, checked out the canonical One source at the exact SHA above, and asserted `git rev-parse HEAD` against that SHA on both Ubuntu and Windows Server 2025.
+The mirror checked out the verification branch at `1ae3aae1276248349b6906913321db3da0b14599`, read `CANONICAL_COMMIT.txt`, checked out the canonical One source at the exact SHA above, and asserted `git rev-parse HEAD` against that SHA on both Ubuntu and Windows Server 2025.
 
 ## P0 evidence
 
-### Ubuntu — job `116954563036`
+### Ubuntu — job `116956935554`
 
 - OS: Ubuntu 24.04.5 LTS / `ubuntu-24.04`.
 - Exact canonical SHA assertion: PASS.
@@ -30,7 +30,7 @@ The mirror checked out the verification branch at `f5e3c81edd38c32781ee8c45535e2
 - DNS failure classification: `network_dns_adapter::tests::dns_adapter_reports_resolution_failure_as_resolution_failure` → PASS.
 - Orchestration runtime: `orchestrator::tests::approved_request_selects_compatible_adapter_and_invokes_once`, `denied_request_never_reaches_adapter_invocation`, and source-level DNS integration tests → PASS.
 
-### Windows — job `116954563246`
+### Windows — job `116956935967`
 
 - OS: Microsoft Windows Server 2025, `windows-2025`.
 - Exact canonical SHA assertion: PASS.
@@ -47,6 +47,6 @@ The mirror checked out the verification branch at `f5e3c81edd38c32781ee8c45535e2
 
 ## Verification boundary
 
-`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. The evidence above verifies `78fc1ecfe520bc35584e4fae36fb13ffa3226877`; it does not automatically verify later commits.
+`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. The evidence above verifies `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`; it does not automatically verify later commits.
 
 The independent public mirror is verification infrastructure only. GitHub `main` remains the canonical source of truth. No paid GitHub upgrade was used or required.
