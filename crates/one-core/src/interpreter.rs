@@ -3,7 +3,14 @@
 use std::collections::HashMap;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
+use crate::adapter::PlatformKind;
+use crate::governance::ExecutionPolicy;
 use crate::ir::{IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
+use crate::network_dns_adapter::DnsResolveAdapter;
+use crate::orchestration::CapabilityRequest;
+use crate::orchestration_audit::AuditRecord;
+use crate::orchestration_result::{normalize_result, NormalizationExpectation, NormalizedValue};
+use crate::orchestrator::{OrchestrationError, Orchestrator};
 use crate::runtime::{Environment, Value};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,10 +29,18 @@ pub struct Interpreter {
     events: HashMap<String, Vec<IrStatement>>,
     environment: Option<Environment>,
     steps: usize,
+    orchestrator: Option<Orchestrator>,
 }
 
 impl Interpreter {
-    pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0 } }
+    pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, orchestrator: None } }
+
+    pub fn with_orchestration_policy(policy: ExecutionPolicy) -> Self {
+        let mut orchestrator = Orchestrator::new(policy);
+        orchestrator.register(Box::new(DnsResolveAdapter::new()));
+        Self { capabilities: CapabilitySet::none(), max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, orchestrator: Some(orchestrator) }
+    }
+
     pub fn execute_network(&mut self, operation: &IrNetworkOperation) -> Result<NetworkExecutionResult, RuntimeError> {
         let semantic = operation.operation();
         if let Err(bundle) = semantic.validate() {
@@ -39,6 +54,7 @@ impl Interpreter {
         }
         Ok(NetworkExecutionResult { description: "network operation delegated to reference backend".into(), performed_external_io: false })
     }
+
     pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> {
         self.functions.clear(); self.events.clear(); self.environment = None; self.steps = 0;
         self.register_definitions(&program.statements);
@@ -47,6 +63,7 @@ impl Interpreter {
         self.environment = Some(env);
         Ok(ExecutionResult { output })
     }
+
     pub fn dispatch_event(&mut self, trigger: &str) -> Result<ExecutionResult, RuntimeError> {
         let body = self.events.get(trigger).cloned().ok_or_else(|| RuntimeError { code: "R3001", message: format!("Event '{}' belum terdaftar.", trigger) })?;
         let mut env = self.environment.take().ok_or_else(|| RuntimeError { code: "R3021", message: "Program belum dijalankan; jalankan program sebelum memicu event.".into() })?;
@@ -55,6 +72,7 @@ impl Interpreter {
         self.environment = Some(env);
         result.map(|()| ExecutionResult { output })
     }
+
     fn register_definitions(&mut self, statements: &[IrStatement]) { for statement in statements { match statement { IrStatement::Function { name, params, result, body } => { self.functions.insert(name.clone(), (params.clone(), result.clone(), body.clone())); }, IrStatement::Event { trigger, body } => { self.events.insert(trigger.join(" "), body.clone()); }, _ => {} } } }
     fn tick(&mut self) -> Result<(), RuntimeError> { self.steps += 1; if self.steps > self.max_steps { Err(RuntimeError { code: "R3002", message: "Program melebihi batas langkah eksekusi yang aman.".into() }) } else { Ok(()) } }
     fn exec_block(&mut self, statements: &[IrStatement], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { for statement in statements { self.tick()?; self.exec_statement(statement, env, output)?; } Ok(()) }
@@ -71,8 +89,28 @@ impl Interpreter {
             },
             IrStatement::Function { .. } | IrStatement::Event { .. } => {}
             IrStatement::Network { operation } => { let _ = self.execute_network(operation)?; }
+            IrStatement::Orchestration { semantic, capability, effect, target } => {
+                let target = self.eval(target, env)?;
+                let target = match target { Value::Text(value) => value, other => return Err(RuntimeError { code: "N3200", message: format!("Target orchestration harus berupa teks, bukan {}.", other.display()) }) };
+                let orchestrator = self.orchestrator.as_ref().ok_or_else(|| RuntimeError { code: "N3205", message: "Orchestration belum diizinkan untuk interpreter ini.".into() })?;
+                let request = CapabilityRequest::new(*semantic, *capability, crate::orchestration::ExecutionScope::target(target), *effect);
+                let mut audit = Vec::<AuditRecord>::new();
+                let result = orchestrator.execute_with_audit(&request, PlatformKind::Any, &mut audit).map_err(Self::orchestration_error)?;
+                let normalized = normalize_result(crate::AdapterId::new("network.dns.resolve"), result, NormalizationExpectation::Utf8Text).map_err(|error| RuntimeError { code: "N3206", message: format!("Hasil orchestration tidak dapat dinormalisasi: {:?}", error) })?;
+                match normalized.value() { NormalizedValue::Text(value) => output.extend(value.lines().map(ToOwned::to_owned)), _ => return Err(RuntimeError { code: "N3207", message: "Hasil orchestration DNS bukan teks.".into() }) }
+            }
         }
         Ok(())
+    }
+
+    fn orchestration_error(error: OrchestrationError) -> RuntimeError {
+        match error {
+            OrchestrationError::InvalidRequest(error) => RuntimeError { code: "N3208", message: format!("Permintaan orchestration tidak valid: {:?}.", error) },
+            OrchestrationError::PolicyDenied(decision) => RuntimeError { code: "N3209", message: format!("Permintaan orchestration ditolak policy: {:?}.", decision) },
+            OrchestrationError::ApprovalRequired => RuntimeError { code: "N3210", message: "Permintaan orchestration membutuhkan persetujuan.".into() },
+            OrchestrationError::NoCompatibleAdapter => RuntimeError { code: "N3211", message: "Tidak ada adapter orchestration yang kompatibel.".into() },
+            OrchestrationError::Adapter(error) => RuntimeError { code: "N3212", message: format!("Adapter orchestration gagal: {:?}.", error) },
+        }
     }
 
     fn exec_action(&mut self, name: &str, args: &[IrExpr], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> {
