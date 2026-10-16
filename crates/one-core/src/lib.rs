@@ -10,6 +10,7 @@ pub mod network_application;
 pub mod network_datagrams;
 pub mod network_mail;
 pub mod network_runtime;
+pub mod orchestration;
 #[cfg(feature = "real-network")]
 pub mod network_http2;
 #[cfg(feature = "real-network")]
@@ -42,6 +43,7 @@ pub use network_http2::execute_http2;
 pub use network_quic::execute_quic;
 #[cfg(feature = "real-network")]
 pub use network_tls::execute_https11;
+pub use orchestration::{AdapterStatus, CapabilityRequest, EffectClass, ExecutionScope, OrchestrationValidationError, SemanticCapabilityId};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
 pub use token::{Span, Token, TokenKind};
