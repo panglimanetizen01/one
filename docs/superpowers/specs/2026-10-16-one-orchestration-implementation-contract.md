@@ -1,6 +1,6 @@
 # One Orchestration Implementation Contract
 
-Status: Verified on canonical `main` through independent exact-SHA cross-platform run `38895405559` against canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`.
+Status: Verified on canonical `main` through independent exact-SHA cross-platform run `38896135846` against canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`.
 
 ## Semantic boundary
 
@@ -12,16 +12,7 @@ A `CapabilityRequest` carries the semantic operation, required capability, execu
 
 ## Governance boundary
 
-`ExecutionPolicy` evaluates a typed request in deterministic order:
-
-1. invalid request → deny
-2. explicit denial → deny
-3. missing capability grant → deny
-4. out-of-scope → deny
-5. approval requirement → require approval
-6. otherwise → allow
-
-The policy is independent of locale or surface wording.
+`ExecutionPolicy` evaluates a typed request in deterministic order: invalid request → deny; explicit denial → deny; missing capability grant → deny; out-of-scope → deny; approval requirement → require approval; otherwise → allow. The policy is independent of locale or surface wording.
 
 ## Adapter boundary
 
@@ -51,7 +42,7 @@ The first real adapter is `network.dns.resolve`. It uses the platform resolver d
 
 ## Exact-SHA verification evidence
 
-Independent run `38895405559` in `panglimanetizen01/one-windows-verification` checked out canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877` exactly. Ubuntu job `116954563036` and Windows job `116954563246` passed build, Clippy, workspace tests, real-network runtime tests, offline verification, contract-artifact checks, deterministic artifact tests, DNS success/failure classification, and orchestration runtime tests.
+Independent run `38896135846` in `panglimanetizen01/one-windows-verification` checked out canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` exactly. Ubuntu job `116954563036` and Windows job `116956935967` passed build, Clippy, workspace tests, real-network runtime tests, offline verification, contract-artifact checks, deterministic artifact tests, DNS success/failure classification, and orchestration runtime tests.
 
 The independent mirror is verification infrastructure only; GitHub `main` remains the source of truth. The canonical hosted runner is not used as the sole evidence path.
 
