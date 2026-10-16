@@ -33,5 +33,5 @@ jobs:
         run: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - name: DNS success and failure classification
         run: cargo test -p one-core --all-targets dns_adapter
-      - name: Orchestration runtime policy path
-        run: cargo test -p one-core --all-targets orchestration
+      - name: Orchestration policy deny and allow paths
+        run: cargo test -p one-core --all-targets denied_request_never_reaches_adapter_invocation approved_request_selects_compatible_adapter_and_invokes_once materially_incompatible_adapter_is_rejected_before_invocation
