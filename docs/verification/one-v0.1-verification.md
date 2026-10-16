@@ -6,13 +6,13 @@
 
 ## Latest exact-SHA executable verification
 
-Canonical source revision: `68381052b9c744fca97fd8b25505d8878e7c2df4`.
+Canonical source revision: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`.
 
 Environment: Termux/Android.
 
 The exact-SHA checkout passed contract checks, build, Clippy with `-D warnings`, targeted filesystem-write CLI regression test, full workspace tests, and offline verification. The filesystem-write CLI test executed a One source program with `--izinkan filesystem.write --target <path>` and verified the target file contained the expected text.
 
-This evidence is platform-bound to Termux/Android. It does not establish Ubuntu/Windows support for `68381052b9c744fca97fd8b25505d8878e7c2df4`.
+This evidence is platform-bound to Termux/Android. It does not establish Ubuntu/Windows support for `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`.
 
 ## Latest cross-platform exact-SHA verification
 
@@ -22,7 +22,7 @@ Independent verification mirror: `panglimanetizen01/one-windows-verification`, r
 
 The independent mirror checked out the exact recorded SHA and verified it on Ubuntu and Windows Server 2025. The run passed contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification.
 
-That cross-platform evidence predates the filesystem-write commits and must not be generalized to the current `main` SHA.
+That cross-platform evidence predates the filesystem-write commits and must not be generalized to the current executable revision.
 
 ## Evidence boundary
 
