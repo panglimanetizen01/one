@@ -80,7 +80,7 @@ For the filesystem-write slice, no explicit permission means denial and a differ
 - **IMPLEMENTATION-COMPLETE:** in-scope source/docs/tests are present.
 - **VERIFIED:** exact source revision has executable evidence for the stated platform boundary.
 - **EXPERIMENTAL:** the declared vertical slice is verified but intentionally limited in coverage or platform boundary.
-- **SUPPORTED:** reserved for a stronger support claim.
+- **SUPPORTED:** reserved for a stronger platform/support claim.
 
 ## Verification infrastructure rule
 
