@@ -14,28 +14,26 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / independently exercised |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / independently exercised |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
-| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED in run `38896135846` |
-| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED in run `38896135846` |
+| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED in run `38896533761` |
+| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED in run `38896533761` |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
-| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED in run `38896135846` |
-| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED in run `38896135846` |
-| Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | VERIFIED in run `38896135846` |
-| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + real-network runtime | VERIFIED in run `38896135846` |
-| Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | VERIFIED in run `38896135846` |
-| Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end One-source execution + explicit permission test | EXPERIMENTAL / VERIFIED in run `38896135846` |
-| DNS success | `network_dns_adapter.rs` | real resolver success test | VERIFIED in run `38896135846` |
-| DNS failure classification | `network_dns_adapter.rs` | resolution-failure classification test | VERIFIED in run `38896135846` |
+| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED in run `38896533761` |
+| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED in run `38896533761` |
+| Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | VERIFIED in run `38896533761` |
+| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + real-network runtime | VERIFIED in run `38896533761` |
+| Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | VERIFIED in run `38896533761` |
+| Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end One-source execution + explicit permission test | EXPERIMENTAL / VERIFIED in run `38896533761` |
+| DNS success | `network_dns_adapter.rs` | real resolver success test | VERIFIED in run `38896533761` |
+| DNS failure classification | `network_dns_adapter.rs` | resolution-failure classification test | VERIFIED in run `38896533761` |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
-| Linux portability | verification mirror workflow | actual Linux run | GREEN in run `38896135846` |
-| Windows portability | verification mirror workflow | actual Windows run | GREEN in run `38896135846` |
-| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN in run `38896135846` |
+| Linux portability | verification mirror workflow | actual Linux run | GREEN in run `38896533761` |
+| Windows portability | verification mirror workflow | actual Windows run | GREEN in run `38896533761` |
+| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN in run `38896533761` |
 
 ## Current exact-SHA evidence
 
-Run `38896135846` in `panglimanetizen01/one-windows-verification` checked out canonical One source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` exactly. Ubuntu job `116956935554` and Windows job `116956935967` both passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification.
-
-The logs explicitly show deterministic `.oneir`/`.onepkg` tests, DNS success and resolution-failure classification tests, and orchestration runtime/source-level DNS tests passing on the relevant platforms.
+Run `38896533761` in `panglimanetizen01/one-windows-verification` checked out canonical One source `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` exactly. Ubuntu job `116958230147` and Windows job `116958229777` both passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, DNS success/failure classification, orchestration runtime, and platform-specific offline verification.
 
 ## Evidence rules
 
