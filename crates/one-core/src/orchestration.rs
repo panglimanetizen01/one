@@ -94,65 +94,37 @@ pub struct CapabilityRequest {
 }
 
 impl CapabilityRequest {
-    pub const fn new(
-        semantic: SemanticCapabilityId,
-        capability: Capability,
-        scope: ExecutionScope,
-        effect: EffectClass,
-    ) -> Self { Self { semantic, capability, scope, effect } }
-
+    pub const fn new(semantic: SemanticCapabilityId, capability: Capability, scope: ExecutionScope, effect: EffectClass) -> Self { Self { semantic, capability, scope, effect } }
     pub fn validate(&self) -> Result<(), OrchestrationValidationError> {
-        if !self.scope.is_valid() {
-            return Err(OrchestrationValidationError::EmptyScope);
-        }
-        if !semantic_matches_capability(self.semantic, self.capability) {
-            return Err(OrchestrationValidationError::IncompatibleSemanticCapability);
-        }
-        if !capability_matches_effect(self.capability, self.effect) {
-            return Err(OrchestrationValidationError::IncompatibleCapabilityEffect);
-        }
+        if !self.scope.is_valid() { return Err(OrchestrationValidationError::EmptyScope); }
+        if !semantic_matches_capability(self.semantic, self.capability) { return Err(OrchestrationValidationError::IncompatibleSemanticCapability); }
+        if !capability_matches_effect(self.capability, self.effect) { return Err(OrchestrationValidationError::IncompatibleCapabilityEffect); }
         Ok(())
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum OrchestrationValidationError {
-    EmptyScope,
-    IncompatibleSemanticCapability,
-    IncompatibleCapabilityEffect,
-}
+pub enum OrchestrationValidationError { EmptyScope, IncompatibleSemanticCapability, IncompatibleCapabilityEffect }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ResolvedCapability {
-    pub semantic: SemanticCapabilityId,
-    pub capability: Capability,
-    pub effect: EffectClass,
-}
+pub struct ResolvedCapability { pub semantic: SemanticCapabilityId, pub capability: Capability, pub effect: EffectClass }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum CapabilityResolutionError {
-    UnknownAlias,
-    Ambiguous,
-    InvalidRequest(OrchestrationValidationError),
-}
+pub enum CapabilityResolutionError { UnknownAlias, Ambiguous, InvalidRequest(OrchestrationValidationError) }
 
 pub fn resolve_localized_alias(locale: &str, label: &str) -> Result<SemanticCapabilityId, CapabilityResolutionError> {
     match (locale, label) {
         ("id", "hubungkan") | ("en", "connect") => Ok(SemanticCapabilityId::NetworkConnect),
         ("id", "dengarkan") | ("en", "listen") => Ok(SemanticCapabilityId::NetworkListen),
-        ("id", "cari perangkat") | ("en", "discover devices") => Ok(SemanticCapabilityId::NetworkDiscover),
+        ("id", "cari perangkat") | ("en", "discover devices") | ("id", "cari alamat") => Ok(SemanticCapabilityId::NetworkDiscover),
         ("id", "jalankan proses") | ("en", "execute process") => Ok(SemanticCapabilityId::ProcessExecute),
         _ => Err(CapabilityResolutionError::UnknownAlias),
     }
 }
 
 pub fn resolve_candidates(candidates: &[SemanticCapabilityId]) -> Result<SemanticCapabilityId, CapabilityResolutionError> {
-    let Some(first) = candidates.first().copied() else {
-        return Err(CapabilityResolutionError::UnknownAlias);
-    };
-    if candidates.iter().any(|candidate| *candidate != first) {
-        return Err(CapabilityResolutionError::Ambiguous);
-    }
+    let Some(first) = candidates.first().copied() else { return Err(CapabilityResolutionError::UnknownAlias); };
+    if candidates.iter().any(|candidate| *candidate != first) { return Err(CapabilityResolutionError::Ambiguous); }
     Ok(first)
 }
 
@@ -229,6 +201,7 @@ mod tests {
     fn equivalent_localized_aliases_resolve_to_one_semantic_capability() {
         assert_eq!(resolve_localized_alias("id", "hubungkan"), Ok(SemanticCapabilityId::NetworkConnect));
         assert_eq!(resolve_localized_alias("en", "connect"), Ok(SemanticCapabilityId::NetworkConnect));
+        assert_eq!(resolve_localized_alias("id", "cari alamat"), Ok(SemanticCapabilityId::NetworkDiscover));
     }
 
     #[test]
