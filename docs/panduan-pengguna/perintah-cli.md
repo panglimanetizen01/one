@@ -57,4 +57,4 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 ## Verification boundary
 
-Current exact-SHA cross-platform evidence is recorded in `docs/verification/one-v0.1-verification.md` for canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`, independently executed in run `38896135846` on Ubuntu and Windows Server 2025.
+Current exact-SHA cross-platform evidence is recorded in `docs/verification/one-v0.1-verification.md` for canonical source `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a`, independently executed in run `38896533761` on Ubuntu and Windows Server 2025.
