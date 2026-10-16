@@ -1,5 +1,13 @@
 use crate::capability::Capability;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AdapterId(String);
+
+impl AdapterId {
+    pub fn new(value: impl Into<String>) -> Self { Self(value.into()) }
+    pub fn as_str(&self) -> &str { &self.0 }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum SemanticCapabilityId {
     FilesystemRead,
@@ -149,14 +157,8 @@ pub fn resolve_candidates(candidates: &[SemanticCapabilityId]) -> Result<Semanti
 }
 
 pub fn resolve_capability_request(request: &CapabilityRequest) -> Result<ResolvedCapability, CapabilityResolutionError> {
-    request
-        .validate()
-        .map_err(CapabilityResolutionError::InvalidRequest)?;
-    Ok(ResolvedCapability {
-        semantic: request.semantic,
-        capability: request.capability,
-        effect: request.effect,
-    })
+    request.validate().map_err(CapabilityResolutionError::InvalidRequest)?;
+    Ok(ResolvedCapability { semantic: request.semantic, capability: request.capability, effect: request.effect })
 }
 
 fn semantic_matches_capability(semantic: SemanticCapabilityId, capability: Capability) -> bool {
@@ -192,6 +194,7 @@ mod tests {
     fn orchestration_identifiers_are_stable_and_ordered() {
         assert_eq!(SemanticCapabilityId::NetworkConnect.as_str(), "network.connect");
         assert!(SemanticCapabilityId::ProcessExecute < SemanticCapabilityId::NetworkConnect);
+        assert_eq!(AdapterId::new("network.native").as_str(), "network.native");
         assert!(AdapterStatus::Verified > AdapterStatus::Implemented);
         assert!(AdapterStatus::Supported > AdapterStatus::Verified);
     }
@@ -206,34 +209,19 @@ mod tests {
 
     #[test]
     fn capability_request_validates_required_fields() {
-        let request = CapabilityRequest::new(
-            SemanticCapabilityId::NetworkConnect,
-            Capability::NetworkConnect,
-            ExecutionScope::target("server.example"),
-            EffectClass::Connect,
-        );
+        let request = CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect);
         assert!(request.validate().is_ok());
     }
 
     #[test]
     fn capability_request_rejects_incompatible_effect_and_capability() {
-        let request = CapabilityRequest::new(
-            SemanticCapabilityId::NetworkConnect,
-            Capability::NetworkConnect,
-            ExecutionScope::target("server.example"),
-            EffectClass::Admin,
-        );
+        let request = CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Admin);
         assert_eq!(request.validate(), Err(OrchestrationValidationError::IncompatibleCapabilityEffect));
     }
 
     #[test]
     fn capability_request_rejects_empty_target_scope() {
-        let request = CapabilityRequest::new(
-            SemanticCapabilityId::NetworkConnect,
-            Capability::NetworkConnect,
-            ExecutionScope::target(""),
-            EffectClass::Connect,
-        );
+        let request = CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target(""), EffectClass::Connect);
         assert_eq!(request.validate(), Err(OrchestrationValidationError::EmptyScope));
     }
 
@@ -246,31 +234,18 @@ mod tests {
     #[test]
     fn localized_alias_cannot_reduce_required_effect() {
         let semantic = resolve_localized_alias("id", "hubungkan").expect("known alias");
-        let request = CapabilityRequest::new(
-            semantic,
-            Capability::NetworkConnect,
-            ExecutionScope::target("server.example"),
-            EffectClass::Admin,
-        );
+        let request = CapabilityRequest::new(semantic, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Admin);
         assert_eq!(request.validate(), Err(OrchestrationValidationError::IncompatibleCapabilityEffect));
     }
 
     #[test]
     fn materially_different_candidates_are_rejected_as_ambiguous() {
-        assert_eq!(
-            resolve_candidates(&[SemanticCapabilityId::NetworkConnect, SemanticCapabilityId::ProcessExecute]),
-            Err(CapabilityResolutionError::Ambiguous)
-        );
+        assert_eq!(resolve_candidates(&[SemanticCapabilityId::NetworkConnect, SemanticCapabilityId::ProcessExecute]), Err(CapabilityResolutionError::Ambiguous));
     }
 
     #[test]
     fn resolved_request_preserves_semantic_capability_and_effect() {
-        let request = CapabilityRequest::new(
-            SemanticCapabilityId::NetworkConnect,
-            Capability::NetworkConnect,
-            ExecutionScope::target("server.example"),
-            EffectClass::Connect,
-        );
+        let request = CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect);
         let resolved = resolve_capability_request(&request).expect("request should resolve");
         assert_eq!(resolved.semantic, SemanticCapabilityId::NetworkConnect);
         assert_eq!(resolved.capability, Capability::NetworkConnect);
