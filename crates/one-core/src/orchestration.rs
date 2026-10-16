@@ -1,3 +1,162 @@
+use crate::capability::Capability;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum SemanticCapabilityId {
+    FilesystemRead,
+    FilesystemWrite,
+    ProcessExecute,
+    NetworkConnect,
+    NetworkListen,
+    NetworkDiscover,
+    NetworkAdmin,
+    Native,
+}
+
+impl SemanticCapabilityId {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::FilesystemRead => "filesystem.read",
+            Self::FilesystemWrite => "filesystem.write",
+            Self::ProcessExecute => "process.execute",
+            Self::NetworkConnect => "network.connect",
+            Self::NetworkListen => "network.listen",
+            Self::NetworkDiscover => "network.discover",
+            Self::NetworkAdmin => "network.admin",
+            Self::Native => "native",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ExecutionScope {
+    Global,
+    Local,
+    Target(String),
+    Resource(String),
+}
+
+impl ExecutionScope {
+    pub const fn global() -> Self { Self::Global }
+    pub const fn local() -> Self { Self::Local }
+
+    pub fn target(value: impl Into<String>) -> Self { Self::Target(value.into()) }
+    pub fn resource(value: impl Into<String>) -> Self { Self::Resource(value.into()) }
+
+    pub fn as_str(&self) -> String {
+        match self {
+            Self::Global => "global".to_owned(),
+            Self::Local => "local".to_owned(),
+            Self::Target(value) => format!("target:{value}"),
+            Self::Resource(value) => format!("resource:{value}"),
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        match self {
+            Self::Global | Self::Local => true,
+            Self::Target(value) | Self::Resource(value) => !value.is_empty(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum EffectClass {
+    Pure,
+    Read,
+    Write,
+    Connect,
+    Listen,
+    Discover,
+    Execute,
+    Admin,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum AdapterStatus {
+    Specified,
+    Designed,
+    Implemented,
+    Verified,
+    Supported,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CapabilityRequest {
+    pub semantic: SemanticCapabilityId,
+    pub capability: Capability,
+    pub scope: ExecutionScope,
+    pub effect: EffectClass,
+}
+
+impl CapabilityRequest {
+    pub const fn new(
+        semantic: SemanticCapabilityId,
+        capability: Capability,
+        scope: ExecutionScope,
+        effect: EffectClass,
+    ) -> Self {
+        Self { semantic, capability, scope, effect }
+    }
+
+    pub fn validate(&self) -> Result<(), OrchestrationValidationError> {
+        if !self.scope.is_valid() {
+            return Err(OrchestrationValidationError::EmptyScope);
+        }
+        if !semantic_matches_capability(self.semantic, self.capability) {
+            return Err(OrchestrationValidationError::IncompatibleSemanticCapability);
+        }
+        if !capability_matches_effect(self.capability, self.effect) {
+            return Err(OrchestrationValidationError::IncompatibleCapabilityEffect);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum OrchestrationValidationError {
+    EmptyScope,
+    IncompatibleSemanticCapability,
+    IncompatibleCapabilityEffect,
+}
+
+fn semantic_matches_capability(semantic: SemanticCapabilityId, capability: Capability) -> bool {
+    match semantic {
+        SemanticCapabilityId::FilesystemRead | SemanticCapabilityId::FilesystemWrite => {
+            matches!(capability, Capability::Filesystem)
+        }
+        SemanticCapabilityId::ProcessExecute => matches!(capability, Capability::Process),
+        SemanticCapabilityId::NetworkConnect => {
+            matches!(capability, Capability::Network | Capability::NetworkConnect)
+        }
+        SemanticCapabilityId::NetworkListen => {
+            matches!(capability, Capability::Network | Capability::NetworkListen)
+        }
+        SemanticCapabilityId::NetworkDiscover => {
+            matches!(capability, Capability::Network | Capability::NetworkDiscover)
+        }
+        SemanticCapabilityId::NetworkAdmin => matches!(capability, Capability::NetworkAdmin),
+        SemanticCapabilityId::Native => matches!(capability, Capability::Native),
+    }
+}
+
+fn capability_matches_effect(capability: Capability, effect: EffectClass) -> bool {
+    match capability {
+        Capability::Filesystem => matches!(effect, EffectClass::Read | EffectClass::Write),
+        Capability::Process | Capability::Native => matches!(effect, EffectClass::Execute),
+        Capability::Network => matches!(
+            effect,
+            EffectClass::Connect
+                | EffectClass::Listen
+                | EffectClass::Discover
+                | EffectClass::Admin
+        ),
+        Capability::NetworkConnect => matches!(effect, EffectClass::Connect),
+        Capability::NetworkListen => matches!(effect, EffectClass::Listen),
+        Capability::NetworkDiscover => matches!(effect, EffectClass::Discover),
+        Capability::NetworkAdmin => matches!(effect, EffectClass::Admin),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -27,7 +186,6 @@ mod tests {
             ExecutionScope::target("server.example"),
             EffectClass::Connect,
         );
-
         assert!(request.validate().is_ok());
     }
 
@@ -39,7 +197,6 @@ mod tests {
             ExecutionScope::target("server.example"),
             EffectClass::Admin,
         );
-
         assert_eq!(
             request.validate(),
             Err(OrchestrationValidationError::IncompatibleCapabilityEffect)
