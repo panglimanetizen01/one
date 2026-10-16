@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod capability;
 pub mod diagnostic;
+pub mod governance;
 pub mod interop;
 pub mod interpreter;
 pub mod ir;
