@@ -49,7 +49,7 @@ Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTP
 
 ## Experimental language-level orchestration
 
-The first source-level orchestration vertical slice is real and independently verified:
+The first source-level orchestration vertical slice is real and independently verified at canonical revision `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` in mirror run `38896533761`:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -90,6 +90,6 @@ No explicit permission means denial. A different target is outside the granted s
 
 ## Verification boundary
 
-Canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` was independently verified in mirror run `38896135846` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, orchestration runtime, and offline verification.
+Canonical source `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` was independently verified in mirror run `38896533761` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, orchestration runtime, and offline verification.
 
-The private GitHub repository remains the source of truth. The public verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
+The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
