@@ -4,24 +4,30 @@
 
 `panglimanetizen01/one`, branch `main`.
 
-## Latest independently executable exact-SHA verification
+## Latest exact-SHA executable verification
 
-Canonical source revision: `f482c6b75505d9965dd33f4f25bb0cd04072cedb`.
+Canonical source revision: `a332dc5e58760460c26ebebb33f32f910bfdf4b3`.
 
-Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38903950612`.
+Environment: Termux/Android.
 
-The independent mirror checked out the canonical One source at the exact recorded SHA and verified the source revision on Ubuntu and Windows Server 2025. The run passed the recorded contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification.
+The exact-SHA checkout passed contract checks, build, Clippy with `-D warnings`, targeted filesystem-write CLI regression test, full workspace tests, and offline verification. The filesystem-write CLI test executed a One source program with `--izinkan filesystem.write --target <path>` and verified the target file contained the expected text.
 
-The verified orchestration boundary in this run includes the DNS source-level slice and the filesystem-read source-level slice. It does not include the later process-execution implementation.
+This evidence is platform-bound to Termux/Android. It does not establish Ubuntu/Windows support for `a332dc5e58760460c26ebebb33f32f910bfdf4b3`.
+
+## Latest cross-platform exact-SHA verification
+
+Canonical source revision: `9038ac75f197753ff1ab6af7478e63e4831903a2`.
+
+Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38929072800`.
+
+The independent mirror checked out the exact recorded SHA and verified it on Ubuntu and Windows Server 2025. The run passed contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification.
+
+That cross-platform evidence predates the filesystem-write commits and must not be generalized to the current `main` SHA.
 
 ## Evidence boundary
 
-`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA. The evidence above verifies `f482c6b75505d9965dd33f4f25bb0cd04072cedb`; it does not automatically verify later commits.
-
-Canonical `main` is now `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`. The documentation synchronization merge is documentation-only relative to the previous main baseline, but no new exact-SHA executable run has yet been recorded for `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`.
-
-The process/system vertical-slice branch contains source/runtime changes and therefore requires a fresh exact-SHA run before its process-execution capability can be labeled `EXPERIMENTAL`, `VERIFIED`, or `SUPPORTED`.
+`VERIFIED` is reserved for claims backed by executable evidence for the exact recorded source SHA and stated platform boundary. Evidence for one commit does not automatically verify later commits.
 
 ## Verification infrastructure status
 
-The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. The currently available mirror branches explicitly state that execution is not valid until their source tree exactly matches the canonical SHA recorded for the verification attempt. No paid GitHub upgrade was used or required.
+The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. The canonical hosted CI path for the filesystem-write CLI work produced zero-step job failures and retries produced no executable jobs, so it is classified as infrastructure evidence failure rather than source failure. No paid GitHub upgrade was used or required.

@@ -49,68 +49,51 @@ Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTP
 
 ## Experimental language-level orchestration
 
-Two source-level orchestration vertical slices are currently real and independently verified at canonical implementation revision `f482c6b75505d9965dd33f4f25bb0cd04072cedb` through mirror run `38903950612`:
+DNS, filesystem read, and the limited process-execution source-level slices are experimentally available within their recorded evidence boundaries.
 
 ```text
 One source: cari alamat "127.0.0.1"
- -> parser
- -> semantic validation
- -> typed orchestration IR
- -> target-scoped governance
- -> network.dns.resolve
- -> normalized result
- -> CLI output
+ -> parser -> semantic validation -> typed orchestration IR
+ -> target-scoped governance -> network.dns.resolve -> CLI output
 
 One source: baca berkas "data/contoh.txt"
- -> parser
- -> semantic validation
- -> typed orchestration IR
- -> target-scoped governance
- -> filesystem.read
- -> normalized UTF-8 text result
- -> CLI output
-```
+ -> parser -> semantic validation -> typed orchestration IR
+ -> target-scoped governance -> filesystem.read -> CLI output
 
-Run them with explicit permission and exact target scope:
-
-```text
-one jalankan main.one --izinkan network.discover --target 127.0.0.1
-one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
-```
-
-Technical aliases:
-
-```text
-one run main.one --allow network.discover --target 127.0.0.1
-one run main.one --allow filesystem.read --target data/contoh.txt
-```
-
-No explicit permission means denial. A different target is outside the granted scope. These slices are **Eksperimental**, not a claim that the full orchestration catalog is supported.
-
-## Process/System experimental boundary
-
-A third source-level slice is implemented and independently verified, but intentionally limited in scope:
-
-```text
 One source: jalankan proses "rustc"
+ -> parser -> semantic validation -> typed orchestration IR
+ -> target-scoped governance -> process.execute -> CLI output
+```
+
+The process slice has exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` and is limited to one explicitly targeted program without arguments.
+
+## Filesystem write experimental boundary
+
+The source-level filesystem-write slice is now executable:
+
+```text
+tulis ke berkas "data/hasil.txt" dengan "halo dari One"
  -> parser
  -> semantic validation
  -> typed orchestration IR
  -> target-scoped governance
- -> process.execute
- -> normalized process output
+ -> filesystem.write
  -> CLI output
 ```
 
-Exact-SHA evidence: canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2`, independent mirror run `38929072800`, with Ubuntu and Windows Server 2025 passing contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification.
-
-Explicit permission surface:
+Explicit permission:
 
 ```text
-one jalankan main.one --izinkan process.execute --target rustc
+one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
-The current implementation executes one explicitly targeted program without additional arguments and has TDD coverage for success, denial, and missing-program backend failure. This is **Eksperimental** within that boundary; it is not a claim of general process management, service management, shell scripting, or arbitrary command orchestration support.
+Technical alias:
+
+```text
+one run main.one --allow filesystem.write --target data/hasil.txt
+```
+
+Current evidence: canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` was verified on Termux/Android with contract check, build, Clippy `-D warnings`, targeted filesystem-write CLI test, all workspace tests, and offline verification. This does **not** establish Ubuntu/Windows support for this SHA. The boundary is one text payload to one explicitly targeted file with explicit `filesystem.write` permission.
 
 ## Documentation
 
@@ -126,8 +109,8 @@ The current implementation executes one explicitly targeted program without addi
 
 ## Verification boundary
 
-Process/System source revision `9038ac75f197753ff1ab6af7478e63e4831903a2` was independently verified in mirror run `38929072800` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification.
+Latest exact-SHA executable evidence for the current canonical `main` is `a332dc5e58760460c26ebebb33f32f910bfdf4b3`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
 
-Canonical `main` is now `6d5a3ee7900a0705ebdcc9a4df4bfb3794ba7f6d`; this is the documentation checkpoint following merge commit `123df544f15d7eec8d74ca231b5e55ccebf4a7ee`. The documentation checkpoint was independently verified in mirror run `38929461255` on Ubuntu and Windows Server 2025.
+Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write CLI commits and must not be generalized to the newer SHA.
 
 The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
