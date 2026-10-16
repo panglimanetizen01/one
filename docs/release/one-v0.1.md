@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **PENDING FINAL EXACT-SHA VERIFICATION**.
+Status: **FINAL VERIFICATION GATE**.
 
 ## Scope
 
@@ -54,17 +54,19 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - [x] Deterministic `.oneir` and `.onepkg` checks have passed on the post-audit source revision.
 - [x] Capability/security tests have passed on the post-audit source revision.
 - [x] Interoperability tests have passed on the post-audit source revision.
-- [ ] The synchronized documentation SHA has passed one final independent Ubuntu/Windows matrix.
+- [ ] The final synchronized documentation revision has passed one final independent Ubuntu/Windows matrix.
 
 ## Evidence
 
-The latest post-audit independent verification run passed the then-current canonical source on both Ubuntu and Windows Server 2025. The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
+The latest completed independent verification run before this documentation synchronization passed the then-current canonical source on both Ubuntu and Windows Server 2025. The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
+
+The final gate is an independent Ubuntu/Windows matrix against the exact canonical SHA produced by this documentation synchronization. Its result is the release decision for this contract; historical runs are not substituted for that gate.
 
 No paid GitHub upgrade was used or is required. **Do not purchase an upgrade** merely to obtain hosted runner execution.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
-- **VERIFIED:** the exact current canonical SHA has actual cross-platform execution evidence.
+- **VERIFIED:** the exact synchronized canonical SHA has actual cross-platform execution evidence from the final independent matrix.
 
-Current state: **PENDING FINAL EXACT-SHA VERIFICATION**.
+Current state: **FINAL VERIFICATION GATE**.
