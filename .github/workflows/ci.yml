@@ -34,4 +34,4 @@ jobs:
       - name: DNS success and failure classification
         run: cargo test -p one-core --all-targets dns_adapter
       - name: Orchestration policy deny and allow paths
-        run: cargo test -p one-core --all-targets adapter
+        run: cargo test -p one-core --all-targets orchestrator
