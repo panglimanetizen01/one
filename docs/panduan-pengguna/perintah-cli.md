@@ -75,3 +75,7 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 - `2` — kesalahan penggunaan CLI atau environment/tool.
 
 Untuk kontrak lengkap, lihat `docs/spec/one-v0.1-cli-contract.md`.
+
+## Verification boundary
+
+Current exact-SHA cross-platform evidence is recorded in `docs/verification/one-v0.1-verification.md` for canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, independently executed in run `38895405559` on Ubuntu and Windows Server 2025.
