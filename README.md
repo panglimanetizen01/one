@@ -93,7 +93,7 @@ Technical alias:
 one run main.one --allow filesystem.write --target data/hasil.txt
 ```
 
-Latest exact-SHA executable evidence: `68381052b9c744fca97fd8b25505d8878e7c2df4`, verified on Termux/Android with contract check, build, Clippy `-D warnings`, targeted filesystem-write CLI test, all workspace tests, and offline verification. This does **not** establish Ubuntu/Windows support for this SHA. The boundary is one text payload to one explicitly targeted file with explicit `filesystem.write` permission.
+Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android with contract check, build, Clippy `-D warnings`, targeted filesystem-write CLI test, all workspace tests, and offline verification. This does **not** establish Ubuntu/Windows support for this SHA. The boundary is one text payload to one explicitly targeted file with explicit `filesystem.write` permission.
 
 ## Documentation
 
@@ -109,7 +109,7 @@ Latest exact-SHA executable evidence: `68381052b9c744fca97fd8b25505d8878e7c2df4`
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for the current executable boundary is `68381052b9c744fca97fd8b25505d8878e7c2df4`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
+Latest exact-SHA executable evidence for the current executable boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
 
 Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write CLI commits and must not be generalized to newer SHAs.
 
