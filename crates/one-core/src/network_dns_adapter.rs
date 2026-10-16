@@ -80,6 +80,18 @@ mod tests {
     }
 
     #[test]
+    fn dns_adapter_reports_resolution_failure_as_resolution_failure() {
+        let adapter = DnsResolveAdapter::new();
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::NetworkDiscover,
+            Capability::NetworkDiscover,
+            ExecutionScope::target("this-host-name-must-not-exist.invalid"),
+            EffectClass::Discover,
+        );
+        assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::ResolutionFailed));
+    }
+
+    #[test]
     fn dns_adapter_end_to_end_uses_policy_normalization_and_audit() {
         let mut orchestrator = Orchestrator::new(ExecutionPolicy::default().grant(Capability::NetworkDiscover).allow_scope(Capability::NetworkDiscover, ScopeRule::Target("127.0.0.1".into())));
         orchestrator.register(Box::new(DnsResolveAdapter::new()));
