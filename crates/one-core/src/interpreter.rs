@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
-use crate::adapter::{FileReadAdapter, PlatformKind};
+use crate::adapter::{FileReadAdapter, PlatformKind, ProcessAdapter};
 use crate::governance::ExecutionPolicy;
 use crate::ir::{IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
 use crate::network_dns_adapter::DnsResolveAdapter;
@@ -18,7 +18,7 @@ use crate::runtime::{Environment, Value};
 pub struct Interpreter { pub capabilities: CapabilitySet, pub max_steps: usize, functions: HashMap<String, (Vec<String>, IrExpr, Vec<IrStatement>)>, events: HashMap<String, Vec<IrStatement>>, environment: Option<Environment>, steps: usize, orchestrator: Option<Orchestrator> }
 impl Interpreter {
  pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, orchestrator: None } }
- pub fn with_orchestration_policy(policy: ExecutionPolicy) -> Self { let mut orchestrator = Orchestrator::new(policy); orchestrator.register(Box::new(DnsResolveAdapter::new())); orchestrator.register(Box::new(FileReadAdapter::new())); Self { capabilities: CapabilitySet::none(), max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, orchestrator: Some(orchestrator) } }
+ pub fn with_orchestration_policy(policy: ExecutionPolicy) -> Self { let mut orchestrator = Orchestrator::new(policy); orchestrator.register(Box::new(DnsResolveAdapter::new())); orchestrator.register(Box::new(FileReadAdapter::new())); orchestrator.register(Box::new(ProcessAdapter::new())); Self { capabilities: CapabilitySet::none(), max_steps: 100_000, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, orchestrator: Some(orchestrator) } }
  pub fn execute_network(&mut self, operation: &IrNetworkOperation) -> Result<NetworkExecutionResult, RuntimeError> { let semantic = operation.operation(); if let Err(bundle) = semantic.validate() { let diagnostic = &bundle.0[0]; return Err(RuntimeError { code: diagnostic.code, message: diagnostic.message.clone() }); } for capability in semantic.required_capabilities() { if !self.capabilities.permits(capability) { return Err(RuntimeError { code: "N3101", message: format!("Kemampuan jaringan {:?} belum diberikan kepada program.", capability) }); } } Ok(NetworkExecutionResult { description: "network operation delegated to reference backend".into(), performed_external_io: false }) }
  pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> { self.functions.clear(); self.events.clear(); self.environment = None; self.steps = 0; self.register_definitions(&program.statements); let mut env = Environment::new(); let mut output = Vec::new(); self.exec_block(&program.statements, &mut env, &mut output)?; self.environment = Some(env); Ok(ExecutionResult { output }) }
  pub fn dispatch_event(&mut self, trigger: &str) -> Result<ExecutionResult, RuntimeError> { let body = self.events.get(trigger).cloned().ok_or_else(|| RuntimeError { code: "R3001", message: format!("Event '{}' belum terdaftar.", trigger) })?; let mut env = self.environment.take().ok_or_else(|| RuntimeError { code: "R3021", message: "Program belum dijalankan; jalankan program sebelum memicu event.".into() })?; let mut output = Vec::new(); self.steps = 0; let result = self.exec_block(&body, &mut env, &mut output); self.environment = Some(env); result.map(|()| ExecutionResult { output }) }
