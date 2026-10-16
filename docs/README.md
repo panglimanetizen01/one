@@ -41,7 +41,8 @@ This directory is the normative documentation surface for One v0.1. When code an
 - `verification/one-v0.1-verification.md` — evidence record and current verification blockers.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
-- `verification/one-v0.1-linux-termux-2026-10-15.md` — recorded independent Linux/Termux execution evidence for the latest canonical verification commit.
+- `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded 2026-10-15 source revision.
+- `verification/one-v0.1-linux-windows-2026-10-15.md` — recorded independent Linux/Windows execution evidence for its explicitly recorded source revision.
 - `release/one-v0.1.md` — release acceptance contract and supported/future matrix.
 
 ## Derivative artifacts
