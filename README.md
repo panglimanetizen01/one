@@ -49,7 +49,7 @@ Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTP
 
 ## Experimental language-level orchestration
 
-The first source-level orchestration vertical slice is now real and verified:
+The first source-level orchestration vertical slice is real and independently verified:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -90,6 +90,6 @@ No explicit permission means denial. A different target is outside the granted s
 
 ## Verification boundary
 
-Independent run `38874287857` verified the first source-to-runtime DNS orchestration slice on Ubuntu and Windows Server 2025, including contract checks, build, Clippy, workspace tests, real-network runtime tests, and offline verification. Documentation-only changes in this branch receive a fresh exact-SHA verification before the resulting canonical head is called verified.
+Canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877` was independently verified in mirror run `38895405559` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, orchestration runtime, and offline verification.
 
 The private GitHub repository remains the source of truth. The public verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
