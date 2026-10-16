@@ -1,6 +1,5 @@
 use crate::adapter::{AdapterError, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
-use crate::capability::Capability;
-use crate::governance::{DenyReason, ExecutionPolicy, PolicyDecision};
+use crate::governance::{ExecutionPolicy, PolicyDecision};
 use crate::orchestration::{AdapterStatus, CapabilityRequest, OrchestrationValidationError};
 use crate::orchestration_audit::AuditRecord;
 
@@ -49,7 +48,6 @@ impl Orchestrator {
             audit.push(AuditRecord::denied(sequence, request.semantic, "invalid request"));
             return Err(OrchestrationError::InvalidRequest(error));
         }
-
         match self.policy.evaluate(request) {
             PolicyDecision::Allow => {}
             PolicyDecision::RequireApproval => {
@@ -61,7 +59,6 @@ impl Orchestrator {
                 return Err(OrchestrationError::PolicyDenied(decision));
             }
         }
-
         let adapter = self.select_adapter(request, platform).ok_or_else(|| {
             audit.push(AuditRecord::denied(sequence, request.semantic, "no compatible adapter"));
             OrchestrationError::NoCompatibleAdapter
@@ -93,7 +90,8 @@ impl Orchestrator {
 mod tests {
     use super::*;
     use crate::adapter::AdapterMetadata;
-    use crate::governance::ScopeRule;
+    use crate::capability::Capability;
+    use crate::governance::{DenyReason, ScopeRule};
     use crate::orchestration::{AdapterId, EffectClass, ExecutionScope, SemanticCapabilityId};
     use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
 
