@@ -12,7 +12,8 @@
 - Added the general-purpose human-language orchestration foundation: typed semantic capability requests, scoped deterministic governance, typed adapters, deterministic orchestration, normalized evidence, audit records, Indonesian/English conformance fixtures, and the first real `network.dns.resolve` adapter.
 - Added the first experimental language-level orchestration slice: `cari alamat` reaches the governed DNS adapter through typed IR and returns a normalized CLI result when `network.discover` is explicitly granted for an exact target.
 - Added policy-denial and out-of-scope protection for the source-level DNS orchestration path.
-- Independently verified the source-level orchestration/CLI revision on Ubuntu and Windows Server 2025 through contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, offline verification, and deterministic artifact verification in run `38874287857`.
+- Independently verified the source-level orchestration/CLI revision on Ubuntu and Windows Server 2025 through contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, offline verification, and deterministic artifact verification.
+- Refreshed the exact-SHA P0 evidence record with mirror run `38895405559` against canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, including DNS success/failure classification and orchestration runtime evidence.
 - Synchronized the CLI contract, user guide, implementation status, release boundary, orchestration specification/plan, README, and feature-status documentation with the experimental DNS source-level boundary.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
