@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS, FILESYSTEM-READ, AND PROCESS-EXECUTION ORCHESTRATION**.
+Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS, FILESYSTEM-READ, PROCESS-EXECUTION, AND FILESYSTEM-WRITE ORCHESTRATION**.
 
 ## Scope
 
@@ -8,13 +8,9 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Current exact-SHA evidence boundary
 
-The process-execution source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2`.
+The latest cross-platform source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025.
 
-Independent mirror run: `38929072800` in `panglimanetizen01/one-windows-verification`.
-
-Ubuntu and Windows Server 2025 both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification.
-
-Canonical `main` is now at documentation checkpoint `6d5a3ee7900a0705ebdcc9a4df4bfb3794ba7f6d`. The documentation checkpoint was independently verified in mirror run `38929461255` on Ubuntu and Windows Server 2025.
+The current canonical `main` is `a332dc5e58760460c26ebebb33f32f910bfdf4b3`. This newer SHA has executable verification on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. That evidence does not establish Ubuntu/Windows support for the newer SHA.
 
 ## Verified baseline
 
@@ -29,78 +25,61 @@ Canonical `main` is now at documentation checkpoint `6d5a3ee7900a0705ebdcc9a4df4
 - Conformance fixtures and golden-output tests.
 - Verified native network runtime slices: DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits.
 - General-purpose orchestration runtime foundation: typed capability requests, deterministic governance, governed adapters, normalized results/evidence, audit records, localized semantic-resolution fixtures, and `network.dns.resolve`.
-- Experimental source-level DNS orchestration through `cari alamat`, explicit `network.discover` permission, exact target scope, governed adapter execution, normalized result, and CLI output.
-- Experimental source-level filesystem-read orchestration through `baca berkas`, explicit `filesystem.read` permission, exact target scope, governed adapter execution, normalized UTF-8 result, and CLI output.
-- Experimental source-level process-execution orchestration through `jalankan proses`, explicit `process.execute` permission, exact target scope, governed adapter execution, normalized process output, and CLI output, within the boundary stated below.
+- Experimental source-level DNS orchestration through `cari alamat`.
+- Experimental source-level filesystem-read orchestration through `baca berkas`.
+- Experimental source-level process-execution orchestration through `jalankan proses`, limited to one explicitly targeted program without arguments and backed by cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`.
+- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission. The current exact-SHA evidence is Termux/Android only.
 
-## Current experimental process boundary
+## Current experimental filesystem-write boundary
 
 ```text
-jalankan proses "rustc"
+tulis ke berkas "data/hasil.txt" dengan "halo dari One"
 → parser
 → semantic validation
 → typed orchestration IR
 → explicit target-scoped governance
-→ process.execute adapter
-→ normalized process output
+→ filesystem.write adapter
 → CLI output
 ```
 
-Exact-SHA evidence: source `9038ac75f197753ff1ab6af7478e63e4831903a2`, mirror run `38929072800`, Ubuntu + Windows Server 2025. The current implementation executes one explicitly targeted program without additional arguments and has TDD coverage for success, default denial, CLI permission, and missing-program backend failure.
+Explicit permission:
+
+```text
+one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
+```
+
+Exact-SHA evidence: `a332dc5e58760460c26ebebb33f32f910bfdf4b3`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this SHA is still pending.
 
 ## Explicit v0.1 limits
 
 - `build` emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
-- The language-level orchestration catalog is not complete. DNS discovery, filesystem-read, and the limited process-execution vertical slice are currently experimental and independently verified through the source/CLI boundary.
+- The language-level orchestration catalog is not complete.
+- Filesystem write is experimental only within the single-text-payload/single-target boundary and the currently verified Android/Termux platform boundary. It is not a claim of general filesystem management or sandbox/path-confinement guarantees.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary; this is not a claim of general process management, service management, shell scripting, or arbitrary command orchestration support.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
 
 ## Experimental orchestration
 
-DNS source:
+Filesystem-write source:
 
 ```text
-cari alamat "127.0.0.1"
+tulis ke berkas "data/hasil.txt" dengan "halo dari One"
 ```
 
 Explicit CLI permission:
 
 ```text
-one jalankan main.one --izinkan network.discover --target 127.0.0.1
+one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
-Filesystem-read source:
-
-```text
-baca berkas "data/contoh.txt"
-```
-
-Explicit CLI permission:
-
-```text
-one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
-```
-
-Process source:
-
-```text
-jalankan proses "rustc"
-```
-
-Explicit CLI permission:
-
-```text
-one jalankan main.one --izinkan process.execute --target rustc
-```
-
-For all verified slices, no explicit permission means denial and a different target is outside the granted scope.
+For the filesystem-write slice, no explicit permission means denial and a different target is outside the granted scope.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** in-scope source/docs/tests are present.
-- **VERIFIED:** exact source revision has executable cross-platform evidence.
-- **EXPERIMENTAL:** the declared vertical slice is verified but intentionally limited in coverage.
+- **VERIFIED:** exact source revision has executable evidence for the stated platform boundary.
+- **EXPERIMENTAL:** the declared vertical slice is verified but intentionally limited in coverage or platform boundary.
 - **SUPPORTED:** reserved for a stronger platform/support claim.
 
 ## Verification infrastructure rule
