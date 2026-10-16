@@ -18,7 +18,8 @@
 - Added the language-level process-execution slice: `jalankan proses` → parser → semantic validation → typed orchestration IR → target-scoped governance → `process.execute` adapter → normalized output → CLI, with TDD coverage for success, denial, and backend failure.
 - Independently verified the process-execution source/runtime slice at canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. The verified boundary is one explicitly targeted program without additional arguments and explicit `process.execute` permission.
 - Added the filesystem-write source-level slice: `tulis ke berkas` → parser → semantic validation → typed orchestration IR → target-scoped governance → `filesystem.write` adapter → CLI.
-- Added a CLI regression test proving `filesystem.write` permission reaches the adapter and writes the expected text to the exact target. The current canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` passed contract, build, Clippy, targeted CLI test, workspace tests, and offline verification on Termux/Android.
-- Filesystem write remains **Eksperimental** and platform-bound to the current Android/Termux evidence until exact-SHA Ubuntu/Windows verification exists.
+- Added a CLI regression test proving `filesystem.write` permission reaches the adapter and writes the expected text to the exact target. The filesystem-write CLI verification was first recorded at canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` on Termux/Android.
+- Filesystem write remains **Eksperimental** and platform-bound to the Android/Termux evidence until exact-SHA Ubuntu/Windows verification exists.
+- Consistency audit synchronized the normative CLI contract and grammar with the implemented `filesystem.write` surface and refreshed all current-main verification references to exact SHA `f4b4edc2e408928fb697fb355c3c69c88c62e09d`.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
