@@ -10,6 +10,7 @@ pub mod lexer;
 pub mod network;
 pub mod network_application;
 pub mod network_datagrams;
+pub mod network_dns_adapter;
 pub mod network_mail;
 pub mod network_runtime;
 pub mod orchestration;
@@ -50,6 +51,7 @@ pub use network_http2::execute_http2;
 pub use network_quic::execute_quic;
 #[cfg(feature = "real-network")]
 pub use network_tls::execute_https11;
+pub use network_dns_adapter::DnsResolveAdapter;
 pub use orchestration::{
     resolve_candidates,
     resolve_capability_request,
