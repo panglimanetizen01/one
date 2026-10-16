@@ -4,7 +4,7 @@
 
 ## 1. Purpose
 
-The One CLI is the stable command-line entry point for project creation, checking, running, testing, building, packaging, version reporting, diagnostics, and help.
+The One CLI is the stable command-line entry point for project creation, checking, running, testing, building, packaging, version reporting, diagnostics, help, and explicitly governed runtime capabilities.
 
 ## 2. Command vocabulary
 
@@ -24,7 +24,33 @@ The primary user-facing vocabulary is conversational Indonesian. Technical alias
 
 Command recognition is exact and bounded. The CLI does not interpret arbitrary natural language.
 
-## 3. Exit status
+## 3. Explicit orchestration permission
+
+Effectful orchestration remains opt-in. The CLI must not silently grant network capabilities.
+
+For the verified DNS orchestration vertical slice, a user may explicitly grant the discovery capability and exact target scope:
+
+```text
+one jalankan <file.one> --izinkan network.discover --target <alamat>
+```
+
+The technical alias is also accepted:
+
+```text
+one run <file.one> --allow network.discover --target <alamat>
+```
+
+Rules:
+
+- only `network.discover` is currently exposed by this CLI permission surface;
+- `--target` is mandatory when that capability is granted;
+- the runtime policy is scoped to exactly the supplied target;
+- no network capability is granted when these flags are absent;
+- a source operation targeting a different value is denied by governance;
+- unknown capabilities are rejected as CLI usage errors;
+- this permission syntax is a controlled adapter boundary, not One language grammar.
+
+## 4. Exit status
 
 The CLI exposes deterministic machine-observable success/failure status:
 
@@ -34,27 +60,27 @@ The CLI exposes deterministic machine-observable success/failure status:
 
 Stable diagnostic codes identify the specific failure; prose is localized and is not the machine contract.
 
-## 4. Output modes
+## 5. Output modes
 
 Human-readable output is localized. A future machine-readable mode must provide stable diagnostic codes, severity, source spans, and structured fields without requiring prose parsing.
 
-## 5. Project discovery
+## 6. Project discovery
 
 Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably.
 
-## 6. Capability policy
+## 7. Capability policy
 
 Effectful execution loads an explicit runtime capability policy. The CLI must not silently grant host capabilities merely because a program requests an effect.
 
-## 7. Offline behavior
+## 8. Offline behavior
 
 Source checking, parsing, semantic analysis, tests that use deterministic local fixtures, and package/build operations that require no external resource must work offline. Commands requiring network effects must report that dependency explicitly.
 
-## 8. Determinism
+## 9. Determinism
 
 Command behavior must not depend on terminal history, shell aliases, editor state, filesystem enumeration order, or LLM output. Fixture discovery is sorted explicitly before execution.
 
-## 9. Project scaffold
+## 10. Project scaffold
 
 `one buat <folder>` and `one new <folder>` create:
 
@@ -67,17 +93,18 @@ Command behavior must not depend on terminal history, shell aliases, editor stat
 
 The command refuses to overwrite an existing folder.
 
-## 10. Package boundary
+## 11. Package boundary
 
 `one package` produces a `.onepkg` artifact containing the validated project manifest and deterministic v0.1 intermediate representation/debug representation. It is not yet a platform installer or signed distribution package.
 
-## 11. Acceptance criteria
+## 12. Acceptance criteria
 
 - stable primary and compatibility command names;
 - clear separation between check/run/test/build/package;
 - deterministic exit status;
 - structured diagnostics;
 - explicit capability policy;
+- exact target scoping for the current CLI DNS orchestration permission;
 - offline validation for source-only operations;
 - Windows/Linux support through the platform abstraction contract;
 - no LLM or network dependency for command interpretation or language semantics.
