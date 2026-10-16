@@ -10,14 +10,6 @@ Dokumentasi pengguna One harus membedakan kemampuan yang benar-benar tersedia da
 | **Dirancang** | Desain atau kontrak sudah ada, tetapi kemampuan belum tersedia untuk penggunaan biasa. |
 | **Belum tersedia** | Belum dapat digunakan pada versi yang sedang didokumentasikan. |
 
-## Aturan
-
-1. Status tidak boleh ditentukan hanya dari roadmap atau nama fitur.
-2. Registry atau daftar protokol tidak otomatis berarti runtime feature tersebut tersedia.
-3. Klaim dukungan harus sesuai dengan implementation status dan verification evidence.
-4. Jika bukti berubah, status dan halaman pengguna yang terdampak harus diperbarui.
-5. Jika fitur dihapus, instruksi pengguna yang sudah tidak berlaku harus dihapus atau ditandai secara eksplisit; jangan dibiarkan sebagai petunjuk aktif.
-
 ## Kondisi One saat ini
 
 One v0.1 memiliki executable language core, grammar, parser, semantic pipeline, reference interpreter, CLI, project scaffolding, conformance fixtures, deterministic artifacts, capability model, interoperability melalui proses, dan beberapa vertical slice network yang telah dibuktikan.
@@ -45,7 +37,7 @@ one jalankan main.one --izinkan network.discover --target 127.0.0.1
 
 Tanpa permission tersebut, policy menolak orchestration. Target juga dibatasi secara eksplisit.
 
-Status **Eksperimental** berarti vertical slice DNS ini nyata dan terverifikasi pada exact-SHA cross-platform run `38895405559` untuk canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, tetapi tidak berarti seluruh katalog capability/orchestration sudah tersedia atau didukung.
+Status **Eksperimental** berarti vertical slice DNS ini nyata dan terverifikasi pada exact-SHA cross-platform run `38896135846` untuk canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c`, tetapi tidak berarti seluruh katalog capability/orchestration sudah tersedia atau didukung.
 
 ### Kemampuan yang masih future
 
