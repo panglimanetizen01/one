@@ -8,7 +8,7 @@
 
 The architecture is executable through a verified runtime foundation and its first source-level vertical slice. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, the real `network.dns.resolve` adapter, and a source-level `cari alamat` operation that reaches that adapter through governed runtime execution.
 
-Independent run `38874287857` verified the source-level DNS slice at its exact canonical source revision on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
+Exact-SHA cross-platform evidence for canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877` is recorded by independent mirror run `38895405559` on Ubuntu and Windows Server 2025. The run passed contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact verification, DNS success/failure classification, orchestration runtime tests, and offline verification.
 
 ## 1. Purpose
 
@@ -49,7 +49,7 @@ source
  → AST
  → name/scope analysis
  → type/semantic analysis
- → CSIR
+ → CSIR/IR
  → runtime/compiler backend
 ```
 
@@ -140,7 +140,7 @@ Orchestration failures remain typed and distinguish invalid source/parameters, a
 
 ## 19. Testing and conformance
 
-The DNS source-level slice has executable success and policy-denial tests plus full Linux/Windows verification. No additional adapter is marked Verified without executable evidence appropriate to its backend.
+The DNS source-level slice has executable success and policy-denial tests plus fresh Linux/Windows exact-SHA verification. The verification run also exercises DNS resolution-failure classification and the general orchestration runtime deny/allow/incompatible-adapter tests. No additional adapter is marked Verified without executable evidence appropriate to its backend.
 
 ## 20. Compatibility with existing One architecture
 
