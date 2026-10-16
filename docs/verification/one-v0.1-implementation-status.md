@@ -22,6 +22,7 @@
 | Human-language orchestration foundation | VERIFIED | typed capability requests, deterministic governance, governed adapters, result normalization, audit records, localization fixtures, and `network.dns.resolve` |
 | Language-level DNS orchestration | EXPERIMENTAL | `cari alamat` → parser → semantic validation → typed orchestration IR → governed DNS adapter → normalized CLI result; explicit target-scoped permission required |
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; explicit target-scoped permission required; independently verified on Ubuntu + Windows Server 2025 at canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via mirror run `38903950612` |
+| Language-level process execution orchestration | IN DEVELOPMENT | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; explicit target-scoped permission required; implementation and TDD tests are present on the current development branch, but exact-SHA execution evidence is still pending |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
 | CLI | IMPLEMENTED | conversational commands, technical aliases, and explicit target-scoped orchestration permission surfaces |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
@@ -49,7 +50,7 @@ The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HT
 
 ## Orchestration boundary
 
-Two language-level vertical slices are now independently verified and remain experimental:
+Two language-level vertical slices are independently verified and remain experimental. A third process-execution slice is implemented and under verification:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -69,9 +70,30 @@ One source: baca berkas "data/contoh.txt"
 → filesystem.read adapter
 → normalized UTF-8 text result
 → CLI output
+
+One source: jalankan proses "rustc"
+→ parser
+→ semantic validation
+→ typed orchestration IR
+→ explicit target-scoped governance
+→ process.execute adapter
+→ normalized process output
+→ CLI output
 ```
 
-The CLI requires explicit permission for both slices. No permission means denial; a different target is outside the granted scope. This is not a claim that the complete orchestration catalog is supported.
+The CLI requires explicit permission for all three slices. No permission means denial; a different target is outside the granted scope. The process slice currently executes one explicitly targeted program without arguments. Its exact-SHA executable verification is not yet recorded, so it must not be promoted to `EXPERIMENTAL` or `VERIFIED` until that evidence exists. This is not a claim that the complete orchestration catalog is supported.
+
+## Current checkpoint
+
+- Canonical `main`: `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`.
+- Latest proven exact-SHA baseline: `f482c6b75505d9965dd33f4f25bb0cd04072cedb`, mirror run `38903950612`.
+- Process/System branch: `feature/process-system-vertical-slice`.
+- Current process branch head: `09aff2680661316f66222923863eae8f0e422296`.
+- PR: #48, open and mergeable; source merge is blocked by the exact-SHA evidence rule, not by a documented source failure.
+- CI run `38927364159` failed on Ubuntu and Windows with zero job steps; retry also failed with zero steps/logs. Classified as infrastructure evidence failure.
+- Public verification mirror remains non-executable until its source tree exactly matches the recorded canonical SHA.
+- Process execution status: `IN DEVELOPMENT`.
+- Next gate: fresh exact-SHA Linux/Windows executable verification of the process branch, then reverify → review → merge → read-back main → checkpoint.
 
 ## Release interpretation
 

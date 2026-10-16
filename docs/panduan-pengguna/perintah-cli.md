@@ -78,6 +78,39 @@ Aturan keamanan:
 
 Fitur ini **Eksperimental**, bukan klaim bahwa seluruh katalog filesystem sudah didukung.
 
+## Menjalankan proses — dalam pengembangan
+
+Source-level process execution saat ini berada dalam tahap **Dalam pengembangan** dan belum memiliki exact-SHA execution evidence untuk implementasi terbaru.
+
+Program:
+
+```text
+jalankan proses "rustc"
+```
+
+Jalankan hanya dengan permission eksplisit dan target program yang sama:
+
+```text
+one jalankan main.one --izinkan process.execute --target rustc
+```
+
+Alias teknis:
+
+```text
+one run main.one --allow process.execute --target rustc
+```
+
+Boundary saat ini:
+
+- tanpa `process.execute`, orchestration ditolak;
+- target harus sama persis dengan executable yang diminta source;
+- implementasi saat ini tidak menerima argumen proses tambahan;
+- program yang tidak ditemukan dilaporkan sebagai adapter/backend failure;
+- output dinormalisasi sebagai UTF-8 text;
+- fitur ini belum merupakan klaim dukungan process management umum, shell scripting, service management, atau arbitrary command orchestration.
+
+Jangan menyebut slice ini **Eksperimental** atau **Verified** sebelum exact-SHA Linux/Windows verification lulus.
+
 ## `bangun` dan `package`
 
 Pada v0.1 saat ini:
@@ -89,6 +122,6 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 ## Verification boundary
 
-Exact-SHA cross-platform evidence untuk filesystem-read terakhir dijalankan secara independen melalui mirror `panglimanetizen01/one-windows-verification` pada run `38901366447`, dengan target canonical `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`. Ubuntu dan Windows Server 2025 sama-sama menyelesaikan checkout exact-SHA, contract artifacts, build, Clippy, tests, real-network runtime tests, dan offline verification. Bukti ini memverifikasi revision tersebut; tidak berarti seluruh katalog orchestration sudah supported.
+Exact-SHA cross-platform evidence terakhir untuk filesystem-read dijalankan secara independen melalui mirror `panglimanetizen01/one-windows-verification` pada run `38903950612`, dengan target canonical `f482c6b75505d9965dd33f4f25bb0cd04072cedb`. Ubuntu dan Windows Server 2025 sama-sama menyelesaikan checkout exact-SHA, contract artifacts, build, Clippy, tests, real-network runtime tests, orchestration runtime, deterministic artifact checks, dan offline verification. Bukti ini memverifikasi revision tersebut; tidak berarti seluruh katalog orchestration atau process-execution terbaru sudah verified.
 
-Dokumentasi verifikasi historis tetap mencatat revision sebelumnya `43cf7337ac963a0e18512aacf56dbfd7ab6bcd3a` dan run `38896533761` sebagai baseline P0 sebelumnya.
+Canonical `main` saat ini adalah `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`; exact-SHA evidence baru untuk SHA tersebut belum tercatat. Development branch process/system juga membutuhkan exact-SHA verification sendiri sebelum dipromosikan.

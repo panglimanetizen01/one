@@ -60,10 +60,20 @@ one jalankan main.one --izinkan filesystem.read --target <path>
 
 Tanpa permission tersebut, policy menolak orchestration. Target yang berbeda dari target yang diberi izin berada di luar scope.
 
-Filesystem read slice tersebut telah diverifikasi pada canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui independent mirror run `38903950612` pada Ubuntu dan Windows Server 2025. Status ini hanya mencakup filesystem read pada boundary tersebut; bukan klaim bahwa filesystem write, process execution, database, atau seluruh orchestration catalog sudah tersedia.
+Filesystem read slice tersebut telah diverifikasi pada canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui independent mirror run `38903950612` pada Ubuntu dan Windows Server 2025. Status ini hanya mencakup filesystem read pada boundary tersebut; bukan klaim bahwa filesystem write, database, atau seluruh orchestration catalog sudah tersedia.
+
+**Dalam pengembangan — process execution source-to-runtime vertical slice:** Implementasi `jalankan proses` sudah melewati parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output dan memiliki TDD tests pada development branch. Exact-SHA execution evidence untuk implementasi terbaru masih pending, sehingga fitur ini belum boleh disebut eksperimental atau verified.
+
+Permission CLI yang ditargetkan:
+
+```text
+one jalankan main.one --izinkan process.execute --target <program>
+```
+
+Slice saat ini hanya mengeksekusi satu program yang ditargetkan secara eksplisit tanpa argumen tambahan. Ini bukan klaim dukungan umum untuk process management, service management, shell scripting, atau arbitrary command orchestration.
 
 ### Kemampuan yang masih future
 
-Filesystem write, process execution, database orchestration, HTTP orchestration tambahan, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
+Filesystem write, database orchestration, HTTP orchestration tambahan, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
 
 Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implementation-status.md` dan `docs/verification/one-v0.1-evidence-matrix.md`.

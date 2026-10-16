@@ -1,4 +1,5 @@
-use crate::capability::Capability;
+use crate::capability::{Capability, CapabilitySet};
+use crate::interop::{run_process, ProcessSpec};
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -39,6 +40,22 @@ impl ToolAdapter for FileReadAdapter {
     }
 }
 
+pub struct ProcessAdapter { metadata: AdapterMetadata }
+impl ProcessAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("process.execute"), AdapterStatus::Implemented, vec![Capability::Process], vec![PlatformKind::Any]) } } }
+impl Default for ProcessAdapter { fn default() -> Self { Self::new() } }
+impl ToolAdapter for ProcessAdapter {
+    fn metadata(&self) -> &AdapterMetadata { &self.metadata }
+    fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> {
+        self.metadata.validate_request(request.capability())?;
+        if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); }
+        let program = match &request.capability().scope { crate::orchestration::ExecutionScope::Target(value) if !value.is_empty() => value.clone(), _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) };
+        let spec = ProcessSpec { program, args: Vec::new(), working_directory: None };
+        let result = run_process(&spec, &CapabilitySet::none().allow(Capability::Process)).map_err(|_| AdapterError::BackendFailure)?;
+        let output = if result.stdout.is_empty() { result.stderr } else { result.stdout };
+        Ok(AdapterResult { success: result.success, output: output.into_bytes() })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -53,4 +70,5 @@ mod tests {
     #[test] fn adapter_errors_distinguish_backend_resolution_failure_from_platform_unavailability() { assert_ne!(AdapterError::ResolutionFailed, AdapterError::UnsupportedPlatform); }
     #[test] fn filesystem_read_adapter_succeeds_for_existing_file() { let adapter = FileReadAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::Filesystem, ExecutionScope::target("Cargo.toml"), EffectClass::Read); let result = adapter.invoke(&AdapterRequest::new(request)).expect("existing file should be readable"); assert!(result.success); assert!(!result.output.is_empty()); }
     #[test] fn filesystem_read_adapter_classifies_missing_backend_as_backend_failure() { let adapter = FileReadAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::Filesystem, ExecutionScope::target("this-file-must-not-exist.one"), EffectClass::Read); assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::BackendFailure)); }
+    #[test] fn process_adapter_executes_scoped_program_and_returns_output() { let adapter = ProcessAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::ProcessExecute, Capability::Process, ExecutionScope::target("rustc"), EffectClass::Execute); let result = adapter.invoke(&AdapterRequest::new(request)).expect("rustc should be executable in the verification environment"); assert!(result.success); assert!(!result.output.is_empty()); }
 }

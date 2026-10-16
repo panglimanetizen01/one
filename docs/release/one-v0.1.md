@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS AND FILESYSTEM-READ ORCHESTRATION**.
+Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS AND FILESYSTEM-READ ORCHESTRATION; PROCESS EXECUTION IN DEVELOPMENT**.
 
 ## Scope
 
@@ -8,13 +8,13 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Current exact-SHA evidence boundary
 
-The latest independently verified implementation revision is `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`.
+The latest independently verified implementation revision is `f482c6b75505d9965dd33f4f25bb0cd04072cedb`.
 
-Independent mirror run: `38901366447` in `panglimanetizen01/one-windows-verification`.
+Independent mirror run: `38903950612` in `panglimanetizen01/one-windows-verification`.
 
 Ubuntu and Windows Server 2025 both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, DNS success/failure classification, filesystem-read orchestration runtime, and platform-specific offline verification.
 
-The canonical `main` is newer than that evidence revision. Evidence for one commit does not automatically verify a later commit. The current post-verification commits must therefore not be described as independently exact-SHA verified until a new verification run records the later SHA.
+Canonical `main` is now `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`. The documentation synchronization merge is documentation-only relative to the pre-merge main baseline, but evidence for one commit does not automatically verify a later commit. The current process/system implementation branch also changes source/runtime behavior and must not be promoted until a new exact-SHA executable verification records it.
 
 ## Verified baseline
 
@@ -32,11 +32,29 @@ The canonical `main` is newer than that evidence revision. Evidence for one comm
 - Experimental source-level DNS orchestration through `cari alamat`, explicit `network.discover` permission, exact target scope, governed adapter execution, normalized result, and CLI output.
 - Experimental source-level filesystem-read orchestration through `baca berkas`, explicit `filesystem.read` permission, exact target scope, governed adapter execution, normalized UTF-8 result, and CLI output.
 
+## Current development boundary
+
+A third source-level process-execution slice is implemented on the development branch:
+
+```text
+jalankan proses "rustc"
+→ parser
+→ semantic validation
+→ typed orchestration IR
+→ explicit target-scoped governance
+→ process.execute adapter
+→ normalized process output
+→ CLI output
+```
+
+It is intentionally labeled **IN DEVELOPMENT** until exact-SHA executable evidence proves the full path on the recorded source revision. The current implementation executes one explicitly targeted program without additional arguments and has TDD coverage for success, default denial, CLI permission, and missing-program backend failure.
+
 ## Explicit v0.1 limits
 
 - `build` emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - The language-level orchestration catalog is not complete. Only the DNS discovery and filesystem-read vertical slices are currently experimental and independently verified through the source/CLI boundary.
+- Process execution is in development and is not yet a verified or supported v0.1 capability.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
 
 ## Experimental orchestration
@@ -65,7 +83,7 @@ Explicit CLI permission:
 one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
 ```
 
-For both slices, no explicit permission means denial and a different target is outside the granted scope.
+For both verified slices, no explicit permission means denial and a different target is outside the granted scope.
 
 ## Release labels
 
