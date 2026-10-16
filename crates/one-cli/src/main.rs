@@ -1,3 +1,4 @@
+#![allow(clippy::possible_missing_else)]
 use std::{collections::HashSet, env, fs, path::{Path, PathBuf}, process::ExitCode};
 use one_core::{analyze, lower, parse, Capability, CapabilitySet, ExecutionPolicy, Interpreter, ScopeRule};
 const VERSION: &str = "0.1.0";
