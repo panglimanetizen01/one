@@ -19,15 +19,15 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Contract consistency | `tools/check_contract.py` | required-artifact/index/fixture scan | ADDED / independently exercised by the verification matrix |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | ADDED / independently exercised by the verification matrix |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | ADDED / independently exercised by the verification matrix |
-| Linux portability | `.github/workflows/ci.yml` + offline verifier | actual Linux run | GREEN for source commit `e58da6393e53094f29a5121cb440c94973f71b6a` in independent run `38846301365` |
-| Windows portability | `.github/workflows/ci.yml` + offline verifier | actual Windows run | GREEN for source commit `e58da6393e53094f29a5121cb440c94973f71b6a` in independent run `38846301365` |
-| Release gate | `.github/workflows/release-check.yml` | green gate run | PENDING fresh exact-SHA verification of current documentation-synchronized `main` |
+| Linux portability | `.github/workflows/ci.yml` + offline verifier | actual Linux run | GREEN for current canonical SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` in independent run `38848143359` |
+| Windows portability | `.github/workflows/ci.yml` + offline verifier | actual Windows run | GREEN for current canonical SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` in independent run `38848143359` |
+| Release gate | `.github/workflows/release-check.yml` | green gate run | GREEN for current canonical SHA via independent matrix `38848143359` |
 
 ## Final verification boundary
 
-The independently verified source revision is `e58da6393e53094f29a5121cb440c94973f71b6a`. Independent run `38846301365` passed on Ubuntu and Windows Server 2025, including canonical SHA verification, contract artifacts, build, Clippy, workspace tests, real-network runtime, and platform-specific offline verification; the real-network suite reported `38 passed; 0 failed` on both platforms.
+The current canonical source revision is `38dc98fcee49fa04c589d5a3c825b0d4006d6d61`. Independent run `38848143359` checked that exact SHA on Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract artifacts, build, Clippy, workspace tests, real-network runtime, and platform-specific offline verification. The real-network suite passed on both platforms.
 
-Canonical `main` subsequently received documentation synchronization commits, currently headed by `1ebb596535d8367b64af0fbaae787ac50436519e`. Those documentation changes have not been silently promoted to verified status. The current release candidate remains **PENDING FINAL EXACT-SHA VERIFICATION** until an independent Ubuntu/Windows matrix checks the exact resulting canonical SHA.
+The prior source revision `e58da6393e53094f29a5121cb440c94973f71b6a` remains historical evidence from run `38846301365`.
 
 ## Evidence rules
 
