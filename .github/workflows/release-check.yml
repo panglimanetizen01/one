@@ -2,6 +2,8 @@ name: One v0.1 Release Check
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ verification/p0-exact-sha-20261016 ]
 
 permissions:
   contents: read
