@@ -24,7 +24,7 @@ One v0.1 memiliki executable language core, grammar, parser, semantic pipeline, 
 
 ### Orchestration
 
-**Eksperimental — DNS source-to-runtime vertical slice:** One sekarang memiliki jalur bahasa yang dapat dieksekusi untuk operasi `cari alamat` dengan izin CLI eksplisit:
+**Eksperimental — DNS source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk operasi `cari alamat` dengan izin CLI eksplisit:
 
 ```text
 One source
@@ -45,7 +45,7 @@ one jalankan main.one --izinkan network.discover --target 127.0.0.1
 
 Tanpa permission tersebut, policy menolak orchestration. Target juga dibatasi secara eksplisit.
 
-Status **Eksperimental** berarti vertical slice DNS ini nyata dan terverifikasi, tetapi tidak berarti seluruh katalog capability/orchestration sudah tersedia atau didukung.
+Status **Eksperimental** berarti vertical slice DNS ini nyata dan terverifikasi pada exact-SHA cross-platform run `38895405559` untuk canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877`, tetapi tidak berarti seluruh katalog capability/orchestration sudah tersedia atau didukung.
 
 ### Kemampuan yang masih future
 
