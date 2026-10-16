@@ -1,6 +1,8 @@
+pub mod adapter;
 pub mod ast;
 pub mod capability;
 pub mod diagnostic;
+pub mod governance;
 pub mod interop;
 pub mod interpreter;
 pub mod ir;
@@ -8,8 +10,13 @@ pub mod lexer;
 pub mod network;
 pub mod network_application;
 pub mod network_datagrams;
+pub mod network_dns_adapter;
 pub mod network_mail;
 pub mod network_runtime;
+pub mod orchestration;
+pub mod orchestration_audit;
+pub mod orchestration_result;
+pub mod orchestrator;
 #[cfg(feature = "real-network")]
 pub mod network_http2;
 #[cfg(feature = "real-network")]
@@ -24,9 +31,11 @@ pub mod stdlib;
 pub mod token;
 pub mod types;
 
+pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
+pub use governance::{DenyReason, ExecutionPolicy, PolicyDecision, ScopeRule};
 pub use interop::{run_process, ProcessResult, ProcessSpec};
 pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, RuntimeError};
 pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
@@ -42,6 +51,24 @@ pub use network_http2::execute_http2;
 pub use network_quic::execute_quic;
 #[cfg(feature = "real-network")]
 pub use network_tls::execute_https11;
+pub use network_dns_adapter::DnsResolveAdapter;
+pub use orchestration::{
+    resolve_candidates,
+    resolve_capability_request,
+    resolve_localized_alias,
+    AdapterId,
+    AdapterStatus,
+    CapabilityRequest,
+    CapabilityResolutionError,
+    EffectClass,
+    ExecutionScope,
+    OrchestrationValidationError,
+    ResolvedCapability,
+    SemanticCapabilityId,
+};
+pub use orchestration_audit::{AuditEvent, AuditEvidence, AuditRecord};
+pub use orchestration_result::{normalize_result, EvidenceCertainty, NormalizationExpectation, NormalizedResult, NormalizedValue, OrchestrationResultError};
+pub use orchestrator::{OrchestrationError, Orchestrator};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
 pub use token::{Span, Token, TokenKind};
