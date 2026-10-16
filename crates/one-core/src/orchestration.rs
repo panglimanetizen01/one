@@ -146,7 +146,7 @@ mod tests {
     #[test]
     fn orchestration_identifiers_are_stable_and_ordered() {
         assert_eq!(SemanticCapabilityId::NetworkConnect.as_str(), "network.connect");
-        assert!(SemanticCapabilityId::NetworkConnect < SemanticCapabilityId::ProcessExecute);
+        assert!(SemanticCapabilityId::ProcessExecute < SemanticCapabilityId::NetworkConnect);
         assert!(AdapterStatus::Verified > AdapterStatus::Implemented);
         assert!(AdapterStatus::Supported > AdapterStatus::Verified);
     }
