@@ -1,19 +1,14 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED FOR CURRENT CANONICAL SHA**.
+Status: **VERIFIED FOR CANONICAL SHA `be2e65852e9a4be833e659524a12c6359769665b`**.
 
 ## Scope
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
 
-## Supported in v0.1
+## Verified in v0.1
 
-- DATA: declaration and assignment.
-- ACTION: display, list creation, list mutation, and greeting through explicit productions.
-- CONDITION: deterministic comparison phrases and `kalau tidak` branch.
-- LOOP: `untuk setiap` and explicit boolean `selama` conditions.
-- FUNCTION: parameters, explicit `hasilnya adalah` result, and calls using `dengan` / `dan`.
-- EVENT: exact trigger registration and dispatch.
+- DATA, ACTION, CONDITION, LOOP, FUNCTION, and EVENT core language constructs.
 - Indonesian lexical and grammar contracts.
 - Language-independent AST and Semantic IR.
 - Reference interpreter.
@@ -21,44 +16,42 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 - Capability-aware process boundary.
 - Cross-platform process API shape using argument vectors and preserved exit status/stdout/stderr.
 - CLI commands `new`, `check`, `run`, `test`, `build`, `package`, `version`, and `ast`, with Indonesian conversational primary aliases.
-- `one test` executes `src/main.one` and, when present, sorted deterministic `tests/conformance/valid/*.one` and `tests/conformance/invalid/*.one` fixtures.
 - Deterministic `.oneir` and `.onepkg` textual artifacts.
-- Strict v0.1 project manifest validation for `nama` and `versi`.
+- Strict v0.1 project manifest validation.
 - Conformance fixtures and golden-output tests.
-- Linux/Windows CI definition.
-- Verified native network runtime slices: DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP, within the explicit runtime limits documented by the network contract.
+- Verified native network runtime slices: DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP, within explicit runtime limits.
+- General-purpose orchestration runtime foundation: typed capability requests, deterministic governance, governed adapters, normalized results/evidence, audit records, localized semantic-resolution fixtures, and `network.dns.resolve`.
 
 ## Explicit v0.1 limits
 
-- Names are grammar-bounded and may contain multiple words. Structural words are interpreted according to the active production; the parser does not globally reserve them.
-- The conversational loop form `selama masih ada ...` is not part of v0.1; only explicit boolean conditions are accepted.
 - `build` currently emits a deterministic `.oneir` IR artifact; it is not a native executable compiler.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
+- The orchestration foundation is verified at the runtime-library boundary, but **language-level One-source orchestration is not yet supported**. The current CLI still executes the established parse → analyze → lower → interpreter path without a verified source-to-Orchestrator bridge.
 - Native C/C++ FFI is future work.
 - Python, Node.js, and Java/JVM integration is currently process-boundary interoperability, not native language bindings.
-- HTTP/3, broad discovery/routing/VPN/industrial/storage/mesh/DTN/telemetry/remote-access adapters, physical network drivers, complete network source grammar, and the remaining protocol inventory are future work.
-- The verified application-protocol implementations are bounded runtime slices, not claims of complete RFC feature coverage.
+- HTTP/3, broad discovery/routing/VPN/industrial/storage/mesh/DTN/telemetry/remote-access adapters, physical network drivers, complete network source grammar, and remaining protocol inventory are future work.
 - Package registry, full dependency registry, IDE/editor tooling, GUI framework integration, and additional locale grammars are future work.
 
 ## Release acceptance checklist
 
-- [x] Linux compilation has passed on the current canonical SHA.
-- [x] Windows compilation has passed on the current canonical SHA.
-- [x] Linux unit/integration/conformance tests have passed on the current canonical SHA.
-- [x] Windows unit/integration/conformance tests have passed on the current canonical SHA.
-- [x] Linux real-network runtime tests have passed on the current canonical SHA.
-- [x] Windows real-network runtime tests have passed on the current canonical SHA.
-- [x] Linux offline verification has passed on the current canonical SHA.
-- [x] Windows offline verification has passed on the current canonical SHA.
-- [x] Contract-artifact closure has passed on the current canonical SHA.
-- [x] Deterministic `.oneir` and `.onepkg` checks have passed on the current canonical SHA.
-- [x] Capability/security tests have passed on the current canonical SHA.
-- [x] Interoperability tests have passed on the current canonical SHA.
-- [x] This documentation synchronization has passed a fresh independent Ubuntu/Windows matrix.
+- [x] Linux compilation passed on canonical SHA `be2e65852e9a4be833e659524a12c6359769665b`.
+- [x] Windows compilation passed on the same canonical SHA.
+- [x] Linux unit/integration/conformance tests passed.
+- [x] Windows unit/integration/conformance tests passed.
+- [x] Linux real-network runtime tests passed.
+- [x] Windows real-network runtime tests passed.
+- [x] Linux offline verification passed.
+- [x] Windows offline verification passed.
+- [x] Contract-artifact closure passed.
+- [x] Deterministic `.oneir` and `.onepkg` checks passed on both offline paths.
+- [x] Capability/security and interoperability tests passed as part of the workspace verification gates.
+- [x] The orchestration runtime foundation passed the same independent matrix.
+- [ ] Language-level One-source orchestration is not a v0.1 release claim yet.
+- [ ] Documentation changes in this synchronization branch require one final fresh exact-SHA verification after merge.
 
 ## Evidence
 
-Independent verification run `38848143359` checked out canonical source commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` and passed on both Ubuntu and Windows Server 2025. The real-network stage passed on both platforms, and the offline verification stage passed on both platforms.
+Independent verification run `38871435579` in `panglimanetizen01/one-windows-verification` checked out canonical source commit `be2e65852e9a4be833e659524a12c6359769665b` and passed on Ubuntu and Windows Server 2025. The real-network stage and platform-specific offline stage passed on both platforms. The offline scripts included deterministic `.oneir` and `.onepkg` comparisons.
 
 The temporary public repository `panglimanetizen01/one-windows-verification` is verification infrastructure only. GitHub `main` remains the source of truth.
 
@@ -68,5 +61,6 @@ No paid GitHub upgrade was used or is required. **Do not purchase an upgrade** m
 
 - **IMPLEMENTATION-COMPLETE:** all in-scope source/docs/tests are present in the canonical repository.
 - **VERIFIED:** the exact canonical SHA has actual cross-platform execution evidence from an independent matrix.
+- **SUPPORTED:** reserved for a stronger platform/support claim; not inferred merely from implementation or registry metadata.
 
-Current state: **VERIFIED FOR CURRENT CANONICAL SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61`.**
+Current verified source: **`be2e65852e9a4be833e659524a12c6359769665b`**. Any later canonical SHA requires fresh exact-SHA verification.

@@ -1,40 +1,39 @@
 # One — General-Purpose Human-Language Tool Orchestration and Governance
 
-**Status:** Proposed architectural specification — conversational design approved by project owner
+**Status:** Implemented orchestration foundation; language-level One-source orchestration remains in development.
 **Date:** 2026-10-16
 **Scope:** General-purpose One language, human-language programming, external-tool orchestration, capability/runtime governance, localization, interoperability, auditability, and platform control
+
+## Current implementation boundary
+
+The architectural design in this document is now partially executable through a verified runtime foundation. The canonical source contains:
+
+- typed semantic capability identifiers and requests;
+- execution scopes and effect classes;
+- deterministic semantic-to-capability resolution;
+- deterministic execution governance with allow/deny/approval decisions;
+- typed external adapter contracts and platform metadata;
+- deterministic compatible-adapter selection;
+- normalized results with explicit evidence certainty;
+- audit records that distinguish policy decisions from attempted execution;
+- Indonesian/English semantic-resolution conformance coverage;
+- the first real adapter, `network.dns.resolve`.
+
+Independent run `38871435579` verified this foundation at canonical source SHA `be2e65852e9a4be833e659524a12c6359769665b` on Ubuntu and Windows Server 2025, including build, Clippy, workspace tests, real-network runtime tests, contract checks, and offline verification.
+
+This does **not** yet mean that a normal One source program can invoke the orchestration runtime end-to-end. The current CLI still follows the established source → parser → semantic analysis → IR → reference interpreter path. The missing language-level bridge is explicitly the next implementation boundary.
 
 ## 1. Purpose
 
 One is a general-purpose programming language intended for all users, including people who do not already understand conventional programming syntax or technical tool command languages.
 
-One must be usable for programs and systems ranging from small personal utilities through medium applications and large software projects. Its surface language should allow ordinary human language to express programming intent while preserving a deterministic formal semantic model underneath.
+One separates language semantics from capability semantics, runtime governance, platform/tool policy, and adapter implementation. Human-language wording is an input surface, not an authority boundary.
 
-One is not a cybersecurity-only language, networking-only language, automation-only language, or wrapper around a fixed collection of external tools.
-
-The external-tool orchestration capability described here is one part of the general One platform. The same architecture applies to development tools, operating-system facilities, network software, databases, build systems, media tools, scientific software, platform APIs, and other external capabilities.
-
-## 2. Design decision: language generality
-
-The One language core must not encode a domain-specific prohibition merely because a capability can be misused.
-
-The language therefore separates:
-
-1. **Language semantics** — what a One program means.
-2. **Capability semantics** — what an operation requires from its execution environment.
-3. **Runtime governance** — what the current execution environment permits.
-4. **Platform/tool policy** — what a deployment, administrator, project owner, or distribution permits.
-5. **Tool adapter implementation** — how an approved semantic capability is realized on a particular platform.
-
-A capability is not made semantically meaningless merely because its runtime environment may restrict it.
-
-Conversely, a human-language phrase must never bypass the capability and governance model merely because the phrase appears harmless or conversational.
-
-## 3. Core principle
+## 2. Core principle
 
 > **One is a human-language programming language, not a human-language disguise for technical commands.**
 
-The translation chain is:
+The intended translation chain is:
 
 ```text
 Human-readable One source
@@ -58,11 +57,9 @@ Normalized result
 One value / diagnostic / human-readable explanation
 ```
 
-The important property is that the external tool is an implementation backend. Its command syntax is not the semantic definition of One.
+The chain above is the architectural target. The verified runtime foundation currently implements the lower capability/governance/adapter/result layers; the source-language bridge is not yet verified.
 
-## 4. Existing One semantic pipeline remains authoritative
-
-The existing deterministic pipeline remains unchanged:
+## 3. Existing One semantic pipeline remains authoritative
 
 ```text
 source
@@ -75,45 +72,17 @@ source
  → runtime/compiler backend
 ```
 
-Human-language intent must ultimately become ordinary One semantic structures. No LLM, external tool, network service, or heuristic runtime component may become the semantic authority.
+The orchestration layer must consume this pipeline rather than creating a parallel interpreter or semantic authority.
 
-Ambiguous source must be rejected with a diagnostic unless the grammar and semantic model provide an unambiguous interpretation.
+## 4. Human-language programming model
 
-## 5. Human-language programming model
+One may eventually permit beginner-oriented semantic operations expressed in ordinary language. Examples in this document are design examples unless an accompanying grammar/semantic contract and executable evidence says otherwise.
 
-One should permit a beginner to express intent using vocabulary close to ordinary communication.
+Illustrative examples do not define grammar by themselves.
 
-Illustrative examples:
+## 5. Intent is not authority
 
-```text
-buat program yang mencatat pengeluaran saya
-
-ketika ada data baru
-    simpan data itu
-    tampilkan jumlah pengeluaran
-```
-
-Tool orchestration example:
-
-```text
-periksa perangkat yang ada di jaringan saya
-
-untuk setiap perangkat yang ditemukan
-    tampilkan alamatnya
-    tampilkan layanan yang terdeteksi
-```
-
-The examples describe semantic intent. They do not define the grammar by themselves.
-
-An advanced programmer must be able to descend from the same semantic operation into precise parameters without changing programming languages.
-
-## 6. Intent is not authority
-
-Natural language expresses intent; it does not grant permission.
-
-For every operation with an external effect, the runtime evaluates the required capability and current execution policy before invoking the backend.
-
-Conceptually:
+For every external effect, the runtime evaluates the required capability, requested scope, and execution policy before invoking an adapter.
 
 ```text
 intent
@@ -124,56 +93,22 @@ requested scope
   ↓
 execution policy
   ↓
-allow / deny / require explicit approval
+allow / deny / require approval
   ↓
 adapter invocation
 ```
 
-This rule applies equally to filesystem access, process execution, networking, native APIs, device access, external applications, and security-related tooling.
+Changing wording or localization must not change the authorization requirements for the same semantic operation.
 
-Changing the wording of an operation must not change the authorization requirements for the underlying semantic operation.
+## 6. Capability model
 
-## 7. Capability model
+Every external operation exposed to One must have a machine-readable capability declaration covering, as applicable, semantic identity, effects, input/output schema, scope, privilege requirements, platform/backend availability, adapter identity, audit requirements, determinism, and verification status.
 
-Every external operation exposed to One must have a machine-readable capability declaration.
+## 7. Tool Capability Registry
 
-A capability declaration should identify at minimum:
+The registry maps semantic capability contracts to available adapters. Registry presence does not prove implementation, verification, or support.
 
-- semantic capability identifier;
-- human-readable names and localized names;
-- required effects;
-- input schema;
-- output schema;
-- target/scope requirements;
-- privilege requirements;
-- whether the operation is read-only, state-changing, destructive, or otherwise high-impact;
-- platform/backend availability;
-- adapter identifier;
-- audit requirements;
-- deterministic versus environment-dependent behavior;
-- verification status.
-
-Capabilities must be composable. A high-level One operation may require several lower-level capabilities.
-
-## 8. Tool Capability Registry
-
-One shall maintain a registry separate from the language grammar.
-
-The registry maps:
-
-```text
-One semantic capability
-        ↓
-capability contract
-        ↓
-available adapters
-        ↓
-external tool / library / platform implementation
-```
-
-A tool entry must not be interpreted as proof that the tool is supported.
-
-Status remains evidence-based:
+Status remains:
 
 - **Specified** — semantic contract exists.
 - **Designed** — adapter boundary exists.
@@ -181,183 +116,43 @@ Status remains evidence-based:
 - **Verified** — required tests and execution evidence pass.
 - **Supported** — verified for declared platforms/backends.
 
-The registry may contain capabilities whose adapters are unavailable on the current platform.
+## 8. Tool abstraction
 
-## 9. Tool abstraction
+Users address semantic capabilities rather than external command syntax. Adapter selection must be deterministic and must reject materially incompatible substitutions.
 
-Users normally address capabilities rather than tool command names.
+## 9. Technical control
 
-For example, the conceptual request:
+Progressive precision remains an architectural goal: beginner semantic operations, named parameters, explicit capability configuration, and expert adapter/platform controls can all map to the same One semantic model.
 
-```text
-cari perangkat di jaringan lokal
-```
+## 10. Result normalization
 
-may map to a network-discovery semantic capability. The runtime may select an available implementation backend according to the declared adapter registry.
+External results are normalized into typed semantic results without inventing facts. Material uncertainty must remain uncertainty.
 
-If multiple adapters satisfy the same semantic contract, selection must be deterministic according to explicit policy, adapter priority, compatibility, and availability rules.
+## 11. Human-readable explanations
 
-The runtime must not silently substitute an adapter whose semantics materially differ from the requested operation.
+Explanation layers may render deterministic structured results and diagnostics for users. They are not semantic or execution authorities.
 
-## 10. Technical control remains available
+## 12. Localization
 
-The human-language layer must not make advanced users powerless.
+Localized surfaces may use different vocabulary and grammar but must preserve capability identity, effects, authorization requirements, scope semantics, result types, error semantics, and deterministic execution semantics.
 
-One therefore supports progressive precision:
+## 13. General-purpose scope
 
-```text
-beginner
-  → natural-language semantic operation
+The architecture is domain-neutral and can later cover filesystem/storage, processes/system services, networking, databases, HTTP/API clients, build/package tools, version control, media, graphics/design, testing, scientific/data tools, OS APIs, devices, developer tooling, security/network-analysis tooling, cloud services, and native libraries.
 
-intermediate
-  → named semantic parameters
+This is an architectural inventory, not a v0.1 implementation claim.
 
-advanced
-  → explicit capability configuration
+## 14. Governance plane
 
-expert
-  → protocol/tool/platform-specific adapter controls
-```
+The runtime governance plane may grant/withhold capabilities, restrict scope, require approval, restrict/disable adapters, and record execution/audit events. Governance state must remain separate from language semantics.
 
-The final level remains inside the One semantic model. External command syntax may be represented as an adapter interface or interoperability boundary rather than becoming mandatory One syntax.
+## 15. No language-level privilege escalation
 
-## 11. Result normalization
+Localization, aliases, macros, generated source, libraries, and adapters must not silently bypass capability checks or increase authority merely by changing wording.
 
-External tools produce heterogeneous output formats. One must normalize them into typed semantic results.
+## 16. External tool orchestration lifecycle
 
-```text
-external output
-    ↓
-adapter parser
-    ↓
-normalized One result
-    ↓
-typed value / diagnostic / evidence
-```
-
-Normalization must preserve material information required for correctness.
-
-It must not invent facts that were not present in the tool output.
-
-When a tool reports uncertainty, the normalized result must retain that uncertainty.
-
-## 12. Human-readable explanations
-
-One may provide human-readable explanations of technical results.
-
-The explanation layer receives deterministic structured results and diagnostics. It must not invent execution results, authorization decisions, or technical facts.
-
-For example:
-
-```text
-Saya menemukan 7 perangkat.
-
-3 perangkat merespons layanan yang dapat dikenali.
-2 perangkat tidak memberikan informasi layanan.
-2 perangkat tidak dapat diverifikasi lebih lanjut.
-```
-
-Advanced users may request the underlying technical evidence.
-
-## 13. Localization
-
-Human-language programming is localization-aware.
-
-Indonesian, English, and future localized surfaces may express the same semantic operation using different vocabulary and grammar.
-
-Localization must not alter:
-
-- capability identity;
-- effect identity;
-- authorization requirements;
-- scope semantics;
-- result types;
-- error semantics;
-- deterministic execution semantics.
-
-Thus:
-
-```text
-Bahasa A ─┐
-Bahasa B ─┼→ same One semantic operation
-Bahasa C ─┘
-```
-
-## 14. General-purpose scope
-
-The orchestration architecture must be domain-neutral.
-
-Initial adapter families may include:
-
-- filesystem and storage;
-- processes and system services;
-- networking;
-- databases;
-- HTTP/API clients;
-- compilers and build tools;
-- package managers;
-- version-control systems;
-- media processing;
-- graphics and design tools;
-- testing tools;
-- scientific and data tools;
-- operating-system APIs;
-- device and hardware interfaces;
-- developer tooling;
-- security and network-analysis tooling;
-- cloud/platform services;
-- native libraries.
-
-This list is an architectural inventory, not a v0.1 implementation claim.
-
-## 15. Security and governance plane
-
-Because One is general-purpose, governance must not be encoded as accidental restrictions in the natural-language grammar.
-
-The platform therefore provides a separate governance plane capable of:
-
-- defining execution policies;
-- granting or withholding capabilities;
-- restricting scope;
-- requiring explicit confirmation for selected operations;
-- restricting adapters;
-- disabling adapters;
-- recording execution/audit events;
-- identifying the active policy source;
-- terminating or suspending execution where the host environment supports it;
-- applying distribution or deployment policy;
-- supporting owner/administrator controls.
-
-The exact policy authority hierarchy must be specified separately and must never be ambiguous.
-
-## 16. Owner-controlled safety architecture
-
-One may provide a platform-level control plane through which the maintainer/distributor can publish policy, revoke an adapter, disable a capability family, or require a newer runtime/policy version.
-
-This mechanism must be treated as governance infrastructure, not as hidden language semantics.
-
-The design must avoid a single opaque remote service becoming a mandatory semantic authority. Offline execution must remain possible where the selected capabilities and platform permit it.
-
-Emergency controls, when implemented, must have explicit semantics, visible policy state, deterministic enforcement points, and auditable changes.
-
-## 17. No language-level privilege escalation
-
-The following transformations must never increase authority merely because of wording:
-
-```text
-technical command → ordinary sentence
-ordinary sentence → technical command
-localized phrase → English phrase
-English phrase → localized phrase
-```
-
-All must resolve to the same underlying capability/effect requirements.
-
-Similarly, aliases, localization, macros, imported libraries, adapters, and generated source must not silently bypass capability checks.
-
-## 18. External tool orchestration lifecycle
-
-A real adapter follows this lifecycle:
+The required lifecycle is:
 
 ```text
 1. Receive typed One capability request.
@@ -366,169 +161,71 @@ A real adapter follows this lifecycle:
 4. Resolve required capabilities.
 5. Evaluate runtime policy.
 6. Select an eligible adapter.
-7. Construct the adapter invocation from typed values.
+7. Construct adapter invocation from typed values.
 8. Execute through the controlled runtime boundary.
-9. Capture exit/result/error information.
+9. Capture result/error information.
 10. Normalize the result.
 11. Record required audit information.
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-The adapter must not accept arbitrary natural-language text as an unchecked command string.
+Steps 1–12 are implemented at the runtime foundation boundary. A verified One-source program path into these steps is the next implementation task.
 
-## 19. Audit model
+## 17. Audit model
 
-For effectful external operations, the runtime should be able to record:
+Audit data records observed/requested runtime facts such as capability identity, adapter identity, scope, policy decision, execution state, and relevant diagnostics. It must not claim facts the runtime cannot verify.
 
-- program/project identity;
-- capability identity;
-- adapter identity;
-- requested scope;
-- policy decision;
-- execution start/end;
-- result status;
-- relevant diagnostics;
-- policy/version identifiers where applicable.
+## 18. Failure semantics
 
-Sensitive output must follow the host platform's data-protection rules.
+Orchestration failures must remain typed and distinguish invalid source/parameters, ambiguity, missing capability, policy denial, out-of-scope target, unavailable adapter, unsupported platform, adapter failure, malformed output, timeout, interruption, and uncertainty where applicable.
 
-Audit data is evidence of what the runtime attempted and observed. It must not claim facts that the runtime cannot verify.
+## 19. Testing and conformance
 
-## 20. Failure semantics
+The architecture requires language, capability, adapter, and end-to-end tests. No adapter is marked Verified without executable evidence appropriate to its backend.
 
-An orchestration failure must be represented as a typed One error/diagnostic rather than silently translated into success.
+The current foundation has executable tests for the runtime layers and a real DNS adapter. The missing end-to-end language-level test is a release boundary for the next implementation phase.
 
-Required distinctions include, where applicable:
+## 20. Compatibility with existing One architecture
 
-- invalid source;
-- ambiguous intent;
-- invalid parameters;
-- missing capability;
-- denied by policy;
-- out-of-scope target;
-- unavailable adapter;
-- unsupported platform;
-- adapter execution failure;
-- malformed external output;
-- timeout;
-- interrupted execution;
-- incomplete/uncertain result.
+This architecture extends, rather than replaces, the lexer/parser, AST/name-scope model, type/semantic model, CSIR/IR, reference interpreter, capability model, diagnostics, conformance system, network model, and deterministic artifact model.
 
-## 21. Testing and conformance
+## 21. v0.1 boundary
 
-The architecture requires tests at multiple layers:
+The verified v0.1 boundary is the orchestration runtime foundation, not a claim that arbitrary human-language source can already invoke every external capability. Tool-specific support is incremental and evidence-based.
 
-### 21.1 Language tests
+## 22. Non-goals
 
-- natural-language grammar fixtures;
-- localization equivalence;
-- ambiguity rejection;
-- semantic equivalence;
-- parser/AST alignment.
+This specification does not make every external tool part of the standard library, make command syntax the One language, use an LLM as execution authority, grant capabilities from wording alone, or claim implementation from registry entries.
 
-### 21.2 Capability tests
-
-- capability declaration validation;
-- effect propagation;
-- scope validation;
-- policy allow/deny behavior;
-- capability inheritance/composition;
-- no bypass through aliases or localization.
-
-### 21.3 Adapter tests
-
-- input translation;
-- invocation construction;
-- output parsing;
-- malformed-output handling;
-- timeout/error propagation;
-- platform compatibility.
-
-### 21.4 End-to-end tests
-
-```text
-One source
- → semantic operation
- → capability gate
- → adapter
- → real/sandboxed backend
- → normalized result
- → One result
-```
-
-No adapter is marked Verified without executable evidence appropriate to its declared backend.
-
-## 22. Compatibility with existing One architecture
-
-This specification extends the existing end-to-end platform architecture.
-
-It does not replace:
-
-- the lexer/parser contract;
-- AST and name/scope model;
-- type and semantic model;
-- CSIR;
-- runtime model;
-- effect/capability model;
-- reference interpreter;
-- module system;
-- package/build model;
-- standard-library contract;
-- network semantic model;
-- protocol registry;
-- diagnostics and conformance system;
-- deterministic artifact model.
-
-The new orchestration layer consumes these existing foundations rather than creating a parallel semantic system.
-
-## 23. v0.1 boundary
-
-This specification defines the long-term architecture. It does not claim that every external tool or adapter is implemented in v0.1.
-
-The first executable slices should establish the generic mechanism with a small number of low-risk, fully testable adapters before broadening the registry.
-
-Candidate early adapters should be selected based on:
-
-- deterministic behavior;
-- clear input/output contracts;
-- local or sandboxable execution;
-- straightforward verification;
-- useful general-purpose capability.
-
-Tool-specific support is added incrementally and only promoted according to the evidence-based status model.
-
-## 24. Non-goals
-
-This specification does not:
-
-- make every external tool part of the One standard library;
-- make tool command syntax the One language;
-- use an LLM as an execution authority;
-- grant capabilities based solely on natural-language wording;
-- claim implementation merely from registry entries;
-- require one centralized online service for ordinary language execution;
-- make localization a separate semantic language;
-- collapse materially different tool behaviors into a misleading generic abstraction.
-
-## 25. Success criteria
+## 23. Success criteria
 
 The architecture succeeds when:
 
-1. An ordinary user can express useful programming intent in understandable language.
-2. The same semantic operation can be localized without changing its meaning.
-3. One can orchestrate real external capabilities through typed adapters.
-4. External tools remain implementation backends rather than semantic authorities.
-5. Advanced users can reach precise technical controls without abandoning One.
-6. Capability and policy enforcement occur independently of surface wording.
-7. Results are normalized without invented facts.
-8. Every supported adapter has executable evidence.
-9. The language remains general-purpose rather than becoming tied to a particular security or tooling domain.
-10. Platform/owner governance can control execution without silently changing the meaning of the language itself.
+1. useful programming intent can be expressed in understandable language;
+2. localization preserves semantic identity;
+3. One can orchestrate real external capabilities through typed adapters;
+4. external tools remain implementation backends;
+5. advanced users retain precise controls;
+6. capability/policy enforcement is independent of wording;
+7. results are normalized without invented facts;
+8. supported adapters have executable evidence;
+9. One remains general-purpose;
+10. platform/owner governance can control execution without changing language meaning.
 
-## 26. Implementation gate
+## 24. Implementation gate
 
-This document is a design specification only.
+The generic orchestration foundation is implemented and independently verified. The next implementation gate is language-level integration:
 
-Before implementation begins, it must be reviewed for consistency against the existing One contracts and then converted into an implementation plan. Production changes require the project's existing fail-first/TDD and evidence-first workflow.
+```text
+One source
+→ parser
+→ AST/semantic operation
+→ capability resolution
+→ governance
+→ adapter
+→ normalized result
+→ One value/diagnostic
+→ CLI/runtime
+```
 
-No external-tool adapter should be declared implemented, verified, or supported merely because this document describes it.
+Production changes for this bridge must use fail-first/TDD, evidence-first debugging, and a fresh exact-SHA cross-platform verification before the language-level feature is called Verified or Supported.
