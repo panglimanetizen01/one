@@ -6,6 +6,14 @@ Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS ORCHESTRATION**.
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
 
+## Current exact-SHA evidence
+
+Canonical source revision independently verified: `78fc1ecfe520bc35584e4fae36fb13ffa3226877`.
+
+Independent mirror run: `38895405559` in `panglimanetizen01/one-windows-verification`.
+
+Ubuntu job `116954563036` and Windows Server 2025 job `116954563246` both checked out that exact SHA and passed canonical SHA assertion, contract checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. Deterministic `.oneir` and `.onepkg` checks, DNS success/failure classification, and orchestration runtime/source-level DNS tests also passed.
+
 ## Verified baseline
 
 - DATA, ACTION, CONDITION, LOOP, FUNCTION, and EVENT core language constructs.
@@ -43,8 +51,6 @@ one jalankan main.one --izinkan network.discover --target 127.0.0.1
 ```
 
 No explicit permission means denial. A different target is outside the granted scope.
-
-Independent verification run `38874287857` checked the exact source revision containing this vertical slice on Ubuntu and Windows Server 2025 and passed contract checks, build, Clippy, workspace tests, real-network runtime tests, and offline verification.
 
 ## Release labels
 
