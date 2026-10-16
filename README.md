@@ -90,6 +90,6 @@ No explicit permission means denial. A different target is outside the granted s
 
 ## Verification boundary
 
-Canonical source `78fc1ecfe520bc35584e4fae36fb13ffa3226877` was independently verified in mirror run `38895405559` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, orchestration runtime, and offline verification.
+Canonical source `e43b31fe9d7a5f62de4d3863b358aa28241fbf9c` was independently verified in mirror run `38896135846` on Ubuntu and Windows Server 2025. The evidence includes exact-SHA checkout, contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic `.oneir`/`.onepkg` checks, DNS success/failure classification, orchestration runtime, and offline verification.
 
 The private GitHub repository remains the source of truth. The public verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
