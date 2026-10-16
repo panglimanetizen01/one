@@ -93,6 +93,7 @@ action = display_action
         | remove_list_action
         | dns_discovery_action
         | filesystem_read_action
+        | filesystem_write_action
         | process_execute_action ;
 
 display_action = "tampilkan", expression, NEWLINE ;
@@ -102,6 +103,7 @@ add_list_action = "tambahkan", expression, "ke", name, NEWLINE ;
 remove_list_action = "hapus", expression, "dari", name, NEWLINE ;
 dns_discovery_action = "cari", "alamat", expression, NEWLINE ;
 filesystem_read_action = "baca", "berkas", expression, NEWLINE ;
+filesystem_write_action = "tulis", "ke", "berkas", expression, "dengan", expression, NEWLINE ;
 process_execute_action = "jalankan", "proses", expression, NEWLINE ;
 ```
 
@@ -115,12 +117,13 @@ tampilkan nama pengguna
 sapa teman
 cari alamat "127.0.0.1"
 baca berkas "data/contoh.txt"
+tulis ke berkas "data/hasil.txt" dengan "halo dari One"
 jalankan proses "rustc"
 ```
 
-`cari alamat`, `baca berkas`, and `jalankan proses` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
+`cari alamat`, `baca berkas`, `tulis ke berkas`, and `jalankan proses` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
 
-The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat`, `baca berkas`, and `jalankan proses` likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
+The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat`, `baca berkas`, and `jalankan proses`, and the fixed three-word prefix `tulis ke berkas`, likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
 
 The source line:
 
@@ -397,22 +400,23 @@ The conformance suite MUST include, at minimum:
 12. explicit `sapa` actions;
 13. explicit `cari alamat` source orchestration;
 14. explicit `baca berkas` source orchestration;
-15. explicit `jalankan proses` source orchestration;
-16. repeated parsing of identical input with identical semantic output.
+15. explicit `tulis ke berkas` source orchestration;
+16. explicit `jalankan proses` source orchestration;
+17. repeated parsing of identical input with identical semantic output.
 
 ### Invalid
 
-17. tabs in indentation;
-18. incomplete declaration/assignment;
-19. unsupported natural-language filler;
-20. arbitrary first-word actions;
-21. unsupported loop-condition prose;
-22. malformed reserved phrases;
-23. ambiguous multi-word boundaries that yield different semantics;
-24. names swallowing structural keywords;
-25. missing action targets;
-26. source spans that cannot cover the complete multi-word name;
-27. orchestration source without the required explicit two-word operation prefix.
+18. tabs in indentation;
+19. incomplete declaration/assignment;
+20. unsupported natural-language filler;
+21. arbitrary first-word actions;
+22. unsupported loop-condition prose;
+23. malformed reserved phrases;
+24. ambiguous multi-word boundaries that yield different semantics;
+25. names swallowing structural keywords;
+26. missing action targets;
+27. source spans that cannot cover the complete multi-word name;
+28. orchestration source without the required explicit operation prefix.
 
 ## 18. Compatibility and implementation gate
 
@@ -426,7 +430,7 @@ The implementation MUST NOT claim conformance to grammar-bounded multi-word name
 4. ambiguity and diagnostic tests exist;
 5. the reference semantic representation preserves the complete name span.
 
-The `cari alamat`, `baca berkas`, and `jalankan proses` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
+The `cari alamat`, `baca berkas`, `tulis ke berkas`, and `jalankan proses` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
 
 No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
 
