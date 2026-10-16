@@ -26,29 +26,45 @@ Command recognition is exact and bounded. The CLI does not interpret arbitrary n
 
 ## 3. Explicit orchestration permission
 
-Effectful orchestration remains opt-in. The CLI must not silently grant network capabilities.
+Effectful orchestration remains opt-in. The CLI must not silently grant capabilities.
 
-For the verified DNS orchestration vertical slice, a user may explicitly grant the discovery capability and exact target scope:
+The currently exposed experimental source-level orchestration permission surfaces are:
+
+### DNS discovery
 
 ```text
 one jalankan <file.one> --izinkan network.discover --target <alamat>
 ```
 
-The technical alias is also accepted:
+Technical alias:
 
 ```text
 one run <file.one> --allow network.discover --target <alamat>
 ```
 
-Rules:
+### Filesystem read
 
-- only `network.discover` is currently exposed by this CLI permission surface;
-- `--target` is mandatory when that capability is granted;
+```text
+one jalankan <file.one> --izinkan filesystem.read --target <path>
+```
+
+Technical alias:
+
+```text
+one run <file.one> --allow filesystem.read --target <path>
+```
+
+Rules for both experimental slices:
+
+- the capability must be explicitly granted;
+- `--target` is mandatory when an orchestration capability is granted;
 - the runtime policy is scoped to exactly the supplied target;
-- no network capability is granted when these flags are absent;
+- no orchestration capability is granted when these flags are absent;
 - a source operation targeting a different value is denied by governance;
 - unknown capabilities are rejected as CLI usage errors;
-- this permission syntax is a controlled adapter boundary, not One language grammar.
+- these permission syntaxes are controlled adapter boundaries, not One language grammar;
+- the filesystem-read slice currently reads UTF-8 text and does not constitute general filesystem support;
+- the DNS and filesystem-read slices are experimental and do not imply that the broader orchestration catalog is supported.
 
 ## 4. Exit status
 
@@ -104,7 +120,7 @@ The command refuses to overwrite an existing folder.
 - deterministic exit status;
 - structured diagnostics;
 - explicit capability policy;
-- exact target scoping for the current CLI DNS orchestration permission;
+- exact target scoping for the current CLI orchestration permission surfaces;
 - offline validation for source-only operations;
 - Windows/Linux support through the platform abstraction contract;
 - no LLM or network dependency for command interpretation or language semantics.
