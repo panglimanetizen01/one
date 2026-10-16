@@ -28,8 +28,8 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Independently verified Linux/Windows source revision | VERIFIED | source commit `e58da6393e53094f29a5121cb440c94973f71b6a` passed independent run `38846301365` on Ubuntu and Windows Server 2025 |
-| Current documentation-synchronized canonical SHA | PENDING | current `main` documentation synchronization requires a fresh exact-SHA independent matrix |
+| Independently verified Linux/Windows source revision | VERIFIED | source commit `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` passed independent run `38848143359` on Ubuntu and Windows Server 2025 |
+| Current documentation-synchronized canonical SHA | VERIFIED | exact current SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` passed independent run `38848143359` |
 | Private canonical hosted CI execution | BLOCKED | canonical runner jobs currently fail before usable workflow-step/log evidence |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -58,7 +58,7 @@ The current verified native runtime inventory is:
 - POP3;
 - IMAP.
 
-Independent Linux and Windows execution has passed contract-artifact checks, build, Clippy, all workspace tests, real-network runtime tests, and platform-specific offline verification for the implemented source revisions. HTTP/2 was included in the real-network stage.
+Independent Linux and Windows execution has passed contract-artifact checks, build, Clippy, all workspace tests, real-network runtime tests, and platform-specific offline verification for the current canonical source revision `38dc98fcee49fa04c589d5a3c825b0d4006d6d61`. HTTP/2 was included in the real-network stage.
 
 The registry's remaining entries are not represented as verified runtime support. Hardware- and platform-dependent protocols require native/platform adapters and separate evidence.
 
