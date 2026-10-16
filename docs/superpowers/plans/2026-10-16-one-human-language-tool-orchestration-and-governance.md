@@ -52,7 +52,7 @@ Added the orchestration implementation contract and synchronized capability/runt
 
 ### Task 11 — Exact-SHA cross-platform verification — COMPLETE
 
-Independent verification run `38871435579` checked out canonical One source SHA `be2e65852e9a4be833e659524a12c6359769665b` and passed on Ubuntu and Windows Server 2025:
+Independent verification run `38872070590` checked out canonical One source baseline `dba4fad49854952e256ae41744f57f93e39167a8` and passed on Ubuntu and Windows Server 2025:
 
 - canonical SHA checkout and equality check;
 - contract-artifact verification;
