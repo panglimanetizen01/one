@@ -22,9 +22,9 @@
 | Human-language orchestration foundation | VERIFIED | typed capability requests, deterministic governance, governed adapters, result normalization, audit records, localization fixtures, and `network.dns.resolve` |
 | Language-level DNS orchestration | EXPERIMENTAL | `cari alamat` → parser → semantic validation → typed orchestration IR → governed DNS adapter → normalized CLI result; explicit target-scoped permission required |
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; explicit target-scoped permission required; independently verified on Ubuntu + Windows Server 2025 at canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via mirror run `38903950612` |
-| Language-level process execution orchestration | IN DEVELOPMENT | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; explicit target-scoped permission required; implementation and TDD tests are present on the current development branch, but exact-SHA execution evidence is still pending |
+| Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; explicit target-scoped permission required; exact-SHA Linux + Windows execution verified at process branch source `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
-| CLI | IMPLEMENTED | conversational commands, technical aliases, and explicit target-scoped orchestration permission surfaces |
+| CLI | VERIFIED | conversational commands, technical aliases, explicit target-scoped orchestration permission surfaces; exact-SHA Linux + Windows verification at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
 | Conformance runner | ADDED | `crates/one-core/tests/conformance.rs` |
@@ -33,7 +33,7 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Current exact-SHA cross-platform verification | VERIFIED | independent mirror run `38903950612` checked out canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, deterministic artifacts, orchestration runtime, and platform-specific offline verification |
+| Current exact-SHA cross-platform verification | VERIFIED | independent mirror run `38929072800` checked out canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and platform-specific offline verification |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent mirror provides exact-SHA executable evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -46,11 +46,11 @@
 
 ## Verified network boundary
 
-The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent mirror run `38903950612` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification on Ubuntu and Windows Server 2025 for canonical source `f482c6b75505d9965dd33f4f25bb0cd04072cedb`.
+The verified native runtime inventory is DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. Independent mirror run `38929072800` passes contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification on Ubuntu and Windows Server 2025 for canonical source `9038ac75f197753ff1ab6af7478e63e4831903a2`.
 
 ## Orchestration boundary
 
-Two language-level vertical slices are independently verified and remain experimental. A third process-execution slice is implemented and under verification:
+Three language-level vertical slices are independently verified, with the process slice intentionally limited in scope:
 
 ```text
 One source: cari alamat "127.0.0.1"
@@ -81,19 +81,16 @@ One source: jalankan proses "rustc"
 → CLI output
 ```
 
-The CLI requires explicit permission for all three slices. No permission means denial; a different target is outside the granted scope. The process slice currently executes one explicitly targeted program without arguments. Its exact-SHA executable verification is not yet recorded, so it must not be promoted to `EXPERIMENTAL` or `VERIFIED` until that evidence exists. This is not a claim that the complete orchestration catalog is supported.
+The CLI requires explicit permission for all three slices. No permission means denial; a different target is outside the granted scope. The process slice currently executes one explicitly targeted program without arguments. Its exact-SHA executable verification is recorded at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800`, so this limited capability is `EXPERIMENTAL`, not a claim that the complete orchestration catalog is supported.
 
 ## Current checkpoint
 
-- Canonical `main`: `ab7df1e2a0dbcc8c3fab3b425137194d1ca0ccbe`.
-- Latest proven exact-SHA baseline: `f482c6b75505d9965dd33f4f25bb0cd04072cedb`, mirror run `38903950612`.
-- Process/System branch: `feature/process-system-vertical-slice`.
-- Current process branch head: `09aff2680661316f66222923863eae8f0e422296`.
-- PR: #48, open and mergeable; source merge is blocked by the exact-SHA evidence rule, not by a documented source failure.
-- CI run `38927364159` failed on Ubuntu and Windows with zero job steps; retry also failed with zero steps/logs. Classified as infrastructure evidence failure.
-- Public verification mirror remains non-executable until its source tree exactly matches the recorded canonical SHA.
-- Process execution status: `IN DEVELOPMENT`.
-- Next gate: fresh exact-SHA Linux/Windows executable verification of the process branch, then reverify → review → merge → read-back main → checkpoint.
+- Canonical `main` after PR #48 merge: `123df544f15d7eec8d74ca231b5e55ccebf4a7ee`.
+- Verified process source parent: `9038ac75f197753ff1ab6af7478e63e4831903a2`.
+- Independent exact-SHA mirror run: `38929072800`, Ubuntu + Windows Server 2025, all verification stages PASS.
+- PR #48: merged.
+- Canonical hosted CI run `38927364159` remains classified as infrastructure evidence failure because both jobs failed before steps; it is not used as source-pass evidence.
+- Process execution status: `EXPERIMENTAL`, limited to one explicitly targeted program without arguments and explicit `process.execute` permission.
 
 ## Release interpretation
 
