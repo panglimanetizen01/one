@@ -14,8 +14,8 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / independently exercised |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / independently exercised |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
-| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable verification additionally recorded at `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android |
-| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED at `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; also cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
+| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable verification additionally recorded at `68381052b9c744fca97fd8b25505d8878e7c2df4` on Termux/Android |
+| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED at `68381052b9c744fca97fd8b25505d8878e7c2df4` on Termux/Android; also cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
 | Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable evidence also passes offline verification on Termux/Android |
@@ -26,8 +26,8 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end source execution + explicit permission | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
 | Language-level filesystem-read orchestration | parser → semantic → typed IR → governance → filesystem.read adapter → normalized result → CLI | end-to-end source execution + allow/deny/out-of-scope/backend tests | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
 | Language-level process execution orchestration | parser → semantic → typed IR → governance → process.execute adapter → normalized result → CLI | end-to-end source execution + permission + denial + backend-failure tests | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
-| Language-level filesystem-write orchestration | parser → semantic → typed IR → governance → filesystem.write adapter → CLI | source execution + explicit permission + exact-target write + denial | EXPERIMENTAL / latest executable evidence `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; CLI regression test and core runtime test PASS; cross-platform evidence pending |
-| Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED on `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; 1 targeted test PASS |
+| Language-level filesystem-write orchestration | parser → semantic → typed IR → governance → filesystem.write adapter → CLI | source execution + explicit permission + exact-target write + denial | EXPERIMENTAL / latest executable evidence `68381052b9c744fca97fd8b25505d8878e7c2df4` on Termux/Android; CLI regression test and core runtime test PASS; cross-platform evidence pending |
+| Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED on `68381052b9c744fca97fd8b25505d8878e7c2df4` on Termux/Android; 1 targeted test PASS |
 | Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED in latest executable evidence on Termux/Android; workspace test PASS |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
 | Linux portability | verification mirror workflow | actual Linux run | GREEN for `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; current filesystem-write executable evidence not yet cross-platform verified |
@@ -36,7 +36,7 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 
 ## Current exact-SHA evidence
 
-Latest exact-SHA executable evidence for the current executable boundary is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`. The exact-SHA Termux/Android verification passed contract checks, build, Clippy `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification. Later documentation-only commits do not change that executable evidence boundary.
+Latest exact-SHA executable evidence for the current executable boundary is `68381052b9c744fca97fd8b25505d8878e7c2df4`. The exact-SHA Termux/Android verification passed contract checks, build, Clippy `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification.
 
 The latest cross-platform exact-SHA evidence remains mirror run `38929072800` for source `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. It predates the filesystem-write commits and is not generalized to newer SHAs.
 
