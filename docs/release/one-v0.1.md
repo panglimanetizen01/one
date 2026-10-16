@@ -31,7 +31,7 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 Independent verification run `38872070590` in `panglimanetizen01/one-windows-verification` checked out canonical source baseline `dba4fad49854952e256ae41744f57f93e39167a8` and passed on Ubuntu and Windows Server 2025. Both jobs passed canonical SHA verification, contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, and platform-specific offline verification. The offline verifiers included deterministic `.oneir` and `.onepkg` comparisons.
 
-The later documentation-only synchronization commit is intentionally treated as a separate canonical revision and receives its own fresh exact-SHA verification before it is called the verified current head.
+The later documentation-only synchronization revision is intentionally treated as a separate canonical revision and receives its own fresh exact-SHA verification before it is called the verified current head.
 
 ## Release labels
 
@@ -39,4 +39,6 @@ The later documentation-only synchronization commit is intentionally treated as 
 - **VERIFIED:** exact source revision has executable cross-platform evidence.
 - **SUPPORTED:** reserved for a stronger platform/support claim.
 
-No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
+## Verification infrastructure rule
+
+No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution. **Do not purchase an upgrade** merely to obtain hosted runner execution; use the independent verification path when the canonical hosted runner is unavailable.
