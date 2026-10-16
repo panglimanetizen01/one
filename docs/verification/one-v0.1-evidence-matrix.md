@@ -14,8 +14,8 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / independently exercised |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / independently exercised |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
-| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; filesystem.write CLI additionally verified at `a332dc5e58760460c26ebebb33f32f910bfdf4b3` on Termux/Android |
-| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED at `a332dc5e58760460c26ebebb33f32f910bfdf4b3` on Termux/Android; also cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
+| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; current main additionally verified at `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android |
+| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED at `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; also cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
 | Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; current main also passes offline verification on Termux/Android |
@@ -26,8 +26,8 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end source execution + explicit permission | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
 | Language-level filesystem-read orchestration | parser → semantic → typed IR → governance → filesystem.read adapter → normalized result → CLI | end-to-end source execution + allow/deny/out-of-scope/backend tests | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
 | Language-level process execution orchestration | parser → semantic → typed IR → governance → process.execute adapter → normalized result → CLI | end-to-end source execution + permission + denial + backend-failure tests | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
-| Language-level filesystem-write orchestration | parser → semantic → typed IR → governance → filesystem.write adapter → CLI | source execution + explicit permission + exact-target write + denial | EXPERIMENTAL / canonical `main` `a332dc5e58760460c26ebebb33f32f910bfdf4b3` verified on Termux/Android; CLI regression test and core runtime test PASS; cross-platform evidence pending |
-| Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED on `a332dc5e58760460c26ebebb33f32f910bfdf4b3` on Termux/Android; 1 targeted test PASS |
+| Language-level filesystem-write orchestration | parser → semantic → typed IR → governance → filesystem.write adapter → CLI | source execution + explicit permission + exact-target write + denial | EXPERIMENTAL / canonical `main` `f4b4edc2e408928fb697fb355c3c69c88c62e09d` verified on Termux/Android; CLI regression test and core runtime test PASS; cross-platform evidence pending |
+| Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED on `f4b4edc2e408928fb697fb355c3c69c88c62e09d` on Termux/Android; 1 targeted test PASS |
 | Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED on current main in Termux/Android; workspace test PASS |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
 | Linux portability | verification mirror workflow | actual Linux run | GREEN for `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; current filesystem-write SHA not yet cross-platform verified |
@@ -36,9 +36,9 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 
 ## Current exact-SHA evidence
 
-Canonical `main` is `a332dc5e58760460c26ebebb33f32f910bfdf4b3`. The exact-SHA Termux/Android verification of this SHA passed contract checks, build, Clippy `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification. This is executable evidence for the stated Android/Termux boundary only.
+Canonical `main` is `f4b4edc2e408928fb697fb355c3c69c88c62e09d`. The exact-SHA Termux/Android verification of this SHA passed contract checks, build, Clippy `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification. This is executable evidence for the stated Android/Termux boundary only.
 
-The latest cross-platform exact-SHA evidence remains mirror run `38929072800` for source `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. It predates the filesystem-write commits and is not generalized to `a332dc5e...`.
+The latest cross-platform exact-SHA evidence remains mirror run `38929072800` for source `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. It predates the filesystem-write commits and is not generalized to `f4b4edc...`.
 
 ## Canonical CI status
 
