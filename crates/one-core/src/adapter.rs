@@ -67,6 +67,7 @@ pub enum AdapterError {
     UndeclaredCapability,
     InvalidArguments,
     UnsupportedPlatform,
+    ResolutionFailed,
 }
 
 pub trait ToolAdapter {
@@ -111,5 +112,10 @@ mod tests {
     fn adapter_request_contains_typed_arguments_not_command_text() {
         let request = AdapterRequest::new(request()).with_argument(AdapterArgument::Text("server.example".into()));
         assert_eq!(request.arguments(), &[AdapterArgument::Text("server.example".into())]);
+    }
+
+    #[test]
+    fn adapter_errors_distinguish_backend_resolution_failure_from_platform_unavailability() {
+        assert_ne!(AdapterError::ResolutionFailed, AdapterError::UnsupportedPlatform);
     }
 }

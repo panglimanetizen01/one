@@ -39,13 +39,13 @@ impl ToolAdapter for DnsResolveAdapter {
         };
         let mut addresses = (host.as_str(), 0u16)
             .to_socket_addrs()
-            .map_err(|_| AdapterError::UnsupportedPlatform)?
+            .map_err(|_| AdapterError::ResolutionFailed)?
             .map(|address| address.to_string())
             .collect::<Vec<_>>();
         addresses.sort();
         addresses.dedup();
         if addresses.is_empty() {
-            return Err(AdapterError::UnsupportedPlatform);
+            return Err(AdapterError::ResolutionFailed);
         }
         Ok(AdapterResult { success: true, output: addresses.join("\n").into_bytes() })
     }
@@ -77,6 +77,18 @@ mod tests {
         assert!(result.success);
         assert!(!result.output.is_empty());
         assert!(std::str::from_utf8(&result.output).expect("text").contains("127.0.0.1"));
+    }
+
+    #[test]
+    fn dns_adapter_reports_resolution_failure_as_resolution_failure() {
+        let adapter = DnsResolveAdapter::new();
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::NetworkDiscover,
+            Capability::NetworkDiscover,
+            ExecutionScope::target("this-host-name-must-not-exist.invalid"),
+            EffectClass::Discover,
+        );
+        assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::ResolutionFailed));
     }
 
     #[test]
