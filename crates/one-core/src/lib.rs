@@ -1,3 +1,4 @@
+pub mod adapter;
 pub mod ast;
 pub mod capability;
 pub mod diagnostic;
@@ -26,6 +27,7 @@ pub mod stdlib;
 pub mod token;
 pub mod types;
 
+pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, PlatformKind};
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
