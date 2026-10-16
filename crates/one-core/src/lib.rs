@@ -31,7 +31,7 @@ pub mod stdlib;
 pub mod token;
 pub mod types;
 
-pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
+pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileReadAdapter, FileWriteAdapter, PlatformKind, ProcessAdapter, ToolAdapter};
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
@@ -64,38 +64,8 @@ pub use types::Type;
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn compile(source: &str) -> IrProgram {
-        let program = parse(source).expect("source should parse");
-        let typed = analyze(&program).expect("source should analyze");
-        lower(&typed).expect("source should lower")
-    }
-
-    #[test]
-    fn core_pipeline_smoke_contract() {
-        let ir = compile("nama adalah \"Budi\"\ntampilkan nama\n");
-        let mut interpreter = Interpreter::new(CapabilitySet::none());
-        let result = interpreter.execute(&ir).expect("source should execute");
-        assert_eq!(result.output, vec!["Budi"]);
-    }
-
-    #[test]
-    fn one_source_dns_operation_reaches_orchestration_runtime_and_returns_normalized_result() {
-        let ir = compile("cari alamat \"127.0.0.1\"\n");
-        let mut interpreter = Interpreter::with_orchestration_policy(
-            ExecutionPolicy::default()
-                .grant(Capability::NetworkDiscover)
-                .allow_scope(Capability::NetworkDiscover, ScopeRule::Target("127.0.0.1".into())),
-        );
-        let result = interpreter.execute(&ir).expect("source orchestration should execute");
-        assert!(result.output.iter().any(|line| line.contains("127.0.0.1")));
-    }
-
-    #[test]
-    fn one_source_dns_operation_is_denied_without_explicit_capability_grant() {
-        let ir = compile("cari alamat \"127.0.0.1\"\n");
-        let mut interpreter = Interpreter::with_orchestration_policy(ExecutionPolicy::default());
-        let error = interpreter.execute(&ir).expect_err("orchestration must be denied by default");
-        assert_eq!(error.code, "N3209");
-    }
+    fn compile(source: &str) -> IrProgram { let program = parse(source).expect("source should parse"); let typed = analyze(&program).expect("source should analyze"); lower(&typed).expect("source should lower") }
+    #[test] fn core_pipeline_smoke_contract() { let ir = compile("nama adalah \"Budi\"\ntampilkan nama\n"); let mut interpreter = Interpreter::new(CapabilitySet::none()); let result = interpreter.execute(&ir).expect("source should execute"); assert_eq!(result.output, vec!["Budi"]); }
+    #[test] fn one_source_dns_operation_reaches_orchestration_runtime_and_returns_normalized_result() { let ir = compile("cari alamat \"127.0.0.1\"\n"); let mut interpreter = Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::NetworkDiscover).allow_scope(Capability::NetworkDiscover, ScopeRule::Target("127.0.0.1".into()))); let result = interpreter.execute(&ir).expect("source orchestration should execute"); assert!(result.output.iter().any(|line| line.contains("127.0.0.1"))); }
+    #[test] fn one_source_dns_operation_is_denied_without_explicit_capability_grant() { let ir = compile("cari alamat \"127.0.0.1\"\n"); let mut interpreter = Interpreter::with_orchestration_policy(ExecutionPolicy::default()); let error = interpreter.execute(&ir).expect_err("orchestration must be denied by default"); assert_eq!(error.code, "N3209"); }
 }
