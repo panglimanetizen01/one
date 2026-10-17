@@ -12,7 +12,7 @@ One starts with Bahasa Indonesia while sharing a common semantic core with futur
 
 **Status:** Accepted
 
-One is not restricted to education, scripting, automation, web, or one technical domain. Its architecture must support serious general-purpose programming.
+One is not restricted to education, scripting, automation, web, or one technical domain. Its architecture must support serious general-purpose programming, including software for devices, embedded systems, and robotics.
 
 ## ADR-0003 — Human-oriented but formally deterministic
 
@@ -42,7 +42,7 @@ External effects require explicit capability and scope governance. Adapters are 
 
 **Status:** Accepted
 
-One must not be tied to a specific OS, Linux distro, shell, terminal, editor, IDE, or Android application. Hosts integrate with One through stable tooling/runtime interfaces.
+One must not be tied to a specific OS, Linux distro, shell, terminal, editor, IDE, Android application, embedded board, or device vendor. Hosts integrate with One through stable tooling/runtime interfaces.
 
 ## ADR-0008 — Linux distribution breadth
 
@@ -85,3 +85,11 @@ A feature or platform is not called Verified or Supported without executable evi
 **Status:** Accepted
 
 One does not claim absolute historical novelty for every individual idea. Its intended distinctiveness is the concrete combination of human-oriented syntax, formal deterministic semantics, shared IR, native localization, progressive complexity, general-purpose scope, portability, interoperability, and governance.
+
+## ADR-0015 — Robotics, embedded systems, and programmable appliances are first-class domain targets
+
+**Status:** Accepted
+
+One's general-purpose scope explicitly includes software for robots, robotic controllers, microcontrollers, embedded computers, industrial/device controllers where appropriate, and programmable household or consumer electronics such as TVs, refrigerators, air conditioners, fans, cooling/refrigeration systems, and similar devices.
+
+Device-specific differences must be implemented through platform abstractions, compiler backends, runtimes, SDK bindings, adapters, or generated artifacts. They must not create separate language semantics. Each concrete target requires executable evidence before it can be called Supported.
