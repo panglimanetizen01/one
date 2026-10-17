@@ -24,8 +24,9 @@
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; independently verified on Ubuntu + Windows Server 2025 at `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via `38903950612` |
 | Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; exact-SHA Linux + Windows verified at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
 | Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; cross-platform evidence for this executable revision is still pending |
+| Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; implementation/test changes are on PR #57 head `0aa4acdf3796235eac432138fec829b6508879e3`; no successful exact-SHA executable verification yet |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
-| CLI | VERIFIED | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android |
+| CLI | VERIFIED / PLATFORM-BOUND | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; database CLI path is newly implemented and unverified |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
 | Conformance runner | ADDED | `crates/one-core/tests/conformance.rs` |
@@ -34,8 +35,9 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Latest exact-SHA executable verification | VERIFIED / PLATFORM-BOUND | latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`; Termux/Android contract, build, Clippy, targeted filesystem-write CLI test, workspace tests, and offline verification all passed; this is not Ubuntu/Windows evidence |
-| Latest cross-platform exact-SHA verification | VERIFIED | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification |
+| Latest exact-SHA executable verification | VERIFIED / HISTORICAL | latest recorded executable evidence is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it predates the database implementation and therefore does not verify current PR #57 head |
+| Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification; it predates the database implementation |
+| Current PR #57 hosted CI | INFRASTRUCTURE FAILURE / NO-STEP | run `550` for current head `0aa4acdf3796235eac432138fec829b6508879e3` failed both Ubuntu and Windows jobs with zero reported steps; this is not source-failure evidence |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent execution paths provide evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -52,7 +54,7 @@ The verified native runtime inventory remains DNS/system resolution, TCP, UDP, T
 
 ## Orchestration boundary
 
-Four language-level vertical slices now exist, but their evidence boundaries differ:
+Five language-level vertical slices now exist in source, but their evidence boundaries differ:
 
 ```text
 cari alamat "127.0.0.1"
@@ -65,21 +67,21 @@ jalankan proses "rustc"
 → parser → semantic → typed IR → target-scoped governance → process.execute → CLI
 
 tulis ke berkas "<path>" dengan "<isi>"
-→ parser → semantic → typed IR → target-scoped governance → filesystem.write → CLI
+→ parser → semantic → typed IR → filesystem.write governance → CLI
+
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+→ parser → semantic → typed IR → resource-scoped database.query governance → database.sqlite.query → normalized CLI result
 ```
 
-DNS and filesystem-read are backed by the recorded cross-platform evidence. Process execution is backed by exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`. Filesystem write is backed by latest executable evidence at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it is intentionally not labeled cross-platform verified.
+DNS, filesystem-read, and process execution are backed by the recorded cross-platform evidence. Filesystem write is backed by the latest Termux/Android executable evidence and is intentionally not labeled cross-platform verified. Database query is implemented with a real SQLite adapter and source/CLI tests, but the current implementation revision is not yet executable-verified because the current hosted CI attempt has no executed steps and the available container cannot reach GitHub DNS.
 
 ## Current checkpoint
 
-- Latest exact-SHA executable verification: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all PASS.
-- Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` / mirror `38929072800`.
-- PR #49: filesystem-write vertical slice merged before the CLI work.
-- PR #50: filesystem.write CLI support merged into `main`.
-- PR #51: documentation synchronized with filesystem.write verification evidence.
-- PR #52: consistency audit synchronized the normative CLI contract and grammar with the implementation.
-- GitHub hosted CI for the filesystem-write PR remained an infrastructure evidence failure with zero executed steps; it is not source-failure evidence.
-- Filesystem write status: `EXPERIMENTAL`, limited to one text payload to one explicitly targeted file, with explicit `filesystem.write` permission.
+- Current PR #57 head: `0aa4acdf3796235eac432138fec829b6508879e3`.
+- Database source path is implemented: `Capability::DatabaseQuery` → `SemanticCapabilityId::DatabaseQuery` → resource scope → `database.sqlite.query` → SQLite parameterized SELECT → UTF-8 normalized result.
+- Database tests cover adapter success, source-level success, default denial, out-of-scope denial, backend failure, deterministic normalization, and CLI success/denial/scope denial.
+- Current hosted CI run `550` failed both Ubuntu and Windows jobs with zero reported steps. This is infrastructure/no-step evidence, not source-failure evidence.
+- No current exact-SHA executable claim is made for the database implementation.
 
 ## Release interpretation
 
