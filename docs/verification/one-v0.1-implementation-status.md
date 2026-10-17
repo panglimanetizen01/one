@@ -24,7 +24,7 @@
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; independently verified on Ubuntu + Windows Server 2025 at `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via `38903950612` |
 | Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; exact-SHA Linux + Windows verified at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
 | Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; cross-platform evidence for this executable revision is still pending |
-| Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; implementation/test changes are on PR #57 head `0aa4acdf3796235eac432138fec829b6508879e3`; no successful exact-SHA executable verification yet |
+| Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; implementation/test source revision `1c6662efbbd0541c6336743875b515a4f338d662`; later branch commits are documentation synchronization only; no successful exact-SHA executable verification yet |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
 | CLI | VERIFIED / PLATFORM-BOUND | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; database CLI path is newly implemented and unverified |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
@@ -35,9 +35,9 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Latest exact-SHA executable verification | VERIFIED / HISTORICAL | latest recorded executable evidence is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it predates the database implementation and therefore does not verify current PR #57 head |
+| Latest exact-SHA executable verification | VERIFIED / HISTORICAL | latest recorded executable evidence is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it predates the database implementation and therefore does not verify the current database source revision |
 | Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification; it predates the database implementation |
-| Current PR #57 hosted CI | INFRASTRUCTURE FAILURE / NO-STEP | run `550` for current head `0aa4acdf3796235eac432138fec829b6508879e3` failed both Ubuntu and Windows jobs with zero reported steps; this is not source-failure evidence |
+| Current database-source CI | INFRASTRUCTURE FAILURE / NO-STEP | run `556` targeted database source revision `1c6662efbbd0541c6336743875b515a4f338d662`; both Ubuntu and Windows jobs failed with zero reported steps; this is not source-failure evidence |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent execution paths provide evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -73,15 +73,16 @@ kueri database ":memory:" dengan "SELECT ?1" dan "42"
 → parser → semantic → typed IR → resource-scoped database.query governance → database.sqlite.query → normalized CLI result
 ```
 
-DNS, filesystem-read, and process execution are backed by the recorded cross-platform evidence. Filesystem write is backed by the latest Termux/Android executable evidence and is intentionally not labeled cross-platform verified. Database query is implemented with a real SQLite adapter and source/CLI tests, but the current implementation revision is not yet executable-verified because the current hosted CI attempt has no executed steps and the available container cannot reach GitHub DNS.
+DNS, filesystem-read, and process execution are backed by the recorded cross-platform evidence. Filesystem write is backed by the latest Termux/Android executable evidence and is intentionally not labeled cross-platform verified. Database query is implemented with a real SQLite adapter and source/CLI tests, but the implementation source revision is not yet executable-verified because hosted CI run #556 has no executed steps and the available container cannot reach GitHub DNS.
 
 ## Current checkpoint
 
-- Current PR #57 head: `0aa4acdf3796235eac432138fec829b6508879e3`.
+- Database implementation source revision: `1c6662efbbd0541c6336743875b515a4f338d662`.
+- Later PR #57 commits are documentation synchronization; they do not constitute fresh executable verification.
 - Database source path is implemented: `Capability::DatabaseQuery` → `SemanticCapabilityId::DatabaseQuery` → resource scope → `database.sqlite.query` → SQLite parameterized SELECT → UTF-8 normalized result.
 - Database tests cover adapter success, source-level success, default denial, out-of-scope denial, backend failure, deterministic normalization, and CLI success/denial/scope denial.
-- Current hosted CI run `550` failed both Ubuntu and Windows jobs with zero reported steps. This is infrastructure/no-step evidence, not source-failure evidence.
-- No current exact-SHA executable claim is made for the database implementation.
+- Hosted CI run `556` failed both Ubuntu and Windows jobs with zero reported steps. This is infrastructure/no-step evidence, not source-failure evidence.
+- No exact-SHA executable claim is made for the database implementation.
 
 ## Release interpretation
 
