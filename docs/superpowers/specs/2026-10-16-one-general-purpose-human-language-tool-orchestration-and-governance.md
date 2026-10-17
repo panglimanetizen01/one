@@ -1,16 +1,14 @@
 # One — General-Purpose Human-Language Tool Orchestration and Governance
 
-**Status:** Runtime orchestration foundation verified; DNS and filesystem-read source-level orchestration are experimental and independently verified at the recorded implementation revision; broader language-level capability coverage remains in development.
+**Status:** Runtime orchestration foundation verified; DNS, filesystem-read, process, and filesystem-write source-level slices have recorded evidence at their respective revisions; the current SQLite database-query slice is implemented but unverified.
 **Date:** 2026-10-16
 **Scope:** General-purpose One language, human-language programming, external-tool orchestration, capability/runtime governance, localization, interoperability, auditability, and platform control
 
 ## Current implementation boundary
 
-The architecture is executable through a verified runtime foundation and two source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, the real `network.dns.resolve` adapter, and source-level `cari alamat` and `baca berkas` operations that reach governed adapters through runtime execution.
+The architecture is executable through a verified runtime foundation and multiple source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, and governed source operations.
 
-The latest independently verified implementation revision is `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`, with independent mirror run `38901366447` on Ubuntu and Windows Server 2025. The run passed contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact verification, DNS success/failure classification, filesystem-read orchestration runtime, and offline verification.
-
-The current canonical `main` is newer than that exact-SHA evidence. Later commits must not be described as independently exact-SHA verified until a new verification run records the newer SHA.
+The latest independently verified implementation revisions are historical and must not be generalized to the current database head. Current PR #57 head is `1c6662efbbd0541c6336743875b515a4f338d662`. The current hosted CI jobs provide no executable steps, so the current database implementation remains unverified.
 
 ## 1. Purpose
 
@@ -22,43 +20,25 @@ One separates language semantics from capability semantics, runtime governance, 
 
 > **One is a human-language programming language, not a human-language disguise for technical commands.**
 
-The verified DNS path is:
+Every source-level orchestration path follows the same controlled semantic boundary:
 
 ```text
-One source: cari alamat "127.0.0.1"
+One source
         ↓
 Localized parser / semantic validation
         ↓
 Typed orchestration IR
         ↓
-Explicit target-scoped governance
+Explicit capability + scope governance
         ↓
-network.dns.resolve adapter
+Governed adapter
         ↓
 Normalized result
         ↓
-CLI output
+CLI/runtime output
 ```
 
-The verified filesystem-read path is:
-
-```text
-One source: baca berkas "data/contoh.txt"
-        ↓
-Localized parser / semantic validation
-        ↓
-Typed orchestration IR
-        ↓
-Explicit target-scoped governance
-        ↓
-filesystem.read adapter
-        ↓
-Normalized UTF-8 text result
-        ↓
-CLI output
-```
-
-These are experimental vertical slices, not the complete orchestration catalog.
+The current source-level examples are DNS, filesystem read/write, process execution, and database query. They are separate semantic operations, not arbitrary prose-to-command translation.
 
 ## 3. Existing One semantic pipeline remains authoritative
 
@@ -79,7 +59,13 @@ The orchestration layer consumes this pipeline rather than creating a parallel i
 
 One may express semantic operations in understandable language. Examples are normative only when covered by grammar/semantic contracts and executable tests.
 
-The currently verified source-level operations are `cari alamat <target>` and `baca berkas <path>`. They resolve to distinct semantic capabilities and governed adapters.
+Current database source form:
+
+```text
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+```
+
+This is a bounded grammar production. It does not authorize database access by itself.
 
 ## 5. Intent is not authority
 
@@ -88,6 +74,18 @@ For every external effect, the runtime evaluates the required capability, reques
 ## 6. Capability model
 
 Every external operation exposed to One must have a machine-readable capability declaration covering semantic identity, effects, input/output schema, scope, privilege requirements, platform/backend availability, adapter identity, audit requirements, determinism, and verification status as applicable.
+
+Current database capability:
+
+```text
+semantic: database.query
+runtime capability: DatabaseQuery
+scope: Resource(database-resource)
+effect: Read
+adapter: database.sqlite.query
+```
+
+The current database capability is read-only and parameterized. Database mutation requires a separate capability contract.
 
 ## 7. Tool Capability Registry
 
@@ -107,6 +105,8 @@ Progressive precision remains an architectural goal: beginner semantic operation
 
 External results are normalized into typed semantic results without inventing facts. Material uncertainty remains uncertainty.
 
+The database adapter currently normalizes SQLite scalar values into deterministic text rows for the declared UTF-8 result expectation.
+
 ## 11. Human-readable explanations
 
 Explanation layers may render deterministic structured results and diagnostics for users. They are not semantic or execution authorities.
@@ -124,6 +124,8 @@ This is an architectural inventory, not a claim that all listed capabilities are
 ## 14. Governance plane
 
 The runtime governance plane may grant/withhold capabilities, restrict scope, require approval, restrict/disable adapters, and record execution/audit events. Governance state remains separate from language semantics.
+
+Database queries use typed `Resource` scope and must match the explicitly granted resource.
 
 ## 15. No language-level privilege escalation
 
@@ -148,7 +150,7 @@ The required lifecycle is:
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-All twelve stages exist in the runtime foundation. The DNS and filesystem-read source-level vertical slices drive those stages from One source through CLI/runtime. Additional capabilities require their own source grammar/semantic boundary and evidence.
+The database source slice now maps through this lifecycle in source, core tests, and CLI tests, but the current revision remains unverified.
 
 ## 17. Audit model
 
@@ -158,9 +160,13 @@ Audit data records observed/requested runtime facts such as capability identity,
 
 Orchestration failures remain typed and distinguish invalid source/parameters, ambiguity, missing capability, policy denial, out-of-scope target, unavailable adapter, unsupported platform, adapter failure, malformed output, timeout, interruption, and uncertainty where applicable.
 
+Database-specific failures currently map invalid arguments to adapter rejection and SQLite open/prepare/query failures to backend failure. Policy denial occurs before adapter invocation.
+
 ## 19. Testing and conformance
 
-The DNS and filesystem-read source-level slices have executable success and policy-denial coverage plus independent Linux/Windows exact-SHA verification at `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`. The verification run also exercises DNS resolution-failure classification, filesystem out-of-scope/backend/unavailable-adapter paths, and the general orchestration runtime deny/allow/incompatible-adapter tests. No additional adapter is marked Verified without executable evidence appropriate to its backend.
+Existing vertical slices have executable tests at their recorded revisions. The current database slice includes core tests for adapter success, default denial, resource-scope denial, backend failure, deterministic normalization, source-to-runtime success, and CLI success/denial/scope denial.
+
+These tests are source evidence only until executed at the exact current SHA.
 
 ## 20. Compatibility with existing One architecture
 
@@ -168,7 +174,7 @@ This architecture extends, rather than replaces, the lexer/parser, AST/name-scop
 
 ## 21. v0.1 boundary
 
-The verified v0.1 boundary includes experimental DNS and filesystem-read source-to-runtime orchestration slices. It does not claim arbitrary human-language source can already invoke every external capability.
+The verified v0.1 boundary remains limited to the recorded exact-SHA evidence. The current database implementation is explicitly outside the Verified/Supported boundary until exact-SHA executable evidence exists.
 
 ## 22. Non-goals
 
@@ -177,8 +183,6 @@ This specification does not make every external tool part of the standard librar
 ## 23. Success criteria
 
 The architecture succeeds when useful programming intent can be expressed in understandable language, localization preserves semantic identity, One can orchestrate real external capabilities through typed adapters, external tools remain implementation backends, advanced users retain precise controls, capability/policy enforcement is independent of wording, results are normalized without invented facts, supported adapters have executable evidence, One remains general-purpose, and platform/owner governance can control execution without changing language meaning.
-
-The DNS and filesystem-read slices satisfy the first two executable source-level boundaries. Broader capability coverage remains future work.
 
 ## 24. Implementation gate
 
