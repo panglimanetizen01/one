@@ -24,8 +24,8 @@
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; independently verified on Ubuntu + Windows Server 2025 at `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via `38903950612` |
 | Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; exact-SHA Linux + Windows verified at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
 | Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; cross-platform evidence for this executable revision is still pending |
-| Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; source/test revision `0aa4acdf3796235eac432138fec829b6508879e3`; no successful exact-SHA executable verification yet |
-| Language-level HTTP GET orchestration | IMPLEMENTED / UNVERIFIED | `ambil dari` → parser → semantic validation → typed IR → target-scoped `network.connect` governance → `network.http.get` adapter → bounded HTTP/1.1 GET → normalized response body → CLI; current branch head `913e644ea665711c669590a80d7ff19866cb7671`; no successful exact-SHA executable verification yet |
+| Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; source/test lineage `0aa4acdf3796235eac432138fec829b6508879e3`; no successful exact-SHA executable verification yet |
+| Language-level HTTP GET orchestration | IMPLEMENTED / UNVERIFIED | `ambil dari` → parser → semantic validation → typed IR → target-scoped `network.connect` governance → `network.http.get` adapter → bounded HTTP/1.1 GET → normalized response body → CLI; current canonical main `dd572f1052aa85439015078e0d879a5388544016`; no successful exact-SHA executable verification yet |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
 | CLI | VERIFIED / PLATFORM-BOUND | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; database and HTTP CLI paths are newly implemented and unverified |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
@@ -36,10 +36,10 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Latest exact-SHA executable verification | VERIFIED / HISTORICAL | latest recorded executable evidence is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it predates the database and HTTP implementation and therefore does not verify the current database/HTTP source revisions |
+| Latest exact-SHA executable verification | VERIFIED / HISTORICAL | latest recorded executable evidence is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it predates the database and HTTP implementation and therefore does not verify canonical `main` |
 | Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification; it predates the database and HTTP implementation |
-| Current database-source CI | INFRASTRUCTURE FAILURE / NO-STEP | run `550` targeted source/test revision `0aa4acdf3796235eac432138fec829b6508879e3`; both Ubuntu and Windows jobs failed with zero reported steps; this is not source-failure evidence |
-| Current HTTP-source CI | INFRASTRUCTURE FAILURE / NO-STEP | latest inspected branch run `585` targeted prior branch head `a0975943d1ca5f8f825741a0cc47da10ab268784`; both Ubuntu and Windows jobs failed with zero reported steps; current head remains unverified |
+| Database-source hosted CI | INFRASTRUCTURE FAILURE / NO-STEP | historical run `550` targeted source/test lineage `0aa4acdf3796235eac432138fec829b6508879e3`; both Ubuntu and Windows jobs failed with zero reported steps; this is not source-failure evidence |
+| HTTP-source hosted CI | INFRASTRUCTURE FAILURE / NO-STEP | historical run `585` targeted a prior HTTP branch head; both Ubuntu and Windows jobs failed with zero reported steps; this is not source-failure evidence |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent execution paths provide evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -80,18 +80,18 @@ ambil dari "http://127.0.0.1:8080/"
 → parser → semantic → typed IR → target-scoped network.connect governance → network.http.get → HTTP/1.1 GET → normalized CLI result
 ```
 
-DNS, filesystem-read, and process execution are backed by the recorded cross-platform evidence. Filesystem write is backed by the latest Termux/Android executable evidence and is intentionally not labeled cross-platform verified. Database query is implemented with a real SQLite adapter and source/CLI tests, but source/test revision `0aa4acdf3796235eac432138fec829b6508879e3` is not yet executable-verified because hosted CI run #550 has no executed steps and the available container cannot reach GitHub DNS. HTTP GET is implemented with a real bounded HTTP/1.1 adapter and source/CLI tests, but current hosted CI runs also report zero executed steps, so it remains unverified.
+DNS, filesystem-read, and process execution are backed by the recorded cross-platform evidence. Filesystem write is backed by the latest Termux/Android executable evidence and is intentionally not labeled cross-platform verified. Database query is implemented with a real SQLite adapter and source/CLI tests, but its current canonical source revision has not yet been executed through the exact-SHA harness. HTTP GET is implemented with a real bounded HTTP/1.1 adapter and source/CLI tests, but its current canonical source revision has not yet been executed through the exact-SHA harness.
 
 ## Current checkpoint
 
-- Database source/test revision: `0aa4acdf3796235eac432138fec829b6508879e3`.
-- HTTP source/test/current implementation head: `913e644ea665711c669590a80d7ff19866cb7671`.
+- Canonical `main` is `dd572f1052aa85439015078e0d879a5388544016`.
+- Database source/test lineage: `0aa4acdf3796235eac432138fec829b6508879e3`.
+- HTTP source/test/current implementation is integrated into canonical `main` at `dd572f1052aa85439015078e0d879a5388544016`.
 - Database source path is implemented: `Capability::DatabaseQuery` → `SemanticCapabilityId::DatabaseQuery` → resource scope → `database.sqlite.query` → SQLite parameterized SELECT → UTF-8 normalized result.
 - HTTP source path is implemented: `Capability::NetworkConnect` → `SemanticCapabilityId::NetworkConnect` → target scope → `network.http.get` → HTTP/1.1 GET → response-body normalization.
 - Database tests cover adapter success, source-level success, default denial, out-of-scope denial, backend failure, deterministic normalization, and CLI success/denial/scope denial.
 - HTTP tests cover loopback source-to-runtime success, default denial, target out-of-scope denial, adapter URL validation, and CLI success/denial/scope denial.
-- Hosted CI run `550` failed both Ubuntu and Windows jobs with zero reported steps for the database lineage; latest inspected HTTP-lineage run `585` likewise failed with zero reported steps.
-- No exact-SHA executable claim is made for the database or HTTP implementation.
+- No exact-SHA executable claim is made for the database or HTTP implementation at canonical `main`.
 
 ## Release interpretation
 
