@@ -62,8 +62,6 @@ If multiple complete parses remain and their semantic structures differ, parsing
 
 The parser MUST NOT resolve this ambiguity using longest-match heuristics, frequency, editor history, filesystem state, execution history, machine learning, or an LLM.
 
-Equivalent parses that normalize to the same semantic structure MAY be collapsed before ambiguity reporting.
-
 ## 4. Data
 
 ```text
@@ -94,7 +92,8 @@ action = display_action
         | dns_discovery_action
         | filesystem_read_action
         | filesystem_write_action
-        | process_execute_action ;
+        | process_execute_action
+        | database_query_action ;
 
 display_action = "tampilkan", expression, NEWLINE ;
 greet_action = "sapa", expression, NEWLINE ;
@@ -105,6 +104,8 @@ dns_discovery_action = "cari", "alamat", expression, NEWLINE ;
 filesystem_read_action = "baca", "berkas", expression, NEWLINE ;
 filesystem_write_action = "tulis", "ke", "berkas", expression, "dengan", expression, NEWLINE ;
 process_execute_action = "jalankan", "proses", expression, NEWLINE ;
+database_query_action = "kueri", "database", expression, "dengan", expression,
+                        { "dan", expression }, NEWLINE ;
 ```
 
 Examples:
@@ -119,11 +120,14 @@ cari alamat "127.0.0.1"
 baca berkas "data/contoh.txt"
 tulis ke berkas "data/hasil.txt" dengan "halo dari One"
 jalankan proses "rustc"
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
 ```
 
-`cari alamat`, `baca berkas`, `tulis ke berkas`, and `jalankan proses` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
+`cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, and `kueri database` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
 
-The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat`, `baca berkas`, and `jalankan proses`, and the fixed three-word prefix `tulis ke berkas`, likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
+The database-query production is intentionally bounded to a database resource, one SQL expression, and zero or more explicit parameter expressions. The current implementation boundary accepts read-only parameterized SQLite `SELECT` statements; broader database mutation/query semantics are not implied by this grammar entry.
+
+The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat`, `baca berkas`, `jalankan proses`, and `kueri database`, and the fixed three-word prefix `tulis ke berkas`, likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
 
 The source line:
 
@@ -402,42 +406,20 @@ The conformance suite MUST include, at minimum:
 14. explicit `baca berkas` source orchestration;
 15. explicit `tulis ke berkas` source orchestration;
 16. explicit `jalankan proses` source orchestration;
-17. repeated parsing of identical input with identical semantic output.
+17. explicit `kueri database` source orchestration with a database resource, SQL, and parameter list;
+18. repeated parsing of identical input with identical semantic output.
 
 ### Invalid
 
-18. tabs in indentation;
-19. incomplete declaration/assignment;
-20. unsupported natural-language filler;
-21. arbitrary first-word actions;
-22. unsupported loop-condition prose;
-23. malformed reserved phrases;
-24. ambiguous multi-word boundaries that yield different semantics;
-25. names swallowing structural keywords;
-26. missing action targets;
-27. source spans that cannot cover the complete multi-word name;
-28. orchestration source without the required explicit operation prefix.
-
-## 18. Compatibility and implementation gate
-
-This document supersedes the previous normative assumption that v0.1 identifiers are only single lexical words.
-
-The implementation MUST NOT claim conformance to grammar-bounded multi-word names until:
-
-1. this grammar and the lexical specification agree;
-2. the AST contract defines the representation of `Name`/name references;
-3. parser tests cover the required boundary cases;
-4. ambiguity and diagnostic tests exist;
-5. the reference semantic representation preserves the complete name span.
-
-The `cari alamat`, `baca berkas`, `tulis ke berkas`, and `jalankan proses` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
-
-No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
-
-## 19. Design decision
-
-**Approved direction:** controlled Indonesian surface syntax with lexical `WORD` tokens, grammar-bounded multi-word names, explicit action productions including the currently verified orchestration forms, deterministic ambiguity rejection, and no implicit natural-language intent inference.
-
-Principle:
-
-> Natural on the surface; formal underneath.
+19. tabs in indentation;
+20. incomplete declaration/assignment;
+21. unsupported natural-language filler;
+22. arbitrary first-word actions;
+23. unsupported loop-condition prose;
+24. malformed reserved phrases;
+25. ambiguous multi-word boundaries that yield different semantics;
+26. names swallowing structural keywords;
+27. missing action targets;
+28. source spans that cannot cover the complete multi-word name;
+29. orchestration source without the required explicit operation prefix;
+30. database query source without a database resource or SQL expression.
