@@ -42,6 +42,20 @@ Technical alias:
 one run <file.one> --allow network.discover --target <alamat>
 ```
 
+### Network connect / HTTP GET — implementation boundary
+
+```text
+one jalankan <file.one> --izinkan network.connect --target <url>
+```
+
+Technical alias:
+
+```text
+one run <file.one> --allow network.connect --target <url>
+```
+
+The `ambil dari "<url>"` source operation maps to semantic capability `network.connect`, effect `Connect`, and the governed `network.http.get` adapter. The current language-level boundary is an explicit `http://` URL, HTTP/1.1 GET, exact target scoping, and response-body normalization. HTTPS, arbitrary methods, custom request headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. The source implementation is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+
 ### Filesystem read
 
 ```text
@@ -66,7 +80,7 @@ Technical alias:
 one run <file.one> --allow filesystem.write --target <path>
 ```
 
-The `tulis ke berkas "<path>" dengan "<isi>"` source operation maps to semantic capability `filesystem.write`, effect `Write`, and the governed `filesystem.write` adapter. The current boundary accepts one text payload for one explicitly targeted file. No permission means denial and a different target is outside the granted scope. This slice is **EXPERIMENTAL** and currently has exact-SHA Termux/Android evidence only.
+The `tulis ke berkas "<path>" dengan "<isi>"` source operation maps to semantic capability `filesystem.write`, effect `Write`, and the governed `filesystem.write` adapter. The current boundary accepts one text payload for one explicitly targeted file. This slice is **EXPERIMENTAL** and currently has exact-SHA Termux/Android evidence only.
 
 ### Process execution — experimental boundary
 
@@ -82,6 +96,14 @@ one run <file.one> --allow process.execute --target <program>
 
 The `jalankan proses "<program>"` source operation maps to semantic capability `process.execute`, effect `Execute`, and the governed `process.execute` adapter. The current implementation executes the selected program without additional arguments and normalizes its stdout (or stderr when stdout is empty) as UTF-8 text. This slice is **EXPERIMENTAL** within the one-program/no-arguments boundary and has exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`.
 
+### Database query — implementation boundary
+
+```text
+one jalankan <file.one> --izinkan database.query --target <database>
+```
+
+The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The current implementation is limited to parameterized read-only SQLite `SELECT` statements and is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+
 Rules for current orchestration permission surfaces:
 
 - the capability must be explicitly granted;
@@ -94,9 +116,10 @@ Rules for current orchestration permission surfaces:
 - the filesystem-read slice currently reads UTF-8 text and does not constitute general filesystem support;
 - the filesystem-write slice currently writes one text payload to one explicitly targeted file and does not constitute general filesystem management or sandbox/path-confinement support;
 - the process-execution slice currently executes one explicitly targeted program without arguments and does not constitute general process-management support;
-- DNS and filesystem-read are experimental within their recorded evidence boundaries;
-- filesystem write is experimental and currently verified only on Termux/Android;
-- process execution is experimental within its recorded cross-platform boundary.
+- the database slice is limited to read-only parameterized SQLite `SELECT` through its explicit resource target;
+- the HTTP GET slice is limited to explicit `http://` URLs and the `network.http.get` adapter;
+- DNS, filesystem-read, filesystem-write, and process execution retain their previously recorded evidence boundaries;
+- database query and HTTP GET are not called Verified or Supported without fresh exact-SHA executable evidence.
 
 ## 4. Exit status
 
