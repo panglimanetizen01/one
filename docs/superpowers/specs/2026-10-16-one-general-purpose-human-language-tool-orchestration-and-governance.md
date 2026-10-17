@@ -1,6 +1,6 @@
 # One — General-Purpose Human-Language Tool Orchestration and Governance
 
-**Status:** Runtime orchestration foundation verified; DNS, filesystem-read, process, and filesystem-write source-level slices have recorded evidence at their respective revisions; the current SQLite database-query slice is implemented but unverified.
+**Status:** Runtime orchestration foundation verified; DNS, filesystem-read, process, and filesystem-write source-level slices have recorded evidence at their respective revisions; the current SQLite database-query and HTTP GET slices are implemented but unverified.
 **Date:** 2026-10-16
 **Scope:** General-purpose One language, human-language programming, external-tool orchestration, capability/runtime governance, localization, interoperability, auditability, and platform control
 
@@ -8,7 +8,7 @@
 
 The architecture is executable through a verified runtime foundation and multiple source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, and governed source operations.
 
-The database source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. Later PR #57 commits in this documentation pass are synchronization-only. Hosted CI run #550 for the database source/test revision provides no executable steps, so the database implementation remains unverified.
+The database source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. Hosted CI for that revision provides no executable steps, so the database implementation remains unverified. The current branch also contains the HTTP GET source-to-runtime slice; its exact-SHA executable verification is likewise unavailable because current CI runs report zero steps.
 
 ## 1. Purpose
 
@@ -38,7 +38,7 @@ Normalized result
 CLI/runtime output
 ```
 
-The current source-level examples are DNS, filesystem read/write, process execution, and database query. They are separate semantic operations, not arbitrary prose-to-command translation.
+The current source-level examples are DNS, filesystem read/write, process execution, database query, and HTTP GET. They are separate semantic operations, not arbitrary prose-to-command translation.
 
 ## 3. Existing One semantic pipeline remains authoritative
 
@@ -65,7 +65,13 @@ Current database source form:
 kueri database ":memory:" dengan "SELECT ?1" dan "42"
 ```
 
-This is a bounded grammar production. It does not authorize database access by itself.
+Current HTTP GET source form:
+
+```text
+ambil dari "http://127.0.0.1:8080/"
+```
+
+Both are bounded grammar productions. Neither authorizes external access by itself.
 
 ## 5. Intent is not authority
 
@@ -85,7 +91,19 @@ effect: Read
 adapter: database.sqlite.query
 ```
 
+Current HTTP GET capability:
+
+```text
+semantic: network.connect
+runtime capability: NetworkConnect
+scope: Target(exact-http-url)
+effect: Connect
+adapter: network.http.get
+```
+
 The current database capability is read-only and parameterized. Database mutation requires a separate capability contract.
+
+The current HTTP source slice is limited to explicit `http://` URLs and GET over the existing HTTP/1.1 runtime. HTTPS, arbitrary methods, custom headers/bodies, redirects, cookies, and API-specific authentication require separate contracts.
 
 ## 7. Tool Capability Registry
 
@@ -107,6 +125,8 @@ External results are normalized into typed semantic results without inventing fa
 
 The database adapter currently normalizes SQLite scalar values into deterministic text rows for the declared UTF-8 result expectation.
 
+The HTTP GET adapter currently returns the successful HTTP response body under the declared UTF-8 normalization expectation and rejects non-2xx HTTP responses as adapter failures.
+
 ## 11. Human-readable explanations
 
 Explanation layers may render deterministic structured results and diagnostics for users. They are not semantic or execution authorities.
@@ -126,6 +146,8 @@ This is an architectural inventory, not a claim that all listed capabilities are
 The runtime governance plane may grant/withhold capabilities, restrict scope, require approval, restrict/disable adapters, and record execution/audit events. Governance state remains separate from language semantics.
 
 Database queries use typed `Resource` scope and must match the explicitly granted resource.
+
+HTTP GET uses typed `Target` scope and must match the exact URL supplied to `--target`.
 
 ## 15. No language-level privilege escalation
 
@@ -150,7 +172,7 @@ The required lifecycle is:
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-The database source slice maps through this lifecycle in source, core tests, and CLI tests, but the source/test revision remains unverified.
+The database and HTTP source slices are designed to follow this lifecycle in source, core tests, and CLI tests, but remain unverified until exact-SHA execution evidence exists.
 
 ## 17. Audit model
 
@@ -162,9 +184,11 @@ Orchestration failures remain typed and distinguish invalid source/parameters, a
 
 Database-specific failures currently map invalid arguments to adapter rejection and SQLite open/prepare/query failures to backend failure. Policy denial occurs before adapter invocation.
 
+HTTP-specific failures currently reject unsupported schemes/invalid URL targets at the adapter boundary, map network/HTTP runtime failures to backend failure, and treat non-2xx responses as backend failure for the current UTF-8 body-returning slice. Policy denial occurs before adapter invocation.
+
 ## 19. Testing and conformance
 
-Existing vertical slices have executable tests at their recorded revisions. The current database slice includes core tests for adapter success, default denial, resource-scope denial, backend failure, deterministic normalization, source-to-runtime success, and CLI success/denial/scope denial.
+Existing vertical slices have executable tests at their recorded revisions. The current database slice includes core tests for adapter success, default denial, resource-scope denial, backend failure, deterministic normalization, source-to-runtime success, and CLI success/denial/scope denial. The current HTTP slice includes source-to-runtime success against a local HTTP server, default capability denial, and out-of-scope denial, plus adapter URL validation coverage.
 
 These tests are source evidence only until executed at the exact source/test revision.
 
@@ -174,7 +198,7 @@ This architecture extends, rather than replaces, the lexer/parser, AST/name-scop
 
 ## 21. v0.1 boundary
 
-The verified v0.1 boundary remains limited to the recorded exact-SHA evidence. The current database implementation is explicitly outside the Verified/Supported boundary until exact-SHA executable evidence exists.
+The verified v0.1 boundary remains limited to the recorded exact-SHA evidence. The current database and HTTP GET implementations are explicitly outside the Verified/Supported boundary until exact-SHA executable evidence exists.
 
 ## 22. Non-goals
 
