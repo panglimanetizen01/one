@@ -35,3 +35,7 @@ jobs:
         run: cargo test -p one-core --all-targets dns_adapter
       - name: Orchestration policy deny and allow paths
         run: cargo test -p one-core --all-targets orchestrator
+      - name: Database vertical slice
+        run: cargo test -p one-core --test database_vertical_slice
+      - name: HTTP GET vertical slice
+        run: cargo test -p one-core --test http_get_vertical_slice
