@@ -30,8 +30,11 @@ Minimum v0.1 classes:
 - `native.call`
 - `clock.read`
 - `random.read`
+- `database.query`
 
-UI, database, device, cryptography, package installation, and other domains require explicit capability definitions before becoming standard effects.
+Database query is currently defined as a read-only, parameterized SQLite `SELECT` boundary. Database mutation requires a separate capability/effect contract and is not implied by `database.query`.
+
+UI, device, cryptography, package installation, and other domains require explicit capability definitions before becoming standard effects.
 
 ## 4. Capability identity
 
@@ -42,6 +45,7 @@ filesystem.read
 filesystem.write:/project/data
 network.connect:example.com:443
 process.spawn:one-tool
+database.query::memory:
 ```
 
 Scope parameters are constraints, not user-visible fuzzy matching.
@@ -86,6 +90,8 @@ Policy evaluation is deterministic for identical policy, request, and runtime ve
 A path-scoped capability must resolve the requested resource against the policy-defined root before access. String-prefix checks alone are insufficient for security-sensitive containment. Symlink, junction, mount, case-sensitivity, and platform-specific path semantics must be handled by the platform adapter.
 
 The language semantic layer must not invent platform-specific path rules.
+
+Database capabilities use typed `Resource` scope rather than `Target` scope. The requested database resource must exactly match the policy resource. The current SQLite adapter opens only the explicitly scoped database resource.
 
 ## 9. Network scope
 
@@ -156,7 +162,7 @@ The semantic analyzer may annotate required effects, but actual permission evalu
 - no ambient host capability;
 - every host effect crosses the capability gate;
 - denied effects have no external side effect;
-- scoped filesystem/network/process permissions are enforced by adapters;
+- scoped filesystem/network/process/database permissions are enforced by adapters;
 - native calls require explicit permission;
 - time/randomness are controllable for deterministic tests;
 - capability errors are stable and provenance-aware;
