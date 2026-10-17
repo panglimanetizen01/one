@@ -79,6 +79,32 @@ one jalankan main.one --izinkan process.execute --target rustc
 
 Boundary saat ini: satu program yang ditargetkan secara eksplisit tanpa argumen tambahan.
 
+## Menjalankan kueri database — dalam pengembangan
+
+SQLite-backed database query sudah diimplementasikan, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
+
+Source One:
+
+```text
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+```
+
+Permission CLI:
+
+```text
+one jalankan main.one --izinkan database.query --target :memory:
+```
+
+Boundary implementasi saat ini:
+
+- capability `database.query` wajib diberikan secara eksplisit;
+- `--target` adalah resource database dan harus cocok persis;
+- adapter menggunakan SQLite nyata dan parameterized SELECT;
+- hasil dinormalisasi sebagai teks UTF-8;
+- INSERT/UPDATE/DELETE/DDL belum termasuk boundary query ini;
+- current implementation head `0aa4acdf3796235eac432138fec829b6508879e3` belum executable-verified;
+- hosted CI run `550` gagal tanpa step yang dieksekusi, sehingga bukan source-failure evidence.
+
 ## `bangun` dan `package`
 
 Pada v0.1 saat ini:
@@ -92,4 +118,4 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 Latest exact-SHA executable evidence for filesystem write/CLI is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
 
-The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write CLI changes.
+The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write CLI or database changes.
