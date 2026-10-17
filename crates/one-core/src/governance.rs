@@ -84,11 +84,23 @@ impl ExecutionPolicy {
         if self.denials.contains(&request.capability) {
             return PolicyDecision::Deny(DenyReason::ExplicitlyDenied);
         }
-        if !self.grants.contains(&request.capability) {
+        let capability_granted = self.grants.iter().any(|capability| {
+            *capability == request.capability
+                || (matches!(
+                    request.capability,
+                    Capability::FilesystemRead | Capability::FilesystemWrite
+                ) && *capability == Capability::Filesystem)
+        });
+        if !capability_granted {
             return PolicyDecision::Deny(DenyReason::MissingCapability);
         }
         let scope_allowed = self.scopes.iter().any(|(capability, rule)| {
-            *capability == request.capability && rule.matches(&request.scope)
+            (*capability == request.capability
+                || (matches!(
+                    request.capability,
+                    Capability::FilesystemRead | Capability::FilesystemWrite
+                ) && *capability == Capability::Filesystem))
+                && rule.matches(&request.scope)
         });
         if !scope_allowed {
             return PolicyDecision::Deny(DenyReason::OutOfScope);
@@ -127,6 +139,51 @@ mod tests {
             .grant(Capability::NetworkConnect)
             .allow_scope(Capability::NetworkConnect, ScopeRule::Target("server.example".into()));
         assert_eq!(policy.evaluate(&request(ExecutionScope::target("server.example"))), PolicyDecision::Allow);
+    }
+
+    #[test]
+    fn specific_filesystem_write_grant_allows_matching_scope() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemWrite,
+            Capability::FilesystemWrite,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Write,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::FilesystemWrite)
+            .allow_scope(Capability::FilesystemWrite, ScopeRule::Target("file.txt".into()));
+        assert_eq!(policy.evaluate(&request), PolicyDecision::Allow);
+    }
+
+    #[test]
+    fn coarse_filesystem_grant_allows_specific_write_with_matching_scope() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemWrite,
+            Capability::FilesystemWrite,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Write,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::Filesystem)
+            .allow_scope(Capability::Filesystem, ScopeRule::Target("file.txt".into()));
+        assert_eq!(policy.evaluate(&request), PolicyDecision::Allow);
+    }
+
+    #[test]
+    fn coarse_filesystem_grant_does_not_cross_write_read_isolation() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Read,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::FilesystemWrite)
+            .allow_scope(Capability::FilesystemWrite, ScopeRule::Target("file.txt".into()));
+        assert_eq!(
+            policy.evaluate(&request),
+            PolicyDecision::Deny(DenyReason::MissingCapability)
+        );
     }
 
     #[test]

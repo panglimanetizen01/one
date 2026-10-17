@@ -30,8 +30,13 @@ Minimum v0.1 classes:
 - `native.call`
 - `clock.read`
 - `random.read`
+- `database.query`
 
-UI, database, device, cryptography, package installation, and other domains require explicit capability definitions before becoming standard effects.
+Database query is currently defined as a read-only, parameterized SQLite `SELECT` boundary. Database mutation requires a separate capability/effect contract and is not implied by `database.query`.
+
+The current language-level HTTP GET slice uses `network.connect` with an exact URL target and is limited to explicit `http://` HTTP/1.1 GET requests. It does not imply HTTPS, redirects, arbitrary methods, custom headers/bodies, cookies, or API-specific authentication.
+
+UI, device, cryptography, package installation, and other domains require explicit capability definitions before becoming standard effects.
 
 ## 4. Capability identity
 
@@ -41,7 +46,9 @@ A capability is identified by a stable name plus optional scoped parameters. Exa
 filesystem.read
 filesystem.write:/project/data
 network.connect:example.com:443
+network.connect:http://127.0.0.1:8080/
 process.spawn:one-tool
+database.query::memory:
 ```
 
 Scope parameters are constraints, not user-visible fuzzy matching.
@@ -87,9 +94,13 @@ A path-scoped capability must resolve the requested resource against the policy-
 
 The language semantic layer must not invent platform-specific path rules.
 
+Database capabilities use typed `Resource` scope rather than `Target` scope. The requested database resource must exactly match the policy resource. The current SQLite adapter opens only the explicitly scoped database resource.
+
 ## 9. Network scope
 
-Network capabilities may constrain protocol, host, port, address family, and listen/connect direction. DNS, proxying, redirects, and certificate verification are host-policy concerns and must not silently expand a grant.
+Network capabilities may constrain protocol, host, port, address family, and listen/connect direction. The current language-level HTTP GET source operation constrains the full `http://` URL as an exact `Target` scope. DNS, proxying, redirects, and certificate verification are host-policy concerns and must not silently expand a grant.
+
+The HTTP GET adapter currently accepts only explicit `http://` targets, performs HTTP/1.1 GET, and returns the response body under a UTF-8 normalization expectation. HTTPS and richer HTTP/API behavior require separate capability contracts.
 
 ## 10. Process scope
 
@@ -156,7 +167,7 @@ The semantic analyzer may annotate required effects, but actual permission evalu
 - no ambient host capability;
 - every host effect crosses the capability gate;
 - denied effects have no external side effect;
-- scoped filesystem/network/process permissions are enforced by adapters;
+- scoped filesystem/network/process/database permissions are enforced by adapters;
 - native calls require explicit permission;
 - time/randomness are controllable for deterministic tests;
 - capability errors are stable and provenance-aware;

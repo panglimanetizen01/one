@@ -1,7 +1,10 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Capability {
     Filesystem,
+    FilesystemRead,
+    FilesystemWrite,
     Process,
+    DatabaseQuery,
     Network,
     NetworkConnect,
     NetworkListen,
@@ -21,6 +24,7 @@ impl CapabilitySet {
     pub fn permits(&self, capability: Capability) -> bool {
         self.capabilities.contains(&capability)
             || (capability == Capability::NetworkConnect && self.capabilities.contains(&Capability::Network))
+            || (matches!(capability, Capability::FilesystemRead | Capability::FilesystemWrite) && self.capabilities.contains(&Capability::Filesystem))
     }
 }
 
@@ -50,5 +54,28 @@ mod tests {
         let capabilities = CapabilitySet::none().allow(Capability::Network);
         assert!(capabilities.permits(Capability::NetworkConnect));
         assert!(!capabilities.permits(Capability::NetworkAdmin));
+    }
+
+    #[test]
+    fn filesystem_read_and_write_capabilities_are_isolated() {
+        let read = CapabilitySet::none().allow(Capability::FilesystemRead);
+        let write = CapabilitySet::none().allow(Capability::FilesystemWrite);
+        assert!(read.permits(Capability::FilesystemRead));
+        assert!(!read.permits(Capability::FilesystemWrite));
+        assert!(write.permits(Capability::FilesystemWrite));
+        assert!(!write.permits(Capability::FilesystemRead));
+    }
+
+    #[test]
+    fn coarse_filesystem_capability_preserves_read_write_compatibility() {
+        let capabilities = CapabilitySet::none().allow(Capability::Filesystem);
+        assert!(capabilities.permits(Capability::FilesystemRead));
+        assert!(capabilities.permits(Capability::FilesystemWrite));
+    }
+
+    #[test]
+    fn database_query_requires_explicit_capability() {
+        assert!(!CapabilitySet::none().permits(Capability::DatabaseQuery));
+        assert!(CapabilitySet::none().allow(Capability::DatabaseQuery).permits(Capability::DatabaseQuery));
     }
 }

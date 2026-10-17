@@ -1,6 +1,6 @@
 # One Human-Language Tool Orchestration and Governance Implementation Plan
 
-> **Current status:** Tasks 1–11, the language-level DNS vertical slice, and the language-level filesystem-read vertical slice are complete and independently verified at their recorded implementation revision. The next implementation boundary is the process/system vertical slice; broader language-level capability coverage follows it.
+> **Current status:** Tasks 1–13 and the language-level process/system vertical slice have source implementations and recorded historical executable evidence at their respective revisions. The current branch extends the chain with SQLite database-query and HTTP GET vertical slices, but both current implementation revisions are not yet executable-verified.
 
 **Goal:** Add a deterministic, general-purpose human-language tool-orchestration foundation to One so semantic operations can invoke typed external capabilities through governed adapters without making tool command syntax the language semantics.
 
@@ -12,7 +12,7 @@
 
 ### Tasks 1–11 — COMPLETE
 
-The typed orchestration domain model, semantic capability vocabulary, execution scopes/effects, deterministic governance, typed adapter contract, orchestration lifecycle, result normalization, audit records, DNS adapter, localization/conformance, cross-contract integration, and exact-SHA Linux/Windows verification are complete.
+The typed orchestration domain model, semantic capability vocabulary, execution scopes/effects, deterministic governance, typed adapter contract, orchestration lifecycle, result normalization, audit records, DNS adapter, localization/conformance, cross-contract integration, and exact-SHA Linux/Windows verification are complete at their recorded revisions.
 
 ## Task 12 — Language-level DNS orchestration — COMPLETE / EXPERIMENTAL
 
@@ -76,9 +76,9 @@ Independent mirror run `38903950612` passed this source-to-runtime slice on Ubun
 
 The feature is intentionally **Eksperimental**: only the declared filesystem-read boundary is exposed through this source-level path. The existence of this slice does not imply that broader filesystem or orchestration support is complete.
 
-## Task 14 — Language-level process/system orchestration — IN DEVELOPMENT
+## Task 14 — Language-level process/system orchestration — IMPLEMENTED / HISTORICALLY VERIFIED / EXPERIMENTAL
 
-The next vertical slice implements the same dependency chain for one explicitly targeted process:
+The process vertical slice implements the same dependency chain for one explicitly targeted process:
 
 ```text
 One source
@@ -114,11 +114,96 @@ Current implementation boundary:
 - missing executable is classified as adapter/backend failure;
 - stdout is normalized as UTF-8 text, with stderr used when stdout is empty.
 
-TDD tests are present at both the one-core source-to-runtime level and CLI integration level. Exact-SHA Linux/Windows execution evidence is still pending; therefore this task must remain **IN DEVELOPMENT** until that evidence exists.
+Historical exact-SHA cross-platform evidence exists at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800`. That evidence does not verify later database/HTTP changes on the current branch.
 
-## Task 15 — Broader language-level capability coverage — IN DEVELOPMENT
+## Task 15 — Language-level database-query orchestration — IMPLEMENTED / UNVERIFIED
 
-After Task 14 is independently verified, extend the same dependency chain without creating a second semantic authority:
+The current branch adds a real SQLite source-to-runtime slice:
+
+```text
+One source
+→ parser
+→ semantic operation
+→ capability resolution
+→ resource-scoped governance
+→ database.sqlite.query adapter
+→ parameterized SQLite SELECT
+→ normalized result
+→ CLI/runtime
+```
+
+Source form:
+
+```text
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan database.query --target :memory:
+```
+
+Implementation boundary:
+
+- `Capability::DatabaseQuery` is explicit and has no ambient grant;
+- `SemanticCapabilityId::DatabaseQuery` maps the source operation to the capability;
+- the request uses `ExecutionScope::Resource` for the database resource;
+- `database.sqlite.query` uses real SQLite through `rusqlite` with bundled SQLite;
+- SQL parameters are passed separately from the SQL text;
+- only `SELECT` statements are accepted by the current adapter;
+- results are deterministically normalized as UTF-8 text;
+- source/core tests cover success, default denial, out-of-scope denial, backend failure, and normalization;
+- CLI tests cover success, default denial, and out-of-scope denial.
+
+The source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. It is **not VERIFIED**: hosted GitHub Actions for this lineage failed both Ubuntu and Windows jobs with zero reported steps, and the available container cannot reach GitHub DNS. No support claim is made.
+
+## Task 16 — Language-level HTTP GET orchestration — IMPLEMENTED / UNVERIFIED
+
+The current branch adds a real HTTP source-to-runtime slice:
+
+```text
+One source
+→ parser
+→ semantic operation
+→ capability resolution
+→ target-scoped governance
+→ network.http.get adapter
+→ bounded HTTP/1.1 GET
+→ normalized response body
+→ CLI/runtime
+```
+
+Source form:
+
+```text
+ambil dari "http://127.0.0.1:8080/"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan network.connect --target http://127.0.0.1:8080/
+```
+
+Implementation boundary:
+
+- `Capability::NetworkConnect` is explicit and has no ambient grant;
+- `SemanticCapabilityId::NetworkConnect` represents the HTTP source operation;
+- the request uses `ExecutionScope::Target` for the exact URL;
+- `network.http.get` uses the existing HTTP/1.1 runtime;
+- only explicit `http://` URLs and GET are accepted by this source-level slice;
+- response bodies are normalized under the declared UTF-8 expectation;
+- non-2xx responses are treated as adapter failure;
+- source/core tests cover loopback success, default denial, and out-of-scope denial;
+- CLI tests cover loopback success, default denial, and out-of-scope denial;
+- HTTPS, arbitrary methods, custom headers/bodies, redirects, cookies, and API-specific authentication require separate contracts.
+
+The current implementation head is `913e644ea665711c669590a80d7ff19866cb7671`. It is **not VERIFIED**: the latest inspected hosted CI attempt on the preceding head failed both Ubuntu and Windows jobs with zero reported steps. No support claim is made.
+
+## Task 17 — Broader language-level capability coverage — IN DEVELOPMENT
+
+After the database and HTTP slices obtain exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority:
 
 ```text
 One source
@@ -134,10 +219,10 @@ One source
 
 Priority:
 
-1. filesystem/storage beyond the verified read slice;
+1. filesystem/storage beyond the verified slices;
 2. process/system services beyond the single-process execution slice;
-3. database;
-4. HTTP/API;
+3. database mutation/transactions after a separate capability contract;
+4. HTTP/API expansion after the GET boundary is verified;
 5. build/package;
 6. testing;
 7. platform APIs;
@@ -165,4 +250,4 @@ For every capability family:
 - `Eksperimental` means a verified slice exists but coverage/support is intentionally limited.
 - `Didukung` is reserved for a stronger support claim.
 
-The DNS and filesystem-read vertical slices are **Eksperimental**. Process/system orchestration is **Dalam pengembangan** until exact-SHA verification passes. Broader language-level orchestration remains **Dalam pengembangan**.
+DNS, filesystem-read, process execution, and filesystem write retain their previously recorded evidence boundaries. Database query and HTTP GET are **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence passes. Broader language-level orchestration remains **Dalam pengembangan**.

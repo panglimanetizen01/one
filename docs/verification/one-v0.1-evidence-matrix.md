@@ -14,43 +14,53 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Capability boundary | `capability.rs`, `platform.rs`, `SECURITY.md` | denied-capability tests | IMPLEMENTED / independently exercised |
 | Standard library | `docs/spec/one-v0.1-stdlib.md`, `stdlib.rs` | behavior tests | IMPLEMENTED / independently exercised |
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
-| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable verification additionally recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android |
-| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; also cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
+| CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED historically; newer database/HTTP CLI changes remain unverified |
+| Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED historically; current-head execution pending |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
-| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable evidence also passes offline verification on Termux/Android |
-| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable evidence also passes offline verification on Termux/Android |
-| Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable workspace tests also pass on Termux/Android |
-| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs` | adapter tests + runtime | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; filesystem.write adapter also passes latest executable tests on Termux/Android |
-| Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | VERIFIED cross-platform at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable workspace tests pass on Termux/Android |
-| Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end source execution + explicit permission | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
-| Language-level filesystem-read orchestration | parser → semantic → typed IR → governance → filesystem.read adapter → normalized result → CLI | end-to-end source execution + allow/deny/out-of-scope/backend tests | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800` |
-| Language-level process execution orchestration | parser → semantic → typed IR → governance → process.execute adapter → normalized result → CLI | end-to-end source execution + permission + denial + backend-failure tests | EXPERIMENTAL / cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
-| Language-level filesystem-write orchestration | parser → semantic → typed IR → governance → filesystem.write adapter → CLI | source execution + explicit permission + exact-target write + denial | EXPERIMENTAL / latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; CLI regression test and core runtime test PASS; cross-platform evidence pending |
-| Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED on `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; 1 targeted test PASS |
-| Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED in latest executable evidence on Termux/Android; workspace test PASS |
+| Deterministic `.oneir` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two builds + byte comparison | VERIFIED historically; current-head execution pending |
+| Deterministic `.onepkg` | `tools/verify_offline.sh`, `tools/verify_offline.ps1` | two packages + byte comparison | VERIFIED historically; current-head execution pending |
+| Orchestration domain/governance | `orchestration.rs`, `governance.rs`, `orchestrator.rs` | unit/integration tests | VERIFIED historically; database/HTTP changes require current-head re-verification |
+| Orchestration adapter boundary | `adapter.rs`, `network_dns_adapter.rs`, `database.rs` | adapter tests + runtime | VERIFIED historically for existing adapters; SQLite and HTTP adapters require current-head execution evidence |
+| Orchestration audit/result normalization | `orchestration_audit.rs`, `orchestration_result.rs` | audit/normalization tests | VERIFIED historically; database/HTTP current-head execution pending |
+| Language-level DNS orchestration | parser → semantic → typed IR → governance → DNS adapter → normalized result → CLI | end-to-end source execution + explicit permission | EXPERIMENTAL / historically executable |
+| Language-level filesystem-read orchestration | parser → semantic → typed IR → governance → filesystem.read adapter → normalized result → CLI | end-to-end source execution + allow/deny/out-of-scope/backend tests | EXPERIMENTAL / historically executable |
+| Language-level process execution orchestration | parser → semantic → typed IR → governance → process.execute adapter → normalized result → CLI | source execution + permission + denial + backend-failure tests | EXPERIMENTAL within previously verified boundary |
+| Language-level filesystem-write orchestration | parser → semantic → typed IR → governance → filesystem.write adapter → CLI | source execution + explicit permission + exact-target write + denial | EXPERIMENTAL; current-head execution pending |
+| Language-level database-query orchestration | parser → semantic → typed IR → resource-scoped governance → `database.sqlite.query` → normalized result → CLI | source execution + explicit permission + out-of-scope denial + backend failure + deterministic normalization | IMPLEMENTED / UNVERIFIED at current head |
+| Database-query CLI regression | `crates/one-cli/tests/database_orchestration.rs` | source + `--izinkan database.query` + matching resource + denial/scope tests | IMPLEMENTED / UNVERIFIED at current head |
+| Language-level HTTP GET orchestration | parser → semantic → typed IR → target-scoped governance → `network.http.get` → normalized result → CLI | loopback source execution + explicit permission + out-of-scope denial + adapter validation | IMPLEMENTED / UNVERIFIED at current head |
+| HTTP GET CLI regression | `crates/one-cli/tests/http_get_orchestration.rs` | real loopback GET + `--izinkan network.connect` + matching target + denial/scope tests | IMPLEMENTED / UNVERIFIED at current head |
+| Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED historically; current-head execution pending |
+| Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED historically; current-head execution pending |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
-| Linux portability | verification mirror workflow | actual Linux run | GREEN for `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; current filesystem-write executable evidence not yet cross-platform verified |
-| Windows portability | verification mirror workflow | actual Windows run | GREEN for `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; current filesystem-write executable evidence not yet cross-platform verified |
-| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN for `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; latest executable evidence is independent Termux evidence only |
+| Linux portability | verification mirror workflow | actual Linux run | GREEN historically; current PR #57 head has no executable hosted job evidence |
+| Windows portability | verification mirror workflow | actual Windows run | GREEN historically; current PR #57 head has no executable hosted job evidence |
+| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN historically; current PR #57 head is not release-verified |
 
 ## Current exact-SHA evidence
 
-Latest exact-SHA executable evidence for the current executable boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`. The exact-SHA Termux/Android verification passed contract checks, build, Clippy `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification.
+Current PR #57 head is `485f768b57401f6e0f76ba16308e4124587a3835`.
 
-The latest cross-platform exact-SHA evidence remains mirror run `38929072800` for source `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. It predates the filesystem-write commits and is not generalized to newer SHAs.
+The hosted CI run #594 was triggered for this exact SHA. Both Ubuntu and Windows jobs completed as failures with zero reported steps, and the rerun again produced no executable steps. This is infrastructure/no-step evidence and does not establish a Rust source failure.
+
+The branch now contains `tools/verify_exact_sha.sh`, a non-destructive exact-SHA harness. It refuses SHA mismatch and dirty working trees, then runs contract verification, workspace build, Clippy with `-D warnings`, workspace tests, deterministic artifact tests, DNS/orchestration tests, filesystem/process vertical slices, database core+CLI slices, and HTTP core+CLI slices. It is the authoritative independent executable path for this verification gap when run in a real checkout with the required Rust/Python toolchain.
+
+The latest successful exact-SHA executable evidence remains historical and predates the database and HTTP implementation. It must not be generalized to the current head.
 
 ## Canonical CI status
 
-The filesystem-write CLI PR's hosted GitHub Actions execution produced zero-step job failures and retries also produced no executable jobs. This is infrastructure evidence, not evidence of a Rust source failure. The Termux verification is therefore the executable evidence for the current filesystem-write CLI boundary.
+Current PR #57 hosted CI attempts repeatedly produce zero-step failures on both matrix jobs. A workflow that never executes steps cannot establish a source-level failure. The current database and HTTP implementations therefore remain UNVERIFIED until the exact current SHA is executed through the independent harness.
 
 ## Evidence rules
 
 - Source presence is implementation evidence, not execution evidence.
 - A failed workflow without usable job steps cannot establish a Rust source failure.
 - A runner that never starts is an infrastructure blocker, not a reason to invent a code result.
-- Offline verification is valid independent execution evidence only when its environment, toolchain, command, exact commit, and result are recorded.
+- Offline or local verification is valid independent execution evidence only when its environment, toolchain, command, exact commit, and result are recorded.
 - `VERIFIED` is reserved for claims backed by actual evidence.
 - Evidence for one commit does not automatically verify later commits.
 - Filesystem write is experimental and must not be generalized from Android/Termux evidence to Ubuntu/Windows support.
-- The process-execution slice is `EXPERIMENTAL` only within its cross-platform verified boundary: one explicitly targeted program without arguments and explicit `process.execute` permission.
+- Database query is implemented but must not be described as verified or supported until current-head executable evidence exists.
+- HTTP GET is implemented but must not be described as verified or supported until current-head executable evidence exists.
+- The process-execution slice is `EXPERIMENTAL` only within its previously verified boundary.

@@ -24,23 +24,27 @@ One v0.1 memiliki executable language core, grammar, parser, semantic pipeline, 
 
 **Eksperimental — filesystem write source-to-runtime vertical slice:** One sekarang memiliki jalur bahasa yang dapat dieksekusi untuk `tulis ke berkas` dengan permission `filesystem.write` dan target file yang sama. Latest exact-SHA verification untuk executable boundary `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` lulus di Termux/Android melalui verifikasi berikut: contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification. Bukti ini belum merupakan verifikasi Ubuntu/Windows untuk SHA tersebut.
 
+**Dalam pengembangan — database query source-to-runtime vertical slice:** Implementasi SQLite sudah ada pada PR #57 lineage `0aa4acdf3796235eac432138fec829b6508879e3`, termasuk `kueri database`, capability `database.query`, resource-scoped governance, adapter `database.sqlite.query`, parameterized SELECT, normalization, dan test CLI/core. Exact-SHA executable verification belum tersedia. Jangan menyebutnya Didukung atau Eksperimental sampai evidence executable tersedia.
+
+**Dalam pengembangan — HTTP GET source-to-runtime vertical slice:** Implementasi `ambil dari` sudah ditambahkan pada PR #57 lineage terbaru, mencakup parser → semantic validation → typed orchestration IR → target-scoped `network.connect` governance → `network.http.get` adapter → bounded HTTP/1.1 GET → normalized response body → CLI permission. Exact-SHA executable verification belum tersedia. Jangan menyebutnya Didukung atau Eksperimental sampai evidence executable tersedia.
+
 Source:
 
 ```text
-tulis ke berkas "<path>" dengan "<isi>"
+ambil dari "http://127.0.0.1:8080/"
 ```
 
 Permission CLI:
 
 ```text
-one jalankan main.one --izinkan filesystem.write --target <path>
+one jalankan main.one --izinkan network.connect --target http://127.0.0.1:8080/
 ```
 
-Boundary saat ini: satu payload teks ke satu file target yang diberikan secara eksplisit; tidak ada klaim sandbox/path confinement tambahan, shell expansion, delete, rename, directory traversal policy, atau filesystem management umum.
+Boundary implementasi saat ini: explicit `http://` URL, HTTP/1.1 GET, exact target scope, response body normalization, dan explicit `network.connect` permission. HTTPS, arbitrary HTTP methods, custom headers/bodies, redirects, cookies, dan API-specific authentication belum termasuk source-level slice ini.
 
 ### Kemampuan yang masih future
 
-Database orchestration, HTTP orchestration tambahan, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
+HTTP methods/HTTPS/API features yang lebih luas, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
 
 Filesystem write tetap **Eksperimental**, bukan **Didukung**, karena bukti lintas-platform untuk executable revision `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` belum ada.
 

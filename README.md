@@ -2,6 +2,20 @@
 
 **One** is a human-oriented, deterministic, general-purpose programming language designed to let ordinary users build software from small scripts to large projects.
 
+## Project context — read this first when starting a new session
+
+The repository is the persistent source of accepted One project context. A new development session must read these contracts before making changes:
+
+1. [`AGENTS.md`](AGENTS.md) — agent operating contract and required reading order.
+2. [`docs/ONE_CONSTITUTION.md`](docs/ONE_CONSTITUTION.md) — vision, mission, architecture invariants, portability, security, localization, and global direction.
+3. [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — accepted requirements baseline.
+4. [`docs/DECISIONS.md`](docs/DECISIONS.md) — accepted architectural decisions.
+5. [`docs/DEVELOPMENT_PROTOCOL.md`](docs/DEVELOPMENT_PROTOCOL.md) — execution, verification, bug, and evidence rules.
+6. Read the domain contract relevant to the task: [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`COMPATIBILITY.md`](docs/COMPATIBILITY.md), [`SECURITY.md`](docs/SECURITY.md), [`LOCALIZATION.md`](docs/LOCALIZATION.md), or [`INTEROPERABILITY.md`](docs/INTEROPERABILITY.md).
+7. Check current verification evidence before claiming support or completion.
+
+This repository contract exists so project intent does not depend on a previous ChatGPT session.
+
 ## Foundation
 
 - Human-oriented conversational surface syntax
@@ -14,6 +28,8 @@
 - Human-readable diagnostics
 - Windows and Linux as first-class platforms
 - LLM-independent compiler/runtime semantics
+- Cross-distro, cross-terminal, cross-editor, and cross-environment portability as architectural goals
+- Deep interoperability with existing languages and technologies
 
 ## v0.1 implementation
 
@@ -69,7 +85,7 @@ The process slice has exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1
 
 ## Filesystem write experimental boundary
 
-The source-level filesystem-write slice is now executable:
+The source-level filesystem-write slice is executable:
 
 ```text
 tulis ke berkas "data/hasil.txt" dengan "halo dari One"
@@ -95,6 +111,14 @@ one run main.one --allow filesystem.write --target data/hasil.txt
 
 Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android with contract check, build, Clippy `-D warnings`, targeted filesystem-write CLI test, all workspace tests, and offline verification. This does **not** establish Ubuntu/Windows support for this SHA. The boundary is one text payload to one explicitly targeted file with explicit `filesystem.write` permission.
 
+## Database query boundary — implemented / unverified
+
+A SQLite-backed source-level database query path is implemented but not yet executable-verified.
+
+## HTTP GET boundary — implemented / unverified
+
+An explicit HTTP GET source-level path is implemented but not yet executable-verified.
+
 ## Documentation
 
 - `docs/panduan-pengguna/README.md`
@@ -109,8 +133,4 @@ Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for the current executable boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
-
-Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write CLI commits and must not be generalized to newer SHAs.
-
-The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
+The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.

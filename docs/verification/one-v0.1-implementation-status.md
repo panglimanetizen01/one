@@ -24,8 +24,10 @@
 | Language-level filesystem read orchestration | EXPERIMENTAL | `baca berkas` → parser → semantic validation → typed orchestration IR → governed `filesystem.read` adapter → normalized UTF-8 text result; independently verified on Ubuntu + Windows Server 2025 at `f482c6b75505d9965dd33f4f25bb0cd04072cedb` via `38903950612` |
 | Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; exact-SHA Linux + Windows verified at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
 | Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; cross-platform evidence for this executable revision is still pending |
+| Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; source/test revision `0aa4acdf3796235eac432138fec829b6508879e3`; no successful exact-SHA executable verification yet |
+| Language-level HTTP GET orchestration | IMPLEMENTED / UNVERIFIED | `ambil dari` → parser → semantic validation → typed IR → target-scoped `network.connect` governance → `network.http.get` adapter → bounded HTTP/1.1 GET → normalized response body → CLI; current branch head `913e644ea665711c669590a80d7ff19866cb7671`; no successful exact-SHA executable verification yet |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
-| CLI | VERIFIED | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android |
+| CLI | VERIFIED / PLATFORM-BOUND | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; database and HTTP CLI paths are newly implemented and unverified |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
 | Conformance fixtures | ADDED | `tests/conformance/**/*.one` |
 | Conformance runner | ADDED | `crates/one-core/tests/conformance.rs` |
@@ -34,8 +36,10 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Latest exact-SHA executable verification | VERIFIED / PLATFORM-BOUND | latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`; Termux/Android contract, build, Clippy, targeted filesystem-write CLI test, workspace tests, and offline verification all passed; this is not Ubuntu/Windows evidence |
-| Latest cross-platform exact-SHA verification | VERIFIED | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification |
+| Latest exact-SHA executable verification | VERIFIED / HISTORICAL | latest recorded executable evidence is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it predates the database and HTTP implementation and therefore does not verify the current database/HTTP source revisions |
+| Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows contract checks, build, Clippy, workspace tests, real-network tests, and offline verification; it predates the database and HTTP implementation |
+| Current database-source CI | INFRASTRUCTURE FAILURE / NO-STEP | run `550` targeted source/test revision `0aa4acdf3796235eac432138fec829b6508879e3`; both Ubuntu and Windows jobs failed with zero reported steps; this is not source-failure evidence |
+| Current HTTP-source CI | INFRASTRUCTURE FAILURE / NO-STEP | latest inspected branch run `585` targeted prior branch head `a0975943d1ca5f8f825741a0cc47da10ab268784`; both Ubuntu and Windows jobs failed with zero reported steps; current head remains unverified |
 | Private canonical hosted CI execution | NOT REQUIRED FOR P0 EVIDENCE | independent execution paths provide evidence; canonical main remains source of truth |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
@@ -50,9 +54,11 @@
 
 The verified native runtime inventory remains DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits. The latest cross-platform evidence is mirror run `38929072800` for `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025.
 
+The language-level HTTP GET slice is separate from this verified native-runtime inventory and remains IMPLEMENTED / UNVERIFIED until its exact source revision is executed successfully.
+
 ## Orchestration boundary
 
-Four language-level vertical slices now exist, but their evidence boundaries differ:
+Six language-level vertical slices now exist in source, but their evidence boundaries differ:
 
 ```text
 cari alamat "127.0.0.1"
@@ -65,21 +71,27 @@ jalankan proses "rustc"
 → parser → semantic → typed IR → target-scoped governance → process.execute → CLI
 
 tulis ke berkas "<path>" dengan "<isi>"
-→ parser → semantic → typed IR → target-scoped governance → filesystem.write → CLI
+→ parser → semantic → typed IR → filesystem.write governance → CLI
+
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+→ parser → semantic → typed IR → resource-scoped database.query governance → database.sqlite.query → normalized CLI result
+
+ambil dari "http://127.0.0.1:8080/"
+→ parser → semantic → typed IR → target-scoped network.connect governance → network.http.get → HTTP/1.1 GET → normalized CLI result
 ```
 
-DNS and filesystem-read are backed by the recorded cross-platform evidence. Process execution is backed by exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`. Filesystem write is backed by latest executable evidence at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; it is intentionally not labeled cross-platform verified.
+DNS, filesystem-read, and process execution are backed by the recorded cross-platform evidence. Filesystem write is backed by the latest Termux/Android executable evidence and is intentionally not labeled cross-platform verified. Database query is implemented with a real SQLite adapter and source/CLI tests, but source/test revision `0aa4acdf3796235eac432138fec829b6508879e3` is not yet executable-verified because hosted CI run #550 has no executed steps and the available container cannot reach GitHub DNS. HTTP GET is implemented with a real bounded HTTP/1.1 adapter and source/CLI tests, but current hosted CI runs also report zero executed steps, so it remains unverified.
 
 ## Current checkpoint
 
-- Latest exact-SHA executable verification: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all PASS.
-- Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` / mirror `38929072800`.
-- PR #49: filesystem-write vertical slice merged before the CLI work.
-- PR #50: filesystem.write CLI support merged into `main`.
-- PR #51: documentation synchronized with filesystem.write verification evidence.
-- PR #52: consistency audit synchronized the normative CLI contract and grammar with the implementation.
-- GitHub hosted CI for the filesystem-write PR remained an infrastructure evidence failure with zero executed steps; it is not source-failure evidence.
-- Filesystem write status: `EXPERIMENTAL`, limited to one text payload to one explicitly targeted file, with explicit `filesystem.write` permission.
+- Database source/test revision: `0aa4acdf3796235eac432138fec829b6508879e3`.
+- HTTP source/test/current implementation head: `913e644ea665711c669590a80d7ff19866cb7671`.
+- Database source path is implemented: `Capability::DatabaseQuery` → `SemanticCapabilityId::DatabaseQuery` → resource scope → `database.sqlite.query` → SQLite parameterized SELECT → UTF-8 normalized result.
+- HTTP source path is implemented: `Capability::NetworkConnect` → `SemanticCapabilityId::NetworkConnect` → target scope → `network.http.get` → HTTP/1.1 GET → response-body normalization.
+- Database tests cover adapter success, source-level success, default denial, out-of-scope denial, backend failure, deterministic normalization, and CLI success/denial/scope denial.
+- HTTP tests cover loopback source-to-runtime success, default denial, target out-of-scope denial, adapter URL validation, and CLI success/denial/scope denial.
+- Hosted CI run `550` failed both Ubuntu and Windows jobs with zero reported steps for the database lineage; latest inspected HTTP-lineage run `585` likewise failed with zero reported steps.
+- No exact-SHA executable claim is made for the database or HTTP implementation.
 
 ## Release interpretation
 
