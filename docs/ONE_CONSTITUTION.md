@@ -16,6 +16,8 @@ One should make programming approachable to ordinary people while retaining the 
 
 The surface language should be understandable like a person giving a clear instruction to another person. The underlying language must remain formal, deterministic, testable, and machine-executable.
 
+One's general-purpose scope includes not only desktop, server, web, automation, data, networking, and developer software, but also software for robots, embedded controllers, and electronic appliances such as televisions, refrigerators, air conditioners, fans, cooling/refrigeration systems, and other programmable devices.
+
 ## 3. Mission
 
 Build a human-oriented, general-purpose programming language that:
@@ -24,6 +26,7 @@ Build a human-oriented, general-purpose programming language that:
 - can be localized to other human languages without changing semantic meaning;
 - works across operating systems, Linux distributions, terminals, editors, IDEs, containers, and devices;
 - can scale from small scripts to large software systems;
+- can target robots, embedded systems, controllers, and programmable electronic appliances where an appropriate backend/runtime exists;
 - interoperates with existing languages and ecosystems;
 - remains independent of any LLM for program meaning and execution;
 - provides explicit security and capability governance;
@@ -81,7 +84,9 @@ One programs must remain executable without an LLM. The compiler, interpreter, r
 
 ## 9. General-purpose scope
 
-One is not restricted to one domain. Its architecture must be able to support application development, systems work, automation, web/API work, data and scientific workloads, developer tooling, networking, security engineering, media/graphics, device integration, and other legitimate computing domains.
+One is not restricted to one domain. Its architecture must be able to support application development, systems work, automation, web/API work, data and scientific workloads, developer tooling, networking, security engineering, media/graphics, device integration, robotics, embedded systems, appliance control, and other legitimate computing domains.
+
+The device and embedded scope includes software that may execute on or control robots, microcontrollers, embedded computers, industrial/device controllers, and programmable household or consumer electronics such as TVs, refrigerators, AC units, fans, air-cooling/refrigeration equipment, and similar appliances.
 
 This is a direction and architectural requirement, not a claim that every capability already exists.
 
@@ -97,11 +102,14 @@ One must not be architecturally dependent on a particular:
 - IDE;
 - Android application;
 - container runtime;
-- CPU architecture where a backend can reasonably support it.
+- CPU architecture where a backend can reasonably support it;
+- microcontroller, embedded board, robot platform, or appliance vendor.
 
 Initial first-class platform targets remain Windows and Linux. Linux compatibility must include a path for major distributions such as Ubuntu, Debian, Kali, Alpine, Arch, Fedora, and other distributions through portable binaries/toolchains or supported build paths.
 
 Android environments such as Termux and Linux-container environments such as UserLAnd are integration targets, not definitions of One.
+
+Embedded and device targets must be handled through platform abstractions and backends rather than by changing One's core semantics for each device vendor.
 
 ## 11. Terminal independence
 
@@ -121,9 +129,11 @@ One should be able to run in constrained environments when the target runtime/to
 
 Unsupported host limitations must be reported as environment/toolchain constraints, not disguised as language semantics.
 
+Embedded targets may impose tighter constraints on memory, storage, CPU, real-time behavior, power, peripherals, boot process, and available operating systems/RTOS. These constraints belong in the backend/runtime/platform contract while preserving one language semantic model.
+
 ## 14. Interoperability
 
-One must not become a closed island. Stable interfaces should allow integration with existing technologies including C/C++, Python, Java/JVM, JavaScript/Node.js, HTML/CSS/web systems, native libraries, operating-system APIs, and external command/tool ecosystems where security and semantic contracts permit.
+One must not become a closed island. Stable interfaces should allow integration with existing technologies including C/C++, Python, Java/JVM, JavaScript/Node.js, HTML/CSS/web systems, native libraries, operating-system APIs, embedded/RTOS APIs, microcontroller SDKs, hardware abstraction layers, robot middleware, appliance/device protocols, and external command/tool ecosystems where security and semantic contracts permit.
 
 Interop must preserve explicit boundaries and must not bypass One's governance model.
 
@@ -149,6 +159,8 @@ External effects require explicit capability and scope contracts. Security-sensi
 
 One may be used for legitimate security engineering, defensive automation, vulnerability research, authorized penetration testing, and security tooling. The language itself remains general-purpose; security policy belongs in the governance plane and host environment.
 
+Device and robotic control must also respect safety, authorization, scope, and platform-specific constraints. The existence of a device-control API does not imply permission to operate a physical system.
+
 ## 17. Progressive complexity
 
 Beginners should be able to write simple instructions without learning the entire runtime model. Advanced users must be able to access explicit parameters, types, capabilities, effects, platform controls, modules, packages, and interop without abandoning the language.
@@ -166,11 +178,12 @@ The following are non-negotiable unless an explicit architectural decision super
 - LLM-independent execution.
 - Explicit capability and scope governance for external effects.
 - Human-readable diagnostics.
-- General-purpose design.
+- General-purpose design, including device, embedded, and robotics domains.
 - Cross-platform architecture.
 - Deep interoperability.
 - Security by explicit boundaries rather than hidden privilege.
 - Progressive complexity.
+- Device/platform differences must not fork core language semantics.
 
 ## 19. Development law
 
