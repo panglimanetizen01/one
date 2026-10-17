@@ -40,17 +40,17 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 
 ## Current exact-SHA evidence
 
-Current canonical `main` is `dd572f1052aa85439015078e0d879a5388544016`.
+The current implementation merge revision is `dd572f1052aa85439015078e0d879a5388544016`; later commits on `main` in this checkpoint are documentation-only corrections.
 
-No successful exact-SHA executable verification for this SHA has been recorded. The repository's hosted CI has repeatedly produced failures with zero reported steps on the affected runs, which is infrastructure/no-step evidence rather than source-failure evidence.
+No successful exact-SHA executable verification for the implementation merge revision has been recorded. The repository's hosted CI has repeatedly produced failures with zero reported steps on the affected runs, which is infrastructure/no-step evidence rather than source-failure evidence.
 
 The canonical `tools/verify_exact_sha.sh` harness is present and non-destructive. It refuses SHA mismatch and dirty working trees, then runs contract verification, workspace build, Clippy with `-D warnings`, workspace tests, deterministic artifact tests, DNS/orchestration tests, filesystem/process vertical slices, database core+CLI slices, and HTTP core+CLI slices. It is the authoritative independent executable path for this verification gap when run in a real checkout with the required Rust/Python toolchain.
 
-The latest successful exact-SHA executable evidence remains historical and predates the database and HTTP implementation. It must not be generalized to `dd572f1052aa85439015078e0d879a5388544016`.
+The latest successful exact-SHA executable evidence remains historical and predates the database and HTTP implementation. It must not be generalized to the implementation merge revision.
 
 ## Canonical CI status
 
-The latest inspected hosted CI run for the preceding canonical SHA `82b5fb53a434f2fd619cfcbfed52aa2dae0934fe` failed both Ubuntu and Windows matrix jobs with zero reported steps. The current merge commit has no usable hosted executable status recorded yet. A workflow that never executes steps cannot establish a source-level failure.
+The latest inspected hosted CI run for the preceding canonical SHA `82b5fb53a434f2fd619cfcbfed52aa2dae0934fe` failed both Ubuntu and Windows matrix jobs with zero reported steps. The implementation merge commit has no usable hosted executable status recorded. A workflow that never executes steps cannot establish a source-level failure.
 
 ## Evidence rules
 
