@@ -4,6 +4,7 @@ pub enum Capability {
     FilesystemRead,
     FilesystemWrite,
     Process,
+    DatabaseQuery,
     Network,
     NetworkConnect,
     NetworkListen,
@@ -70,5 +71,11 @@ mod tests {
         let capabilities = CapabilitySet::none().allow(Capability::Filesystem);
         assert!(capabilities.permits(Capability::FilesystemRead));
         assert!(capabilities.permits(Capability::FilesystemWrite));
+    }
+
+    #[test]
+    fn database_query_requires_explicit_capability() {
+        assert!(!CapabilitySet::none().permits(Capability::DatabaseQuery));
+        assert!(CapabilitySet::none().allow(Capability::DatabaseQuery).permits(Capability::DatabaseQuery));
     }
 }
