@@ -1,16 +1,16 @@
 # One — General-Purpose Human-Language Tool Orchestration and Governance
 
-**Status:** Runtime orchestration foundation verified; DNS and filesystem-read source-level orchestration are experimental and independently verified at the recorded implementation revision; broader language-level capability coverage remains in development.
+**Status:** Runtime orchestration foundation verified; DNS, filesystem-read, process-execution, and filesystem-write source-level orchestration are implemented as experimental vertical slices within explicit boundaries; broader language-level capability coverage remains in development.
 **Date:** 2026-10-16
 **Scope:** General-purpose One language, human-language programming, external-tool orchestration, capability/runtime governance, localization, interoperability, auditability, and platform control
 
 ## Current implementation boundary
 
-The architecture is executable through a verified runtime foundation and two source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, the real `network.dns.resolve` adapter, and source-level `cari alamat` and `baca berkas` operations that reach governed adapters through runtime execution.
+The architecture is executable through a verified runtime foundation and four source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, and source-level `cari alamat`, `baca berkas`, `jalankan proses`, and `tulis ke berkas` operations that reach governed adapters through runtime execution.
 
-The latest independently verified implementation revision is `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`, with independent mirror run `38901366447` on Ubuntu and Windows Server 2025. The run passed contract checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact verification, DNS success/failure classification, filesystem-read orchestration runtime, and offline verification.
+The latest independently verified cross-platform source/runtime revision is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write executable slice and must not be generalized to later executable revisions.
 
-The current canonical `main` is newer than that exact-SHA evidence. Later commits must not be described as independently exact-SHA verified until a new verification run records the newer SHA.
+The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android. Contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification passed for that SHA. This does not establish Ubuntu/Windows support for that executable revision.
 
 ## 1. Purpose
 
@@ -58,6 +58,10 @@ Normalized UTF-8 text result
 CLI output
 ```
 
+The implemented process-execution path is experimental and explicitly bounded to the currently verified single-program/no-arguments boundary.
+
+The implemented filesystem-write path is experimental and explicitly bounded to one text payload and one explicitly targeted file with `filesystem.write` permission. It has executable evidence on Termux/Android only at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`.
+
 These are experimental vertical slices, not the complete orchestration catalog.
 
 ## 3. Existing One semantic pipeline remains authoritative
@@ -79,7 +83,14 @@ The orchestration layer consumes this pipeline rather than creating a parallel i
 
 One may express semantic operations in understandable language. Examples are normative only when covered by grammar/semantic contracts and executable tests.
 
-The currently verified source-level operations are `cari alamat <target>` and `baca berkas <path>`. They resolve to distinct semantic capabilities and governed adapters.
+Current source-level orchestration operations are:
+
+- `cari alamat <target>` — experimental DNS slice;
+- `baca berkas <path>` — experimental filesystem-read slice;
+- `jalankan proses <program>` — experimental process-execution slice within its declared boundary;
+- `tulis ke berkas <target> dengan <text>` — experimental filesystem-write slice within its declared target/payload boundary.
+
+They resolve to distinct semantic capabilities and governed adapters.
 
 ## 5. Intent is not authority
 
@@ -148,7 +159,7 @@ The required lifecycle is:
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-All twelve stages exist in the runtime foundation. The DNS and filesystem-read source-level vertical slices drive those stages from One source through CLI/runtime. Additional capabilities require their own source grammar/semantic boundary and evidence.
+The runtime foundation implements these governance/orchestration stages. The current source-level slices drive them from One source through CLI/runtime. Additional capabilities require their own source grammar/semantic boundary and evidence.
 
 ## 17. Audit model
 
@@ -160,7 +171,7 @@ Orchestration failures remain typed and distinguish invalid source/parameters, a
 
 ## 19. Testing and conformance
 
-The DNS and filesystem-read source-level slices have executable success and policy-denial coverage plus independent Linux/Windows exact-SHA verification at `0e6104ccf79f9f9cb3782ccf14abcd62a109c01b`. The verification run also exercises DNS resolution-failure classification, filesystem out-of-scope/backend/unavailable-adapter paths, and the general orchestration runtime deny/allow/incompatible-adapter tests. No additional adapter is marked Verified without executable evidence appropriate to its backend.
+The current conformance and runtime tests cover the implemented orchestration foundation and source-level slices within their declared boundaries. The cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2` covers the earlier DNS/process/system runtime boundary on Ubuntu and Windows Server 2025. The later filesystem-write executable boundary is independently verified on Termux/Android at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`. No additional adapter is marked Verified without executable evidence appropriate to its backend and platform boundary.
 
 ## 20. Compatibility with existing One architecture
 
@@ -168,7 +179,7 @@ This architecture extends, rather than replaces, the lexer/parser, AST/name-scop
 
 ## 21. v0.1 boundary
 
-The verified v0.1 boundary includes experimental DNS and filesystem-read source-to-runtime orchestration slices. It does not claim arbitrary human-language source can already invoke every external capability.
+The current v0.1 implementation boundary includes experimental DNS, filesystem-read, process-execution, and filesystem-write source-to-runtime slices with explicit limits and platform evidence. It does not claim arbitrary human-language source can already invoke every external capability, nor does it claim general filesystem management, general process management, unrestricted command orchestration, or native executable compilation.
 
 ## 22. Non-goals
 
@@ -178,7 +189,7 @@ This specification does not make every external tool part of the standard librar
 
 The architecture succeeds when useful programming intent can be expressed in understandable language, localization preserves semantic identity, One can orchestrate real external capabilities through typed adapters, external tools remain implementation backends, advanced users retain precise controls, capability/policy enforcement is independent of wording, results are normalized without invented facts, supported adapters have executable evidence, One remains general-purpose, and platform/owner governance can control execution without changing language meaning.
 
-The DNS and filesystem-read slices satisfy the first two executable source-level boundaries. Broader capability coverage remains future work.
+The current source-level slices establish multiple executable boundaries, while broader capability coverage remains future work.
 
 ## 24. Implementation gate
 
@@ -196,4 +207,4 @@ One source
 → CLI/runtime
 ```
 
-Production changes for each new capability must use fail-first/TDD, evidence-first debugging, explicit policy/scope, and a fresh exact-SHA Linux/Windows verification before the capability is called Verified or Supported.
+Production changes for each new capability must use fail-first/TDD, evidence-first debugging, explicit policy/scope, and a fresh exact-SHA platform verification before the capability is called Verified or Supported.
