@@ -1,6 +1,6 @@
 # One Human-Language Tool Orchestration and Governance Implementation Plan
 
-> **Current status:** Tasks 1–11, the language-level DNS vertical slice, and the language-level filesystem-read vertical slice are complete and independently verified at their recorded implementation revision. The next implementation boundary is the process/system vertical slice; broader language-level capability coverage follows it.
+> **Current status:** Tasks 1–13 and the language-level process/system vertical slice have source implementations and recorded historical executable evidence at their respective revisions. The current branch extends the chain with a SQLite database-query vertical slice, but the current database revision is not yet executable-verified.
 
 **Goal:** Add a deterministic, general-purpose human-language tool-orchestration foundation to One so semantic operations can invoke typed external capabilities through governed adapters without making tool command syntax the language semantics.
 
@@ -12,7 +12,7 @@
 
 ### Tasks 1–11 — COMPLETE
 
-The typed orchestration domain model, semantic capability vocabulary, execution scopes/effects, deterministic governance, typed adapter contract, orchestration lifecycle, result normalization, audit records, DNS adapter, localization/conformance, cross-contract integration, and exact-SHA Linux/Windows verification are complete.
+The typed orchestration domain model, semantic capability vocabulary, execution scopes/effects, deterministic governance, typed adapter contract, orchestration lifecycle, result normalization, audit records, DNS adapter, localization/conformance, cross-contract integration, and exact-SHA Linux/Windows verification are complete at their recorded revisions.
 
 ## Task 12 — Language-level DNS orchestration — COMPLETE / EXPERIMENTAL
 
@@ -76,9 +76,9 @@ Independent mirror run `38903950612` passed this source-to-runtime slice on Ubun
 
 The feature is intentionally **Eksperimental**: only the declared filesystem-read boundary is exposed through this source-level path. The existence of this slice does not imply that broader filesystem or orchestration support is complete.
 
-## Task 14 — Language-level process/system orchestration — IN DEVELOPMENT
+## Task 14 — Language-level process/system orchestration — IMPLEMENTED / HISTORICALLY VERIFIED / EXPERIMENTAL
 
-The next vertical slice implements the same dependency chain for one explicitly targeted process:
+The process vertical slice implements the same dependency chain for one explicitly targeted process:
 
 ```text
 One source
@@ -114,11 +114,53 @@ Current implementation boundary:
 - missing executable is classified as adapter/backend failure;
 - stdout is normalized as UTF-8 text, with stderr used when stdout is empty.
 
-TDD tests are present at both the one-core source-to-runtime level and CLI integration level. Exact-SHA Linux/Windows execution evidence is still pending; therefore this task must remain **IN DEVELOPMENT** until that evidence exists.
+Historical exact-SHA cross-platform evidence exists at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800`. That evidence does not verify later database changes on the current branch.
 
-## Task 15 — Broader language-level capability coverage — IN DEVELOPMENT
+## Task 15 — Language-level database-query orchestration — IMPLEMENTED / UNVERIFIED
 
-After Task 14 is independently verified, extend the same dependency chain without creating a second semantic authority:
+The current branch adds a real SQLite source-to-runtime slice:
+
+```text
+One source
+→ parser
+→ semantic operation
+→ capability resolution
+→ resource-scoped governance
+→ database.sqlite.query adapter
+→ parameterized SQLite SELECT
+→ normalized result
+→ CLI/runtime
+```
+
+Source form:
+
+```text
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan database.query --target :memory:
+```
+
+Implementation boundary:
+
+- `Capability::DatabaseQuery` is explicit and has no ambient grant;
+- `SemanticCapabilityId::DatabaseQuery` maps the source operation to the capability;
+- the request uses `ExecutionScope::Resource` for the database resource;
+- `database.sqlite.query` uses real SQLite through `rusqlite` with bundled SQLite;
+- SQL parameters are passed separately from the SQL text;
+- only `SELECT` statements are accepted by the current adapter;
+- results are deterministically normalized as UTF-8 text;
+- source/core tests cover success, default denial, out-of-scope denial, backend failure, and normalization;
+- CLI tests cover success, default denial, and out-of-scope denial.
+
+The current implementation head is `1c6662efbbd0541c6336743875b515a4f338d662`. It is **not VERIFIED** because the current hosted GitHub Actions jobs have failed with zero reported steps and the available container cannot reach GitHub DNS. No support claim is made.
+
+## Task 16 — Broader language-level capability coverage — IN DEVELOPMENT
+
+After the database slice obtains exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority:
 
 ```text
 One source
@@ -134,9 +176,9 @@ One source
 
 Priority:
 
-1. filesystem/storage beyond the verified read slice;
+1. filesystem/storage beyond the verified slices;
 2. process/system services beyond the single-process execution slice;
-3. database;
+3. database mutation/transactions after a separate capability contract;
 4. HTTP/API;
 5. build/package;
 6. testing;
@@ -165,4 +207,4 @@ For every capability family:
 - `Eksperimental` means a verified slice exists but coverage/support is intentionally limited.
 - `Didukung` is reserved for a stronger support claim.
 
-The DNS and filesystem-read vertical slices are **Eksperimental**. Process/system orchestration is **Dalam pengembangan** until exact-SHA verification passes. Broader language-level orchestration remains **Dalam pengembangan**.
+DNS, filesystem-read, process execution, and filesystem write retain their previously recorded evidence boundaries. Database query is **Dalam pengembangan / UNVERIFIED** until current-head executable evidence passes. Broader language-level orchestration remains **Dalam pengembangan**.
