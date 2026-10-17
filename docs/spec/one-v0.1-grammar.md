@@ -95,7 +95,8 @@ action = display_action
         | filesystem_read_action
         | filesystem_write_action
         | process_execute_action
-        | database_query_action ;
+        | database_query_action
+        | http_get_action ;
 
 display_action = "tampilkan", expression, NEWLINE ;
 greet_action = "sapa", expression, NEWLINE ;
@@ -108,6 +109,7 @@ filesystem_write_action = "tulis", "ke", "berkas", expression, "dengan", express
 process_execute_action = "jalankan", "proses", expression, NEWLINE ;
 database_query_action = "kueri", "database", expression, "dengan", expression,
                         { "dan", expression }, NEWLINE ;
+http_get_action = "ambil", "dari", expression, NEWLINE ;
 ```
 
 Examples:
@@ -123,13 +125,16 @@ baca berkas "data/contoh.txt"
 tulis ke berkas "data/hasil.txt" dengan "halo dari One"
 jalankan proses "rustc"
 kueri database ":memory:" dengan "SELECT ?1" dan "42"
+ambil dari "http://127.0.0.1:8080/"
 ```
 
-`cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, and `kueri database` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
+`cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, `kueri database`, and `ambil dari` are source-level orchestration productions. Their effectful execution is governed by explicit runtime capability policy; grammar recognition alone does not grant permission.
 
 The database-query production is intentionally bounded to a database resource, one SQL expression, and zero or more explicit parameter expressions. The current implementation boundary accepts read-only parameterized SQLite `SELECT` statements; broader database mutation/query semantics are not implied by this grammar entry.
 
-The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat`, `baca berkas`, `jalankan proses`, and `kueri database`, and the fixed three-word prefix `tulis ke berkas`, likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
+The HTTP GET production is intentionally bounded to an explicit `http://` URL. The current implementation uses the existing bounded HTTP/1.1 runtime, performs GET only, returns the UTF-8-normalized response body, and requires explicit `network.connect` permission scoped to the exact URL. HTTPS, arbitrary methods, request headers/bodies, redirects, cookies, and API-specific authentication are outside this source-level slice.
+
+The fixed words `buat daftar`, `ke`, and `dari` are structural boundaries for their respective productions. The fixed two-word prefixes `cari alamat`, `baca berkas`, `jalankan proses`, `kueri database`, and `ambil dari`, and the fixed three-word prefix `tulis ke berkas`, likewise identify distinct semantic operations; arbitrary prose is not mapped to these operations.
 
 The source line:
 
@@ -409,22 +414,24 @@ The conformance suite MUST include, at minimum:
 15. explicit `tulis ke berkas` source orchestration;
 16. explicit `jalankan proses` source orchestration;
 17. explicit `kueri database` source orchestration with a database resource, SQL, and parameter list;
-18. repeated parsing of identical input with identical semantic output.
+18. explicit `ambil dari` HTTP source orchestration;
+19. repeated parsing of identical input with identical semantic output.
 
 ### Invalid
 
-19. tabs in indentation;
-20. incomplete declaration/assignment;
-21. unsupported natural-language filler;
-22. arbitrary first-word actions;
-23. unsupported loop-condition prose;
-24. malformed reserved phrases;
-25. ambiguous multi-word boundaries that yield different semantics;
-26. names swallowing structural keywords;
-27. missing action targets;
-28. source spans that cannot cover the complete multi-word name;
-29. orchestration source without the required explicit operation prefix;
-30. database query source without a database resource or SQL expression.
+20. tabs in indentation;
+21. incomplete declaration/assignment;
+22. unsupported natural-language filler;
+23. arbitrary first-word actions;
+24. unsupported loop-condition prose;
+25. malformed reserved phrases;
+26. ambiguous multi-word boundaries that yield different semantics;
+27. names swallowing structural keywords;
+28. missing action targets;
+29. source spans that cannot cover the complete multi-word name;
+30. orchestration source without the required explicit operation prefix;
+31. database query source without a database resource or SQL expression;
+32. HTTP source using an unsupported scheme instead of explicit `http://`.
 
 ## 18. Compatibility and implementation gate
 
@@ -438,7 +445,7 @@ The implementation MUST NOT claim conformance to grammar-bounded multi-word name
 4. ambiguity and diagnostic tests exist;
 5. the reference semantic representation preserves the complete name span.
 
-The `cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, and `kueri database` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
+The `cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, `kueri database`, and `ambil dari` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
 
 No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
 
