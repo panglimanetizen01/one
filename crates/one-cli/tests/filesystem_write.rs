@@ -47,7 +47,8 @@ fn filesystem_write_permission_does_not_grant_filesystem_read() {
 
     assert!(!output.status.success(), "filesystem.write unexpectedly granted read: {}", String::from_utf8_lossy(&output.stdout));
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("capability") || stderr.contains("izin"), "unexpected stderr: {stderr}");
+    assert!(stderr.contains("N3209"), "unexpected stderr: {stderr}");
+    assert!(stderr.contains("MissingCapability"), "unexpected stderr: {stderr}");
     let _ = fs::remove_file(&target);
     let _ = fs::remove_file(&source);
 }
