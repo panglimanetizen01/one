@@ -39,3 +39,5 @@ jobs:
         run: cargo test -p one-core --test database_vertical_slice
       - name: HTTP GET vertical slice
         run: cargo test -p one-core --test http_get_vertical_slice
+      - name: HTTP GET CLI vertical slice
+        run: cargo test -p one-cli --test http_get_orchestration
