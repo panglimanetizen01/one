@@ -1,17 +1,16 @@
 use one_core::{
-    normalize_result, parse, lower, analyze, AdapterId, AdapterResult, Capability, CapabilityRequest,
+    analyze, lower, normalize_result, parse, AdapterId, AdapterResult, Capability, CapabilityRequest,
     EffectClass, ExecutionPolicy, ExecutionScope, FileReadAdapter, FileWriteAdapter, Interpreter,
     NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
-    SemanticCapabilityId, ScopeRule, ToolAdapter,
+    ScopeRule, SemanticCapabilityId,
 };
-use one_core::adapter::{AdapterError, AdapterMetadata, AdapterRequest};
-use one_core::governance::PolicyDecision;
+use one_core::adapter::AdapterError;
 use one_core::orchestration_audit::{AuditEvidence, AuditEvent};
 
 fn compile(source: &str) -> one_core::IrProgram {
     let program = parse(source).expect("source should parse");
     let typed = analyze(&program).expect("source should analyze");
-    lower(&typed).expect("source should lower").clone()
+    lower(&typed).expect("source should lower")
 }
 
 fn filesystem_read_request(path: &str) -> CapabilityRequest {
@@ -137,24 +136,4 @@ fn filesystem_write_adapter_declares_write_capability_only() {
     let adapter = FileWriteAdapter::new();
     assert!(adapter.metadata().declares(Capability::FilesystemWrite));
     assert!(!adapter.metadata().declares(Capability::FilesystemRead));
-}
-
-#[allow(dead_code)]
-struct UnusedFailureAdapter {
-    metadata: AdapterMetadata,
-}
-
-impl ToolAdapter for UnusedFailureAdapter {
-    fn metadata(&self) -> &AdapterMetadata { &self.metadata }
-    fn invoke(&self, _request: &AdapterRequest) -> Result<AdapterResult, AdapterError> {
-        Err(AdapterError::BackendFailure)
-    }
-}
-
-#[test]
-fn policy_decision_type_remains_stable_for_filesystem_denial() {
-    assert_eq!(
-        PolicyDecision::Deny(one_core::DenyReason::MissingCapability),
-        PolicyDecision::Deny(one_core::DenyReason::MissingCapability),
-    );
 }
