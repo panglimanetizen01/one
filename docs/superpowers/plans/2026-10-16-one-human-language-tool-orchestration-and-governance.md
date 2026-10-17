@@ -1,6 +1,6 @@
 # One Human-Language Tool Orchestration and Governance Implementation Plan
 
-> **Current status:** Tasks 1–13 and the language-level process/system vertical slice have source implementations and recorded historical executable evidence at their respective revisions. The current branch extends the chain with a SQLite database-query vertical slice, but the current database revision is not yet executable-verified.
+> **Current status:** Tasks 1–13 and the language-level process/system vertical slice have source implementations and recorded historical executable evidence at their respective revisions. The current branch extends the chain with SQLite database-query and HTTP GET vertical slices, but both current implementation revisions are not yet executable-verified.
 
 **Goal:** Add a deterministic, general-purpose human-language tool-orchestration foundation to One so semantic operations can invoke typed external capabilities through governed adapters without making tool command syntax the language semantics.
 
@@ -114,7 +114,7 @@ Current implementation boundary:
 - missing executable is classified as adapter/backend failure;
 - stdout is normalized as UTF-8 text, with stderr used when stdout is empty.
 
-Historical exact-SHA cross-platform evidence exists at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800`. That evidence does not verify later database changes on the current branch.
+Historical exact-SHA cross-platform evidence exists at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800`. That evidence does not verify later database/HTTP changes on the current branch.
 
 ## Task 15 — Language-level database-query orchestration — IMPLEMENTED / UNVERIFIED
 
@@ -156,11 +156,54 @@ Implementation boundary:
 - source/core tests cover success, default denial, out-of-scope denial, backend failure, and normalization;
 - CLI tests cover success, default denial, and out-of-scope denial.
 
-The source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. It is **not VERIFIED**: hosted GitHub Actions run #550 for this revision failed both Ubuntu and Windows jobs with zero reported steps, and the available container cannot reach GitHub DNS. No support claim is made.
+The source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. It is **not VERIFIED**: hosted GitHub Actions for this lineage failed both Ubuntu and Windows jobs with zero reported steps, and the available container cannot reach GitHub DNS. No support claim is made.
 
-## Task 16 — Broader language-level capability coverage — IN DEVELOPMENT
+## Task 16 — Language-level HTTP GET orchestration — IMPLEMENTED / UNVERIFIED
 
-After the database slice obtains exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority:
+The current branch adds a real HTTP source-to-runtime slice:
+
+```text
+One source
+→ parser
+→ semantic operation
+→ capability resolution
+→ target-scoped governance
+→ network.http.get adapter
+→ bounded HTTP/1.1 GET
+→ normalized response body
+→ CLI/runtime
+```
+
+Source form:
+
+```text
+ambil dari "http://127.0.0.1:8080/"
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan network.connect --target http://127.0.0.1:8080/
+```
+
+Implementation boundary:
+
+- `Capability::NetworkConnect` is explicit and has no ambient grant;
+- `SemanticCapabilityId::NetworkConnect` represents the HTTP source operation;
+- the request uses `ExecutionScope::Target` for the exact URL;
+- `network.http.get` uses the existing HTTP/1.1 runtime;
+- only explicit `http://` URLs and GET are accepted by this source-level slice;
+- response bodies are normalized under the declared UTF-8 expectation;
+- non-2xx responses are treated as adapter failure;
+- source/core tests cover loopback success, default denial, and out-of-scope denial;
+- CLI tests cover loopback success, default denial, and out-of-scope denial;
+- HTTPS, arbitrary methods, custom headers/bodies, redirects, cookies, and API-specific authentication require separate contracts.
+
+The current implementation head is `913e644ea665711c669590a80d7ff19866cb7671`. It is **not VERIFIED**: the latest inspected hosted CI attempt on the preceding head failed both Ubuntu and Windows jobs with zero reported steps. No support claim is made.
+
+## Task 17 — Broader language-level capability coverage — IN DEVELOPMENT
+
+After the database and HTTP slices obtain exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority:
 
 ```text
 One source
@@ -179,7 +222,7 @@ Priority:
 1. filesystem/storage beyond the verified slices;
 2. process/system services beyond the single-process execution slice;
 3. database mutation/transactions after a separate capability contract;
-4. HTTP/API;
+4. HTTP/API expansion after the GET boundary is verified;
 5. build/package;
 6. testing;
 7. platform APIs;
@@ -207,4 +250,4 @@ For every capability family:
 - `Eksperimental` means a verified slice exists but coverage/support is intentionally limited.
 - `Didukung` is reserved for a stronger support claim.
 
-DNS, filesystem-read, process execution, and filesystem write retain their previously recorded evidence boundaries. Database query is **Dalam pengembangan / UNVERIFIED** until current-head executable evidence passes. Broader language-level orchestration remains **Dalam pengembangan**.
+DNS, filesystem-read, process execution, and filesystem write retain their previously recorded evidence boundaries. Database query and HTTP GET are **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence passes. Broader language-level orchestration remains **Dalam pengembangan**.
