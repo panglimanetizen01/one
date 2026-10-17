@@ -25,7 +25,7 @@
 | Language-level process execution orchestration | EXPERIMENTAL | `jalankan proses` → parser → semantic validation → typed orchestration IR → governed `process.execute` adapter → normalized process output; exact-SHA Linux + Windows verified at `9038ac75f197753ff1ab6af7478e63e4831903a2` via `38929072800`; one targeted program without arguments |
 | Language-level filesystem write orchestration | EXPERIMENTAL | `tulis ke berkas` → parser → semantic validation → typed IR → `filesystem.write` governance → filesystem write adapter → CLI; latest executable evidence `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; cross-platform evidence for this executable revision is still pending |
 | Language-level database query orchestration | IMPLEMENTED / UNVERIFIED | `kueri database` → parser → semantic validation → typed IR → resource-scoped `database.query` governance → SQLite adapter → normalized result → CLI; source/test lineage `0aa4acdf3796235eac432138fec829b6508879e3`; no successful exact-SHA executable verification yet |
-| Language-level HTTP GET orchestration | IMPLEMENTED / UNVERIFIED | `ambil dari` → parser → semantic validation → typed IR → target-scoped `network.connect` governance → `network.http.get` adapter → bounded HTTP/1.1 GET → normalized response body → CLI; current canonical main `dd572f1052aa85439015078e0d879a5388544016`; no successful exact-SHA executable verification yet |
+| Language-level HTTP GET orchestration | IMPLEMENTED / UNVERIFIED | `ambil dari` → parser → semantic validation → typed IR → target-scoped `network.connect` governance → `network.http.get` adapter → bounded HTTP/1.1 GET → normalized response body → CLI; implementation merge revision `dd572f1052aa85439015078e0d879a5388544016`; no successful exact-SHA executable verification yet |
 | General language-level orchestration | IN DEVELOPMENT | additional capabilities and source operations are not yet implemented through the same end-to-end path |
 | CLI | VERIFIED / PLATFORM-BOUND | existing CLI/process boundary cross-platform verified at `9038ac75f197753ff1ab6af7478e63e4831903a2`; latest filesystem.write executable verification recorded at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android; database and HTTP CLI paths are newly implemented and unverified |
 | Project scaffolding | IMPLEMENTED | CLI project tests |
@@ -84,14 +84,15 @@ DNS, filesystem-read, and process execution are backed by the recorded cross-pla
 
 ## Current checkpoint
 
-- Canonical `main` is `dd572f1052aa85439015078e0d879a5388544016`.
+- Implementation merge revision: `dd572f1052aa85439015078e0d879a5388544016`.
+- Subsequent `main` commits in this checkpoint are documentation-only corrections.
 - Database source/test lineage: `0aa4acdf3796235eac432138fec829b6508879e3`.
-- HTTP source/test/current implementation is integrated into canonical `main` at `dd572f1052aa85439015078e0d879a5388544016`.
+- HTTP source/test/current implementation is integrated by the implementation merge revision above.
 - Database source path is implemented: `Capability::DatabaseQuery` → `SemanticCapabilityId::DatabaseQuery` → resource scope → `database.sqlite.query` → SQLite parameterized SELECT → UTF-8 normalized result.
 - HTTP source path is implemented: `Capability::NetworkConnect` → `SemanticCapabilityId::NetworkConnect` → target scope → `network.http.get` → HTTP/1.1 GET → response-body normalization.
 - Database tests cover adapter success, source-level success, default denial, out-of-scope denial, backend failure, deterministic normalization, and CLI success/denial/scope denial.
 - HTTP tests cover loopback source-to-runtime success, default denial, target out-of-scope denial, adapter URL validation, and CLI success/denial/scope denial.
-- No exact-SHA executable claim is made for the database or HTTP implementation at canonical `main`.
+- No exact-SHA executable claim is made for the database or HTTP implementation at the implementation merge revision.
 
 ## Release interpretation
 
