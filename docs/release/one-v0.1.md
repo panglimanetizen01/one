@@ -50,6 +50,30 @@ one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 
 Latest exact-SHA evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
 
+## Current database-query implementation boundary
+
+A SQLite-backed language-level database query slice has been implemented on PR #57 head `0aa4acdf3796235eac432138fec829b6508879e3`:
+
+```text
+kueri database ":memory:" dengan "SELECT ?1" dan "42"
+→ parser
+→ semantic validation
+→ typed orchestration IR
+→ resource-scoped database.query governance
+→ database.sqlite.query adapter
+→ parameterized SQLite SELECT
+→ normalized UTF-8 result
+→ CLI
+```
+
+Explicit CLI permission:
+
+```text
+one jalankan main.one --izinkan database.query --target :memory:
+```
+
+This database slice is **IMPLEMENTED / UNVERIFIED**. It is not part of the v0.1 VERIFIED or EXPERIMENTAL release-support boundary until exact-SHA executable evidence exists. Current hosted CI run #550 failed both Ubuntu and Windows jobs with zero reported steps, so it provides no source execution evidence.
+
 ## Explicit v0.1 limits
 
 - `build` emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
@@ -57,6 +81,7 @@ Latest exact-SHA evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/An
 - The language-level orchestration catalog is not complete.
 - Filesystem write is experimental only within the single-text-payload/single-target boundary and the currently verified Android/Termux platform boundary. It is not a claim of general filesystem management or sandbox/path-confinement guarantees.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary; this is not a claim of general process management, service management, shell scripting, or arbitrary command orchestration support.
+- Database query is implemented as a read-only parameterized SQLite SELECT slice but remains unverified at the current revision and is therefore excluded from the verified/support boundary.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
 
 ## Experimental orchestration
@@ -74,6 +99,8 @@ one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
 ```
 
 For the filesystem-write slice, no explicit permission means denial and a different target is outside the granted scope.
+
+Database query is intentionally documented separately above as implemented/unverified; it must not be described as experimental or supported until executable evidence is obtained.
 
 ## Release labels
 
