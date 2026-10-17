@@ -2,6 +2,20 @@
 
 **One** is a human-oriented, deterministic, general-purpose programming language designed to let ordinary users build software from small scripts to large projects.
 
+## Project context — read this first when starting a new session
+
+The repository is the persistent source of accepted One project context. A new development session must read these contracts before making changes:
+
+1. [`AGENTS.md`](AGENTS.md) — agent operating contract and required reading order.
+2. [`docs/ONE_CONSTITUTION.md`](docs/ONE_CONSTITUTION.md) — vision, mission, architecture invariants, portability, security, localization, and global direction.
+3. [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — accepted requirements baseline.
+4. [`docs/DECISIONS.md`](docs/DECISIONS.md) — accepted architectural decisions.
+5. [`docs/DEVELOPMENT_PROTOCOL.md`](docs/DEVELOPMENT_PROTOCOL.md) — execution, verification, bug, and evidence rules.
+6. Read the domain contract relevant to the task: [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`COMPATIBILITY.md`](docs/COMPATIBILITY.md), [`SECURITY.md`](docs/SECURITY.md), [`LOCALIZATION.md`](docs/LOCALIZATION.md), or [`INTEROPERABILITY.md`](docs/INTEROPERABILITY.md).
+7. Check current verification evidence before claiming support or completion.
+
+This repository contract exists so project intent does not depend on a previous ChatGPT session.
+
 ## Foundation
 
 - Human-oriented conversational surface syntax
@@ -14,6 +28,8 @@
 - Human-readable diagnostics
 - Windows and Linux as first-class platforms
 - LLM-independent compiler/runtime semantics
+- Cross-distro, cross-terminal, cross-editor, and cross-environment portability as architectural goals
+- Deep interoperability with existing languages and technologies
 
 ## v0.1 implementation
 
@@ -97,41 +113,11 @@ Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`
 
 ## Database query boundary — implemented / unverified
 
-A SQLite-backed source-level database query path is implemented but not yet executable-verified:
-
-```text
-One source: kueri database ":memory:" dengan "SELECT ?1" dan "42"
- -> parser -> semantic validation -> typed orchestration IR
- -> resource-scoped database.query governance
- -> database.sqlite.query -> normalized result -> CLI
-```
-
-Explicit permission:
-
-```text
-one jalankan main.one --izinkan database.query --target :memory:
-```
-
-The database slice is limited to read-only parameterized SQLite `SELECT`; it is **not** currently a supported or experimentally verified release feature. Hosted CI for its lineage has failed with zero executed steps, so it provides no executable source evidence.
+A SQLite-backed source-level database query path is implemented but not yet executable-verified.
 
 ## HTTP GET boundary — implemented / unverified
 
-An explicit HTTP GET source-level path is implemented but not yet executable-verified:
-
-```text
-One source: ambil dari "http://127.0.0.1:8080/"
- -> parser -> semantic validation -> typed orchestration IR
- -> target-scoped network.connect governance
- -> network.http.get -> HTTP/1.1 GET -> normalized result -> CLI
-```
-
-Explicit permission:
-
-```text
-one jalankan main.one --izinkan network.connect --target http://127.0.0.1:8080/
-```
-
-The HTTP slice is limited to explicit `http://` URLs, GET only, exact target scope, and response-body normalization. HTTPS, arbitrary methods, custom headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. It is **not** currently a supported or experimentally verified release feature because exact-SHA executable evidence is unavailable.
+An explicit HTTP GET source-level path is implemented but not yet executable-verified.
 
 ## Documentation
 
@@ -147,8 +133,4 @@ The HTTP slice is limited to explicit `http://` URLs, GET only, exact target sco
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for the currently recorded executable boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
-
-Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write CLI, database, and HTTP implementation commits and must not be generalized to newer SHAs.
-
-The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
+The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
