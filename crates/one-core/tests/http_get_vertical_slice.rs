@@ -24,7 +24,7 @@ fn source_http_get_reaches_real_http_adapter_with_target_scoped_network_connect(
         }
         assert!(request.starts_with(b"GET / HTTP/1.1\r\n"));
         stream
-            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 18\r\n\r\nhello from One HTTP")
+            .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 19\r\n\r\nhello from One HTTP")
             .expect("HTTP response should be writable");
     });
 
@@ -55,4 +55,30 @@ fn source_http_get_reaches_real_http_adapter_with_target_scoped_network_connect(
         .expect("HTTP source should execute through the governed adapter");
     assert_eq!(result.output, vec!["hello from One HTTP"]);
     server.join().expect("HTTP server should finish cleanly");
+}
+
+#[test]
+fn source_http_get_is_denied_without_explicit_network_connect_capability() {
+    let source = "ambil dari \"http://127.0.0.1:9/\"\n";
+    let program = parse(source).expect("HTTP source should parse");
+    let typed = one_core::analyze(&program).expect("HTTP source should analyze");
+    let ir = lower(&typed).expect("HTTP source should lower");
+    let mut interpreter = Interpreter::with_orchestration_policy(ExecutionPolicy::default());
+    let error = interpreter.execute(&ir).expect_err("HTTP must be denied by default");
+    assert_eq!(error.code, "N3209");
+}
+
+#[test]
+fn source_http_get_is_denied_when_url_is_outside_granted_scope() {
+    let source = "ambil dari \"http://127.0.0.1:9/\"\n";
+    let program = parse(source).expect("HTTP source should parse");
+    let typed = one_core::analyze(&program).expect("HTTP source should analyze");
+    let ir = lower(&typed).expect("HTTP source should lower");
+    let mut interpreter = Interpreter::with_orchestration_policy(
+        ExecutionPolicy::default()
+            .grant(Capability::NetworkConnect)
+            .allow_scope(Capability::NetworkConnect, ScopeRule::Target("http://127.0.0.1:10/".into())),
+    );
+    let error = interpreter.execute(&ir).expect_err("HTTP target outside scope must be denied");
+    assert_eq!(error.code, "N3209");
 }
