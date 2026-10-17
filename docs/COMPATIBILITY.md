@@ -75,6 +75,24 @@ Integration should use CLI, LSP, formatter, diagnostics, debugger, project metad
 
 The architecture should avoid hard-coding one CPU family. Practical initial targets should include x86-64 and ARM64, with ARM and other architectures added as backend/toolchain evidence permits.
 
+## Robots, embedded systems, and electronic devices
+
+The compatibility program must also be capable of targeting programmable physical devices through appropriate compiler backends, runtimes, SDK integrations, or generated artifacts. Target categories include:
+
+- robots and robotic controllers;
+- microcontrollers and embedded computers;
+- industrial/device controllers where technically appropriate;
+- smart televisions and media appliances;
+- refrigerators and refrigeration controllers;
+- air conditioners and HVAC controllers;
+- electric fans and ventilation controllers;
+- air coolers and other cooling equipment;
+- other programmable household and consumer electronic appliances.
+
+This section defines compatibility direction, not current support status. A specific device, board, chipset, RTOS, firmware environment, or appliance model must not be called Supported without executable evidence for that target and revision.
+
+Hardware, firmware, real-time, memory, power, peripheral, boot, and vendor-SDK differences belong in the platform/backend layer and must not create incompatible One language semantics.
+
 ## Containers and remote environments
 
 One should work in containers, VMs, remote shells, SSH sessions, and CI systems when the required runtime/toolchain dependencies are available.
@@ -88,6 +106,7 @@ platform
 OS/distribution
 architecture
 host environment
+device/board/firmware target when applicable
 One revision
 compiler/toolchain
 command
@@ -106,7 +125,7 @@ Portable IR/toolchain/runtime
         ↓
 Platform abstraction
         ↓
-OS / distro / architecture
+OS / distro / architecture / device
         ↓
-CLI / terminal / IDE / container / device
+CLI / terminal / IDE / container / robot / embedded device / appliance
 ```
