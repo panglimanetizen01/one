@@ -130,6 +130,20 @@ mod tests {
     }
 
     #[test]
+    fn specific_filesystem_write_grant_allows_matching_scope() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemWrite,
+            Capability::FilesystemWrite,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Write,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::FilesystemWrite)
+            .allow_scope(Capability::FilesystemWrite, ScopeRule::Target("file.txt".into()));
+        assert_eq!(policy.evaluate(&request), PolicyDecision::Allow);
+    }
+
+    #[test]
     fn out_of_scope_target_is_denied() {
         let policy = ExecutionPolicy::default()
             .grant(Capability::NetworkConnect)
