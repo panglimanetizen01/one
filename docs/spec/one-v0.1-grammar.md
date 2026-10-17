@@ -62,6 +62,8 @@ If multiple complete parses remain and their semantic structures differ, parsing
 
 The parser MUST NOT resolve this ambiguity using longest-match heuristics, frequency, editor history, filesystem state, execution history, machine learning, or an LLM.
 
+Equivalent parses that normalize to the same semantic structure MAY be collapsed before ambiguity reporting.
+
 ## 4. Data
 
 ```text
@@ -423,3 +425,27 @@ The conformance suite MUST include, at minimum:
 28. source spans that cannot cover the complete multi-word name;
 29. orchestration source without the required explicit operation prefix;
 30. database query source without a database resource or SQL expression.
+
+## 18. Compatibility and implementation gate
+
+This document supersedes the previous normative assumption that v0.1 identifiers are only single lexical words.
+
+The implementation MUST NOT claim conformance to grammar-bounded multi-word names until:
+
+1. this grammar and the lexical specification agree;
+2. the AST contract defines the representation of `Name`/name references;
+3. parser tests cover the required boundary cases;
+4. ambiguity and diagnostic tests exist;
+5. the reference semantic representation preserves the complete name span.
+
+The `cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, and `kueri database` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
+
+No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
+
+## 19. Design decision
+
+**Approved direction:** controlled Indonesian surface syntax with lexical `WORD` tokens, grammar-bounded multi-word names, explicit action productions including the currently verified orchestration forms, deterministic ambiguity rejection, and no implicit natural-language intent inference.
+
+Principle:
+
+> Natural on the surface; formal underneath.
