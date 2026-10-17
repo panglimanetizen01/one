@@ -69,7 +69,7 @@ The process slice has exact-SHA Ubuntu + Windows evidence at `9038ac75f197753ff1
 
 ## Filesystem write experimental boundary
 
-The source-level filesystem-write slice is now executable:
+The source-level filesystem-write slice is executable:
 
 ```text
 tulis ke berkas "data/hasil.txt" dengan "halo dari One"
@@ -95,6 +95,25 @@ one run main.one --allow filesystem.write --target data/hasil.txt
 
 Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android with contract check, build, Clippy `-D warnings`, targeted filesystem-write CLI test, all workspace tests, and offline verification. This does **not** establish Ubuntu/Windows support for this SHA. The boundary is one text payload to one explicitly targeted file with explicit `filesystem.write` permission.
 
+## Database query boundary — in development
+
+A SQLite-backed source-level database query path is implemented but not yet executable-verified:
+
+```text
+One source: kueri database ":memory:" dengan "SELECT ?1" dan "42"
+ -> parser -> semantic validation -> typed orchestration IR
+ -> resource-scoped database.query governance
+ -> database.sqlite.query -> normalized result -> CLI
+```
+
+Explicit permission:
+
+```text
+one jalankan main.one --izinkan database.query --target :memory:
+```
+
+Current implementation head is `0aa4acdf3796235eac432138fec829b6508879e3`. The slice is limited to read-only parameterized SQLite `SELECT`; it is **not** currently a supported or experimentally verified release feature. Hosted CI run `550` failed both matrix jobs with zero executed steps, so it provides no executable source evidence.
+
 ## Documentation
 
 - `docs/panduan-pengguna/README.md`
@@ -109,8 +128,8 @@ Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for the current executable boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
+Latest exact-SHA executable evidence for the currently recorded executable boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android. Contract, build, Clippy, targeted filesystem-write CLI, workspace tests, and offline verification all passed.
 
-Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write CLI commits and must not be generalized to newer SHAs.
+Latest cross-platform evidence remains `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025. That evidence predates the filesystem-write CLI and database implementation commits and must not be generalized to newer SHAs.
 
 The private GitHub repository remains the source of truth. The verification mirror is verification infrastructure only. No paid GitHub upgrade is required.
