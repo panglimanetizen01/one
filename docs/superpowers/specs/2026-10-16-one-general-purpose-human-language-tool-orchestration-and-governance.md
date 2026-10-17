@@ -8,7 +8,7 @@
 
 The architecture is executable through a verified runtime foundation and multiple source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, and governed source operations.
 
-The latest independently verified implementation revisions are historical and must not be generalized to the current database head. Current PR #57 head is `1c6662efbbd0541c6336743875b515a4f338d662`. The current hosted CI jobs provide no executable steps, so the current database implementation remains unverified.
+The database source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. Later PR #57 commits in this documentation pass are synchronization-only. Hosted CI run #550 for the database source/test revision provides no executable steps, so the database implementation remains unverified.
 
 ## 1. Purpose
 
@@ -150,7 +150,7 @@ The required lifecycle is:
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-The database source slice now maps through this lifecycle in source, core tests, and CLI tests, but the current revision remains unverified.
+The database source slice maps through this lifecycle in source, core tests, and CLI tests, but the source/test revision remains unverified.
 
 ## 17. Audit model
 
@@ -166,7 +166,7 @@ Database-specific failures currently map invalid arguments to adapter rejection 
 
 Existing vertical slices have executable tests at their recorded revisions. The current database slice includes core tests for adapter success, default denial, resource-scope denial, backend failure, deterministic normalization, source-to-runtime success, and CLI success/denial/scope denial.
 
-These tests are source evidence only until executed at the exact current SHA.
+These tests are source evidence only until executed at the exact source/test revision.
 
 ## 20. Compatibility with existing One architecture
 
