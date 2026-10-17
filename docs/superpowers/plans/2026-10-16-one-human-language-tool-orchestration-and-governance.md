@@ -156,7 +156,7 @@ Implementation boundary:
 - source/core tests cover success, default denial, out-of-scope denial, backend failure, and normalization;
 - CLI tests cover success, default denial, and out-of-scope denial.
 
-The current implementation head is `1c6662efbbd0541c6336743875b515a4f338d662`. It is **not VERIFIED** because the current hosted GitHub Actions jobs have failed with zero reported steps and the available container cannot reach GitHub DNS. No support claim is made.
+The source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. It is **not VERIFIED**: hosted GitHub Actions run #550 for this revision failed both Ubuntu and Windows jobs with zero reported steps, and the available container cannot reach GitHub DNS. No support claim is made.
 
 ## Task 16 — Broader language-level capability coverage — IN DEVELOPMENT
 
