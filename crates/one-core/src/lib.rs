@@ -32,7 +32,7 @@ pub mod stdlib;
 pub mod token;
 pub mod types;
 
-pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileReadAdapter, FileWriteAdapter, PlatformKind, ProcessAdapter, ToolAdapter};
+pub use adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileReadAdapter, FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter, ToolAdapter};
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
 pub use database::SqliteAdapter;
