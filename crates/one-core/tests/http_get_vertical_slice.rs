@@ -37,7 +37,7 @@ fn source_http_get_reaches_real_http_adapter_with_target_scoped_network_connect(
     assert!(matches!(
         ir.statements.first(),
         Some(IrStatement::Orchestration {
-            semantic: SemanticCapabilityId::HttpGet,
+            semantic: SemanticCapabilityId::NetworkConnect,
             capability: Capability::NetworkConnect,
             target: IrExpr::Text(value),
             adapter,
