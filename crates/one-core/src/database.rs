@@ -80,6 +80,7 @@ impl ToolAdapter for SqliteAdapter {
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
+        let column_count = statement.column_count();
         let parameter_refs: Vec<&dyn rusqlite::ToSql> = parameters
             .iter()
             .map(|value| value as &dyn rusqlite::ToSql)
@@ -87,7 +88,6 @@ impl ToolAdapter for SqliteAdapter {
         let mut rows = statement
             .query(rusqlite::params_from_iter(parameter_refs))
             .map_err(|_| AdapterError::BackendFailure)?;
-        let column_count = statement.column_count();
         let mut output = String::new();
         while let Some(row) = rows.next().map_err(|_| AdapterError::BackendFailure)? {
             for index in 0..column_count {
