@@ -34,23 +34,23 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED historically; current-head execution pending |
 | Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED historically; current-head execution pending |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
-| Linux portability | verification mirror workflow | actual Linux run | GREEN historically; current PR #57 head has no executable hosted job evidence |
-| Windows portability | verification mirror workflow | actual Windows run | GREEN historically; current PR #57 head has no executable hosted job evidence |
-| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN historically; current PR #57 head is not release-verified |
+| Linux portability | verification mirror workflow | actual Linux run | GREEN historically; current main has no fresh executable job evidence |
+| Windows portability | verification mirror workflow | actual Windows run | GREEN historically; current main has no fresh executable job evidence |
+| Release gate | verification mirror workflow | green exact-SHA matrix | GREEN historically; current main is not release-verified |
 
 ## Current exact-SHA evidence
 
-Current PR #57 head is `485f768b57401f6e0f76ba16308e4124587a3835`.
+Current canonical `main` is `dd572f1052aa85439015078e0d879a5388544016`.
 
-The hosted CI run #594 was triggered for this exact SHA. Both Ubuntu and Windows jobs completed as failures with zero reported steps, and the rerun again produced no executable steps. This is infrastructure/no-step evidence and does not establish a Rust source failure.
+No successful exact-SHA executable verification for this SHA has been recorded. The repository's hosted CI has repeatedly produced failures with zero reported steps on the affected runs, which is infrastructure/no-step evidence rather than source-failure evidence.
 
-The branch now contains `tools/verify_exact_sha.sh`, a non-destructive exact-SHA harness. It refuses SHA mismatch and dirty working trees, then runs contract verification, workspace build, Clippy with `-D warnings`, workspace tests, deterministic artifact tests, DNS/orchestration tests, filesystem/process vertical slices, database core+CLI slices, and HTTP core+CLI slices. It is the authoritative independent executable path for this verification gap when run in a real checkout with the required Rust/Python toolchain.
+The canonical `tools/verify_exact_sha.sh` harness is present and non-destructive. It refuses SHA mismatch and dirty working trees, then runs contract verification, workspace build, Clippy with `-D warnings`, workspace tests, deterministic artifact tests, DNS/orchestration tests, filesystem/process vertical slices, database core+CLI slices, and HTTP core+CLI slices. It is the authoritative independent executable path for this verification gap when run in a real checkout with the required Rust/Python toolchain.
 
-The latest successful exact-SHA executable evidence remains historical and predates the database and HTTP implementation. It must not be generalized to the current head.
+The latest successful exact-SHA executable evidence remains historical and predates the database and HTTP implementation. It must not be generalized to `dd572f1052aa85439015078e0d879a5388544016`.
 
 ## Canonical CI status
 
-Current PR #57 hosted CI attempts repeatedly produce zero-step failures on both matrix jobs. A workflow that never executes steps cannot establish a source-level failure. The current database and HTTP implementations therefore remain UNVERIFIED until the exact current SHA is executed through the independent harness.
+The latest inspected hosted CI run for the preceding canonical SHA `82b5fb53a434f2fd619cfcbfed52aa2dae0934fe` failed both Ubuntu and Windows matrix jobs with zero reported steps. The current merge commit has no usable hosted executable status recorded yet. A workflow that never executes steps cannot establish a source-level failure.
 
 ## Evidence rules
 
