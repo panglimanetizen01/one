@@ -1,17 +1,30 @@
 use one_core::{
-    ExecutionProfile, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec,
+    ExecutionProfile, ReferenceTargetBackend, RuntimeClass, TargetArchitecture, TargetBackend,
+    TargetEnvironment, TargetSpec,
 };
 
 #[test]
 fn hosted_target_is_accepted_by_declared_backend() {
     let target = TargetSpec::hosted(TargetArchitecture::X86_64, TargetEnvironment::Linux);
-    let backend = TargetBackend::reference();
+    let backend = ReferenceTargetBackend::new();
 
-    backend.validate(&target).expect("reference backend should accept hosted x86_64 Linux");
+    backend
+        .validate(&target)
+        .expect("reference backend should accept hosted x86_64 Linux");
 }
 
 #[test]
-fn constrained_and_firmware_profiles_are_representable_without_semantic_fork() {
+fn backend_contract_declares_identity_and_required_runtime() {
+    let backend = ReferenceTargetBackend::new();
+    let contract: &dyn TargetBackend = &backend;
+
+    assert_eq!(contract.id(), "reference");
+    assert_eq!(contract.required_runtime(), RuntimeClass::Hosted);
+}
+
+#[test]
+fn target_model_distinguishes_runtime_requirements() {
+    let hosted = TargetSpec::hosted(TargetArchitecture::X86_64, TargetEnvironment::Linux);
     let constrained = TargetSpec::new(
         TargetArchitecture::Aarch64,
         ExecutionProfile::Constrained,
@@ -23,6 +36,9 @@ fn constrained_and_firmware_profiles_are_representable_without_semantic_fork() {
         TargetEnvironment::BareMetal,
     );
 
+    assert_eq!(hosted.runtime(), RuntimeClass::Hosted);
+    assert_eq!(constrained.runtime(), RuntimeClass::Rtos);
+    assert_eq!(firmware.runtime(), RuntimeClass::BareMetal);
     assert_eq!(constrained.profile(), ExecutionProfile::Constrained);
     assert_eq!(firmware.profile(), ExecutionProfile::Firmware);
 }
@@ -31,10 +47,14 @@ fn constrained_and_firmware_profiles_are_representable_without_semantic_fork() {
 fn backend_identity_mismatch_is_rejected_deterministically() {
     let target = TargetSpec::hosted(TargetArchitecture::X86_64, TargetEnvironment::Linux)
         .with_backend("other");
-    let backend = TargetBackend::reference();
+    let backend = ReferenceTargetBackend::new();
 
-    let first = backend.validate(&target).expect_err("backend mismatch must be rejected");
-    let second = backend.validate(&target).expect_err("same mismatch must fail identically");
+    let first = backend
+        .validate(&target)
+        .expect_err("backend mismatch must be rejected");
+    let second = backend
+        .validate(&target)
+        .expect_err("same mismatch must fail identically");
 
     assert_eq!(first, second);
     assert!(first.to_string().contains("backend mismatch"));
@@ -47,10 +67,14 @@ fn unsupported_architecture_is_rejected_deterministically() {
         ExecutionProfile::Hosted,
         TargetEnvironment::Linux,
     );
-    let backend = TargetBackend::reference();
+    let backend = ReferenceTargetBackend::new();
 
-    let first = backend.validate(&target).expect_err("unsupported architecture must be rejected");
-    let second = backend.validate(&target).expect_err("same target must fail identically");
+    let first = backend
+        .validate(&target)
+        .expect_err("unsupported architecture must be rejected");
+    let second = backend
+        .validate(&target)
+        .expect_err("same target must fail identically");
 
     assert_eq!(first, second);
     assert!(first.to_string().contains("architecture"));
@@ -63,9 +87,11 @@ fn unsupported_execution_profile_is_rejected_deterministically() {
         ExecutionProfile::Firmware,
         TargetEnvironment::Linux,
     );
-    let backend = TargetBackend::reference();
+    let backend = ReferenceTargetBackend::new();
 
-    let error = backend.validate(&target).expect_err("reference backend must reject unsupported firmware profile");
+    let error = backend
+        .validate(&target)
+        .expect_err("reference backend must reject unsupported firmware profile");
 
     assert!(error.to_string().contains("profile"));
 }
@@ -77,9 +103,11 @@ fn unsupported_environment_is_rejected_deterministically() {
         ExecutionProfile::Hosted,
         TargetEnvironment::BareMetal,
     );
-    let backend = TargetBackend::reference();
+    let backend = ReferenceTargetBackend::new();
 
-    let error = backend.validate(&target).expect_err("reference backend must reject bare-metal environment");
+    let error = backend
+        .validate(&target)
+        .expect_err("reference backend must reject bare-metal environment");
 
     assert!(error.to_string().contains("environment"));
 }
@@ -97,9 +125,12 @@ fn target_selection_does_not_mutate_semantic_ir() {
         ExecutionProfile::Constrained,
         TargetEnvironment::Rtos,
     );
+    let backend = ReferenceTargetBackend::new();
 
-    TargetBackend::reference().validate(&hosted).expect("hosted target should validate");
-    let _ = TargetBackend::reference().validate(&constrained);
+    backend
+        .validate(&hosted)
+        .expect("hosted target should validate");
+    let _ = backend.validate(&constrained);
 
     assert_eq!(ir.canonical_text(), before);
 }
