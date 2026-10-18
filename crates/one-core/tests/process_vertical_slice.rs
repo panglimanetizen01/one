@@ -49,7 +49,7 @@ fn source_process_is_denied_when_target_is_out_of_scope() {
     );
     let error = interpreter.execute(&ir).expect_err("out-of-scope process must be denied");
     assert_eq!(error.code, "N3209");
-    assert!(error.message.contains("ScopeViolation"));
+    assert!(error.message.contains("OutOfScope"));
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn process_orchestrator_reports_unavailable_adapter_without_invocation() {
     let policy = ExecutionPolicy::default()
         .grant(Capability::Process)
         .allow_scope(Capability::Process, ScopeRule::Target("rustc".into()));
-    let mut orchestrator = Orchestrator::new(policy);
+    let orchestrator = Orchestrator::new(policy);
     let mut audit = Vec::new();
     let error = orchestrator.execute_with_audit(&request, PlatformKind::Any, &mut audit)
         .expect_err("no registered process adapter must be reported");
@@ -131,7 +131,7 @@ fn process_adapter_selection_is_deterministic_by_adapter_id() {
 #[test]
 fn process_policy_denial_remains_a_decision_without_execution() {
     let request = process_request("rustc");
-    let mut orchestrator = Orchestrator::new(ExecutionPolicy::default());
+    let orchestrator = Orchestrator::new(ExecutionPolicy::default());
     let mut audit = Vec::new();
     assert_eq!(
         orchestrator.execute_with_audit(&request, PlatformKind::Any, &mut audit),

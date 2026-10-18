@@ -80,7 +80,7 @@ fn sqlite_adapter_reports_backend_failure_for_unavailable_database_path() {
         .join("database.sqlite");
     let adapter = SqliteAdapter::new();
     let result = adapter.invoke(
-        &AdapterRequest::new(request(missing.display().to_string()))
+        &AdapterRequest::new(request(&missing.display().to_string()))
             .with_argument(AdapterArgument::Text("SELECT 1".into())),
     );
     assert_eq!(result, Err(one_core::AdapterError::BackendFailure));

@@ -60,7 +60,7 @@ fn parse_http_target(target: &str) -> Result<(String, String), AdapterError> {
     let authority_end = rest.find('/').unwrap_or(rest.len());
     let authority = &rest[..authority_end];
     if authority.is_empty() { return Err(AdapterError::InvalidArguments); }
-    if let Some((host, port)) = authority.rsplit_once(':') { if host.is_empty() || port.is_empty() || port.parse::<u16>().is_err() { return Err(AdapterError::InvalidArguments); } }
+    if let Some((host, port)) = authority.rsplit_once(':') && (host.is_empty() || port.is_empty() || port.parse::<u16>().is_err()) { return Err(AdapterError::InvalidArguments); }
     let path = if authority_end == rest.len() { "/" } else { &rest[authority_end..] };
     Ok((authority.to_owned(), path.to_owned()))
 }
