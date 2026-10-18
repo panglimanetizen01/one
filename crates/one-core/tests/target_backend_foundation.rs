@@ -61,6 +61,51 @@ fn backend_identity_mismatch_is_rejected_deterministically() {
 }
 
 #[test]
+fn required_runtime_mismatch_is_rejected_deterministically() {
+    struct RtosBackend;
+
+    impl TargetBackend for RtosBackend {
+        fn id(&self) -> &'static str {
+            "rtos-test"
+        }
+
+        fn required_runtime(&self) -> RuntimeClass {
+            RuntimeClass::Rtos
+        }
+
+        fn supports_architecture(&self, architecture: &TargetArchitecture) -> bool {
+            matches!(architecture, TargetArchitecture::Aarch64)
+        }
+
+        fn supports_profile(&self, profile: ExecutionProfile) -> bool {
+            matches!(profile, ExecutionProfile::Constrained)
+        }
+
+        fn supports_environment(&self, environment: TargetEnvironment) -> bool {
+            matches!(environment, TargetEnvironment::Rtos)
+        }
+    }
+
+    let target = TargetSpec::new(
+        TargetArchitecture::Aarch64,
+        ExecutionProfile::Constrained,
+        TargetEnvironment::Linux,
+    )
+    .with_backend("rtos-test");
+    let backend = RtosBackend;
+
+    let first = backend
+        .validate(&target)
+        .expect_err("runtime mismatch must be rejected");
+    let second = backend
+        .validate(&target)
+        .expect_err("same runtime mismatch must fail identically");
+
+    assert_eq!(first, second);
+    assert!(first.to_string().contains("runtime"));
+}
+
+#[test]
 fn unsupported_architecture_is_rejected_deterministically() {
     let target = TargetSpec::new(
         TargetArchitecture::Other("example-arch".into()),
