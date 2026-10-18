@@ -93,6 +93,10 @@ impl TargetSpec {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TargetValidationError {
     BackendMismatch { expected: String, actual: String },
+    RuntimeMismatch {
+        expected: RuntimeClass,
+        actual: RuntimeClass,
+    },
     UnsupportedArchitecture(TargetArchitecture),
     UnsupportedProfile(ExecutionProfile),
     UnsupportedEnvironment(TargetEnvironment),
@@ -103,6 +107,9 @@ impl fmt::Display for TargetValidationError {
         match self {
             Self::BackendMismatch { expected, actual } => {
                 write!(formatter, "backend mismatch: expected {expected}, got {actual}")
+            }
+            Self::RuntimeMismatch { expected, actual } => {
+                write!(formatter, "runtime mismatch: expected {expected:?}, got {actual:?}")
             }
             Self::UnsupportedArchitecture(architecture) => {
                 write!(formatter, "unsupported architecture: {architecture:?}")
@@ -148,6 +155,13 @@ pub trait TargetBackend {
 
         if !self.supports_environment(target.environment()) {
             return Err(TargetValidationError::UnsupportedEnvironment(target.environment()));
+        }
+
+        if target.runtime() != self.required_runtime() {
+            return Err(TargetValidationError::RuntimeMismatch {
+                expected: self.required_runtime(),
+                actual: target.runtime(),
+            });
         }
 
         Ok(())
