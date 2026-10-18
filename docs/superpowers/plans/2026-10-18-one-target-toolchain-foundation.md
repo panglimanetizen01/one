@@ -317,3 +317,11 @@ If documentation needs final evidence updates, commit them separately with a ver
 Do not describe this slice as “cross-compilation supported.” Completion means only that One has a deterministic, typed abstraction and validation boundary for toolchain metadata, backed by executable tests and repository-wide verification.
 
 The next independent slice may evaluate an actual cross-compilation/toolchain adapter. That later work requires its own target/toolchain-specific evidence and must not be inferred from this foundation.
+
+## Execution Record
+
+- Task 1 implementation commits: `23adc262ac2a5d9480824f316c00c7186e1a12c1` (`feat: add target toolchain foundation`) and `ab8c6a0dbcc610d25aa3a9f1e139302ee8a1ec22` (`feat: export target toolchain foundation`).
+- Task 2 integration-test commit: `d9882364604469720bf705f7eeeceb1f6005bb63` (`test: verify target toolchain compatibility`).
+- Pull request opened for executable verification: #61, head `d9882364604469720bf705f7eeeceb1f6005bb63`, base `main`.
+- GitHub Actions run `39095286165` was triggered by PR #61, but both Ubuntu and Windows jobs terminated with `steps: []` and `conclusion: failure`; a retry of the Ubuntu job produced the same zero-step infrastructure failure. This is not executable code/test evidence and must not be treated as a code PASS or FAIL.
+- Local executable verification, contract check, deterministic artifacts, vertical slices, exact-SHA script, and clean-worktree verification remain outstanding because no Rust/Cargo runtime is available in the current execution environment.
