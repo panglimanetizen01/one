@@ -1,6 +1,6 @@
 # One Target Toolchain Foundation Specification
 
-**Status:** Proposed for implementation after plan approval
+**Status:** Implemented on `docs/sync-target-backend-status`; executable verification remains required before merge.
 
 ## 1. Goal
 
@@ -76,7 +76,7 @@ Validation must reject at least:
 
 Diagnostics must identify the failed compatibility dimension deterministically. No validation may silently select a different target, runtime, backend, or toolchain.
 
-The existing `TargetBackend` contract remains authoritative for backend identity and declared target support. This slice extends the boundary with toolchain compatibility; it does not weaken or bypass existing target validation.
+The existing `TargetBackend` contract remains authoritative for backend identity and declared target support. This slice extends the boundary with toolchain compatibility; it does not weaken or bypass existing target validation. Runtime compatibility remains governed by the existing target/backend contract rather than introducing a second runtime rule.
 
 ## 5. Determinism
 
