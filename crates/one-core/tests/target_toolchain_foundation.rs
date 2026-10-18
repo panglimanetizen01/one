@@ -1,7 +1,7 @@
 use one_core::{
     ArtifactFormat, ExecutionProfile, LinkerStrategy, ReferenceTargetBackend, ReferenceToolchain,
-    TargetArchitecture, TargetEnvironment, TargetSpec, ToolchainCapability, ToolchainOperation,
-    ToolchainSpec, ToolchainTarget, ToolchainValidationError,
+    RuntimeClass, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec,
+    ToolchainCapability, ToolchainOperation, ToolchainSpec, ToolchainTarget, ToolchainValidationError,
 };
 
 fn hosted_target() -> TargetSpec {
@@ -10,6 +10,30 @@ fn hosted_target() -> TargetSpec {
 
 fn reference_toolchain() -> ToolchainSpec {
     ReferenceToolchain::new().spec()
+}
+
+struct RuntimeProbeBackend;
+
+impl TargetBackend for RuntimeProbeBackend {
+    fn id(&self) -> &'static str {
+        "runtime-probe"
+    }
+
+    fn required_runtime(&self) -> RuntimeClass {
+        RuntimeClass::Hosted
+    }
+
+    fn supports_architecture(&self, architecture: &TargetArchitecture) -> bool {
+        matches!(architecture, TargetArchitecture::Aarch64)
+    }
+
+    fn supports_profile(&self, profile: ExecutionProfile) -> bool {
+        matches!(profile, ExecutionProfile::Hosted)
+    }
+
+    fn supports_environment(&self, environment: TargetEnvironment) -> bool {
+        matches!(environment, TargetEnvironment::Rtos)
+    }
 }
 
 #[test]
@@ -171,12 +195,23 @@ fn repeated_validation_produces_equal_results() {
 fn runtime_incompatibility_is_reported_by_existing_target_backend_contract() {
     let target = TargetSpec::new(
         TargetArchitecture::Aarch64,
-        ExecutionProfile::Constrained,
+        ExecutionProfile::Hosted,
         TargetEnvironment::Rtos,
     )
-    .with_backend("reference");
-    let backend = ReferenceTargetBackend::new();
-    let toolchain = reference_toolchain();
+    .with_backend("runtime-probe");
+    let backend = RuntimeProbeBackend;
+    let toolchain = ToolchainSpec::new(
+        "runtime-probe-toolchain",
+        "runtime-probe",
+        ToolchainTarget::new(
+            "aarch64-unknown-none",
+            TargetArchitecture::Aarch64,
+            TargetEnvironment::Rtos,
+        ),
+        LinkerStrategy::PlatformDefault,
+        ArtifactFormat::Executable,
+        ToolchainCapability::Build,
+    );
 
     let error = toolchain
         .validate_for(&target, &backend, ToolchainOperation::Build)
