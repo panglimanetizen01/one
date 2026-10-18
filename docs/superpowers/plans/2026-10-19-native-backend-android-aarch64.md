@@ -17,7 +17,7 @@ Merealisasikan jalur pertama `One Source → Semantic IR → Backend → Toolcha
 
 ## Batas implementasi pertama
 
-Backend pertama hanya mendukung konstruksi IR sederhana yang dapat dipetakan deterministik ke C: deklarasi, assignment, literal teks/angka/boolean, operasi numerik/perbandingan, dan aksi `tampilkan`. Konstruksi lain gagal eksplisit dengan diagnostic backend; tidak ada fallback ke interpreter.
+Backend pertama hanya mendukung deklarasi, assignment, literal teks/angka/boolean, identifier yang dapat dipetakan aman ke identifier C, dan aksi `tampilkan`. Ekspresi binary, pemanggilan fungsi, `nothing`, loop, kondisi, event, orchestration, network, serta aksi lain gagal eksplisit dengan diagnostic backend; tidak ada fallback ke interpreter.
 
 ## Kriteria selesai slice
 
