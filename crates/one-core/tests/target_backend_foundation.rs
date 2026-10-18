@@ -82,7 +82,7 @@ fn required_runtime_mismatch_is_rejected_deterministically() {
         }
 
         fn supports_environment(&self, environment: TargetEnvironment) -> bool {
-            matches!(environment, TargetEnvironment::Rtos)
+            matches!(environment, TargetEnvironment::Linux)
         }
     }
 
