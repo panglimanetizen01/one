@@ -2,7 +2,7 @@ use one_core::{
     analyze, lower, normalize_result, parse, AdapterId, AdapterResult, Capability, CapabilityRequest,
     EffectClass, ExecutionPolicy, ExecutionScope, FileReadAdapter, FileWriteAdapter, Interpreter,
     NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
-    ScopeRule, SemanticCapabilityId,
+    ScopeRule, SemanticCapabilityId, ToolAdapter,
 };
 use one_core::adapter::AdapterError;
 use one_core::orchestration_audit::{AuditEvidence, AuditEvent};
@@ -68,7 +68,7 @@ fn source_filesystem_read_is_denied_when_target_is_out_of_scope() {
     let error = interpreter.execute(&ir).expect_err("out-of-scope target must be denied");
 
     assert_eq!(error.code, "N3209");
-    assert!(error.message.contains("ScopeViolation"));
+    assert!(error.message.contains("OutOfScope"));
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn filesystem_orchestrator_reports_unavailable_adapter_without_invocation() {
     let policy = ExecutionPolicy::default()
         .grant(Capability::FilesystemRead)
         .allow_scope(Capability::FilesystemRead, ScopeRule::Target(path.into()));
-    let mut orchestrator = Orchestrator::new(policy);
+    let orchestrator = Orchestrator::new(policy);
     let mut audit = Vec::new();
 
     let error = orchestrator

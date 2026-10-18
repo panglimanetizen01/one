@@ -44,7 +44,7 @@ fn cli_http_get_is_denied_without_permission() {
     let output = run(&["run", path.to_str().unwrap()]);
     let _ = fs::remove_file(&path);
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("N3209"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("N3205"));
 }
 
 #[test]
