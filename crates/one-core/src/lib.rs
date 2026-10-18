@@ -61,7 +61,7 @@ pub use orchestration_result::{normalize_result, EvidenceCertainty, Normalizatio
 pub use orchestrator::{OrchestrationError, Orchestrator};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
-pub use target::{ExecutionProfile, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec, TargetValidationError};
+pub use target::{ExecutionProfile, ReferenceTargetBackend, RuntimeClass, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec, TargetValidationError};
 pub use token::{Span, Token, TokenKind};
 pub use types::Type;
 
