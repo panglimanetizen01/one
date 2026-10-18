@@ -41,7 +41,9 @@ fn backend_menghasilkan_source_c_deterministik_dari_ir_sederhana() {
 
 #[test]
 fn backend_menolak_ir_yang_belum_didukung_dan_tidak_fallback_ke_interpreter() {
-    let ir = compile("nama adalah \"Halo\"\ntambahkan nama ke daftar\n");
+    let ir = compile(
+        "umur adalah 18\nkalau umur sudah 17 tahun\n    tampilkan \"Boleh masuk\"\n",
+    );
     let backend = NativeAndroidAarch64Backend::new();
     let error = backend.codegen(&ir).expect_err("IR yang belum didukung harus gagal eksplisit");
     assert_eq!(error.code(), "NATIVE-CODEGEN-UNSUPPORTED");
