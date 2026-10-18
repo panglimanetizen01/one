@@ -1,6 +1,6 @@
 use one_core::{
     lower, parse, analyze, ArtifactFormat, ExecutionProfile, IrProgram, NativeAndroidAarch64Backend,
-    TargetArchitecture, TargetEnvironment, TargetSpec, ToolchainOperation,
+    TargetArchitecture, TargetEnvironment, TargetSpec, ToolchainCapability,
 };
 
 fn compile(source: &str) -> IrProgram {
@@ -12,7 +12,7 @@ fn compile(source: &str) -> IrProgram {
 #[test]
 fn backend_menerima_target_android_aarch64_hosted() {
     let backend = NativeAndroidAarch64Backend::new();
-    let target = TargetSpec::hosted(TargetArchitecture::Aarch64, TargetEnvironment::Android)
+    let target = TargetSpec::hosted(TargetArchitecture::Aarch64, TargetEnvironment::Linux)
         .with_backend(backend.id());
     backend.validate(&target).expect("target Android AArch64 harus diterima");
     assert_eq!(backend.required_runtime(), one_core::RuntimeClass::Hosted);
@@ -42,5 +42,5 @@ fn spesifikasi_toolchain_android_aarch64_memakai_executable() {
     let toolchain = NativeAndroidAarch64Backend::new().toolchain();
     assert_eq!(toolchain.target().triple(), "aarch64-linux-android24");
     assert_eq!(toolchain.artifact(), &ArtifactFormat::Executable);
-    assert!(toolchain.capability().supports_operation(ToolchainOperation::Build));
+    assert_eq!(toolchain.capability(), ToolchainCapability::BuildAndExecute);
 }
