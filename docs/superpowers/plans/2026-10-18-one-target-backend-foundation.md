@@ -24,11 +24,20 @@ Required failing behaviors:
 - produce deterministic diagnostics;
 - preserve semantic IR independently of target selection.
 
-Run only the focused tests and record the expected failures.
+The RED-phase test update was pushed first at `7f7dd37fbac31575187e7c1959a6c7b92d01ccbd`. The pull-request CI runner then reported failure before executing any job step (`steps: []` on both matrix jobs), so that infrastructure result is not treated as executable RED evidence.
 
 ## Phase 3 — GREEN
 
 Implement the smallest target/backend abstractions needed by the RED tests.
+
+Implemented on `feat/target-backend-foundation`:
+
+- `TargetBackend` is an explicit backend contract trait rather than a concrete backend singleton;
+- `ReferenceTargetBackend` is the reference implementation;
+- target metadata includes deterministic `RuntimeClass` derived from `TargetEnvironment`;
+- backend declarations expose identity, required runtime, architecture support, profile support, and environment support;
+- validation rejects backend identity, architecture, profile, and environment mismatches deterministically;
+- target metadata remains independent from One Semantic IR.
 
 Constraints:
 
@@ -41,7 +50,7 @@ Constraints:
 
 ## Phase 4 — Verification
 
-Run:
+Required verification:
 
 - focused target/backend tests;
 - full workspace tests;
@@ -49,13 +58,19 @@ Run:
 - `cargo clippy --workspace --all-targets -- -D warnings`;
 - deterministic artifact tests;
 - existing vertical-slice tests;
-- contract checker.
+- contract checker;
+- exact-SHA verification for the resulting commit.
 
-Then run the exact-SHA verification script for the resulting commit.
+A prior full verification existed at the pre-audit head `83cd765c918f5ac5bcb23c5480fc1d768def06ee`. After the audit changes, fresh executable verification is still required. GitHub Actions has so far created a PR run at the post-change head but both matrix jobs terminated before any step executed, so it is not evidence of code failure or success.
 
 ## Phase 5 — Documentation
 
-Update only documentation whose claims are proven by the implementation and tests. Explicitly keep concrete hardware support as unverified until a real target has executable evidence.
+Documentation was reconciled with the implementation:
+
+- the specification now describes the `TargetBackend` trait and `ReferenceTargetBackend` implementation;
+- runtime class metadata and its deterministic environment mapping are explicit;
+- the specification keeps concrete hardware support unverified;
+- this plan records the CI runner limitation without converting it into a false test result.
 
 ## Phase 6 — Integration
 
@@ -63,4 +78,4 @@ Commit the minimal implementation and documentation changes on `feat/target-back
 
 ## Next independent slice
 
-After this foundation is verified, evaluate cross-compilation/toolchain abstraction as the next dependency layer. Device I/O and concrete MCU/RTOS integrations remain downstream work.
+After this foundation is independently verified, evaluate cross-compilation/toolchain abstraction as the next dependency layer. Device I/O and concrete MCU/RTOS integrations remain downstream work.
