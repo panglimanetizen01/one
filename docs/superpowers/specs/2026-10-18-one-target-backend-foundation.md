@@ -1,6 +1,6 @@
 # One Target Backend Foundation
 
-**Status:** Proposed implementation specification
+**Status:** Implemented foundation specification
 
 ## Purpose
 
@@ -29,6 +29,7 @@ It includes:
 - target architecture identity;
 - execution profile identity;
 - target environment metadata;
+- runtime class metadata;
 - backend identity and declared target support;
 - deterministic target validation;
 - explicit unsupported-target diagnostics;
@@ -38,31 +39,35 @@ It does NOT implement GPIO, I2C, SPI, UART, CAN, interrupts, RTOS integration, f
 
 ## Target model
 
-A target description must distinguish at least:
+A target description distinguishes at least:
 
-- architecture (`x86_64`, `aarch64`, and future architectures);
+- architecture (`x86_64`, `aarch64`, `arm`, and future architectures);
 - execution profile (`hosted`, `constrained`, `firmware`);
 - operating environment (`windows`, `linux`, `rtos`, `bare-metal`, or future environments);
-- backend identity;
-- runtime requirements.
+- runtime class (`hosted`, `rtos`, `bare-metal`);
+- backend identity.
 
-The representation must be extensible without changing One Semantic IR semantics.
+The representation is extensible without changing One Semantic IR semantics. Runtime class is derived deterministically from the target environment in this foundation slice so the target model cannot contain an unvalidated runtime/environment pairing.
 
 ## Backend contract
 
-A backend declares:
+A backend is represented by the `TargetBackend` trait. Each implementation declares:
 
 - stable backend identity;
-- supported target profiles/architectures;
+- supported target profiles;
+- supported architectures;
+- supported environments;
 - required runtime class;
 - deterministic validation of a target description;
 - a boundary at which platform-specific implementation begins.
+
+The reference implementation is `ReferenceTargetBackend`. It declares support for x86_64, AArch64, and ARM architectures; the hosted execution profile; Windows and Linux environments; and the hosted runtime class.
 
 A backend MUST reject a target outside its declared support rather than silently selecting a fallback with different semantics.
 
 ## Diagnostics
 
-Unsupported or malformed target descriptions must produce deterministic, machine-testable diagnostics. Diagnostics must identify the rejected target dimension and must not imply hardware support merely because a target name exists in metadata.
+Unsupported or malformed target descriptions produce deterministic, machine-testable diagnostics. Diagnostics identify the rejected target dimension and do not imply hardware support merely because a target name exists in metadata.
 
 ## Evidence states
 
@@ -70,15 +75,17 @@ Adding a target descriptor is not evidence that the concrete target is supported
 
 ## Testing contract
 
-The implementation must include tests for:
+The implementation includes tests for:
 
 1. valid hosted target acceptance;
-2. valid constrained/firmware target description construction where the model permits it;
-3. unsupported architecture rejection;
-4. unsupported execution profile rejection;
-5. deterministic diagnostics;
-6. backend declaration matching target validation;
-7. no semantic-IR mutation caused by target selection.
+2. valid constrained/firmware target description construction;
+3. backend contract identity and required runtime declaration;
+4. runtime class distinction in the target model;
+5. unsupported architecture rejection;
+6. unsupported execution profile rejection;
+7. unsupported environment rejection;
+8. deterministic backend mismatch and rejection diagnostics;
+9. no semantic-IR mutation caused by target selection.
 
 ## Non-goals
 
