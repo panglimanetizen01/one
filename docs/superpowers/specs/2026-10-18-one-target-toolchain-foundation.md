@@ -1,6 +1,6 @@
 # One Target Toolchain Foundation Specification
 
-**Status:** Implemented on `docs/sync-target-backend-status`; executable verification remains required before merge.
+**Status:** Implemented and locally verified on `docs/sync-target-backend-status` at `207409bf1eadc4518c345f82cfed647347cce0ba`. This slice is a toolchain abstraction/validation foundation, not cross-compilation support.
 
 ## 1. Goal
 
