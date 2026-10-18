@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt, path::{PathBuf}, process::Command};
+use std::{collections::BTreeMap, fmt, path::PathBuf, process::Command};
 
 use crate::{
     ir::{IrExpr, IrProgram, IrStatement},
@@ -10,7 +10,6 @@ pub struct NativeArtifact { pub path: PathBuf, pub format: ArtifactFormat }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NativeBackendError { code: &'static str, message: String }
-
 impl NativeBackendError {
     fn new(code: &'static str, message: impl Into<String>) -> Self { Self { code, message: message.into() } }
     pub fn code(&self) -> &'static str { self.code }
@@ -59,10 +58,18 @@ impl TargetBackend for NativeAndroidAarch64Backend {
 struct CGenerator { variables: BTreeMap<String, CType>, output: String }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)] enum CType { Text, Number, Boolean }
 impl CGenerator {
+    fn identifier(name: &str) -> Result<(), NativeBackendError> {
+        let mut chars = name.chars();
+        let Some(first) = chars.next() else { return Err(NativeBackendError::new("NATIVE-CODEGEN-IDENTIFIER", "identifier native tidak boleh kosong")); };
+        if !(first == '_' || first.is_ascii_alphabetic()) || !chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric()) {
+            return Err(NativeBackendError::new("NATIVE-CODEGEN-IDENTIFIER", format!("identifier '{}' tidak dapat dipetakan aman ke C", name)));
+        }
+        Ok(())
+    }
     fn statement(&mut self, statement: &IrStatement) -> Result<(), NativeBackendError> {
         match statement {
-            IrStatement::Declaration { name, value } => { let ty = self.expr_type(value)?; self.variables.insert(name.clone(), ty); self.output.push_str("  "); self.output.push_str(match ty { CType::Text => "const char* ", CType::Number => "long long ", CType::Boolean => "bool " }); self.output.push_str(name); self.output.push_str(" = "); self.expr(value)?; self.output.push_str(";\n"); }
-            IrStatement::Assignment { name, value } => { let Some(expected) = self.variables.get(name).copied() else { return Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", format!("assignment ke variabel '{}' tidak didukung", name))); }; if expected != self.expr_type(value)? { return Err(NativeBackendError::new("NATIVE-CODEGEN-TYPE", format!("tipe assignment '{}' tidak cocok", name))); } self.output.push_str("  "); self.output.push_str(name); self.output.push_str(" = "); self.expr(value)?; self.output.push_str(";\n"); }
+            IrStatement::Declaration { name, value } => { Self::identifier(name)?; let ty = self.expr_type(value)?; self.variables.insert(name.clone(), ty); self.output.push_str("  "); self.output.push_str(match ty { CType::Text => "const char* ", CType::Number => "long long ", CType::Boolean => "bool " }); self.output.push_str(name); self.output.push_str(" = "); self.expr(value)?; self.output.push_str(";\n"); }
+            IrStatement::Assignment { name, value } => { Self::identifier(name)?; let Some(expected) = self.variables.get(name).copied() else { return Err(NativeBackendError::new("NATIVE-CODEGEN-UNDEFINED", format!("assignment ke variabel '{}' tidak didukung", name))); }; if expected != self.expr_type(value)? { return Err(NativeBackendError::new("NATIVE-CODEGEN-TYPE", format!("tipe assignment '{}' tidak cocok", name))); } self.output.push_str("  "); self.output.push_str(name); self.output.push_str(" = "); self.expr(value)?; self.output.push_str(";\n"); }
             IrStatement::Action { name, args } if name == "tampilkan" && args.len() == 1 => match self.expr_type(&args[0])? { CType::Text => { self.output.push_str("  puts("); self.expr(&args[0])?; self.output.push_str(");\n"); }, CType::Number => { self.output.push_str("  printf(\"%lld\\n\", "); self.expr(&args[0])?; self.output.push_str(");\n"); }, CType::Boolean => { self.output.push_str("  puts("); self.expr(&args[0])?; self.output.push_str(" ? \"benar\" : \"salah\");\n"); } },
             IrStatement::Action { name, .. } if name == "tampilkan" => return Err(NativeBackendError::new("NATIVE-CODEGEN-ARITY", "'tampilkan' membutuhkan tepat satu nilai")),
             IrStatement::Action { name, .. } => return Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", format!("aksi '{}' belum didukung backend native", name))),
@@ -73,17 +80,17 @@ impl CGenerator {
     fn expr_type(&self, expr: &IrExpr) -> Result<CType, NativeBackendError> {
         match expr {
             IrExpr::Text(_) => Ok(CType::Text), IrExpr::Number(_) => Ok(CType::Number), IrExpr::Boolean(_) => Ok(CType::Boolean),
-            IrExpr::Identifier(name) => self.variables.get(name).copied().ok_or_else(|| NativeBackendError::new("NATIVE-CODEGEN-UNDEFINED", format!("identifier '{}' tidak ditemukan", name))),
-            IrExpr::Binary { left, op, right } => { use crate::ast::BinaryOp; let left_ty = self.expr_type(left)?; let right_ty = self.expr_type(right)?; match op { BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide if left_ty == CType::Number && right_ty == CType::Number => Ok(CType::Number), BinaryOp::Equal | BinaryOp::Greater | BinaryOp::Less | BinaryOp::AtLeast | BinaryOp::AtMost if left_ty == right_ty => Ok(CType::Boolean), BinaryOp::Add if left_ty == CType::Text && right_ty == CType::Text => Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", "penggabungan teks belum didukung backend native")), _ => Err(NativeBackendError::new("NATIVE-CODEGEN-TYPE", "operasi IR tidak cocok dengan tipe native")) } }
-            IrExpr::Nothing | IrExpr::Call { .. } => Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", "ekspresi ini belum didukung backend native")),
+            IrExpr::Identifier(name) => { Self::identifier(name)?; self.variables.get(name).copied().ok_or_else(|| NativeBackendError::new("NATIVE-CODEGEN-UNDEFINED", format!("identifier '{}' tidak ditemukan", name))) }
+            IrExpr::Binary { .. } | IrExpr::Nothing | IrExpr::Call { .. } => Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", "ekspresi non-literal belum didukung backend native")),
         }
     }
     fn expr(&mut self, expr: &IrExpr) -> Result<(), NativeBackendError> {
         match expr {
             IrExpr::Text(value) => { self.output.push('"'); for ch in value.chars() { match ch { '\\' => self.output.push_str("\\\\"), '"' => self.output.push_str("\\\""), '\n' => self.output.push_str("\\n"), '\r' => self.output.push_str("\\r"), '\t' => self.output.push_str("\\t"), other => self.output.push(other) } } self.output.push('"'); },
-            IrExpr::Number(value) => self.output.push_str(&value.to_string()), IrExpr::Boolean(value) => self.output.push_str(if *value { "true" } else { "false" }), IrExpr::Identifier(name) => self.output.push_str(name),
-            IrExpr::Binary { left, op, right } => { self.output.push('('); self.expr(left)?; self.output.push_str(match op { crate::ast::BinaryOp::Add => " + ", crate::ast::BinaryOp::Subtract => " - ", crate::ast::BinaryOp::Multiply => " * ", crate::ast::BinaryOp::Divide => " / ", crate::ast::BinaryOp::Equal => " == ", crate::ast::BinaryOp::Greater => " > ", crate::ast::BinaryOp::Less => " < ", crate::ast::BinaryOp::AtLeast => " >= ", crate::ast::BinaryOp::AtMost => " <= " }); self.expr(right)?; self.output.push(')'); },
-            IrExpr::Nothing | IrExpr::Call { .. } => return Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", "ekspresi belum didukung backend native")),
-        } Ok(())
+            IrExpr::Number(value) => self.output.push_str(&value.to_string()), IrExpr::Boolean(value) => self.output.push_str(if *value { "true" } else { "false" }),
+            IrExpr::Identifier(name) => { Self::identifier(name)?; self.output.push_str(name); },
+            IrExpr::Binary { .. } | IrExpr::Nothing | IrExpr::Call { .. } => return Err(NativeBackendError::new("NATIVE-CODEGEN-UNSUPPORTED", "ekspresi non-literal belum didukung backend native")),
+        }
+        Ok(())
     }
 }
