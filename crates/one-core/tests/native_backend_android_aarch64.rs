@@ -1,6 +1,6 @@
 use one_core::{
     lower, parse, analyze, ArtifactFormat, ExecutionProfile, IrProgram, NativeAndroidAarch64Backend,
-    TargetArchitecture, TargetEnvironment, TargetSpec, ToolchainCapability,
+    TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec, ToolchainCapability,
 };
 
 fn compile(source: &str) -> IrProgram {
