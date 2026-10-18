@@ -96,7 +96,6 @@ pub enum TargetValidationError {
     UnsupportedArchitecture(TargetArchitecture),
     UnsupportedProfile(ExecutionProfile),
     UnsupportedEnvironment(TargetEnvironment),
-    RuntimeMismatch { expected: RuntimeClass, actual: RuntimeClass },
 }
 
 impl fmt::Display for TargetValidationError {
@@ -113,9 +112,6 @@ impl fmt::Display for TargetValidationError {
             }
             Self::UnsupportedEnvironment(environment) => {
                 write!(formatter, "unsupported target environment: {environment:?}")
-            }
-            Self::RuntimeMismatch { expected, actual } => {
-                write!(formatter, "runtime mismatch: expected {expected:?}, got {actual:?}")
             }
         }
     }
@@ -152,13 +148,6 @@ pub trait TargetBackend {
 
         if !self.supports_environment(target.environment()) {
             return Err(TargetValidationError::UnsupportedEnvironment(target.environment()));
-        }
-
-        if target.runtime() != self.required_runtime() {
-            return Err(TargetValidationError::RuntimeMismatch {
-                expected: self.required_runtime(),
-                actual: target.runtime(),
-            });
         }
 
         Ok(())
