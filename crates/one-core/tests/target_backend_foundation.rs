@@ -28,6 +28,19 @@ fn constrained_and_firmware_profiles_are_representable_without_semantic_fork() {
 }
 
 #[test]
+fn backend_identity_mismatch_is_rejected_deterministically() {
+    let target = TargetSpec::hosted(TargetArchitecture::X86_64, TargetEnvironment::Linux)
+        .with_backend("other");
+    let backend = TargetBackend::reference();
+
+    let first = backend.validate(&target).expect_err("backend mismatch must be rejected");
+    let second = backend.validate(&target).expect_err("same mismatch must fail identically");
+
+    assert_eq!(first, second);
+    assert!(first.to_string().contains("backend mismatch"));
+}
+
+#[test]
 fn unsupported_architecture_is_rejected_deterministically() {
     let target = TargetSpec::new(
         TargetArchitecture::Other("example-arch".into()),
@@ -55,6 +68,20 @@ fn unsupported_execution_profile_is_rejected_deterministically() {
     let error = backend.validate(&target).expect_err("reference backend must reject unsupported firmware profile");
 
     assert!(error.to_string().contains("profile"));
+}
+
+#[test]
+fn unsupported_environment_is_rejected_deterministically() {
+    let target = TargetSpec::new(
+        TargetArchitecture::Aarch64,
+        ExecutionProfile::Hosted,
+        TargetEnvironment::BareMetal,
+    );
+    let backend = TargetBackend::reference();
+
+    let error = backend.validate(&target).expect_err("reference backend must reject bare-metal environment");
+
+    assert!(error.to_string().contains("environment"));
 }
 
 #[test]
