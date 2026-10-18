@@ -8,6 +8,7 @@ pub mod interop;
 pub mod interpreter;
 pub mod ir;
 pub mod lexer;
+pub mod native_backend;
 pub mod network;
 pub mod network_application;
 pub mod network_datagrams;
@@ -43,6 +44,7 @@ pub use interop::{run_process, ProcessResult, ProcessSpec};
 pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, RuntimeError};
 pub use ir::{lower, lower_network, IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
 pub use lexer::lex;
+pub use native_backend::{NativeAndroidAarch64Backend, NativeArtifact, NativeBackendError};
 pub use network::{NetworkAddressKind, NetworkConnectionId, NetworkConstraints, NetworkDiagnosticStage, NetworkFailure, NetworkOperation, NetworkProtocolFamily, NetworkSecurity, NetworkTarget, NetworkTransport, ProtocolCapability, ProtocolRegistry, ProtocolSupportStatus};
 pub use network_application::{ftp_login, smtp_send, ApplicationProtocolError};
 pub use network_datagrams::{ntp_query, tftp_read, tftp_write, DatagramProtocolError};
@@ -61,12 +63,7 @@ pub use orchestration_result::{normalize_result, EvidenceCertainty, Normalizatio
 pub use orchestrator::{OrchestrationError, Orchestrator};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
-pub use target::{
-    ArtifactFormat, ExecutionProfile, LinkerStrategy, ReferenceTargetBackend, ReferenceToolchain,
-    RuntimeClass, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec,
-    TargetValidationError, ToolchainCapability, ToolchainOperation, ToolchainSpec,
-    ToolchainTarget, ToolchainValidationError,
-};
+pub use target::{ArtifactFormat, ExecutionProfile, LinkerStrategy, ReferenceTargetBackend, ReferenceToolchain, RuntimeClass, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec, TargetValidationError, ToolchainCapability, ToolchainOperation, ToolchainSpec, ToolchainTarget, ToolchainValidationError};
 pub use token::{Span, Token, TokenKind};
 pub use types::Type;
 
