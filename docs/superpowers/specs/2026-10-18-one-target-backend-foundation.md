@@ -58,12 +58,12 @@ A backend is represented by the `TargetBackend` trait. Each implementation decla
 - supported architectures;
 - supported environments;
 - required runtime class;
-- deterministic validation of a target description;
+- deterministic validation of a target description, including required-runtime compatibility;
 - a boundary at which platform-specific implementation begins.
 
 The reference implementation is `ReferenceTargetBackend`. It declares support for x86_64, AArch64, and ARM architectures; the hosted execution profile; Windows and Linux environments; and the hosted runtime class.
 
-A backend MUST reject a target outside its declared support rather than silently selecting a fallback with different semantics.
+A backend MUST reject a target outside its declared support rather than silently selecting a fallback with different semantics. A target whose derived runtime class does not match the backend's required runtime MUST also be rejected deterministically.
 
 ## Diagnostics
 
@@ -81,11 +81,12 @@ The implementation includes tests for:
 2. valid constrained/firmware target description construction;
 3. backend contract identity and required runtime declaration;
 4. runtime class distinction in the target model;
-5. unsupported architecture rejection;
-6. unsupported execution profile rejection;
-7. unsupported environment rejection;
-8. deterministic backend mismatch and rejection diagnostics;
-9. no semantic-IR mutation caused by target selection.
+5. deterministic required-runtime mismatch rejection;
+6. unsupported architecture rejection;
+7. unsupported execution profile rejection;
+8. unsupported environment rejection;
+9. deterministic backend mismatch and rejection diagnostics;
+10. no semantic-IR mutation caused by target selection.
 
 ## Non-goals
 
