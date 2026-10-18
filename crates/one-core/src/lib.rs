@@ -29,6 +29,7 @@ pub mod platform;
 pub mod runtime;
 pub mod semantic;
 pub mod stdlib;
+pub mod target;
 pub mod token;
 pub mod types;
 
@@ -60,6 +61,7 @@ pub use orchestration_result::{normalize_result, EvidenceCertainty, Normalizatio
 pub use orchestrator::{OrchestrationError, Orchestrator};
 pub use parser::parse;
 pub use semantic::{analyze, analyze_network, TypedProgram};
+pub use target::{ExecutionProfile, ReferenceTargetBackend, RuntimeClass, TargetArchitecture, TargetBackend, TargetEnvironment, TargetSpec, TargetValidationError};
 pub use token::{Span, Token, TokenKind};
 pub use types::Type;
 
