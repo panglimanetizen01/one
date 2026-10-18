@@ -10,5 +10,9 @@ description = "Command-line interface for One"
 name = "one"
 path = "src/main.rs"
 
+[[bin]]
+name = "one-native"
+path = "src/native_main.rs"
+
 [dependencies]
 one-core = { path = "../one-core" }
