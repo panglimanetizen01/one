@@ -21,6 +21,7 @@ Required failing behaviors:
 - reject unsupported architecture;
 - reject unsupported execution profile;
 - reject mismatched backend/target declarations;
+- reject backend/target runtime mismatch;
 - produce deterministic diagnostics;
 - preserve semantic IR independently of target selection.
 
@@ -36,7 +37,7 @@ Implemented on `feat/target-backend-foundation`:
 - `ReferenceTargetBackend` is the reference implementation;
 - target metadata includes deterministic `RuntimeClass` derived from `TargetEnvironment`;
 - backend declarations expose identity, required runtime, architecture support, profile support, and environment support;
-- validation rejects backend identity, architecture, profile, and environment mismatches deterministically;
+- validation rejects backend identity, runtime, architecture, profile, and environment mismatches deterministically;
 - target metadata remains independent from One Semantic IR.
 
 Constraints:
@@ -61,14 +62,15 @@ Required verification:
 - contract checker;
 - exact-SHA verification for the resulting commit.
 
-A prior full verification existed at the pre-audit head `83cd765c918f5ac5bcb23c5480fc1d768def06ee`. After the audit changes, fresh executable verification is still required. GitHub Actions has so far created a PR run at the post-change head but both matrix jobs terminated before any step executed, so it is not evidence of code failure or success.
+A prior full verification existed at the pre-audit head `83cd765c918f5ac5bcb23c5480fc1d768def06ee`. After the audit changes, fresh executable verification is still required. GitHub Actions has so far created PR runs at post-change heads but the matrix jobs terminated before executing any step (`steps: []`), so those runs are not evidence of code failure or success.
 
 ## Phase 5 — Documentation
 
-Documentation was reconciled with the implementation:
+Documentation is reconciled with the implementation:
 
-- the specification now describes the `TargetBackend` trait and `ReferenceTargetBackend` implementation;
+- the specification describes the `TargetBackend` trait and `ReferenceTargetBackend` implementation;
 - runtime class metadata and its deterministic environment mapping are explicit;
+- required-runtime compatibility is part of backend validation;
 - the specification keeps concrete hardware support unverified;
 - this plan records the CI runner limitation without converting it into a false test result.
 
