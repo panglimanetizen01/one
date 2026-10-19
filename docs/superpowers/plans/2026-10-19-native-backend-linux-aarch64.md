@@ -34,40 +34,41 @@
 **Files:**
 - Tidak mengubah source.
 
-- [ ] Probe compiler, sysroot, linker, dan executor Linux AArch64.
-- [ ] Buktikan compile smoke test kecil ke ELF `aarch64-unknown-linux-gnu`.
-- [ ] Jika executor tersedia, jalankan smoke test.
-- [ ] Jika executor tidak tersedia, catat target sebagai BUILD TERBUKTI saja dan jangan klaim executable.
-- [ ] Pilih toolchain berdasarkan bukti aktual, bukan asumsi.
+- [x] Probe compiler, sysroot, linker, dan executor Linux AArch64.
+- [x] Buktikan compile smoke test kecil ke ELF `aarch64-unknown-linux-gnu`.
+- [x] Executor AArch64 tersedia pada host verifikasi dan smoke test native berhasil dijalankan.
+- [x] Toolchain dipilih berdasarkan bukti aktual.
 
 ### Task 1: Backend Linux AArch64
 
 **Files:**
-- Create/modify: `crates/one-core/src/native_backend_linux_aarch64.rs`
-- Modify: `crates/one-core/src/lib.rs`
-- Test: `crates/one-core/tests/native_backend_linux_aarch64.rs`
+- Implemented through the shared native backend in `crates/one-core/src/native_backend.rs`.
+- Tests: `crates/one-core/tests/native_backend_linux_windows.rs`.
 
-- [ ] Tulis test target/toolchain dan mismatch.
-- [ ] Jalankan test dan pastikan gagal sebelum implementasi.
-- [ ] Implementasikan `NativeLinuxAarch64Backend`.
-- [ ] Implementasikan codegen subset IR yang disetujui.
-- [ ] Jalankan unit/integration test sampai PASS.
-- [ ] Commit.
+- [x] Tulis test target/toolchain dan mismatch.
+- [x] Jalankan test dan pastikan gagal sebelum implementasi.
+- [x] Implementasikan `NativeLinuxAarch64Backend`.
+- [x] Implementasikan codegen subset IR yang disetujui.
+- [x] Jalankan unit/integration test sampai PASS.
 
 ### Task 2: CLI Target Linux AArch64
 
 **Files:**
-- Modify: `crates/one-cli/src/native_main.rs`
+- `crates/one-cli/src/native_main.rs`
 
-- [ ] Tambahkan pemilihan target `linux-aarch64`.
-- [ ] Pertahankan Android AArch64.
-- [ ] Test error toolchain secara deterministik.
-- [ ] Commit.
+- [x] Tambahkan pemilihan target `linux-aarch64`.
+- [x] Pertahankan Android AArch64.
+- [x] Test error toolchain secara deterministik.
 
 ### Task 3: Artifact dan Eksekusi
 
-- [ ] Build program smoke test nyata.
-- [ ] Periksa `file`/ELF architecture.
-- [ ] Eksekusi dengan executor Linux AArch64 yang tersedia.
-- [ ] Catat output sebagai bukti.
-- [ ] Jika hanya cross-build dan executor belum tersedia, jangan klaim executable.
+- [x] Build program smoke test nyata.
+- [x] Periksa `file`/ELF architecture.
+- [x] Eksekusi dengan executor Linux AArch64 yang tersedia.
+- [x] Catat output `ONE_NATIVE_LINUX_AARCH64`.
+
+## Status
+
+**VERIFIED — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`, AArch64/Linux host boundary.**
+
+Post-merge exact-SHA verification on `main` remains required before making a canonical main support claim.
