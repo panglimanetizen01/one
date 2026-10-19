@@ -34,39 +34,40 @@
 **Files:**
 - Tidak mengubah source.
 
-- [ ] Probe MinGW/Clang Windows, linker, runtime, dan executor Windows/Wine.
-- [ ] Buktikan compile smoke test kecil menjadi PE/COFF x86_64.
-- [ ] Jika executor tersedia, jalankan smoke test.
-- [ ] Jika executor tidak tersedia, catat target sebagai BUILD TERBUKTI saja dan jangan klaim executable.
-- [ ] Pilih toolchain berdasarkan bukti aktual, bukan asumsi.
+- [x] Probe MinGW/Clang Windows, linker, runtime, dan executor availability.
+- [x] Buktikan compile smoke test menjadi PE/COFF x86_64.
+- [ ] Windows/Wine executor belum tersedia pada environment verifikasi.
+- [x] Toolchain dipilih berdasarkan bukti aktual.
 
 ### Task 1: Backend Windows x86_64
 
 **Files:**
-- Create/modify: `crates/one-core/src/native_backend_windows_x86_64.rs`
-- Modify: `crates/one-core/src/lib.rs`
-- Test: `crates/one-core/tests/native_backend_windows_x86_64.rs`
+- Implemented through the shared native backend in `crates/one-core/src/native_backend.rs`.
+- Tests: `crates/one-core/tests/native_backend_linux_windows.rs`.
 
-- [ ] Tulis test target/toolchain, codegen, determinisme, dan unsupported IR.
-- [ ] Jalankan test dan pastikan gagal sebelum implementasi.
-- [ ] Implementasikan `NativeWindowsX86_64Backend`.
-- [ ] Integrasikan toolchain Windows GNU yang terbukti.
-- [ ] Jalankan test sampai PASS.
-- [ ] Commit.
+- [x] Tulis test target/toolchain, codegen, determinisme, dan unsupported IR.
+- [x] Jalankan test dan pastikan gagal sebelum implementasi.
+- [x] Implementasikan `NativeWindowsX86_64Backend`.
+- [x] Integrasikan toolchain Windows GNU yang terbukti.
+- [x] Jalankan test sampai PASS.
 
 ### Task 2: CLI Target Windows x86_64
 
 **Files:**
-- Modify: `crates/one-cli/src/native_main.rs`
+- `crates/one-cli/src/native_main.rs`
 
-- [ ] Tambahkan pemilihan target `windows-x86_64`.
-- [ ] Pertahankan target lain.
-- [ ] Commit.
+- [x] Tambahkan pemilihan target `windows-x86_64`.
+- [x] Pertahankan target lain.
 
 ### Task 3: Artifact dan Eksekusi
 
-- [ ] Build smoke test.
-- [ ] Periksa PE/COFF x86_64.
-- [ ] Eksekusi dengan Windows/Wine executor yang terbukti.
-- [ ] Catat output.
-- [ ] Jangan klaim executable tanpa bukti eksekusi.
+- [x] Build smoke test.
+- [x] Periksa PE/COFF x86_64.
+- [ ] Eksekusi dengan Windows/Wine executor yang terbukti — executor belum tersedia.
+- [x] Catat status sebagai BUILD TERBUKTI, bukan executable-terverifikasi.
+
+## Status
+
+**BUILD TERBUKTI — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; target execution pending.**
+
+Post-merge exact-SHA verification on `main` remains required.
