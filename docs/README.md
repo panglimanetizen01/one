@@ -36,6 +36,10 @@ User documentation is intentionally separate from normative engineering contract
 - `superpowers/specs/2026-10-16-one-general-purpose-human-language-tool-orchestration-and-governance.md` — orchestration architecture and current implemented boundary.
 - `superpowers/plans/2026-10-16-one-human-language-tool-orchestration-and-governance.md` — orchestration implementation plan and next language-level gate.
 - `superpowers/specs/2026-10-16-one-orchestration-implementation-contract.md` — executable orchestration contract.
+- `superpowers/specs/2026-10-19-native-backends-linux-windows.md` — native hosted backend contract for Linux AArch64, Linux x86_64, and Windows x86_64.
+- `superpowers/plans/2026-10-19-native-backend-linux-aarch64.md` — Linux AArch64 implementation and evidence plan.
+- `superpowers/plans/2026-10-19-native-backend-linux-x86_64.md` — Linux x86_64 implementation and evidence plan.
+- `superpowers/plans/2026-10-19-native-backend-windows-x86_64.md` — Windows x86_64 implementation and evidence plan.
 
 ## Language/tooling contracts
 
@@ -61,12 +65,13 @@ User documentation is intentionally separate from normative engineering contract
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
-- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration boundary.
-- `verification/one-v0.1-verification.md` — current exact-SHA evidence record.
+- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
+- `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
 - `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded source revision.
 - `verification/one-v0.1-linux-windows-2026-10-15.md` — historical independent Linux/Windows execution evidence for its explicitly recorded source revision.
+- `verification/native-backends-2026-10-19.md` — exact verification boundary for PR #64 native hosted backends.
 - `release/one-v0.1.md` — release acceptance contract and supported/future matrix.
 
 ## Derivative artifacts
@@ -76,6 +81,8 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-cli/tests/cli.rs` — CLI integration tests derived from the CLI contract.
 - `../crates/one-core/tests/process_orchestration.rs` — source-to-runtime process-execution TDD tests.
 - `../crates/one-cli/tests/process_orchestration.rs` — CLI process-execution integration tests.
+- `../crates/one-core/tests/native_backend_linux_windows.rs` — native Linux/Windows backend contract and regression tests.
+- `../crates/one-cli/tests/native_cli.rs` — native target CLI regression tests.
 - `../tests/conformance/valid/*.one` — accepted-language fixtures.
 - `../tests/conformance/invalid/*.one` — rejected-language fixtures.
 - `../tests/golden/*.snap` — deterministic execution outputs.
@@ -84,7 +91,8 @@ User documentation is intentionally separate from normative engineering contract
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
+- `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
 
 ## Canonical rule
 
-GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. The current process/system implementation therefore remains a development-stage capability until exact-SHA execution evidence exists.
+GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. Native Linux AArch64 is currently verified on the exact PR #64 SHA within the AArch64/Linux host boundary; Linux x86_64 and Windows x86_64 are currently build-proven but lack target execution evidence. The process/system and other source-level orchestration capabilities retain their separately recorded evidence boundaries.
