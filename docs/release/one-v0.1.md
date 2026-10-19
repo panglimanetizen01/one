@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE WITH EXPERIMENTAL DNS, FILESYSTEM-READ, PROCESS-EXECUTION, AND FILESYSTEM-WRITE ORCHESTRATION; DATABASE-QUERY AND HTTP-GET IMPLEMENTED/UNVERIFIED**.
+Status: **VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION AND A BRANCH-BOUND NATIVE BACKEND DEVELOPMENT SLICE**.
 
 ## Scope
 
@@ -8,11 +8,9 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Current exact-SHA evidence boundary
 
-The latest cross-platform source/runtime revision independently verified is `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800` on Ubuntu and Windows Server 2025.
+Canonical `main` evidence remains separately recorded and is not replaced by branch-bound native-backend evidence.
 
-The latest exact-SHA executable evidence for the filesystem-write CLI boundary is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android: contract check, build, Clippy, targeted filesystem-write CLI test, full workspace tests, and offline verification all passed. This evidence does not establish Ubuntu/Windows support for it.
-
-The current PR #57 head is `913e644ea665711c669590a80d7ff19866cb7671`. Database and HTTP GET implementations exist there, but current hosted CI attempts provide zero executed steps, so neither implementation is exact-SHA verified.
+PR #64 current verification revision is `797c6fe75bd3fa9081329f73dd59e34278f27ddd` on branch `feature/native-backends-linux-windows`. This revision adds native hosted backends for Linux AArch64, Linux x86_64, and Windows x86_64. The evidence is branch-bound until the PR is merged and the merged SHA is reverified.
 
 ## Verified baseline
 
@@ -29,111 +27,64 @@ The current PR #57 head is `913e644ea665711c669590a80d7ff19866cb7671`. Database 
 - General-purpose orchestration runtime foundation: typed capability requests, deterministic governance, governed adapters, normalized results/evidence, audit records, localized semantic-resolution fixtures, and `network.dns.resolve`.
 - Experimental source-level DNS orchestration through `cari alamat`.
 - Experimental source-level filesystem-read orchestration through `baca berkas`.
-- Experimental source-level process-execution orchestration through `jalankan proses`, limited to one explicitly targeted program without arguments and backed by cross-platform evidence at `9038ac75f197753ff1ab6af7478e63e4831903a2`.
-- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission. The latest exact-SHA executable evidence is Termux/Android only.
+- Experimental source-level process-execution orchestration through `jalankan proses`, limited to one explicitly targeted program without arguments and backed by the recorded cross-platform evidence.
+- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission and the recorded Termux/Android evidence boundary.
+- Experimental source-level database-query and HTTP-GET slices within their recorded Termux/Android exact-SHA boundaries.
 
-## Current experimental filesystem-write boundary
+## Native backend development boundary — PR #64
 
-```text
-tulis ke berkas "data/hasil.txt" dengan "halo dari One"
-→ parser
-→ semantic validation
-→ typed orchestration IR
-→ explicit target-scoped governance
-→ filesystem.write adapter
-→ CLI output
-```
-
-Explicit permission:
+The native backend contract is:
 
 ```text
-one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
+One Source
+→ Parser
+→ Analyzer
+→ One Semantic IR
+→ Target Backend
+→ Toolchain
+→ Native Executable
 ```
 
-Latest exact-SHA evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/Android. The targeted CLI regression test, filesystem-write runtime test, full workspace tests, and offline verification pass. Cross-platform verification for this executable revision is still pending.
+Semantic IR remains target-independent.
 
-## Current database-query implementation boundary
+### Linux AArch64
 
-A SQLite-backed language-level database query slice has been implemented on the current PR #57 lineage:
+Target: `aarch64-unknown-linux-gnu`
 
-```text
-kueri database ":memory:" dengan "SELECT ?1" dan "42"
-→ parser
-→ semantic validation
-→ typed orchestration IR
-→ resource-scoped database.query governance
-→ database.sqlite.query adapter
-→ parameterized SQLite SELECT
-→ normalized UTF-8 result
-→ CLI
-```
+Status on PR #64 SHA: **VERIFIED — AArch64/Linux host boundary**. A native ELF AArch64 artifact was built and executed successfully.
 
-Explicit CLI permission:
+### Linux x86_64
 
-```text
-one jalankan main.one --izinkan database.query --target :memory:
-```
+Target: `x86_64-unknown-linux-gnu`
 
-This database slice is **IMPLEMENTED / UNVERIFIED**. It is not part of the v0.1 VERIFIED or EXPERIMENTAL release-support boundary until exact-SHA executable evidence exists. Current hosted CI attempts fail with zero reported steps, so they provide no source execution evidence.
+Status on PR #64 SHA: **BUILD TERBUKTI — execution pending**. The backend produces a real ELF x86-64 artifact using the verified cross-linker selection in the current environment. No x86_64 executor was available.
 
-## Current HTTP GET implementation boundary
+### Windows x86_64
 
-An HTTP GET language-level slice has been implemented on the current PR #57 head:
+Target: `x86_64-pc-windows-gnu`
 
-```text
-ambil dari "http://127.0.0.1:8080/"
-→ parser
-→ semantic validation
-→ typed orchestration IR
-→ target-scoped network.connect governance
-→ network.http.get adapter
-→ bounded HTTP/1.1 GET
-→ normalized response body
-→ CLI
-```
+Status on PR #64 SHA: **BUILD TERBUKTI — execution pending**. A PE32+ x86-64 artifact is proven. No Windows/Wine executor was available for the current verification environment.
 
-Explicit CLI permission:
-
-```text
-one jalankan main.one --izinkan network.connect --target http://127.0.0.1:8080/
-```
-
-This HTTP slice is **IMPLEMENTED / UNVERIFIED**. The current boundary is explicit `http://` URLs, GET only, exact target scope, and response-body normalization. HTTPS, arbitrary methods, custom headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. It is not part of the v0.1 VERIFIED or EXPERIMENTAL release-support boundary until exact-SHA executable evidence exists.
+These native backend statuses are not v0.1 platform-support claims until PR #64 is merged and the merged revision receives exact-SHA verification.
 
 ## Explicit v0.1 limits
 
-- `build` emits a deterministic `.oneir` IR/debug artifact; it is not a native executable compiler.
+- The existing `build` command emits a deterministic `.oneir` IR/debug artifact; it is not replaced by a general-purpose native compiler merely because the native backend development slice exists.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - The language-level orchestration catalog is not complete.
-- Filesystem write is experimental only within the single-text-payload/single-target boundary and the currently verified Android/Termux platform boundary. It is not a claim of general filesystem management or sandbox/path-confinement guarantees.
-- Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary; this is not a claim of general process management, service management, shell scripting, or arbitrary command orchestration support.
-- Database query is implemented as a read-only parameterized SQLite SELECT slice but remains unverified at the current revision and is therefore excluded from the verified/support boundary.
-- HTTP GET is implemented as a bounded HTTP/1.1 GET slice but remains unverified at the current revision and is therefore excluded from the verified/support boundary.
+- Filesystem write is experimental only within the single-text-payload/single-target boundary and its currently verified Android/Termux platform boundary.
+- Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary.
+- Database query is a read-only parameterized SQLite SELECT slice and remains bounded to its recorded Termux/Android evidence.
+- HTTP GET is a bounded HTTP/1.1 GET slice and remains bounded to its recorded Termux/Android evidence.
+- Native Linux x86_64 and Windows x86_64 execution are not yet verified.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
-
-## Experimental orchestration
-
-Filesystem-write source:
-
-```text
-tulis ke berkas "data/hasil.txt" dengan "halo dari One"
-```
-
-Explicit CLI permission:
-
-```text
-one jalankan main.one --izinkan filesystem.write --target data/hasil.txt
-```
-
-For the filesystem-write slice, no explicit permission means denial and a different target is outside the granted scope.
-
-Database query and HTTP GET are intentionally documented separately above as implemented/unverified; they must not be described as experimental or supported until executable evidence is obtained.
 
 ## Release labels
 
 - **IMPLEMENTATION-COMPLETE:** in-scope source/docs/tests are present.
 - **VERIFIED:** exact source revision has executable evidence for the stated platform boundary.
 - **EXPERIMENTAL:** the declared vertical slice is verified but intentionally limited in coverage or platform boundary.
+- **BUILD TERBUKTI:** a native artifact was produced and structurally validated, but target execution evidence is missing.
 - **SUPPORTED:** reserved for a stronger platform/support claim.
 
 ## Verification infrastructure rule
