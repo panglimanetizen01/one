@@ -59,6 +59,28 @@ one help
 
 The implementation includes the six core constructs, structured diagnostics, capability model, explicit process interoperability, project scaffolding, strict v0.1 manifest validation, deterministic `.oneir`/`.onepkg` artifacts, and conformance/golden fixtures.
 
+## Native backend development boundary
+
+The current native backend development slice uses the same One Semantic IR and adds hosted native targets without target-specific semantic forks:
+
+```text
+One Source
+ -> Parser
+ -> Analyzer
+ -> One Semantic IR
+ -> Target Backend
+ -> Toolchain
+ -> Native Artifact
+```
+
+PR #64 exact revision `797c6fe75bd3fa9081329f73dd59e34278f27ddd` currently proves:
+
+- Linux AArch64: ELF AArch64 built and executed on the AArch64/Linux verification host.
+- Linux x86_64: ELF x86-64 built successfully using the verified cross-linker selection; target execution remains pending.
+- Windows x86_64: PE32+ x86-64 artifact proven; Windows/Wine execution remains pending.
+
+These are branch-bound development statuses until PR #64 is merged and the merged `main` revision is reverified. They do not change the existing v0.1 `one build` `.oneir` contract into a general native compiler claim.
+
 ## One Network foundation
 
 Verified native runtime slices include DNS/system resolution, TCP, UDP, TLS/HTTPS, HTTP/1.1, HTTP/2, QUIC, TFTP, NTP, FTP, SMTP, POP3, and IMAP within explicit runtime limits.
@@ -109,15 +131,15 @@ Technical alias:
 one run main.one --allow filesystem.write --target data/hasil.txt
 ```
 
-Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, verified on Termux/Android with contract check, build, Clippy `-D warnings`, targeted filesystem-write CLI test, all workspace tests, and offline verification. This does **not** establish Ubuntu/Windows support for this SHA. The boundary is one text payload to one explicitly targeted file with explicit `filesystem.write` permission.
+The executable evidence remains bounded to the recorded Termux/Android exact SHA. This does not establish Ubuntu/Windows support for that revision.
 
-## Database query boundary — implemented / unverified
+## Database query boundary
 
-A SQLite-backed source-level database query path is implemented but not yet executable-verified.
+A SQLite-backed source-level database query path is implemented and executable-verified within its recorded Termux/Android boundary. It remains a read-only parameterized SELECT slice and is not a general database abstraction.
 
-## HTTP GET boundary — implemented / unverified
+## HTTP GET boundary
 
-An explicit HTTP GET source-level path is implemented but not yet executable-verified.
+An explicit HTTP GET source-level path is implemented and executable-verified within its recorded Termux/Android boundary. The slice is bounded to explicit `http://` URLs, GET, exact target scope, and response-body normalization.
 
 ## Documentation
 
@@ -125,10 +147,10 @@ An explicit HTTP GET source-level path is implemented but not yet executable-ver
 - `docs/panduan-pengguna/status-fitur.md`
 - `docs/panduan-pengguna/perintah-cli.md`
 - `docs/spec/one-v0.1-cli-contract.md`
-- `docs/superpowers/specs/2026-10-16-one-general-purpose-human-language-tool-orchestration-and-governance.md`
-- `docs/superpowers/plans/2026-10-16-one-human-language-tool-orchestration-and-governance.md`
+- `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md`
 - `docs/verification/one-v0.1-implementation-status.md`
 - `docs/verification/one-v0.1-evidence-matrix.md`
+- `docs/verification/native-backends-2026-10-19.md`
 - `docs/release/one-v0.1.md`
 
 ## Verification boundary
