@@ -42,54 +42,45 @@ Setiap backend harus melakukan validasi target dan toolchain sebelum build.
 
 ### Linux AArch64
 
-ID:
-`native-linux-aarch64`
+ID: `native-linux-aarch64`
 
-Target:
+Target: `aarch64-unknown-linux-gnu`
+
 - architecture: `Aarch64`
 - environment: `Linux`
 - profile: `Hosted`
 - runtime: `Hosted`
+- artifact: `Executable`
 
-Artifact:
-`Executable`
-
-Target triple:
-`aarch64-unknown-linux-gnu`
+Status PR #64 exact SHA: **VERIFIED** pada boundary host Linux AArch64 karena artifact ELF AArch64 berhasil dibangun dan dieksekusi.
 
 ### Linux x86_64
 
-ID:
-`native-linux-x86_64`
+ID: `native-linux-x86_64`
 
-Target:
+Target: `x86_64-unknown-linux-gnu`
+
 - architecture: `X86_64`
 - environment: `Linux`
 - profile: `Hosted`
 - runtime: `Hosted`
+- artifact: `Executable`
 
-Artifact:
-`Executable`
-
-Target triple:
-`x86_64-unknown-linux-gnu`
+Status PR #64 exact SHA: **BUILD TERBUKTI**. Artifact ELF x86-64 berhasil dibangun. Pada environment verifikasi, Clang memerlukan cross-linker `--ld-path=/usr/bin/x86_64-linux-gnu-ld`. Execution target belum terbukti karena executor x86_64 tidak tersedia.
 
 ### Windows x86_64
 
-ID:
-`native-windows-x86_64`
+ID: `native-windows-x86_64`
 
-Target:
+Target: `x86_64-pc-windows-gnu`
+
 - architecture: `X86_64`
 - environment: `Windows`
 - profile: `Hosted`
 - runtime: `Hosted`
+- artifact: `Executable`
 
-Artifact:
-`Executable`
-
-Target triple:
-`x86_64-pc-windows-gnu`
+Status PR #64 exact SHA: **BUILD TERBUKTI**. Artifact PE32+ x86-64 terbukti. Execution belum terbukti karena Windows/Wine executor tidak tersedia pada environment verifikasi.
 
 ## Codegen
 
@@ -127,26 +118,6 @@ Path executable compiler/linker dapat dikonfigurasi melalui environment variable
 
 Tidak boleh menggunakan shell interpolation untuk command build.
 
-## Ketergantungan toolchain
-
-Probe awal menunjukkan:
-
-- host Android AArch64
-- `clang` tersedia
-- `ld.lld` tersedia
-- Clang mengenali AArch64 dan x86-64
-- GNU cross compiler belum tersedia
-- MinGW belum tersedia
-- QEMU belum tersedia
-- Wine belum tersedia
-- Rust mengenali:
-  - `aarch64-unknown-linux-gnu`
-  - `x86_64-unknown-linux-gnu`
-  - `x86_64-pc-windows-gnu`
-  - `x86_64-pc-windows-msvc`
-
-Implementasi wajib terlebih dahulu membuktikan jalur toolchain yang benar pada environment verifikasi. Tidak boleh mengasumsikan toolchain hanya karena target triple dikenal Rust.
-
 ## Verifikasi executable
 
 Untuk setiap target wajib ada:
@@ -162,7 +133,7 @@ Untuk setiap target wajib ada:
 Jika target dapat cross-build tetapi belum dapat dieksekusi pada environment verifikasi, statusnya hanya:
 `BUILD TERBUKTI`, bukan `EXECUTABLE TERBUKTI`.
 
-Tidak boleh menyatakan target selesai sebelum kriteria executable terpenuhi.
+PR #64 membuktikan seluruh gate build/format yang tersedia. Gate execution masih terbuka untuk Linux x86_64 dan Windows x86_64.
 
 ## CLI
 
@@ -197,5 +168,7 @@ Satu target hanya dianggap selesai apabila seluruh bukti berikut tersedia:
 `source → IR → backend → toolchain → executable → format benar → eksekusi berhasil`
 
 Ketiga target harus diverifikasi secara independen.
+
+Untuk PR #64, Linux AArch64 memenuhi kriteria tersebut pada boundary host AArch64. Linux x86_64 dan Windows x86_64 belum memenuhi gate execution.
 
 Setelah perubahan masuk `main`, verifikasi ulang harus dilakukan pada SHA merge/main yang tepat.
