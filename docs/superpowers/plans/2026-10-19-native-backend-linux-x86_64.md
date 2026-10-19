@@ -34,40 +34,41 @@
 **Files:**
 - Tidak mengubah source.
 
-- [ ] Probe compiler, sysroot, linker, dan executor Linux x86_64.
-- [ ] Buktikan compile smoke test kecil ke ELF `x86_64-unknown-linux-gnu`.
-- [ ] Jika executor tersedia, jalankan smoke test.
-- [ ] Jika executor tidak tersedia, catat target sebagai BUILD TERBUKTI saja dan jangan klaim executable.
-- [ ] Pilih toolchain berdasarkan bukti aktual, bukan asumsi.
+- [x] Probe compiler, sysroot, linker, dan executor Linux x86_64.
+- [x] Buktikan compile smoke test kecil ke ELF `x86_64-unknown-linux-gnu`.
+- [ ] Executor x86_64 belum tersedia pada environment verifikasi.
+- [x] Toolchain dipilih berdasarkan bukti aktual.
 
 ### Task 1: Backend Linux x86_64
 
 **Files:**
-- Create/modify: `crates/one-core/src/native_backend_linux_x86_64.rs`
-- Modify: `crates/one-core/src/lib.rs`
-- Test: `crates/one-core/tests/native_backend_linux_x86_64.rs`
+- Implemented through the shared native backend in `crates/one-core/src/native_backend.rs`.
+- Tests: `crates/one-core/tests/native_backend_linux_windows.rs`.
 
-- [ ] Tulis test target/toolchain, codegen, determinisme, dan unsupported IR.
-- [ ] Jalankan test dan pastikan gagal sebelum implementasi.
-- [ ] Implementasikan `NativeLinuxX86_64Backend`.
-- [ ] Integrasikan toolchain nyata yang terbukti.
-- [ ] Jalankan test sampai PASS.
-- [ ] Commit.
+- [x] Tulis test target/toolchain, codegen, determinisme, dan unsupported IR.
+- [x] Regression test untuk cross-linker ditulis dan terbukti RED sebelum fix.
+- [x] Implementasikan `NativeLinuxX86_64Backend`.
+- [x] Integrasikan toolchain nyata yang terbukti.
+- [x] Jalankan test sampai PASS.
 
 ### Task 2: CLI Target Linux x86_64
 
 **Files:**
-- Modify: `crates/one-cli/src/native_main.rs`
+- `crates/one-cli/src/native_main.rs`
 
-- [ ] Tambahkan pemilihan target `linux-x86_64`.
-- [ ] Pertahankan target Android.
-- [ ] Tambahkan error toolchain deterministik.
-- [ ] Commit.
+- [x] Tambahkan pemilihan target `linux-x86_64`.
+- [x] Pertahankan target Android.
+- [x] Tambahkan error toolchain deterministik.
 
 ### Task 3: Artifact dan Eksekusi
 
-- [ ] Build smoke test.
-- [ ] Periksa ELF x86_64.
-- [ ] Jalankan pada executor Linux x86_64 yang terbukti.
-- [ ] Catat output.
-- [ ] Jangan klaim executable tanpa bukti eksekusi.
+- [x] Build smoke test.
+- [x] Periksa ELF x86_64.
+- [ ] Jalankan pada executor Linux x86_64 yang terbukti — executor belum tersedia.
+- [x] Catat status sebagai BUILD TERBUKTI, bukan executable-terverifikasi.
+
+## Status
+
+**BUILD TERBUKTI — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; target execution pending.**
+
+Post-merge exact-SHA verification on `main` remains required.
