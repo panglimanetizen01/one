@@ -73,7 +73,7 @@ One Source
  -> Native Artifact
 ```
 
-PR #64 exact revision `797c6fe75bd3fa9081329f73dd59e34278f27ddd` currently proves:
+PR #64 implementation/fix revision `797c6fe75bd3fa9081329f73dd59e34278f27ddd` currently proves:
 
 - Linux AArch64: ELF AArch64 built and executed on the AArch64/Linux verification host.
 - Linux x86_64: ELF x86-64 built successfully using the verified cross-linker selection; target execution remains pending.
