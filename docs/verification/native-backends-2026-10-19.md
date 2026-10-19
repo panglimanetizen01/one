@@ -46,7 +46,7 @@ This is branch-bound evidence. It is not a verification claim for `main` until t
 - `cargo clippy -p one-core --all-targets -- -D warnings`: **passed**.
 - Linux x86_64 CLI native build: **passed**, ELF x86-64 artifact produced.
 - `git diff --check`: **passed** before commit.
-- Commit contains only the bounded native linker fix and its regression test: 2 files, 36 insertions, 9 deletions.
+- Commit `797c6fe` contains only the bounded native linker fix and its regression test: 2 files, 36 insertions, 9 deletions.
 
 ## Full-suite boundary
 
