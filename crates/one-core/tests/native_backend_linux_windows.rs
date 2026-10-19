@@ -1,0 +1,149 @@
+use one_core::{
+    ArtifactFormat, IrProgram, NativeLinuxAarch64Backend, NativeLinuxX86_64Backend,
+    NativeWindowsX86_64Backend, TargetArchitecture, TargetBackend, TargetEnvironment,
+    ToolchainCapability, analyze, lower, parse,
+};
+
+fn compile(source: &str) -> IrProgram {
+    let program = parse(source).expect("source harus dapat diparse");
+    let typed = analyze(&program).expect("source harus dapat dianalisis");
+    lower(&typed).expect("source harus dapat diturunkan ke IR")
+}
+
+#[test]
+fn linux_aarch64_memiliki_target_dan_toolchain_yang_tepat() {
+    let backend = NativeLinuxAarch64Backend::new();
+    let target = backend.target();
+
+    backend.validate(&target).expect("target harus valid");
+    assert_eq!(target.architecture(), &TargetArchitecture::Aarch64);
+    assert_eq!(target.environment(), TargetEnvironment::Linux);
+
+    let toolchain = backend.toolchain();
+    assert_eq!(toolchain.target().triple(), "aarch64-unknown-linux-gnu");
+    assert_eq!(toolchain.artifact(), &ArtifactFormat::Executable);
+    assert_eq!(toolchain.capability(), ToolchainCapability::BuildAndExecute);
+}
+
+#[test]
+fn linux_x86_64_memiliki_target_dan_toolchain_yang_tepat() {
+    let backend = NativeLinuxX86_64Backend::new();
+    let target = backend.target();
+
+    backend.validate(&target).expect("target harus valid");
+    assert_eq!(target.architecture(), &TargetArchitecture::X86_64);
+    assert_eq!(target.environment(), TargetEnvironment::Linux);
+
+    let toolchain = backend.toolchain();
+    assert_eq!(toolchain.target().triple(), "x86_64-unknown-linux-gnu");
+    assert_eq!(toolchain.artifact(), &ArtifactFormat::Executable);
+    assert_eq!(toolchain.capability(), ToolchainCapability::BuildAndExecute);
+}
+
+#[test]
+fn windows_x86_64_memiliki_target_dan_toolchain_yang_tepat() {
+    let backend = NativeWindowsX86_64Backend::new();
+    let target = backend.target();
+
+    backend.validate(&target).expect("target harus valid");
+    assert_eq!(target.architecture(), &TargetArchitecture::X86_64);
+    assert_eq!(target.environment(), TargetEnvironment::Windows);
+
+    let toolchain = backend.toolchain();
+    assert_eq!(toolchain.target().triple(), "x86_64-pc-windows-gnu");
+    assert_eq!(toolchain.artifact(), &ArtifactFormat::Executable);
+    assert_eq!(toolchain.capability(), ToolchainCapability::BuildAndExecute);
+}
+
+#[test]
+fn ketiga_backend_menghasilkan_codegen_deterministik() {
+    let ir = compile("tampilkan \"ONE_NATIVE_BACKEND_OK\"\n");
+
+    let linux_arm = NativeLinuxAarch64Backend::new();
+    assert_eq!(
+        linux_arm.codegen(&ir).unwrap(),
+        linux_arm.codegen(&ir).unwrap()
+    );
+
+    let linux_x64 = NativeLinuxX86_64Backend::new();
+    assert_eq!(
+        linux_x64.codegen(&ir).unwrap(),
+        linux_x64.codegen(&ir).unwrap()
+    );
+
+    let windows = NativeWindowsX86_64Backend::new();
+    assert_eq!(windows.codegen(&ir).unwrap(), windows.codegen(&ir).unwrap());
+}
+
+#[test]
+fn ketiga_backend_menolak_ir_yang_belum_didukung() {
+    let ir = compile("sapa \"X\"\n");
+
+    let error = NativeLinuxAarch64Backend::new()
+        .codegen(&ir)
+        .expect_err("IR unsupported harus ditolak");
+    assert_eq!(error.code(), "NATIVE-CODEGEN-UNSUPPORTED");
+
+    let error = NativeLinuxX86_64Backend::new()
+        .codegen(&ir)
+        .expect_err("IR unsupported harus ditolak");
+    assert_eq!(error.code(), "NATIVE-CODEGEN-UNSUPPORTED");
+
+    let error = NativeWindowsX86_64Backend::new()
+        .codegen(&ir)
+        .expect_err("IR unsupported harus ditolak");
+    assert_eq!(error.code(), "NATIVE-CODEGEN-UNSUPPORTED");
+}
+
+#[test]
+fn windows_x86_64_dapat_membangun_artifact_native() {
+    let backend = NativeWindowsX86_64Backend::new();
+    let ir = compile("tampilkan \"ONE_NATIVE_WINDOWS_BACKEND\"\n");
+
+    let output = std::env::temp_dir().join("one-native-windows-backend-test.exe");
+    let _ = std::fs::remove_file(&output);
+    let _ = std::fs::remove_file(output.with_extension("c"));
+
+    let artifact = backend
+        .build(&ir, &output)
+        .expect("backend Windows harus dapat membangun artifact");
+
+    assert_eq!(artifact.format, ArtifactFormat::Executable);
+    assert!(artifact.path.is_file());
+
+    let _ = std::fs::remove_file(&artifact.path);
+}
+
+#[test]
+fn linux_targets_adalah_target_gnu_linux_one() {
+    let aarch64 = NativeLinuxAarch64Backend::new();
+    let x86_64 = NativeLinuxX86_64Backend::new();
+
+    assert_eq!(
+        aarch64.toolchain().target().triple(),
+        "aarch64-unknown-linux-gnu"
+    );
+    assert_eq!(
+        x86_64.toolchain().target().triple(),
+        "x86_64-unknown-linux-gnu"
+    );
+    assert_eq!(
+        aarch64.toolchain().target().environment(),
+        TargetEnvironment::Linux
+    );
+    assert_eq!(
+        x86_64.toolchain().target().environment(),
+        TargetEnvironment::Linux
+    );
+}
+
+#[test]
+fn target_linux_tidak_bergantung_pada_ketersediaan_compiler_host() {
+    let aarch64 = NativeLinuxAarch64Backend::new().toolchain();
+    let x86_64 = NativeLinuxX86_64Backend::new().toolchain();
+
+    assert_eq!(aarch64.target().triple(), "aarch64-unknown-linux-gnu");
+    assert_eq!(x86_64.target().triple(), "x86_64-unknown-linux-gnu");
+    assert_eq!(aarch64.capability(), ToolchainCapability::BuildAndExecute);
+    assert_eq!(x86_64.capability(), ToolchainCapability::BuildAndExecute);
+}
