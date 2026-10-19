@@ -1,7 +1,7 @@
 use one_core::{
-    ArtifactFormat, IrProgram, NativeLinuxAarch64Backend, NativeLinuxX86_64Backend,
-    NativeWindowsX86_64Backend, TargetArchitecture, TargetBackend, TargetEnvironment,
-    ToolchainCapability, analyze, lower, parse,
+    analyze, lower, parse, ArtifactFormat, IrProgram, NativeLinuxAarch64Backend,
+    NativeLinuxX86_64Backend, NativeWindowsX86_64Backend, TargetArchitecture, TargetBackend,
+    TargetEnvironment, ToolchainCapability,
 };
 
 fn compile(source: &str) -> IrProgram {
@@ -93,6 +93,25 @@ fn ketiga_backend_menolak_ir_yang_belum_didukung() {
         .codegen(&ir)
         .expect_err("IR unsupported harus ditolak");
     assert_eq!(error.code(), "NATIVE-CODEGEN-UNSUPPORTED");
+}
+
+#[test]
+fn linux_x86_64_build_menggunakan_cross_linker_x86_64() {
+    let backend = NativeLinuxX86_64Backend::new();
+    let ir = compile("tampilkan \"ONE_NATIVE_LINUX_X86_64\"\n");
+
+    let output = std::env::temp_dir().join("one-native-linux-x86-64-linker-test");
+    let _ = std::fs::remove_file(&output);
+    let _ = std::fs::remove_file(output.with_extension("c"));
+
+    let artifact = backend
+        .build(&ir, &output)
+        .expect("backend Linux x86_64 harus dapat membangun artifact");
+
+    assert_eq!(artifact.format, ArtifactFormat::Executable);
+    assert!(artifact.path.is_file());
+
+    let _ = std::fs::remove_file(&artifact.path);
 }
 
 #[test]

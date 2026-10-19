@@ -323,7 +323,7 @@ pub struct NativeLinuxX86_64Backend;
 pub struct NativeWindowsX86_64Backend;
 
 macro_rules! native_backend {
-    ($name:ident, $id:literal, $triple:literal, $arch:expr, $env:expr, $compiler:literal, $target_arg:literal) => {
+    ($name:ident, $id:literal, $triple:literal, $arch:expr, $env:expr, $compiler:literal, $target_arg:literal, $linker_arg:expr) => {
         impl $name {
             pub const fn new() -> Self {
                 Self
@@ -378,8 +378,13 @@ macro_rules! native_backend {
 
                 let compiler = std::env::var_os("ONE_CLANG").unwrap_or_else(|| $compiler.into());
 
-                let status = Command::new(&compiler)
-                    .arg($target_arg)
+                let mut command = Command::new(&compiler);
+                command.arg($target_arg);
+                let linker_arg: Option<&'static str> = $linker_arg;
+                if let Some(linker_arg) = linker_arg {
+                    command.arg(linker_arg);
+                }
+                let status = command
                     .arg(&source_path)
                     .arg("-o")
                     .arg(&output)
@@ -473,7 +478,8 @@ native_backend!(
     TargetArchitecture::Aarch64,
     TargetEnvironment::Linux,
     "clang",
-    "--target=aarch64-unknown-linux-gnu"
+    "--target=aarch64-unknown-linux-gnu",
+    None
 );
 
 native_backend!(
@@ -483,7 +489,8 @@ native_backend!(
     TargetArchitecture::X86_64,
     TargetEnvironment::Linux,
     "clang",
-    "--target=x86_64-unknown-linux-gnu"
+    "--target=x86_64-unknown-linux-gnu",
+    Some("--ld-path=/usr/bin/x86_64-linux-gnu-ld")
 );
 
 native_backend!(
@@ -493,7 +500,8 @@ native_backend!(
     TargetArchitecture::X86_64,
     TargetEnvironment::Windows,
     "x86_64-w64-mingw32-clang",
-    "--target=x86_64-w64-windows-gnu"
+    "--target=x86_64-w64-windows-gnu",
+    None
 );
 
 fn validate_native_artifact(
