@@ -36,13 +36,14 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Native Linux AArch64 backend | VERIFIED — PR #64 branch-bound | exact SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; ELF AArch64 built and executed on AArch64/Linux verification host |
-| Native Linux x86_64 backend | BUILD TERBUKTI — PR #64 branch-bound | exact SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; ELF x86-64 built successfully using verified cross-linker; target execution not yet available |
-| Native Windows x86_64 backend | BUILD TERBUKTI — PR #64 branch-bound | exact SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; PE32+ x86-64 artifact proven; Windows/Wine execution not yet available |
+| Native Linux AArch64 backend | IMPLEMENTED / POST-MERGE VERIFICATION PENDING | PR #64 implementation evidence at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; merged into `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; executable verification of merged `main` not yet recorded |
+| Native Linux x86_64 backend | IMPLEMENTED / BUILD EVIDENCE PRE-MERGE | PR #64 produced ELF x86-64 at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; target execution unavailable; merged `main` still requires exact-SHA verification |
+| Native Windows x86_64 backend | IMPLEMENTED / BUILD EVIDENCE PRE-MERGE | PR #64 produced PE32+ x86-64 at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; Windows/Wine execution unavailable; merged `main` still requires exact-SHA verification |
 | Native backend contract | DEFINED + VERIFIED FOR PR #64 SCOPE | `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md` and native backend test suite |
-| Latest canonical main exact-SHA executable verification | VERIFIED / CURRENT BEFORE PR #64 | canonical main evidence remains separately recorded; PR #64 branch evidence must not be generalized to main before merge |
+| Canonical main merge state | MERGED / VERIFICATION PENDING | PR #64 merged at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` |
+| Post-merge hosted CI | INFRASTRUCTURE FAILURE / INCONCLUSIVE | run `39371290853`; both matrix jobs failed before any executable step (`steps: []`) |
 | Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows verification; it predates later database, HTTP, filesystem-write, and native-backend changes |
-| Native backend PR #64 | OPEN / MERGE GATE | head `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; requires review/merge and post-merge exact-SHA verification |
+| Native backend PR #64 | MERGED / POST-MERGE VERIFICATION GATE | merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; native evidence remains bounded to the recorded pre-merge SHA until current-head verification exists |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
 | Node.js binding | FUTURE | contract required before support claim |
@@ -58,7 +59,9 @@ PR #64 exact revision `797c6fe75bd3fa9081329f73dd59e34278f27ddd` adds native hos
 
 Linux AArch64 is **VERIFIED** for the stated AArch64/Linux host boundary because a native ELF artifact was built and executed successfully. Linux x86_64 is **BUILD TERBUKTI** because the artifact was produced and identified as ELF x86-64, but no x86_64 executor was available. Windows x86_64 is **BUILD TERBUKTI** because PE32+ x86-64 was proven, but no Windows/Wine executor was available.
 
-The Linux x86_64 linker regression is covered by `linux_x86_64_build_menggunakan_cross_linker_x86_64`, and the native backend suite passes 9/9 on the verification environment. These branch-bound facts do not become `main` support claims until PR #64 is merged and the merged revision is reverified.
+These are implementation-SHA facts, not current-`main` support claims. PR #64 was merged at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; post-merge exact-SHA verification is required before promoting the native backend statuses for canonical `main`.
+
+The first post-merge CI run (`39371290853`) is inconclusive because both matrix jobs failed with zero executable steps. This must not be classified as a Rust source failure.
 
 ## Release interpretation
 

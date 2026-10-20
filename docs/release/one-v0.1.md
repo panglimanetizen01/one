@@ -1,16 +1,18 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION AND A BRANCH-BOUND NATIVE BACKEND DEVELOPMENT SLICE**.
+Status: **VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION AND MERGED NATIVE BACKEND IMPLEMENTATION AWAITING POST-MERGE VERIFICATION**.
 
 ## Scope
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
 
-## Current exact-SHA evidence boundary
+## Current canonical revision and exact-SHA evidence boundary
 
-Canonical `main` evidence remains separately recorded and is not replaced by branch-bound native-backend evidence.
+PR #64 was merged into canonical `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`.
 
-PR #64 current verification revision is `797c6fe75bd3fa9081329f73dd59e34278f27ddd` on branch `feature/native-backends-linux-windows`. This revision adds native hosted backends for Linux AArch64, Linux x86_64, and Windows x86_64. The evidence is branch-bound until the PR is merged and the merged SHA is reverified.
+The native backend implementation/evidence revision remains `797c6fe75bd3fa9081329f73dd59e34278f27ddd` on `feature/native-backends-linux-windows`. That evidence is valid only for its recorded revision and environments. It must not be promoted to current-`main` executable verification merely because the PR was merged.
+
+The first post-merge hosted `One CI` run is `39371290853`. Both matrix jobs failed with zero executable steps (`steps: []`), so this is an infrastructure/runner failure and does not establish a Rust source failure or a successful/failed test result.
 
 ## Verified baseline
 
@@ -51,32 +53,32 @@ Semantic IR remains target-independent.
 
 Target: `aarch64-unknown-linux-gnu`
 
-Status on PR #64 SHA: **VERIFIED — AArch64/Linux host boundary**. A native ELF AArch64 artifact was built and executed successfully.
+Status on implementation SHA: **VERIFIED — AArch64/Linux host boundary**. A native ELF AArch64 artifact was built and executed successfully.
 
 ### Linux x86_64
 
 Target: `x86_64-unknown-linux-gnu`
 
-Status on PR #64 SHA: **BUILD TERBUKTI — execution pending**. The backend produces a real ELF x86-64 artifact using the verified cross-linker selection in the current environment. No x86_64 executor was available.
+Status on implementation SHA: **BUILD TERBUKTI — execution pending**. The backend produces a real ELF x86-64 artifact using the verified cross-linker selection in the recorded environment. No x86_64 executor was available.
 
 ### Windows x86_64
 
 Target: `x86_64-pc-windows-gnu`
 
-Status on PR #64 SHA: **BUILD TERBUKTI — execution pending**. A PE32+ x86-64 artifact is proven. No Windows/Wine executor was available for the current verification environment.
+Status on implementation SHA: **BUILD TERBUKTI — execution pending**. A PE32+ x86-64 artifact is proven. No Windows/Wine executor was available for the recorded environment.
 
-These native backend statuses are not v0.1 platform-support claims until PR #64 is merged and the merged revision receives exact-SHA verification.
+These native backend statuses remain bounded to the recorded implementation SHA until exact-SHA post-merge verification of `main` succeeds.
 
 ## Explicit v0.1 limits
 
-- The existing `build` command emits a deterministic `.oneir` IR/debug artifact; it is not replaced by a general-purpose native compiler merely because the native backend development slice exists.
+- The existing `build` command emits a deterministic `.oneir` IR/debug artifact; the native backend slice does not replace it with a general-purpose native compiler claim.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - The language-level orchestration catalog is not complete.
 - Filesystem write is experimental only within the single-text-payload/single-target boundary and its currently verified Android/Termux platform boundary.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary.
 - Database query is a read-only parameterized SQLite SELECT slice and remains bounded to its recorded Termux/Android evidence.
 - HTTP GET is a bounded HTTP/1.1 GET slice and remains bounded to its recorded Termux/Android evidence.
-- Native Linux x86_64 and Windows x86_64 execution are not yet verified.
+- Native Linux x86_64 and Windows x86_64 execution are not yet verified for the merged `main` revision.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
 
 ## Release labels

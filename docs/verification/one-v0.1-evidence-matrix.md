@@ -34,24 +34,26 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED within recorded Termux/Android boundary |
 | Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED within recorded Termux/Android boundary |
 | Native backend contract | `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md` | target/toolchain contract + backend tests + artifact verification | VERIFIED for PR #64 scope |
-| Native Linux AArch64 | `NativeLinuxAarch64Backend` + native backend tests | real ELF AArch64 build + target execution | VERIFIED — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`, AArch64/Linux host boundary |
-| Native Linux x86_64 | `NativeLinuxX86_64Backend` + `linux_x86_64_build_menggunakan_cross_linker_x86_64` | real ELF x86-64 build + target execution | BUILD TERBUKTI — exact PR #64 SHA; execution pending |
-| Native Windows x86_64 | `NativeWindowsX86_64Backend` + Windows native verification workflow | real PE32+ x86-64 build + target execution | BUILD TERBUKTI — exact PR #64 SHA; Windows/Wine execution pending |
+| Native Linux AArch64 | `NativeLinuxAarch64Backend` + native backend tests | real ELF AArch64 build + target execution | VERIFIED — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`, AArch64/Linux host boundary; merged into `main` but not reverified at merge SHA |
+| Native Linux x86_64 | `NativeLinuxX86_64Backend` + `linux_x86_64_build_menggunakan_cross_linker_x86_64` | real ELF x86-64 build + target execution | BUILD TERBUKTI — exact PR #64 SHA; execution pending; merged `main` requires exact-SHA verification |
+| Native Windows x86_64 | `NativeWindowsX86_64Backend` + Windows native verification workflow | real PE32+ x86-64 build + target execution | BUILD TERBUKTI — exact PR #64 SHA; Windows/Wine execution pending; merged `main` requires exact-SHA verification |
 | Native CLI target selection | `crates/one-cli/src/native_main.rs`, `crates/one-cli/tests/native_cli.rs` | explicit target selection + regression tests | IMPLEMENTED / tested in PR #64 branch |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
-| Linux portability | verification mirror workflow | actual Linux run | HISTORICAL GREEN for older SHA; native AArch64 PR evidence is branch-bound |
-| Windows portability | verification mirror workflow | actual Windows run | HISTORICAL GREEN for older SHA; native Windows artifact is branch-bound and execution pending |
-| Release gate | verification mirror workflow | green exact-SHA matrix | CURRENT MAIN NOT RELEASE-VERIFIED CROSS-PLATFORM; PR #64 remains a merge/post-merge verification gate |
+| Linux portability | verification mirror workflow | actual Linux run | HISTORICAL GREEN for older SHA; merged native backend revision is not yet independently verified on current `main` |
+| Windows portability | verification mirror workflow | actual Windows run | HISTORICAL GREEN for older SHA; merged native backend revision is not yet independently verified on current `main` |
+| Release gate | verification mirror workflow | green exact-SHA matrix | CURRENT MAIN NOT RELEASE-VERIFIED CROSS-PLATFORM; PR #64 is merged, but post-merge exact-SHA verification is still required |
 
-## Current exact-SHA evidence
+## Current canonical revision
 
-Canonical `main` evidence remains the separately recorded Termux/Android exact-SHA revision. It must not be overwritten by branch-bound PR evidence.
+PR #64 was merged into `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`.
 
-PR #64 current verification revision is `797c6fe75bd3fa9081329f73dd59e34278f27ddd`. Native backend tests pass 9/9, Clippy for `one-core` passes with `-D warnings`, Linux x86_64 native CLI build produces an ELF x86-64 artifact, and Linux AArch64 native artifact execution succeeds on the AArch64 verification host. Windows x86_64 is artifact-proven but has no target executor in the current environment.
+The native backend evidence in this matrix remains tied to its recorded pre-merge implementation SHA and stated verification environments. The merge establishes canonical source state, not executable verification of the merge commit.
+
+The first post-merge `One CI` run is `39371290853`. Both `ubuntu-latest` and `windows-2025` jobs concluded `failure` with `steps: []`; therefore the run is an infrastructure/runner failure and provides no source-code execution result.
 
 ## Cross-platform evidence boundary
 
-The latest older cross-platform exact-SHA evidence remains mirror run `38929072800` for revision `9038ac75f197753ff1ab6af7478e63e4831903a2`, verified on Ubuntu and Windows Server 2025. That evidence predates later database, HTTP, filesystem-write, and native-backend changes and must not be generalized to PR #64 or current `main`.
+The latest older cross-platform exact-SHA evidence remains mirror run `38929072800` for revision `9038ac75f197753ff1ab6af7478e63e4831903a2`, verified on Ubuntu and Windows Server 2025. That evidence predates later database, HTTP, filesystem-write, and native-backend changes and must not be generalized to current `main`.
 
 ## Evidence rules
 

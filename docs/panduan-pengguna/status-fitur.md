@@ -12,17 +12,17 @@ Dokumentasi pengguna One harus membedakan kemampuan yang benar-benar tersedia da
 
 ## Kondisi One saat ini
 
-One v0.1 memiliki executable language core, grammar, parser, semantic pipeline, reference interpreter, CLI, project scaffolding, conformance fixtures, deterministic artifacts, capability model, interoperability melalui proses, beberapa vertical slice network, dan native backend development untuk hosted Linux/Windows.
+One v0.1 memiliki executable language core, grammar, parser, semantic pipeline, reference interpreter, CLI, project scaffolding, conformance fixtures, deterministic artifacts, capability model, interoperability melalui proses, beberapa vertical slice network, dan native backend implementation yang sudah masuk ke canonical `main` melalui PR #64. Verifikasi executable pada merge revision masih menunggu evidence exact-SHA.
 
 ### Native backend
 
-**Terverifikasi — Linux AArch64 pada boundary PR #64:** backend `native-linux-aarch64` menghasilkan executable ELF AArch64 dari One Semantic IR dan artifact berhasil dieksekusi pada host Linux AArch64. Evidence exact-SHA: `797c6fe75bd3fa9081329f73dd59e34278f27ddd`.
+**Bukti implementasi — canonical `main`:** PR #64 telah digabung ke `main` pada merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`. Implementasi native backend menggunakan One Semantic IR yang sama dan menyediakan target hosted Linux AArch64, Linux x86_64, dan Windows x86_64.
 
-**Build terbukti — Linux x86_64 pada boundary PR #64:** backend `native-linux-x86_64` menghasilkan executable ELF x86-64 dan regression test cross-linker lulus. Target execution belum diverifikasi karena executor x86_64 tidak tersedia pada environment verifikasi.
+**Evidence executable yang tersedia sebelum merge:** implementation SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd` membuktikan Linux AArch64 ELF dibangun dan dieksekusi pada host AArch64/Linux; Linux x86_64 menghasilkan ELF x86-64; Windows x86_64 menghasilkan PE32+. Linux x86_64 dan Windows x86_64 belum memiliki target-execution evidence.
 
-**Build terbukti — Windows x86_64 pada boundary PR #64:** backend `native-windows-x86_64` menghasilkan artifact PE32+ x86-64. Eksekusi Windows/Wine belum diverifikasi karena executor tidak tersedia.
+**Boundary saat ini:** bukti tersebut tetap terikat pada implementation SHA dan environment yang tercatat. Jangan menyebut native backend sebagai executable-terverifikasi untuk merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` sebelum exact-SHA verification dilakukan pada `main`.
 
-Status native backend di atas masih **branch-bound** sampai PR #64 digabung ke `main` dan SHA hasil merge diverifikasi ulang. Jangan menyebut Linux x86_64 atau Windows x86_64 sebagai executable-terverifikasi sebelum target execution evidence tersedia.
+Post-merge `One CI` run `39371290853` tidak menghasilkan execution evidence: kedua matrix job (`ubuntu-latest` dan `windows-2025`) gagal dengan `steps: []`. Ini adalah evidence kegagalan infrastructure/runner, bukan bukti kegagalan source code.
 
 ### Orchestration
 
