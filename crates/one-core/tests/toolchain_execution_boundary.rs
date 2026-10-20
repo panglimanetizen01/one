@@ -57,7 +57,7 @@ fn command_preserves_executable_and_arguments_without_shell_parsing() {
         .invoke(&command)
         .expect("fixture invocation should succeed");
     assert!(invocation.stdout().contains("source file; $(do-not-run)"));
-    assert!(invocation.stdout().contains("artifact with spaces"));
+    assert!(invocation.stdout().contains("output=artifact with spaces"));
 }
 
 #[test]
@@ -128,7 +128,10 @@ struct CountingInvoker {
 }
 
 impl ToolchainInvoker for CountingInvoker {
-    fn invoke(&self, _command: &ToolchainCommand) -> Result<ToolchainInvocation, ToolchainExecutionError> {
+    fn invoke(
+        &self,
+        _command: &ToolchainCommand,
+    ) -> Result<ToolchainInvocation, ToolchainExecutionError> {
         self.calls.set(self.calls.get() + 1);
         self.result.clone()
     }
@@ -136,7 +139,10 @@ impl ToolchainInvoker for CountingInvoker {
 
 fn success_invocation() -> ToolchainInvocation {
     CommandToolchainInvoker
-        .invoke(&ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()))
+        .invoke(&ToolchainCommand::new(
+            fixture_executable(),
+            Vec::<OsString>::new(),
+        ))
         .expect("fixture success invocation should succeed")
 }
 
@@ -225,5 +231,28 @@ fn successful_execution_returns_artifact() {
     assert_eq!(result.format, ArtifactFormat::Executable);
     assert_eq!(resolver.calls.get(), 1);
     assert_eq!(invoker.calls.get(), 1);
+    let _ = fs::remove_file(result.path);
+}
+
+#[test]
+fn high_level_build_uses_real_resolver_invoker_and_artifact_validation() {
+    let resolver = PathToolchainResolver::new(fixture_executable());
+    let invoker = CommandToolchainInvoker;
+    let artifact = std::env::temp_dir().join("one-gate1-end-to-end-artifact");
+    let _ = fs::remove_file(&artifact);
+
+    let result = execute_toolchain_build(
+        &target(),
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        &artifact,
+    )
+    .expect("real boundary should produce the fixture artifact");
+
+    assert_eq!(result.path, artifact);
+    assert!(result.path.is_file());
     let _ = fs::remove_file(result.path);
 }
