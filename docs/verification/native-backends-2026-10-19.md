@@ -11,4 +11,15 @@ PR #64 native backend evidence is anchored to implementation/fix SHA `797c6fe75b
 
 A later full `cargo test` in the Debian/proot environment failed in the Android CLI regression because the environment selected Debian host Clang and could not find `bits/libc-header-start.h`. This is environmental evidence outside the bounded Linux x86_64 linker fix.
 
-This evidence is branch-bound until PR #64 is merged and the merged `main` SHA is reverified. Linux x86_64 and Windows x86_64 require real target execution evidence before promotion from build-proven to executable-verified.
+## Post-merge canonical state
+
+PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20.
+
+The merge itself establishes source presence on canonical `main`; it does **not** promote the branch-bound execution/build evidence above to current-head verification. A post-merge exact-SHA verification is still required before any native backend is documented as verified for the merged `main` revision.
+
+The first post-merge `One CI` run for `main` is run `39371290853` at the merge SHA. GitHub reports both matrix jobs as `failure`, but both jobs have `steps: []`, so this is **CI infrastructure/runner evidence**, not source-code failure evidence. The jobs never reached checkout, toolchain, build, Clippy, or test steps.
+
+Until a post-merge executable verification is recorded, retain these boundaries:
+- Linux AArch64: verified only for the recorded AArch64/Linux verification host and implementation SHA above.
+- Linux x86_64: build-proven only for the recorded verification environment and implementation SHA above.
+- Windows x86_64: build-proven only for the recorded verification environment and implementation SHA above.
