@@ -19,7 +19,9 @@ PR #65 subsequently repaired the canonical documentation state and was merged in
 
 The merge itself establishes source presence on canonical `main`; it does **not** promote the branch-bound execution/build evidence above to current-head verification. A post-merge exact-SHA verification is still required before any native backend is documented as verified for the merged `main` revision.
 
-The first post-merge `One CI` run for the current canonical SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2` is run `39372356906` (run attempt 2 after retry). GitHub reports both matrix jobs as `failure`, but both jobs have `steps: []`, so this is **CI infrastructure/runner evidence**, not source-code failure evidence. The jobs never reached checkout, toolchain, build, Clippy, or test steps. The retry reproduced the same no-step failure on both Ubuntu and Windows. No job logs or artifacts were produced.
+At the implementation merge SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`, the post-merge `One CI` run was `39372356906` (run attempt 2 after retry). GitHub reported both matrix jobs as `failure`, but both jobs had `steps: []`. This is **CI infrastructure/runner evidence**, not source-code failure evidence: the jobs never reached checkout, toolchain, build, Clippy, or test steps. The retry reproduced the same no-step failure on both Ubuntu and Windows, with no job logs or artifacts produced.
+
+After the documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, `One CI` run `39381125667` independently reproduced the same failure on both matrix jobs, again with `steps: []`. This confirms the runner/infrastructure condition persisted independently of the native-backend implementation.
 
 Until a post-merge executable verification is recorded, retain these boundaries:
 - Linux AArch64: verified only for the recorded AArch64/Linux verification host and implementation SHA above.
