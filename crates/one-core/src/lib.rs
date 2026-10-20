@@ -32,6 +32,7 @@ pub mod semantic;
 pub mod stdlib;
 pub mod target;
 pub mod token;
+pub mod toolchain;
 pub mod types;
 
 pub use adapter::{
@@ -92,6 +93,10 @@ pub use target::{
     ToolchainTarget, ToolchainValidationError, target_definition,
 };
 pub use token::{Span, Token, TokenKind};
+pub use toolchain::{
+    CommandToolchainInvoker, PathToolchainResolver, ToolchainCommand, ToolchainExecutionError,
+    ToolchainInvocation, ToolchainInvoker, ToolchainResolver,
+};
 pub use types::Type;
 
 #[cfg(test)]
