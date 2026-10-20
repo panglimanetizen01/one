@@ -70,7 +70,10 @@ fn missing_executable_is_toolchain_not_found() {
         .and_then(|command| CommandToolchainInvoker.invoke(&command))
         .expect_err("missing executable must fail");
 
-    assert!(matches!(error, ToolchainExecutionError::ToolchainNotFound { .. }));
+    assert!(matches!(
+        error,
+        ToolchainExecutionError::ToolchainNotFound { .. }
+    ));
 }
 
 #[test]
@@ -84,7 +87,10 @@ fn process_start_failure_is_distinct() {
         .invoke(&command)
         .expect_err("directory cannot be executed as a process");
 
-    assert!(matches!(error, ToolchainExecutionError::ProcessStart { .. }));
+    assert!(matches!(
+        error,
+        ToolchainExecutionError::ProcessStart { .. }
+    ));
 }
 
 #[test]
@@ -96,7 +102,11 @@ fn non_zero_exit_is_distinct_from_start_failure() {
         .expect_err("fixture requested non-zero exit");
 
     match error {
-        ToolchainExecutionError::NonZeroExit { status, stdout, stderr } => {
+        ToolchainExecutionError::NonZeroExit {
+            status,
+            stdout,
+            stderr,
+        } => {
             assert_eq!(status, Some(7));
             assert!(stdout.is_empty());
             assert!(stderr.contains("fixture exit 7"));
@@ -169,7 +179,10 @@ fn target_mismatch_is_rejected_before_execution() {
     )
     .expect_err("architecture mismatch must be rejected");
 
-    assert!(matches!(error, ToolchainExecutionError::Validation { .. }));
+    assert!(matches!(
+        error,
+        ToolchainExecutionError::Validation { .. }
+    ));
     assert_eq!(resolver.calls.get(), 0);
     assert_eq!(invoker.calls.get(), 0);
 }
@@ -198,7 +211,10 @@ fn successful_execution_without_artifact_is_failure() {
     )
     .expect_err("successful process without artifact must fail");
 
-    assert!(matches!(error, ToolchainExecutionError::ArtifactMissing { .. }));
+    assert!(matches!(
+        error,
+        ToolchainExecutionError::ArtifactMissing { .. }
+    ));
     assert_eq!(resolver.calls.get(), 1);
     assert_eq!(invoker.calls.get(), 1);
 }
