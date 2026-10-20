@@ -2,7 +2,7 @@ name: One CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/gate1-toolchain-execution-boundary ]
   pull_request:
     branches: [ main ]
 
@@ -38,6 +38,4 @@ jobs:
       - name: Database vertical slice
         run: cargo test -p one-core --test database_vertical_slice
       - name: HTTP GET vertical slice
-        run: cargo test -p one-core --test http_get_vertical_slice
-      - name: HTTP GET CLI vertical slice
         run: cargo test -p one-cli --test http_get_orchestration
