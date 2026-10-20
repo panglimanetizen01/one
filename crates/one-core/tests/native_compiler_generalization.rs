@@ -1,5 +1,6 @@
 use one_core::ir::{IrExpr, IrLoopKind, IrProgram, IrStatement};
 use one_core::native_backend::{NativeLinuxAarch64Backend, NativeLinuxX86_64Backend};
+use one_core::TargetBackend;
 
 fn backend() -> NativeLinuxAarch64Backend {
     NativeLinuxAarch64Backend::new()
