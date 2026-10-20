@@ -38,6 +38,7 @@ pub enum ToolchainExecutionError {
     ToolchainNotFound { executable: PathBuf },
     ProcessStart { executable: PathBuf, message: String },
     ProcessExited { status: i32, stdout: Vec<u8>, stderr: Vec<u8> },
+    ArtifactMissing { artifact: PathBuf },
     Validation(ToolchainValidationError),
 }
 
@@ -47,6 +48,7 @@ impl fmt::Display for ToolchainExecutionError {
             Self::ToolchainNotFound { executable } => write!(f, "toolchain executable not found: {}", executable.display()),
             Self::ProcessStart { executable, message } => write!(f, "failed to start toolchain executable {}: {message}", executable.display()),
             Self::ProcessExited { status, .. } => write!(f, "toolchain process exited with status {status}"),
+            Self::ArtifactMissing { artifact } => write!(f, "toolchain artifact missing: {}", artifact.display()),
             Self::Validation(error) => write!(f, "toolchain validation failed: {error}"),
         }
     }
@@ -104,4 +106,22 @@ impl ToolchainInvoker for CommandToolchainInvoker {
         }
         Ok(invocation)
     }
+}
+
+pub fn execute_toolchain_build<R, I>(
+    resolver: &R,
+    invoker: &I,
+    spec: &ToolchainSpec,
+    artifact: PathBuf,
+) -> Result<ToolchainInvocation, ToolchainExecutionError>
+where
+    R: ToolchainResolver,
+    I: ToolchainInvoker,
+{
+    let command = resolver.resolve(spec)?;
+    let invocation = invoker.invoke(&command)?;
+    if !artifact.is_file() {
+        return Err(ToolchainExecutionError::ArtifactMissing { artifact });
+    }
+    Ok(invocation)
 }
