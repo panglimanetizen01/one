@@ -3,7 +3,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use crate::target::{ToolchainSpec, ToolchainValidationError};
+use crate::target::{ToolchainOperation, ToolchainSpec, ToolchainValidationError};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ToolchainCommand {
@@ -12,17 +12,9 @@ pub struct ToolchainCommand {
 }
 
 impl ToolchainCommand {
-    pub fn new(executable: PathBuf, args: Vec<OsString>) -> Self {
-        Self { executable, args }
-    }
-
-    pub fn executable(&self) -> &Path {
-        &self.executable
-    }
-
-    pub fn args(&self) -> &[OsString] {
-        &self.args
-    }
+    pub fn new(executable: PathBuf, args: Vec<OsString>) -> Self { Self { executable, args } }
+    pub fn executable(&self) -> &Path { &self.executable }
+    pub fn args(&self) -> &[OsString] { &self.args }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,90 +26,30 @@ pub struct ToolchainInvocation {
 
 impl ToolchainInvocation {
     fn from_output(output: Output) -> Self {
-        Self {
-            status: output.status.code().unwrap_or(-1),
-            stdout: output.stdout,
-            stderr: output.stderr,
-        }
+        Self { status: output.status.code().unwrap_or(-1), stdout: output.stdout, stderr: output.stderr }
     }
-
-    pub fn status(&self) -> i32 {
-        self.status
-    }
-
-    pub fn stdout(&self) -> &[u8] {
-        &self.stdout
-    }
-
-    pub fn stderr(&self) -> &[u8] {
-        &self.stderr
-    }
+    pub fn status(&self) -> i32 { self.status }
+    pub fn stdout(&self) -> &[u8] { &self.stdout }
+    pub fn stderr(&self) -> &[u8] { &self.stderr }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolchainExecutionError {
     ToolchainNotFound { executable: PathBuf },
     ProcessStart { executable: PathBuf, message: String },
     ProcessExited { status: i32, stdout: Vec<u8>, stderr: Vec<u8> },
+    ArtifactMissing { path: PathBuf },
     Validation(ToolchainValidationError),
 }
 
-impl PartialEq for ToolchainExecutionError {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (
-                Self::ToolchainNotFound { executable: left },
-                Self::ToolchainNotFound { executable: right },
-            ) => left == right,
-            (
-                Self::ProcessStart {
-                    executable: left_path,
-                    message: left_message,
-                },
-                Self::ProcessStart {
-                    executable: right_path,
-                    message: right_message,
-                },
-            ) => left_path == right_path && left_message == right_message,
-            (
-                Self::ProcessExited {
-                    status: left_status,
-                    stdout: left_stdout,
-                    stderr: left_stderr,
-                },
-                Self::ProcessExited {
-                    status: right_status,
-                    stdout: right_stdout,
-                    stderr: right_stderr,
-                },
-            ) => {
-                left_status == right_status
-                    && left_stdout == right_stdout
-                    && left_stderr == right_stderr
-            }
-            (Self::Validation(left), Self::Validation(right)) => left == right,
-            _ => false,
-        }
-    }
-}
-
-impl Eq for ToolchainExecutionError {}
-
 impl fmt::Display for ToolchainExecutionError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ToolchainNotFound { executable } => {
-                write!(formatter, "toolchain executable not found: {}", executable.display())
-            }
-            Self::ProcessStart { executable, message } => write!(
-                formatter,
-                "failed to start toolchain executable {}: {message}",
-                executable.display()
-            ),
-            Self::ProcessExited { status, .. } => {
-                write!(formatter, "toolchain process exited with status {status}")
-            }
-            Self::Validation(error) => write!(formatter, "toolchain validation failed: {error}"),
+            Self::ToolchainNotFound { executable } => write!(f, "toolchain executable not found: {}", executable.display()),
+            Self::ProcessStart { executable, message } => write!(f, "failed to start toolchain executable {}: {message}", executable.display()),
+            Self::ProcessExited { status, .. } => write!(f, "toolchain process exited with status {status}"),
+            Self::ArtifactMissing { path } => write!(f, "expected toolchain artifact was not produced: {}", path.display()),
+            Self::Validation(error) => write!(f, "toolchain validation failed: {error}"),
         }
     }
 }
@@ -135,67 +67,63 @@ pub struct PathToolchainResolver {
 }
 
 impl PathToolchainResolver {
-    pub fn new(compiler: PathBuf, linker: Option<PathBuf>) -> Self {
-        Self { compiler, linker }
-    }
+    pub fn new(compiler: PathBuf, linker: Option<PathBuf>) -> Self { Self { compiler, linker } }
 }
 
 impl ToolchainResolver for PathToolchainResolver {
     fn resolve(&self, spec: &ToolchainSpec) -> Result<ToolchainCommand, ToolchainExecutionError> {
         if !self.compiler.is_file() {
-            return Err(ToolchainExecutionError::ToolchainNotFound {
-                executable: self.compiler.clone(),
-            });
+            return Err(ToolchainExecutionError::ToolchainNotFound { executable: self.compiler.clone() });
         }
-
         let mut args = vec![OsString::from(format!("--target={}", spec.target().triple()))];
         if let Some(linker) = &self.linker {
             args.push(OsString::from("-fuse-ld"));
             args.push(linker.as_os_str().to_owned());
         }
-
         Ok(ToolchainCommand::new(self.compiler.clone(), args))
     }
 }
 
 pub trait ToolchainInvoker {
-    fn invoke(
-        &self,
-        command: &ToolchainCommand,
-    ) -> Result<ToolchainInvocation, ToolchainExecutionError>;
+    fn invoke(&self, command: &ToolchainCommand) -> Result<ToolchainInvocation, ToolchainExecutionError>;
 }
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CommandToolchainInvoker;
-
-impl CommandToolchainInvoker {
-    pub const fn new() -> Self {
-        Self
-    }
-}
+impl CommandToolchainInvoker { pub const fn new() -> Self { Self } }
 
 impl ToolchainInvoker for CommandToolchainInvoker {
-    fn invoke(
-        &self,
-        command: &ToolchainCommand,
-    ) -> Result<ToolchainInvocation, ToolchainExecutionError> {
-        let output = Command::new(command.executable())
-            .args(command.args())
-            .output()
+    fn invoke(&self, command: &ToolchainCommand) -> Result<ToolchainInvocation, ToolchainExecutionError> {
+        let output = Command::new(command.executable()).args(command.args()).output()
             .map_err(|error| ToolchainExecutionError::ProcessStart {
-                executable: command.executable().to_path_buf(),
-                message: error.to_string(),
+                executable: command.executable().to_path_buf(), message: error.to_string()
             })?;
-
         let invocation = ToolchainInvocation::from_output(output);
         if invocation.status() != 0 {
             return Err(ToolchainExecutionError::ProcessExited {
-                status: invocation.status(),
-                stdout: invocation.stdout.clone(),
-                stderr: invocation.stderr.clone(),
+                status: invocation.status(), stdout: invocation.stdout.clone(), stderr: invocation.stderr.clone()
             });
         }
-
         Ok(invocation)
     }
+}
+
+pub fn execute_toolchain_build<R: ToolchainResolver, I: ToolchainInvoker>(
+    resolver: &R,
+    invoker: &I,
+    spec: &ToolchainSpec,
+    operation: ToolchainOperation,
+    artifact: &Path,
+) -> Result<ToolchainInvocation, ToolchainExecutionError> {
+    if !spec.capability().supports(operation) {
+        return Err(ToolchainExecutionError::Validation(
+            ToolchainValidationError::UnsupportedOperation { capability: spec.capability(), operation },
+        ));
+    }
+    let command = resolver.resolve(spec)?;
+    let invocation = invoker.invoke(&command)?;
+    if !artifact.is_file() {
+        return Err(ToolchainExecutionError::ArtifactMissing { path: artifact.to_path_buf() });
+    }
+    Ok(invocation)
 }
