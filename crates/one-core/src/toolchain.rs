@@ -1,7 +1,6 @@
 use std::{
     ffi::OsString,
-    fmt,
-    io,
+    fmt, io,
     path::{Path, PathBuf},
     process::{Command, ExitStatus, Output},
 };
@@ -86,15 +85,24 @@ impl ToolchainInvocation {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToolchainExecutionError {
-    ToolchainNotFound { executable: PathBuf },
-    ProcessStart { executable: PathBuf, message: String },
+    ToolchainNotFound {
+        executable: PathBuf,
+    },
+    ProcessStart {
+        executable: PathBuf,
+        message: String,
+    },
     NonZeroExit {
         status: Option<i32>,
         stdout: String,
         stderr: String,
     },
-    ArtifactMissing { path: PathBuf },
-    Validation { message: String },
+    ArtifactMissing {
+        path: PathBuf,
+    },
+    Validation {
+        message: String,
+    },
 }
 
 impl fmt::Display for ToolchainExecutionError {
