@@ -8,7 +8,7 @@ use std::{
 use one_core::{
     ArtifactFormat, CommandToolchainInvoker, LinkerStrategy, PathToolchainResolver,
     ReferenceTargetBackend, TargetArchitecture, TargetEnvironment, TargetSpec, ToolchainCapability,
-    ToolchainCommand, ToolchainExecutionError, ToolchainInvoker, ToolchainInvocation,
+    ToolchainCommand, ToolchainExecutionError, ToolchainInvocation, ToolchainInvoker,
     ToolchainResolver, ToolchainSpec, ToolchainTarget, execute_toolchain_build,
 };
 
@@ -179,10 +179,7 @@ fn target_mismatch_is_rejected_before_execution() {
     )
     .expect_err("architecture mismatch must be rejected");
 
-    assert!(matches!(
-        error,
-        ToolchainExecutionError::Validation { .. }
-    ));
+    assert!(matches!(error, ToolchainExecutionError::Validation { .. }));
     assert_eq!(resolver.calls.get(), 0);
     assert_eq!(invoker.calls.get(), 0);
 }
@@ -211,10 +208,7 @@ fn successful_execution_without_artifact_is_failure() {
     )
     .expect_err("successful process without artifact must fail");
 
-    assert!(matches!(
-        error,
-        ToolchainExecutionError::ArtifactMissing { .. }
-    ));
+    assert!(matches!(error, ToolchainExecutionError::ArtifactMissing { .. }));
     assert_eq!(resolver.calls.get(), 1);
     assert_eq!(invoker.calls.get(), 1);
 }
