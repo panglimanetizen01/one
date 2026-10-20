@@ -25,11 +25,11 @@ fn main() -> ExitCode {
         index += 1;
     }
 
-    if let Some(path) = artifact {
-        if let Err(error) = fs::write(path, b"fixture artifact") {
-            eprintln!("fixture artifact write failed: {error}");
-            return ExitCode::from(3);
-        }
+    if let Some(path) = artifact
+        && let Err(error) = fs::write(path, b"fixture artifact")
+    {
+        eprintln!("fixture artifact write failed: {error}");
+        return ExitCode::from(3);
     }
 
     if exit != 0 {
