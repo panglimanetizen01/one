@@ -61,7 +61,7 @@ The implementation includes the six core constructs, structured diagnostics, cap
 
 ## Native backend development boundary
 
-The current native backend development slice uses the same One Semantic IR and adds hosted native targets without target-specific semantic forks:
+The native backend implementation from PR #64 is now present on canonical `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`. It uses the same One Semantic IR and adds hosted native targets without target-specific semantic forks:
 
 ```text
 One Source
@@ -73,13 +73,15 @@ One Source
  -> Native Artifact
 ```
 
-PR #64 implementation/fix revision `797c6fe75bd3fa9081329f73dd59e34278f27ddd` currently proves:
+The executable evidence remains bounded to the pre-merge implementation SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd` until exact-SHA verification is repeated on the merged `main` revision:
 
-- Linux AArch64: ELF AArch64 built and executed on the AArch64/Linux verification host.
+- Linux AArch64: ELF AArch64 built and executed on the recorded AArch64/Linux verification host.
 - Linux x86_64: ELF x86-64 built successfully using the verified cross-linker selection; target execution remains pending.
 - Windows x86_64: PE32+ x86-64 artifact proven; Windows/Wine execution remains pending.
 
-These are branch-bound development statuses until PR #64 is merged and the merged `main` revision is reverified. They do not change the existing v0.1 `one build` `.oneir` contract into a general native compiler claim.
+The first post-merge hosted `One CI` run (`39371290853`) failed on both matrix jobs before any executable step (`steps: []`). This is infrastructure/runner evidence and does not establish a source-code test result.
+
+The native backend implementation therefore must not yet be described as executable-verified for the merged `main` revision.
 
 ## One Network foundation
 
