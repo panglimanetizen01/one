@@ -102,21 +102,42 @@ fn successful_toolchain_execution_accepts_created_artifact() {
         "one-toolchain-artifact-{}",
         std::process::id()
     ));
-    let command = one_core::ToolchainCommand::new(
-        PathBuf::from("/bin/sh"),
-        vec![
-            OsString::from("-c"),
-            OsString::from("printf artifact > \"$1\""),
-            OsString::from("one-toolchain-test"),
-            artifact.as_os_str().to_owned(),
-        ],
-    );
+    let resolver = FixtureResolver::creating_artifact(&artifact);
     let invoker = one_core::CommandToolchainInvoker::new();
-    let invocation = invoker.invoke(&command).expect("fixture process must succeed");
+    let spec = reference_toolchain_spec();
+
+    let invocation = one_core::execute_toolchain_build(&resolver, &invoker, &spec, artifact.clone())
+        .expect("successful build must accept the created artifact");
 
     assert_eq!(invocation.status(), 0);
     assert!(artifact.is_file(), "fixture must create the artifact");
     std::fs::remove_file(&artifact).expect("fixture artifact cleanup must succeed");
+}
+
+struct FixtureResolver {
+    command: ToolchainCommand,
+}
+
+impl FixtureResolver {
+    fn creating_artifact(artifact: &std::path::Path) -> Self {
+        Self {
+            command: ToolchainCommand::new(
+                PathBuf::from("/bin/sh"),
+                vec![
+                    OsString::from("-c"),
+                    OsString::from("printf artifact > \"$1\""),
+                    OsString::from("one-toolchain-test"),
+                    artifact.as_os_str().to_owned(),
+                ],
+            ),
+        }
+    }
+}
+
+impl ToolchainResolver for FixtureResolver {
+    fn resolve(&self, _spec: &ToolchainSpec) -> Result<ToolchainCommand, ToolchainExecutionError> {
+        Ok(self.command.clone())
+    }
 }
 
 fn reference_toolchain_spec() -> ToolchainSpec {
