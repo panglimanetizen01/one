@@ -34,22 +34,22 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Filesystem-write CLI regression | `crates/one-cli/tests/filesystem_write.rs` | source file + `--izinkan filesystem.write` + actual target content | VERIFIED within recorded Termux/Android boundary |
 | Filesystem-write policy/runtime | `crates/one-core/tests/filesystem_write_runtime.rs` | default denial + target-scoped grant + exact text output | VERIFIED within recorded Termux/Android boundary |
 | Native backend contract | `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md` | target/toolchain contract + backend tests + artifact verification | VERIFIED for PR #64 scope |
-| Native Linux AArch64 | `NativeLinuxAarch64Backend` + native backend tests | real ELF AArch64 build + target execution | VERIFIED — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`, AArch64/Linux host boundary; merged into `main` but not reverified at merge SHA |
+| Native Linux AArch64 | `NativeLinuxAarch64Backend` + native backend tests | real ELF AArch64 build + target execution | VERIFIED — exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd`, AArch64/Linux host boundary; merged into `main` but not reverified at a current `main` SHA |
 | Native Linux x86_64 | `NativeLinuxX86_64Backend` + `linux_x86_64_build_menggunakan_cross_linker_x86_64` | real ELF x86-64 build + target execution | BUILD TERBUKTI — exact PR #64 SHA; execution pending; merged `main` requires exact-SHA verification |
 | Native Windows x86_64 | `NativeWindowsX86_64Backend` + Windows native verification workflow | real PE32+ x86-64 build + target execution | BUILD TERBUKTI — exact PR #64 SHA; Windows/Wine execution pending; merged `main` requires exact-SHA verification |
 | Native CLI target selection | `crates/one-cli/src/native_main.rs`, `crates/one-cli/tests/native_cli.rs` | explicit target selection + regression tests | IMPLEMENTED / tested in PR #64 branch |
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
 | Linux portability | verification mirror workflow | actual Linux run | HISTORICAL GREEN for older SHA; merged native backend revision is not yet independently verified on current `main` |
 | Windows portability | verification mirror workflow | actual Windows run | HISTORICAL GREEN for older SHA; merged native backend revision is not yet independently verified on current `main` |
-| Release gate | verification mirror workflow | green exact-SHA matrix | CURRENT MAIN NOT RELEASE-VERIFIED CROSS-PLATFORM; PR #64 is merged, but post-merge exact-SHA verification is still required |
+| Release gate | verification mirror workflow | green exact-SHA matrix | CURRENT MAIN NOT RELEASE-VERIFIED CROSS-PLATFORM; post-merge hosted CI is blocked by runner/infrastructure failure |
 
 ## Current canonical revision
 
 PR #64 was merged into `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`.
 
-The native backend evidence in this matrix remains tied to its recorded pre-merge implementation SHA and stated verification environments. The merge establishes canonical source state, not executable verification of the merge commit.
+PR #65 repaired the canonical documentation state and merged at `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`. Subsequent evidence-record commits are now on `main`; the current branch head must be read from GitHub rather than treating `100d0f...` as the current revision.
 
-The first post-merge `One CI` run is `39371290853`. Both `ubuntu-latest` and `windows-2025` jobs concluded `failure` with `steps: []`; therefore the run is an infrastructure/runner failure and provides no source-code execution result.
+At merge SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`, post-merge `One CI` run `39372356906` failed on both Ubuntu and Windows with `steps: []`, including after retry. After documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, run `39381125667` independently reproduced the same no-step failure on both matrix jobs. These are infrastructure/runner failures and provide no source-code execution result.
 
 ## Cross-platform evidence boundary
 
