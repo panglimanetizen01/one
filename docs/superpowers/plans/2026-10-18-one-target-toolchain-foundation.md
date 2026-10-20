@@ -295,7 +295,7 @@ git status --short
 ```
 Expected: exact expected SHA and clean worktree.
 
-- [ ] **Step 8: Perform final static review
+- [ ] **Step 8: Perform final static review**
 
 Review the diff specifically for:
 - accidental host/toolchain execution;
@@ -323,7 +323,7 @@ The next independent slice may evaluate an actual cross-compilation/toolchain ad
 - Task 1 implementation commits: `23adc262ac2a5d9480824f316c00c7186e1a12c1` (`feat: add target toolchain foundation`) and `ab8c6a0dbcc610d25aa3a9f1e139302ee8a1ec22` (`feat: export target toolchain foundation`).
 - Task 2 integration-test commit: `d9882364604469720bf705f7eeeceb1f6005bb63` (`test: verify target toolchain compatibility`).
 - Runtime regression-test correction: `207409bf1eadc4518c345f82cfed647347cce0ba` (`test: exercise reachable target runtime mismatch`). The original runtime test fixture failed before reaching runtime validation because the reference backend rejected its profile/environment; the corrected integration fixture uses a test-only backend that makes the existing runtime contract reachable without changing production target semantics.
-- Pull request #61 currently targets `main` and has head `207409bf1eadc4518c345f82cfed647347cce0ba`.
+- Pull request #61 merged into `main` at `15b0b6646ef6375a44d88e6fbc800ac46a10f81c`. Its final head before merge was `207409bf1eadc4518c345f82cfed647347cce0ba`.
 - Focused integration verification at `207409bf1eadc4518c345f82cfed647347cce0ba`: `cargo test -p one-core --test target_toolchain_foundation --locked` — 9 passed, 0 failed.
 - Full verification at the same head: `cargo check --workspace --all-targets --locked` passed; `cargo clippy --workspace --all-targets --locked -- -D warnings` passed; `cargo test --workspace --all-targets --locked` passed with all listed suites at zero failures, including 100 `one-core` unit tests, 15 CLI tests, 9 target-backend tests, and 9 target-toolchain tests; `python tools/check_contract.py` returned `CONTRACT CHECK: PASS` with 48 required artifacts, 61 indexed concrete artifacts, 6 valid fixtures, 6 invalid fixtures, and 3 golden fixtures; `cargo build --workspace --all-targets --locked` passed; `git diff --check` produced no errors; exact HEAD was `207409bf1eadc4518c345f82cfed647347cce0ba`; final status was clean in detached verification worktree (`## HEAD (no branch)`).
 - GitHub Actions for the earlier head reproduced a zero-step runner failure and is not executable verification evidence; local executable verification above is the evidence gate.
