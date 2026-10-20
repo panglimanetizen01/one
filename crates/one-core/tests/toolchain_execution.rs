@@ -96,6 +96,29 @@ fn successful_toolchain_execution_requires_artifact() {
     ));
 }
 
+#[test]
+fn successful_toolchain_execution_accepts_created_artifact() {
+    let artifact = std::env::temp_dir().join(format!(
+        "one-toolchain-artifact-{}",
+        std::process::id()
+    ));
+    let command = one_core::ToolchainCommand::new(
+        PathBuf::from("/bin/sh"),
+        vec![
+            OsString::from("-c"),
+            OsString::from("printf artifact > \"$1\""),
+            OsString::from("one-toolchain-test"),
+            artifact.as_os_str().to_owned(),
+        ],
+    );
+    let invoker = one_core::CommandToolchainInvoker::new();
+    let invocation = invoker.invoke(&command).expect("fixture process must succeed");
+
+    assert_eq!(invocation.status(), 0);
+    assert!(artifact.is_file(), "fixture must create the artifact");
+    std::fs::remove_file(&artifact).expect("fixture artifact cleanup must succeed");
+}
+
 fn reference_toolchain_spec() -> ToolchainSpec {
     one_core::ReferenceToolchain::new().spec()
 }
