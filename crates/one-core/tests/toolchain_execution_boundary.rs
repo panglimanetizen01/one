@@ -3,14 +3,13 @@ use std::{
     ffi::OsString,
     fs,
     path::{Path, PathBuf},
-    process::{ExitStatus, Output},
 };
 
 use one_core::{
-    ArtifactFormat, ExecutionProfile, ReferenceTargetBackend, TargetArchitecture, TargetEnvironment,
-    TargetSpec, ToolchainCapability, ToolchainCommand, ToolchainExecutionError, ToolchainInvoker,
-    ToolchainInvocation, ToolchainResolver, ToolchainSpec, ToolchainTarget, LinkerStrategy,
-    PathToolchainResolver, CommandToolchainInvoker, execute_toolchain_build,
+    ArtifactFormat, CommandToolchainInvoker, LinkerStrategy, PathToolchainResolver,
+    ReferenceTargetBackend, TargetArchitecture, TargetEnvironment, TargetSpec, ToolchainCapability,
+    ToolchainCommand, ToolchainExecutionError, ToolchainInvoker, ToolchainInvocation,
+    ToolchainResolver, ToolchainSpec, ToolchainTarget, execute_toolchain_build,
 };
 
 fn toolchain() -> ToolchainSpec {
@@ -53,11 +52,19 @@ fn command_preserves_executable_and_arguments_without_shell_parsing() {
             artifact.into_os_string(),
         ]
     );
+
+    let invocation = CommandToolchainInvoker
+        .invoke(&command)
+        .expect("fixture invocation should succeed");
+    assert!(invocation.stdout().contains("source file; $(do-not-run)"));
+    assert!(invocation.stdout().contains("artifact with spaces"));
 }
 
 #[test]
 fn missing_executable_is_toolchain_not_found() {
-    let resolver = PathToolchainResolver::new(PathBuf::from("/definitely/missing/one-toolchain"));
+    let missing = std::env::temp_dir().join("one-gate1-definitely-missing-toolchain.exe");
+    let _ = fs::remove_file(&missing);
+    let resolver = PathToolchainResolver::new(missing);
     let error = resolver
         .resolve(&toolchain(), Path::new("source.one"), Path::new("artifact"))
         .and_then(|command| CommandToolchainInvoker.invoke(&command))
@@ -68,7 +75,11 @@ fn missing_executable_is_toolchain_not_found() {
 
 #[test]
 fn process_start_failure_is_distinct() {
-    let command = ToolchainCommand::new(PathBuf::from("/"), Vec::new());
+    let directory = fixture_executable()
+        .parent()
+        .expect("fixture must have a parent")
+        .to_path_buf();
+    let command = ToolchainCommand::new(directory, Vec::<OsString>::new());
     let error = CommandToolchainInvoker
         .invoke(&command)
         .expect_err("directory cannot be executed as a process");
@@ -86,7 +97,7 @@ fn non_zero_exit_is_distinct_from_start_failure() {
 
     match error {
         ToolchainExecutionError::NonZeroExit { status, stdout, stderr } => {
-            assert_eq!(status.code(), Some(7));
+            assert_eq!(status, Some(7));
             assert!(stdout.is_empty());
             assert!(stderr.contains("fixture exit 7"));
         }
@@ -124,12 +135,9 @@ impl ToolchainInvoker for CountingInvoker {
 }
 
 fn success_invocation() -> ToolchainInvocation {
-    let output = Output {
-        status: ExitStatus::from_raw(0),
-        stdout: Vec::new(),
-        stderr: Vec::new(),
-    };
-    ToolchainInvocation::from_output(output)
+    CommandToolchainInvoker
+        .invoke(&ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()))
+        .expect("fixture success invocation should succeed")
 }
 
 #[test]
@@ -137,7 +145,7 @@ fn target_mismatch_is_rejected_before_execution() {
     let target = TargetSpec::hosted(TargetArchitecture::Aarch64, TargetEnvironment::Linux);
     let resolver = CountingResolver {
         calls: Cell::new(0),
-        command: ToolchainCommand::new(fixture_executable(), Vec::new()),
+        command: ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()),
     };
     let invoker = CountingInvoker {
         calls: Cell::new(0),
@@ -164,7 +172,7 @@ fn target_mismatch_is_rejected_before_execution() {
 fn successful_execution_without_artifact_is_failure() {
     let resolver = CountingResolver {
         calls: Cell::new(0),
-        command: ToolchainCommand::new(fixture_executable(), Vec::new()),
+        command: ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()),
     };
     let invoker = CountingInvoker {
         calls: Cell::new(0),
@@ -193,7 +201,7 @@ fn successful_execution_without_artifact_is_failure() {
 fn successful_execution_returns_artifact() {
     let resolver = CountingResolver {
         calls: Cell::new(0),
-        command: ToolchainCommand::new(fixture_executable(), Vec::new()),
+        command: ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()),
     };
     let invoker = CountingInvoker {
         calls: Cell::new(0),
