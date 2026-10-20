@@ -185,5 +185,5 @@ fn invalid_lowering_has_structured_diagnostic() {
 fn invalid_target_backend_is_rejected_before_build() {
     let backend = NativeLinuxX86_64Backend::new();
     let target = backend.target();
-    assert!(target.validate_backend(&backend).is_ok());
+    assert!(backend.validate(&target).is_ok());
 }
