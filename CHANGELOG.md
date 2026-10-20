@@ -25,6 +25,8 @@
 - Native Linux AArch64 is verified on the exact PR #64 SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd` for an AArch64/Linux host boundary: ELF AArch64 artifact built and executed successfully.
 - Native Linux x86_64 is build-proven on the same PR SHA: ELF x86-64 artifact built successfully using the verified cross-linker selection and the dedicated regression test passes. Target execution remains pending because no x86_64 executor was available.
 - Native Windows x86_64 is build-proven on the same PR SHA: PE32+ x86-64 artifact proven. Target execution remains pending because no Windows/Wine executor was available.
-- Updated the native backend contract map, implementation-status inventory, evidence matrix, release boundary, user feature-status guide, and verification record to keep the native evidence explicitly branch- and SHA-bound until PR #64 is merged and reverified.
+- PR #64 was merged into canonical `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`. The pre-merge native evidence remains bounded to its recorded implementation SHA until exact-SHA post-merge verification is completed.
+- The first post-merge `One CI` run `39371290853` failed on both matrix jobs before any executable step (`steps: []`); this is recorded as an infrastructure/runner failure, not as source-code failure evidence.
+- Updated the native backend contract map, implementation-status inventory, evidence matrix, release boundary, user feature-status guide, and verification record to reflect the merged state and preserve exact-SHA evidence boundaries.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
