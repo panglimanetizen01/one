@@ -8,7 +8,7 @@ use std::{
 
 use crate::{
     native_backend::NativeArtifact,
-    target::{TargetBackend, TargetSpec, ToolchainSpec, ToolchainOperation},
+    target::{TargetBackend, TargetSpec, ToolchainOperation, ToolchainSpec},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,7 +122,9 @@ impl fmt::Display for ToolchainExecutionError {
             Self::ArtifactMissing { path } => {
                 write!(formatter, "toolchain artifact missing: {}", path.display())
             }
-            Self::Validation { message } => write!(formatter, "toolchain validation failed: {message}"),
+            Self::Validation { message } => {
+                write!(formatter, "toolchain validation failed: {message}")
+            }
         }
     }
 }
@@ -178,14 +180,20 @@ impl ToolchainResolver for PathToolchainResolver {
 }
 
 pub trait ToolchainInvoker {
-    fn invoke(&self, command: &ToolchainCommand) -> Result<ToolchainInvocation, ToolchainExecutionError>;
+    fn invoke(
+        &self,
+        command: &ToolchainCommand,
+    ) -> Result<ToolchainInvocation, ToolchainExecutionError>;
 }
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CommandToolchainInvoker;
 
 impl ToolchainInvoker for CommandToolchainInvoker {
-    fn invoke(&self, command: &ToolchainCommand) -> Result<ToolchainInvocation, ToolchainExecutionError> {
+    fn invoke(
+        &self,
+        command: &ToolchainCommand,
+    ) -> Result<ToolchainInvocation, ToolchainExecutionError> {
         let output = Command::new(command.executable())
             .args(command.args())
             .output()
