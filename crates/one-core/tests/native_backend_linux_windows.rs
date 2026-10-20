@@ -104,9 +104,52 @@ fn linux_x86_64_build_menggunakan_cross_linker_x86_64() {
     let _ = std::fs::remove_file(&output);
     let _ = std::fs::remove_file(output.with_extension("c"));
 
+    let linker = std::env::temp_dir().join(format!(
+        "one-test-x86_64-linux-gnu-ld-{}",
+        std::process::id()
+    ));
+    std::fs::write(
+        &linker,
+        b"#!/bin/sh\nexec x86_64-linux-gnu-ld \"$@\"\n",
+    )
+    .expect("fixture linker harus dapat dibuat");
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut permissions = std::fs::metadata(&linker).unwrap().permissions();
+        permissions.set_mode(0o755);
+        std::fs::set_permissions(&linker, permissions).unwrap();
+    }
+
+    struct EnvGuard {
+        previous: Option<std::ffi::OsString>,
+    }
+
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            unsafe {
+                match &self.previous {
+                    Some(value) => std::env::set_var("ONE_LINUX_X86_64_LD", value),
+                    None => std::env::remove_var("ONE_LINUX_X86_64_LD"),
+                }
+            }
+        }
+    }
+
+    let _env_guard = EnvGuard {
+        previous: std::env::var_os("ONE_LINUX_X86_64_LD"),
+    };
+
+    unsafe {
+        std::env::set_var("ONE_LINUX_X86_64_LD", &linker);
+    }
+
     let artifact = backend
         .build(&ir, &output)
         .expect("backend Linux x86_64 harus dapat membangun artifact");
+
+    assert!(std::path::Path::new(&linker).is_file());
 
     assert_eq!(artifact.format, ArtifactFormat::Executable);
     assert!(artifact.path.is_file());

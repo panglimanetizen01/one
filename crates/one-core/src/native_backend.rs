@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt, path::PathBuf, process::Command};
+use std::{collections::BTreeMap, env, ffi::OsStr, fmt, path::PathBuf, process::Command};
 
 use crate::{
     ir::{IrExpr, IrProgram, IrStatement},
@@ -323,7 +323,7 @@ pub struct NativeLinuxX86_64Backend;
 pub struct NativeWindowsX86_64Backend;
 
 macro_rules! native_backend {
-    ($name:ident, $id:literal, $triple:literal, $arch:expr, $env:expr, $compiler:literal, $target_arg:literal, $linker_arg:expr) => {
+    ($name:ident, $id:literal, $triple:literal, $arch:expr, $env:expr, $compiler:literal, $target_arg:literal, $linker_resolver:expr) => {
         impl $name {
             pub const fn new() -> Self {
                 Self
@@ -380,9 +380,10 @@ macro_rules! native_backend {
 
                 let mut command = Command::new(&compiler);
                 command.arg($target_arg);
-                let linker_arg: Option<&'static str> = $linker_arg;
+
+                let linker_arg: Option<PathBuf> = $linker_resolver()?;
                 if let Some(linker_arg) = linker_arg {
-                    command.arg(linker_arg);
+                    command.arg(format!("--ld-path={}", linker_arg.display()));
                 }
                 let status = command
                     .arg(&source_path)
@@ -451,6 +452,181 @@ macro_rules! native_backend {
     };
 }
 
+
+fn resolve_linux_x86_64_linker(
+    override_path: Option<&PathBuf>,
+    path_env: Option<&OsStr>,
+) -> Result<PathBuf, NativeBackendError> {
+    if let Some(path) = override_path {
+        return match Command::new(path).arg("--version").status() {
+            Ok(status) if status.success() => Ok(path.clone()),
+            _ => Err(NativeBackendError::new(
+                "NATIVE-LINKER-INCOMPATIBLE",
+                "linker GNU x86_64 ditemukan tetapi tidak kompatibel atau tidak dapat dijalankan",
+            )),
+        };
+    }
+
+    let path_env = path_env.unwrap_or_else(|| OsStr::new(""));
+    let mut found_incompatible = false;
+
+    for candidate in env::split_paths(path_env)
+        .map(|directory| directory.join("x86_64-linux-gnu-ld"))
+    {
+        if !candidate.is_file() {
+            continue;
+        }
+
+        match Command::new(&candidate).arg("--version").status() {
+            Ok(status) if status.success() => return Ok(candidate),
+            _ => found_incompatible = true,
+        }
+    }
+
+    if found_incompatible {
+        Err(NativeBackendError::new(
+            "NATIVE-LINKER-INCOMPATIBLE",
+            "linker GNU x86_64 ditemukan tetapi tidak kompatibel atau tidak dapat dijalankan",
+        ))
+    } else {
+        Err(NativeBackendError::new(
+            "NATIVE-LINKER-NOT-FOUND",
+            "target x86_64-unknown-linux-gnu membutuhkan linker GNU x86_64 yang kompatibel",
+        ))
+    }
+}
+
+#[cfg(test)]
+mod linker_discovery_tests {
+    use super::*;
+
+    #[test]
+    fn linux_x86_64_linker_override_diprioritaskan() {
+        let root = std::env::temp_dir().join(format!(
+            "one-native-linker-override-{}",
+            std::process::id()
+        ));
+        let expected = root.join("x86_64-linux-gnu-ld");
+        let path_candidate = root.join("path-bin");
+        let path_linker = path_candidate.join("x86_64-linux-gnu-ld");
+
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::create_dir_all(&path_candidate).unwrap();
+
+        std::fs::write(&expected, b"#!/bin/sh\nexit 0\n").unwrap();
+        std::fs::write(&path_linker, b"#!/bin/sh\nexit 1\n").unwrap();
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            for path in [&expected, &path_linker] {
+                let mut permissions = std::fs::metadata(path).unwrap().permissions();
+                permissions.set_mode(0o755);
+                std::fs::set_permissions(path, permissions).unwrap();
+            }
+        }
+
+        assert_eq!(
+            resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
+                .unwrap(),
+            expected
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn linux_x86_64_linker_override_tidak_kompatibel_ditolak() {
+        let root = std::env::temp_dir().join(format!(
+            "one-native-linker-override-invalid-{}",
+            std::process::id()
+        ));
+        let candidate = root.join("x86_64-linux-gnu-ld");
+
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(&candidate, b"#!/bin/sh\nexit 1\n").unwrap();
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mut permissions = std::fs::metadata(&candidate).unwrap().permissions();
+            permissions.set_mode(0o755);
+            std::fs::set_permissions(&candidate, permissions).unwrap();
+        }
+
+        let result = resolve_linux_x86_64_linker(Some(&candidate), None);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().code(),
+            "NATIVE-LINKER-INCOMPATIBLE"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn linux_x86_64_linker_host_salah_ditolak() {
+        let root = std::env::temp_dir().join(format!(
+            "one-native-linker-invalid-{}",
+            std::process::id()
+        ));
+        let bin = root.join("bin");
+        let candidate = bin.join("x86_64-linux-gnu-ld");
+
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::write(&candidate, b"#!/bin/sh\nexit 1\n").unwrap();
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mut permissions = std::fs::metadata(&candidate).unwrap().permissions();
+            permissions.set_mode(0o755);
+            std::fs::set_permissions(&candidate, permissions).unwrap();
+        }
+
+        let result = resolve_linux_x86_64_linker(None, Some(bin.as_os_str()));
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().code(),
+            "NATIVE-LINKER-INCOMPATIBLE"
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn linux_x86_64_linker_ditemukan_dari_path() {
+        let root = std::env::temp_dir().join(format!(
+            "one-native-linker-test-{}",
+            std::process::id()
+        ));
+        let bin = root.join("bin");
+        let expected = bin.join("x86_64-linux-gnu-ld");
+
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::write(&expected, b"#!/bin/sh\necho 'GNU ld (GNU Binutils) 2.40'\nexit 0\n").unwrap();
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mut permissions = std::fs::metadata(&expected).unwrap().permissions();
+            permissions.set_mode(0o755);
+            std::fs::set_permissions(&expected, permissions).unwrap();
+        }
+
+        let path_env = bin.as_os_str();
+        assert_eq!(
+            resolve_linux_x86_64_linker(None, Some(path_env)).unwrap(),
+            expected
+        );
+
+        let _ = std::fs::remove_dir_all(root);
+    }
+}
+
+
 impl CGenerator {
     fn generate(program: &IrProgram) -> Result<String, NativeBackendError> {
         let mut generator = CGenerator {
@@ -479,7 +655,7 @@ native_backend!(
     TargetEnvironment::Linux,
     "clang",
     "--target=aarch64-unknown-linux-gnu",
-    None
+    || Ok::<Option<PathBuf>, NativeBackendError>(None)
 );
 
 native_backend!(
@@ -490,7 +666,15 @@ native_backend!(
     TargetEnvironment::Linux,
     "clang",
     "--target=x86_64-unknown-linux-gnu",
-    Some("--ld-path=/usr/bin/x86_64-linux-gnu-ld")
+    || {
+        resolve_linux_x86_64_linker(
+            std::env::var_os("ONE_LINUX_X86_64_LD")
+                .map(PathBuf::from)
+                .as_ref(),
+            std::env::var_os("PATH").as_deref(),
+        )
+        .map(Some)
+    }
 );
 
 native_backend!(
@@ -501,7 +685,7 @@ native_backend!(
     TargetEnvironment::Windows,
     "x86_64-w64-mingw32-clang",
     "--target=x86_64-w64-windows-gnu",
-    None
+    || Ok::<Option<PathBuf>, NativeBackendError>(None)
 );
 
 fn validate_native_artifact(
