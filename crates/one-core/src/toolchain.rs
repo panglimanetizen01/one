@@ -3,7 +3,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use crate::target::{ToolchainOperation, ToolchainSpec, ToolchainValidationError};
+use crate::target::{ToolchainSpec, ToolchainValidationError};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ToolchainCommand {
@@ -38,7 +38,6 @@ pub enum ToolchainExecutionError {
     ToolchainNotFound { executable: PathBuf },
     ProcessStart { executable: PathBuf, message: String },
     ProcessExited { status: i32, stdout: Vec<u8>, stderr: Vec<u8> },
-    ArtifactMissing { path: PathBuf },
     Validation(ToolchainValidationError),
 }
 
@@ -48,7 +47,6 @@ impl fmt::Display for ToolchainExecutionError {
             Self::ToolchainNotFound { executable } => write!(f, "toolchain executable not found: {}", executable.display()),
             Self::ProcessStart { executable, message } => write!(f, "failed to start toolchain executable {}: {message}", executable.display()),
             Self::ProcessExited { status, .. } => write!(f, "toolchain process exited with status {status}"),
-            Self::ArtifactMissing { path } => write!(f, "expected toolchain artifact was not produced: {}", path.display()),
             Self::Validation(error) => write!(f, "toolchain validation failed: {error}"),
         }
     }
@@ -106,24 +104,4 @@ impl ToolchainInvoker for CommandToolchainInvoker {
         }
         Ok(invocation)
     }
-}
-
-pub fn execute_toolchain_build<R: ToolchainResolver, I: ToolchainInvoker>(
-    resolver: &R,
-    invoker: &I,
-    spec: &ToolchainSpec,
-    operation: ToolchainOperation,
-    artifact: &Path,
-) -> Result<ToolchainInvocation, ToolchainExecutionError> {
-    if !spec.capability().supports(operation) {
-        return Err(ToolchainExecutionError::Validation(
-            ToolchainValidationError::UnsupportedOperation { capability: spec.capability(), operation },
-        ));
-    }
-    let command = resolver.resolve(spec)?;
-    let invocation = invoker.invoke(&command)?;
-    if !artifact.is_file() {
-        return Err(ToolchainExecutionError::ArtifactMissing { path: artifact.to_path_buf() });
-    }
-    Ok(invocation)
 }
