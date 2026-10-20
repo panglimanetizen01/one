@@ -4,27 +4,57 @@
 
 `panglimanetizen01/one`, branch `main`.
 
-## Latest exact-SHA executable verification
+## Canonical main evidence
 
-Canonical source revision: `55a8474ad5b19e20fcd51c3be79f39aaa374bbf3`.
+Canonical `main` verification evidence remains recorded at its exact SHA and stated platform boundary. This document must not silently replace that evidence with a feature-branch result.
 
-Environment: Termux/Android.
+## PR #64 native backend verification
 
-The exact-SHA checkout passed the canonical `tools/verify_exact_sha.sh` harness. The run verified the exact checkout SHA, contract artifacts, workspace build, Clippy with `-D warnings`, full workspace tests, deterministic artifact output, DNS tests, orchestration tests, filesystem vertical slice and capability isolation, process vertical slice, database vertical slice and CLI tests, and HTTP GET vertical slice and CLI tests.
+Branch: `feature/native-backends-linux-windows`
 
-The full workspace test run passed all discovered test suites, including the current database and HTTP source-to-runtime paths. The database CLI suite passed 3/3 and the HTTP GET CLI suite passed 3/3. The database vertical slice passed 7/7 and the HTTP GET vertical slice passed 3/3.
+Exact verification revision: `797c6fe75bd3fa9081329f73dd59e34278f27ddd`.
 
-This evidence is platform-bound to Termux/Android. It establishes exact-SHA executable evidence for canonical `main` on that platform only; it does not establish Ubuntu/Windows support for `55a8474ad5b19e20fcd51c3be79f39aaa374bbf3`.
+This is branch-bound evidence and becomes a canonical main verification record only after PR #64 is merged and the merged SHA is independently reverified.
 
-## Latest cross-platform exact-SHA verification
+### Linux AArch64
 
-Canonical source revision: `9038ac75f197753ff1ab6af7478e63e4831903a2`.
+- Target: `aarch64-unknown-linux-gnu`.
+- Native One CLI build succeeded.
+- Artifact identified as ELF 64-bit AArch64.
+- Artifact executed successfully on the AArch64/Linux verification host and printed `ONE_NATIVE_LINUX_AARCH64`.
+- Status: **VERIFIED — exact PR SHA, AArch64/Linux host boundary**.
 
-Independent verification mirror: `panglimanetizen01/one-windows-verification`, run `38929072800`.
+### Linux x86_64
 
-The independent mirror checked out the exact recorded SHA and verified it on Ubuntu and Windows Server 2025. The run passed contract-artifact checks, build, Clippy, workspace tests, real-network runtime tests, deterministic artifact checks, orchestration runtime, and platform-specific offline verification.
+- Target: `x86_64-unknown-linux-gnu`.
+- Regression test `linux_x86_64_build_menggunakan_cross_linker_x86_64` passed.
+- Native One CLI build succeeded.
+- Artifact identified as ELF 64-bit x86-64 with `/lib64/ld-linux-x86-64.so.2`.
+- No x86_64 executor was available.
+- Status: **BUILD TERBUKTI — execution pending**.
 
-That cross-platform evidence predates the database, HTTP, and later filesystem-write changes and must not be generalized to the current executable revision.
+### Windows x86_64
+
+- Target: `x86_64-pc-windows-gnu`.
+- Native artifact build is covered by backend/CLI verification.
+- Artifact proven as PE32+ x86-64.
+- No Windows/Wine executor was available.
+- Status: **BUILD TERBUKTI — execution pending**.
+
+### Native regression/static evidence
+
+- Native backend integration suite: 9/9 passed.
+- `cargo clippy -p one-core --all-targets -- -D warnings`: passed.
+- Linux x86_64 native CLI build: passed; ELF x86-64 produced.
+- `git diff --check`: passed before the fix commit.
+
+## Full-suite boundary
+
+A later full `cargo test` invocation in the Debian/proot verification environment failed in `android_target_explicit_mempertahankan_build_native` because the environment selected Debian host Clang and could not find `bits/libc-header-start.h`. This is environmental evidence outside the bounded Linux x86_64 linker fix and is not evidence that the fix itself failed. The targeted native suite, Clippy, native CLI build, and diff checks had already passed before commit.
+
+## Latest cross-platform historical evidence
+
+Independent mirror run `38929072800` verified revision `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. That evidence predates the database, HTTP, filesystem-write, and native-backend revisions and must not be generalized to PR #64 or current `main`.
 
 ## Evidence boundary
 
@@ -32,4 +62,4 @@ That cross-platform evidence predates the database, HTTP, and later filesystem-w
 
 ## Verification infrastructure status
 
-The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. Historical canonical hosted CI attempts for the affected work produced zero-step job failures, so those runs are classified as infrastructure evidence failure rather than source failure. The current canonical executable evidence is the independent Termux/Android exact-SHA run recorded above. No paid GitHub upgrade was used or required.
+The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. Historical canonical hosted CI attempts for affected work produced zero-step job failures, so those runs are classified as infrastructure evidence failure rather than source failure. No paid GitHub upgrade was used or required.

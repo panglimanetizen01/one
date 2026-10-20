@@ -159,7 +159,8 @@ fn unsupported_environment_is_rejected_deterministically() {
 
 #[test]
 fn target_selection_does_not_mutate_semantic_ir() {
-    let program = one_core::parse("nama adalah \"Budi\"\ntampilkan nama\n").expect("source should parse");
+    let program =
+        one_core::parse("nama adalah \"Budi\"\ntampilkan nama\n").expect("source should parse");
     let typed = one_core::analyze(&program).expect("source should analyze");
     let ir = one_core::lower(&typed).expect("source should lower");
     let before = ir.canonical_text();
@@ -178,4 +179,33 @@ fn target_selection_does_not_mutate_semantic_ir() {
     let _ = backend.validate(&constrained);
 
     assert_eq!(ir.canonical_text(), before);
+}
+
+#[test]
+fn target_registry_mendefinisikan_target_native_one_tanpa_mengikat_compiler_host() {
+    let android =
+        one_core::target_definition("android-aarch64").expect("target Android harus terdaftar");
+    let linux_aarch64 =
+        one_core::target_definition("linux-aarch64").expect("target Linux AArch64 harus terdaftar");
+    let linux_x86_64 =
+        one_core::target_definition("linux-x86_64").expect("target Linux x86_64 harus terdaftar");
+    let windows = one_core::target_definition("windows-x86_64")
+        .expect("target Windows x86_64 harus terdaftar");
+
+    assert_eq!(android.triple(), "aarch64-linux-android24");
+    assert_eq!(linux_aarch64.triple(), "aarch64-unknown-linux-gnu");
+    assert_eq!(linux_x86_64.triple(), "x86_64-unknown-linux-gnu");
+    assert_eq!(windows.triple(), "x86_64-pc-windows-gnu");
+
+    assert_eq!(
+        linux_aarch64.environment(),
+        one_core::TargetEnvironment::Linux
+    );
+    assert_eq!(
+        linux_x86_64.environment(),
+        one_core::TargetEnvironment::Linux
+    );
+    assert_eq!(windows.environment(), one_core::TargetEnvironment::Windows);
+
+    assert!(one_core::target_definition("compiler-yang-kebetulan-terpasang").is_none());
 }

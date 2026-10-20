@@ -92,7 +92,10 @@ impl TargetSpec {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TargetValidationError {
-    BackendMismatch { expected: String, actual: String },
+    BackendMismatch {
+        expected: String,
+        actual: String,
+    },
     RuntimeMismatch {
         expected: RuntimeClass,
         actual: RuntimeClass,
@@ -106,10 +109,16 @@ impl fmt::Display for TargetValidationError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BackendMismatch { expected, actual } => {
-                write!(formatter, "backend mismatch: expected {expected}, got {actual}")
+                write!(
+                    formatter,
+                    "backend mismatch: expected {expected}, got {actual}"
+                )
             }
             Self::RuntimeMismatch { expected, actual } => {
-                write!(formatter, "runtime mismatch: expected {expected:?}, got {actual:?}")
+                write!(
+                    formatter,
+                    "runtime mismatch: expected {expected:?}, got {actual:?}"
+                )
             }
             Self::UnsupportedArchitecture(architecture) => {
                 write!(formatter, "unsupported architecture: {architecture:?}")
@@ -122,6 +131,79 @@ impl fmt::Display for TargetValidationError {
             }
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TargetDefinition {
+    id: &'static str,
+    triple: &'static str,
+    architecture: TargetArchitecture,
+    environment: TargetEnvironment,
+}
+
+impl TargetDefinition {
+    pub const fn new(
+        id: &'static str,
+        triple: &'static str,
+        architecture: TargetArchitecture,
+        environment: TargetEnvironment,
+    ) -> Self {
+        Self {
+            id,
+            triple,
+            architecture,
+            environment,
+        }
+    }
+
+    pub const fn id(&self) -> &str {
+        self.id
+    }
+
+    pub const fn triple(&self) -> &str {
+        self.triple
+    }
+
+    pub const fn architecture(&self) -> &TargetArchitecture {
+        &self.architecture
+    }
+
+    pub const fn environment(&self) -> TargetEnvironment {
+        self.environment
+    }
+}
+
+const TARGET_DEFINITIONS: &[TargetDefinition] = &[
+    TargetDefinition::new(
+        "android-aarch64",
+        "aarch64-linux-android24",
+        TargetArchitecture::Aarch64,
+        TargetEnvironment::Linux,
+    ),
+    TargetDefinition::new(
+        "linux-aarch64",
+        "aarch64-unknown-linux-gnu",
+        TargetArchitecture::Aarch64,
+        TargetEnvironment::Linux,
+    ),
+    TargetDefinition::new(
+        "linux-x86_64",
+        "x86_64-unknown-linux-gnu",
+        TargetArchitecture::X86_64,
+        TargetEnvironment::Linux,
+    ),
+    TargetDefinition::new(
+        "windows-x86_64",
+        "x86_64-pc-windows-gnu",
+        TargetArchitecture::X86_64,
+        TargetEnvironment::Windows,
+    ),
+];
+
+pub fn target_definition(id: &str) -> Option<&'static TargetDefinition> {
+    TARGET_DEFINITIONS
+        .iter()
+        .find(|definition| definition.id() == id)
 }
 
 pub trait TargetBackend {
@@ -154,7 +236,9 @@ pub trait TargetBackend {
         }
 
         if !self.supports_environment(target.environment()) {
-            return Err(TargetValidationError::UnsupportedEnvironment(target.environment()));
+            return Err(TargetValidationError::UnsupportedEnvironment(
+                target.environment(),
+            ));
         }
 
         if target.runtime() != self.required_runtime() {
@@ -364,7 +448,10 @@ impl fmt::Display for ToolchainValidationError {
         match self {
             Self::TargetValidation(error) => write!(formatter, "target validation failed: {error}"),
             Self::BackendMismatch { expected, actual } => {
-                write!(formatter, "toolchain backend mismatch: expected {expected}, got {actual}")
+                write!(
+                    formatter,
+                    "toolchain backend mismatch: expected {expected}, got {actual}"
+                )
             }
             Self::ArchitectureMismatch { expected, actual } => write!(
                 formatter,
@@ -449,7 +536,10 @@ impl TargetBackend for ReferenceTargetBackend {
     }
 
     fn supports_environment(&self, environment: TargetEnvironment) -> bool {
-        matches!(environment, TargetEnvironment::Windows | TargetEnvironment::Linux)
+        matches!(
+            environment,
+            TargetEnvironment::Windows | TargetEnvironment::Linux
+        )
     }
 }
 
@@ -471,7 +561,10 @@ mod tests {
         let first = ReferenceTargetBackend::new().validate(&target);
         let second = ReferenceTargetBackend::new().validate(&target);
         assert_eq!(first, second);
-        assert!(matches!(first, Err(TargetValidationError::BackendMismatch { .. })));
+        assert!(matches!(
+            first,
+            Err(TargetValidationError::BackendMismatch { .. })
+        ));
     }
 
     #[test]
@@ -502,12 +595,16 @@ mod tests {
         let backend = ReferenceTargetBackend::new();
         let toolchain = ReferenceToolchain::new().spec();
 
-        assert!(toolchain
-            .validate_for(&target, &backend, ToolchainOperation::Build)
-            .is_ok());
-        assert!(toolchain
-            .validate_for(&target, &backend, ToolchainOperation::Execute)
-            .is_ok());
+        assert!(
+            toolchain
+                .validate_for(&target, &backend, ToolchainOperation::Build)
+                .is_ok()
+        );
+        assert!(
+            toolchain
+                .validate_for(&target, &backend, ToolchainOperation::Execute)
+                .is_ok()
+        );
     }
 
     #[test]
