@@ -80,6 +80,22 @@ fn target_mismatch_is_rejected_before_execution() {
     ));
 }
 
+#[test]
+fn successful_toolchain_execution_requires_artifact() {
+    let resolver = one_core::PathToolchainResolver::new(PathBuf::from("/bin/true"), None);
+    let invoker = one_core::CommandToolchainInvoker::new();
+    let spec = reference_toolchain_spec();
+    let artifact = PathBuf::from("/tmp/one-test-missing-artifact");
+
+    let error = one_core::execute_toolchain_build(&resolver, &invoker, &spec, artifact)
+        .expect_err("successful process without artifact must fail");
+
+    assert!(matches!(
+        error,
+        ToolchainExecutionError::ArtifactMissing { .. }
+    ));
+}
+
 fn reference_toolchain_spec() -> ToolchainSpec {
     one_core::ReferenceToolchain::new().spec()
 }
