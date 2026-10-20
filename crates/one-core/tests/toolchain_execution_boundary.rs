@@ -1,0 +1,221 @@
+use std::{
+    cell::Cell,
+    ffi::OsString,
+    fs,
+    path::{Path, PathBuf},
+    process::{ExitStatus, Output},
+};
+
+use one_core::{
+    ArtifactFormat, ExecutionProfile, ReferenceTargetBackend, TargetArchitecture, TargetEnvironment,
+    TargetSpec, ToolchainCapability, ToolchainCommand, ToolchainExecutionError, ToolchainInvoker,
+    ToolchainInvocation, ToolchainResolver, ToolchainSpec, ToolchainTarget, LinkerStrategy,
+    PathToolchainResolver, CommandToolchainInvoker, execute_toolchain_build,
+};
+
+fn toolchain() -> ToolchainSpec {
+    ToolchainSpec::new(
+        "fixture-toolchain",
+        "reference",
+        ToolchainTarget::new(
+            "x86_64-unknown-linux-gnu",
+            TargetArchitecture::X86_64,
+            TargetEnvironment::Linux,
+        ),
+        LinkerStrategy::Named("fixture".into()),
+        ArtifactFormat::Executable,
+        ToolchainCapability::Build,
+    )
+}
+
+fn target() -> TargetSpec {
+    TargetSpec::hosted(TargetArchitecture::X86_64, TargetEnvironment::Linux)
+}
+
+fn fixture_executable() -> PathBuf {
+    PathBuf::from(env!("CARGO_BIN_EXE_toolchain-fixture"))
+}
+
+#[test]
+fn command_preserves_executable_and_arguments_without_shell_parsing() {
+    let executable = fixture_executable();
+    let source = Path::new("source file; $(do-not-run)").to_path_buf();
+    let artifact = Path::new("artifact with spaces").to_path_buf();
+    let command = ToolchainCommand::for_build(&executable, &toolchain(), &source, &artifact);
+
+    assert_eq!(command.executable(), executable.as_path());
+    assert_eq!(
+        command.args(),
+        &[
+            OsString::from("--target=x86_64-unknown-linux-gnu"),
+            source.into_os_string(),
+            OsString::from("-o"),
+            artifact.into_os_string(),
+        ]
+    );
+}
+
+#[test]
+fn missing_executable_is_toolchain_not_found() {
+    let resolver = PathToolchainResolver::new(PathBuf::from("/definitely/missing/one-toolchain"));
+    let error = resolver
+        .resolve(&toolchain(), Path::new("source.one"), Path::new("artifact"))
+        .and_then(|command| CommandToolchainInvoker.invoke(&command))
+        .expect_err("missing executable must fail");
+
+    assert!(matches!(error, ToolchainExecutionError::ToolchainNotFound { .. }));
+}
+
+#[test]
+fn process_start_failure_is_distinct() {
+    let command = ToolchainCommand::new(PathBuf::from("/"), Vec::new());
+    let error = CommandToolchainInvoker
+        .invoke(&command)
+        .expect_err("directory cannot be executed as a process");
+
+    assert!(matches!(error, ToolchainExecutionError::ProcessStart { .. }));
+}
+
+#[test]
+fn non_zero_exit_is_distinct_from_start_failure() {
+    let fixture = fixture_executable();
+    let command = ToolchainCommand::new(fixture, vec![OsString::from("--exit=7")]);
+    let error = CommandToolchainInvoker
+        .invoke(&command)
+        .expect_err("fixture requested non-zero exit");
+
+    match error {
+        ToolchainExecutionError::NonZeroExit { status, stdout, stderr } => {
+            assert_eq!(status.code(), Some(7));
+            assert!(stdout.is_empty());
+            assert!(stderr.contains("fixture exit 7"));
+        }
+        other => panic!("expected non-zero exit, got {other:?}"),
+    }
+}
+
+struct CountingResolver {
+    calls: Cell<u32>,
+    command: ToolchainCommand,
+}
+
+impl ToolchainResolver for CountingResolver {
+    fn resolve(
+        &self,
+        _toolchain: &ToolchainSpec,
+        _source: &Path,
+        _artifact: &Path,
+    ) -> Result<ToolchainCommand, ToolchainExecutionError> {
+        self.calls.set(self.calls.get() + 1);
+        Ok(self.command.clone())
+    }
+}
+
+struct CountingInvoker {
+    calls: Cell<u32>,
+    result: Result<ToolchainInvocation, ToolchainExecutionError>,
+}
+
+impl ToolchainInvoker for CountingInvoker {
+    fn invoke(&self, _command: &ToolchainCommand) -> Result<ToolchainInvocation, ToolchainExecutionError> {
+        self.calls.set(self.calls.get() + 1);
+        self.result.clone()
+    }
+}
+
+fn success_invocation() -> ToolchainInvocation {
+    let output = Output {
+        status: ExitStatus::from_raw(0),
+        stdout: Vec::new(),
+        stderr: Vec::new(),
+    };
+    ToolchainInvocation::from_output(output)
+}
+
+#[test]
+fn target_mismatch_is_rejected_before_execution() {
+    let target = TargetSpec::hosted(TargetArchitecture::Aarch64, TargetEnvironment::Linux);
+    let resolver = CountingResolver {
+        calls: Cell::new(0),
+        command: ToolchainCommand::new(fixture_executable(), Vec::new()),
+    };
+    let invoker = CountingInvoker {
+        calls: Cell::new(0),
+        result: Ok(success_invocation()),
+    };
+
+    let error = execute_toolchain_build(
+        &target,
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        Path::new("artifact"),
+    )
+    .expect_err("architecture mismatch must be rejected");
+
+    assert!(matches!(error, ToolchainExecutionError::Validation { .. }));
+    assert_eq!(resolver.calls.get(), 0);
+    assert_eq!(invoker.calls.get(), 0);
+}
+
+#[test]
+fn successful_execution_without_artifact_is_failure() {
+    let resolver = CountingResolver {
+        calls: Cell::new(0),
+        command: ToolchainCommand::new(fixture_executable(), Vec::new()),
+    };
+    let invoker = CountingInvoker {
+        calls: Cell::new(0),
+        result: Ok(success_invocation()),
+    };
+
+    let artifact = std::env::temp_dir().join("one-gate1-missing-artifact");
+    let _ = fs::remove_file(&artifact);
+    let error = execute_toolchain_build(
+        &target(),
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        &artifact,
+    )
+    .expect_err("successful process without artifact must fail");
+
+    assert!(matches!(error, ToolchainExecutionError::ArtifactMissing { .. }));
+    assert_eq!(resolver.calls.get(), 1);
+    assert_eq!(invoker.calls.get(), 1);
+}
+
+#[test]
+fn successful_execution_returns_artifact() {
+    let resolver = CountingResolver {
+        calls: Cell::new(0),
+        command: ToolchainCommand::new(fixture_executable(), Vec::new()),
+    };
+    let invoker = CountingInvoker {
+        calls: Cell::new(0),
+        result: Ok(success_invocation()),
+    };
+    let artifact = std::env::temp_dir().join("one-gate1-present-artifact");
+    fs::write(&artifact, b"fixture").expect("artifact fixture should be writable");
+
+    let result = execute_toolchain_build(
+        &target(),
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        &artifact,
+    )
+    .expect("existing artifact must succeed");
+
+    assert_eq!(result.path, artifact);
+    assert_eq!(result.format, ArtifactFormat::Executable);
+    assert_eq!(resolver.calls.get(), 1);
+    assert_eq!(invoker.calls.get(), 1);
+    let _ = fs::remove_file(result.path);
+}
