@@ -95,7 +95,7 @@ pub use target::{
 pub use token::{Span, Token, TokenKind};
 pub use toolchain::{
     CommandToolchainInvoker, PathToolchainResolver, ToolchainCommand, ToolchainExecutionError,
-    ToolchainInvocation, ToolchainInvoker, ToolchainResolver,
+    ToolchainInvocation, ToolchainInvoker, ToolchainResolver, execute_toolchain_build,
 };
 pub use types::Type;
 
