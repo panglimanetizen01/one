@@ -288,13 +288,18 @@ fn high_level_build_rejects_non_zero_status_from_custom_invoker() {
     )
     .expect_err("high-level build must reject a non-zero invocation status");
 
-    assert!(matches!(
-        error,
+    match error {
         ToolchainExecutionError::NonZeroExit {
-            status: Some(7),
-            ..
+            status,
+            stdout,
+            stderr,
+        } => {
+            assert_eq!(status, Some(7));
+            assert!(stdout.is_empty());
+            assert!(stderr.contains("fixture exit 7"));
         }
-    ));
+        other => panic!("expected non-zero exit classification, got {other:?}"),
+    }
     assert_eq!(resolver.calls.get(), 1);
     assert_eq!(invoker.calls.get(), 1);
 }
