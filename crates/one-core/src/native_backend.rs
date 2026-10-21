@@ -505,7 +505,7 @@ fn resolve_linux_x86_64_linker(
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod linker_discovery_tests {
     use super::*;
 
