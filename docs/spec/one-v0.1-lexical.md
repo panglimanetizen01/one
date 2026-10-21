@@ -181,7 +181,7 @@ Unknown words are not automatically mapped to keywords by similarity.
 
 A lexical error MUST identify a deterministic source location and stable lexical error category where applicable.
 
-The lexer/parser boundary MUST preserve enough source information to report the complete source span of a grammar-level multi-word name after parsing.
+The lexer MUST preserve deterministic token-level source locations for each emitted `WORD`. The v0.1 AST stores normalized multi-word names and statement-introducer anchor spans; it does not promise a complete name span after parsing. Consumers MUST NOT infer a full multi-word name range from the AST. A future AST/source-map extension that exposes such ranges requires a separately reviewed compatibility change.
 
 ## 13. Non-goals
 
@@ -202,7 +202,7 @@ At minimum, tests MUST establish that:
 2. `daftar belanja` is not emitted as a lexical `NAME` token.
 3. reserved multi-word phrases remain component tokens.
 4. tabs in indentation are rejected with the stable lexical diagnostic.
-5. source spans are preserved for every component word.
+5. token-level source spans are preserved for every component word; AST consumers do not assume those spans survive name normalization.
 6. repeated lexing of identical input produces an identical token stream.
 7. punctuation outside the permitted literal/comment forms is rejected deterministically.
 8. quoted text remains a single `TEXT` token even when it contains spaces.
