@@ -41,7 +41,7 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Broader language-level orchestration | same source-to-runtime chain for additional capabilities | per-capability end-to-end tests | IN DEVELOPMENT |
 | Linux portability | verification mirror workflow | actual Linux run | VERIFIED for canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` in matrix run `39554661451` |
 | Windows portability | verification mirror workflow | actual Windows run | VERIFIED for canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` in matrix run `39554661451` |
-| Release gate | verification mirror workflow | green exact-SHA matrix | Exact-SHA cross-platform matrix passed for current main; release approval remains a separate project-level decision |
+| Release gate | verification mirror workflow | green exact-SHA matrix | Exact-SHA cross-platform matrix passed for the last code-bearing source revision; release approval remains a separate project-level decision |
 
 ## Last code-bearing canonical revision verified
 
