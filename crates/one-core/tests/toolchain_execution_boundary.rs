@@ -230,6 +230,43 @@ fn successful_execution_without_artifact_is_failure() {
 }
 
 #[test]
+fn failed_toolchain_removes_partial_artifact() {
+    let artifact = std::env::temp_dir().join(format!(
+        "one-gate1-partial-artifact-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_file(&artifact);
+    let resolver = CountingResolver {
+        calls: Cell::new(0),
+        command: ToolchainCommand::new(
+            fixture_executable(),
+            vec![
+                OsString::from("--exit=7"),
+                OsString::from("source.one"),
+                OsString::from("-o"),
+                artifact.as_os_str().to_owned(),
+            ],
+        ),
+    };
+    let invoker = CommandToolchainInvoker;
+
+    let error = execute_toolchain_build(
+        &target(),
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        &artifact,
+    )
+    .expect_err("non-zero toolchain exit must fail the build");
+
+    assert!(matches!(error, ToolchainExecutionError::NonZeroExit { .. }));
+    assert!(!artifact.exists(), "partial output must not remain after failure");
+    assert_eq!(resolver.calls.get(), 1);
+}
+
+#[test]
 fn successful_execution_returns_artifact() {
     let resolver = PathToolchainResolver::new(fixture_executable());
     let invoker = CommandToolchainInvoker;
