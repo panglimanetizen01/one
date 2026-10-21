@@ -22,6 +22,11 @@ The hosted verification branch was temporarily enabled for the existing CI workf
 
 Therefore no claim is made here that the Gate 1 test suite has executed successfully.
 
+## Static review finding and repair
+
+A source review found that `command_preserves_executable_and_arguments_without_shell_parsing` passed the relative output path `artifact with spaces` to the fake toolchain. The fixture writes the requested `-o` output, so this could leave a generated artifact in the test working directory. The test now directs that artifact to a process-specific path under the system temporary directory, asserts the requested output path, confirms the artifact exists, and removes it.
+
+This is a test-isolation repair committed at `763d39b392000603353556bd801b418cb4ea35a7`. It has been read back from GitHub, but it is **not yet executable-verified**: the available hosted run `39454526520` failed with zero steps, and this session's local environment has no `rustc` executable.
 ## Required commands not yet evidenced
 
 - `cargo test -p one-core --test toolchain_execution_boundary --locked`
