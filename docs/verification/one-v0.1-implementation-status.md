@@ -41,7 +41,7 @@
 | Native Windows x86_64 backend | IMPLEMENTED / BUILD EVIDENCE PRE-MERGE | PR #64 produced PE32+ x86-64 at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; Windows/Wine execution unavailable; current `main` still requires exact-SHA verification |
 | Native backend contract | DEFINED + VERIFIED FOR PR #64 SCOPE | `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md` and native backend test suite |
 | Canonical main merge state | MERGED / CURRENT-HEAD VERIFICATION PENDING | PR #64 merged at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; later documentation-evidence commits are on `main` |
-| Post-merge hosted CI | INFRASTRUCTURE FAILURE / INCONCLUSIVE | run `39372356906` and subsequent run `39381125667`; both matrix jobs failed before any executable step (`steps: []`), including after retry |
+| Post-merge hosted CI | INFRASTRUCTURE FAILURE / INCONCLUSIVE | runs `39372356906`, `39381125667`, and latest observed `39440575308` at `main` SHA `34725aa393ca31759eb88c96688063f6358ce54a`; both matrix jobs failed before executable steps (`steps: []`) |
 | Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows verification; it predates later database, HTTP, filesystem-write, and native-backend changes |
 | Native backend PR #64 | MERGED / CURRENT-HEAD VERIFICATION GATE | merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; native evidence remains bounded to the recorded pre-merge SHA until current-head verification exists |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
