@@ -57,7 +57,7 @@ impl ToolAdapter for HttpGetAdapter {
 fn parse_http_target(target: &str) -> Result<(String, String), AdapterError> {
     let rest = target.strip_prefix("http://").ok_or(AdapterError::InvalidArguments)?;
     if rest.contains('#') || rest.contains('\r') || rest.contains('\n') || rest.contains('@') { return Err(AdapterError::InvalidArguments); }
-    let authority_end = rest.find(|ch| ch == '/' || ch == '?').unwrap_or(rest.len());
+    let authority_end = rest.find(['/', '?']).unwrap_or(rest.len());
     let authority = &rest[..authority_end];
     if authority.is_empty() { return Err(AdapterError::InvalidArguments); }
     parse_http_authority(authority).map_err(|_| AdapterError::InvalidArguments)?;
