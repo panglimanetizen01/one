@@ -75,7 +75,7 @@ fn command_preserves_executable_and_arguments_without_shell_parsing() {
 fn missing_executable_is_toolchain_not_found() {
     let missing = std::env::temp_dir().join("one-gate1-definitely-missing-toolchain.exe");
     let _ = fs::remove_file(&missing);
-    let resolver = PathToolchainResolver::new(missing);
+    let resolver = PathToolchainResolver::new(missing.clone());
     let error = resolver
         .resolve(&toolchain(), Path::new("source.one"), Path::new("artifact"))
         .and_then(|command| CommandToolchainInvoker.invoke(&command))
@@ -83,6 +83,14 @@ fn missing_executable_is_toolchain_not_found() {
 
     assert!(matches!(
         error,
+        ToolchainExecutionError::ToolchainNotFound { .. }
+    ));
+
+    let start_error = CommandToolchainInvoker
+        .invoke(&ToolchainCommand::new(missing, Vec::<OsString>::new()))
+        .expect_err("starting a missing executable must fail");
+    assert!(matches!(
+        start_error,
         ToolchainExecutionError::ToolchainNotFound { .. }
     ));
 }
