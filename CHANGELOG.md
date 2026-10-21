@@ -27,6 +27,7 @@
 - Native Windows x86_64 is build-proven on the same PR SHA: PE32+ x86-64 artifact proven. Target execution remains pending because no Windows/Wine executor was available.
 - PR #64 was merged into canonical `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`. The pre-merge native evidence remains bounded to its recorded implementation SHA until exact-SHA post-merge verification is completed.
 - The first post-merge `One CI` run `39371290853` failed on both matrix jobs before any executable step (`steps: []`); this is recorded as an infrastructure/runner failure, not as source-code failure evidence.
+- Latest observed canonical `main` CI run `39440575308` targets SHA `34725aa393ca31759eb88c96688063f6358ce54a` and again failed on both matrix jobs with `steps: []`; source-code verification did not execute.
 - Updated the native backend contract map, implementation-status inventory, evidence matrix, release boundary, user feature-status guide, and verification record to reflect the merged state and preserve exact-SHA evidence boundaries.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
