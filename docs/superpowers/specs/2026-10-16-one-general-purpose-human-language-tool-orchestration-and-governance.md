@@ -1,6 +1,6 @@
 # One — General-Purpose Human-Language Tool Orchestration and Governance
 
-**Status:** Runtime orchestration foundation verified; DNS, filesystem-read, process, and filesystem-write source-level slices have recorded evidence at their respective revisions; the current SQLite database-query and HTTP GET slices are implemented but unverified.
+**Status:** Runtime orchestration foundation verified. DNS, filesystem read/write, process execution, SQLite database query, and HTTP GET source-level slices have executable evidence at their recorded exact-SHA boundaries. Database query and HTTP GET were included in the successful Ubuntu/Windows Server 2025 matrix for source SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`; they remain experimental with deliberately narrow operation boundaries.
 **Date:** 2026-10-16
 **Scope:** General-purpose One language, human-language programming, external-tool orchestration, capability/runtime governance, localization, interoperability, auditability, and platform control
 
@@ -8,7 +8,7 @@
 
 The architecture is executable through a verified runtime foundation and multiple source-level vertical slices. The canonical source contains typed semantic capability requests, execution scopes/effects, deterministic semantic resolution, deterministic governance, typed external adapters, normalized results/evidence, audit records, localized semantic-resolution conformance, and governed source operations.
 
-The database source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. Hosted CI for that revision provides no executable steps, so the database implementation remains unverified. The current branch also contains the HTTP GET source-to-runtime slice; its exact-SHA executable verification is likewise unavailable because current CI runs report zero steps.
+Independent exact-SHA matrix run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out canonical source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and passed on Ubuntu and Windows Server 2025. The matrix ran contract checks, build, Clippy, workspace tests, real-network tests, and platform-appropriate offline verification; the exact-SHA verifier also explicitly runs the database and HTTP GET vertical-slice core/CLI suites. Canonical hosted CI failures with `steps: []` remain inconclusive infrastructure evidence and do not invalidate this independent executable evidence.
 
 ## 1. Purpose
 
@@ -172,7 +172,7 @@ The required lifecycle is:
 12. Return a typed One result or deterministic diagnostic.
 ```
 
-The database and HTTP source slices are designed to follow this lifecycle in source, core tests, and CLI tests, but remain unverified until exact-SHA execution evidence exists.
+The database and HTTP source slices follow this lifecycle in source, core tests, and CLI tests. Their exact-SHA tests passed in the recorded Ubuntu/Windows Server 2025 matrix; their verified boundaries remain experimental and do not imply support for database mutation, HTTPS, arbitrary HTTP methods, or untested target architectures.
 
 ## 17. Audit model
 
@@ -198,7 +198,7 @@ This architecture extends, rather than replaces, the lexer/parser, AST/name-scop
 
 ## 21. v0.1 boundary
 
-The verified v0.1 boundary remains limited to the recorded exact-SHA evidence. The current database and HTTP GET implementations are explicitly outside the Verified/Supported boundary until exact-SHA executable evidence exists.
+The verified v0.1 boundary remains limited to recorded exact-SHA evidence. Database query and HTTP GET are executable-verified at source SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` on Ubuntu and Windows Server 2025, but remain experimental and are not promoted to generally Supported capabilities.
 
 ## 22. Non-goals
 
