@@ -1,6 +1,6 @@
 # One v0.1 — Language Invariants
 
-**Status:** Draft specification for review
+**Status:** Accepted normative foundation constraints for One v0.1 by [ADR-0016](../decisions/ADR-0016-accept-language-invariants.md). Implementation conformance remains a separate, evidence-gated status.
 **Scope:** Language-level invariants that constrain lexical, grammar, AST, semantic, IR, runtime, compiler, localization, and tooling design.
 **Foundation:** `docs/foundation/one-v0.1-foundation.md`
 
@@ -293,9 +293,9 @@ The following edge-case classes are mandatory inputs to later lexical, grammar, 
 
 These are test obligations, not yet complete lexical or grammar rules.
 
-## 5. Acceptance Gate for This Specification
+## 5. Acceptance Criteria and Conformance Boundary
 
-Language Invariants v0.1 is complete only when all of the following are true:
+The following criteria govern acceptance of the foundation contract:
 
 - Every foundation-level language principle has a corresponding invariant or an explicit reason why it is outside this document's scope.
 - No invariant contradicts the locked One v0.1 foundation.
@@ -305,35 +305,18 @@ Language Invariants v0.1 is complete only when all of the following are true:
 - Required edge-case classes are recorded for downstream conformance work.
 - The specification is reviewed against the existing implementation without treating existing implementation behavior as authoritative.
 
-## 6. Known Implementation Alignment Note
+## 6. Implementation Alignment and Conformance
 
-The repository already contains lexer, parser, AST, semantic, IR, interpreter, diagnostics, capability, and CLI implementation artifacts. Those artifacts are evidence about the current implementation, not automatic authority over this specification.
+The repository contains lexer, parser, AST, semantic, IR, interpreter, diagnostics, capability, and CLI implementation artifacts. Those artifacts are evidence about implementation behavior, not automatic authority over this contract. Acceptance of these invariants does not certify that every invariant is already implemented or exhaustively tested.
 
-In particular, existing lexer behavior includes explicit indentation and newline handling. The later Lexical Specification MUST audit that implementation against the normative rules established here before lexical behavior is declared contract-complete.
+The lexical, concrete grammar, and AST contracts have since been authored and reviewed as downstream specifications. Their implementation conformance must be established by targeted tests and exact-SHA evidence, not inferred from this document's status. In particular, source-span and localization obligations remain bounded by their respective contracts and recorded implementation limitations.
 
-## 7. Next Specification Gate
+## 7. Downstream Specification Gates
 
-After approval of this document, the next stage is:
+The downstream gate order is recorded in [`README.md`](./README.md): lexical rules, concrete grammar, AST, name/scope, types and semantics, IR, interpreter, conformance, backend, runtime/capabilities, tooling and release verification.
 
-**Lexical Specification One v0.1**
-
-It MUST define, at minimum:
-
-- source encoding;
-- Unicode policy;
-- identifier grammar;
-- keyword/reserved-word policy;
-- number literals;
-- text literals and escapes;
-- whitespace;
-- newline normalization;
-- indentation/dedentation;
-- comments;
-- token boundaries;
-- lexical errors;
-- lexical ambiguity rules;
-- valid/invalid examples;
-- edge-case tests;
-- acceptance criteria.
-
-Only after that gate should the Concrete Grammar v0.1 be finalized.
+- The lexical specification is normative for the Indonesian v0.1 implementation.
+- The concrete grammar is normative for the Indonesian v0.1 implementation.
+- The AST contract is accepted for the current v0.1 implementation baseline.
+- The detailed localization contract remains a draft until separately approved.
+- A normative document does not imply that its implementation has passed every required conformance test.
