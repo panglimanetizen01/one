@@ -2,6 +2,10 @@
 
 This index records the dependency order and review state of the language specification. **A file existing in the repository does not mean its contract has been approved or implemented.** Each gate must be explicitly reviewed against its dependencies and acceptance tests.
 
+## Decision record
+
+- [ADR-0016 — Accept Language Invariants](../decisions/ADR-0016-accept-language-invariants.md) records acceptance of the foundation constraints and explicitly separates contract status from implementation conformance.
+
 ## Dependency-ordered gates
 
 1. [Language Invariants](./one-v0.1-language-invariants.md) — accepted normative foundation constraints; changes require explicit review.
