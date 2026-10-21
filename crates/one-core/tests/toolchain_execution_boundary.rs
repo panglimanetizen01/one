@@ -206,7 +206,7 @@ fn successful_execution_without_artifact_is_failure() {
         result: Ok(success_invocation()),
     };
 
-    let artifact = std::env::temp_dir().join("one-gate1-missing-artifact");
+    let artifact = std::env::temp_dir().join(format!("one-gate1-missing-artifact-{}", std::process::id()));
     let _ = fs::remove_file(&artifact);
     let error = execute_toolchain_build(
         &target(),
@@ -335,7 +335,7 @@ fn high_level_build_rejects_preexisting_artifact_to_prevent_stale_success() {
 fn high_level_build_uses_real_resolver_invoker_and_artifact_validation() {
     let resolver = PathToolchainResolver::new(fixture_executable());
     let invoker = CommandToolchainInvoker;
-    let artifact = std::env::temp_dir().join("one-gate1-end-to-end-artifact");
+    let artifact = std::env::temp_dir().join(format!("one-gate1-end-to-end-artifact-{}", std::process::id()));
     let _ = fs::remove_file(&artifact);
 
     let result = execute_toolchain_build(
