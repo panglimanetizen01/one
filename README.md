@@ -73,15 +73,17 @@ One Source
  -> Native Artifact
 ```
 
-The executable evidence remains bounded to the pre-merge implementation SHA `797c6fe75bd3fa9081329f73dd59e34278f27ddd` until exact-SHA verification is repeated on a merged `main` revision:
+The latest canonical `main` revision is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out this exact canonical revision and passed on Ubuntu and Windows Server 2025, including:
 
-- Linux AArch64: ELF AArch64 built and executed on the recorded AArch64/Linux verification host.
-- Linux x86_64: ELF x86-64 built successfully using the verified cross-linker selection; target execution remains pending.
-- Windows x86_64: PE32+ x86-64 artifact proven; Windows/Wine execution remains pending.
+- contract artifacts and specification/implementation checks;
+- build, AST contract regression tests, Clippy, and workspace tests;
+- real-network runtime tests;
+- platform-appropriate offline verification;
+- Linux and Windows cross-toolchain provisioning and native-backend test coverage.
 
-Post-merge `One CI` runs `39372356906` and `39381125667` both failed on Ubuntu and Windows before any executable step (`steps: []`), including after retry. These are infrastructure/runner evidence and do not establish source-code test results.
+The canonical repository's hosted CI runs `39372356906` and `39381125667` failed before executable steps (`steps: []`). Those runs are infrastructure evidence, not source-test results; the independent exact-SHA matrix is the positive executable evidence for the current revision.
 
-The native backend implementation therefore must not yet be described as executable-verified for the current `main` revision. See `docs/verification/native-backends-2026-10-19.md` for the exact evidence boundary.
+Target-specific claims remain bounded to their actual evidence: the recorded AArch64 execution is for its stated AArch64/Linux host and earlier implementation SHA; x86_64/Windows artifact and test evidence must not be generalized into an unrecorded execution claim for another target. See `docs/verification/native-backends-2026-10-19.md` and the evidence matrix for details.
 
 ## One Network foundation
 
