@@ -26,7 +26,7 @@
 - Missing executables must be classified separately from generic process-start errors — `missing_executable_is_toolchain_not_found` and `process_start_failure_is_distinct`.
 - Non-zero process completion must retain status/stdout/stderr and remain distinct from start failure — `non_zero_exit_is_distinct_from_start_failure`.
 - Target mismatch must prevent resolver/invoker execution — `target_mismatch_is_rejected_before_execution`.
-- A successful process without the requested artifact must fail, while an existing artifact must succeed — `successful_execution_requires_artifact` and `successful_execution_returns_artifact`.
+- A successful process without a freshly produced artifact must fail, while a pre-existing output path must be rejected before execution — `successful_execution_requires_artifact` and `successful_execution_returns_artifact`.
 
 ---
 
@@ -81,11 +81,12 @@
 
 - [ ] **Step 1: Add failing high-level composition assertions if not already failing**
   - Prove target validation occurs before resolver/invoker calls.
-  - Prove successful invocation still fails on missing artifact.
-  - Prove successful invocation plus existing artifact returns `NativeArtifact`.
+  - Prove successful invocation still fails on missing artifact and that a pre-existing output path is rejected before resolver/invoker calls.
+  - Prove a fresh artifact created by the current invocation returns `NativeArtifact`.
 - [ ] **Step 2: Implement `execute_toolchain_build`**
   - Validate target/toolchain compatibility before resolving or invoking.
-  - Resolve command, invoke it, then require `artifact.is_file()`.
+  - Reject an already-existing output path before resolution so stale output cannot create false success.
+  - Resolve and invoke the command; reject non-zero `ToolchainInvocation` status even for custom invokers, then require the fresh output to be a regular file.
   - Return `NativeArtifact { path, format }` on success.
 - [ ] **Step 3: Run focused tests**
   - Run: `cargo test -p one-core --test toolchain_execution_boundary`
