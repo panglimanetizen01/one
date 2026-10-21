@@ -24,6 +24,16 @@ The audit was performed by reading canonical GitHub files. It did not run Rust t
 
 **Merge gate:** first approve or revise the AST draft with an explicit review decision; then implement and test the accepted contract. Do not claim AST conformance complete before both steps.
 
+**Additional schema mismatches found in the same draft (review together, not as isolated patches):**
+
+- The draft's `Program` and several expression/structural nodes require spans that the current AST types do not carry.
+- The draft proposes explicit action variants (`Display`, `CreateList`, `AddToList`, `RemoveFromList`), while implementation uses a generic `Statement::Action { name, args, span }` and supports additional actions.
+- The draft models structured `Condition`, `ForEach`, `Function`, `Parameter`, `EventTrigger`, and `Reference` nodes; the current implementation uses different enum/field shapes and plain strings in multiple places.
+- The draft describes an implementation-neutral integer representation, while the current AST uses `i64`.
+- The draft says it depends on a name-boundary contract; the implementation gate must verify that the referenced contract exists, is authoritative, and is linked from the index before relying on it.
+
+These differences mean a one-field name patch would not make the AST conformant. The review must either define a staged, implementation-compatible v0.1 AST contract or accept the full source-preserving schema and plan a coordinated migration. Do not silently mix the two models.
+
 ### P1 — Specification status and dependency gates must remain explicit
 
 `docs/spec/README.md` describes lexical specification as the next review gate, followed by concrete grammar and AST. The existence of a document does not itself mean its review gate is approved. Keep each stage's status explicit and do not infer approval from file presence.
