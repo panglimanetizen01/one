@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install cross-compilers (Ubuntu)
         if: runner.os == 'Linux'
         shell: bash
