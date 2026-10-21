@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Findings recorded; no language contract or implementation source changed by this audit.
+**Disposition:** Documentation corrections merged in PR #66. The AST design/implementation gap remains open and requires an explicit AST-contract decision and coordinated implementation.
 
 ## Executive summary
 
@@ -34,19 +34,13 @@ The audit was performed by reading canonical GitHub files. It did not run Rust t
 
 These differences mean a one-field name patch would not make the AST conformant. The review must either define a staged, implementation-compatible v0.1 AST contract or accept the full source-preserving schema and plan a coordinated migration. Do not silently mix the two models.
 
-### P1 — Specification status and dependency gates must remain explicit
+### RESOLVED — Specification index gate wording
 
-`docs/spec/README.md` describes lexical specification as the next review gate, followed by concrete grammar and AST. The existence of a document does not itself mean its review gate is approved. Keep each stage's status explicit and do not infer approval from file presence.
+The pre-audit index described the lexical specification as the next gate and grammar/AST as later gates without distinguishing file presence from approval. PR #66 updated `docs/spec/README.md` to make gate status and review policy explicit. This resolves the documentation ambiguity; it does not certify any gate as approved or implemented.
 
-**Required remediation:** reviewers should record approval status for each gate and update the index only when evidence supports a status transition. Do not relabel draft specifications as approved solely to make the index appear complete.
+### RESOLVED — Localization document authority labels
 
-### P1 — Localization overview and detailed contract have different authority/status presentation
-
-`docs/spec/one-v0.1-localization.md` is a concise architecture overview. `docs/spec/one-v0.1-localization-contract.md` is a more detailed contract and explicitly labels itself a draft for review.
-
-**Risk:** contributors may not know whether the detailed file is binding or still under review.
-
-**Required remediation:** keep the overview explicitly non-normative and make the contract's approval state unambiguous. Before declaring localization fully specified, review name-boundary behavior, diagnostic parameter stability, AST/CSIR equivalence fixtures, locale versioning, and the six-construct mapping. Do not claim a multi-locale implementation is verified merely because the architecture permits it.
+PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architecture overview and links to `docs/spec/one-v0.1-localization-contract.md`, which remains a draft for review. The authority/status ambiguity is resolved at the documentation level. Localization is not considered fully specified or multi-locale conformant until the detailed contract and its lexical, grammar, AST/CSIR equivalence, diagnostic, versioning, and six-construct conformance criteria are reviewed and tested.
 
 ## Evidence reviewed
 
@@ -63,13 +57,12 @@ These differences mean a one-field name patch would not make the AST conformant.
 - `crates/one-core/tests/conformance.rs`
 - `tools/check_contract.py`
 
-## Explicitly not verified
+## Verification boundary
 
-- Whether `python tools/check_contract.py` passes on the current canonical HEAD.
-- Whether `cargo test --workspace --all-targets` and Clippy pass on current canonical HEAD.
-- Whether all AST-contract requirements are tested.
-- Whether hosted CI is healthy.
-- Whether Windows or Linux native release artifacts pass end-to-end verification.
+- PR #66 changed documentation only; it did not change language contracts or implementation code.
+- Rust tests, Clippy, the contract checker, and platform release verification were not run for PR #66.
+- The CI runs reported failure on Ubuntu and Windows, while job-log artifacts were unavailable; the repository's existing issue #2 documents this hosted-runner evidence limitation and its independent verification route.
+- The AST draft/implementation gap remains unresolved; no AST conformance or release-readiness claim is made.
 
 ## Safe next implementation sequence
 
