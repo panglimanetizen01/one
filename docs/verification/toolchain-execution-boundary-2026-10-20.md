@@ -18,6 +18,10 @@
 - A pre-existing output path is rejected before resolver/invoker execution. This prevents stale-artifact false success and preserves the existing file, but means callers must select a fresh output path or deliberately relocate/remove an old artifact before calling the API. When invocation fails or exits non-zero, any regular partial output file is best-effort removed.
 - Fake-toolchain fixture and regression tests cover argument preservation, missing executable, process-start failure, non-zero status, target mismatch, missing artifact, successful artifact creation, custom-invoker non-zero status, stale-artifact rejection, partial-artifact cleanup, and high-level composition.
 
+## RED evidence status
+
+The focused regression tests are present, but the required pre-fix RED run has not been executed. The current environment cannot run Rust, and the hosted runner has not started any job steps. Therefore no RED or GREEN test result is claimed.
+
 ## Repository policy note
 
 The current `.gitignore` explicitly ignores `Cargo.lock`. Gate 1 commands therefore do not use `--locked`; this avoids claiming lockfile-based reproducibility that the repository does not currently provide. The lockfile policy is not changed by this Gate and remains a separate workspace-level decision.
@@ -28,9 +32,9 @@ The source, tests, workflow, and documentation have been read back from GitHub a
 
 The available container has no `rustc`, `cargo`, `rustfmt`, or `clippy-driver`; network DNS resolution to GitHub and Rust distribution hosts also fails. Therefore this environment cannot execute the Rust verification commands.
 
-The clean Gate 1 branch run [`39543146501`](https://github.com/panglimanetizen01/one/actions/runs/39543146501) targeted revision `de7f0ac024425607ebb432974eb59b4bf4eaed09` and included the Gate 1 source and regression tests then present. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job logs. A retry (attempt 2) was queued, but it likewise did not reach an executable step before this record was updated. This is infrastructure/verification-insufficiency evidence, not a source-code test result.
+The clean Gate 1 branch run [`39543402886`](https://github.com/panglimanetizen01/one/actions/runs/39543402886) targeted source/test revision `79ee6b9325f21e46e46447e3696c8f44316ed19b`. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job logs. An earlier run at the same code path was retried and again failed before executable steps. This is infrastructure/verification-insufficiency evidence, not a source-code test result.
 
-The branch now has a focused Gate 1 CI step and push-triggered CI for branches, but repeated workflow attempts have failed before checkout/toolchain steps. No Rust command has been shown to pass or fail.
+The branch has a focused Gate 1 CI step and push-triggered CI for branches, but repeated workflow attempts have failed before checkout/toolchain steps. No Rust command has been shown to pass or fail.
 
 ## Required commands not yet evidenced
 
