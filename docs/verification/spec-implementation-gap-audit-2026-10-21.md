@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`. The complete independent verification matrix passed on both Ubuntu and Windows for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`; the merged canonical commit `90db05209bdec3eb40ca57524b3694e98cc75c79` is being reverified separately.
+**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`. The complete independent verification matrix passed on both Ubuntu and Windows for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`; the merged canonical commit `90db05209bdec3eb40ca57524b3694e98cc75c79` was separately verified successfully in independent matrix run `39553591078`.
 
 ## Executive summary
 
@@ -60,7 +60,7 @@ PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architectu
 - PR #66 changed documentation only.
 - Subsequent commits revised the AST contract, recorded ADR-0015, and added parser regression tests.
 - Independent exact-SHA verification passed for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed` on Ubuntu and Windows, including contract checker, build, AST tests, Clippy, workspace tests, real-network tests, and offline verification.
-- The merged canonical SHA `90db05209bdec3eb40ca57524b3694e98cc75c79` is being verified separately; do not reuse the branch SHA as evidence for a different SHA.
+- The merged canonical SHA `e0c09d5dd99f4b8eb9c9af961739cf9ba0c8e2e8` was independently verified successfully on Ubuntu and Windows in matrix run `39554088367`; evidence is tied to this exact SHA.
 - Contract alignment and the documented cross-platform verification issues are resolved on the tested PR head. Release readiness remains a separate project-level decision.
 
 ## Future AST expansion
