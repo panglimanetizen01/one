@@ -2,13 +2,13 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`. The complete independent verification matrix passed on both Ubuntu and Windows for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`; the merged canonical commit `90db05209bdec3eb40ca57524b3694e98cc75c79` was separately verified successfully in independent matrix run `39553591078`.
+**Disposition:** Documentation corrections merged in PR #66. The AST contract was narrowed to the accepted v0.1 implementation schema, ADR-0015 records that decision, and parser regression tests cover the agreed boundaries. The latest canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed the independent exact-SHA Ubuntu/Windows matrix in run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451).
 
 ## Executive summary
 
 The concrete grammar and lexical specification are normative. The AST contract now explicitly describes the current v0.1 AST schema and its limitations rather than claiming an unimplemented source-preserving tree. This resolves the specification/implementation mismatch at the v0.1 contract level. Full statement/expression ranges and per-word name spans remain documented limitations, not supported capabilities.
 
-The audit began as a source review. Subsequent independent exact-SHA verification for PR #69 passed the contract checker, build, AST regression tests, Clippy, workspace tests, real-network tests, and offline verification on Ubuntu and Windows. The merged main SHA is undergoing a separate exact-SHA confirmation; this audit does not by itself claim release readiness.
+The audit began as a source review. The independent exact-SHA matrix for canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed contract-artifact checks, build, AST regression tests, Clippy, workspace tests, real-network tests, and platform-appropriate offline verification on Ubuntu and Windows. This is current-revision verification evidence, not by itself a blanket release-readiness or universal target-execution claim.
 
 ## Confirmed findings
 
@@ -59,9 +59,9 @@ PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architectu
 
 - PR #66 changed documentation only.
 - Subsequent commits revised the AST contract, recorded ADR-0015, and added parser regression tests.
-- Independent exact-SHA verification passed for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed` on Ubuntu and Windows, including contract checker, build, AST tests, Clippy, workspace tests, real-network tests, and offline verification.
-- The merged canonical SHA `e0c09d5dd99f4b8eb9c9af961739cf9ba0c8e2e8` was independently verified successfully on Ubuntu and Windows in matrix run `39554088367`; evidence is tied to this exact SHA.
-- Contract alignment and the documented cross-platform verification issues are resolved on the tested PR head. Release readiness remains a separate project-level decision.
+- The latest canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` was independently verified successfully on Ubuntu and Windows in matrix run `39554661451`; evidence is tied to this exact SHA.
+- Matrix coverage included contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification.
+- Canonical hosted CI failures with `steps: []` remain infrastructure failures, not source-test results. Release readiness and target-specific execution claims remain separate decisions.
 
 ## Future AST expansion
 

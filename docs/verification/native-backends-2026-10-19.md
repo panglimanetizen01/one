@@ -13,17 +13,13 @@ A later full `cargo test` in the Debian/proot environment failed in the Android 
 
 ## Post-merge canonical state
 
-PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20.
+PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20. Subsequent source, test, and documentation changes are included in canonical `main` revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`.
 
-PR #65 subsequently repaired the canonical documentation state and was merged into `main` at `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`.
+Independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out this exact canonical revision and passed on Ubuntu and Windows Server 2025. The jobs passed contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Linux cross-compilers and Windows/Android cross-toolchains were provisioned successfully.
 
-The merge itself establishes source presence on canonical `main`; it does **not** promote the branch-bound execution/build evidence above to current-head verification. A post-merge exact-SHA verification is still required before any native backend is documented as verified for the merged `main` revision.
+Canonical hosted `One CI` runs `39372356906` and `39381125667` failed before executable steps (`steps: []`). This is infrastructure evidence rather than source-test evidence; it does not negate the successful independent exact-SHA matrix.
 
-At the implementation merge SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`, the post-merge `One CI` run was `39372356906` (run attempt 2 after retry). GitHub reported both matrix jobs as `failure`, but both jobs had `steps: []`. This is **CI infrastructure/runner evidence**, not source-code failure evidence: the jobs never reached checkout, toolchain, build, Clippy, or test steps. The retry reproduced the same no-step failure on both Ubuntu and Windows, with no job logs or artifacts produced.
-
-After the documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, `One CI` run `39381125667` independently reproduced the same failure on both matrix jobs, again with `steps: []`. This confirms the runner/infrastructure condition persisted independently of the native-backend implementation.
-
-Until a post-merge executable verification is recorded, retain these boundaries:
-- Linux AArch64: verified only for the recorded AArch64/Linux verification host and implementation SHA above.
-- Linux x86_64: build-proven only for the recorded verification environment and implementation SHA above.
-- Windows x86_64: build-proven only for the recorded verification environment and implementation SHA above.
+Target execution evidence remains target-specific:
+- Linux AArch64: verified for the recorded AArch64/Linux host and earlier implementation SHA.
+- Linux x86_64: current canonical build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
+- Windows x86_64: current canonical Windows build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.

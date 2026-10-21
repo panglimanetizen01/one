@@ -1,6 +1,6 @@
 # One v0.1 Release Contract
 
-Status: **VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION AND MERGED NATIVE BACKEND IMPLEMENTATION AWAITING POST-MERGE VERIFICATION**.
+Status: **EXACT-SHA CROSS-PLATFORM VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION; RELEASE APPROVAL REMAINS A SEPARATE GATE**.
 
 ## Scope
 
@@ -8,11 +8,13 @@ One v0.1 is the Indonesian-first reference implementation. Its purpose is to est
 
 ## Current canonical revision and exact-SHA evidence boundary
 
-PR #64 was merged into canonical `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`.
+Canonical `main` revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) on Ubuntu and Windows Server 2025.
 
-The native backend implementation/evidence revision remains `797c6fe75bd3fa9081329f73dd59e34278f27ddd` on `feature/native-backends-linux-windows`. That evidence is valid only for its recorded revision and environments. It must not be promoted to current-`main` executable verification merely because the PR was merged.
+The matrix passed contract-artifact checks, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. It also provisioned the Windows/Android cross-toolchains and Linux cross-compilers required by the native CLI integration coverage.
 
-The first post-merge hosted `One CI` run is `39371290853`. Both matrix jobs failed with zero executable steps (`steps: []`), so this is an infrastructure/runner failure and does not establish a Rust source failure or a successful/failed test result.
+Canonical hosted `One CI` runs `39372356906` and `39381125667` failed before executable steps (`steps: []`). These are infrastructure/runner failures and do not establish a source failure; the independent exact-SHA matrix is the positive current-revision evidence.
+
+The matrix verifies the current canonical revision on its Ubuntu and Windows hosts. It does not automatically imply that every cross-compiled target artifact was executed on its own target architecture; target-specific execution claims remain bounded to their recorded evidence.
 
 ## Verified baseline
 
@@ -67,7 +69,7 @@ Target: `x86_64-pc-windows-gnu`
 
 Status on implementation SHA: **BUILD TERBUKTI — execution pending**. A PE32+ x86-64 artifact is proven. No Windows/Wine executor was available for the recorded environment.
 
-These native backend statuses remain bounded to the recorded implementation SHA until exact-SHA post-merge verification of `main` succeeds.
+The current canonical revision has passed the exact-SHA build/test matrix. Individual native target execution claims remain bounded to the exact artifact and target executor recorded in the native-backend verification evidence.
 
 ## Explicit v0.1 limits
 
