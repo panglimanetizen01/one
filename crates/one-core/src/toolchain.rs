@@ -233,6 +233,12 @@ fn classify_start_error(executable: &Path, error: io::Error) -> ToolchainExecuti
     }
 }
 
+fn remove_partial_artifact(path: &Path) {
+    if path.is_file() {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
 pub fn execute_toolchain_build<R, I>(
     target: &TargetSpec,
     backend: &impl TargetBackend,
@@ -262,13 +268,21 @@ where
     }
 
     let command = resolver.resolve(toolchain, source, artifact)?;
-    let invocation = invoker.invoke(&command)?;
+    let invocation = match invoker.invoke(&command) {
+        Ok(invocation) => invocation,
+        Err(error) => {
+            remove_partial_artifact(artifact);
+            return Err(error);
+        }
+    };
     if !invocation.success() {
-        return Err(ToolchainExecutionError::NonZeroExit {
+        let error = ToolchainExecutionError::NonZeroExit {
             status: invocation.status().code(),
             stdout: invocation.stdout().to_owned(),
             stderr: invocation.stderr().to_owned(),
-        });
+        };
+        remove_partial_artifact(artifact);
+        return Err(error);
     }
 
     if !artifact.is_file() {
