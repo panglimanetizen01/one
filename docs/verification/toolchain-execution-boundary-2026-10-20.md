@@ -15,8 +15,8 @@
 - `PathToolchainResolver` resolves an explicit executable path.
 - `CommandToolchainInvoker` uses `std::process::Command` directly; no shell parsing or interpolated shell command is used.
 - `execute_toolchain_build` validates target/toolchain compatibility before resolution, checks invocation status even for custom invokers, and requires a fresh regular artifact.
-- A pre-existing output path is rejected before resolver/invoker execution. This prevents stale-artifact false success and preserves the existing file, but means callers must select a fresh output path or deliberately relocate/remove an old artifact before calling the API.
-- Fake-toolchain fixture and regression tests cover argument preservation, missing executable, process-start failure, non-zero status, target mismatch, missing artifact, successful artifact creation, custom-invoker non-zero status, stale-artifact rejection, and high-level composition.
+- A pre-existing output path is rejected before resolver/invoker execution. This prevents stale-artifact false success and preserves the existing file, but means callers must select a fresh output path or deliberately relocate/remove an old artifact before calling the API. When invocation fails or exits non-zero, any regular partial output file is best-effort removed.
+- Fake-toolchain fixture and regression tests cover argument preservation, missing executable, process-start failure, non-zero status, target mismatch, missing artifact, successful artifact creation, custom-invoker non-zero status, stale-artifact rejection, partial-artifact cleanup, and high-level composition.
 
 ## Repository policy note
 
