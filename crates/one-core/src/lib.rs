@@ -31,6 +31,7 @@ pub mod runtime;
 pub mod semantic;
 pub mod stdlib;
 pub mod target;
+pub mod toolchain;
 pub mod token;
 pub mod types;
 
@@ -90,6 +91,10 @@ pub use target::{
     RuntimeClass, TargetArchitecture, TargetBackend, TargetDefinition, TargetEnvironment,
     TargetSpec, TargetValidationError, ToolchainCapability, ToolchainOperation, ToolchainSpec,
     ToolchainTarget, ToolchainValidationError, target_definition,
+};
+pub use toolchain::{
+    CommandToolchainInvoker, PathToolchainResolver, ToolchainCommand, ToolchainExecutionError,
+    ToolchainInvocation, ToolchainInvoker, ToolchainResolver, execute_toolchain_build,
 };
 pub use token::{Span, Token, TokenKind};
 pub use types::Type;
