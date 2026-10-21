@@ -2,13 +2,13 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`; execution of those tests remains pending CI evidence.
+**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`. The complete independent verification matrix passed on both Ubuntu and Windows for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`; the merged canonical commit `90db05209bdec3eb40ca57524b3694e98cc75c79` is being reverified separately.
 
 ## Executive summary
 
 The concrete grammar and lexical specification are normative. The AST contract now explicitly describes the current v0.1 AST schema and its limitations rather than claiming an unimplemented source-preserving tree. This resolves the specification/implementation mismatch at the v0.1 contract level. Full statement/expression ranges and per-word name spans remain documented limitations, not supported capabilities.
 
-The audit was performed by reading canonical GitHub files. It did not run Rust tests, Clippy, the contract checker, or platform verification. No runtime or release status is upgraded by this document.
+The audit began as a source review. Subsequent independent exact-SHA verification for PR #69 passed the contract checker, build, AST regression tests, Clippy, workspace tests, real-network tests, and offline verification on Ubuntu and Windows. The merged main SHA is undergoing a separate exact-SHA confirmation; this audit does not by itself claim release readiness.
 
 ## Confirmed findings
 
@@ -20,7 +20,7 @@ Before the correction, `docs/spec/one-v0.1-ast.md` proposed structured `Name` no
 
 **Residual limitation:** source tooling and diagnostics cannot rely on component-level name spans or full expression ranges in v0.1. This is now an explicit limitation rather than an implied capability. Future expansion requires a separately reviewed compatibility change.
 
-**Verification remaining:** parser tests now cover multi-word declaration/assignment names, grammar-selected list targets, unsupported action rejection, span anchors, and deterministic repeated parsing. These tests have been added but have not yet been observed passing in a CI run. Do not mark the implementation Verified until CI or independent exact-SHA verification passes.
+**Verification:** the new parser tests passed on both Ubuntu and Windows in the independent matrix for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`. The full workspace suite, Clippy, contract checker, network runtime tests, and offline verification also passed on both operating systems for that exact SHA.
 
 **Schema differences intentionally scoped out of v0.1 by the accepted decision:**
 
@@ -59,13 +59,12 @@ PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architectu
 
 - PR #66 changed documentation only.
 - Subsequent commits revised the AST contract, recorded ADR-0015, and added parser regression tests.
-- The new parser tests, full workspace tests, Clippy, contract checker, and platform release verification have not yet been observed passing for the latest commit.
-- GitHub Actions runs have previously failed on both Ubuntu and Windows with unavailable job-log artifacts; issue #2 documents the hosted-runner evidence limitation and independent verification route.
-- Contract alignment is resolved; implementation verification and release readiness are not claimed.
+- Independent exact-SHA verification passed for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed` on Ubuntu and Windows, including contract checker, build, AST tests, Clippy, workspace tests, real-network tests, and offline verification.
+- The merged canonical SHA `90db05209bdec3eb40ca57524b3694e98cc75c79` is being verified separately; do not reuse the branch SHA as evidence for a different SHA.
+- Contract alignment and the documented cross-platform verification issues are resolved on the tested PR head. Release readiness remains a separate project-level decision.
 
-## Safe next implementation sequence
+## Future AST expansion
 
-1. Run the newly added parser AST tests and the complete workspace suite.
-2. Run `python tools/check_contract.py` and Clippy.
-3. If hosted CI remains unavailable, use the documented independent exact-SHA verification path; do not reuse older SHA evidence.
-4. Record the exact tested SHA and environment before calling the change Verified.
+1. If v0.2 requires component-level name spans or full statement/expression ranges, write a separate compatibility proposal first.
+2. Add fail-first tests and coordinate parser, semantic analysis, IR lowering, diagnostics, and tooling changes.
+3. Verify the exact commit on every supported platform before declaring the expanded AST conformant.
