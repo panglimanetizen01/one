@@ -2,29 +2,27 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Documentation corrections merged in PR #66. The AST design/implementation gap remains open and requires an explicit AST-contract decision and coordinated implementation.
+**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`. The complete independent verification matrix passed on both Ubuntu and Windows for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`; the merged canonical commit `90db05209bdec3eb40ca57524b3694e98cc75c79` is being reverified separately.
 
 ## Executive summary
 
-The repository contains a concrete grammar and draft lexical and AST contracts. The current Rust AST/parser implementation does not implement the proposed source-preserving multi-word Name representation in the AST draft. This is a confirmed design/implementation gap against the proposed architecture, but it is not yet a violation of an approved AST contract: the AST document explicitly remains draft normative for review. Resolve the AST contract's approval and boundary details before treating this as a release-blocking conformance failure.
+The concrete grammar and lexical specification are normative. The AST contract now explicitly describes the current v0.1 AST schema and its limitations rather than claiming an unimplemented source-preserving tree. This resolves the specification/implementation mismatch at the v0.1 contract level. Full statement/expression ranges and per-word name spans remain documented limitations, not supported capabilities.
 
-The audit was performed by reading canonical GitHub files. It did not run Rust tests, Clippy, the contract checker, or platform verification. No runtime or release status is upgraded by this document.
+The audit began as a source review. Subsequent independent exact-SHA verification for PR #69 passed the contract checker, build, AST regression tests, Clippy, workspace tests, real-network tests, and offline verification on Ubuntu and Windows. The merged main SHA is undergoing a separate exact-SHA confirmation; this audit does not by itself claim release readiness.
 
 ## Confirmed findings
 
-### P0 candidate — AST name representation does not yet meet the proposed AST design
+### RESOLVED — AST contract scope and implementation shape
 
-**Draft requirement:** `docs/spec/one-v0.1-ast.md` proposes a logical `Name` node containing component words and source spans. It states that a multi-word name must preserve its complete span and the span of each component. The same document labels itself **Draft normative contract for review**, so it must not be described as already approved.
+Before the correction, `docs/spec/one-v0.1-ast.md` proposed structured `Name` nodes, component spans, full node ranges, and action-specific variants while remaining draft normative for review. That proposal was broader than the existing public AST.
 
-**Observed implementation:** `crates/one-core/src/ast.rs` stores names as `String` in declarations, assignments, function names/parameters, loop bindings, and references. `crates/one-core/src/parser.rs` joins declaration words using `words.join(" ")`. The resulting AST does not retain per-word name spans or a structured `Name` value.
+**Decision:** ADR-0015 accepts the existing v0.1 public AST schema: normalized string names, the current statement/expression variants, and statement-introducer span anchors. The revised contract explicitly records that full statement/expression spans and per-word name spans are not available in v0.1.
 
-**Risk:** downstream diagnostics, refactoring/tooling, exact grammar-boundary validation, and future localization cannot rely on the source-preserving representation promised by the AST contract. Changing the draft to fit implementation may discard an important source-preservation goal. Conversely, the implementation must not be called nonconforming to an approved contract until the draft is reviewed and accepted. Decide the contract first, then implement against that explicit decision.
+**Residual limitation:** source tooling and diagnostics cannot rely on component-level name spans or full expression ranges in v0.1. This is now an explicit limitation rather than an implied capability. Future expansion requires a separately reviewed compatibility change.
 
-**Required remediation:** implement the specified logical name representation and preserve word/span data through parser construction and semantic analysis. Update all affected consumers deliberately. Add tests for single-word and multi-word names, exact spans, grammar terminators, and deterministic diagnostics. Run the complete offline verification workflow before proposing merge.
+**Verification:** the new parser tests passed on both Ubuntu and Windows in the independent matrix for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`. The full workspace suite, Clippy, contract checker, network runtime tests, and offline verification also passed on both operating systems for that exact SHA.
 
-**Merge gate:** first approve or revise the AST draft with an explicit review decision; then implement and test the accepted contract. Do not claim AST conformance complete before both steps.
-
-**Additional schema mismatches found in the same draft (review together, not as isolated patches):**
+**Schema differences intentionally scoped out of v0.1 by the accepted decision:**
 
 - The draft's `Program` and several expression/structural nodes require spans that the current AST types do not carry.
 - The draft proposes explicit action variants (`Display`, `CreateList`, `AddToList`, `RemoveFromList`), while implementation uses a generic `Statement::Action { name, args, span }` and supports additional actions.
@@ -32,7 +30,7 @@ The audit was performed by reading canonical GitHub files. It did not run Rust t
 - The draft describes an implementation-neutral integer representation, while the current AST uses `i64`.
 - The draft says it depends on a name-boundary contract; the implementation gate must verify that the referenced contract exists, is authoritative, and is linked from the index before relying on it.
 
-These differences mean a one-field name patch would not make the AST conformant. The review must either define a staged, implementation-compatible v0.1 AST contract or accept the full source-preserving schema and plan a coordinated migration. Do not silently mix the two models.
+These differences are no longer presented as a conformance failure: the accepted v0.1 contract now documents the implementation-aligned schema and limitations. A future richer AST requires a coordinated migration and tests.
 
 ### RESOLVED — Specification index gate wording
 
@@ -59,16 +57,14 @@ PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architectu
 
 ## Verification boundary
 
-- PR #66 changed documentation only; it did not change language contracts or implementation code.
-- Rust tests, Clippy, the contract checker, and platform release verification were not run for PR #66.
-- The CI runs reported failure on Ubuntu and Windows, while job-log artifacts were unavailable; the repository's existing issue #2 documents this hosted-runner evidence limitation and its independent verification route.
-- The AST draft/implementation gap remains unresolved; no AST conformance or release-readiness claim is made.
+- PR #66 changed documentation only.
+- Subsequent commits revised the AST contract, recorded ADR-0015, and added parser regression tests.
+- Independent exact-SHA verification passed for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed` on Ubuntu and Windows, including contract checker, build, AST tests, Clippy, workspace tests, real-network tests, and offline verification.
+- The merged canonical SHA `90db05209bdec3eb40ca57524b3694e98cc75c79` is being verified separately; do not reuse the branch SHA as evidence for a different SHA.
+- Contract alignment and the documented cross-platform verification issues are resolved on the tested PR head. Release readiness remains a separate project-level decision.
 
-## Safe next implementation sequence
+## Future AST expansion
 
-1. Rebase or branch from the latest canonical `main` before implementation work.
-2. Add fail-first tests for structured multi-word name spans and parser boundary cases.
-3. Implement the AST/name representation without weakening the grammar or contract.
-4. Update parser, semantic analysis, IR lowering, diagnostics, and fixtures affected by the new representation.
-5. Run the contract checker, complete offline verification, Clippy, and all tests with an executable Cargo target directory.
-6. Inspect the resulting GitHub diff and CI evidence before merging.
+1. If v0.2 requires component-level name spans or full statement/expression ranges, write a separate compatibility proposal first.
+2. Add fail-first tests and coordinate parser, semantic analysis, IR lowering, diagnostics, and tooling changes.
+3. Verify the exact commit on every supported platform before declaring the expanded AST conformant.
