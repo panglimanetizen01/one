@@ -22,7 +22,7 @@
 
 ## Review Focus
 
-- Arguments containing spaces/quotes/metacharacters must remain discrete arguments — `command_arguments_are_passed_without_shell_parsing`.
+- Arguments containing spaces/quotes/metacharacters must remain discrete arguments — `command_preserves_executable_and_arguments_without_shell_parsing`.
 - Missing executables must be classified separately from generic process-start errors — `missing_executable_is_toolchain_not_found` and `process_start_failure_is_distinct`.
 - Non-zero process completion must retain status/stdout/stderr and remain distinct from start failure — `non_zero_exit_is_distinct_from_start_failure`.
 - Target mismatch must prevent resolver/invoker execution — `target_mismatch_is_rejected_before_execution`.
@@ -40,7 +40,7 @@
 - Consumes: existing `TargetSpec`, `ToolchainSpec`, `ReferenceTargetBackend`, and test-only filesystem/process primitives.
 - Produces: failing tests defining the Gate 1 public boundary.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - Add tests for command argument preservation, missing executable, process-start failure, non-zero exit, target mismatch before execution, missing artifact, successful artifact, and high-level resolver+invoker+artifact flow.
 - [ ] **Step 2: Run the Gate 1 test target and verify RED**
   - Run: `cargo test -p one-core --test toolchain_execution_boundary`
@@ -55,17 +55,17 @@
 **Interfaces:**
 - Produces `ToolchainCommand`, `ToolchainInvocation`, `ToolchainExecutionError`, `ToolchainResolver`, `PathToolchainResolver`, `ToolchainInvoker`, `CommandToolchainInvoker`.
 
-- [ ] **Step 1: Implement `ToolchainCommand` and deterministic command construction**
+- [x] **Step 1: Implement `ToolchainCommand` and deterministic command construction**
   - Preserve executable and ordered `OsString` arguments.
   - Construct `--target=<triple>`, source, `-o`, output as discrete arguments.
-- [ ] **Step 2: Implement `ToolchainExecutionError`**
+- [x] **Step 2: Implement `ToolchainExecutionError`**
   - Include `ToolchainNotFound`, `ProcessStart`, `NonZeroExit`, `ArtifactMissing`, and `Validation` variants with diagnostic data needed by tests.
-- [ ] **Step 3: Implement `ToolchainResolver` and `PathToolchainResolver`**
+- [x] **Step 3: Implement `ToolchainResolver` and `PathToolchainResolver`**
   - Resolve a configured executable path for the requested `ToolchainSpec` without shell/path searching side effects.
-- [ ] **Step 4: Implement `ToolchainInvoker` and `CommandToolchainInvoker`**
+- [x] **Step 4: Implement `ToolchainInvoker` and `CommandToolchainInvoker`**
   - Use `std::process::Command::new(...).args(...)` and `output()`; never invoke a shell.
   - Map `NotFound` separately from other process-start errors and retain status/stdout/stderr for completed processes.
-- [ ] **Step 5: Export the public boundary from `one_core`**
+- [x] **Step 5: Export the public boundary from `one_core`**
   - Add `pub mod toolchain` and the selected public re-exports in `lib.rs`.
 - [ ] **Step 6: Run Gate 1 tests**
   - Run: `cargo test -p one-core --test toolchain_execution_boundary`
@@ -80,12 +80,12 @@
 **Interfaces:**
 - Produces `execute_toolchain_build` and fake/test resolver+invoker fixtures proving the high-level boundary composition.
 
-- [ ] **Step 1: Add failing high-level composition assertions if not already failing**
+- [x] **Step 1: Add high-level composition regression assertions**
   - Prove target validation occurs before resolver/invoker calls.
   - Prove successful invocation still fails on missing artifact and that a pre-existing output path is rejected before resolver/invoker calls.
   - Prove a fresh artifact created by the current invocation returns `NativeArtifact`.
   - Prove a non-zero toolchain that writes a partial output does not leave that file behind.
-- [ ] **Step 2: Implement `execute_toolchain_build`**
+- [x] **Step 2: Implement `execute_toolchain_build`**
   - Validate target/toolchain compatibility before resolving or invoking.
   - Reject an already-existing output path before resolution so stale output cannot create false success.
   - Resolve and invoke the command; reject non-zero `ToolchainInvocation` status even for custom invokers, then require the fresh output to be a regular file.
@@ -119,7 +119,7 @@
 - Modify: `docs/ARCHITECTURE.md`
 - Modify: `docs/verification/toolchain-execution-boundary-2026-10-20.md`
 
-- [ ] **Step 1: Document the execution boundary**
+- [x] **Step 1: Document the execution boundary**
   - Add the resolver → command → invoker → artifact-validation boundary, shell-free execution rule, and error classes to architecture documentation without expanding platform claims.
 - [ ] **Step 2: Record fresh verification evidence**
   - Record exact revision, commands, test counts/results, clippy, contract check, diff check, and CI classification.
