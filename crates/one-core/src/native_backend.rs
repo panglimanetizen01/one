@@ -509,6 +509,7 @@ fn resolve_linux_x86_64_linker(
 mod linker_discovery_tests {
     use super::*;
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_override_diprioritaskan() {
         let root = std::env::temp_dir().join(format!(
@@ -544,6 +545,7 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_override_tidak_kompatibel_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -574,6 +576,7 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_host_salah_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -605,6 +608,7 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_ditemukan_dari_path() {
         let root = std::env::temp_dir().join(format!(
