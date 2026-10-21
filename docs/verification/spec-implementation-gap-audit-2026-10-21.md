@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Documentation corrections merged in PR #66. The AST contract has now been explicitly narrowed to the accepted v0.1 implementation schema in commit `21793da8ee05e50977b7d38b7262daaae18b065d`, and ADR-0015 records that decision in commit `901a5e5345d09c877e8c063673b0acf8e141f34d`. Parser regression tests were added in commit `2984d0eca5fb7de3a1a68e1f270a66f14906af00`. The complete independent verification matrix passed on both Ubuntu and Windows for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed`; the merged canonical commit `90db05209bdec3eb40ca57524b3694e98cc75c79` was separately verified successfully in independent matrix run `39553591078`.
+**Disposition:** Documentation corrections merged in PR #66. The AST contract was narrowed to the accepted v0.1 implementation schema, ADR-0015 records that decision, and parser regression tests cover the agreed boundaries. The latest canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed the independent exact-SHA Ubuntu/Windows matrix in run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451).
 
 ## Executive summary
 
