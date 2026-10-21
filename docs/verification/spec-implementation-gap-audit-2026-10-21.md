@@ -2,7 +2,7 @@
 
 **Audit date:** 2026-10-21  
 **Scope:** Canonical GitHub `main` source files inspected for the One v0.1 language core.  
-**Disposition:** Documentation corrections merged in PR #66. The AST contract was narrowed to the accepted v0.1 implementation schema, ADR-0015 records that decision, and parser regression tests cover the agreed boundaries. The latest canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed the independent exact-SHA Ubuntu/Windows matrix in run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451).
+**Disposition:** Documentation corrections merged in PR #66. The AST contract was narrowed to the accepted v0.1 implementation schema, ADR-0015 records that decision, and parser regression tests cover the agreed boundaries. The last code-bearing canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed the independent exact-SHA Ubuntu/Windows matrix in run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451). Later evidence-documentation changes do not alter source or tests.
 
 ## Executive summary
 
@@ -59,7 +59,7 @@ PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architectu
 
 - PR #66 changed documentation only.
 - Subsequent commits revised the AST contract, recorded ADR-0015, and added parser regression tests.
-- The latest canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` was independently verified successfully on Ubuntu and Windows in matrix run `39554661451`; evidence is tied to this exact SHA.
+- The last code-bearing canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` was independently verified successfully on Ubuntu and Windows in matrix run `39554661451`; evidence is tied to this exact source SHA.
 - Matrix coverage included contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification.
 - Canonical hosted CI failures with `steps: []` remain infrastructure failures, not source-test results. Release readiness and target-specific execution claims remain separate decisions.
 

@@ -73,7 +73,7 @@ One Source
  -> Native Artifact
 ```
 
-The latest canonical `main` revision is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out this exact canonical revision and passed on Ubuntu and Windows Server 2025, including:
+The last code-bearing canonical `main` revision independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out that source revision and passed on Ubuntu and Windows Server 2025. The subsequent evidence-documentation sync changes documentation only, not source or tests. Coverage included:
 
 - contract artifacts and specification/implementation checks;
 - build, AST contract regression tests, Clippy, and workspace tests;

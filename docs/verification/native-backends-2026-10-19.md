@@ -13,7 +13,7 @@ A later full `cargo test` in the Debian/proot environment failed in the Android 
 
 ## Post-merge canonical state
 
-PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20. Subsequent source, test, and documentation changes are included in canonical `main` revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`.
+PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20. The last code-bearing canonical `main` revision independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Subsequent evidence-sync commits change documentation only, not source or tests.
 
 Independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out this exact canonical revision and passed on Ubuntu and Windows Server 2025. The jobs passed contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Linux cross-compilers and Windows/Android cross-toolchains were provisioned successfully.
 
@@ -21,5 +21,5 @@ Canonical hosted `One CI` runs `39372356906` and `39381125667` failed before exe
 
 Target execution evidence remains target-specific:
 - Linux AArch64: verified for the recorded AArch64/Linux host and earlier implementation SHA.
-- Linux x86_64: current canonical build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
-- Windows x86_64: current canonical Windows build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
+- Linux x86_64: the exact-SHA source build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
+- Windows x86_64: the exact-SHA Windows build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
