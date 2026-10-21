@@ -62,7 +62,9 @@ A fake toolchain is supplied by fixture shell-free executable test programs wher
 - target mismatch before execution;
 - successful execution with missing artifact;
 - successful execution with artifact present;
-- high-level execution passes through resolver, invoker, and artifact validation.
+- high-level execution passes through resolver, invoker, and artifact validation;
+- the high-level boundary rejects a non-zero `ToolchainInvocation` even when a custom invoker returns it as `Ok`;
+- a pre-existing output path is rejected before resolution/execution so a stale artifact cannot satisfy post-build validation.
 
 ## Scope exclusions
 
