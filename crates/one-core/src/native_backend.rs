@@ -619,15 +619,10 @@ mod linker_discovery_tests {
         let expected = bin.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&bin).unwrap();
-        std::fs::write(&expected, b"#!/bin/sh\necho 'GNU ld (GNU Binutils) 2.40'\nexit 0\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = std::fs::metadata(&expected).unwrap().permissions();
-            permissions.set_mode(0o755);
-            std::fs::set_permissions(&expected, permissions).unwrap();
-        }
+        // This test verifies PATH discovery and successful invocation, not GNU ld
+        // compatibility parsing. Use a known executable instead of a shell script
+        // so the test is independent of the host shell and script execution policy.
+        std::os::unix::fs::symlink("/bin/true", &expected).unwrap();
 
         let path_env = bin.as_os_str();
         assert_eq!(
