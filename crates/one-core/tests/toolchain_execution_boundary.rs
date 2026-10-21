@@ -3,6 +3,7 @@ use std::{
     ffi::OsString,
     fs,
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use one_core::{
@@ -252,6 +253,86 @@ fn successful_execution_returns_artifact() {
     assert_eq!(resolver.calls.get(), 1);
     assert_eq!(invoker.calls.get(), 1);
     let _ = fs::remove_file(result.path);
+}
+
+#[test]
+fn high_level_build_rejects_non_zero_status_from_custom_invoker() {
+    let output = Command::new(fixture_executable())
+        .arg("--exit=7")
+        .output()
+        .expect("fixture should start");
+    let failed_invocation = ToolchainInvocation::from_output(output);
+    let resolver = CountingResolver {
+        calls: Cell::new(0),
+        command: ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()),
+    };
+    let invoker = CountingInvoker {
+        calls: Cell::new(0),
+        result: Ok(failed_invocation),
+    };
+    let artifact = std::env::temp_dir().join(format!(
+        "one-gate1-nonzero-artifact-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_file(&artifact);
+
+    let error = execute_toolchain_build(
+        &target(),
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        &artifact,
+    )
+    .expect_err("high-level build must reject a non-zero invocation status");
+
+    assert!(matches!(
+        error,
+        ToolchainExecutionError::NonZeroExit {
+            status: Some(7),
+            ..
+        }
+    ));
+    assert_eq!(resolver.calls.get(), 1);
+    assert_eq!(invoker.calls.get(), 1);
+}
+
+#[test]
+fn high_level_build_rejects_preexisting_artifact_to_prevent_stale_success() {
+    let resolver = CountingResolver {
+        calls: Cell::new(0),
+        command: ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()),
+    };
+    let invoker = CountingInvoker {
+        calls: Cell::new(0),
+        result: Ok(success_invocation()),
+    };
+    let artifact = std::env::temp_dir().join(format!(
+        "one-gate1-stale-artifact-{}",
+        std::process::id()
+    ));
+    fs::write(&artifact, b"stale artifact").expect("stale artifact fixture should be writable");
+
+    let error = execute_toolchain_build(
+        &target(),
+        &ReferenceTargetBackend::new(),
+        &toolchain(),
+        &resolver,
+        &invoker,
+        Path::new("source.one"),
+        &artifact,
+    )
+    .expect_err("pre-existing output must not be accepted as a fresh artifact");
+
+    assert!(matches!(error, ToolchainExecutionError::Validation { .. }));
+    assert_eq!(resolver.calls.get(), 0);
+    assert_eq!(invoker.calls.get(), 0);
+    assert_eq!(
+        fs::read(&artifact).expect("stale artifact must remain untouched"),
+        b"stale artifact"
+    );
+    fs::remove_file(artifact).expect("stale artifact fixture should be removed");
 }
 
 #[test]
