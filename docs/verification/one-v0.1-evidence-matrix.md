@@ -65,4 +65,4 @@ Run `39554661451` verifies the exact code-bearing source SHA above on Ubuntu and
 - Evidence for one commit does not automatically verify later commits.
 - Filesystem write, database query, and HTTP GET remain bounded to their recorded Termux/Android exact-SHA evidence.
 - Native Linux x86_64 and Windows x86_64 are build-proven on PR #64 but are not execution-verified until a real target executor succeeds.
-- Cross-platform support for current `main` remains unverified until a merged revision is independently executed and recorded.
+- The last code-bearing source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` has host-level Ubuntu/Windows exact-SHA verification in run `39554661451`. This does not certify every cross-compiled target artifact as executed, and does not by itself constitute release approval. Later evidence-sync commits changed documentation only.
