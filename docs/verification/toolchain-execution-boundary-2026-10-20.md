@@ -1,40 +1,35 @@
 # Gate 1 — Toolchain Execution Boundary Verification
 
-Revision under verification: `feature/gate1-toolchain-execution-boundary`
-Base: `34725aa393ca31759eb88c96688063f6358ce54a`
+## Scope and source boundary
 
-## Implemented boundary
+- Canonical base: `main` at `34725aa393ca31759eb88c96688063f6358ce54a`.
+- Gate 1-only branch: `fix/gate1-toolchain-execution-boundary`.
+- Gate 1 is isolated from native compiler generalization / Gate 2 files.
+- No parser, analyzer, One Semantic IR, interpreter, or target semantic changes are included.
 
-- `ToolchainCommand`: executable plus ordered arguments.
-- `ToolchainInvocation`: exit status, stdout, stderr.
-- `ToolchainExecutionError`: toolchain-not-found, process-start, non-zero-exit, artifact-missing, and validation failures.
-- `ToolchainResolver` and `PathToolchainResolver`.
-- `ToolchainInvoker` and `CommandToolchainInvoker` using direct `std::process::Command` argument passing.
-- Deterministic build command construction from target triple, source, and output.
-- `execute_toolchain_build`: compatibility validation → resolution → invocation → artifact existence validation.
-- Cargo fake-toolchain binary fixture and integration regression suite.
+## Implemented contract
 
-## RED evidence
+- `ToolchainCommand` stores an executable path and ordered `OsString` arguments.
+- `ToolchainInvocation` retains process status, stdout, and stderr.
+- `ToolchainExecutionError` distinguishes toolchain-not-found, process-start, non-zero-exit, artifact-missing, and validation failures.
+- `PathToolchainResolver` resolves an explicit executable path.
+- `CommandToolchainInvoker` uses `std::process::Command` directly; no shell parsing or interpolated shell command is used.
+- `execute_toolchain_build` validates target/toolchain compatibility before resolution, checks invocation status even for custom invokers, and requires a fresh regular artifact.
+- A pre-existing output path is rejected before resolver/invoker execution. This prevents stale-artifact false success and preserves the existing file, but means callers must select a fresh output path or deliberately relocate/remove an old artifact before calling the API.
+- Fake-toolchain fixture and regression tests cover argument preservation, missing executable, process-start failure, non-zero status, target mismatch, missing artifact, successful artifact creation, custom-invoker non-zero status, stale-artifact rejection, and high-level composition.
 
-The Gate 1 integration test suite was added before the production boundary implementation. A local RED run could not be executed in this environment because the repository could not be cloned locally: the container reported `Could not resolve host: github.com`.
+## Repository policy note
 
-The hosted verification branch was temporarily enabled for the existing CI workflow. Run `39454526520` (`One CI`) was created for commit `f815771f451e25ccb4f883003e38d215338310e4`, but both matrix jobs completed with `steps: null`; this is the repository's known zero-step CI infrastructure failure mode and does not provide source compilation/test evidence. The temporary CI trigger was restored immediately afterward.
+The current `.gitignore` explicitly ignores `Cargo.lock`. Gate 1 commands therefore do not use `--locked`; this avoids claiming lockfile-based reproducibility that the repository does not currently provide. The lockfile policy is not changed by this Gate and remains a separate workspace-level decision.
 
-Therefore no claim is made here that the Gate 1 test suite has executed successfully.
+## Verification evidence
 
-## Static review findings and repairs
+The source, tests, workflow, and documentation have been read back from GitHub after updates. This is repository-state evidence, not executable test evidence.
 
-A source review found that `command_preserves_executable_and_arguments_without_shell_parsing` passed the relative output path `artifact with spaces` to the fake toolchain. The fixture writes the requested `-o` output, so this could leave a generated artifact in the test working directory. The test now directs that artifact to a process-specific path under the system temporary directory, asserts the requested output path, confirms the artifact exists, and removes it. Other fixed artifact fixture names were also made process-specific to reduce collisions between concurrent test processes.
+The available container has no `rustc`, `cargo`, `rustfmt`, or `clippy-driver`; network DNS resolution to GitHub and Rust distribution hosts also fails. Therefore this environment cannot execute the Rust verification commands.
 
-A second contract gap was identified: `execute_toolchain_build` previously trusted any `Ok(ToolchainInvocation)` from a custom invoker without checking `invocation.success()`. It could therefore accept a non-zero status if an artifact happened to exist. The high-level boundary now converts a completed non-zero invocation to structured `NonZeroExit`, preserving status/stdout/stderr.
+A previous branch-push attempt, run [`39542767735`](https://github.com/panglimanetizen01/one/actions/runs/39542767735), targeted a related working branch whose Gate 1 source/test blobs match this implementation, but it is **not promoted as evidence for this clean Gate 1 branch**. Both jobs had empty `steps: []`, no runner name, and no downloadable job log. It proves only that hosted execution failed before an executable step on that attempt.
 
-A third false-success path was identified: a pre-existing artifact could satisfy `artifact.is_file()` even if the current toolchain invocation did not produce it. The high-level boundary now rejects an already-existing output path before resolver/invoker execution, preserving the existing file and returning structured `Validation`. The documented limitation is that callers must choose a fresh output path or deliberately relocate/remove an old artifact before invoking this API.
-
-The original test-isolation repair was committed at `763d39b392000603353556bd801b418cb4ea35a7`; the later status and stale-artifact fixes are in the current branch history. These changes have been read back from GitHub, but **none has executable test evidence yet**.
-
-## Latest hosted verification attempt
-
-The branch-push workflow was configured to run on branch pushes and to include a focused Gate 1 test step. Run [`39542394202`](https://github.com/panglimanetizen01/one/actions/runs/39542394202) targets source revision `934439ce07e8f356cd3731fdf3fb7070f564a99a`. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job log. This is evidence that hosted execution did not reach checkout or any executable test step; it is not source-code pass/fail evidence.
 ## Required commands not yet evidenced
 
 - `cargo test -p one-core --test toolchain_execution_boundary`
@@ -47,6 +42,6 @@ The branch-push workflow was configured to run on branch pushes and to include a
 
 ## Status
 
-`IN PROGRESS / BLOCKED BY VERIFICATION INFRASTRUCTURE`
+`IN PROGRESS / BLOCKED BY EXECUTABLE VERIFICATION`
 
-Gate 1 is not eligible for `GREEN LOCKED 🔒 FINAL` until fresh executable test, format, check, clippy, contract, and diff evidence exists for the final revision.
+Gate 1 is not eligible for `GREEN LOCKED 🔒 FINAL` until the focused test, full `one-core` suite, formatting, workspace check, Clippy, contract check, diff check, and final-diff review have fresh evidence for the final source revision.
