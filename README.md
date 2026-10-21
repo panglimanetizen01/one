@@ -79,7 +79,7 @@ The executable evidence remains bounded to the pre-merge implementation SHA `797
 - Linux x86_64: ELF x86-64 built successfully using the verified cross-linker selection; target execution remains pending.
 - Windows x86_64: PE32+ x86-64 artifact proven; Windows/Wine execution remains pending.
 
-Post-merge `One CI` runs `39372356906` and `39381125667` both failed on Ubuntu and Windows before any executable step (`steps: []`), including after retry. These are infrastructure/runner evidence and do not establish source-code test results.
+Post-merge `One CI` runs `39372356906` and `39381125667` failed on Ubuntu and Windows before any executable step (`steps: []`), including after retry. The latest observed run for canonical `main` is `39440575308` at SHA `34725aa393ca31759eb88c96688063f6358ce54a`; both matrix jobs again failed with `steps: []`. These are infrastructure/runner evidence and do not establish source-code test results.
 
 The native backend implementation therefore must not yet be described as executable-verified for the current `main` revision. See `docs/verification/native-backends-2026-10-19.md` for the exact evidence boundary.
 
