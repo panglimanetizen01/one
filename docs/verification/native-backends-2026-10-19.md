@@ -21,7 +21,7 @@ The merge itself establishes source presence on canonical `main`; it does **not*
 
 At the implementation merge SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`, the post-merge `One CI` run was `39372356906` (run attempt 2 after retry). GitHub reported both matrix jobs as `failure`, but both jobs had `steps: []`. This is **CI infrastructure/runner evidence**, not source-code failure evidence: the jobs never reached checkout, toolchain, build, Clippy, or test steps. The retry reproduced the same no-step failure on both Ubuntu and Windows, with no job logs or artifacts produced.
 
-After the documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, `One CI` run `39381125667` independently reproduced the same failure on both matrix jobs, again with `steps: []`. This confirms the runner/infrastructure condition persisted independently of the native-backend implementation.
+After the documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, `One CI` run `39381125667` independently reproduced the same failure on both matrix jobs, again with `steps: []`. The latest observed `main` run, `39440575308`, targets exact SHA `34725aa393ca31759eb88c96688063f6358ce54a` and again reports both Ubuntu and Windows jobs as failed with `steps: []` and no runner names. No checkout, build, Clippy, or test step ran. This is continued infrastructure/verification insufficiency evidence, not a source-code result.
 
 Until a post-merge executable verification is recorded, retain these boundaries:
 - Linux AArch64: verified only for the recorded AArch64/Linux verification host and implementation SHA above.
