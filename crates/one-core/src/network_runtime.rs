@@ -25,7 +25,7 @@ impl RealNetworkRuntime {
     pub fn close(&mut self, id: NetworkConnectionId) -> bool { self.connections.remove(&id).is_some() }
 }
 fn resolve_target(host: &str, port: u16, address_kind: Option<NetworkAddressKind>) -> Result<SocketAddr, NetworkRuntimeError> { let service = if host.contains(':') { format!("[{host}]:{port}") } else { format!("{host}:{port}") }; let mut addresses = service.to_socket_addrs().map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?; addresses.find(|a| match address_kind { Some(NetworkAddressKind::Ipv4) => a.is_ipv4(), Some(NetworkAddressKind::Ipv6) => a.is_ipv6(), Some(NetworkAddressKind::Name) | None => true }).ok_or_else(|| NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))) }
-fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
+pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
     let invalid = || NetworkRuntimeError::InvalidOperation("Authority HTTP tidak valid.".into());
     if let Some(rest) = authority.strip_prefix('[') {
         let (host, suffix) = rest.split_once(']').ok_or_else(invalid)?;
