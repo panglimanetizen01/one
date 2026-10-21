@@ -34,3 +34,66 @@ impl Parser {
     fn match_operator(&self) -> Option<(BinaryOp, usize)> { if self.lexeme_is("ditambah") { return Some((BinaryOp::Add, 1)); } if self.lexeme_is("dikurangi") { return Some((BinaryOp::Subtract, 1)); } if self.lexeme_is("dikali") { return Some((BinaryOp::Multiply, 1)); } if self.lexeme_is("dibagi") { return Some((BinaryOp::Divide, 1)); } if self.lexeme_is("sudah") { return Some((BinaryOp::AtLeast, 1)); } if self.lexeme_is("belum") { return Some((BinaryOp::AtMost, 1)); } if self.lexeme_is("sama") && self.peek_lexeme(1) == Some("dengan") { return Some((BinaryOp::Equal, 2)); } if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("besar") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Greater, 3)); } if self.lexeme_is("lebih") && self.peek_lexeme(1) == Some("kecil") && self.peek_lexeme(2) == Some("dari") { return Some((BinaryOp::Less, 3)); } None }
     fn parse_primary_with_boundary(&mut self, boundary: Option<&str>, stop_at_and: bool) -> Result<Expr, DiagnosticBundle> { let token = self.advance(); match token.kind { TokenKind::Text => Ok(Expr::Text(token.lexeme)), TokenKind::Number => token.lexeme.parse::<i64>().map(Expr::Number).map_err(|_| self.error("E1015", "Angka tidak valid.")), TokenKind::Identifier | TokenKind::Keyword => match token.lexeme.as_str() { "benar" => Ok(Expr::Boolean(true)), "salah" => Ok(Expr::Boolean(false)), "tidak" if self.lexeme_is("ada") => { self.advance(); Ok(Expr::Nothing) }, _ => { let mut words = vec![token.lexeme]; while self.is_word() && !self.lexeme_is("dengan") && self.match_operator().is_none() && !boundary.is_some_and(|value| self.lexeme_is(value)) && !(stop_at_and && self.lexeme_is("dan")) { words.push(self.advance().lexeme); } let name = words.join(" "); if self.lexeme_is("dengan") { self.advance(); let mut args = vec![self.parse_primary_with_boundary(None, true)?]; while self.lexeme_is("dan") { self.advance(); args.push(self.parse_primary_with_boundary(None, true)?); } return Ok(Expr::Call { name, args }); } Ok(Expr::Identifier(name)) } }, _ => Err(self.error("E1016", "Token ini tidak dapat menjadi ekspresi.")) } }
 }
+
+#[cfg(test)]
+mod ast_contract_tests {
+    use super::*;
+    use crate::token::Span;
+
+    #[test]
+    fn declaration_normalizes_multi_word_name_and_anchors_span() {
+        let program = parse("nama pengguna adalah \"Budi\"\n").expect("valid declaration");
+        assert_eq!(program.statements.len(), 1);
+        match &program.statements[0] {
+            Statement::Declaration { name, value: Expr::Text(value), span } => {
+                assert_eq!(name, "nama pengguna");
+                assert_eq!(value, "Budi");
+                assert_eq!(span, &Span::new(0, 4, 1, 1));
+            }
+            other => panic!("unexpected AST: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn assignment_normalizes_multi_word_name_and_keeps_integer_value() {
+        let program = parse("saldo rekening menjadi 100000\n").expect("valid assignment");
+        assert_eq!(program.statements.len(), 1);
+        match &program.statements[0] {
+            Statement::Assignment { name, value: Expr::Number(value), span } => {
+                assert_eq!(name, "saldo rekening");
+                assert_eq!(*value, 100000);
+                assert_eq!(span, &Span::new(0, 5, 1, 1));
+            }
+            other => panic!("unexpected AST: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn list_action_keeps_grammar_selected_multi_word_target() {
+        let program = parse("tambahkan apel ke daftar buah\n").expect("valid list action");
+        match &program.statements[0] {
+            Statement::Action { name, args, .. } => {
+                assert_eq!(name, "tambahkan");
+                assert_eq!(args, &vec![
+                    Expr::Identifier("apel".into()),
+                    Expr::Identifier("daftar buah".into()),
+                ]);
+            }
+            other => panic!("unexpected AST: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn unsupported_action_does_not_fall_back_to_generic_ast() {
+        let error = parse("apel\n").expect_err("unsupported action must be rejected");
+        assert_eq!(error.0[0].code, "E1016");
+    }
+
+    #[test]
+    fn repeated_parse_produces_identical_ast_and_span_anchors() {
+        let source = "nama pengguna adalah \"Budi\"\n";
+        let first = parse(source).expect("valid source");
+        let second = parse(source).expect("same valid source");
+        assert_eq!(first, second);
+    }
+}
