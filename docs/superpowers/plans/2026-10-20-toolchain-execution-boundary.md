@@ -42,7 +42,7 @@
 - [ ] **Step 1: Write the failing tests**
   - Add tests for command argument preservation, missing executable, process-start failure, non-zero exit, target mismatch before execution, missing artifact, successful artifact, and high-level resolver+invoker+artifact flow.
 - [ ] **Step 2: Run the Gate 1 test target and verify RED**
-  - Run: `cargo test -p one-core --test toolchain_execution_boundary --locked`
+  - Run: `cargo test -p one-core --test toolchain_execution_boundary`
   - Expected: compile failure because the new `toolchain` boundary does not yet exist.
 
 ### Task 2: Implement command, resolver, invoker, and structured errors
