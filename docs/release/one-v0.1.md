@@ -69,7 +69,7 @@ Target: `x86_64-pc-windows-gnu`
 
 Status on implementation SHA: **BUILD TERBUKTI — execution pending**. A PE32+ x86-64 artifact is proven. No Windows/Wine executor was available for the recorded environment.
 
-These native backend statuses remain bounded to the recorded implementation SHA until exact-SHA post-merge verification of `main` succeeds.
+The current canonical revision has passed the exact-SHA build/test matrix. Individual native target execution claims remain bounded to the exact artifact and target executor recorded in the native-backend verification evidence.
 
 ## Explicit v0.1 limits
 
