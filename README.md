@@ -81,7 +81,7 @@ The last code-bearing canonical `main` revision independently verified is `77a89
 - platform-appropriate offline verification;
 - Linux and Windows cross-toolchain provisioning and native-backend test coverage.
 
-The canonical repository's hosted CI runs `39372356906` and `39381125667` failed before executable steps (`steps: []`). Those runs are infrastructure evidence, not source-test results; the independent exact-SHA matrix is the positive executable evidence for the current revision.
+The canonical repository's hosted CI runs `39372356906` and `39381125667` failed before executable steps (`steps: []`). Those runs are infrastructure evidence, not source-test results; the independent exact-SHA matrix is the positive executable evidence for the last code-bearing source revision.
 
 Target-specific claims remain bounded to their actual evidence: the recorded AArch64 execution is for its stated AArch64/Linux host and earlier implementation SHA; x86_64/Windows artifact and test evidence must not be generalized into an unrecorded execution claim for another target. See `docs/verification/native-backends-2026-10-19.md` and the evidence matrix for details.
 
