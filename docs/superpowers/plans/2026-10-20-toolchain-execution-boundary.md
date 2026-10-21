@@ -26,7 +26,8 @@
 - Missing executables must be classified separately from generic process-start errors — `missing_executable_is_toolchain_not_found` and `process_start_failure_is_distinct`.
 - Non-zero process completion must retain status/stdout/stderr and remain distinct from start failure — `non_zero_exit_is_distinct_from_start_failure`.
 - Target mismatch must prevent resolver/invoker execution — `target_mismatch_is_rejected_before_execution`.
-- A successful process without a freshly produced artifact must fail, while a pre-existing output path must be rejected before execution — `successful_execution_requires_artifact` and `successful_execution_returns_artifact`.
+- A successful process without a freshly produced artifact must fail, while a pre-existing output path must be rejected before execution — `successful_execution_without_artifact_is_failure`, `successful_execution_returns_artifact`, and `high_level_build_rejects_preexisting_artifact_to_prevent_stale_success`.
+- A failed invocation must not leave a regular partial output artifact — `failed_toolchain_removes_partial_artifact`.
 
 ---
 
@@ -83,6 +84,7 @@
   - Prove target validation occurs before resolver/invoker calls.
   - Prove successful invocation still fails on missing artifact and that a pre-existing output path is rejected before resolver/invoker calls.
   - Prove a fresh artifact created by the current invocation returns `NativeArtifact`.
+  - Prove a non-zero toolchain that writes a partial output does not leave that file behind.
 - [ ] **Step 2: Implement `execute_toolchain_build`**
   - Validate target/toolchain compatibility before resolving or invoking.
   - Reject an already-existing output path before resolution so stale output cannot create false success.
