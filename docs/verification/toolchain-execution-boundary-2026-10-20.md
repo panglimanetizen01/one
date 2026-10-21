@@ -34,7 +34,9 @@ The available container has no `rustc`, `cargo`, `rustfmt`, or `clippy-driver`; 
 
 The clean Gate 1 branch run [`39543528736`](https://github.com/panglimanetizen01/one/actions/runs/39543528736) targeted source/test revision `215c41b325161da6bee82208e3ccbad0bf114ba1`. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job logs. Multiple earlier runs and a retry of a prior exact-branch run showed the same pre-step failure. This is infrastructure/verification-insufficiency evidence, not a source-code test result.
 
-The branch has a focused Gate 1 CI step and push-triggered CI for branches, but repeated workflow attempts have failed before checkout/toolchain steps. No Rust command has been shown to pass or fail. Subsequent documentation-only commits do not alter the source/test blobs; their own workflow runs also fail before executable steps.
+The branch has a focused Gate 1 CI step and push-triggered CI for branches, but repeated workflow attempts have failed before checkout/toolchain steps. No Rust command has been shown to pass or fail.
+
+The public [GitHub Status page](https://www.githubstatus.com/) was checked on 2026-10-21 and reported all systems operational with no incident listed for that date. Therefore the exact cause of the zero-step jobs is **unknown**; this record does not attribute it to a confirmed GitHub-wide outage or infer account billing/quota state. Subsequent documentation-only commits do not alter the source/test blobs; their own workflow runs also fail before executable steps.
 
 ## Required commands not yet evidenced
 
