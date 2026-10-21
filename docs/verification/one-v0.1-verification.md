@@ -54,7 +54,7 @@ A later full `cargo test` invocation in the Debian/proot verification environmen
 
 ## Latest cross-platform historical evidence
 
-Independent mirror run `38929072800` verified revision `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. That evidence predates the database, HTTP, filesystem-write, and native-backend revisions and must not be generalized to PR #64 or current `main`.
+Independent mirror run `38929072800` verified revision `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu and Windows Server 2025. That historical run predates the database, HTTP, filesystem-write, and native-backend revisions and must not be used for those later changes. The later exact-SHA matrix `39554661451` verifies canonical source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and includes the current source/core/CLI test suites for filesystem write, database query, and HTTP GET.
 
 ## Evidence boundary
 
