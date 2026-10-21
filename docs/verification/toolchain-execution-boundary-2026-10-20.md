@@ -37,7 +37,7 @@ The original test-isolation repair was committed at `763d39b392000603353556bd801
 The branch-push workflow was configured to run on branch pushes and to include a focused Gate 1 test step. Run [`39542394202`](https://github.com/panglimanetizen01/one/actions/runs/39542394202) targets source revision `934439ce07e8f356cd3731fdf3fb7070f564a99a`. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job log. This is evidence that hosted execution did not reach checkout or any executable test step; it is not source-code pass/fail evidence.
 ## Required commands not yet evidenced
 
-- `cargo test -p one-core --test toolchain_execution_boundary --locked`
+- `cargo test -p one-core --test toolchain_execution_boundary`
 - `cargo fmt --check`
 - `cargo test -p one-core --locked`
 - `cargo check --workspace --all-targets --locked`
