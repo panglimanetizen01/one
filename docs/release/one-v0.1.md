@@ -12,7 +12,7 @@ PR #64 was merged into canonical `main` at `ec844aa652a4d35c3891fc810d344c9c9db2
 
 The native backend implementation/evidence revision remains `797c6fe75bd3fa9081329f73dd59e34278f27ddd` on `feature/native-backends-linux-windows`. That evidence is valid only for its recorded revision and environments. It must not be promoted to current-`main` executable verification merely because the PR was merged.
 
-The first post-merge hosted `One CI` run is `39371290853`. Both matrix jobs failed with zero executable steps (`steps: []`), so this is an infrastructure/runner failure and does not establish a Rust source failure or a successful/failed test result.
+The first post-merge hosted `One CI` run is `39371290853`. The latest observed run for canonical `main` is `39440575308` at SHA `34725aa393ca31759eb88c96688063f6358ce54a`. Both matrix jobs failed with zero executable steps (`steps: []`), so these runs establish an infrastructure/runner failure and do not establish a Rust source failure or a successful/failed test result.
 
 ## Verified baseline
 
