@@ -252,8 +252,24 @@ where
             message: error.to_string(),
         })?;
 
+    if artifact.exists() {
+        return Err(ToolchainExecutionError::Validation {
+            message: format!(
+                "output path already exists; refusing to accept a stale artifact: {}",
+                artifact.display()
+            ),
+        });
+    }
+
     let command = resolver.resolve(toolchain, source, artifact)?;
-    invoker.invoke(&command)?;
+    let invocation = invoker.invoke(&command)?;
+    if !invocation.success() {
+        return Err(ToolchainExecutionError::NonZeroExit {
+            status: invocation.status().code(),
+            stdout: invocation.stdout().to_owned(),
+            stderr: invocation.stderr().to_owned(),
+        });
+    }
 
     if !artifact.is_file() {
         return Err(ToolchainExecutionError::ArtifactMissing {
