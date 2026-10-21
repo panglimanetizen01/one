@@ -4,10 +4,10 @@ This index records the dependency order and review state of the language specifi
 
 ## Dependency-ordered gates
 
-1. [Language Invariants](./one-v0.1-language-invariants.md) — foundation; changes require explicit review.
-2. [Lexical Specification](./one-v0.1-lexical.md) — review/approval gate.
-3. [Concrete Grammar](./one-v0.1-grammar.md) — depends on lexical rules; review/approval gate.
-4. [AST Contract](./one-v0.1-ast.md) — depends on approved lexical and grammar contracts; review/approval gate.
+1. [Language Invariants](./one-v0.1-language-invariants.md) — accepted normative foundation constraints; changes require explicit review.
+2. [Lexical Specification](./one-v0.1-lexical.md) — normative for the initial Indonesian v0.1 implementation; implementation conformance is tracked separately.
+3. [Concrete Grammar](./one-v0.1-grammar.md) — normative for the initial Indonesian v0.1 implementation; implementation conformance is tracked separately.
+4. [AST Contract](./one-v0.1-ast.md) — accepted for the v0.1 implementation baseline; its documented source-span limitations are normative.
 5. Name resolution and scope — must preserve grammar-defined name boundaries and ambiguity rejection.
 6. Type system.
 7. Semantic model.
@@ -42,4 +42,4 @@ These concerns must be designed and checked alongside the stages they constrain;
 - If two contracts conflict, stop implementation of the affected area until the conflict is resolved and recorded.
 - A status such as Verified or Supported requires executable evidence tied to a specific commit and environment.
 
-The exact repository directory layout remains subject to architecture review; this index records dependency and review policy, not a guarantee that every listed stage is complete.
+The exact repository directory layout remains subject to architecture review. Specification status and implementation-conformance status are separate: an accepted or normative contract does not, by itself, prove that every required behavior is implemented or verified.
