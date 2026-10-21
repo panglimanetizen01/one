@@ -203,7 +203,7 @@ Exact-SHA evidence: independent matrix run [`39554661451`](https://github.com/pa
 
 ## Task 17 — Broader language-level capability coverage — IN DEVELOPMENT
 
-After the database and HTTP slices obtain exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority:
+With the database and HTTP slices now covered by exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority; do not broaden their experimental support claims:
 
 ```text
 One source
