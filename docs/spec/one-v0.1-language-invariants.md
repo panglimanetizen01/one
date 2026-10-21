@@ -1,6 +1,6 @@
 # One v0.1 — Language Invariants
 
-**Status:** Accepted normative foundation constraints for One v0.1. Implementation conformance remains a separate, evidence-gated status.
+**Status:** Accepted normative foundation constraints for One v0.1 by [ADR-0016](../decisions/ADR-0016-accept-language-invariants.md). Implementation conformance remains a separate, evidence-gated status.
 **Scope:** Language-level invariants that constrain lexical, grammar, AST, semantic, IR, runtime, compiler, localization, and tooling design.
 **Foundation:** `docs/foundation/one-v0.1-foundation.md`
 
