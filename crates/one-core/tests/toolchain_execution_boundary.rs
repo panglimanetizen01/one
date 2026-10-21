@@ -226,16 +226,13 @@ fn successful_execution_without_artifact_is_failure() {
 
 #[test]
 fn successful_execution_returns_artifact() {
-    let resolver = CountingResolver {
-        calls: Cell::new(0),
-        command: ToolchainCommand::new(fixture_executable(), Vec::<OsString>::new()),
-    };
-    let invoker = CountingInvoker {
-        calls: Cell::new(0),
-        result: Ok(success_invocation()),
-    };
-    let artifact = std::env::temp_dir().join("one-gate1-present-artifact");
-    fs::write(&artifact, b"fixture").expect("artifact fixture should be writable");
+    let resolver = PathToolchainResolver::new(fixture_executable());
+    let invoker = CommandToolchainInvoker;
+    let artifact = std::env::temp_dir().join(format!(
+        "one-gate1-present-artifact-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_file(&artifact);
 
     let result = execute_toolchain_build(
         &target(),
@@ -246,13 +243,12 @@ fn successful_execution_returns_artifact() {
         Path::new("source.one"),
         &artifact,
     )
-    .expect("existing artifact must succeed");
+    .expect("real toolchain boundary should create the artifact");
 
     assert_eq!(result.path, artifact);
     assert_eq!(result.format, ArtifactFormat::Executable);
-    assert_eq!(resolver.calls.get(), 1);
-    assert_eq!(invoker.calls.get(), 1);
-    let _ = fs::remove_file(result.path);
+    assert!(result.path.is_file());
+    fs::remove_file(result.path).expect("artifact fixture should be removed");
 }
 
 #[test]
