@@ -190,7 +190,12 @@ fn target_mismatch_is_rejected_before_execution() {
     )
     .expect_err("architecture mismatch must be rejected");
 
-    assert!(matches!(error, ToolchainExecutionError::Validation { .. }));
+    match error {
+        ToolchainExecutionError::Validation { message } => {
+            assert!(message.contains("architecture mismatch"));
+        }
+        other => panic!("expected target validation failure, got {other:?}"),
+    }
     assert_eq!(resolver.calls.get(), 0);
     assert_eq!(invoker.calls.get(), 0);
 }
