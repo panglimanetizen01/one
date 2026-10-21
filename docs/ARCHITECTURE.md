@@ -111,3 +111,25 @@ One source
 ```
 
 This pattern is the preferred template for future real-world capabilities.
+
+## 18. Toolchain execution boundary
+
+Native build execution is modeled as a distinct host-process boundary:
+
+```text
+One Semantic IR
+ -> TargetSpec
+ -> ToolchainSpec
+ -> ToolchainResolver
+ -> ToolchainCommand
+ -> ToolchainInvoker
+ -> Compiler / Linker process
+ -> ToolchainInvocation
+ -> Artifact validation
+```
+
+`ToolchainCommand` contains an executable path and ordered arguments. The command is executed directly with `std::process::Command`; no shell command string, shell quoting, or shell parsing is part of the language/toolchain contract. `ToolchainResolver` and `ToolchainInvoker` are separate interfaces so resolution and process execution can be tested independently.
+
+`ToolchainExecutionError` distinguishes missing toolchains, process-start failures, non-zero process completion, missing artifacts, and target/toolchain validation failures. Compatibility validation runs before resolver/invoker execution. The high-level build boundary independently checks the returned process status even when a custom invoker returns a completed non-zero invocation. A successful process is not a successful build unless the expected artifact is a regular file. To prevent a stale output from being mistaken for a newly produced artifact, the requested output path must not already exist when the build starts; callers must choose a fresh output path or deliberately remove/relocate an old output before invoking this API.
+
+The boundary does not install toolchains, discover packages over the network, change One semantics, create per-target Semantic IRs, or claim unverified platform support.
