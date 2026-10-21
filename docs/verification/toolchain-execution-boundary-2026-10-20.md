@@ -39,7 +39,7 @@ The branch-push workflow was configured to run on branch pushes and to include a
 
 - `cargo test -p one-core --test toolchain_execution_boundary`
 - `cargo fmt --check`
-- `cargo test -p one-core --locked`
+- `cargo test -p one-core`
 - `cargo check --workspace --all-targets --locked`
 - `cargo clippy --workspace --all-targets --locked -- -D warnings`
 - `python tools/check_contract.py`
