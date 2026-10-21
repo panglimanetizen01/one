@@ -36,14 +36,14 @@
 | Offline Windows verifier | ADDED | `tools/verify_offline.ps1` |
 | Release gate workflow | DEFINED | `.github/workflows/release-check.yml` |
 | Linux/Windows CI definition | COMPLETE | `.github/workflows/ci.yml` |
-| Native Linux AArch64 backend | IMPLEMENTED / CURRENT-HEAD VERIFICATION PENDING | PR #64 implementation evidence at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; merged into `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; current-main executable verification not yet recorded |
-| Native Linux x86_64 backend | IMPLEMENTED / BUILD EVIDENCE PRE-MERGE | PR #64 produced ELF x86-64 at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; target execution unavailable; current `main` still requires exact-SHA verification |
-| Native Windows x86_64 backend | IMPLEMENTED / BUILD EVIDENCE PRE-MERGE | PR #64 produced PE32+ x86-64 at `797c6fe75bd3fa9081329f73dd59e34278f27ddd`; Windows/Wine execution unavailable; current `main` still requires exact-SHA verification |
-| Native backend contract | DEFINED + VERIFIED FOR PR #64 SCOPE | `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md` and native backend test suite |
-| Canonical main merge state | MERGED / CURRENT-HEAD VERIFICATION PENDING | PR #64 merged at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; later documentation-evidence commits are on `main` |
-| Post-merge hosted CI | INFRASTRUCTURE FAILURE / INCONCLUSIVE | run `39372356906` and subsequent run `39381125667`; both matrix jobs failed before any executable step (`steps: []`), including after retry |
-| Latest cross-platform exact-SHA verification | VERIFIED / HISTORICAL | mirror run `38929072800` checked out `9038ac75f197753ff1ab6af7478e63e4831903a2` exactly and passed Ubuntu + Windows verification; it predates later database, HTTP, filesystem-write, and native-backend changes |
-| Native backend PR #64 | MERGED / CURRENT-HEAD VERIFICATION GATE | merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`; native evidence remains bounded to the recorded pre-merge SHA until current-head verification exists |
+| Native Linux AArch64 backend | IMPLEMENTED / CURRENT-HEAD MATRIX VERIFIED | Current canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed the exact-SHA Ubuntu/Windows matrix `39554661451`; AArch64-target execution remains bounded to its recorded AArch64/Linux evidence |
+| Native Linux x86_64 backend | IMPLEMENTED / CURRENT-HEAD MATRIX VERIFIED | Current canonical SHA passed build, Clippy, workspace and native-backend test coverage in matrix `39554661451`; retain target-specific execution boundaries |
+| Native Windows x86_64 backend | IMPLEMENTED / CURRENT-HEAD MATRIX VERIFIED | Current canonical SHA passed Windows build, Clippy, workspace and native-backend test coverage in matrix `39554661451`; retain target-specific execution boundaries |
+| Native backend contract | DEFINED + VERIFIED FOR CURRENT-MAIN TEST MATRIX | `docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md`, native backend tests, exact-SHA matrix |
+| Canonical main merge state | MERGED / EXACT-SHA MATRIX VERIFIED | Canonical `main` SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` verified in run `39554661451` |
+| Post-merge hosted CI | INFRASTRUCTURE FAILURE / INCONCLUSIVE | runs `39372356906` and `39381125667` failed before executable steps (`steps: []`); independent matrix `39554661451` passed |
+| Latest cross-platform exact-SHA verification | VERIFIED / CURRENT | mirror run `39554661451` checked out exact canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and passed on Ubuntu + Windows Server 2025 |
+| Native backend PR #64 | MERGED / CURRENT-HEAD MATRIX VERIFIED | PR #64 source is on canonical `main`; current-main test matrix is green while individual target execution claims remain evidence-bounded |
 | Native C/C++ FFI | FUTURE | contract required before support claim |
 | Python binding | FUTURE | contract required before support claim |
 | Node.js binding | FUTURE | contract required before support claim |
