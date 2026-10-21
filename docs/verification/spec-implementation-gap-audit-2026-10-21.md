@@ -59,9 +59,9 @@ PR #66 labels `docs/spec/one-v0.1-localization.md` as a non-normative architectu
 
 - PR #66 changed documentation only.
 - Subsequent commits revised the AST contract, recorded ADR-0015, and added parser regression tests.
-- Independent exact-SHA verification passed for PR #69 head `253f1f7bdf34fec02d7fb8369b55d9fe3af0c1ed` on Ubuntu and Windows, including contract checker, build, AST tests, Clippy, workspace tests, real-network tests, and offline verification.
-- The merged canonical SHA `e0c09d5dd99f4b8eb9c9af961739cf9ba0c8e2e8` was independently verified successfully on Ubuntu and Windows in matrix run `39554088367`; evidence is tied to this exact SHA.
-- Contract alignment and the documented cross-platform verification issues are resolved on the tested PR head. Release readiness remains a separate project-level decision.
+- The latest canonical SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` was independently verified successfully on Ubuntu and Windows in matrix run `39554661451`; evidence is tied to this exact SHA.
+- Matrix coverage included contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification.
+- Canonical hosted CI failures with `steps: []` remain infrastructure failures, not source-test results. Release readiness and target-specific execution claims remain separate decisions.
 
 ## Future AST expansion
 
