@@ -1,6 +1,6 @@
 # One Human-Language Tool Orchestration and Governance Implementation Plan
 
-> **Current status:** Tasks 1–13 and the language-level process/system vertical slice have source implementations and recorded historical executable evidence at their respective revisions. The current branch extends the chain with SQLite database-query and HTTP GET vertical slices, but both current implementation revisions are not yet executable-verified.
+> **Current status:** Tasks 1–16 have source implementations and recorded executable evidence at their respective revisions. The exact-SHA Ubuntu/Windows Server 2025 matrix `39554661451` checked out canonical source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and passed contract checks, build, Clippy, workspace tests, real-network tests, and offline verification. This matrix includes the database-query and HTTP GET core/CLI integration tests. Those capabilities remain experimental and bounded to the tested source forms; this does not certify every native target or constitute release approval.
 
 **Goal:** Add a deterministic, general-purpose human-language tool-orchestration foundation to One so semantic operations can invoke typed external capabilities through governed adapters without making tool command syntax the language semantics.
 
@@ -116,7 +116,7 @@ Current implementation boundary:
 
 Historical exact-SHA cross-platform evidence exists at `9038ac75f197753ff1ab6af7478e63e4831903a2` via mirror run `38929072800`. That evidence does not verify later database/HTTP changes on the current branch.
 
-## Task 15 — Language-level database-query orchestration — IMPLEMENTED / UNVERIFIED
+## Task 15 — Language-level database-query orchestration — IMPLEMENTED / VERIFIED / EXPERIMENTAL
 
 The current branch adds a real SQLite source-to-runtime slice:
 
@@ -156,9 +156,9 @@ Implementation boundary:
 - source/core tests cover success, default denial, out-of-scope denial, backend failure, and normalization;
 - CLI tests cover success, default denial, and out-of-scope denial.
 
-The source/test revision is `0aa4acdf3796235eac432138fec829b6508879e3`. It is **not VERIFIED**: hosted GitHub Actions for this lineage failed both Ubuntu and Windows jobs with zero reported steps, and the available container cannot reach GitHub DNS. No support claim is made.
+Exact-SHA evidence: independent matrix run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out canonical source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and passed on Ubuntu and Windows Server 2025. Its verification script ran `cargo test --workspace --all-targets` and the targeted `database_vertical_slice` and `database_orchestration` suites. The database query slice is therefore executable-verified on those host environments, while remaining experimental, read-only, parameterized `SELECT` only, and not a general database abstraction. Canonical hosted CI runs with zero steps remain inconclusive infrastructure evidence.
 
-## Task 16 — Language-level HTTP GET orchestration — IMPLEMENTED / UNVERIFIED
+## Task 16 — Language-level HTTP GET orchestration — IMPLEMENTED / VERIFIED / EXPERIMENTAL
 
 The current branch adds a real HTTP source-to-runtime slice:
 
@@ -199,11 +199,11 @@ Implementation boundary:
 - CLI tests cover loopback success, default denial, and out-of-scope denial;
 - HTTPS, arbitrary methods, custom headers/bodies, redirects, cookies, and API-specific authentication require separate contracts.
 
-The current implementation head is `913e644ea665711c669590a80d7ff19866cb7671`. It is **not VERIFIED**: the latest inspected hosted CI attempt on the preceding head failed both Ubuntu and Windows jobs with zero reported steps. No support claim is made.
+Exact-SHA evidence: independent matrix run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out canonical source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and passed on Ubuntu and Windows Server 2025. Its verification script ran `cargo test --workspace --all-targets` and the targeted `http_get_vertical_slice` and `http_get_orchestration` suites, including real loopback HTTP behavior. The HTTP GET slice is executable-verified on those host environments but remains experimental and limited to explicit `http://` GET with exact target scope and normalized response body. Canonical hosted CI runs with zero steps remain inconclusive infrastructure evidence.
 
 ## Task 17 — Broader language-level capability coverage — IN DEVELOPMENT
 
-After the database and HTTP slices obtain exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority:
+With the database and HTTP slices now covered by exact-SHA executable evidence, continue the same dependency chain without creating a second semantic authority; do not broaden their experimental support claims:
 
 ```text
 One source
@@ -250,4 +250,4 @@ For every capability family:
 - `Eksperimental` means a verified slice exists but coverage/support is intentionally limited.
 - `Didukung` is reserved for a stronger support claim.
 
-DNS, filesystem-read, process execution, and filesystem write retain their previously recorded evidence boundaries. Database query and HTTP GET are **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence passes. Broader language-level orchestration remains **Dalam pengembangan**.
+DNS, filesystem-read, process execution, filesystem write, database query, and HTTP GET have executable evidence at their individually recorded exact-SHA boundaries. Database query and HTTP GET are verified by the Ubuntu/Windows Server 2025 matrix for source SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`, but remain **Eksperimental** because their semantic and operation boundaries are intentionally narrow. Broader language-level orchestration remains **Dalam pengembangan**.

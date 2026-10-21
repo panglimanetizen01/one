@@ -32,8 +32,8 @@ The matrix verifies the recorded source revision on its Ubuntu and Windows hosts
 - Experimental source-level DNS orchestration through `cari alamat`.
 - Experimental source-level filesystem-read orchestration through `baca berkas`.
 - Experimental source-level process-execution orchestration through `jalankan proses`, limited to one explicitly targeted program without arguments and backed by the recorded cross-platform evidence.
-- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission and the recorded Termux/Android evidence boundary.
-- Experimental source-level database-query and HTTP-GET slices within their recorded Termux/Android exact-SHA boundaries.
+- Experimental source-level filesystem-write orchestration through `tulis ke berkas`, limited to one text payload and one explicitly targeted file, with `filesystem.write` permission; source/core/CLI tests passed in the exact-SHA Ubuntu/Windows matrix `39554661451` for `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`, alongside historical Termux evidence.
+- Experimental source-level database-query and HTTP-GET slices with historical Termux evidence and source/core/CLI tests passing in the exact-SHA Ubuntu/Windows matrix `39554661451` for `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`.
 
 ## Native backend development boundary — PR #64
 
@@ -78,8 +78,8 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 - The language-level orchestration catalog is not complete.
 - Filesystem write is experimental only within the single-text-payload/single-target boundary and its currently verified Android/Termux platform boundary.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary.
-- Database query is a read-only parameterized SQLite SELECT slice and remains bounded to its recorded Termux/Android evidence.
-- HTTP GET is a bounded HTTP/1.1 GET slice and remains bounded to its recorded Termux/Android evidence.
+- Database query remains a read-only parameterized SQLite SELECT slice; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
+- HTTP GET remains limited to explicit `http://` HTTP/1.1 GET, exact target scope, and response-body normalization; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
 - Native Linux x86_64 and Windows x86_64 execution are not yet verified for the merged `main` revision.
 - Native C/C++ FFI, Python/Node/JVM native bindings, package registry, IDE/editor, GUI framework integration, additional locales, and additional protocol/capability inventory beyond the verified boundary remain future work.
 

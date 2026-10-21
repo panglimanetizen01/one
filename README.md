@@ -135,15 +135,15 @@ Technical alias:
 one run main.one --allow filesystem.write --target data/hasil.txt
 ```
 
-The executable evidence remains bounded to the recorded Termux/Android exact SHA. This does not establish Ubuntu/Windows support for that revision.
+The filesystem-write source/core/CLI tests also passed in the exact-SHA Ubuntu/Windows Server 2025 matrix for source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` (run [39554661451](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451)). This proves the tested source-level slice on those host environments, not universal filesystem portability or release readiness.
 
 ## Database query boundary
 
-A SQLite-backed source-level database query path is implemented and executable-verified within its recorded Termux/Android boundary. It remains a read-only parameterized SELECT slice and is not a general database abstraction.
+A SQLite-backed source-level database query path is executable-verified within its recorded Termux/Android boundary and its core/CLI test suites passed in the exact-SHA Ubuntu/Windows Server 2025 matrix for source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` (run [39554661451](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451)). It remains a read-only parameterized SELECT slice and is not a general database abstraction.
 
 ## HTTP GET boundary
 
-An explicit HTTP GET source-level path is implemented and executable-verified within its recorded Termux/Android boundary. The slice is bounded to explicit `http://` URLs, GET, exact target scope, and response-body normalization.
+An explicit HTTP GET source-level path is executable-verified within its recorded Termux/Android boundary and its core/CLI loopback test suites passed in the exact-SHA Ubuntu/Windows Server 2025 matrix for source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` (run [39554661451](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451)). The slice is bounded to explicit `http://` URLs, GET, exact target scope, and response-body normalization.
 
 ## Documentation
 
