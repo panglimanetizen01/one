@@ -101,7 +101,7 @@
 - [ ] **Step 2: Full one-core test suite**
   - Run: `cargo test -p one-core`
 - [ ] **Step 3: Workspace checks required by protocol**
-  - Run: `cargo check --workspace --all-targets --locked`
+  - Run: `cargo check --workspace --all-targets`
   - Run: `cargo clippy --workspace --all-targets --locked -- -D warnings`
 - [ ] **Step 4: Contract and diff verification**
   - Run: `python tools/check_contract.py`
