@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Gate 1 toolchain execution boundary
-        run: cargo test -p one-core --test toolchain_execution_boundary --locked
+        run: cargo test -p one-core --test toolchain_execution_boundary
       - name: Tests
         run: cargo test --workspace --all-targets
       - name: Deterministic .oneir and .onepkg artifacts
