@@ -39,7 +39,11 @@ fn fixture_executable() -> PathBuf {
 fn command_preserves_executable_and_arguments_without_shell_parsing() {
     let executable = fixture_executable();
     let source = Path::new("source file; $(do-not-run)").to_path_buf();
-    let artifact = Path::new("artifact with spaces").to_path_buf();
+    let artifact = std::env::temp_dir().join(format!(
+        "one-gate1-artifact with spaces-{}",
+        std::process::id()
+    ));
+    let _ = fs::remove_file(&artifact);
     let command = ToolchainCommand::for_build(&executable, &toolchain(), &source, &artifact);
 
     assert_eq!(command.executable(), executable.as_path());
@@ -49,7 +53,7 @@ fn command_preserves_executable_and_arguments_without_shell_parsing() {
             OsString::from("--target=x86_64-unknown-linux-gnu"),
             source.into_os_string(),
             OsString::from("-o"),
-            artifact.into_os_string(),
+            artifact.as_os_str().to_owned(),
         ]
     );
 
@@ -57,7 +61,13 @@ fn command_preserves_executable_and_arguments_without_shell_parsing() {
         .invoke(&command)
         .expect("fixture invocation should succeed");
     assert!(invocation.stdout().contains("source file; $(do-not-run)"));
-    assert!(invocation.stdout().contains("output=artifact with spaces"));
+    assert!(
+        invocation
+            .stdout()
+            .contains(&format!("output={}", artifact.display()))
+    );
+    assert!(artifact.is_file(), "fixture should create the requested artifact");
+    fs::remove_file(&artifact).expect("temporary artifact should be removed");
 }
 
 #[test]
