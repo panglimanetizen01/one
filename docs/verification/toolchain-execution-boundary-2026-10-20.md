@@ -32,9 +32,9 @@ The source, tests, workflow, and documentation have been read back from GitHub a
 
 The available container has no `rustc`, `cargo`, `rustfmt`, or `clippy-driver`; network DNS resolution to GitHub and Rust distribution hosts also fails. Therefore this environment cannot execute the Rust verification commands.
 
-The clean Gate 1 branch run [`39543402886`](https://github.com/panglimanetizen01/one/actions/runs/39543402886) targeted source/test revision `79ee6b9325f21e46e46447e3696c8f44316ed19b`. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job logs. An earlier run at the same code path was retried and again failed before executable steps. This is infrastructure/verification-insufficiency evidence, not a source-code test result.
+The clean Gate 1 branch run [`39543528736`](https://github.com/panglimanetizen01/one/actions/runs/39543528736) targeted source/test revision `215c41b325161da6bee82208e3ccbad0bf114ba1`. Both matrix jobs failed with empty `steps: []`, empty runner names, and no downloadable job logs. Multiple earlier runs and a retry of a prior exact-branch run showed the same pre-step failure. This is infrastructure/verification-insufficiency evidence, not a source-code test result.
 
-The branch has a focused Gate 1 CI step and push-triggered CI for branches, but repeated workflow attempts have failed before checkout/toolchain steps. No Rust command has been shown to pass or fail.
+The branch has a focused Gate 1 CI step and push-triggered CI for branches, but repeated workflow attempts have failed before checkout/toolchain steps. No Rust command has been shown to pass or fail. Subsequent documentation-only commits do not alter the source/test blobs; their own workflow runs also fail before executable steps.
 
 ## Required commands not yet evidenced
 
