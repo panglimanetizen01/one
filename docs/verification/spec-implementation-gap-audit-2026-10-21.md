@@ -6,23 +6,23 @@
 
 ## Executive summary
 
-The repository contains a normative concrete grammar and draft-normative lexical and AST contracts. The current Rust AST/parser implementation does not fully satisfy the AST contract for multi-word names. This is an implementation/specification conformance gap, not a reason to weaken the contract.
+The repository contains a concrete grammar and draft lexical and AST contracts. The current Rust AST/parser implementation does not implement the proposed source-preserving multi-word Name representation in the AST draft. This is a confirmed design/implementation gap against the proposed architecture, but it is not yet a violation of an approved AST contract: the AST document explicitly remains draft normative for review. Resolve the AST contract's approval and boundary details before treating this as a release-blocking conformance failure.
 
 The audit was performed by reading canonical GitHub files. It did not run Rust tests, Clippy, the contract checker, or platform verification. No runtime or release status is upgraded by this document.
 
 ## Confirmed findings
 
-### P0 — AST name representation does not match the AST contract
+### P0 candidate — AST name representation does not yet meet the proposed AST design
 
-**Normative requirement:** `docs/spec/one-v0.1-ast.md` requires a logical `Name` node containing component words and source spans. It states that a multi-word name must preserve its complete span and the span of each component.
+**Draft requirement:** `docs/spec/one-v0.1-ast.md` proposes a logical `Name` node containing component words and source spans. It states that a multi-word name must preserve its complete span and the span of each component. The same document labels itself **Draft normative contract for review**, so it must not be described as already approved.
 
 **Observed implementation:** `crates/one-core/src/ast.rs` stores names as `String` in declarations, assignments, function names/parameters, loop bindings, and references. `crates/one-core/src/parser.rs` joins declaration words using `words.join(" ")`. The resulting AST does not retain per-word name spans or a structured `Name` value.
 
-**Risk:** downstream diagnostics, refactoring/tooling, exact grammar-boundary validation, and future localization cannot rely on the source-preserving representation promised by the AST contract. Updating the specification to match the current implementation would silently weaken an approved contract.
+**Risk:** downstream diagnostics, refactoring/tooling, exact grammar-boundary validation, and future localization cannot rely on the source-preserving representation promised by the AST contract. Changing the draft to fit implementation may discard an important source-preservation goal. Conversely, the implementation must not be called nonconforming to an approved contract until the draft is reviewed and accepted. Decide the contract first, then implement against that explicit decision.
 
 **Required remediation:** implement the specified logical name representation and preserve word/span data through parser construction and semantic analysis. Update all affected consumers deliberately. Add tests for single-word and multi-word names, exact spans, grammar terminators, and deterministic diagnostics. Run the complete offline verification workflow before proposing merge.
 
-**Merge gate:** do not mark AST conformance complete until implementation and tests demonstrate the contract.
+**Merge gate:** first approve or revise the AST draft with an explicit review decision; then implement and test the accepted contract. Do not claim AST conformance complete before both steps.
 
 ### P1 — Specification status and dependency gates must remain explicit
 
