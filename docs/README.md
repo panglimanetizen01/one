@@ -60,6 +60,8 @@ User documentation is intentionally separate from normative engineering contract
 - `spec/one-v0.1-cli-contract.md` — canonical CLI commands, aliases, exit codes, project operations, and determinism.
 - `spec/one-v0.1-interop.md` — explicit foreign-process interoperability boundary.
 - `spec/one-network-foundation.md` — implemented typed network semantic/IR/reference boundary and explicit limits.
+- `superpowers/specs/2026-10-20-toolchain-execution-boundary-design.md` — shell-free compiler/linker invocation boundary, structured errors, and stale-artifact rejection contract.
+- `superpowers/plans/2026-10-20-toolchain-execution-boundary.md` — Gate 1 implementation and verification plan.
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
 ## Verification and release
@@ -72,6 +74,7 @@ User documentation is intentionally separate from normative engineering contract
 - `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded source revision.
 - `verification/one-v0.1-linux-windows-2026-10-15.md` — historical independent Linux/Windows execution evidence for its explicitly recorded source revision.
 - `verification/native-backends-2026-10-19.md` — exact verification boundary for PR #64 native hosted backends.
+- `verification/toolchain-execution-boundary-2026-10-20.md` — Gate 1 implementation findings and exact verification limitations.
 - `release/one-v0.1.md` — release acceptance contract and supported/future matrix.
 
 ## Derivative artifacts
