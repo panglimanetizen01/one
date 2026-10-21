@@ -49,7 +49,7 @@ PR #64 was merged into `main` at `ec844aa652a4d35c3891fc810d344c9c9db2f5cf`.
 
 PR #65 repaired the canonical documentation state and merged at `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`. Subsequent evidence-record commits are now on `main`; the current branch head must be read from GitHub rather than treating `100d0f...` as the current revision.
 
-At merge SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`, post-merge `One CI` run `39372356906` failed on both Ubuntu and Windows with `steps: []`, including after retry. After documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, run `39381125667` independently reproduced the same no-step failure on both matrix jobs. These are infrastructure/runner failures and provide no source-code execution result.
+At merge SHA `100d0f9553be6352b8dbc76b3e6dad67f5a7a9e2`, post-merge `One CI` run `39372356906` failed on both Ubuntu and Windows with `steps: []`, including after retry. After documentation repair commit `5e618c2514a99093c8a7c1d40faf5af7f0baf2de`, run `39381125667` independently reproduced the same no-step failure on both matrix jobs. The latest observed `main` run `39440575308` targets exact SHA `34725aa393ca31759eb88c96688063f6358ce54a` and again failed on both matrix jobs with `steps: []`. These are infrastructure/runner failures and provide no source-code execution result.
 
 ## Cross-platform evidence boundary
 
