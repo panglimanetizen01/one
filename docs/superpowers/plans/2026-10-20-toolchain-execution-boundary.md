@@ -99,7 +99,7 @@
 - [ ] **Step 1: Format check**
   - Run: `cargo fmt --check`
 - [ ] **Step 2: Full one-core test suite**
-  - Run: `cargo test -p one-core --locked`
+  - Run: `cargo test -p one-core`
 - [ ] **Step 3: Workspace checks required by protocol**
   - Run: `cargo check --workspace --all-targets --locked`
   - Run: `cargo clippy --workspace --all-targets --locked -- -D warnings`
