@@ -8,7 +8,7 @@
 
 The concrete grammar and lexical specification are normative. The AST contract now explicitly describes the current v0.1 AST schema and its limitations rather than claiming an unimplemented source-preserving tree. This resolves the specification/implementation mismatch at the v0.1 contract level. Full statement/expression ranges and per-word name spans remain documented limitations, not supported capabilities.
 
-The audit began as a source review. The independent exact-SHA matrix for canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed contract-artifact checks, build, AST regression tests, Clippy, workspace tests, real-network tests, and platform-appropriate offline verification on Ubuntu and Windows. This is current-revision verification evidence, not by itself a blanket release-readiness or universal target-execution claim.
+The audit began as a source review. The independent exact-SHA matrix for canonical `main` commit `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed contract-artifact checks, build, AST regression tests, Clippy, workspace tests, real-network tests, and platform-appropriate offline verification on Ubuntu and Windows. This is verification evidence for that source revision, not by itself a blanket release-readiness or universal target-execution claim.
 
 ## Confirmed findings
 
