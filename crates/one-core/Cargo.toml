@@ -10,6 +10,10 @@ description = "Core language implementation for One"
 name = "one_core"
 path = "src/lib.rs"
 
+[[bin]]
+name = "toolchain-fixture"
+path = "tests/fixtures/toolchain_fixture.rs"
+
 [features]
 default = []
 real-network = ["dep:rustls", "dep:webpki-roots", "dep:quinn", "dep:tokio", "dep:rcgen", "dep:h2", "dep:bytes", "dep:http"]
