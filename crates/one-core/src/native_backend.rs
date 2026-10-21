@@ -102,7 +102,9 @@ impl NativeAndroidAarch64Backend {
                 ),
             )
         })?;
-        let compiler = std::env::var_os("ONE_CLANG").unwrap_or_else(|| "clang".into());
+        let compiler = std::env::var_os("ONE_ANDROID_CLANG")
+            .or_else(|| std::env::var_os("ONE_CLANG"))
+            .unwrap_or_else(|| "clang".into());
         let status = Command::new(&compiler)
             .arg("--target=aarch64-linux-android24")
             .arg(&source_path)
@@ -376,7 +378,14 @@ macro_rules! native_backend {
                     )
                 })?;
 
-                let compiler = std::env::var_os("ONE_CLANG").unwrap_or_else(|| $compiler.into());
+                let compiler_override = if self.id() == "native-windows-x86_64" {
+                    "ONE_WINDOWS_CLANG"
+                } else {
+                    "ONE_CLANG"
+                };
+                let compiler = std::env::var_os(compiler_override)
+                    .or_else(|| std::env::var_os("ONE_CLANG"))
+                    .unwrap_or_else(|| $compiler.into());
 
                 let mut command = Command::new(&compiler);
                 command.arg($target_arg);
@@ -496,10 +505,11 @@ fn resolve_linux_x86_64_linker(
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod linker_discovery_tests {
     use super::*;
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_override_diprioritaskan() {
         let root = std::env::temp_dir().join(format!(
@@ -535,6 +545,7 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_override_tidak_kompatibel_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -565,6 +576,7 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_host_salah_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -596,6 +608,7 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_ditemukan_dari_path() {
         let root = std::env::temp_dir().join(format!(
@@ -606,15 +619,10 @@ mod linker_discovery_tests {
         let expected = bin.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&bin).unwrap();
-        std::fs::write(&expected, b"#!/bin/sh\necho 'GNU ld (GNU Binutils) 2.40'\nexit 0\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = std::fs::metadata(&expected).unwrap().permissions();
-            permissions.set_mode(0o755);
-            std::fs::set_permissions(&expected, permissions).unwrap();
-        }
+        // This test verifies PATH discovery and successful invocation, not GNU ld
+        // compatibility parsing. Use a known executable instead of a shell script
+        // so the test is independent of the host shell and script execution policy.
+        std::os::unix::fs::symlink("/bin/true", &expected).unwrap();
 
         let path_env = bin.as_os_str();
         assert_eq!(

@@ -10,7 +10,7 @@ use one_core::semantic::analyze;
 
 fn unique_temp_path() -> String {
     let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    std::env::temp_dir().join(format!("one-filesystem-write-{nanos}.txt")).display().to_string()
+    std::env::temp_dir().join(format!("one-filesystem-write-{nanos}.txt")).to_string_lossy().replace('\\', "/")
 }
 
 #[test]
