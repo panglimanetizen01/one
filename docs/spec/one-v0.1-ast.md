@@ -1,542 +1,179 @@
 # One v0.1 — AST Contract
 
-**Status:** Draft normative contract for review
-**Depends on:** Language Invariants, lexical specification, concrete grammar, name-boundary contract
-**Scope:** Parser output and source-preserving structural representation
+**Status:** Accepted for the v0.1 implementation baseline  
+**Depends on:** Approved language invariants, lexical specification, concrete grammar  
+**Scope:** Parser output consumed by semantic analysis and IR lowering
 
-## 1. Purpose
+## 1. Purpose and boundary
 
-The Abstract Syntax Tree (AST) is the stable structural boundary between parsing and semantic analysis.
+The Abstract Syntax Tree (AST) is the structural boundary between parsing and semantic analysis. It records the parse selected by the deterministic v0.1 grammar. It does not execute source, resolve names, infer types, authorize external effects, or call an LLM/network service.
 
-The AST MUST represent the structure established by the concrete grammar without retaining unresolved grammar ambiguity. It MUST preserve enough source information for deterministic diagnostics and later tooling.
-
-The AST is not the runtime IR. It is a source-oriented structural representation. Semantic analysis resolves names, types, capabilities, and other meaning after the AST is constructed.
+This contract deliberately describes the **v0.1 AST shape that the implementation exposes**. It does not promise a richer source-preserving tree than the current public types provide. Future AST expansion must be proposed as a separately reviewed compatibility change rather than assumed from aspirational diagrams.
 
 ## 2. Core invariants
 
-The v0.1 AST MUST satisfy all of the following:
-
-1. Every accepted source statement maps to exactly one normalized AST structure.
-2. No AST node may encode an unresolved choice between different semantic parses.
-3. A grammar-level multi-word name is represented as one logical `Name`, not as unrelated expression nodes.
-4. The complete source span of a multi-word name is preserved.
-5. Lexical spelling is preserved sufficiently for diagnostics and source tooling.
-6. AST construction does not perform symbol-table lookup or type inference.
-7. AST construction does not execute code.
-8. AST construction does not call an LLM or network service.
-9. Unsupported conversational prose does not receive an AST node.
-10. Equivalent grammar parses that normalize to the same semantic structure produce the same AST shape.
+1. Accepted source is parsed deterministically according to the v0.1 lexical and concrete grammar.
+2. Unsupported statements and malformed expressions are rejected; they are not converted to generic executable intent.
+3. Multi-word names are one logical name in the AST, represented by a normalized string formed by joining the grammar-selected word tokens with one ASCII space.
+4. The normalized name string is semantic identity for v0.1. Source spelling and component-level name spans are not retained by the AST.
+5. Every statement variant carries a `Span` anchor inherited from its introducer token. This is a deterministic diagnostic anchor, **not** a full statement-range span.
+6. Expression nodes do not currently carry their own spans.
+7. `Program` does not currently carry a span; it contains an ordered vector of statements.
+8. AST construction does not perform symbol-table lookup, type inference, capability checks, or execution.
+9. The parser must not guess between distinct meanings. Unsupported or malformed input returns a diagnostic and no successful `Program`.
 
 ## 3. Source locations
 
-Every externally visible AST node MUST have a source span.
+The current `Span` type contains:
 
-A span is half-open:
-
-```text
-Span = [start, end)
-```
-
-Each endpoint MUST identify at least:
-
-```text
-line
-column
-byte offset
-```
-
-The implementation MAY additionally retain UTF-8 character offsets or token indices.
-
-For:
-
-```text
-nama pengguna adalah Budi
-```
-
-the `Name("nama pengguna")` span MUST cover both `nama` and `pengguna`, but MUST NOT include `adalah`.
-
-## 4. Name node
-
-The canonical source-level name node is:
-
-```text
-Name {
-    words: [NameWord, ...],
-    span: Span
-}
-
-NameWord {
-    text: String,
-    span: Span
+```rust
+Span {
+    start: usize,
+    end: usize,
+    line: usize,
+    column: usize,
 }
 ```
 
-A name MUST contain at least one word.
+`start` and `end` are byte offsets; `line` and `column` identify the token's starting location. In v0.1, statement spans are anchors based on the statement introducer token. They do not cover the complete statement or each component of a multi-word name.
 
-The AST MUST NOT represent a multi-word name by concatenating arbitrary source text and losing its component spans.
+Diagnostics that need a location must use the available statement/token anchor. Consumers MUST NOT interpret a statement span as a complete statement range.
 
-Example:
+Full node ranges, expression spans, and per-word name spans are intentionally outside this accepted v0.1 AST contract. Adding them requires tests and a reviewed compatibility change.
 
-```text
-nama pengguna
-```
+## 4. Program and statement schema
 
-normalizes to one logical name:
+The v0.1 public schema is:
 
-```text
-Name {
-    words: ["nama", "pengguna"]
-}
-```
-
-not a binary expression and not an unresolved text blob.
-
-## 5. Program and statement nodes
-
-Minimum structure:
-
-```text
+```rust
 Program {
-    statements: [Statement],
-    span: Span
+    statements: Vec<Statement>,
 }
+
+Statement =
+    Declaration { name: String, value: Expr, span: Span }
+  | Assignment  { name: String, value: Expr, span: Span }
+  | Action      { name: String, args: Vec<Expr>, span: Span }
+  | Conditional {
+        condition: Expr,
+        then_block: Vec<Statement>,
+        else_block: Vec<Statement>,
+        span: Span,
+    }
+  | Loop { kind: LoopKind, body: Vec<Statement>, span: Span }
+  | Function {
+        name: String,
+        params: Vec<String>,
+        result: Expr,
+        body: Vec<Statement>,
+        span: Span,
+    }
+  | Event { trigger: Vec<String>, body: Vec<Statement>, span: Span }
+
+LoopKind =
+    ForEach { variable: String, iterable: Expr }
+  | While { condition: Expr }
 ```
 
-`Statement` is one of:
+The enum/field names above are the public v0.1 AST contract. The AST is not required to use a different algebraic model such as separate `Declare`, `Condition`, or `EventTrigger` structs.
 
-```text
-Declare
-Assign
-Action
-Condition
-Loop
-Function
-Event
-```
+## 5. Data and name representation
 
-No statement node may represent unsupported or unresolved source.
-
-## 6. Data nodes
-
-### Declaration
-
-```text
-Declare {
-    name: Name,
-    value: Expression,
-    span: Span
-}
-```
-
-Source:
+Declarations and assignments use a normalized `String` name:
 
 ```text
 nama pengguna adalah "Budi"
-```
-
-produces one `Declare` with `Name(["nama", "pengguna"])` and `Text("Budi")`.
-
-The word `adalah` is grammar syntax and is not part of the `Name` node.
-
-### Assignment
-
-```text
-Assign {
-    name: Name,
-    value: Expression,
-    span: Span
-}
-```
-
-Source:
-
-```text
 saldo rekening menjadi 100000
 ```
 
-produces one `Assign` with `Name(["saldo", "rekening"])` and an integer expression.
+The first example creates a declaration whose `name` is `"nama pengguna"`; the second creates an assignment whose `name` is `"saldo rekening"`.
 
-## 7. Action nodes
+Name words are selected by the concrete grammar. Structural separators such as `adalah` and `menjadi` are excluded from the name. A name is not an arbitrary slice of prose: the parser must apply the defined grammar boundary and reject unsupported forms.
 
-The v0.1 core contains explicit actions only:
+References use `Expr::Identifier(String)`. Function names and parameters, loop variables and iterable references, and event triggers use the corresponding string fields shown in the schema. Event triggers are retained as an ordered `Vec<String>` of token spellings.
 
-```text
-Action = Display
-       | CreateList
-       | AddToList
-       | RemoveFromList
+Because v0.1 normalizes a multi-word name to a string, component word spans and exact original whitespace are not available in the AST. Localization or tooling code must not assume otherwise.
+
+## 6. Action schema
+
+The implementation uses an explicit, grammar-validated action name and argument list:
+
+```rust
+Action { name: String, args: Vec<Expr>, span: Span }
 ```
 
-### Display
+Examples of normalized action names include `tampilkan`, `sapa`, `cari alamat`, `baca berkas`, `tulis ke berkas`, `ambil dari`, `jalankan proses`, `kueri database`, `buat daftar`, `tambahkan`, and `hapus`.
 
-```text
-Display {
-    value: Expression,
-    span: Span
-}
+The generic AST variant does **not** mean arbitrary action text is accepted. The parser must recognize an explicit production and reject unsupported action heads with a stable diagnostic. Semantic analysis and IR lowering validate the action's argument contract.
+
+## 7. Expression schema
+
+The v0.1 expression schema is:
+
+```rust
+Expr =
+    Text(String)
+  | Number(i64)
+  | Boolean(bool)
+  | Nothing
+  | Identifier(String)
+  | Binary { left: Box<Expr>, op: BinaryOp, right: Box<Expr> }
+  | Call { name: String, args: Vec<Expr> }
+
+BinaryOp =
+    Add | Subtract | Multiply | Divide
+  | Equal | Greater | Less | AtLeast | AtMost
 ```
 
-### CreateList
-
-```text
-CreateList {
-    name: Name,
-    span: Span
-}
-```
-
-### AddToList
-
-```text
-AddToList {
-    value: Expression,
-    target: Name,
-    span: Span
-}
-```
-
-### RemoveFromList
-
-```text
-RemoveFromList {
-    value: Expression,
-    target: Name,
-    span: Span
-}
-```
-
-There is deliberately no `GenericAction` node in v0.1. An arbitrary first word cannot become an executable action merely because a matching identifier exists.
-
-## 8. Condition nodes
-
-```text
-Condition {
-    test: ConditionExpression,
-    then_branch: Block,
-    else_branch: Option<Block>,
-    span: Span
-}
-
-Comparison {
-    operator: ComparisonOperator,
-    left: Expression,
-    right: Expression,
-    span: Span
-}
-```
-
-`ComparisonOperator` contains only operators admitted by the concrete grammar, including `sudah`, `belum`, `sama dengan`, `lebih besar dari`, and `lebih kecil dari`.
-
-The AST MUST preserve operator identity. It MUST NOT store only the original phrase and defer interpretation to runtime.
-
-## 9. Loop nodes
-
-```text
-Loop = ForEach | While
-```
-
-### ForEach
-
-```text
-ForEach {
-    binding: Name,
-    source: Name,
-    body: Block,
-    span: Span
-}
-```
-
-### While
-
-```text
-While {
-    test: ConditionExpression,
-    body: Block,
-    span: Span
-}
-```
-
-The conversational phrase `selama masih ada ...` is not represented because it is outside v0.1.
-
-## 10. Function nodes
-
-```text
-Function {
-    name: Name,
-    parameters: [Parameter],
-    result: Expression,
-    body: [Statement],
-    span: Span
-}
-
-Parameter {
-    name: Name,
-    span: Span
-}
-```
-
-The parser records syntactic function structure only. It does not decide whether a function name is defined, duplicated, or callable.
-
-A function call is an expression:
+Operator matching, precedence/associativity, and legal expression boundaries are defined by the concrete grammar and parser. Type validity belongs to semantic analysis. Integer values use `i64` in the v0.1 implementation; changing the integer model requires a type-system decision and compatibility tests.
 
-```text
-Call {
-    function: Name,
-    arguments: [Expression],
-    span: Span
-}
-```
-
-The `dengan` / `dan` words are grammar syntax and are not executable operation nodes.
+## 8. Blocks and control flow
 
-## 11. Event nodes
+A conditional stores its condition expression and separate `then_block` / `else_block` statement vectors. A loop stores a `LoopKind` and its body. A function stores its normalized name, normalized parameter names, result expression, and body. An event stores its ordered trigger tokens and body.
 
-```text
-Event {
-    trigger: EventTrigger,
-    body: Block,
-    span: Span
-}
-```
+The parser enforces indentation and block structure. A successful AST must not contain an unresolved parse choice. Empty-block handling follows the concrete grammar and parser diagnostics; the AST schema itself does not reinterpret empty blocks.
 
-`EventTrigger` MUST retain its parsed components and source spans. It MUST NOT contain a free-form semantic intent generated from prose.
+## 9. Error and ambiguity behavior
 
-The final event-trigger semantic model is a later dependency. This AST contract therefore requires structured source representation and exact span preservation; runtime dispatch semantics belong to later semantic/runtime specifications.
+The parser returns either a complete `Program` or a diagnostic bundle. It must not expose a partial public AST for malformed input.
 
-## 12. Expression nodes
+- No valid grammar parse: reject with a parser diagnostic.
+- Exactly one grammar-defined parse: return its AST.
+- Unsupported action or expression token: reject; do not create a generic fallback node.
+- Distinct semantic interpretations: reject rather than guess.
 
-Minimum expression model:
+Stable diagnostic codes and their documented meanings must remain deterministic. A change to error codes or parse boundaries requires regression tests and an explicit compatibility review.
 
-```text
-Expression = Text
-           | Integer
-           | Boolean
-           | Nothing
-           | Reference
-           | Call
-           | Binary
-```
+## 10. Conformance tests
 
-### Text
+The v0.1 AST test suite must cover:
 
-```text
-Text {
-    value: String,
-    span: Span
-}
-```
+1. Declaration and assignment with one-word and multi-word names.
+2. Normalized names exclude structural separators and preserve word order.
+3. Every statement variant has the expected enum and fields.
+4. Expression variants and binary operators match the concrete grammar.
+5. Action heads outside the grammar are rejected.
+6. Function, loop, conditional, and event structures preserve their parsed order and nesting.
+7. Statement span anchors identify the introducer token and are not mistaken for full statement ranges.
+8. Invalid/incomplete statements return diagnostics rather than a partial `Program`.
+9. Repeated parsing of identical source yields structurally identical AST output.
+10. Existing valid, invalid, golden IR, semantic, and CLI fixtures remain deterministic.
 
-### Integer
+## 11. Explicit v0.1 limitations
 
-```text
-Integer {
-    value: implementation-neutral integer literal representation,
-    span: Span
-}
-```
+The following are not guarantees of this AST version:
 
-Exact integer width is a later type-system decision and MUST NOT be silently assumed here.
+- component-level source spans for multi-word names;
+- full statement or expression ranges;
+- a distinct `Name` type in the public AST;
+- separate AST variants for every action;
+- a source-preserving event-trigger node;
+- an implementation-neutral integer literal type.
 
-### Boolean
+These limitations are documented rather than hidden. A future expansion should add the missing representation with fail-first tests and a coordinated migration across parser, semantic analysis, IR lowering, diagnostics, and tooling. It must not silently change v0.1 meaning.
 
-```text
-Boolean {
-    value: true | false,
-    span: Span
-}
-```
+## 12. Decision
 
-### Nothing
+For v0.1, the accepted AST is the concrete public schema implemented by `crates/one-core/src/ast.rs`, with grammar-defined normalized string names, explicit statement variants, generic-but-validated action nodes, expression enums, and statement-introducer span anchors.
 
-```text
-Nothing {
-    span: Span
-}
-```
-
-### Reference
-
-```text
-Reference {
-    name: Name,
-    span: Span
-}
-```
-
-A `Reference` is syntactic. It does not prove that the referenced name exists.
-
-### Binary
-
-```text
-Binary {
-    operator: BinaryOperator,
-    left: Expression,
-    right: Expression,
-    span: Span
-}
-```
-
-`BinaryOperator` is an explicit enum for the grammar's arithmetic operators. Precedence and associativity are parser contracts; type validity belongs to semantic/type analysis.
-
-## 13. Blocks
-
-```text
-Block {
-    statements: [Statement],
-    span: Span
-}
-```
-
-A block MUST contain at least one statement under the current concrete grammar.
-
-Indentation is structural syntax and is represented by block nesting rather than executable indentation nodes.
-
-## 14. AST normalization
-
-The parser MUST normalize syntactic variants that are explicitly equivalent under the grammar into one semantic AST shape.
-
-The parser MUST NOT normalize distinct semantic meanings into one AST shape merely because their surface text looks similar.
-
-For example, `nama pengguna` and `nama` remain distinct names when both are valid references.
-
-The complete `Name.words` sequence MUST be preserved.
-
-## 15. Ambiguity handling
-
-The AST layer receives input only after concrete parsing has established a unique semantic parse.
-
-Therefore:
-
-- zero parses → parser diagnostic; no AST;
-- one semantic parse → construct one AST;
-- multiple equivalent parses → normalize to one AST;
-- multiple different semantic parses → `EAMBxxx`; no AST.
-
-An AST MUST NEVER contain an `Ambiguous` node as a substitute for rejecting unresolved source in v0.1.
-
-## 16. Invalid AST cases
-
-The following source forms MUST produce no AST:
-
-```text
-apel
-```
-
-because no core action or statement production accepts it.
-
-```text
-nama menjadi
-```
-
-because the assignment has no expression.
-
-```text
-kalau umur 17
-    tampilkan "..."
-```
-
-because the comparison operator is missing.
-
-```text
-selama masih ada barang di daftar belanja
-    tampilkan barang
-```
-
-because the conversational loop-condition extension is outside v0.1.
-
-```text
-tambahkan apel entah ke mana
-```
-
-because the target does not satisfy an explicit production boundary.
-
-A parser MUST NOT create a partial AST and let later semantic analysis guess missing structure.
-
-## 17. Source-span acceptance tests
-
-The test suite MUST verify:
-
-1. single-word name spans cover exactly one word;
-2. multi-word name spans cover every component word;
-3. structural keywords are excluded from name spans;
-4. declaration, assignment, action, condition, loop, function, event, and expression nodes have enclosing spans;
-5. nested block spans are stable;
-6. literal spans follow the implementation's documented delimiter convention;
-7. repeated parsing preserves identical spans;
-8. malformed input does not produce a partial public AST.
-
-## 18. Structural acceptance tests
-
-The conformance suite MUST establish at minimum:
-
-### Valid
-
-```text
-nama pengguna adalah "Budi"
-```
-
-→ one `Declare` with a two-word `Name` and `Text` value.
-
-```text
-saldo rekening menjadi 100000
-```
-
-→ one `Assign` with a two-word `Name` and integer value.
-
-```text
-tambahkan apel ke daftar buah
-```
-
-→ one `AddToList` with an expression value and two-word target `Name`.
-
-```text
-untuk setiap teman di daftar teman
-    tampilkan teman
-```
-
-→ one `ForEach` with a two-word source `Name` and nested `Block`.
-
-### Invalid
-
-The suite MUST reject all invalid forms in section 16 and verify that no ambiguous source can be represented as a valid AST.
-
-## 19. Semantic boundary
-
-The AST does NOT decide:
-
-- whether a name is defined;
-- whether two names collide;
-- whether an expression has a valid type;
-- whether an operation requires a capability;
-- whether a function call is valid for its target function;
-- whether an event can be registered;
-- how a value is represented at runtime;
-- how the AST lowers to common semantic IR.
-
-Those decisions belong to subsequent semantic, type, capability, and IR contracts.
-
-## 20. Determinism requirement
-
-For identical normalized source and identical grammar version, parsing MUST produce structurally identical AST output, including node kinds, name-word ordering, and source spans.
-
-AST output MUST NOT depend on machine learning, LLM output, network access, filesystem enumeration order, process timing, prior execution history, or editor state.
-
-## 21. Compatibility and implementation gate
-
-This AST contract becomes normative after review acceptance.
-
-Before parser implementation is updated to claim conformance:
-
-1. lexical and concrete grammar gates must agree;
-2. implementation types must represent the AST schema;
-3. parser tests must cover valid, invalid, boundary, ambiguity, and span cases;
-4. conformance fixtures must assert AST structure, not only successful parsing;
-5. downstream semantic analysis must consume this AST rather than reparsing source text.
-
-## 22. Design decision
-
-**Proposed v0.1 AST:** deterministic, source-oriented structure with explicit `Name` nodes, complete source spans, explicit action nodes, structured control-flow nodes, and no unresolved ambiguity node.
-
-Principle:
-
-> Parse once into a stable structure; perform semantic meaning after the structure is unambiguous.
+This decision closes the discrepancy between the previous aspirational draft and the implementation baseline. It does **not** claim that full source-preserving AST tooling, multi-locale conformance, or release verification is complete.
