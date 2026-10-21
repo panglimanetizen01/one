@@ -102,7 +102,9 @@ impl NativeAndroidAarch64Backend {
                 ),
             )
         })?;
-        let compiler = std::env::var_os("ONE_CLANG").unwrap_or_else(|| "clang".into());
+        let compiler = std::env::var_os("ONE_ANDROID_CLANG")
+            .or_else(|| std::env::var_os("ONE_CLANG"))
+            .unwrap_or_else(|| "clang".into());
         let status = Command::new(&compiler)
             .arg("--target=aarch64-linux-android24")
             .arg(&source_path)
@@ -376,7 +378,14 @@ macro_rules! native_backend {
                     )
                 })?;
 
-                let compiler = std::env::var_os("ONE_CLANG").unwrap_or_else(|| $compiler.into());
+                let compiler_override = if self.id() == "native-windows-x86_64" {
+                    "ONE_WINDOWS_CLANG"
+                } else {
+                    "ONE_CLANG"
+                };
+                let compiler = std::env::var_os(compiler_override)
+                    .or_else(|| std::env::var_os("ONE_CLANG"))
+                    .unwrap_or_else(|| $compiler.into());
 
                 let mut command = Command::new(&compiler);
                 command.arg($target_arg);
