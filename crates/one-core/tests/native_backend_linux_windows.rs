@@ -95,6 +95,7 @@ fn ketiga_backend_menolak_ir_yang_belum_didukung() {
     assert_eq!(error.code(), "NATIVE-CODEGEN-UNSUPPORTED");
 }
 
+#[cfg(unix)]
 #[test]
 fn linux_x86_64_build_menggunakan_cross_linker_x86_64() {
     let backend = NativeLinuxX86_64Backend::new();
