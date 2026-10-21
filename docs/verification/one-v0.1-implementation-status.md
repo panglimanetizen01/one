@@ -2,7 +2,7 @@
 
 | Area | State | Evidence in canonical repository |
 |---|---|---|
-| Foundation | COMPLETE | approved architecture/spec docs |
+| Foundation | ACCEPTED / NORMATIVE | `docs/foundation/one-v0.1-foundation.md` + accepted language invariants; implementation conformance is tracked separately |
 | Lexical contract | COMPLETE | `docs/spec/one-v0.1-lexical.md` |
 | Concrete grammar | COMPLETE | `docs/spec/one-v0.1-grammar.md` |
 | AST | IMPLEMENTED | `crates/one-core/src/ast.rs` + AST contract |
