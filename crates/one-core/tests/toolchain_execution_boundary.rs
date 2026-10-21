@@ -381,7 +381,7 @@ fn high_level_build_rejects_preexisting_artifact_to_prevent_stale_success() {
     assert_eq!(invoker.calls.get(), 0);
     assert_eq!(
         fs::read(&artifact).expect("stale artifact must remain untouched"),
-        b"stale artifact"
+        b"stale artifact".to_vec()
     );
     fs::remove_file(artifact).expect("stale artifact fixture should be removed");
 }
