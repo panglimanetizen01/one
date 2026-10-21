@@ -67,7 +67,7 @@
 - [ ] **Step 5: Export the public boundary from `one_core`**
   - Add `pub mod toolchain` and the selected public re-exports in `lib.rs`.
 - [ ] **Step 6: Run Gate 1 tests**
-  - Run: `cargo test -p one-core --test toolchain_execution_boundary --locked`
+  - Run: `cargo test -p one-core --test toolchain_execution_boundary`
   - Expected: all Gate 1 tests pass.
 
 ### Task 3: Implement high-level execution and compatibility/artifact validation
@@ -88,7 +88,7 @@
   - Resolve command, invoke it, then require `artifact.is_file()`.
   - Return `NativeArtifact { path, format }` on success.
 - [ ] **Step 3: Run focused tests**
-  - Run: `cargo test -p one-core --test toolchain_execution_boundary --locked`
+  - Run: `cargo test -p one-core --test toolchain_execution_boundary`
   - Expected: all tests pass.
 
 ### Task 4: Full GREEN, Clippy, repository verification
