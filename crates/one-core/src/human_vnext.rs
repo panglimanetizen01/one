@@ -292,7 +292,7 @@ mod tests {
             program.declarations,
             vec![HumanDeclaration::Data {
                 name: "pesan".into(),
-                value: HumanValue::Text("Halo dunia\nIni tanda kutip \" dan titik koma ;".into()),
+                value: HumanValue::Text("Halo dunia\nIni tanda kutip \" dan titik koma ;\n".into()),
             }]
         );
     }
@@ -582,19 +582,19 @@ mod task_runtime_tests {
 
     fn task_program() -> HumanProgram {
         parse(concat!(
-            "Buat aplikasi daftar tugas\\n",
-            "Pengguna bisa menambahkan tugas\\n",
-            "    Terima judul tugas\\n",
-            "    Simpan tugas baru\\n",
-            "Pengguna bisa melihat semua tugas\\n",
-            "    Tampilkan semua tugas\\n",
-            "Pengguna bisa menandai tugas sebagai selesai\\n",
-            "    Terima tugas yang dipilih\\n",
-            "    Tandai tugas sebagai selesai\\n",
-            "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\\n",
-        )).expect("task app source should parse")
+            "Buat aplikasi daftar tugas\n",
+            "Pengguna bisa menambahkan tugas\n",
+            "    Terima judul tugas\n",
+            "    Simpan tugas baru\n",
+            "Pengguna bisa melihat semua tugas\n",
+            "    Tampilkan semua tugas\n",
+            "Pengguna bisa menandai tugas sebagai selesai\n",
+            "    Terima tugas yang dipilih\n",
+            "    Tandai tugas sebagai selesai\n",
+            "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+        ))
+        .expect("task app source should parse")
     }
-
     #[test]
     fn task_app_persists_across_sessions_and_marks_completion() {
         let path = storage_path();
