@@ -171,13 +171,15 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
             // Preserve blank lines at the end of the text block, including a
             // final newline when the source itself ends immediately after data.
             let boundary_line = meaningful.get(index).map_or(lines.len() + 1, |entry| entry.0);
-            for blank_line in next_source_line..boundary_line {
-                if lines[blank_line - 1].trim().is_empty() {
-                    text_lines.push(String::new());
+            // If there is no nonblank payload line, the block denotes the empty
+            // string. A final source newline alone must not turn it into a
+            // one-newline value.
+            if !text_lines.is_empty() {
+                for blank_line in next_source_line..boundary_line {
+                    if lines[blank_line - 1].trim().is_empty() {
+                        text_lines.push(String::new());
+                    }
                 }
-            }
-            if text_lines.is_empty() {
-                return Err(error(header_line, "H0009", "Blok teks harus memiliki setidaknya satu baris"));
             }
             declarations.push(HumanDeclaration::Data {
                 name,
@@ -348,6 +350,19 @@ mod tests {
         let source = "Buat aplikasi catatan\nTolong lakukan sesuatu\n";
         let error = parse(source).expect_err("unknown instruction must fail");
         assert_eq!(error.code, "H0016");
+    }
+
+    #[test]
+    fn accepts_empty_text_block_without_inventing_a_newline() {
+        let source = "Buat aplikasi catatan\nBuat data pesan\n    Isi teks berikut\n";
+        let program = parse(source).expect("empty text is a valid text value");
+        assert_eq!(
+            program.declarations,
+            vec![HumanDeclaration::Data {
+                name: "pesan".into(),
+                value: HumanValue::Text(String::new()),
+            }]
+        );
     }
 
     #[test]
