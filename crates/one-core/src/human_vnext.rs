@@ -424,7 +424,7 @@ fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
             .ok_or_else(|| format!("Data tugas rusak pada baris {}: status hilang", index + 1))?;
         let title = fields.next()
             .ok_or_else(|| format!("Data tugas rusak pada baris {}: judul hilang", index + 1))?;
-        if !matches!(status, "0" | "1") || title.is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
+        if !matches!(status, "0" | "1") || title.is_empty() || title.chars().any(|ch| ch.is_control()) {
             return Err(format!("Data tugas rusak pada baris {}: field tidak valid", index + 1));
         }
         if tasks.iter().any(|task: &Task| task.id == id) {
@@ -442,8 +442,8 @@ fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
     }
     let mut contents = String::new();
     for task in tasks {
-        if task.title.is_empty() || task.title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
-            return Err("Judul tugas tidak boleh kosong atau mengandung baris baru/tab".into());
+        if task.title.is_empty() || task.title.chars().any(|ch| ch.is_control()) {
+            return Err("Judul tugas tidak boleh kosong atau mengandung karakter kontrol".into());
         }
         contents.push_str(&format!("{}\t{}\t{}\n", task.id, if task.done { 1 } else { 0 }, task.title));
     }
@@ -514,7 +514,7 @@ pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
                 }
                 let title = title.trim_end_matches(|ch: char| matches!(ch, '\r' | '\n'));
                 if title.trim().is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
-                    writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung tab").map_err(|error| error.to_string())?;
+                    writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung karakter kontrol").map_err(|error| error.to_string())?;
                     continue;
                 }
                 let id = tasks.iter().map(|task| task.id).max().unwrap_or(0).checked_add(1)
