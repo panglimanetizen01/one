@@ -63,7 +63,7 @@ fn validate_indentation(line: &str, line_number: usize) -> Result<usize, HumanPa
     if line.as_bytes().get(width) == Some(&b'\t') {
         return Err(error(line_number, "H0001", "Indentasi tidak boleh memakai tab"));
     }
-    if width % 4 != 0 {
+    if !width.is_multiple_of(4) {
         return Err(error(line_number, "H0002", "Indentasi harus kelipatan empat spasi"));
     }
     Ok(width)
@@ -243,10 +243,10 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
     let mut data_names = std::collections::HashSet::new();
     let mut persisted_collections = std::collections::HashSet::new();
     for declaration in &declarations {
-        if let HumanDeclaration::Persist { collection } = declaration {
-            if !persisted_collections.insert(collection.as_str()) {
-                return Err(error(1, "H0019", format!("Deklarasi penyimpanan ganda untuk {}", collection)));
-            }
+        if let HumanDeclaration::Persist { collection } = declaration
+            && !persisted_collections.insert(collection.as_str())
+        {
+            return Err(error(1, "H0019", format!("Deklarasi penyimpanan ganda untuk {}", collection)));
         }
         let name = match declaration {
             HumanDeclaration::Data { name, .. } => {
@@ -256,10 +256,10 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
             HumanDeclaration::Action { name, .. } => Some(name),
             HumanDeclaration::Persist { .. } => None,
         };
-        if let Some(name) = name {
-            if !declaration_names.insert(name.as_str()) {
-                return Err(error(1, "H0017", format!("Nama deklarasi ganda {}", name)));
-            }
+        if let Some(name) = name
+            && !declaration_names.insert(name.as_str())
+        {
+            return Err(error(1, "H0017", format!("Nama deklarasi ganda {}", name)));
         }
     }
 
@@ -547,7 +547,7 @@ pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
                 if input.read_line(&mut title).map_err(|error| format!("Gagal membaca judul: {error}"))? == 0 {
                     break;
                 }
-                let title = title.trim_end_matches(|ch: char| matches!(ch, '\r' | '\n'));
+                let title = title.trim_end_matches(['\r', '\n']);
                 if title.trim().is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
                     writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung karakter kontrol").map_err(|error| error.to_string())?;
                     continue;
