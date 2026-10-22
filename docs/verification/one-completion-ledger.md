@@ -81,4 +81,7 @@ Changes committed directly to the feature branch after the baseline above:
 - `e364af0b5768628f40e3f3de5c52fd3f0833607d` — linked the experimental contract from the specification index.
 - `48afad1a35f4911e3a415de3fdfc1463091a8aaf` — made the contract checker require the new grammar document.
 
+- `f7ca5c5d35a59b6928de20fe722e308a7f11fb19` — applied the four strict-Clippy fixes to the GitHub source.
+- `7f02a4563024cb60e37d95bf3e2639ddffa8a4f3` — added runtime tests for blank-title rejection, invalid/unknown task IDs, and a storage write failure.
+
 **Evidence status:** These are repository changes, not test results. The new tests and contract-checker change still require local execution on the updated branch. No verified points are awarded by this checkpoint; the 30% gate remains NOT PASSED until all F1–F6 acceptance evidence passes on one recorded SHA, including the CI/infrastructure requirement or an explicitly reviewed replacement verification contract.
