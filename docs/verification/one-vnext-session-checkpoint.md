@@ -17,10 +17,10 @@ The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledge
 
 ## Latest code revision
 
-- **Last code-changing SHA:** `6f1d4b92661a2df67d639b3f0122e9fe502ce296`
-- **Source:** [human_vnext.rs](https://github.com/panglimanetizen01/one/blob/6f1d4b92661a2df67d639b3f0122e9fe502ce296/crates/one-core/src/human_vnext.rs)
-- **CLI:** [main.rs](https://github.com/panglimanetizen01/one/blob/6f1d4b92661a2df67d639b3f0122e9fe502ce296/crates/one-cli/src/main.rs)
-- **CLI integration test:** [cli.rs](https://github.com/panglimanetizen01/one/blob/6f1d4b92661a2df67d639b3f0122e9fe502ce296/crates/one-cli/tests/cli.rs)
+- **Last code-changing SHA:** `8c4f7c4706365972797446382989b81335434d92`
+- **Source:** [human_vnext.rs](https://github.com/panglimanetizen01/one/blob/8c4f7c4706365972797446382989b81335434d92/crates/one-core/src/human_vnext.rs)
+- **CLI:** [main.rs](https://github.com/panglimanetizen01/one/blob/8c4f7c4706365972797446382989b81335434d92/crates/one-cli/src/main.rs)
+- **CLI integration test:** [cli.rs](https://github.com/panglimanetizen01/one/blob/8c4f7c4706365972797446382989b81335434d92/crates/one-cli/tests/cli.rs)
 - **Example:** [daftar-tugas.one](https://github.com/panglimanetizen01/one/blob/spec/human-instruction-grammar-vnext-20261022/examples/human-vnext/daftar-tugas.one)
 - **Grammar contract:** [grammar draft](https://github.com/panglimanetizen01/one/blob/spec/human-instruction-grammar-vnext-20261022/docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md)
 - **User instructions:** [task-list guide](human-vnext-task-list.md)
@@ -41,7 +41,7 @@ The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledge
 
 - **Source presence:** VERIFIED through GitHub file reads and commit metadata.
 - **Rust compile, format, Clippy and unit/integration tests:** **NOT VERIFIED**. This environment has no functioning Rust execution path for the private checkout.
-- **CI:** [Latest inspected run](https://github.com/panglimanetizen01/one/actions/runs/39752553835) failed on Ubuntu and Windows with zero steps in both jobs. The logs endpoint returned 404 and no runner IDs were allocated. This is a runner/workflow execution blocker, not evidence that the Rust source failed, and not a passing result.
+- **CI:** [Exact-code-SHA run](https://github.com/panglimanetizen01/one/actions/runs/39752818112) failed on Ubuntu and Windows with zero steps in both jobs. The logs endpoint returned 404 and no runner IDs were allocated. This is a runner/workflow execution blocker, not evidence that the Rust source failed, and not a passing result.
 - **Exact current code SHA CI:** no successful run observed for `6f1d4b92661a2df67d639b3f0122e9fe502ce296`.
 - **Canonical ONE AST/IR integration:** NOT IMPLEMENTED. The human-vNext task runner is a dedicated experimental interpreter for the supported task-list action shapes; it does not yet lower into the canonical ONE v0.1 IR.
 - **General-purpose vNext execution:** NOT IMPLEMENTED. Unsupported constructs must not be presented as working.
