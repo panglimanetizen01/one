@@ -193,15 +193,19 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
         return Err(error(line_number, "H0016", "Bentuk instruksi tidak dikenal dalam parser human-vnext"));
     }
 
-    let mut names = std::collections::HashSet::new();
+    let mut declaration_names = std::collections::HashSet::new();
+    let mut data_names = std::collections::HashSet::new();
     for declaration in &declarations {
         let name = match declaration {
-            HumanDeclaration::Data { name, .. } => Some(name),
+            HumanDeclaration::Data { name, .. } => {
+                data_names.insert(name.as_str());
+                Some(name)
+            }
             HumanDeclaration::Action { name, .. } => Some(name),
             HumanDeclaration::Persist { .. } => None,
         };
         if let Some(name) = name {
-            if !names.insert(name.as_str()) {
+            if !declaration_names.insert(name.as_str()) {
                 return Err(error(1, "H0017", format!("Nama deklarasi ganda {}", name)));
             }
         }
@@ -211,8 +215,8 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
         if let HumanDeclaration::Action { body, .. } = declaration {
             for instruction in body {
                 match instruction {
-                    HumanInstruction::Display { name } if !names.contains(name.as_str()) => {
-                        return Err(error(1, "H0018", format!("Nilai {} belum dideklarasikan", name)));
+                    HumanInstruction::Display { name } if !data_names.contains(name.as_str()) => {
+                        return Err(error(1, "H0018", format!("Nilai {} belum dideklarasikan sebagai data", name)));
                     }
                     _ => {}
                 }
@@ -253,6 +257,13 @@ mod tests {
                 body: vec![HumanInstruction::Display { name: "judul".into() }],
             }
         );
+    }
+
+    #[test]
+    fn rejects_display_reference_to_action_name() {
+        let source = "Buat aplikasi catatan\nPengguna bisa melihat catatan\n    Tampilkan melihat catatan\n";
+        let error = parse(source).expect_err("an action name is not a data value");
+        assert_eq!(error.code, "H0018");
     }
 
     #[test]
