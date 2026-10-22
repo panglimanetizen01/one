@@ -43,10 +43,10 @@ For each row, **implemented points** are provisional progress based on code actu
 ## Baseline and evidence
 
 - This ledger is the first weighted completion ledger located for the vNext workstream; no prior canonical weighted formula was found during repository discovery.
-- Current source branch: `spec/human-instruction-grammar-vnext-20261022`.
+- Current source branch: `spec/human-instruction-grammar-vnext-20261022`.\n- Last code-changing SHA: `6f1d4b92661a2df67d639b3f0122e9fe502ce296`.\n- Checkpoint commit: `7c2117eedff4ed2b6df66b8b6e95e7240a9373b1`; this records the code SHA above, while later documentation-only commits may advance the branch head.
 - Current code includes the experimental parser, the dedicated task-list runner, an explicit CLI command, a runnable example, and regression tests. These changes are not credited as verified until they execute successfully.
 - The GitHub Actions runs inspected for earlier commits failed before any steps started; the jobs reported an empty step list and logs were unavailable. This is an infrastructure/runner blocker, not evidence of a Rust source failure or a pass.
-- The current source SHA and exact-SHA CI state must be refreshed when this ledger/checkpoint is next updated.
+- Latest inspected Actions run: [39752553835](https://github.com/panglimanetizen01/one/actions/runs/39752553835), triggered for `64bcadd625b6948896fa0a6ec26fc1d791a33ff7`; both OS jobs failed before any steps started. No successful exact-SHA CI run was observed for `6f1d4b92661a2df67d639b3f0122e9fe502ce296`.
 
 ## Milestone gate definitions
 
