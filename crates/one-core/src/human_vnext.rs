@@ -337,3 +337,165 @@ mod tests {
         assert_eq!(error.code, "H0008");
     }
 }
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Task {
+    id: u64,
+    title: String,
+    done: bool,
+}
+
+fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
+    if !path.exists() {
+        return Ok(Vec::new());
+    }
+    let contents = std::fs::read_to_string(path)
+        .map_err(|error| format!("Tidak dapat membaca penyimpanan '{}': {error}", path.display()))?;
+    let mut tasks = Vec::new();
+    for (index, line) in contents.lines().enumerate() {
+        let mut fields = line.splitn(3, '\t');
+        let id = fields.next().and_then(|value| value.parse::<u64>().ok())
+            .ok_or_else(|| format!("Data tugas rusak pada baris {}: ID tidak valid", index + 1))?;
+        let status = fields.next()
+            .ok_or_else(|| format!("Data tugas rusak pada baris {}: status hilang", index + 1))?;
+        let title = fields.next()
+            .ok_or_else(|| format!("Data tugas rusak pada baris {}: judul hilang", index + 1))?;
+        if !matches!(status, "0" | "1") || title.is_empty() || title.contains(['\r', '\n', '\t']) {
+            return Err(format!("Data tugas rusak pada baris {}: field tidak valid", index + 1));
+        }
+        if tasks.iter().any(|task: &Task| task.id == id) {
+            return Err(format!("Data tugas rusak pada baris {}: ID duplikat", index + 1));
+        }
+        tasks.push(Task { id, title: title.to_owned(), done: status == "1" });
+    }
+    Ok(tasks)
+}
+
+fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
+    if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)
+            .map_err(|error| format!("Tidak dapat membuat direktori penyimpanan: {error}"))?;
+    }
+    let mut contents = String::new();
+    for task in tasks {
+        if task.title.is_empty() || task.title.contains(['\r', '\n', '\t']) {
+            return Err("Judul tugas tidak boleh kosong atau mengandung baris baru/tab".into());
+        }
+        contents.push_str(&format!("{}\t{}\t{}\n", task.id, if task.done { 1 } else { 0 }, task.title));
+    }
+    let mut temporary = path.as_os_str().to_os_string();
+    temporary.push(".tmp");
+    let temporary = std::path::PathBuf::from(temporary);
+    std::fs::write(&temporary, contents)
+        .map_err(|error| format!("Tidak dapat menulis data sementara: {error}"))?;
+    if let Err(error) = std::fs::rename(&temporary, path) {
+        let _ = std::fs::remove_file(&temporary);
+        return Err(format!("Tidak dapat menyimpan data tugas secara atomik: {error}"));
+    }
+    Ok(())
+}
+
+fn validate_task_app(program: &HumanProgram) -> Result<(), String> {
+    if !program.declarations.iter().any(|declaration| matches!(
+        declaration,
+        HumanDeclaration::Persist { collection } if collection == "tugas"
+    )) {
+        return Err("Aplikasi daftar tugas wajib mendeklarasikan: Simpan semua tugas agar tidak hilang saat aplikasi ditutup".into());
+    }
+    let mut add = false;
+    let mut list = false;
+    let mut complete = false;
+    for declaration in &program.declarations {
+        if let HumanDeclaration::Action { body, .. } = declaration {
+            match body.as_slice() {
+                [HumanInstruction::AcceptTaskTitle, HumanInstruction::AddTask] if !add => add = true,
+                [HumanInstruction::DisplayAllTasks] if !list => list = true,
+                [HumanInstruction::AcceptTaskId, HumanInstruction::CompleteTask] if !complete => complete = true,
+                _ => {}
+            }
+        }
+    }
+    if !add || !list || !complete {
+        return Err("Aplikasi daftar tugas membutuhkan aksi tambah, lihat semua, dan tandai selesai dengan instruksi yang didukung".into());
+    }
+    Ok(())
+}
+
+/// Run the explicitly experimental human-vNext task-list vertical slice.
+/// The existing v0.1 compiler and CLI path remain untouched.
+pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
+    program: &HumanProgram,
+    storage_path: &std::path::Path,
+    input: &mut R,
+    output: &mut W,
+) -> Result<(), String> {
+    validate_task_app(program)?;
+    let mut tasks = load_tasks(storage_path)?;
+    writeln!(output, "ONE human-vNext — {}", program.project).map_err(|error| error.to_string())?;
+    writeln!(output, "Perintah: tambah, lihat, selesai, keluar").map_err(|error| error.to_string())?;
+    loop {
+        write!(output, "> ").map_err(|error| error.to_string())?;
+        output.flush().map_err(|error| error.to_string())?;
+        let mut command = String::new();
+        if input.read_line(&mut command).map_err(|error| format!("Gagal membaca perintah: {error}"))? == 0 {
+            break;
+        }
+        match command.trim() {
+            "tambah" => {
+                write!(output, "Judul tugas: ").map_err(|error| error.to_string())?;
+                output.flush().map_err(|error| error.to_string())?;
+                let mut title = String::new();
+                if input.read_line(&mut title).map_err(|error| format!("Gagal membaca judul: {error}"))? == 0 {
+                    break;
+                }
+                let title = title.trim_end_matches(['\r', '\n']);
+                if title.trim().is_empty() || title.contains(['\r', '\n', '\t']) {
+                    writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung tab").map_err(|error| error.to_string())?;
+                    continue;
+                }
+                let id = tasks.iter().map(|task| task.id).max().unwrap_or(0).checked_add(1)
+                    .ok_or_else(|| "ID tugas habis".to_owned())?;
+                tasks.push(Task { id, title: title.to_owned(), done: false });
+                save_tasks(storage_path, &tasks)?;
+                writeln!(output, "Tugas {id} tersimpan.").map_err(|error| error.to_string())?;
+            }
+            "lihat" => {
+                if tasks.is_empty() {
+                    writeln!(output, "Belum ada tugas.").map_err(|error| error.to_string())?;
+                }
+                for task in &tasks {
+                    writeln!(output, "{} [{}] {}", task.id, if task.done { "selesai" } else { "belum selesai" }, task.title)
+                        .map_err(|error| error.to_string())?;
+                }
+            }
+            "selesai" => {
+                write!(output, "ID tugas: ").map_err(|error| error.to_string())?;
+                output.flush().map_err(|error| error.to_string())?;
+                let mut raw_id = String::new();
+                if input.read_line(&mut raw_id).map_err(|error| format!("Gagal membaca ID: {error}"))? == 0 {
+                    break;
+                }
+                let id = match raw_id.trim().parse::<u64>() {
+                    Ok(id) => id,
+                    Err(_) => {
+                        writeln!(output, "Kesalahan: ID harus berupa angka positif").map_err(|error| error.to_string())?;
+                        continue;
+                    }
+                };
+                match tasks.iter_mut().find(|task| task.id == id) {
+                    Some(task) => {
+                        task.done = true;
+                        save_tasks(storage_path, &tasks)?;
+                        writeln!(output, "Tugas {id} ditandai selesai.").map_err(|error| error.to_string())?;
+                    }
+                    None => writeln!(output, "Kesalahan: tugas {id} tidak ditemukan").map_err(|error| error.to_string())?,
+                }
+            }
+            "keluar" => break,
+            "" => {}
+            other => writeln!(output, "Kesalahan: perintah '{}' tidak dikenal", other).map_err(|error| error.to_string())?,
+        }
+    }
+    Ok(())
+}
