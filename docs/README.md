@@ -30,9 +30,9 @@ User documentation is intentionally separate from normative engineering contract
 
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
 - `superpowers/specs/2026-10-22-one-human-instruction-language-contract-audit.md` — proposed forensic audit and acceptance gates for the intended human-instruction surface; does not override v0.1.
-- `superpowers/specs/2026-10-22-one-human-instruction-surface-vnext.md` — proposed vNext source-language contract, literal/data requirements, compatibility gates, and task-list acceptance target; not normative or implemented.
+- `superpowers/specs/2026-10-22-one-human-instruction-surface-vnext.md` — proposed vNext source-language contract, literal/data requirements, compatibility gates, and task-list acceptance target; not normative.
 - `superpowers/specs/2026-10-22-one-forensic-readiness-audit.md` — evidence-based audit of the accepted vision versus current implementation, prototype defects, and end-to-end completion gates.
-- `superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md` — narrower candidate grammar for deterministic instruction parsing and unquoted text blocks; intentionally incomplete and not implemented.
+- `superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md` — versioned, non-normative starter grammar contract for the experimental parser and task-list runner.
 - `superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md` — approved end-to-end network/platform architecture.
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
 - `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger and release gate.
@@ -69,7 +69,7 @@ User documentation is intentionally separate from normative engineering contract
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
-- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
+- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.\n- `verification/one-completion-ledger.md` — fixed weighted vNext completion method, milestone gates, and evidence status.\n- `verification/one-vnext-session-checkpoint.md` — continuation checkpoint for the active vNext workstream.\n- `verification/human-vnext-task-list.md` — experimental task-list example usage and current limitations.\n- `../examples/human-vnext/daftar-tugas.one` — runnable source fixture for the experimental human-vNext task-list command.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
