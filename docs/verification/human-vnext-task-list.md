@@ -33,7 +33,7 @@ Buka kembali proses dengan perintah yang sama untuk memuat data dari berkas. Dat
 
 - Sintaks human-vNext belum normatif dan hanya mendukung bentuk tindakan yang dipakai oleh contoh ini.
 - Runner task-list adalah interpreter eksperimental khusus untuk vertical slice ini; AST belum diturunkan ke IR kanonis ONE v0.1.
-- Judul tugas harus satu baris dan tidak boleh kosong atau mengandung tab.
+- Judul tugas harus satu baris dan tidak boleh kosong atau mengandung karakter kontrol.
 - File storage adalah format internal tab-delimited; migrasi format belum dijanjikan.
 - Build, test, Clippy, dan CI pada commit yang berisi contoh ini harus lulus sebelum slice dinyatakan verified.
 - Jangan gunakan direktori data produksi untuk eksperimen. Pilih path eksplisit melalui `--data` bila diperlukan.
