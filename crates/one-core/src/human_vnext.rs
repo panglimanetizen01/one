@@ -276,6 +276,21 @@ mod tests {
     }
 
     #[test]
+    fn preserves_relative_indentation_and_accepts_crlf_text_blocks() {
+        let source = "Buat aplikasi catatan\r\nBuat data pesan\r\n    Isi teks berikut\r\n        Baris pertama\r\n            Baris menjorok\r\n        Baris terakhir\r\n";
+        let program = parse(source).expect("CRLF and relative indentation should be preserved");
+        assert_eq!(
+            program.declarations,
+            vec![HumanDeclaration::Data {
+                name: "pesan".into(),
+                value: HumanValue::Text(
+                    "Baris pertama\n    Baris menjorok\nBaris terakhir\n".into(),
+                ),
+            }]
+        );
+    }
+
+    #[test]
     fn parses_action_and_display_reference() {
         let source = "Buat aplikasi daftar tugas\nBuat data judul\n    Isi teks berikut\n        Belanja\nPengguna bisa melihat tugas\n    Tampilkan judul\n";
         let program = parse(source).expect("supported action should parse");
