@@ -29,7 +29,10 @@ required = [
     "docs/verification/one-v0.1-linux-windows-2026-10-15.md", "docs/verification/native-backends-2026-10-19.md",
     "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
-    "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",\n    "docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md",\n    "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",\n    "examples/human-vnext/daftar-tugas.one",
+    "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
+    "docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md",
+    "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",
+    "examples/human-vnext/daftar-tugas.one",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
