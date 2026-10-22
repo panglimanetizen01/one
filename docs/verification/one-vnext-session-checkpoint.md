@@ -1,54 +1,73 @@
 # ONE vNext Session Checkpoint
 
 **Updated:** 2026-10-22  
-**Workstream:** Deterministic human-instruction grammar vNext  
+**Active target:** Milestone 30% — foundation and first runnable reference application  
+**Repository:** [panglimanetizen01/one](https://github.com/panglimanetizen01/one)  
 **Pull request:** [#78](https://github.com/panglimanetizen01/one/pull/78)  
 **Branch:** `spec/human-instruction-grammar-vnext-20261022`
 
-## Target milestone
+## Completion
 
-Continue the accepted vNext human-instruction grammar implementation. The active request in this session did not specify which cumulative 30% / 60% / 100% gate applies, and no weighted completion ledger or exact weight formula was found in the repository. Therefore, a numeric project completion percentage is **NOT CALCULATED** rather than guessed. Do not silently invent weights or mark a milestone PASS.
+The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledger.md). Its weights are fixed for future sessions.
 
-## Code checkpoint
+- **Implementation progress:** 21/100 points (provisional, includes work not yet verified).
+- **Progress inside the 30-point foundation tranche:** 21/30 points implemented (70% of that tranche).
+- **Verified completion:** 0/100 points for this newly introduced vNext tranche at the current code revision because no Rust build/test/Clippy run has completed successfully on the exact revision.
+- **Milestone 30% gate:** **NOT PASSED**. Do not report the overall project as 30% complete or PASS GREEN LOCKED.
 
-- Code revision before this checkpoint document: `42392c007905d99e6a8b56d60e700271ceaf86cd`
-- Latest code change: `crates/one-core/src/human_vnext.rs`
-- Change: preserve blank lines and a trailing newline in introduced indented text blocks; added regression test `preserves_blank_lines_and_trailing_newline_in_text_blocks`.
-- Commit: [42392c0](https://github.com/panglimanetizen01/one/commit/42392c007905d99e6a8b56d60e700271ceaf86cd)
+## Latest code revision
 
-## Evidence and verification
+- **Last code-changing SHA:** `6f1d4b92661a2df67d639b3f0122e9fe502ce296`
+- **Source:** [human_vnext.rs](https://github.com/panglimanetizen01/one/blob/6f1d4b92661a2df67d639b3f0122e9fe502ce296/crates/one-core/src/human_vnext.rs)
+- **CLI:** [main.rs](https://github.com/panglimanetizen01/one/blob/6f1d4b92661a2df67d639b3f0122e9fe502ce296/crates/one-cli/src/main.rs)
+- **CLI integration test:** [cli.rs](https://github.com/panglimanetizen01/one/blob/6f1d4b92661a2df67d639b3f0122e9fe502ce296/crates/one-cli/tests/cli.rs)
+- **Example:** [daftar-tugas.one](https://github.com/panglimanetizen01/one/blob/spec/human-instruction-grammar-vnext-20261022/examples/human-vnext/daftar-tugas.one)
+- **Grammar contract:** [grammar draft](https://github.com/panglimanetizen01/one/blob/spec/human-instruction-grammar-vnext-20261022/docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md)
+- **User instructions:** [task-list guide](human-vnext-task-list.md)
 
-- Repository contract read: `AGENTS.md`, `docs/ONE_CONSTITUTION.md`, `docs/DEVELOPMENT_PROTOCOL.md`, `docs/DECISIONS.md`.
-- PR #78 head confirmed at code revision `42392c007905d99e6a8b56d60e700271ceaf86cd`; PR remains open and draft.
-- CI run [39751590947](https://github.com/panglimanetizen01/one/actions/runs/39751590947) failed on Ubuntu and Windows with both jobs reporting **zero steps**. This is insufficient evidence of a source-code test failure.
-- A retry of the prior infrastructure-shaped failure was requested, but the subsequent run still failed before any steps.
-- Rust build, Clippy, and tests against the updated SHA: **NOT VERIFIED**. The GitHub connector does not provide a functioning execution environment for running the Rust test suite locally.
+## Implemented in this session
 
-## Done
+- Added preservation and tests for blank lines, trailing newlines, CRLF, relative indentation and Unicode text in text blocks.
+- Defined stricter deterministic name syntax and duplicate-persistence rejection.
+- Added task-list action instructions to the human-vNext parser.
+- Added an experimental task-list runner supporting add, list, mark-complete, input validation, durable file storage, reload on restart, corrupt-record errors, and temporary-file/rename writes.
+- Added explicit `one jalankan-human-vnext <program.one> [--data <file>]` CLI entry; the default v0.1 command path remains separate.
+- Added a runnable human-vNext source example and usage documentation.
+- Added core runtime tests and a CLI subprocess test for persistence across process restarts.
+- Formalized the starter subset grammar and versioning/boundary rules.
+- Added a weighted completion ledger and static contract checks for the example and ledger.
 
-- [IMPLEMENTED] Text-block parser now reinserts blank source lines between meaningful lines and retains trailing blank lines/newline according to the current candidate contract.
-- [IMPLEMENTED] Regression test added to assert exact text value for an internal blank line and trailing newline.
-- [VERIFIED] The commit and changed source/test are present on the PR branch.
-- [NOT VERIFIED] Compilation, test execution, Clippy, full CI, semantic integration, runtime behavior, and persistence.
+## Verification and failures
 
-## Remaining work
-
-1. Diagnose why hosted CI jobs terminate before the first step; do not classify this as a Rust failure without logs/evidence.
-2. Run targeted tests and formatting/lint/build checks on the exact head SHA in a functioning Rust environment.
-3. Add tests for CRLF, relative indentation within text blocks, blank-only/empty text, and block-boundary edge cases.
-4. Define and implement the versioned vNext compile/CLI path without changing normative v0.1 behavior.
-5. Add deterministic semantic validation and stable diagnostics for all supported productions.
-6. Implement the task-list acceptance application and durable storage adapter; prove persistence by starting it twice and observing retained data.
-7. Add positive/negative fixtures and deterministic AST/IR evidence; update specs/status evidence to match actual behavior.
-8. Establish or locate the canonical weighted completion ledger and its 30% / 60% / 100% formulas before asserting numeric completion.
+- **Source presence:** VERIFIED through GitHub file reads and commit metadata.
+- **Rust compile, format, Clippy and unit/integration tests:** **NOT VERIFIED**. This environment has no functioning Rust execution path for the private checkout.
+- **CI:** [Latest inspected run](https://github.com/panglimanetizen01/one/actions/runs/39752553835) failed on Ubuntu and Windows with zero steps in both jobs. The logs endpoint returned 404 and no runner IDs were allocated. This is a runner/workflow execution blocker, not evidence that the Rust source failed, and not a passing result.
+- **Exact current code SHA CI:** no successful run observed for `6f1d4b92661a2df67d639b3f0122e9fe502ce296`.
+- **Canonical ONE AST/IR integration:** NOT IMPLEMENTED. The human-vNext task runner is a dedicated experimental interpreter for the supported task-list action shapes; it does not yet lower into the canonical ONE v0.1 IR.
+- **General-purpose vNext execution:** NOT IMPLEMENTED. Unsupported constructs must not be presented as working.
+- **Persistence end-to-end:** implementation and regression tests are present, but actual test execution is NOT VERIFIED.
 
 ## Git state
 
-- Branch: `spec/human-instruction-grammar-vnext-20261022`
-- Code SHA: `42392c007905d99e6a8b56d60e700271ceaf86cd`
-- PR: #78, open, draft, not merged.
-- Main was not modified; no merge was performed.
+- PR #78 remains **open, draft, not merged**.
+- Base branch: `main`; base SHA observed: `d86c3be75c81a27d6d4f040f21718f6248413e47`.
+- Last code-changing SHA: `6f1d4b92661a2df67d639b3f0122e9fe502ce296`.
+- Main was not modified and no merge was performed.
+- Documentation-only checkpoint/ledger commits may follow the code SHA; refresh the actual PR head before further work.
+
+## Remaining work to reach 30%
+
+1. Get a functioning exact-SHA Linux/Windows CI run. Diagnose repository Actions availability/runner setup outside source code if jobs still terminate before their first step.
+2. Run `cargo fmt --check`, `cargo build --workspace --all-targets`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace --all-targets`, and `python tools/check_contract.py`; fix actual failures and rerun.
+3. Review storage atomic replacement on Windows, invalid/corrupt data handling, Unicode/control-character cases, empty text and block-boundary cases.
+4. Verify default v0.1 parser/CLI compatibility on the same SHA.
+5. Resolve the frontend integration gate: either lower supported vNext nodes into the canonical AST/IR/runtime or explicitly revise the milestone contract only through reviewed governance. Do not call the current task-specific runner the general compiler pipeline.
+6. Once all F1–F6 criteria earn their full 30 verified points, update the ledger and checkpoint with exact SHA and successful CI evidence.
+
+## Next action
+
+First, refresh PR #78 head and workflow state. Then restore a functioning Rust/Actions verification path and run the exact-SHA suite. Fix code defects revealed by real diagnostics; do not weaken or disable gates to get green.
 
 ## Gate
 
-**NOT PASSED** — code is committed, but build/test/Clippy/CI gates and end-to-end vNext acceptance requirements are not yet proven.
+**NOT PASSED** — substantial implementation is committed, but exact-SHA tests/CI and canonical execution-pipeline acceptance are not proven.
