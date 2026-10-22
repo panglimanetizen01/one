@@ -24,6 +24,11 @@ pub enum HumanValue {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HumanInstruction {
     Display { name: String },
+    AcceptTaskTitle,
+    AddTask,
+    DisplayAllTasks,
+    AcceptTaskId,
+    CompleteTask,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -179,13 +184,20 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
                 if body_indent != 4 {
                     return Err(error(body_line, "H0011", "Isi tindakan harus menggunakan satu tingkat indentasi"));
                 }
-                if let Some(reference) = body_text.strip_prefix("Tampilkan ") {
-                    if !is_name(reference) {
-                        return Err(error(body_line, "H0012", "Tampilkan membutuhkan nama nilai"));
+                match body_text {
+                    "Terima judul tugas" => body.push(HumanInstruction::AcceptTaskTitle),
+                    "Simpan tugas baru" => body.push(HumanInstruction::AddTask),
+                    "Tampilkan semua tugas" => body.push(HumanInstruction::DisplayAllTasks),
+                    "Terima tugas yang dipilih" => body.push(HumanInstruction::AcceptTaskId),
+                    "Tandai tugas sebagai selesai" => body.push(HumanInstruction::CompleteTask),
+                    _ if body_text.starts_with("Tampilkan ") => {
+                        let reference = body_text.strip_prefix("Tampilkan ").unwrap_or_default();
+                        if !is_name(reference) {
+                            return Err(error(body_line, "H0012", "Tampilkan membutuhkan nama nilai"));
+                        }
+                        body.push(HumanInstruction::Display { name: reference.to_owned() });
                     }
-                    body.push(HumanInstruction::Display { name: reference.to_owned() });
-                } else {
-                    return Err(error(body_line, "H0013", "Instruksi tindakan belum didukung parser prototipe"));
+                    _ => return Err(error(body_line, "H0013", "Instruksi tindakan belum didukung parser prototipe")),
                 }
                 index += 1;
             }
