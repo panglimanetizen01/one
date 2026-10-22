@@ -103,10 +103,11 @@ fn parse_project(line: &str, line_number: usize) -> Result<String, HumanParseErr
 /// Supported top-level forms:
 /// - Buat aplikasi <nama>
 /// - Buat data <nama> followed by an indented Isi teks berikut block
-/// - Pengguna bisa <nama> followed by an indented body containing Tampilkan <nama>
+/// - Pengguna bisa <nama> with supported display or task-list instructions
 /// - Simpan semua <nama> agar tidak hilang saat aplikasi ditutup
 ///
-/// This parser is experimental and is not wired into the default v0.1 CLI.
+/// This parser is experimental and is selected only through the explicit
+/// human-vNext CLI command; the default v0.1 parser remains unchanged.
 pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
     let lines: Vec<&str> = source.split('\n').map(trim_line_ending).collect();
     let mut meaningful: Vec<(usize, usize, &str)> = Vec::new();
