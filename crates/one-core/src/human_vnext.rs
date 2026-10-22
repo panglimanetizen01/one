@@ -669,4 +669,38 @@ mod task_runtime_tests {
         assert!(load_tasks(&path).expect_err("corrupt record must fail").contains("ID tidak valid"));
         let _ = std::fs::remove_file(path);
     }
+    
+    #[test]
+    fn task_app_rejects_blank_title_without_persisting_it() {
+        let path = storage_path();
+        let mut input = Cursor::new(b"tambah\n   \nkeluar\n".to_vec());
+        let mut output = Vec::new();
+        run_task_app(&task_program(), &path, &mut input, &mut output)
+            .expect("invalid title is reported without aborting the session");
+        assert!(String::from_utf8(output).unwrap().contains("judul tidak boleh kosong"));
+        assert!(!path.exists(), "invalid title must not create storage");
+    }
+
+    #[test]
+    fn task_app_rejects_non_numeric_and_unknown_task_ids() {
+        let path = storage_path();
+        let mut input = Cursor::new(b"selesai\nbukan-angka\nselesai\n999\nkeluar\n".to_vec());
+        let mut output = Vec::new();
+        run_task_app(&task_program(), &path, &mut input, &mut output)
+            .expect("invalid and unknown IDs are reported without aborting the session");
+        let output = String::from_utf8(output).unwrap();
+        assert!(output.contains("ID harus berupa angka positif"));
+        assert!(output.contains("tugas 999 tidak ditemukan"));
+        assert!(!path.exists(), "unknown IDs must not create storage");
+    }
+
+    #[test]
+    fn task_storage_reports_parent_path_write_failure() {
+        let root = storage_path();
+        std::fs::write(&root, "file where a directory is required").unwrap();
+        let path = root.join("tasks.db");
+        let error = save_tasks(&path, &[]).expect_err("a file cannot be used as a parent directory");
+        assert!(error.contains("Tidak dapat membuat direktori penyimpanan"));
+        let _ = std::fs::remove_file(root);
+    }
 }
