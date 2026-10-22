@@ -512,7 +512,7 @@ pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
                 if input.read_line(&mut title).map_err(|error| format!("Gagal membaca judul: {error}"))? == 0 {
                     break;
                 }
-                let title = title.trim_end_matches(|ch| ch == '\r' || ch == '\n');
+                let title = title.trim_end_matches(|ch: char| matches!(ch, '\r' | '\n'));
                 if title.trim().is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
                     writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung tab").map_err(|error| error.to_string())?;
                     continue;
