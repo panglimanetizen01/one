@@ -227,7 +227,7 @@ Text-block rules implemented by the prototype:
 - Eight leading spaces identify text payload lines. Additional indentation beyond those eight spaces is preserved as data.
 - Blank lines inside the text payload are preserved.
 - A terminal source newline inside the payload is preserved as a terminal newline in the value.
-- Tabs are rejected in structural indentation. Tabs/newlines in task titles are rejected by the current line-based storage format.
+- Tabs are rejected in structural indentation. Control characters in task titles are rejected by the current line-based storage format.
 - Unknown instructions and unresolved display references fail with stable prototype diagnostic codes. These codes are experimental and not yet a public compatibility promise.
 
 Before release, the repository must decide the stable language identifier, project manifest declaration, migration policy, Unicode normalization policy, and how formatters and editor tooling identify the language version.
