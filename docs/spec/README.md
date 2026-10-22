@@ -28,6 +28,10 @@ This index records the dependency order and review state of the language specifi
 18. Interoperability layer.
 19. Release verification.
 
+## Experimental language surfaces
+
+- [Human-instruction vNext starter grammar](./human-instruction-vnext-starter-grammar.md) — proposed, implementation-bounded experimental contract; it does not alter normative ONE v0.1.
+
 ## Cross-cutting contracts
 
 These concerns must be designed and checked alongside the stages they constrain; they are not deferred until the end:
