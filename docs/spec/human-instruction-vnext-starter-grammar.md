@@ -60,7 +60,7 @@ persistence_declaration
 blank                = NL ;
 ```
 
-TEXT is the remaining source content on a line after the text-block indentation. Text-block collection continues until the next non-blank line at indentation zero or until end-of-file. The implementation may preserve empty lines and indentation relative to the block's content indentation. A text block must contain at least one content line according to parser validation.
+TEXT is the remaining source content on a line after the text-block indentation. Text-block collection continues until the next non-blank line at indentation zero or until end-of-file. The implementation may preserve empty lines and indentation relative to the block's content indentation. An empty text block is currently accepted and produces an empty text value; the required conformance matrix must preserve this behavior unless a versioned contract change deliberately changes it.
 
 **Important implementation boundary:** the EBNF above names the currently supported forms, but text-block boundaries and indentation are governed by the prose rules and parser tests; this starter contract does not yet define a general-purpose expression language.
 
@@ -87,7 +87,7 @@ TEXT is the remaining source content on a line after the text-block indentation.
 |---|---|---|
 | Structure | application + supported declarations | empty source, indented application, orphan instruction |
 | Indentation | four-space nested body | tab, non-multiple-of-four indentation |
-| Text blocks | Unicode and multiline content, blank lines, CRLF | missing/empty content block |
+| Text blocks | Unicode and multiline content, blank lines, CRLF, empty block | missing text-block header |
 | Names | Indonesian/Unicode alphanumeric names, underscore, hyphen | repeated/edge spaces, punctuation |
 | Binding | display of declared data | unresolved data name, action name used as data |
 | Persistence | one tugas declaration | duplicate persistence declarations |
