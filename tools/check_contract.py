@@ -29,7 +29,7 @@ required = [
     "docs/verification/one-v0.1-linux-windows-2026-10-15.md", "docs/verification/native-backends-2026-10-19.md",
     "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
-    "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
+    "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",\n    "docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md",\n    "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",\n    "examples/human-vnext/daftar-tugas.one",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -68,6 +68,22 @@ fixture = (ROOT / "tests/spec/grammar_examples.one").read_text(encoding="utf-8")
 for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika "):
     if marker not in fixture:
         raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
+
+human_vnext = (ROOT / "examples/human-vnext/daftar-tugas.one").read_text(encoding="utf-8")
+for marker in (
+    "Buat aplikasi daftar tugas",
+    "Terima judul tugas",
+    "Simpan tugas baru",
+    "Tampilkan semua tugas",
+    "Tandai tugas sebagai selesai",
+    "Simpan semua tugas agar tidak hilang saat aplikasi ditutup",
+):
+    if marker not in human_vnext:
+        raise SystemExit(f"HUMAN vNEXT EXAMPLE: missing required instruction {marker!r}")
+
+ledger = (ROOT / "docs/verification/one-completion-ledger.md").read_text(encoding="utf-8")
+if "30% GATE NOT PASSED" not in ledger or "TOTAL" not in ledger:
+    raise SystemExit("COMPLETION LEDGER: missing explicit milestone status or weighted total")
 
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")
