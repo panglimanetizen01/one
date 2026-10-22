@@ -70,3 +70,15 @@ PASS only when every weighted row earns its full verified points, all required C
 - **Verified completion:** 0/100 points for this newly introduced vNext tranche on the current head; tests/build/Clippy/CI have not completed successfully on the exact current SHA.
 - **Milestone target:** 30%.
 - **Gate:** **NOT PASSED**.
+
+## Repository work checkpoint — 2026-10-22
+
+Changes committed directly to the feature branch after the baseline above:
+
+- `c31258c98932293203507f0566c258d519632668` — added an implementation-bounded human-vNext starter grammar contract.
+- `c73950e16acb1df32be32b4f52898fe001ca878c` — added parser tests for Unicode identifiers, invalid indentation, duplicate data/action names, and orphaned nested instructions.
+- `212a48ac37522d16c76cb525f043aed6adf26db3` — aligned the text-block contract with observed parser behavior (empty text is accepted).
+- `e364af0b5768628f40e3f3de5c52fd3f0833607d` — linked the experimental contract from the specification index.
+- `48afad1a35f4911e3a415de3fdfc1463091a8aaf` — made the contract checker require the new grammar document.
+
+**Evidence status:** These are repository changes, not test results. The new tests and contract-checker change still require local execution on the updated branch. No verified points are awarded by this checkpoint; the 30% gate remains NOT PASSED until all F1–F6 acceptance evidence passes on one recorded SHA, including the CI/infrastructure requirement or an explicitly reviewed replacement verification contract.
