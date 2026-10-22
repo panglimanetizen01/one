@@ -394,6 +394,41 @@ mod tests {
     }
 
     #[test]
+    fn accepts_unicode_and_punctuated_identifier_characters() {
+        let source = "Buat aplikasi café 東京\nBuat data naïve_名-2\n    Isi teks berikut\n        isi\n";
+        let program = parse(source).expect("Unicode alphanumeric identifiers, underscore, and hyphen are supported");
+        assert_eq!(program.project, "café 東京");
+        assert!(matches!(
+            &program.declarations[0],
+            HumanDeclaration::Data { name, .. } if name == "naïve_名-2"
+        ));
+    }
+
+    #[test]
+    fn rejects_tabs_and_noncanonical_indentation() {
+        for source in [
+            "Buat aplikasi catatan\nPengguna bisa melihat\n\tTampilkan pesan\n",
+            "Buat aplikasi catatan\n Pengguna bisa melihat\n",
+        ] {
+            assert!(parse(source).is_err(), "invalid indentation must be rejected");
+        }
+    }
+
+    #[test]
+    fn rejects_duplicate_data_and_action_names() {
+        let source = "Buat aplikasi catatan\nBuat data pesan\n    Isi teks berikut\n        isi\nPengguna bisa pesan\n    Tampilkan pesan\n";
+        let error = parse(source).expect_err("declarations share one duplicate-name namespace");
+        assert_eq!(error.code, "H0017");
+    }
+
+    #[test]
+    fn rejects_orphaned_nested_instruction() {
+        let source = "Buat aplikasi catatan\n    Tampilkan pesan\n";
+        let error = parse(source).expect_err("nested instruction without a parent must fail");
+        assert_eq!(error.code, "H0006");
+    }
+
+    #[test]
     fn rejects_missing_text_block() {
         let source = "Buat aplikasi catatan\nBuat data pesan\n";
         let error = parse(source).expect_err("missing text block must fail");
