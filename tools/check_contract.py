@@ -32,6 +32,7 @@ required = [
     "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
     "docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md",
     "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",
+    "docs/spec/human-instruction-vnext-starter-grammar.md",
     "examples/human-vnext/daftar-tugas.one",
 ]
 
