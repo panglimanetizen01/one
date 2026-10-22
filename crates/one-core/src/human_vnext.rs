@@ -361,7 +361,7 @@ fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
             .ok_or_else(|| format!("Data tugas rusak pada baris {}: status hilang", index + 1))?;
         let title = fields.next()
             .ok_or_else(|| format!("Data tugas rusak pada baris {}: judul hilang", index + 1))?;
-        if !matches!(status, "0" | "1") || title.is_empty() || title.contains(['\r', '\n', '\t']) {
+        if !matches!(status, "0" | "1") || title.is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
             return Err(format!("Data tugas rusak pada baris {}: field tidak valid", index + 1));
         }
         if tasks.iter().any(|task: &Task| task.id == id) {
@@ -450,7 +450,7 @@ pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
                     break;
                 }
                 let title = title.trim_end_matches(['\r', '\n']);
-                if title.trim().is_empty() || title.contains(['\r', '\n', '\t']) {
+                if title.trim().is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
                     writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung tab").map_err(|error| error.to_string())?;
                     continue;
                 }
@@ -498,4 +498,77 @@ pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
         }
     }
     Ok(())
+}
+
+
+#[cfg(test)]
+mod task_runtime_tests {
+    use super::*;
+    use std::io::Cursor;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+
+    fn storage_path() -> std::path::PathBuf {
+        std::env::temp_dir().join(format!(
+            "one-human-vnext-tasks-{}-{}.db",
+            std::process::id(),
+            NEXT_ID.fetch_add(1, Ordering::Relaxed)
+        ))
+    }
+
+    fn task_program() -> HumanProgram {
+        parse(
+            "Buat aplikasi daftar tugas\n\
+             Pengguna bisa menambahkan tugas\n\
+                 Terima judul tugas\n\
+                 Simpan tugas baru\n\
+             Pengguna bisa melihat semua tugas\n\
+                 Tampilkan semua tugas\n\
+             Pengguna bisa menandai tugas sebagai selesai\n\
+                 Terima tugas yang dipilih\n\
+                 Tandai tugas sebagai selesai\n\
+             Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+        ).expect("task app source should parse")
+    }
+
+    #[test]
+    fn task_app_persists_across_sessions_and_marks_completion() {
+        let path = storage_path();
+        let program = task_program();
+        let mut first_input = Cursor::new(b"tambah\nBelanja kebutuhan\nkeluar\n".to_vec());
+        let mut first_output = Vec::new();
+        run_task_app(&program, &path, &mut first_input, &mut first_output)
+            .expect("adding a task should succeed");
+
+        let mut second_input = Cursor::new(b"lihat\nselesai\n1\nlihat\nkeluar\n".to_vec());
+        let mut second_output = Vec::new();
+        run_task_app(&program, &path, &mut second_input, &mut second_output)
+            .expect("reopened task app should read and update saved data");
+        let output = String::from_utf8(second_output).expect("output is UTF-8");
+        assert!(output.contains("Belanja kebutuhan"), "task must survive restart");
+        assert!(output.contains("[selesai] Belanja kebutuhan"), "completion must persist");
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn task_app_rejects_missing_persistence_declaration() {
+        let mut program = task_program();
+        program.declarations.retain(|declaration| !matches!(declaration, HumanDeclaration::Persist { .. }));
+        let path = storage_path();
+        let mut input = Cursor::new(Vec::<u8>::new());
+        let mut output = Vec::new();
+        let error = run_task_app(&program, &path, &mut input, &mut output)
+            .expect_err("durable storage must be declared");
+        assert!(error.contains("wajib mendeklarasikan"));
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn task_storage_rejects_corrupt_records() {
+        let path = storage_path();
+        std::fs::write(&path, "not-an-id\t0\tjudul\n").expect("write corrupt fixture");
+        assert!(load_tasks(&path).expect_err("corrupt record must fail").contains("ID tidak valid"));
+        let _ = std::fs::remove_file(path);
+    }
 }
