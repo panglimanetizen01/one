@@ -130,15 +130,32 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
             }
             index += 1;
             let mut text_lines = Vec::new();
+            let mut next_source_line = header_line + 1;
             while index < meaningful.len() && meaningful[index].1 >= 8 {
                 let (text_line, text_indent, text_content) = meaningful[index];
                 if text_indent < 8 || text_indent % 4 != 0 {
                     return Err(error(text_line, "H0002", "Indentasi isi teks tidak valid"));
                 }
+                // Blank source lines inside a text block are data. Reinsert them
+                // between meaningful lines instead of dropping them during the
+                // structural-line scan above.
+                for blank_line in next_source_line..text_line {
+                    if lines[blank_line - 1].trim().is_empty() {
+                        text_lines.push(String::new());
+                    }
+                }
                 let raw = lines[text_line - 1];
-                let content_start = text_indent;
-                text_lines.push(raw.get(content_start..).unwrap_or(text_content).to_owned());
+                text_lines.push(raw.get(8..).unwrap_or(text_content).to_owned());
+                next_source_line = text_line + 1;
                 index += 1;
+            }
+            // Preserve blank lines at the end of the text block, including a
+            // final newline when the source itself ends immediately after data.
+            let boundary_line = meaningful.get(index).map_or(lines.len() + 1, |entry| entry.0);
+            for blank_line in next_source_line..boundary_line {
+                if lines[blank_line - 1].trim().is_empty() {
+                    text_lines.push(String::new());
+                }
             }
             if text_lines.is_empty() {
                 return Err(error(header_line, "H0009", "Blok teks harus memiliki setidaknya satu baris"));
@@ -241,6 +258,19 @@ mod tests {
             vec![HumanDeclaration::Data {
                 name: "pesan".into(),
                 value: HumanValue::Text("Halo dunia\nIni tanda kutip \" dan titik koma ;".into()),
+            }]
+        );
+    }
+
+    #[test]
+    fn preserves_blank_lines_and_trailing_newline_in_text_blocks() {
+        let source = "Buat aplikasi catatan\nBuat data pesan\n    Isi teks berikut\n        Baris pertama\n\n        Baris ketiga\n";
+        let program = parse(source).expect("blank lines and trailing newline are text data");
+        assert_eq!(
+            program.declarations,
+            vec![HumanDeclaration::Data {
+                name: "pesan".into(),
+                value: HumanValue::Text("Baris pertama\n\nBaris ketiga\n".into()),
             }]
         );
     }
