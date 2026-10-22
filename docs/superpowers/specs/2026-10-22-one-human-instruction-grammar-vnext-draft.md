@@ -182,11 +182,24 @@ Runtime fixtures must separately verify add, list, complete, persistence across 
 
 ## 11. Versioning and CLI isolation
 
-The prototype must be invoked through an explicit versioned mode or separate command, such as one check --language human-vnext. This example is a design suggestion only; it is not a claim that the current CLI implements the flag.
+The current prototype is explicitly isolated and invoked with:
 
-The existing v0.1 default mode must retain its existing grammar and diagnostics. The new mode must fail clearly if its parser is not built into the selected binary. No silent fallback from vNext to v0.1 or from v0.1 to vNext is allowed.
+    one jalankan-human-vnext examples/human-vnext/daftar-tugas.one
+    one jalankan-human-vnext examples/human-vnext/daftar-tugas.one --data ./data/tugas.db
 
-Before release, the repository must decide the stable language identifier, CLI selection mechanism, project manifest declaration, migration policy, and how formatters and editor tooling identify the language version.
+The default `one jalankan`, `one periksa`, build, and package commands continue to use the normative v0.1 parser. There is no automatic fallback between the two source languages. The vNext command currently implements only the task-list vertical slice; it is not a general-purpose vNext compiler and must be labelled experimental.
+
+The provisional language identifier is `one-human-vnext`. Names are case-sensitive and preserved as UTF-8 without Unicode normalization. Therefore canonically equivalent Unicode spellings are not currently folded together. This is an explicit limitation, not an implicit normalization policy.
+
+Text-block rules implemented by the prototype:
+- LF and CRLF are accepted; CRLF line endings are normalized.
+- Eight leading spaces identify text payload lines. Additional indentation beyond those eight spaces is preserved as data.
+- Blank lines inside the text payload are preserved.
+- A terminal source newline inside the payload is preserved as a terminal newline in the value.
+- Tabs are rejected in structural indentation. Tabs/newlines in task titles are rejected by the current line-based storage format.
+- Unknown instructions and unresolved display references fail with stable prototype diagnostic codes. These codes are experimental and not yet a public compatibility promise.
+
+Before release, the repository must decide the stable language identifier, project manifest declaration, migration policy, Unicode normalization policy, and how formatters and editor tooling identify the language version.
 
 ## 12. Prototype implementation gate
 
@@ -205,4 +218,10 @@ Do not promote this draft to normative until all of the following are true:
 
 ## 13. Current status
 
-This is a narrower grammar draft for review and prototyping. The isolated experimental parser is in crates/one-core/src/human_vnext.rs with a small unit-test set, but it is not wired into the CLI, does not execute programs, does not implement persistence, and is not normative. Tests have not yet been run against the current branch. In particular, the task-list example remains an acceptance target until end-to-end evidence exists.
+This remains a proposed, non-normative grammar draft. The parser and task-list runner live in `crates/one-core/src/human_vnext.rs`; the explicit CLI entry point is `one jalankan-human-vnext`; the runnable source fixture is `examples/human-vnext/daftar-tugas.one`.
+
+The current vertical slice recognizes the task app's add/list/complete action shapes, validates that a persistence requirement is declared, stores records in a tab-delimited UTF-8 file using a temporary file and rename, and reloads the file at startup. It does not yet lower the human-vNext AST into ONE's canonical v0.1 IR, and the task runner is a dedicated experimental interpreter for this narrow app shape. Therefore the general human-vNext compiler/execution pipeline requirement remains **NOT IMPLEMENTED**.
+
+Regression tests were added for text-block fidelity, CRLF/relative indentation, task persistence across sessions, completion persistence, missing persistence declarations, and corrupted storage. They are committed but remain **NOT VERIFIED** until the Rust tests and exact-SHA Linux/Windows CI execute successfully. The CI run currently fails before any job steps start, so this is not evidence of either a code failure or a code pass.
+
+The task-list slice is implemented in source but must not be described as verified or production-ready until tests, CI, error-path review, and v0.1 regression checks pass.
