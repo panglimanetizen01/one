@@ -379,7 +379,7 @@ fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
     }
     let mut contents = String::new();
     for task in tasks {
-        if task.title.is_empty() || task.title.contains(['\r', '\n', '\t']) {
+        if task.title.is_empty() || task.title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
             return Err("Judul tugas tidak boleh kosong atau mengandung baris baru/tab".into());
         }
         contents.push_str(&format!("{}\t{}\t{}\n", task.id, if task.done { 1 } else { 0 }, task.title));
