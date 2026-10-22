@@ -70,9 +70,23 @@ fn validate_indentation(line: &str, line_number: usize) -> Result<usize, HumanPa
 }
 
 fn is_name(value: &str) -> bool {
-    !value.trim().is_empty()
-        && value == value.trim()
-        && !value.chars().any(|ch| ch.is_control())
+    if value.is_empty() || value != value.trim() {
+        return false;
+    }
+    let mut previous_space = false;
+    for ch in value.chars() {
+        if ch == ' ' {
+            if previous_space {
+                return false;
+            }
+            previous_space = true;
+        } else if ch.is_alphanumeric() || ch == '_' || ch == '-' {
+            previous_space = false;
+        } else {
+            return false;
+        }
+    }
+    !previous_space
 }
 
 fn parse_project(line: &str, line_number: usize) -> Result<String, HumanParseError> {
@@ -224,7 +238,13 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
 
     let mut declaration_names = std::collections::HashSet::new();
     let mut data_names = std::collections::HashSet::new();
+    let mut persisted_collections = std::collections::HashSet::new();
     for declaration in &declarations {
+        if let HumanDeclaration::Persist { collection } = declaration {
+            if !persisted_collections.insert(collection.as_str()) {
+                return Err(error(1, "H0019", format!("Deklarasi penyimpanan ganda untuk {}", collection)));
+            }
+        }
         let name = match declaration {
             HumanDeclaration::Data { name, .. } => {
                 data_names.insert(name.as_str());
@@ -328,6 +348,33 @@ mod tests {
         let source = "Buat aplikasi catatan\nTolong lakukan sesuatu\n";
         let error = parse(source).expect_err("unknown instruction must fail");
         assert_eq!(error.code, "H0016");
+    }
+
+    #[test]
+    fn preserves_unicode_text_without_normalization() {
+        let source = "Buat aplikasi catatan\nBuat data pesan\n    Isi teks berikut\n        Halo 世界 — selamat pagi 👋\n";
+        let program = parse(source).expect("Unicode text should be accepted");
+        assert_eq!(
+            program.declarations,
+            vec![HumanDeclaration::Data {
+                name: "pesan".into(),
+                value: HumanValue::Text("Halo 世界 — selamat pagi 👋\n".into()),
+            }]
+        );
+    }
+
+    #[test]
+    fn rejects_duplicate_persistence_declarations() {
+        let source = "Buat aplikasi catatan\nSimpan semua tugas agar tidak hilang saat aplikasi ditutup\nSimpan semua tugas agar tidak hilang saat aplikasi ditutup\n";
+        let error = parse(source).expect_err("duplicate persistence declarations must fail");
+        assert_eq!(error.code, "H0019");
+    }
+
+    #[test]
+    fn rejects_noncanonical_identifier_spacing() {
+        let source = "Buat aplikasi catatan\nBuat data dua  kata\n    Isi teks berikut\n        isi\n";
+        let error = parse(source).expect_err("ambiguous repeated spaces in names must fail");
+        assert_eq!(error.code, "H0007");
     }
 
     #[test]
