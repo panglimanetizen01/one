@@ -6,6 +6,8 @@ pub mod diagnostic;
 pub mod governance;
 pub mod interop;
 pub mod interpreter;
+/// Experimental, isolated parser for the proposed human-instruction surface.
+pub mod human_vnext;
 pub mod ir;
 pub mod lexer;
 pub mod native_backend;
