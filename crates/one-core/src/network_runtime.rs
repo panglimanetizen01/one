@@ -25,6 +25,39 @@ impl RealNetworkRuntime {
     pub fn close(&mut self, id: NetworkConnectionId) -> bool { self.connections.remove(&id).is_some() }
 }
 fn resolve_target(host: &str, port: u16, address_kind: Option<NetworkAddressKind>) -> Result<SocketAddr, NetworkRuntimeError> { let service = if host.contains(':') { format!("[{host}]:{port}") } else { format!("{host}:{port}") }; let mut addresses = service.to_socket_addrs().map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?; addresses.find(|a| match address_kind { Some(NetworkAddressKind::Ipv4) => a.is_ipv4(), Some(NetworkAddressKind::Ipv6) => a.is_ipv6(), Some(NetworkAddressKind::Name) | None => true }).ok_or_else(|| NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))) }
+fn is_valid_http_reg_name(host: &str) -> bool {
+    let bytes = host.as_bytes();
+    if bytes.is_empty() || !host.is_ascii() {
+        return false;
+    }
+
+    let mut i = 0;
+    while i < bytes.len() {
+        let byte = bytes[i];
+        if byte == b'%' {
+            if i + 2 >= bytes.len()
+                || !bytes[i + 1].is_ascii_hexdigit()
+                || !bytes[i + 2].is_ascii_hexdigit()
+            {
+                return false;
+            }
+            i += 3;
+            continue;
+        }
+
+        let valid = byte.is_ascii_alphanumeric()
+            || matches!(
+                byte,
+                b'-' | b'.' | b'_' | b'~' | b'!' | b'$' | b'&' | b'\'' | b'(' | b')'
+                    | b'*' | b'+' | b',' | b';' | b'='
+            );
+        if !valid {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
 pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
     let invalid = || NetworkRuntimeError::InvalidOperation("Authority HTTP tidak valid.".into());
     if let Some(rest) = authority.strip_prefix('[') {
@@ -35,9 +68,10 @@ pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), Net
     }
     if authority.is_empty() || authority.contains('[') || authority.contains(']') { return Err(invalid()); }
     match authority.rsplit_once(':') {
-        Some((host, port)) if !host.is_empty() && !host.contains(':') => Ok((host.to_owned(), port.parse::<u16>().map_err(|_| invalid())?)),
+        Some((host, port)) if !host.contains(':') && is_valid_http_reg_name(host) => Ok((host.to_owned(), port.parse::<u16>().map_err(|_| invalid())?)),
         Some(_) => Err(invalid()),
-        None => Ok((authority.to_owned(), 80)),
+        None if is_valid_http_reg_name(authority) => Ok((authority.to_owned(), 80)),
+        None => Err(invalid()),
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -52,6 +86,19 @@ pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, c
 mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io::{Read, Write}; use std::net::TcpListener; use std::thread;
     #[test] fn localhost_resolution_returns_a_real_socket_address() { let address = resolve_target("localhost", 80, None).expect("localhost must resolve"); assert!(address.ip().is_loopback()); }
     #[test] fn http_authority_parser_handles_ipv4_dns_and_bracketed_ipv6() { assert_eq!(parse_http_authority("127.0.0.1:8080"), Ok(("127.0.0.1".into(), 8080))); assert_eq!(parse_http_authority("example.com"), Ok(("example.com".into(), 80))); assert_eq!(parse_http_authority("[::1]:8080"), Ok(("::1".into(), 8080))); assert_eq!(parse_http_authority("[::1]"), Ok(("::1".into(), 80))); }
+    #[test] fn http_authority_parser_follows_uri_reg_name_syntax() {
+        for host in ["example.com", "bad_host", "-bad.example", "bad..example", "example.com-", "name~test", "example%20name"] {
+            assert!(parse_http_authority(host).is_ok(), "reg-name yang valid seharusnya diterima: {host:?}");
+        }
+        for host in ["", "foo bar", "foo\tbar", "example.com/path", "example%ZZ", "example%"] {
+            assert!(parse_http_authority(host).is_err(), "authority yang tidak valid seharusnya ditolak: {host:?}");
+        }
+        assert!(parse_http_authority("example.com:80").is_ok());
+        assert!(parse_http_authority("example.com:65535").is_ok());
+        assert!(parse_http_authority("example.com:65536").is_err());
+        assert!(parse_http_authority("example.com:").is_err());
+        assert_eq!(parse_http_authority("[::1]:8080"), Ok(("::1".into(), 8080)));
+    }
     #[test] fn http_authority_parser_rejects_invalid_ports_and_unbracketed_ipv6() { assert!(parse_http_authority("example.com:not-a-port").is_err()); assert!(parse_http_authority("::1:8080").is_err()); assert!(parse_http_authority("[not-ipv6]:80").is_err()); }
     #[test] fn ipv6_resolution_uses_bracketed_socket_authority() { let address = resolve_target("::1", 8080, Some(NetworkAddressKind::Ipv6)).expect("IPv6 loopback should resolve"); assert!(address.is_ipv6()); assert_eq!(address.port(), 8080); }
     #[test] fn tcp_round_trip_uses_real_loopback_socket() { let listener = TcpListener::bind("127.0.0.1:0").expect("bind"); let address = listener.local_addr().expect("address"); let server = thread::spawn(move || { let (mut stream, _) = listener.accept().expect("accept"); let mut input = [0u8; 4]; stream.read_exact(&mut input).expect("read"); assert_eq!(&input, b"ping"); stream.write_all(b"pong").expect("write"); }); let mut runtime = RealNetworkRuntime::new(); let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect); let connected = runtime.execute(NetworkOperation::Connect { target: NetworkTarget::Service { host: address.ip().to_string(), port: address.port() }, constraints: crate::network::NetworkConstraints { address_kind: Some(NetworkAddressKind::Ipv4), transport: NetworkTransport::Reliable, security: Some(crate::network::NetworkSecurity::Insecure), timeout_ms: 2_000, protocol: Some(NetworkProtocolFamily::Tcp) } }, &capabilities).expect("connect"); let id = match connected { NetworkRuntimeResult::Connected { id, .. } => id, _ => panic!("unexpected result") }; runtime.execute(NetworkOperation::Send { connection: id, data: b"ping".to_vec() }, &capabilities).expect("send"); let received = runtime.execute(NetworkOperation::Receive { connection: id }, &capabilities).expect("receive"); assert_eq!(received, NetworkRuntimeResult::Received { id, data: b"pong".to_vec() }); server.join().expect("server"); }
