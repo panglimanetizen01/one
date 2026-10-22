@@ -1,0 +1,208 @@
+# ONE Human Instruction Surface vNext — Grammar Draft
+
+**Status:** PROPOSED, VERSIONED DESIGN DRAFT — NOT IMPLEMENTED  
+**Language identifier:** one-human-vnext (provisional; must be ratified before implementation)  
+**Locale:** Indonesian canonical surface, id  
+**Compatibility:** Separate from normative ONE v0.1. No v0.1 source is reinterpreted by this draft.
+
+## 1. Purpose and conformance rule
+
+This document narrows the product contract into a candidate grammar that can be implemented and tested. ONE remains a programming language with a learned, finite instruction vocabulary and deterministic semantics. It is not arbitrary prose interpreted by an AI model.
+
+The ordinary source form must not require conventional programming punctuation to express program structure. This includes braces, parentheses, semicolons, commas, colons, symbolic operators, and quote marks. Newlines and indentation are structural whitespace. Ordinary words and fixed phrase patterns carry instruction meaning.
+
+A program conforms only if every nonblank instruction line matches exactly one production in this version, every referenced name resolves, and every block boundary is valid. If there is no parse or more than one meaning-preserving parse, compilation fails with a diagnostic. No fuzzy fallback is permitted.
+
+## 2. Source layout
+
+- Encoding is UTF-8.
+- LF and CRLF line endings are accepted and normalized before parsing.
+- A blank line separates visual groups but has no semantic effect.
+- Top-level instructions begin at column zero.
+- A nested body is indented by exactly four spaces per level.
+- Tabs are forbidden in indentation.
+- Indentation is legal only after a production that requires a body.
+- A block ends when indentation returns to its parent level.
+- The file must end at a complete instruction boundary.
+- No punctuation token is required to end an instruction. A newline ends a simple instruction; indentation delimits a body.
+
+These rules intentionally retain a whitespace-based block model, not a punctuation-based one.
+
+## 3. Lexical and name model
+
+The lexer recognizes Unicode words, decimal integers, line boundaries, indentation transitions, and text-block boundaries. It does not treat punctuation as an instruction delimiter. Punctuation appearing in a text block is data.
+
+Names are sequences of words in a grammar-defined name slot. Each production must identify where a name ends. The parser must not greedily absorb reserved phrase markers when they belong to the production. If a name and marker can be interpreted in two different ways, the source is ambiguous and rejected.
+
+The initial implementation should keep names case-sensitive after Unicode normalization policy is decided. The implementation must not silently fold two distinct names into one. The normalization algorithm remains an explicit pre-implementation decision.
+
+## 4. Text values without mandatory quotes
+
+### 4.1 Chosen candidate: introduced indented text block
+
+This draft chooses an explicit text-introduction phrase followed by an indented body for arbitrary text values. The introducing instruction is:
+
+    Isi teks berikut
+        Ini adalah isi teks
+        Tanda baca seperti titik koma kurung dan tanda kutip
+        tetap menjadi data bukan sintaks ONE
+
+The block content is data, not executable ONE instructions. Its leading indentation is removed by the common block indentation amount; internal relative indentation and blank lines are preserved. The parser records a text-block node distinct from a statement block.
+
+This candidate avoids requiring quote marks and permits punctuation and command-like words inside data. It does mean a multi-line text literal is visually a block. The implementation must test empty text, trailing newline, leading spaces, Unicode normalization, CRLF normalization, and round-trip fidelity before this rule can be promoted to normative status.
+
+### 4.2 Inline text
+
+Inline text without quotes is not yet standardized in this draft. An arbitrary sequence of words cannot safely be distinguished from a variable reference or instruction marker using guesswork. The first vertical slice should use named values or introduced text blocks for text data. A later reviewed production may introduce inline text using an unambiguous phrase and boundary rule.
+
+The vNext compiler must never infer whether words are text or a variable based only on whether a name happens to exist.
+
+## 5. Canonical starter productions
+
+The following are candidate forms for the first prototype. They are intentionally a small subset, not a claim that the whole language is specified.
+
+### 5.1 Program declaration
+
+    Buat aplikasi daftar tugas
+
+This declares a project artifact of kind application with project name daftar tugas. The phrase Buat aplikasi is reserved in this production; the remaining name is the project identifier. The first prototype should require exactly one project declaration at the start of a project file.
+
+### 5.2 User action declarations
+
+    Pengguna bisa menambahkan tugas
+        Terima judul tugas
+        Simpan tugas baru
+
+    Pengguna bisa melihat semua tugas
+        Tampilkan semua tugas
+
+    Pengguna bisa menandai tugas sebagai selesai
+        Terima tugas yang dipilih
+        Tandai tugas sebagai selesai
+
+These declare named user actions. The words after Pengguna bisa are the action name; body instructions specify the action behavior. The initial vertical slice must implement only the action patterns it can prove end-to-end. Unsupported body instructions are compile errors, not placeholders.
+
+### 5.3 Persistence requirement
+
+    Simpan semua tugas agar tidak hilang saat aplikasi ditutup
+
+This is a requirement-level phrase, not a runtime implementation by itself. The compiler must lower it to an explicit persistence requirement node and the runtime/backend must bind that node to a documented storage adapter. The first prototype must choose a concrete storage location, schema, write atomicity, restart behavior, and error policy. No persistence claim is valid until a test starts the program twice and observes the same stored tasks.
+
+### 5.4 Data declaration and text block
+
+    Buat data pesan
+        Isi teks berikut
+            Halo dunia
+
+The semantic meaning is a variable named pesan whose value is the exact text block Halo dunia. This is a candidate production. It must be tested against nested statement blocks so a text block cannot be confused with executable instructions.
+
+### 5.5 Display
+
+    Tampilkan pesan
+
+This resolves pesan as a value and emits its display representation. If pesan is unresolved, compilation fails. It is not treated as the literal text pesan.
+
+## 6. Candidate EBNF-like grammar
+
+The grammar notation below is specification notation only; it is not source syntax that ONE users type.
+
+    program          = project-declaration, newline, { blank-line | top-level-declaration }, EOF ;
+    project-declaration = "Buat aplikasi", project-name ;
+    top-level-declaration = user-action | data-declaration | persistence-requirement ;
+    user-action      = "Pengguna bisa", action-name, newline, indent, action-body, dedent ;
+    action-body      = instruction, { newline, instruction } ;
+    data-declaration = "Buat data", identifier, newline, indent, text-block, dedent ;
+    text-block       = "Isi teks berikut", newline, indent, text-line, { newline, text-line }, dedent ;
+    text-line        = any-source-line-as-data ;
+    persistence-requirement = "Simpan semua", collection-name, "agar tidak hilang saat aplikasi ditutup" ;
+    instruction      = display-instruction | supported-action-instruction ;
+    display-instruction = "Tampilkan", value-reference ;
+
+This is a deliberately incomplete grammar sketch. In particular, project-name, action-name, identifier, collection-name, value-reference, and supported-action-instruction require exact lexical boundaries and semantics before this draft can become normative. It must not be treated as a parser-ready complete grammar.
+
+## 7. AST contract for the prototype
+
+The versioned AST should preserve intent rather than source-language phrasing:
+
+- ProjectDeclaration { name, artifact_kind }
+- UserActionDeclaration { name, parameters, body }
+- DataDeclaration { name, value }
+- TextBlock { exact_text }
+- Display { value_reference }
+- PersistenceRequirement { collection, durability_scope }
+
+Each node also carries a source span for diagnostics. Locale-specific words lower to the same node shape. The exact Rust type layout is an implementation choice, but golden tests must lock the observable semantic shape.
+
+## 8. Semantic rules
+
+1. A project file has exactly one project declaration, before all other top-level declarations.
+2. Each action name is unique within a project.
+3. Each data name is unique in its scope.
+4. Each reference must resolve at compile time unless the production explicitly declares a runtime-bound value.
+5. A display instruction reads a value; it does not create or mutate one.
+6. A text block is opaque data and is never recursively parsed as ONE code.
+7. A persistence requirement must bind to an available persistence implementation or fail before execution.
+8. Unsupported action body instructions are rejected.
+9. No AI or network access is used to decide parsing, name resolution, or semantics.
+10. Every side effect must pass the existing capability and execution-policy boundary.
+
+## 9. Negative grammar fixtures
+
+The prototype must reject, with stable diagnostic categories:
+
+- a missing project declaration;
+- two project declarations;
+- an action declaration with no body;
+- an instruction body at the wrong indentation level;
+- tabs used for indentation;
+- an unknown instruction phrase;
+- a reference to an undeclared value;
+- duplicate action or data names;
+- a persistence requirement when no compatible adapter exists;
+- a line that has two plausible parses;
+- text-block content accidentally parsed as executable instructions;
+- an unterminated or malformed text block;
+- unsupported inline free-form text where a value reference is required.
+
+## 10. Positive fixtures
+
+At minimum, the parser fixture set must include:
+
+- one project declaration;
+- multiple actions with deterministic body boundaries;
+- a text block containing punctuation and quote characters as data;
+- a text block containing words that resemble ONE instructions;
+- Unicode text and mixed whitespace inside text data;
+- blank lines between declarations;
+- nested text and instruction blocks with different indentation depths;
+- a complete task-list source fixture;
+- exact expected AST output for every accepted fixture.
+
+Runtime fixtures must separately verify add, list, complete, persistence across restart, and storage failure behavior. A parser fixture alone cannot claim application behavior works.
+
+## 11. Versioning and CLI isolation
+
+The prototype must be invoked through an explicit versioned mode or separate command, such as one check --language human-vnext. This example is a design suggestion only; it is not a claim that the current CLI implements the flag.
+
+The existing v0.1 default mode must retain its existing grammar and diagnostics. The new mode must fail clearly if its parser is not built into the selected binary. No silent fallback from vNext to v0.1 or from v0.1 to vNext is allowed.
+
+Before release, the repository must decide the stable language identifier, CLI selection mechanism, project manifest declaration, migration policy, and how formatters and editor tooling identify the language version.
+
+## 12. Prototype implementation gate
+
+Do not promote this draft to normative until all of the following are true:
+
+- grammar decisions left open above are resolved;
+- text blocks round-trip exactly under a documented newline/indentation policy;
+- parser positive and negative fixtures pass;
+- AST and semantic lowering golden tests pass;
+- the task-list vertical slice runs through the public toolchain;
+- persistence survives process restart and reports failures accurately;
+- capability checks are enforced;
+- Linux and Windows verification is recorded for the exact commit;
+- beginner documentation uses only tested syntax;
+- review confirms v0.1 behavior is unchanged.
+
+## 13. Current status
+
+This is a narrower grammar draft for review and prototyping. It is not complete, not normative, and not implemented. In particular, the task-list example remains an acceptance target until end-to-end evidence exists.
