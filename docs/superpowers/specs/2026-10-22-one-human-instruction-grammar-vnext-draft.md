@@ -102,23 +102,54 @@ The semantic meaning is a variable named pesan whose value is the exact text blo
 
 This resolves pesan as a value and emits its display representation. If pesan is unresolved, compilation fails. It is not treated as the literal text pesan.
 
-## 6. Candidate EBNF-like grammar
+## 6. Versioned prototype grammar
 
-The grammar notation below is specification notation only; it is not source syntax that ONE users type.
+**Grammar revision:** `one-human-vnext/0.1-draft`  
+**Status:** deterministic prototype contract; not yet normative.
 
-    program          = project-declaration, newline, { blank-line | top-level-declaration }, EOF ;
-    project-declaration = "Buat aplikasi", project-name ;
-    top-level-declaration = user-action | data-declaration | persistence-requirement ;
-    user-action      = "Pengguna bisa", action-name, newline, indent, action-body, dedent ;
-    action-body      = instruction, { newline, instruction } ;
-    data-declaration = "Buat data", identifier, newline, indent, text-block, dedent ;
-    text-block       = "Isi teks berikut", newline, indent, text-line, { newline, text-line }, dedent ;
-    text-line        = any-source-line-as-data ;
-    persistence-requirement = "Simpan semua", collection-name, "agar tidak hilang saat aplikasi ditutup" ;
-    instruction      = display-instruction | supported-action-instruction ;
-    display-instruction = "Tampilkan", value-reference ;
+The grammar below describes the accepted source subset. It does not claim that unsupported general-purpose language features exist.
 
-This is a deliberately incomplete grammar sketch. In particular, project-name, action-name, identifier, collection-name, value-reference, and supported-action-instruction require exact lexical boundaries and semantics before this draft can become normative. It must not be treated as a parser-ready complete grammar.
+```ebnf
+program              = project-declaration, newline, { top-level-item }, EOF ;
+top-level-item       = blank-line | data-declaration | user-action | persistence-requirement ;
+project-declaration  = "Buat aplikasi ", name ;
+data-declaration     = "Buat data ", name, newline,
+                       indent-4, "Isi teks berikut", newline, text-block ;
+user-action          = "Pengguna bisa ", name, newline,
+                       indent-4, action-body ;
+action-body          = action-instruction, { newline, action-instruction } ;
+action-instruction   = display-instruction
+                     | "Terima judul tugas"
+                     | "Simpan tugas baru"
+                     | "Tampilkan semua tugas"
+                     | "Terima tugas yang dipilih"
+                     | "Tandai tugas sebagai selesai" ;
+display-instruction  = "Tampilkan ", name ;
+persistence-requirement
+                     = "Simpan semua ", name,
+                       " agar tidak hilang saat aplikasi ditutup" ;
+name                 = name-character, { name-character | " ", name-character } ;
+name-character       = unicode-alphanumeric | "_" | "-" ;
+indent-4             = "    " ;
+indent-8             = "        " ;
+newline              = LF | CRLF ;
+blank-line           = zero-or-more-spaces, newline ;
+text-block           = { text-payload-line } ;
+text-payload-line    = indent-8, source-text, newline ;
+```
+
+The EBNF is paired with these boundary rules because a text block carries raw lines rather than parsed instructions:
+
+1. The first nonblank line must be the single project declaration. A second project declaration is rejected as an unknown top-level instruction.
+2. Names are case-sensitive UTF-8 strings composed of Unicode alphanumeric characters, underscores, hyphens and single ASCII spaces between characters/words. Leading/trailing or repeated spaces, punctuation, tabs and control characters are rejected in names. The implementation does not normalize Unicode; canonically equivalent spellings remain distinct. Combining marks that are not classified as alphanumeric by Rust's standard library are currently outside the name grammar.
+3. Every top-level declaration starts at column zero. The action body starts at four spaces. Text payload lines use at least eight leading spaces; exactly eight are structural and any additional spaces are retained as payload indentation.
+4. LF and CRLF are accepted. CRLF is normalized to LF in text values. UTF-8 payload content is preserved without Unicode normalization.
+5. Blank lines within a text payload are data. A blank line after the final nonblank payload line and before the next top-level declaration is also payload, so it adds a trailing newline to that value. Blank lines outside text blocks are ignored. This removes guessing at the cost of requiring authors to understand that blank lines following a text block belong to the value.
+6. An empty text block produces the empty string. A terminal newline in a nonempty text block is preserved as a terminal LF. Text payload is opaque and is never parsed as executable ONE source.
+7. Duplicate data/action names and duplicate persistence declarations are rejected. A display reference must resolve to a declared data value. Unknown instructions are rejected; there is no AI or fuzzy fallback.
+8. The task-list runtime accepts only the supported action-body sequences described in section 13. Parsing another action phrase does not imply that the runtime can execute it.
+
+This is a formal contract for the current starter subset, not a complete grammar for the future general-purpose language. Unsupported loops, conditions, types, functions, modules, arbitrary input/output, and general persistence declarations remain unimplemented and must fail rather than silently degrade.
 
 ## 7. AST contract for the prototype
 
