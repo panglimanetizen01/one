@@ -1,6 +1,6 @@
 # ONE Human Instruction Surface vNext — Grammar Draft
 
-**Status:** PROPOSED, VERSIONED DESIGN DRAFT — NOT IMPLEMENTED  
+**Status:** PROPOSED DESIGN DRAFT — EXPERIMENTAL PARSER PROTOTYPE EXISTS; NOT NORMATIVE  
 **Language identifier:** one-human-vnext (provisional; must be ratified before implementation)  
 **Locale:** Indonesian canonical surface, id  
 **Compatibility:** Separate from normative ONE v0.1. No v0.1 source is reinterpreted by this draft.
@@ -205,4 +205,4 @@ Do not promote this draft to normative until all of the following are true:
 
 ## 13. Current status
 
-This is a narrower grammar draft for review and prototyping. It is not complete, not normative, and not implemented. In particular, the task-list example remains an acceptance target until end-to-end evidence exists.
+This is a narrower grammar draft for review and prototyping. The isolated experimental parser is in crates/one-core/src/human_vnext.rs with a small unit-test set, but it is not wired into the CLI, does not execute programs, does not implement persistence, and is not normative. Tests have not yet been run against the current branch. In particular, the task-list example remains an acceptance target until end-to-end evidence exists.
