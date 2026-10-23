@@ -3,7 +3,7 @@
 use std::{collections::HashSet, env, fs, path::{Path, PathBuf}, process::ExitCode};
 use one_core::{analyze, lower, parse, Capability, CapabilitySet, ExecutionPolicy, Interpreter, ScopeRule};
 const VERSION: &str = "0.1.0";
-fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
+fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one jalankan-human-core <program.one> (frontend vNext ke IR kanonis)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &bundle.0 { eprintln!("{}: {}", diagnostic.code, diagnostic.message); if let Some(span) = &diagnostic.span { eprintln!("  baris {}, kolom {}", span.line, span.column); } for note in &diagnostic.notes { eprintln!("  catatan: {}", note); } for suggestion in &diagnostic.suggestions { eprintln!("  saran: {}", suggestion); } } }
 fn compile_source(source: &str) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let program = parse(source)?; let typed = analyze(&program)?; Ok((program, typed)) }
 fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("src").join("main.one"); if path.is_file() { Ok(path) } else { Err(format!("Proyek tidak memiliki '{}'.", path.display())) } }
@@ -38,6 +38,24 @@ fn main() -> ExitCode {
   return match one_core::human_vnext::run_task_app(&program, &storage_path, &mut input, &mut output) {
    Ok(()) => ExitCode::SUCCESS,
    Err(error) => { eprintln!("EHV003: {}", error); ExitCode::from(1) }
+  };
+ }
+ if first == "jalankan-human-core" || first == "run-human-core" {
+  let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-core <program.one>"); return ExitCode::from(2); };
+  if args.next().is_some() { eprintln!("EHV1001: terlalu banyak argumen."); return ExitCode::from(2); }
+  let path = Path::new(&source_arg);
+  let source = match fs::read_to_string(path) {
+   Ok(source) => source,
+   Err(error) => { eprintln!("EHV1002: tidak dapat membaca '{}': {}", path.display(), error); return ExitCode::from(2); }
+  };
+  let compiled = match one_core::human_compiler::compile(&source) {
+   Ok(program) => program,
+   Err(bundle) => { print_diagnostics(&bundle); return ExitCode::from(1); }
+  };
+  let mut interpreter = Interpreter::new(CapabilitySet::none());
+  return match interpreter.execute(&compiled.ir) {
+   Ok(result) => { for line in result.output { println!("{}", line); } ExitCode::SUCCESS },
+   Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) }
   };
  }
  let command = match first.as_str() { "buat" | "new" => "new", "periksa" | "check" => "check", "jalankan" | "run" => "run", "bangun" | "build" => "build", "ast" => "ast", "test" => "test", "package" => "package", "lihat" if args.next().as_deref() == Some("struktur") => "ast", _ => { usage(); return ExitCode::from(2); } };
