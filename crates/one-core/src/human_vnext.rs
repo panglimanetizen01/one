@@ -411,6 +411,23 @@ mod tests {
     }
 
     #[test]
+    fn rejects_noncanonical_identifier_edges_and_punctuation() {
+        for name in [" leading", "trailing ", "two  spaces", "nama!", "nama/tugas", "nama🙂"] {
+            let source = format!("Buat aplikasi {name}\n");
+            let error = parse(&source).expect_err("invalid identifier must be rejected");
+            assert_eq!(error.code, "H0004", "identifier {name:?}");
+        }
+
+        for name in [" leading", "trailing ", "nama!", "nama/tugas"] {
+            let source = format!(
+                "Buat aplikasi catatan\nBuat data {name}\n    Isi teks berikut\n        isi\n"
+            );
+            let error = parse(&source).expect_err("invalid data identifier must be rejected");
+            assert_eq!(error.code, "H0007", "identifier {name:?}");
+        }
+    }
+
+    #[test]
     fn rejects_tabs_and_noncanonical_indentation() {
         for source in [
             "Buat aplikasi catatan\nPengguna bisa melihat\n\tTampilkan pesan\n",
