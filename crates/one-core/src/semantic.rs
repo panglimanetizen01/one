@@ -23,6 +23,7 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
             ("angka maksimum".to_owned(), 2),
             ("nilai pemetaan".to_owned(), 2),
             ("atur pemetaan".to_owned(), 3),
+            ("ubah nilai ke json".to_owned(), 1),
         ]),
     }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
 pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
@@ -103,6 +104,7 @@ impl Analyzer {
             for arg in args { arg_types.push(self.infer(arg)?); }
             let expected_types: Option<Vec<Type>> = match name.as_str() {
                 "panjang teks" | "pangkas teks" => Some(vec![Type::Text]),
+                "ubah nilai ke json" => Some(vec![Type::Any]),
                 "teks memuat" | "pisah teks" => Some(vec![Type::Text, Type::Text]),
                 "ganti teks" => Some(vec![Type::Text, Type::Text, Type::Text]),
                 "ubah teks ke angka" => Some(vec![Type::Text]),
@@ -128,7 +130,7 @@ impl Analyzer {
             Ok(match name.as_str() {
                 "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
                 "teks memuat" => Type::Boolean,
-                "pangkas teks" | "ganti teks" => Type::Text,
+                "pangkas teks" | "ganti teks" | "ubah nilai ke json" => Type::Text,
                 "pisah teks" => Type::List,
                 "atur pemetaan" => Type::Map,
                 "ambil indeks" => Type::Any,
