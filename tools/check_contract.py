@@ -169,7 +169,8 @@ ledger = (ROOT / "docs/verification/one-completion-ledger.md").read_text(encodin
 current_result = ledger.partition("## Current result")[2].partition("## Repository work checkpoint")[0]
 if (
     "TOTAL" not in ledger
-    or "Milestone target" not in current_result or "30%" not in current_result
+    or "Milestone target" not in current_result
+    or not any(f"{percent}%" in current_result for percent in ("30", "60", "100"))
     or not any(marker in current_result for marker in ("**Gate:** **NOT PASSED**", "**Gate:** **PASS GREEN LOCKED**"))
 ):
     raise SystemExit("COMPLETION LEDGER: missing valid current milestone status or weighted total")
