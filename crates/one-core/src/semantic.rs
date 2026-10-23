@@ -6,7 +6,23 @@ use crate::diagnostic::{Diagnostic, DiagnosticBundle};
 use crate::network::NetworkOperation;
 use crate::types::Type;
 #[derive(Debug, Clone, PartialEq)] pub struct TypedProgram { pub program: Program }
-pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { let mut analyzer = Analyzer { scopes: vec![HashMap::new()], functions: HashMap::new() }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
+pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { let mut analyzer = Analyzer {
+        scopes: vec![HashMap::new()],
+        functions: HashMap::from([
+            ("panjang teks".to_owned(), 1),
+            ("teks memuat".to_owned(), 2),
+            ("pangkas teks".to_owned(), 1),
+            ("ganti teks".to_owned(), 3),
+            ("pisah teks".to_owned(), 2),
+            ("ubah teks ke angka".to_owned(), 1),
+            ("panjang daftar".to_owned(), 1),
+            ("ambil indeks".to_owned(), 2),
+            ("nilai mutlak".to_owned(), 1),
+            ("bagi bulat".to_owned(), 2),
+            ("angka minimum".to_owned(), 2),
+            ("angka maksimum".to_owned(), 2),
+        ]),
+    }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
 pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
 struct Analyzer { scopes: Vec<HashMap<String, Type>>, functions: HashMap<String, usize> }
 impl Analyzer {
@@ -81,6 +97,13 @@ impl Analyzer {
             bundle
         })
     }
-    fn infer(&self, expr: &Expr) -> Result<Type, DiagnosticBundle> { match expr { Expr::Text(_) => Ok(Type::Text), Expr::Number(_) => Ok(Type::Number), Expr::Boolean(_) => Ok(Type::Boolean), Expr::Nothing => Ok(Type::Nothing), Expr::Identifier(name) => self.lookup(name).ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2014", format!("Saya belum menemukan '{}'.", name), None))), Expr::Binary { left, op, right } => { let l = self.infer(left)?; let r = self.infer(right)?; match op { BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide => if matches!(l, Type::Number | Type::Any) && matches!(r, Type::Number | Type::Any) { Ok(Type::Number) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2015", "Operasi hitung membutuhkan angka.", None))) }, BinaryOp::Equal | BinaryOp::Greater | BinaryOp::Less | BinaryOp::AtLeast | BinaryOp::AtMost => if compatible(l, r) || l == Type::Any || r == Type::Any { Ok(Type::Boolean) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2016", "Dua nilai dibandingkan dengan tipe yang tidak kompatibel.", None))) } } }, Expr::Call { name, args } => { let arity = self.functions.get(name).copied().ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2017", format!("Pekerjaan '{}' belum dibuat.", name), None)))?; if arity != args.len() { return Err(DiagnosticBundle::single(Diagnostic::error("E2018", format!("Pekerjaan '{}' membutuhkan {} parameter.", name, arity), None))); } for arg in args { self.infer(arg)?; } Ok(Type::Any) } } }
+    fn infer(&self, expr: &Expr) -> Result<Type, DiagnosticBundle> { match expr { Expr::Text(_) => Ok(Type::Text), Expr::Number(_) => Ok(Type::Number), Expr::Boolean(_) => Ok(Type::Boolean), Expr::Nothing => Ok(Type::Nothing), Expr::Identifier(name) => self.lookup(name).ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2014", format!("Saya belum menemukan '{}'.", name), None))), Expr::Binary { left, op, right } => { let l = self.infer(left)?; let r = self.infer(right)?; match op { BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide => if matches!(l, Type::Number | Type::Any) && matches!(r, Type::Number | Type::Any) { Ok(Type::Number) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2015", "Operasi hitung membutuhkan angka.", None))) }, BinaryOp::Equal | BinaryOp::Greater | BinaryOp::Less | BinaryOp::AtLeast | BinaryOp::AtMost => if compatible(l, r) || l == Type::Any || r == Type::Any { Ok(Type::Boolean) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2016", "Dua nilai dibandingkan dengan tipe yang tidak kompatibel.", None))) } } }, Expr::Call { name, args } => { let arity = self.functions.get(name).copied().ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2017", format!("Pekerjaan '{}' belum dibuat.", name), None)))?; if arity != args.len() { return Err(DiagnosticBundle::single(Diagnostic::error("E2018", format!("Pekerjaan '{}' membutuhkan {} parameter.", name, arity), None))); } for arg in args { self.infer(arg)?; } Ok(match name.as_str() {
+            "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
+            "teks memuat" => Type::Boolean,
+            "pangkas teks" | "ganti teks" => Type::Text,
+            "pisah teks" => Type::List,
+            "ambil indeks" => Type::Any,
+            _ => Type::Any,
+        }) } } }
 }
 fn compatible(expected: Type, actual: Type) -> bool { expected == actual || expected == Type::Any || actual == Type::Any }
