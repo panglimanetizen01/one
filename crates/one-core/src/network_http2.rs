@@ -42,6 +42,31 @@ pub fn execute_http2(
     })
 }
 
+const MAX_HTTP2_HEADER_COUNT: usize = 256;
+const MAX_HTTP2_HEADER_BYTES: usize = 64 * 1024;
+
+fn collect_bounded_headers(headers: &http::HeaderMap) -> Result<Vec<(String, String)>, NetworkRuntimeError> {
+    if headers.len() > MAX_HTTP2_HEADER_COUNT {
+        return Err(NetworkRuntimeError::Protocol("Jumlah header HTTP/2 melebihi batas.".into()));
+    }
+    let mut total_bytes = 0usize;
+    let mut output = Vec::with_capacity(headers.len());
+    for (name, value) in headers {
+        let value = value.to_str()
+            .map_err(|error| NetworkRuntimeError::Protocol(format!("Nilai header HTTP/2 bukan teks yang valid: {error}")))?;
+        total_bytes = total_bytes
+            .checked_add(name.as_str().len())
+            .and_then(|total| total.checked_add(value.len()))
+            .and_then(|total| total.checked_add(4))
+            .ok_or_else(|| NetworkRuntimeError::Protocol("Ukuran header HTTP/2 melampaui batas integer.".into()))?;
+        if total_bytes > MAX_HTTP2_HEADER_BYTES {
+            return Err(NetworkRuntimeError::Protocol("Header HTTP/2 melebihi batas ukuran.".into()));
+        }
+        output.push((name.to_string(), value.to_owned()));
+    }
+    Ok(output)
+}
+
 async fn execute_http2_async(
     address: SocketAddr,
     authority: String,
@@ -74,16 +99,7 @@ async fn execute_http2_async(
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
 
     let status = response.status().as_u16();
-    let headers = response
-        .headers()
-        .iter()
-        .map(|(name, value)| {
-            (
-                name.to_string(),
-                value.to_str().unwrap_or_default().to_string(),
-            )
-        })
-        .collect::<Vec<_>>();
+    let headers = collect_bounded_headers(response.headers())?;
 
     let mut body = Vec::new();
     while let Some(chunk) = response.body_mut().data().await {
@@ -129,6 +145,25 @@ mod tests {
                 "path should be rejected: {path:?}"
             );
         }
+    }
+
+    #[test]
+    fn http2_response_headers_enforce_count_and_byte_budgets() {
+        let mut headers = http::HeaderMap::new();
+        for index in 0..257 {
+            headers.insert(
+                http::HeaderName::from_bytes(format!("x-{index}").as_bytes()).expect("header name"),
+                http::HeaderValue::from_static("v"),
+            );
+        }
+        assert!(collect_bounded_headers(&headers).is_err());
+
+        let mut oversized = http::HeaderMap::new();
+        oversized.insert(
+            http::HeaderName::from_static("x-large"),
+            http::HeaderValue::from_bytes(vec![b'x'; MAX_HTTP2_HEADER_BYTES]).expect("header value"),
+        );
+        assert!(collect_bounded_headers(&oversized).is_err());
     }
 
     #[test]
