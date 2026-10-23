@@ -39,7 +39,7 @@ fn human_frontend_reports_unknown_names_instead_of_succeeding_silently() {
     let output = run(&path);
     let _ = fs::remove_file(&path);
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("E2002"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("E2014"));
 }
 
 #[test]
@@ -135,7 +135,7 @@ fn human_frontend_enforces_block_scope() {
     let output = run(&path);
     let _ = fs::remove_file(&path);
     assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("E2002"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("E2014"));
 }
 
 #[test]
