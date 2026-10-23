@@ -65,7 +65,19 @@ fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, Netw
                 }
             }
             return Ok(output);
-        } if output.len().saturating_add(size) > max_body || bytes.len() < size + 2 { return Err(NetworkRuntimeError::Protocol("HTTP chunk melebihi batas atau terpotong.".into())); } output.extend_from_slice(&bytes[..size]); if &bytes[size..size + 2] != b"\r\n" { return Err(NetworkRuntimeError::Protocol("HTTP chunk tidak diakhiri CRLF.".into())); } bytes = &bytes[size + 2..]; } }
+        } if size > max_body.saturating_sub(output.len()) {
+            return Err(NetworkRuntimeError::Protocol("HTTP chunk melebihi batas ukuran.".into()));
+        }
+        let framed_size = size.checked_add(2)
+            .ok_or_else(|| NetworkRuntimeError::Protocol("Ukuran HTTP chunk melampaui batas integer.".into()))?;
+        if bytes.len() < framed_size {
+            return Err(NetworkRuntimeError::Protocol("HTTP chunk terpotong.".into()));
+        }
+        output.extend_from_slice(&bytes[..size]);
+        if &bytes[size..framed_size] != b"\r\n" {
+            return Err(NetworkRuntimeError::Protocol("HTTP chunk tidak diakhiri CRLF.".into()));
+        }
+        bytes = &bytes[framed_size..]; } }
 const MAX_HTTP_BODY_BYTES: usize = 16 * 1024 * 1024;
 const MAX_HTTP_HEADER_BYTES: usize = 64 * 1024;
 const MAX_HTTP_RESPONSE_BYTES: usize = MAX_HTTP_BODY_BYTES + MAX_HTTP_HEADER_BYTES;
