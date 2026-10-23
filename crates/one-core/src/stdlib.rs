@@ -590,8 +590,35 @@ mod tests {
     }
 
     #[test]
-    fn json_parser_rejects_inputs_above_the_byte_limit_before_allocating_parser_state() {
-        let oversized = Value::Text(" ".repeat(MAX_JSON_INPUT_BYTES + 1));
-        assert_eq!(json_to_value(&oversized), None);
+    fn json_parser_accepts_valid_input_exactly_at_the_byte_limit() {
+        let padding = " ".repeat(MAX_JSON_INPUT_BYTES - 4);
+        let source = Value::Text(format!("null{padding}"));
+        assert_eq!(source.as_text().map(str::len), Some(MAX_JSON_INPUT_BYTES));
+        assert_eq!(json_to_value(&source), Some(Value::Nothing));
+    }
+
+    #[test]
+    fn json_parser_rejects_valid_json_one_byte_over_the_limit() {
+        // This would parse successfully without the size guard; whitespace after null is valid JSON.
+        let padding = " ".repeat(MAX_JSON_INPUT_BYTES - 3);
+        let source = Value::Text(format!("null{padding}"));
+        assert_eq!(source.as_text().map(str::len), Some(MAX_JSON_INPUT_BYTES + 1));
+        assert_eq!(json_to_value(&source), None);
+    }
+
+    #[test]
+    fn json_parser_limits_input_by_utf8_bytes_not_character_count() {
+        // The character count is below the limit, but the UTF-8 byte count is above it.
+        let source = Value::Text(format!("\"{}\"", "é".repeat(MAX_JSON_INPUT_BYTES / 2)));
+        assert!(source.as_text().unwrap().chars().count() < MAX_JSON_INPUT_BYTES);
+        assert!(source.as_text().unwrap().len() > MAX_JSON_INPUT_BYTES);
+        assert_eq!(json_to_value(&source), None);
+    }
+
+    #[test]
+    fn json_parser_rejects_empty_and_excessively_nested_input() {
+        assert_eq!(json_to_value(&Value::Text(String::new())), None);
+        let nested = format!("{}0{}", "[".repeat(129), "]".repeat(129));
+        assert_eq!(json_to_value(&Value::Text(nested)), None);
     }
 }
