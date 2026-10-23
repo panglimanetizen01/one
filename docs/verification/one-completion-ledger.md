@@ -44,8 +44,8 @@ For each row, **implemented points** are provisional progress based on code actu
 
 - This ledger is the first weighted completion ledger located for the vNext workstream; no prior canonical weighted formula was found during repository discovery.
 - Current source branch: `spec/human-instruction-grammar-vnext-20261022`.
-- Last code-changing SHA at the current repository checkpoint: `7f02a4563024cb60e37d95bf3e2639ddffa8a4f3`. Earlier historical checkpoints remain listed below.
-- Latest checkpoint update commit: `37a52a683baa9494de1f3dc5962fecdc48bd6084`; this records the code SHA above, while later documentation-only commits may advance the branch head.
+- Last code-changing SHA at the current repository checkpoint: `26199c0114ea0da5f9784ea4d000ab185799e4fc`. Later commits in this checkpoint sequence only update verification documentation/ledger evidence; the tested source snapshot is unchanged.
+- Latest checkpoint update commit: `d936b96283162eea3eff7b4bccec7c6abbcb5f2b`; this records the verified Foundation decision, while later documentation-only commits may advance the branch head.
 - Current code includes the experimental parser, the dedicated task-list runner, an explicit CLI command, a runnable example, and regression tests. These changes are not credited as verified until they execute successfully.
 - The GitHub Actions runs inspected for earlier commits failed before any steps started; the jobs reported an empty step list and logs were unavailable. This is an infrastructure/runner blocker, not evidence of a Rust source failure or a pass.
 - Exact-code-SHA Actions run: [39752818112](https://github.com/panglimanetizen01/one/actions/runs/39752818112), triggered for `8c4f7c4706365972797446382989b81335434d92`; both OS jobs failed before any steps started. No build/test result was produced.
