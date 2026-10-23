@@ -90,7 +90,7 @@ For structural lines, the parser rejects tabs and indentation widths that are no
 | Code | Rejection class |
 |---|---|
 | H0001 | Tab used in structural indentation |
-| H0002 | Noncanonical structural indentation or invalid text-block prefix |
+| H0002 | Noncanonical structural indentation |
 | H0003 | Empty source or missing application declaration |
 | H0004 | Invalid application name |
 | H0005 | Indented application declaration |
