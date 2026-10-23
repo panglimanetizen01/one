@@ -123,3 +123,8 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - The workflow config includes build, strict Clippy, workspace tests, deterministic artifact tests, DNS/orchestration/database/HTTP vertical slices, and the Ubuntu/Windows matrix. The latest exact-SHA green result for this code-bearing snapshot has not been obtained. The verification mirror's previous green run applies only to an earlier SHA.
 - Fixed ledger weights and accounting remain unchanged: 75/100 provisional implementation; 60/100 verified. The broader mandatory gaps recorded above (complete standard-library breadth, external dependency/registry and authenticated provenance, full conformance/platform matrix, race-resistant filesystem confinement, comprehensive threat review, docs/tooling audit, and final forensic release audit) remain open.
 - Gate remains NOT PASSED. This checkpoint deliberately awards no completion points merely for commits or unverified tests.
+
+### Additional resource-bound correction
+
+- crates/one-core/src/network_runtime.rs now rejects attempts to exceed 1,024 active connections, checks connection ID increment for overflow before creating a socket, and rejects outbound payloads above 16 MiB before connection lookup/write. A regression test checks oversized payload rejection.
+- This adds implementation coverage only; no ledger points are added without the full acceptance matrix. The next exact-SHA matrix must target the resulting checkpoint commit.
