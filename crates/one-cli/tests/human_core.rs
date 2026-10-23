@@ -294,3 +294,17 @@ fn checked_in_mapping_reference_program_runs_through_the_public_cli() {
     assert!(stdout.contains("nama"));
     assert!(!stdout.contains("umur"));
 }
+
+#[test]
+fn human_frontend_reports_missing_mapping_key_instead_of_returning_success() {
+    let path = fixture(concat!(
+        "Buat program kunci hilang\n",
+        "buat pemetaan profil\n",
+        "ambil kunci \"nama\" dari profil\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success());
+    assert!(stderr.contains("R3041"), "{stderr}");
+}
