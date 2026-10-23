@@ -108,8 +108,9 @@ impl KeyValueStore {
     pub fn flush(&self) -> Result<(), StoreError> {
         let encoded = encode(&self.values);
         if encoded.len() as u64 > MAX_FILE_BYTES { return Err(StoreError::Limit("berkas hasil lebih besar dari 16 MiB")); }
-        if let Some(parent) = self.path.parent() {
-            if !parent.as_os_str().is_empty() { fs::create_dir_all(parent)?; }
+        if let Some(parent) = self.path.parent()
+            && !parent.as_os_str().is_empty() {
+            fs::create_dir_all(parent)?;
         }
         let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
         let temp = self.path.with_extension(format!("one-tmp-{}-{sequence}", std::process::id()));
@@ -191,7 +192,7 @@ fn hex_decode(value: &str) -> Result<Vec<u8>, String> {
     if !value.len().is_multiple_of(2) { return Err("panjang data heksadesimal ganjil".into()); }
     let bytes = value.as_bytes();
     let mut output = Vec::with_capacity(bytes.len() / 2);
-    for pair in bytes.chunks_exact(2) {
+    for pair in bytes.chunks(2) {
         let high = (pair[0] as char).to_digit(16).ok_or_else(|| "digit heksadesimal tidak valid".to_owned())?;
         let low = (pair[1] as char).to_digit(16).ok_or_else(|| "digit heksadesimal tidak valid".to_owned())?;
         output.push(((high << 4) | low) as u8);
