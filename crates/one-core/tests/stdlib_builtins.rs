@@ -19,7 +19,7 @@ fn text_builtins_execute_through_the_canonical_pipeline() {
 
 #[test]
 fn text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline() {
-    let source = "teks adalah \"kucing\"\nawal adalah teks diawali dengan teks dan \"ku\"\nakhir adalah teks diakhiri dengan teks dan \"ing\"\nbukan awal adalah teks diawali dengan teks dan \"anjing\"\nbukan akhir adalah teks diakhiri dengan teks dan \"kucing\"\ntampilkan awal\ntampilkan akhir\ntampilkan bukan awal\ntampilkan bukan akhir\n";
+    let source = "teks adalah \"kucing\"\nawal adalah teks diawali dengan teks dan \"ku\"\nakhir adalah teks diakhiri dengan teks dan \"ing\"\nbukan awal adalah teks diawali dengan teks dan \"anjing\"\nbukan akhir adalah teks diakhiri dengan teks dan \"ing!\"\ntampilkan awal\ntampilkan akhir\ntampilkan bukan awal\ntampilkan bukan akhir\n";
     assert_eq!(
         run(source).expect("prefix and suffix builtins should execute"),
         vec!["benar", "benar", "salah", "salah"]
