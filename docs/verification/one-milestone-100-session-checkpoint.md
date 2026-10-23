@@ -20,17 +20,18 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 ## Work added in this session
 
-- `crates/one-core/src/stdlib.rs`: deterministic public Rust helpers for text length/contains/trim/literal replace/literal split/integer conversion; list length/index access; deterministic text-keyed map construction/get/set; checked integer absolute value/division/min/max; plus unit tests for type mismatch, Unicode scalar length, bounds, overflow, division by zero, and stable map ordering.
-- `docs/spec/one-v0.1-standard-library.md`: records the actual helper boundary and explicitly says these APIs are not all callable as built-ins from `.one` source yet.
-- Code helper commit: `652d4dc6662b62538dde602ef215cfe05b340cd1`.
-- Checked conversion follow-up: `7f196f64b2b181ebb87ac6a2fb35642b3f6d5112`.
-- Documentation update: `3c81f41511cf5a0fabe27363d1af18840c8fc256`.
+- `crates/one-core/src/stdlib.rs`: deterministic public Rust helpers for text length/contains/trim/literal replace/literal split/integer conversion; list length/index access; deterministic text-keyed map construction/get/set; checked integer absolute value/division/min/max; and unit tests for Unicode, bounds, invalid types, overflow, division by zero, and stable map ordering.
+- `crates/one-core/src/semantic.rs`: registers 12 built-ins with arity and return-type rules, plus static argument-type diagnostics (`E2032`).
+- `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/integer built-ins through the same canonical IR interpreter and checks runtime arity before indexing arguments; invalid runtime operations return `R3022`.
+- `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter.
+- `docs/spec/one-v0.1-standard-library.md`: documents which helpers are source-level built-ins and which remain Rust-only helpers.
+- Main implementation commits include `652d4dc6662b62538dde602ef215cfe05b340cd1`, `7f196f64b2b181ebb87ac6a2fb35642b3f6d5112`, `449caf6b33c28d10d59674e6bb4e850d6ad4be1c`, `c2f16baa1ab26184c74c7908faa1557419c1e277`, and `66cf560fe30928318ea619a565422303c8806ef9`.
 
 ## Verification status
 
-- New Rust unit tests are present but **not executed in this session**.
-- Exact-SHA build, strict Clippy, and workspace tests for the new branch: **NOT VERIFIED**.
-- GitHub status query and PR-triggered workflow query returned no statuses/workflow runs for the new SHA; absence of a run is not a pass.
+- The canonical CI run [39940416046](https://github.com/panglimanetizen01/one/actions/runs/39940416046) targeted exact SHA `66cf560fe30928318ea619a565422303c8806ef9` but both OS jobs failed before any steps (`runner_id=0`, empty step lists). This is an infrastructure failure, not a source test result.
+- Independent exact-SHA mirror verification has been requested by updating the mirror target file on branch `verification` to `66cf560fe30928318ea619a565422303c8806ef9`; result is **PENDING** until the mirror workflow run is observed and both OS jobs complete.
+- Exact-SHA build, strict Clippy, and workspace tests for the new branch: **NOT YET VERIFIED**.
 - No points are added to the verified completion total for this work. The completion ledger has not been altered.
 
 ## Remaining required work
