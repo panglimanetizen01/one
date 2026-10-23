@@ -189,3 +189,21 @@ fn human_frontend_rejects_import_cycles() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("HV1012"));
 }
+
+#[test]
+fn second_real_program_runs_through_the_same_human_compiler_and_runtime() {
+    let path = fixture(concat!(
+        "Buat program pencatat skor\\n",
+        "skor awal adalah 10\\n",
+        "bonus adalah 5\\n",
+        "skor akhir adalah skor awal ditambah bonus\\n",
+        "kalau skor akhir sama dengan 15\\n",
+        "    tampilkan \"Skor tervalidasi\"\\n",
+        "kalau tidak\\n",
+        "    tampilkan \"Skor tidak valid\"\\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Skor tervalidasi");
+}
