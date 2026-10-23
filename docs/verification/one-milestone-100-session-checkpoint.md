@@ -25,7 +25,9 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/map/integer built-ins through the canonical IR interpreter and checks runtime arity before indexing arguments; invalid builtin operations return `R3022`. Integer arithmetic uses checked add/subtract/multiply/divide and reports `R3023` on overflow rather than panicking.
 - `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter, including opt-in mapping tests, a checked-in example, overflow, invalid conversion, invalid index, and missing-map-key cases.
 - `crates/one-cli/tests/cli.rs`: verifies that the official CLI can execute the checked-in stdlib example.
-- `examples/stdlib.one`: runnable example exercising the current source-level builtin subset.
+- `examples/stdlib.one`: runnable example exercising the default-parser text/list/integer builtin subset.
+- `examples/human-vnext/pemetaan-kontak.one`: now exercises mapping get/update built-ins through the opt-in human-core CLI path.
+- `crates/one-cli/tests/human_core.rs`: asserts the checked-in mapping example outputs the updated value.
 - `docs/panduan-pengguna/fungsi-dan-event.md`: documents supported builtin syntax and explicit limitations, including opt-in mapping grammar.
 - `docs/spec/one-v0.1-standard-library.md`: documents which helpers are source-level built-ins and which remain Rust-only helpers.
 - Main implementation commits include `652d4dc6662b62538dde602ef215cfe05b340cd1`, `7f196f64b2b181ebb87ac6a2fb35642b3f6d5112`, `449caf6b33c28d10d59674e6bb4e850d6ad4be1c`, `c2f16baa1ab26184c74c7908faa1557419c1e277`, `66cf560fe30928318ea619a565422303c8806ef9`, `abd105a4515c3c1b96b8695f6c9061646a6dfca2`, `c56d841ed914f384975f9e224e1db014336a72c7`, `6656abed12c0b0d5dba983c2261c516ca98e5b55`, and `2b98153907eaa1e96f160bf2efc7b59aef06eaf0`.
