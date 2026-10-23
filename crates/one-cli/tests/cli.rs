@@ -163,7 +163,7 @@ fn stdlib_example_runs_through_the_official_cli() {
 fn package_command_supports_modular_human_core_projects_deterministically() {
     let root = std::env::temp_dir().join(format!("one-human-package-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
     fs::create_dir_all(root.join("src")).unwrap();
-    fs::write(root.join("one.toml"), "nama = \"humanapp\"\\nversi = \"1.0.0\"\\n").unwrap();
+    fs::write(root.join("one.toml"), "nama = \"humanapp\"\nversi = \"1.0.0\"\n").unwrap();
     fs::write(root.join("src/main.one"), r#"Buat program paket modular
 Gunakan modul "math.one"
 hasil adalah tambah dengan 2 dan 3
@@ -177,12 +177,12 @@ buat pekerjaan tambah
 "#).unwrap();
 
     let output = run(&["package", root.to_str().unwrap()]);
-    assert!(output.status.success(), "stdout: {}\\nstderr: {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+    assert!(output.status.success(), "stdout: {}\nstderr: {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
     let artifact = root.join("target/humanapp-1.0.0.onepkg");
     let first = fs::read(&artifact).expect("package artifact should exist");
     let text = String::from_utf8_lossy(&first);
     assert!(text.starts_with("One human-core package v1"));
-    assert!(text.contains("[frontend]\\nhuman-core"));
+    assert!(text.contains("[frontend]\nhuman-core"));
     assert!(text.contains("tambah"));
     assert!(run(&["package", root.to_str().unwrap()]).status.success());
     assert_eq!(first, fs::read(&artifact).unwrap(), "human-core package must be deterministic");
