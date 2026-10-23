@@ -161,19 +161,21 @@ mod tests {
                 let listener = tokio::net::TcpListener::from_std(listener).expect("tokio listener");
                 let (stream, _) = listener.accept().await.expect("accept");
                 let mut connection = h2::server::handshake(stream).await.expect("h2 handshake");
-                while let Some(result) = connection.accept().await {
-                    let (request, mut respond) = result.expect("h2 request");
-                    assert_eq!(request.uri().path(), "/probe");
-                    tokio::spawn(async move {
-                        let response = http::Response::builder()
-                            .status(200)
-                            .header("x-test", "yes")
-                            .body(())
-                            .expect("response");
-                        let mut stream = respond.send_response(response, false).expect("send headers");
-                        stream.send_data(bytes::Bytes::from_static(b"pong"), true).expect("send body");
-                    });
-                }
+                let _ = tokio::time::timeout(Duration::from_secs(5), async {
+                    while let Some(result) = connection.accept().await {
+                        let (request, mut respond) = result.expect("h2 request");
+                        assert_eq!(request.uri().path(), "/probe");
+                        tokio::spawn(async move {
+                            let response = http::Response::builder()
+                                .status(200)
+                                .header("x-test", "yes")
+                                .body(())
+                                .expect("response");
+                            let mut stream = respond.send_response(response, false).expect("send headers");
+                            stream.send_data(bytes::Bytes::from_static(b"pong"), true).expect("send body");
+                        });
+                    }
+                }).await;
             });
         });
 
