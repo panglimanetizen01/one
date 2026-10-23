@@ -130,6 +130,7 @@ impl Analyzer {
                 "teks memuat" => Type::Boolean,
                 "pangkas teks" | "ganti teks" => Type::Text,
                 "pisah teks" => Type::List,
+                "atur pemetaan" => Type::Map,
                 "ambil indeks" => Type::Any,
                 _ => Type::Any,
             }) } } }
