@@ -35,6 +35,7 @@ The following calls use the existing deterministic expression-call syntax and ca
 | `ambil indeks` | 2 | Any | Read a list element using a zero-based integer index |
 | `nilai mutlak` | 1 | Number | Checked integer absolute value |
 | `bagi bulat` | 2 | Number | Checked signed integer division, truncating toward zero |
+| `angka sisa bagi` | 2 | Number | Checked signed-integer remainder; divisor zero and `i64::MIN` remainder `-1` are errors |
 | `angka minimum` | 2 | Number | Minimum of two integers |
 | `angka maksimum` | 2 | Number | Maximum of two integers |
 | `nilai pemetaan` | 2 | Any | Read a text-keyed mapping entry; missing keys are errors |
