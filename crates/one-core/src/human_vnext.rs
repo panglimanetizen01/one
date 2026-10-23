@@ -562,7 +562,12 @@ fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> s
     std::fs::rename(temporary, destination)
 }
 
+static NEXT_STORAGE_TEMP_ID: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
 fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
+    use std::io::Write as _;
+
     if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)
             .map_err(|error| format!("Tidak dapat membuat direktori penyimpanan: {error}"))?;
@@ -575,12 +580,23 @@ fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
         contents.push_str(&format!("{}\t{}\t{}\n", task.id, if task.done { 1 } else { 0 }, task.title));
     }
     let mut temporary_name = path.as_os_str().to_os_string();
-    temporary_name.push(format!(".tmp.{}", std::process::id()));
+    temporary_name.push(format!(
+        ".tmp.{}.{}",
+        std::process::id(),
+        NEXT_STORAGE_TEMP_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
+    ));
     let temporary = std::path::PathBuf::from(temporary_name);
-    if let Err(error) = std::fs::write(&temporary, contents) {
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary)
+        .map_err(|error| format!("Tidak dapat membuat data sementara: {error}"))?;
+    if let Err(error) = file.write_all(contents.as_bytes()).and_then(|()| file.sync_all()) {
+        drop(file);
         let _ = std::fs::remove_file(&temporary);
         return Err(format!("Tidak dapat menulis data sementara: {error}"));
     }
+    drop(file);
     if let Err(error) = replace_file(&temporary, path) {
         let _ = std::fs::remove_file(&temporary);
         return Err(format!("Tidak dapat menyimpan data tugas secara atomik: {error}"));
