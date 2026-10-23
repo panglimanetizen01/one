@@ -33,6 +33,7 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
             ("jumlah daftar angka".to_owned(), 1),
             ("nilai dari json".to_owned(), 1),
             ("waktu utc dari unix".to_owned(), 1),
+            ("unix dari waktu utc".to_owned(), 1),
         ]),
     }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
 pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
@@ -116,6 +117,7 @@ impl Analyzer {
                 "ubah nilai ke json" => Some(vec![Type::Any]),
                 "nilai dari json" => Some(vec![Type::Text]),
                 "waktu utc dari unix" => Some(vec![Type::Number]),
+                "unix dari waktu utc" => Some(vec![Type::Text]),
                 "teks diawali" | "teks diakhiri" => Some(vec![Type::Text, Type::Text]),
                 "huruf kecil" | "huruf besar" => Some(vec![Type::Text]),
                 "gabung teks" => Some(vec![Type::List, Type::Text]),
@@ -143,7 +145,7 @@ impl Analyzer {
                 }
             }
             Ok(match name.as_str() {
-                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "jumlah daftar angka" | "nilai mutlak" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" => Type::Number,
+                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "jumlah daftar angka" | "nilai mutlak" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" | "unix dari waktu utc" => Type::Number,
                 "teks memuat" | "teks diawali" | "teks diakhiri" => Type::Boolean,
                 "pangkas teks" | "ganti teks" | "ubah nilai ke json" | "waktu utc dari unix" | "huruf kecil" | "huruf besar" | "gabung teks" => Type::Text,
                 "pisah teks" => Type::List,
