@@ -1,5 +1,5 @@
 use std::net::{SocketAddr, UdpSocket};
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::capability::{Capability, CapabilitySet};
 
@@ -131,6 +131,13 @@ pub fn ntp_query(socket: &UdpSocket, server: SocketAddr, timeout: Duration, capa
     socket.set_write_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut request = [0u8; 48];
     request[0] = 0x23;
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)
+        .map_err(|_| DatagramProtocolError::InvalidPacket)?;
+    let ntp_seconds = now.as_secs().checked_add(2_208_988_800)
+        .ok_or(DatagramProtocolError::InvalidPacket)?;
+    let fraction = ((u128::from(now.subsec_nanos()) << 32) / 1_000_000_000) as u32;
+    request[40..44].copy_from_slice(&(ntp_seconds as u32).to_be_bytes());
+    request[44..48].copy_from_slice(&fraction.to_be_bytes());
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut response = [0u8; 512];
     let (size, peer) = socket.recv_from(&mut response).map_err(map_io_error)?;
@@ -142,6 +149,9 @@ pub fn ntp_query(socket: &UdpSocket, server: SocketAddr, timeout: Duration, capa
     let mode = response[0] & 0x07;
     let stratum = response[1];
     if !matches!(version, 3 | 4) || !matches!(mode, 4 | 5) || leap == 3 || !(1..=15).contains(&stratum) {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
+    if response[24..32] != request[40..48] {
         return Err(DatagramProtocolError::InvalidPacket);
     }
     let timestamp = u64::from_be_bytes(response[40..48].try_into().expect("NTP timestamp is 8 bytes"));
@@ -207,6 +217,7 @@ mod tests {
             let mut response = [0u8; 48];
             response[0] = 0x24;
             response[1] = 1;
+            response[24..32].copy_from_slice(&request[40..48]);
             response[40..48].copy_from_slice(&(1_700_000_000u64 << 32).to_be_bytes());
             server.send_to(&response, peer).expect("ntp response");
         });
@@ -226,6 +237,7 @@ mod tests {
             let mut response = [0u8; 48];
             response[0] = 0x24;
             response[1] = 0;
+            response[24..32].copy_from_slice(&request[40..48]);
             response[40..48].copy_from_slice(&(1_700_000_000u64 << 32).to_be_bytes());
             server.send_to(&response, peer).expect("unsynchronized response");
         });
