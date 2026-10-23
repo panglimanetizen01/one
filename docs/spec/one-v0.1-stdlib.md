@@ -21,11 +21,17 @@ The following calls use the existing deterministic expression-call syntax and ca
 |---|---:|---|---|
 | `panjang teks` | 1 | Number | Unicode scalar-value count; not bytes or grapheme clusters |
 | `teks memuat` | 2 | Boolean | Literal substring search |
+| `teks diawali` | 2 | Boolean | Literal prefix test |
+| `teks diakhiri` | 2 | Boolean | Literal suffix test |
+| `huruf kecil` | 1 | Text | Unicode lowercase mapping |
+| `huruf besar` | 1 | Text | Unicode uppercase mapping |
 | `pangkas teks` | 1 | Text | Trim Unicode whitespace at both ends |
 | `ganti teks` | 3 | Text | Replace all literal, non-empty occurrences |
 | `pisah teks` | 2 | List | Split on a literal, non-empty separator |
 | `ubah teks ke angka` | 1 | Number | Parse a base-10 signed 64-bit integer; whitespace and overflow are rejected |
 | `panjang daftar` | 1 | Number | List element count |
+| `gabung teks` | 2 | Text | Join a list containing only text values with a literal separator |
+| `jumlah daftar angka` | 1 | Number | Checked sum of integer values; overflow and non-integer items are errors |
 | `ambil indeks` | 2 | Any | Read a list element using a zero-based integer index |
 | `nilai mutlak` | 1 | Number | Checked integer absolute value |
 | `bagi bulat` | 2 | Number | Checked signed integer division, truncating toward zero |
