@@ -1,6 +1,6 @@
 # ONE Final Milestone Session Checkpoint
 
-**Updated:** 2026-10-23
+**Updated:** 2026-10-24
 **Active target:** Milestone 100% — ecosystem and release quality
 **Repository:** https://github.com/panglimanetizen01/one
 **Branch:** `milestone/100-ecosystem-20261023`
@@ -49,11 +49,11 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - Run [39944870126](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39944870126) passed Ubuntu and Windows build, AST contract tests, Clippy, and workspace tests for JSON parsing and round-trip support; Windows offline verification was still in progress at the last query.
 - Run [39945264052](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39945264052) failed before contract/build steps because the mirror was incorrectly pointed at blob SHA `c66b31c64319e471552fe89021a51856b00761bc` instead of commit SHA `f4b404596f1bcd4720c39855b76eee8ffaaec676`. Git reported `fatal: unable to read tree`; no source checks ran. This was a verification-target error, not a source test result.
 - The module-lockfile implementation now emits lock v2 with SHA-256 digests for sorted relative module paths. Publisher identity and authenticated provenance remain unimplemented.
-- Current ledger totals: **75/100 provisional implementation points; 60/100 verified points**. Provisional rows are E1=6/10, E2=5/8, E3=1/8, E4=2/6, E5=1/4. Fixed weights are unchanged; no new verified points have been awarded.
-- E1 remains partial: source-level text/list/map/integer/JSON built-ins remain integrated. Filesystem adapters now cap reads and writes at 16 MiB and reject parent-directory components and existing symlink path components. HTTP responses are bounded to a 16 MiB body plus 64 KiB header allowance; header count is capped at 256, and ambiguous framing is rejected. Time/date, concurrency, logging/configuration, and full persistence integration remain incomplete.
+- Historical ledger totals at the 2026-10-23 checkpoint: **75/100 provisional implementation points; 60/100 verified points**. This historical subtotal is superseded by the 2026-10-24 continuation section below; fixed weights remain unchanged.
+- E1 remained partial at this checkpoint: source-level text/list/map/integer/JSON built-ins, filesystem limits, and bounded HTTP framing were integrated. UTC formatting and strict UTC parsing were added in the 2026-10-24 continuation; broader time/date, concurrency, logging/configuration, and full persistence integration remain incomplete.
 - E2 remains partial: human-core build/test/package, stale-lock verification, and SHA-256 module lock v2 are implemented. External dependency declarations/registry resolution, signed package identity, authenticated provenance, target-specific native artifacts, and full provenance remain incomplete.
-- E3 remains partial: valid/invalid human-core conformance fixtures are supported, but the complete compatibility matrix must pass on the latest exact source SHA.
-- E4 remains partial: checked integer arithmetic, recursion-depth bounds, bounded JSON/HTTP/filesystem operations, strict HTTP framing, and static filesystem traversal/symlink rejection are implemented with regression tests. Race-resistant filesystem resolution, general memory/open-resource quotas, comprehensive threat review, and broader failure recovery remain incomplete.
+- E3 was partial at this historical checkpoint; the exact-SHA Linux/Windows matrix for the later source snapshot is recorded in the 2026-10-24 continuation below.
+- E4 remained partial at this checkpoint: checked arithmetic, recursion-depth bounds, and JSON/HTTP/filesystem bounds were implemented. The 2026-10-24 continuation adds read-only SQLite access and SQL/parameter resource budgets. Race-resistant filesystem resolution, broader memory/open-resource quotas, comprehensive threat review, and broader failure recovery remain incomplete.
 - The previous exact-SHA run [39945846717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39945846717) built and passed AST contract tests on both platforms, then failed strict Clippy because an obsolete duplicate module collector had 8 arguments. The collector state was refactored into `ModuleCollection`. A subsequent strict-Clippy run found a nested-if lint in stale-lock validation; this was corrected using a let-chain, without suppressing the lint. Exact-SHA run [39958882035](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39958882035) is checking source commit `d9d696fa87683027b78fdcbbec504696904055aa`: Ubuntu build, AST regression tests, strict Clippy, workspace tests, real-network tests, and offline verification **PASSED**; Windows is still running its build/test matrix. No new verified ledger points are awarded until the full required matrix completes. The final 100% gate remains **NOT PASSED**.
 ## Latest security/package implementation changes
 
@@ -67,7 +67,7 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - Fixed a hosted Ubuntu regression in `crates/one-core/src/native_backend.rs`: the linker-override priority test no longer assumes `/bin/true` and `/bin/false` exist. It uses the current Rust test executable for the successful probe, preserving the invalid-override test and the actual production linker compatibility check.
 - The noexec regression is not treated as passed until the corrected Linux-specific fixture passes in the final exact-SHA matrix. The latest code fix is e14b63ba0e40e45eb8a0c0f79a78886d0a83bdf1; earlier run 39964925469 is historical and does not establish final-SHA verification.
 - The module-lock validation work also adds stale-lock rejection for human-core `build`/`test` with `ETOOL006`, lock refresh via `package`, and regression coverage. This is a limited packaging improvement, not completion of external dependency resolution or cryptographic provenance.
-- The latest verification run is pending, and E1–E6 are still only partially implemented. Completion remains **75/100 provisional, 60/100 verified** under the unchanged ledger. Final 100% is not established.
+- The latest verification run was pending at this historical checkpoint. Current completion is recorded in the 2026-10-24 continuation below; final 100% remains NOT PASSED.
 
 ## Remaining required work
 
@@ -88,7 +88,7 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 ## Gate
 
-**NOT PASSED** — milestone 100% remains in progress. Text/list/map/integer/JSON helper operations are wired to the interpreter's built-in function dispatch, and an end-to-end human-core built-in test passes on Ubuntu. Windows verification for source SHA `d9d696fa87683027b78fdcbbec504696904055aa` remains in progress. The required wider standard-library, dependency, security, documentation, and final audit work remains incomplete.
+**NOT PASSED** — milestone 100% remains in progress. The later exact-SHA evidence and current remaining work are recorded in the 2026-10-24 continuation section below.
 
 
 ## Session continuation — JSON parser input bound evidence (2026-10-23)
@@ -200,3 +200,31 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - Source commit 88703a34885c8727ea3317a690ae0bf024028f99 wraps the HTTP/2 test server's accept loop in a five-second timeout. The client request still has to complete and return the expected status, body, and response header; the timeout only bounds test-server teardown if peer closure is delayed.
 - The exact-SHA matrix for d1951f14d79e4255cc6bc9374af6c33833017bed had Linux pass and Windows reach the real-network test step; Windows completion was still pending when this change was made. That run cannot verify this teardown change.
 - The next matrix must target the checkpoint SHA produced by this update.
+
+
+## 2026-10-24 continuation — exact-SHA hardening and verification
+
+- **Working branch:** `milestone/100-ecosystem-20261023`.
+- **PR:** [#80](https://github.com/panglimanetizen01/one/pull/80), open/draft/unmerged; `main` unchanged.
+- **Exact source SHA verified:** `64985b51599c1531b6b8e07aa0aa9d16551e6e38`. Code-bearing change `cec949631f3c91a5419957b1a8820904daa6bcd7` fixes the Windows offline verifier; the tested SHA adds verification-contract documentation. Subsequent ledger/checkpoint edits are documentation-only and do not alter the tested source code.
+
+### Changes
+
+- File-backed SQLite `database.query` uses SQLite read-only flags and `query_only`; missing database files are not created. Added enforced budgets for SQL bytes (1 MiB), per-parameter bytes (1 MiB), total parameter bytes (16 MiB), parameter count (256), result rows (100,000), and serialized output (16 MiB), with regression tests.
+- Added strict Gregorian UTC text parsing as the source-level builtin `unix dari waktu utc`, paired with the existing `waktu utc dari unix` formatter. Both are integrated through semantic checks and canonical interpreter execution, with unit/integration tests and updated docs.
+- Fixed `tools/verify_offline.ps1` false-green behavior by propagating nonzero native exit codes and skipping only the Android-native CLI test on Windows. Android native execution remains explicitly unverified, not passed.
+
+### Evidence
+
+- Focused standard-library/database regressions: [run 40006470057](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470057) — SUCCESS.
+- Linux distro matrix: [run 40006470246](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470246) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Exact-SHA cross-platform matrix: [run 40006470017](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470017) — Ubuntu and Windows SUCCESS for build, contract artifacts, AST tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification. Test logs show 215 core tests passed on Ubuntu and 210 on Windows. One Android AArch64 execution test remains ignored; the Windows-only CLI test is explicitly filtered out.
+- The earlier run [40005692552](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40005692552) is not credited as valid full verification: its offline script log exposed a failed Android-target test followed by a false PASS. The corrected script was verified on SHA `64985...`; the new Windows log contains no `test result: FAILED` marker and ends with `OFFLINE VERIFICATION: PASS`.
+- Canonical repository runs [40006462899](https://github.com/panglimanetizen01/one/actions/runs/40006462899), [40006463227](https://github.com/panglimanetizen01/one/actions/runs/40006463227), and [40006463315](https://github.com/panglimanetizen01/one/actions/runs/40006463315) failed before steps with `runner_id=0` and empty step lists. No source test result is inferred from those failures; the reviewed exact-SHA mirror fallback supplied actual Linux/Windows evidence.
+
+### Completion ledger and remaining work
+
+- **Implementation subtotal:** 84/100 provisional points; E1=7/10, E2=5/8, E3=8/8, E4=3/6, E5=1/4, E6=0/4. Fixed weights unchanged.
+- **Verified completion:** 68/100. E1, E2, E4, E5 and E6 remain unverified.
+- Remaining mandatory work: external dependency resolution and authenticated package provenance; wider standard-library APIs; race-resistant filesystem confinement and broader quotas; compatibility and developer tooling/docs completion; Android-native execution if required by declared targets; and E6 forensic Definition-of-Done audit.
+- **GATE: NOT PASSED — Milestone 100% remains in progress.**
