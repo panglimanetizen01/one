@@ -38,7 +38,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 0/6 | 0/6 | NOT IMPLEMENTED |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 0/4 | 0/4 | NOT IMPLEMENTED |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **21/100** | **0/100** | **30% GATE NOT PASSED** |
+|  | **TOTAL** |  | **30/100** | **30/100** | **30% GATE PASSED** |
 
 ## Baseline and evidence
 
