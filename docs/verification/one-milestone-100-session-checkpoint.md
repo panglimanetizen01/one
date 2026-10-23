@@ -173,3 +173,9 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - Source commit d67a98a2c7dd2e0b4273814b6ebecf35015049d2 applies the configured timeout to QUIC payload writes as well as handshake, stream opening, and response reads.
 - The current exact-SHA matrix run 39977590301 targets the prior checkpoint SHA cbf1c08ce0d0e3a55df07b92b72e23409f80bda3. Ubuntu build, AST contract checks, strict Clippy, and workspace tests completed successfully on that prior snapshot; real-network tests were still running at the last inspection. This does not verify the subsequent QUIC timeout edit.
 - The next matrix target is the checkpoint SHA produced by this update. Do not transfer results from earlier source SHAs to the newer release candidate.
+
+### HTTP/2 integration-test compile correction
+
+- The real-network build on the previous source snapshot found E0596 in the new HTTP/2 loopback test because the response handle was not mutable, plus an unused Read import left after HTTPS switched to the bounded reader.
+- Fixed in commits 31e20504da8c58620c1a40a18bf7be8336f75ed8 and 763fd6765c17928a070d3b77e04381ea9fa1c1dc: the test now binds the response handle mutably, and the obsolete TLS Read import is removed.
+- The failed prior matrix remains failed and earns no points. The next exact-SHA run must target this checkpoint commit and execute the real-network suite again.
