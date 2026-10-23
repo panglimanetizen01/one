@@ -238,6 +238,24 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         ).is_err());
     }
 
+    #[test]
+    fn chunked_http_body_accepts_bounded_non_framing_trailers() {
+        let response = parse_http_response(
+            b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\nX-Trace: ok\r\n\r\n",
+            16,
+        ).expect("valid chunked response with a trailer");
+        assert_eq!(response.body, b"hello");
+    }
+
+    #[test]
+    fn chunked_http_body_rejects_size_integer_overflow_without_panicking() {
+        let error = parse_http_response(
+            b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nffffffffffffffff\r\n",
+            usize::MAX,
+        ).expect_err("chunk framing integer overflow must be rejected");
+        assert!(matches!(error, NetworkRuntimeError::Protocol(_)));
+    }
+
     #[test] fn chunked_http_body_is_decoded_without_guessing() { let response = parse_http_response(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n", 100).expect("parse"); assert_eq!(response.body, b"hello"); }
     #[test] fn bounded_http_reader_rejects_oversized_responses() { let input = vec![b'x'; 1025]; let error = read_bounded_response(std::io::Cursor::new(input), 1024).expect_err("oversized response must be rejected"); assert!(matches!(error, NetworkRuntimeError::Protocol(message) if message.contains("batas ukuran total"))); }
     #[test] fn bounded_http_reader_accepts_responses_at_the_limit() { let input = vec![b'x'; 1024]; assert_eq!(read_bounded_response(std::io::Cursor::new(input.clone()), 1024).expect("response at limit"), input); }
