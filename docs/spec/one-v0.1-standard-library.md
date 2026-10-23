@@ -37,6 +37,9 @@ The `one_core::stdlib` Rust module currently exposes the following pure helper o
 - `map_get`, `map_set`, and `map_from_entries`: text-keyed mappings backed by ordered keys for deterministic display.
 - `value_to_json` and `json_to_value`: bounded deterministic JSON serialization/parsing for text, integer, boolean, empty, list, and mapping values; JSON floating-point/exponent numbers are rejected because the runtime has no float type.
 - `number_abs`, `number_divide`, `number_min`, and `number_max`: checked integer helpers; overflow and division by zero are rejected.
+- `unix_seconds_to_utc_text`: deterministic Gregorian UTC formatting for Unix epoch seconds, returning `YYYY-MM-DDTHH:MM:SSZ`; accepts only integer seconds and years 0000 through 9999. It does not read the host clock or infer local time zones.
+
+The source-level built-in `waktu utc dari unix` formats an integer Unix timestamp in UTC and rejects invalid types or dates outside the supported four-digit year range with the standard runtime diagnostic.
 
 The following subset is now registered as source-level calls in the canonical parser/semantic-analysis/interpreter path: `panjang teks`, `teks memuat`, `pangkas teks`, `ganti teks`, `pisah teks`, `ubah teks ke angka`, `panjang daftar`, `ambil indeks`, `nilai mutlak`, `bagi bulat`, `angka minimum`, and `angka maksimum`. Mapping operations `nilai pemetaan` and `atur pemetaan` are also registered, but currently rely on the opt-in human-core mapping grammar to create a mapping value. Semantic analysis checks their arity and known argument types; runtime errors use code `R3022` for invalid values or failed checked operations. A source-level end-to-end test file exercises this path. The mapping helper functions and `display_value` remain Rust-level helpers rather than source-level built-ins.
 
