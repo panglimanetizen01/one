@@ -90,7 +90,7 @@ pub fn parse_http_response(mut bytes: &[u8], max_body: usize) -> Result<HttpResp
     .filter(|status| (100..=599).contains(status))
     .ok_or_else(|| NetworkRuntimeError::Protocol("Status HTTP tidak valid.".into()))?;
 let reason = parts.next().unwrap_or_default();
-if reason.bytes().any(|byte| (byte < 0x20 && byte != b'\\t') || byte == 0x7f) {
+if reason.bytes().any(|byte| (byte < 0x20 && byte != b'\t') || byte == 0x7f) {
     return Err(NetworkRuntimeError::Protocol("Reason phrase HTTP tidak valid.".into()));
 }
 let reason = reason.to_string();
