@@ -132,11 +132,11 @@ Therefore E3 remains **8/8 implemented, 0/8 verified** until the declared Androi
 
 ### Latest exact-SHA matrix
 
-The latest tested source snapshot is `8552fa915b972aeb47ed27c4e5f577ffdb539ecf`:
+The latest tested source snapshot is `ebf254d1194a903a3b582f3a18abfc402f2003d2`:
 
-- Focused stdlib/database [40008200945](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200945) — SUCCESS.
-- Linux distro [40008200684](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200684) — Ubuntu 24.04 and Debian 12 SUCCESS.
-- Cross-platform [40008200962](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200962) — Ubuntu and Windows SUCCESS. Exact SHA verified in both logs; build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; one `OFFLINE VERIFICATION: PASS` per platform.
+- Focused stdlib/database [40009389100](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389100) — SUCCESS.
+- Linux distro [40009389164](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389164) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform [40009389190](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389190) — Ubuntu and Windows SUCCESS. Exact SHA verified in both logs; build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; one `OFFLINE VERIFICATION: PASS` per platform.
 - Main workspace summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The separate Android ELF build-and-execute test remains ignored on both platforms and is not counted as passed. Canonical repository Actions fail before steps with `runner_id=0`.
 
 This correction is documentation-only and does not change the tested source code snapshot.
