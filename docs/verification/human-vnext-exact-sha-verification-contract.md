@@ -22,8 +22,9 @@ Run `bash tools/verify-human-vnext.sh` from a clean worktree fetched from GitHub
 1. source cleanliness and exact remote-HEAD checks;
 2. `bash -n tools/verify-human-vnext.sh`;
 3. `python3 tools/check_contract.py`;
-4. `git diff --check`;
-5. `cargo build --workspace --all-targets`;
+4. `cargo fmt --all -- --check`;
+5. `git diff --check`;
+6. `cargo build --workspace --all-targets`;
 6. `cargo clippy --workspace --all-targets -- -D warnings`;
 7. `cargo test --workspace --all-targets`;
 8. final worktree cleanliness and a second exact-HEAD check to detect local changes or branch movement during verification.
