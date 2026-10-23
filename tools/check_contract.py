@@ -48,6 +48,7 @@ required = [
     "tests/human-vnext/invalid/duplicate-persistence.one",
     "tests/human-vnext/invalid/action-name-as-data.one",
     "tests/human-vnext/invalid/repeated-spaces.one",
+    "tests/human-vnext/invalid/duplicate-data-action-name.one",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -110,8 +111,8 @@ print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
 human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
 human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
-if len(human_valid) < 4 or len(human_invalid) < 10:
-    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 4 valid and 10 invalid fixtures")
+if len(human_valid) < 4 or len(human_invalid) < 11:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 4 valid and 11 invalid fixtures")
 
 print(f"golden fixtures: {len(golden)}")
 print(f"human-vNext valid fixtures: {len(human_valid)}")
