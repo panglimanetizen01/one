@@ -48,7 +48,7 @@ fn main() -> ExitCode {
    Ok(source) => source,
    Err(error) => { eprintln!("EHV1002: tidak dapat membaca '{}': {}", path.display(), error); return ExitCode::from(2); }
   };
-  let compiled = match one_core::human_compiler::compile(&source) {
+  let compiled = match one_core::human_compiler::compile_file(path) {
    Ok(program) => program,
    Err(bundle) => { print_diagnostics(&bundle); return ExitCode::from(1); }
   };
