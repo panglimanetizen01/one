@@ -38,23 +38,30 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 ## Verification status
 
-- Canonical repository CI run [39940416046](https://github.com/panglimanetizen01/one/actions/runs/39940416046) targeted an earlier SHA and both OS jobs failed before steps (`runner_id=0`, empty step lists). This is infrastructure evidence, not a source pass.
-- Independent mirror run [39941625828](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39941625828) **PASSED on Ubuntu and Windows** for exact source SHA `2cf1e567357da960b8b592afc67a29454533bbd7`. Contract artifacts, build, AST contract tests, strict Clippy, workspace tests, real-network tests, and platform-appropriate offline verification completed. This validates only that earlier source snapshot.
-- Run [39942193741](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39942193741) passed Ubuntu build/AST contract tests/Clippy but failed workspace tests because a new `Ani` assertion was placed in the wrong test; corrected in `259f7fd87de43e1db4678b6e1b6de8a913ac6e38`.
-- Run [39942565741](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39942565741) targeted `711e3e9af557a7d57df11daa27f6ad63cdd0c949`; Ubuntu build, AST contract tests, strict Clippy, workspace tests, real-network tests, and offline verification passed. Windows remains in progress at the last query. This SHA predates the human-core package extension.
-- Human-core package code-bearing SHA `c617695a5e45e41e6c5b21e0c99da94cfb9a559b` passed Ubuntu build, AST contract tests, strict Clippy, workspace tests, real-network tests, and offline verification in run [39942950596](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39942950596); Windows build and Clippy passed but its full test matrix was still in progress at the last query. This does not verify later build/test workflow additions.
-- Later commits `c50fe33d61e9b5d13971b9ea07a873b8dd95108f` and `cec0baf0e4f39eb78cf73fbab7985ce121570dee` add human-core `build` and `test` workflows and extend the modular project CLI test. Exact-SHA verification for this latest change set is pending.
+- Canonical repository CI run [39940416046](https://github.com/panglimanetizen01/one/actions/runs/39940416046) failed before steps (`runner_id=0`, empty step lists); it is infrastructure evidence, not a source pass.
+- Exact-SHA matrix [39941625828](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39941625828) **PASSED on Ubuntu and Windows** for source SHA `2cf1e567357da960b8b592afc67a29454533bbd7`, validating the earlier standard-library source slice.
+- Exact-SHA matrix [39942950596](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39942950596) **PASSED on Ubuntu and Windows** for source SHA `c617695a5e45e41e6c5b21e0c99da94cfb9a559b`, validating the modular human-core package slice. This snapshot predates build/test additions and the module lockfile.
+- Run [39943377785](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39943377785) passed Ubuntu's required build/AST/Clippy/workspace/network/offline steps for the human-core build/test/package workflow.
+- Run [39943724686](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39943724686) passed Ubuntu's required checks for human-core conformance fixtures.
+- Run [39944046531](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39944046531) passed Ubuntu's required checks including deterministic JSON serialization.
+- Run [39944600422](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39944600422) **PASSED on Ubuntu and Windows** for the text/list/JSON serializer/depth-limit slice.
+- Run [39944870126](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39944870126) passed Ubuntu and Windows build, AST contract tests, Clippy, and workspace tests for JSON parsing and round-trip support; Windows offline verification was still in progress at the last query.
+- Run [39945264052](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39945264052) failed before contract/build steps because the mirror was incorrectly pointed at blob SHA `c66b31c64319e471552fe89021a51856b00761bc` instead of commit SHA `f4b404596f1bcd4720c39855b76eee8ffaaec676`. Git reported `fatal: unable to read tree`; no source checks ran. This was a verification-target error, not a source test result.
+- The module-lockfile implementation is now present: the package embeds and emits a sidecar lock listing sorted relative module paths with FNV-1a-64 reproducibility fingerprints. Those fingerprints are not cryptographic integrity hashes.
 - Current ledger totals: **74/100 provisional implementation points; 60/100 verified points**. Provisional rows are E1=6/10, E2=4/8, E3=1/8, E4=2/6, E5=1/4. Fixed weights are unchanged; no new verified points have been awarded.
-- E2 remains partial: the experimental human-core package format resolves relative modules into canonical IR and is designed to be deterministic, but dependency declarations/lockfile, package registry/resolution, and the full provenance envelope remain unimplemented.
-- E4 remains partial: checked integer arithmetic and recursion-depth bounds are implemented; comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain unimplemented.
+- E1 remains partial: the source-level pure standard-library slice covers text, lists, mappings, integer math, JSON serialization/parsing, Unicode case/prefix/suffix operations, joining, and checked sums. Filesystem, HTTP/networking, time/date, concurrency, logging/configuration, and full persistence integration remain incomplete.
+- E2 remains partial: human-core build/test/package and local module locking are implemented; external dependency declarations/registry resolution, cryptographic source integrity, target-specific native artifacts, and full provenance remain incomplete.
+- E3 remains partial: valid/invalid human-core conformance fixtures are supported, but the complete compatibility matrix must pass on the latest exact source SHA.
+- E4 remains partial: checked integer arithmetic and recursion-depth bounds are implemented; comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain incomplete.
 - Latest branch full Linux/Windows verification is **NOT YET VERIFIED**. The final 100% gate remains **NOT PASSED**.
 ## Remaining required work
 
-- Integrate the standard-library helpers into the official source-level ONE runtime with structured errors and conformance tests.
-- Complete the remaining E1–E6 acceptance criteria without changing their weights.
-- Reconcile package/build/dependency and module behavior with normative contracts.
-- Complete exact-SHA Linux/Windows and any other contract-required platform verification.
-- Perform the final forensic audit only after all implementation and verification gates are satisfied.
+- Complete the required standard library: safe capability-gated filesystem/IO, HTTP/networking, time/date, configuration/logging, persistence/transaction integration, and any contract-required concurrency APIs.
+- Complete external dependency declarations/resolution and lockfile semantics; replace the local non-cryptographic fingerprint with a cryptographic integrity mechanism before claiming supply-chain integrity.
+- Complete the native vNext grammar and module visibility/source-map contracts; keep v0.1 compatibility explicit.
+- Complete conformance/compatibility across all declared platforms, security threat review, resource bounds, and failure recovery.
+- Finish tutorials, reference docs, debugging/developer tooling, end-to-end modular application examples, and docs/source reconciliation.
+- Run the final exact-SHA Linux/Windows and any other required platform matrix, then perform the full forensic Definition-of-Done audit.
 
 ## Git state and safety
 
