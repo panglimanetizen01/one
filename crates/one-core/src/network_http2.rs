@@ -103,3 +103,39 @@ async fn execute_http2_async(
         body,
     })
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn http2_rejects_malformed_authority_before_dns_or_socket_work() {
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        for authority in ["", "user@example.com:80", "example.com:", "example.com:abc", "example.com:65536", "2001:db8::1"] {
+            assert!(
+                execute_http2(authority, "/", &capabilities, Duration::from_millis(10)).is_err(),
+                "authority should be rejected: {authority}"
+            );
+        }
+    }
+
+    #[test]
+    fn http2_rejects_path_controls_spaces_and_fragments() {
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        for path in ["", "relative", "/has space", "/bad\\rpath", "/bad\\npath", "/path#fragment"] {
+            assert!(
+                execute_http2("127.0.0.1:80", path, &capabilities, Duration::from_millis(10)).is_err(),
+                "path should be rejected: {path:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn http2_requires_network_capability_before_target_processing() {
+        assert!(matches!(
+            execute_http2("bad authority", "bad path", &CapabilitySet::none(), Duration::from_millis(10)),
+            Err(NetworkRuntimeError::CapabilityDenied(_))
+        ));
+    }
+}
