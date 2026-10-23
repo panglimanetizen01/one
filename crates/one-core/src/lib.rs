@@ -30,6 +30,7 @@ pub mod orchestration_audit;
 pub mod orchestration_result;
 pub mod orchestrator;
 pub mod parser;
+pub mod persistence;
 pub mod platform;
 pub mod runtime;
 pub mod semantic;
