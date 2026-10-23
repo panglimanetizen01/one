@@ -6,6 +6,8 @@ use crate::capability::{Capability, CapabilitySet};
 
 const MAX_MAIL_LINE: usize = 64 * 1024;
 const MAX_IMAP_BODY: usize = 16 * 1024 * 1024;
+const MAX_MAIL_RESPONSE_BYTES: usize = 16 * 1024 * 1024;
+const MAX_MAIL_RESPONSE_LINES: usize = 100_000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MailProtocolError {
@@ -107,8 +109,13 @@ impl Pop3Client {
         let first = command(&mut self.stream, "LIST")?;
         require_ok(&first, "+OK")?;
         let mut messages = Vec::new();
+        let mut response_bytes = first.len();
         loop {
             let line = read_line(&mut self.stream)?;
+            response_bytes = response_bytes.checked_add(line.len()).ok_or(MailProtocolError::InvalidResponse)?;
+            if response_bytes > MAX_MAIL_RESPONSE_BYTES || messages.len() >= MAX_MAIL_RESPONSE_LINES {
+                return Err(MailProtocolError::InvalidResponse);
+            }
             let trimmed = line.trim_end();
             if trimmed == "." { break; }
             let mut fields = trimmed.split_whitespace();
@@ -142,8 +149,13 @@ impl ImapClient {
         let tag = self.tag();
         self.stream.write_all(format!("{tag} {command_text}\r\n").as_bytes()).map_err(io_error)?;
         let mut untagged = Vec::new();
+        let mut response_bytes = 0usize;
         loop {
             let line = read_line(&mut self.stream)?;
+            response_bytes = response_bytes.checked_add(line.len()).ok_or(MailProtocolError::InvalidResponse)?;
+            if response_bytes > MAX_MAIL_RESPONSE_BYTES || untagged.len() >= MAX_MAIL_RESPONSE_LINES {
+                return Err(MailProtocolError::InvalidResponse);
+            }
             if line.starts_with(&format!("{tag} ")) {
                 return Ok((line[tag.len() + 1..].trim_end().to_string(), untagged));
             }
