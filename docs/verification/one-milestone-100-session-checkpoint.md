@@ -65,7 +65,7 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 ## Remaining required work
 
 - Complete the required standard library: safe capability-gated filesystem/IO, HTTP/networking, time/date, configuration/logging, persistence/transaction integration, and any contract-required concurrency APIs.
-- Complete external dependency declarations/resolution and lockfile semantics; replace the local non-cryptographic fingerprint with a cryptographic integrity mechanism before claiming supply-chain integrity.
+- Complete external dependency declarations/registry resolution, trusted lockfile semantics, signed package identity, authenticated provenance, target-specific artifacts, and supply-chain verification. SHA-256 module digests now detect content mismatch against a trusted lock, but do not authenticate the lock or publisher.
 - Complete the native vNext grammar and module visibility/source-map contracts; keep v0.1 compatibility explicit.
 - Complete conformance/compatibility across all declared platforms, security threat review, resource bounds, and failure recovery.
 - Finish tutorials, reference docs, debugging/developer tooling, end-to-end modular application examples, and docs/source reconciliation.
