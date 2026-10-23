@@ -26,11 +26,11 @@ For each row, **implemented points** are provisional progress based on code actu
 | F4 | Task-list app actions — **5** | Source example supports add/list/complete with input validation through public CLI | 5/5 | 5/5 | VERIFIED |
 | F5 | Durable task persistence — **3** | Data survives a new process; corrupt storage and write failures are reported | 3/3 | 3/3 | VERIFIED |
 | F6 | Beginner docs, example, exact-SHA build/CI evidence and checkpoint — **2** | Reproducible commands, docs agree with implementation, build/test/Clippy/CI green at exact SHA | 2/2 | 2/2 | VERIFIED |
-| C1 | Canonical vNext AST/IR integration — **8** | Human frontend lowers into canonical IR with golden semantic tests | 0/8 | 0/8 | NOT IMPLEMENTED |
-| C2 | General frontend-to-runtime execution pipeline — **8** | More than the task-list special-case; ordinary programs run through canonical compiler/interpreter | 0/8 | 0/8 | NOT IMPLEMENTED |
-| C3 | Expanded semantic/type/scope model and diagnostics — **6** | Defined scope/type rules and positive/negative fixture suite | 0/6 | 0/6 | NOT IMPLEMENTED |
-| C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart and atomicity tests | 0/4 | 0/4 | NOT IMPLEMENTED |
-| C5 | Additional real application vertical slices — **4** | At least two additional source programs integrated through the same compiler/runtime | 0/4 | 0/4 | NOT IMPLEMENTED |
+| C1 | Canonical vNext AST/IR integration — **8** | Human frontend lowers into canonical IR with golden semantic tests | 8/8 | 0/8 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
+| C2 | General frontend-to-runtime execution pipeline — **8** | More than the task-list special-case; ordinary programs run through canonical compiler/interpreter | 8/8 | 0/8 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
+| C3 | Expanded semantic/type/scope model and diagnostics — **6** | Defined scope/type rules and positive/negative fixture suite | 6/6 | 0/6 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
+| C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart and atomicity tests | 4/4 | 0/4 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
+| C5 | Additional real application vertical slices — **4** | At least two additional source programs integrated through the same compiler/runtime | 4/4 | 0/4 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 0/10 | 0/10 | NOT IMPLEMENTED |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 0/8 | 0/8 | NOT IMPLEMENTED |
@@ -38,7 +38,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 0/6 | 0/6 | NOT IMPLEMENTED |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 0/4 | 0/4 | NOT IMPLEMENTED |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **30/100** | **30/100** | **30% GATE PASSED** |
+|  | **TOTAL** |  | **60/100** | **30/100** | **60% IMPLEMENTATION PRESENT; 30% VERIFIED; 60% GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -64,12 +64,22 @@ PASS only when all F1–F6 and C1–C5 are verified (60 points total) and the ch
 
 PASS only when every weighted row earns its full verified points, all required CI/release gates pass on the recorded release SHA, and the final forensic audit finds no outstanding mandatory Definition-of-Done requirement.
 
+## Milestone 60 implementation candidate — 2026-10-23
+
+- Feature PR: [#79](https://github.com/panglimanetizen01/one/pull/79), branch `feat/human-vnext-core-runtime-60`.
+- Implementation now present for C1–C5: human program header adapter to canonical AST/semantic/IR; explicit CLI execution through the canonical interpreter; tests for values, functions, conditions, lists, loops, scope and semantic rejection; relative multi-file module loading with duplicate/cycle/path-traversal rejection; a versioned bounded key/value persistence API with corruption rejection, restart, rollback and bulk replacement tests; calculator and score-tracker programs.
+- The existing vNext task-list CLI and persistence path are left intact. The new key/value API is reusable but has not yet replaced the task-list app's legacy storage format.
+- The canonical repository Actions jobs continued to fail before executing steps on earlier commits. Those runs are not evidence of source failure or success.
+- Independent hosted verification is being run through the documented mirror fallback. Only a completed exact-SHA run with both Linux and Windows jobs green may award C1–C5 verified points.
+- **Implementation subtotal: 60/100. Verified completion: 30/100. Milestone 60 gate: NOT PASSED until exact-SHA acceptance checks succeed.**
+- Do not call this a complete vNext language: map values, broader native vNext grammar beyond the canonical-language adapter, and further ecosystem work remain outside this milestone candidate.
+
 ## Current result
 
-- **Implementation progress:** 30/100 points for the completed Foundation tranche.
-- **Verified completion:** 30/100 points (30%); all F1–F6 acceptance evidence is recorded below.
-- **Milestone target:** 30%.
-- **Gate:** **PASS GREEN LOCKED**. The verified scope is the reviewed implementation-bounded `human-vnext-starter/0.1`, not the broader draft language or later 60%/100% milestones.
+- **Implementation progress:** 60/100 points present (Foundation plus the current Core/Runtime candidate); C1–C5 points remain provisional until exact-SHA acceptance evidence passes.
+- **Verified completion:** 30/100 points (30%); the current Core/Runtime candidate has 0 additional verified points pending exact-SHA Linux/Windows checks.
+- **Milestone target:** 60%.
+- **Gate:** **NOT PASSED** for milestone 60 until the current candidate passes exact-SHA checks. The prior 30-point Foundation scope remains separately locked only at its recorded implementation SHA.
 
 ## Repository work checkpoint — 2026-10-22
 
