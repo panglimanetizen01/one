@@ -62,3 +62,62 @@ fn human_vnext_cli_runs_task_app_and_reopens_persistent_data() {
     assert!(stdout.contains("Tugas 1 ditandai selesai"), "completion must execute through the CLI");
     let _ = fs::remove_dir_all(&root);
 }
+
+
+#[test]
+fn human_vnext_cli_rejects_missing_source_argument() {
+    let output = run(&["jalankan-human-vnext"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Penggunaan: one jalankan-human-vnext"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_unknown_option_without_running_program() {
+    let source = fixture("human-vnext-option", "Buat aplikasi catatan\n");
+    let output = run(&["jalankan-human-vnext", source.to_str().unwrap(), "--unknown"]);
+    let _ = fs::remove_file(&source);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("EHV001"));
+}
+
+#[test]
+fn human_vnext_cli_reports_missing_source_file() {
+    let path = std::env::temp_dir().join(format!(
+        "one-human-vnext-missing-{}.one",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let output = run(&["jalankan-human-vnext", path.to_str().unwrap()]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("EHV001"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_invalid_source_with_parser_diagnostic() {
+    let source = fixture("human-vnext-invalid", "Buat aplikasi catatan\nInstruksi tidak dikenal\n");
+    let output = run(&["jalankan-human-vnext", source.to_str().unwrap()]);
+    let _ = fs::remove_file(&source);
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("EHV002"));
+    assert!(stderr.contains("H0016"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_task_app_without_persistence_contract() {
+    let source = fixture("human-vnext-no-persist", concat!(
+        "Buat aplikasi daftar tugas\n",
+        "Pengguna bisa menambahkan tugas\n",
+        "    Terima judul tugas\n",
+        "    Simpan tugas baru\n",
+        "Pengguna bisa melihat semua tugas\n",
+        "    Tampilkan semua tugas\n",
+        "Pengguna bisa menandai tugas sebagai selesai\n",
+        "    Terima tugas yang dipilih\n",
+        "    Tandai tugas sebagai selesai\n",
+    ));
+    let output = run(&["jalankan-human-vnext", source.to_str().unwrap()]);
+    let _ = fs::remove_file(&source);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("EHV003"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("wajib mendeklarasikan"));
+}
