@@ -168,6 +168,10 @@ pub(crate) fn read_bounded_response<R: Read>(reader: R, max_bytes: usize) -> Res
 }
 
 pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
+    parse_http_authority_with_default(authority, 80)
+}
+
+pub(crate) fn parse_http_authority_with_default(authority: &str, default_port: u16) -> Result<(String, u16), NetworkRuntimeError> {
     let invalid = || NetworkRuntimeError::Protocol("Authority HTTP tidak valid.".into());
     if authority.is_empty()
         || authority.chars().any(|character| character.is_ascii_control() || character.is_ascii_whitespace())
@@ -186,7 +190,7 @@ pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), Net
         host.parse::<std::net::Ipv6Addr>().map_err(|_| invalid())?;
         let suffix = &bracketed[close + 1..];
         let port = if suffix.is_empty() {
-            80
+            default_port
         } else {
             let port_text = suffix.strip_prefix(':').ok_or_else(invalid)?;
             if port_text.is_empty() || !port_text.bytes().all(|byte| byte.is_ascii_digit()) {
@@ -206,7 +210,7 @@ pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), Net
                 }
                 (host, port_text.parse::<u16>().map_err(|_| invalid())?)
             }
-            None => (authority, 80),
+            None => (authority, default_port),
         };
         if host.is_empty()
             || host.len() > 253
@@ -259,6 +263,13 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         let request = HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![], body: vec![] };
         let wire = String::from_utf8(request.to_bytes().expect("valid request")).expect("UTF-8");
         assert!(wire.contains("Content-Length: 0\r\n"));
+    }
+
+    #[test]
+    fn authority_parser_applies_protocol_specific_default_ports() {
+        assert_eq!(parse_http_authority_with_default("example.com", 443), Ok(("example.com".into(), 443)));
+        assert_eq!(parse_http_authority_with_default("[::1]", 443), Ok(("::1".into(), 443)));
+        assert_eq!(parse_http_authority_with_default("example.com:8080", 443), Ok(("example.com".into(), 8080)));
     }
 
     #[test]
