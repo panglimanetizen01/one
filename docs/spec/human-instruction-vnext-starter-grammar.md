@@ -85,13 +85,6 @@ For structural lines, the parser rejects tabs and indentation widths that are no
 - The current prototype's persistence runner requires the collection name tugas and the supported add/list/complete instruction shapes. Other validly parsed declarations are not automatically executable by that runner.
 - Diagnostic codes are stable within this starter version only; changing a code or its meaning requires updating tests and this contract together.
 
-## 5. Versioning and compatibility
-
-- This contract identifier is human-vnext-starter/0.1; it is separate from ONE's normative v0.1 language.
-- New keywords, synonyms, indentation rules, identifier characters, name binding, text-block behavior, or diagnostic semantics require a versioned contract change and positive/negative regression fixtures.
-- A syntax change must not alter the default v0.1 parser. Any future shared AST/IR lowering is a separate milestone and must be specified and tested independently.
-- The starter grammar may be narrowed to match executable evidence. It must not be broadened merely by adding prose examples.
-
 ## 6. Required conformance matrix
 
 | Area | Positive evidence | Negative evidence |
