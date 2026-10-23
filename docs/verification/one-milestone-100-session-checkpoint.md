@@ -147,3 +147,12 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - The Ubuntu build in earlier matrix run 39976287701 exposed a real compile error in IMAP FETCH: the tag counter API had changed to return Result<String, MailProtocolError>, but fetch_body still used it without propagating the error. This produced E0277 when formatting the tag.
 - Fixed in source commit 510ce2e97c89246b25a3c8ca162e877284804338 by changing the remaining FETCH call site to use the checked result, self.tag()? . This is a root-cause fix, not a test waiver.
 - The prior matrix is a failed run and is not credited. A fresh exact-SHA matrix must target the checkpoint commit produced by this update; build, Clippy, workspace tests, real-network tests, and offline checks must all execute and pass on that SHA.
+
+### Additional protocol and resource-safety fixes
+
+- Exact-SHA build/test evidence from matrix 39976584347 identified the IMAP integration fixture mismatch after safe argument quoting. The fixture was corrected in commit 406d5eb602aed72c4729759ab53483fca0ef423a to expect quoted LOGIN and SELECT arguments; the implementation's escaping remains in place.
+- TFTP reads now bind a transfer to the first responding peer from the requested server IP, reject peer changes, cap received files at 16 MiB, and check block-number increments. TFTP writes cap payloads before network I/O and require ACKs from the negotiated transfer peer.
+- NTP queries now validate the exact server peer, version/mode/leap/stratum fields, a nonzero transmit timestamp, and the echoed originate timestamp. Tests cover valid responses and unsynchronized stratum-zero replies.
+- FTP/SMTP reply accumulation is bounded by 16 MiB and 100,000 lines; application fields are capped and control bytes rejected; SMTP message size is capped; FTP reply parsing rejects non-ASCII status prefixes before byte slicing.
+- HTTP request serialization now caps method length, path length, body size, user-supplied header count and header bytes before building the wire buffer. HTTP/2 has a real loopback request/response test; QUIC rejects outbound payloads over 16 MiB before copying.
+- These edits follow the previous checkpoint SHA, so the next independent matrix must target this checkpoint's exact SHA. Prior results remain tied to their recorded source snapshots and do not verify these changes.
