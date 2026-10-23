@@ -141,3 +141,20 @@ fn human_vnext_cli_rejects_task_app_without_persistence_contract() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("EHV003"));
     assert!(String::from_utf8_lossy(&output.stderr).contains("wajib mendeklarasikan"));
 }
+
+#[test]
+fn stdlib_example_runs_through_the_official_cli() {
+    let path = fixture("stdlib", include_str!("../../../examples/stdlib.one"));
+    let output = run(&["run", path.to_str().unwrap()]);
+    let _ = fs::remove_file(&path);
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout).lines().collect::<Vec<_>>(),
+        vec!["2", "benar", "pir,jeruk", "42", "7", "3"]
+    );
+}
