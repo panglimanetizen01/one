@@ -200,8 +200,18 @@ hasil adalah belum dibuat
     let text = String::from_utf8_lossy(&first);
     assert!(text.starts_with("One human-core package v1"));
     assert!(text.contains("[frontend]\nhuman-core"));
+    assert!(text.contains("[module-lock]"));
+    assert!(text.contains("main.one fnv1a64="));
+    assert!(text.contains("math.one fnv1a64="));
     assert!(text.contains("tambah"));
+    let lock_path = root.join("target/humanapp-1.0.0.one.lock");
+    let first_lock = fs::read(&lock_path).expect("module lock should exist");
+    let lock_text = String::from_utf8_lossy(&first_lock);
+    assert!(lock_text.contains("One module lock v1"));
+    assert!(lock_text.contains("main.one fnv1a64="));
+    assert!(lock_text.contains("math.one fnv1a64="));
     assert!(run(&["package", root.to_str().unwrap()]).status.success());
     assert_eq!(first, fs::read(&artifact).unwrap(), "human-core package must be deterministic");
+    assert_eq!(first_lock, fs::read(&lock_path).unwrap(), "module lock must be deterministic");
     let _ = fs::remove_dir_all(&root);
 }
