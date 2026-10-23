@@ -535,6 +535,10 @@ mod tests {
             Some(Value::Text("2024-02-29T00:00:00Z".into()))
         );
         assert_eq!(unix_seconds_to_utc_text(&Value::Text("0".into())), None);
+        assert_eq!(
+            unix_seconds_to_utc_text(&Value::Number(253_402_300_799)),
+            Some(Value::Text("9999-12-31T23:59:59Z".into()))
+        );
         assert_eq!(unix_seconds_to_utc_text(&Value::Number(253_402_300_800)), None);
     }
 
