@@ -110,6 +110,7 @@ for marker in (
 human_cli_tests = (ROOT / "crates/one-cli/tests/cli.rs").read_text(encoding="utf-8")
 for marker in (
     "human_vnext_cli_runs_task_app_and_reopens_persistent_data",
+    "default_v01_cli_does_not_auto_detect_human_vnext_source",
     "human_vnext_cli_rejects_missing_source_argument",
     "human_vnext_cli_rejects_unknown_option_without_running_program",
     "human_vnext_cli_reports_missing_source_file",
