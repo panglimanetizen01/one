@@ -306,6 +306,8 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
             &b"HTTP/1.1 200 OK\r\n: value\r\nContent-Length: 0\r\n\r\n"[..],
             &b"HTTP/1.1 200 OK\r\nBad Header: value\r\nContent-Length: 0\r\n\r\n"[..],
             &b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nxy"[..],
+            &b"HTTP/1.1 200 OK\r\nContent-Length: +1\r\n\r\n"[..],
+            &b"HTTP/1.1 200 Bad\x01Reason\r\nContent-Length: 0\r\n\r\n"[..],
         ] {
             assert!(parse_http_response(response, 16).is_err());
         }
