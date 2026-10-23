@@ -22,16 +22,18 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 - `crates/one-core/src/stdlib.rs`: deterministic public Rust helpers for text length/contains/trim/literal replace/literal split/integer conversion; list length/index access; deterministic text-keyed map construction/get/set; checked integer absolute value/division/min/max; and unit tests for Unicode, bounds, invalid types, overflow, division by zero, and stable map ordering.
 - `crates/one-core/src/semantic.rs`: registers 12 built-ins with arity and return-type rules, plus static argument-type diagnostics (`E2032`).
-- `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/integer built-ins through the same canonical IR interpreter and checks runtime arity before indexing arguments; invalid runtime operations return `R3022`.
-- `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter.
+- `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/integer built-ins through the same canonical IR interpreter and checks runtime arity before indexing arguments; invalid builtin operations return `R3022`. Integer arithmetic now uses checked add/subtract/multiply/divide and reports `R3023` on overflow rather than panicking.
+- `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter, including a checked-in example and overflow/error cases.
+- `examples/stdlib.one`: runnable example exercising the current source-level builtin subset.
+- `docs/panduan-pengguna/fungsi-dan-event.md`: documents supported builtin syntax and explicit limitations.
 - `docs/spec/one-v0.1-standard-library.md`: documents which helpers are source-level built-ins and which remain Rust-only helpers.
-- Main implementation commits include `652d4dc6662b62538dde602ef215cfe05b340cd1`, `7f196f64b2b181ebb87ac6a2fb35642b3f6d5112`, `449caf6b33c28d10d59674e6bb4e850d6ad4be1c`, `c2f16baa1ab26184c74c7908faa1557419c1e277`, and `66cf560fe30928318ea619a565422303c8806ef9`.
+- Main implementation commits include `652d4dc6662b62538dde602ef215cfe05b340cd1`, `7f196f64b2b181ebb87ac6a2fb35642b3f6d5112`, `449caf6b33c28d10d59674e6bb4e850d6ad4be1c`, `c2f16baa1ab26184c74c7908faa1557419c1e277`, `66cf560fe30928318ea619a565422303c8806ef9`, `abd105a4515c3c1b96b8695f6c9061646a6dfca2`, `c56d841ed914f384975f9e224e1db014336a72c7`, `6656abed12c0b0d5dba983c2261c516ca98e5b55`, and `2b98153907eaa1e96f160bf2efc7b59aef06eaf0`.
 
 ## Verification status
 
-- The canonical CI run [39940416046](https://github.com/panglimanetizen01/one/actions/runs/39940416046) targeted exact SHA `66cf560fe30928318ea619a565422303c8806ef9` but both OS jobs failed before any steps (`runner_id=0`, empty step lists). This is an infrastructure failure, not a source test result.
-- Independent exact-SHA mirror verification has been requested by updating the mirror target file on branch `verification` to `66cf560fe30928318ea619a565422303c8806ef9`; result is **PENDING** until the mirror workflow run is observed and both OS jobs complete.
-- Exact-SHA build, strict Clippy, and workspace tests for the new branch: **NOT YET VERIFIED**.
+- Canonical repository CI run [39940416046](https://github.com/panglimanetizen01/one/actions/runs/39940416046) targeted exact SHA `66cf560fe30928318ea619a565422303c8806ef9` but both OS jobs failed before any steps (`runner_id=0`, empty step lists). This is an infrastructure failure, not a source test result.
+- Independent mirror run [39940719805](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39940719805) targeted SHA `9d08dc8f3facb9060f6391552318951f58aa1a8a`; the contract-artifact step passed after the checker/ledger correction, but the run has not completed the required platform matrix. It does not verify later source changes.
+- The current branch source has additional overflow handling and a checked-in executable example after that SHA. Exact-SHA build, strict Clippy, and workspace tests for the latest branch are **NOT YET VERIFIED**.
 - No points are added to the verified completion total for this work. The completion ledger has not been altered.
 
 ## Remaining required work
