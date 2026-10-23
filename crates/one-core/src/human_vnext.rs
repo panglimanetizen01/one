@@ -920,6 +920,25 @@ mod task_runtime_tests {
         assert!(error.contains("Tidak dapat membuat direktori penyimpanan"));
         let _ = std::fs::remove_file(root);
     }
+
+    #[test]
+    fn task_storage_cleans_temporary_file_when_replacement_fails() {
+        let path = storage_path();
+        std::fs::create_dir(&path).expect("create destination directory");
+        let file_name = path.file_name().unwrap().to_string_lossy().into_owned();
+        let error = save_tasks(&path, &[]).expect_err("a directory cannot be replaced by a task file");
+        assert!(error.contains("secara atomik"));
+        let parent = path.parent().unwrap();
+        let prefix = format!("{file_name}.tmp.");
+        let leftovers = std::fs::read_dir(parent)
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.file_name().to_string_lossy().starts_with(&prefix))
+            .count();
+        assert_eq!(leftovers, 0, "failed replacement must clean up its temporary file");
+        assert!(path.is_dir(), "failed replacement must not remove the destination");
+        let _ = std::fs::remove_dir(path);
+    }
 }
 
 
