@@ -493,7 +493,7 @@ pub fn unix_seconds_to_utc_text(value: &Value) -> Option<Value> {
     let month_prime = (5 * day_of_year + 2) / 153;
     let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
     let month = month_prime + if month_prime < 10 { 3 } else { -9 };
-    year += i64::from(month <= 2);
+    year += if month <= 2 { 1 } else { 0 };
 
     if !(0..=9_999).contains(&year) {
         return None;
