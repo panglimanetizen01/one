@@ -220,54 +220,84 @@ pub fn list_sum_numbers(value: &Value) -> Option<Value> {
     }
 }
 
-/// Serialize a runtime value as deterministic JSON. Nesting deeper than 128 levels is rejected.
-pub fn value_to_json(value: &Value) -> Option<Value> {
-    fn quote(text: &str) -> String {
-        let mut output = String::from("\"");
-        for character in text.chars() {
-            match character {
-                '"' => output.push_str("\\\""),
-                '\\' => output.push_str("\\\\"),
-                '\u{0008}' => output.push_str("\\b"),
-                '\u{000c}' => output.push_str("\\f"),
-                '\n' => output.push_str("\\n"),
-                '\r' => output.push_str("\\r"),
-                '\t' => output.push_str("\\t"),
-                character if character <= '\u{001f}' => {
-                    output.push_str(&format!("\\u{:04x}", u32::from(character)));
-                }
-                character => output.push(character),
+/// Maximum serialized JSON output, in UTF-8 bytes.
+const MAX_JSON_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+
+/// Append text only while keeping the complete JSON output within its byte limit.
+fn push_json_bounded(output: &mut String, fragment: &str) -> Option<()> {
+    if output.len().checked_add(fragment.len())? > MAX_JSON_OUTPUT_BYTES {
+        return None;
+    }
+    output.push_str(fragment);
+    Some(())
+}
+
+/// Append a JSON string with all required escapes, enforcing the output byte limit.
+fn quote_json_bounded(text: &str, output: &mut String) -> Option<()> {
+    push_json_bounded(output, "\"")?;
+    for character in text.chars() {
+        match character {
+            '"' => push_json_bounded(output, "\\\"")?,
+            '\\' => push_json_bounded(output, "\\\\")?,
+            '\u{0008}' => push_json_bounded(output, "\\b")?,
+            '\u{000c}' => push_json_bounded(output, "\\f")?,
+            '\n' => push_json_bounded(output, "\\n")?,
+            '\r' => push_json_bounded(output, "\\r")?,
+            '\t' => push_json_bounded(output, "\\t")?,
+            character if character <= '\u{001f}' => {
+                let escaped = format!("\\u{:04x}", u32::from(character));
+                push_json_bounded(output, &escaped)?;
+            }
+            character => {
+                let mut encoded = [0_u8; 4];
+                push_json_bounded(output, character.encode_utf8(&mut encoded))?;
             }
         }
-        output.push('"');
-        output
     }
+    push_json_bounded(output, "\"")
+}
 
-    fn encode(value: &Value, depth: usize) -> Option<String> {
+/// Serialize a runtime value as deterministic JSON. Nesting deeper than 128 levels or output
+/// larger than 16 MiB is rejected. Map keys are emitted in deterministic sorted order.
+pub fn value_to_json(value: &Value) -> Option<Value> {
+    fn encode(value: &Value, depth: usize, output: &mut String) -> Option<()> {
         if depth > 128 {
             return None;
         }
         match value {
-            Value::Text(text) => Some(quote(text)),
-            Value::Number(number) => Some(number.to_string()),
-            Value::Boolean(boolean) => Some(boolean.to_string()),
-            Value::Nothing => Some("null".to_owned()),
+            Value::Text(text) => quote_json_bounded(text, output),
+            Value::Number(number) => push_json_bounded(output, &number.to_string()),
+            Value::Boolean(true) => push_json_bounded(output, "true"),
+            Value::Boolean(false) => push_json_bounded(output, "false"),
+            Value::Nothing => push_json_bounded(output, "null"),
             Value::List(values) => {
-                let encoded = values.iter()
-                    .map(|value| encode(value, depth + 1))
-                    .collect::<Option<Vec<_>>>()?;
-                Some(format!("[{}]", encoded.join(",")))
+                push_json_bounded(output, "[")?;
+                for (index, value) in values.iter().enumerate() {
+                    if index > 0 {
+                        push_json_bounded(output, ",")?;
+                    }
+                    encode(value, depth + 1, output)?;
+                }
+                push_json_bounded(output, "]")
             }
             Value::Map(values) => {
-                let encoded = values.iter()
-                    .map(|(key, value)| Some(format!("{}:{}", quote(key), encode(value, depth + 1)?)))
-                    .collect::<Option<Vec<_>>>()?;
-                Some(format!("{{{}}}", encoded.join(",")))
+                push_json_bounded(output, "{")?;
+                for (index, (key, value)) in values.iter().enumerate() {
+                    if index > 0 {
+                        push_json_bounded(output, ",")?;
+                    }
+                    quote_json_bounded(key, output)?;
+                    push_json_bounded(output, ":")?;
+                    encode(value, depth + 1, output)?;
+                }
+                push_json_bounded(output, "}")
             }
         }
     }
 
-    encode(value, 0).map(Value::Text)
+    let mut output = String::new();
+    encode(value, 0, &mut output)?;
+    Some(Value::Text(output))
 }
 
 const MAX_JSON_INPUT_BYTES: usize = 16 * 1024 * 1024;
