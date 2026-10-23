@@ -120,3 +120,31 @@ tampilkan hasil
     let error = run(source).unwrap_err();
     assert!(error.contains("R3024"), "unexpected recursion error: {error}");
 }
+
+#[test]
+fn unicode_text_and_collection_builtins_execute_through_one() {
+    let source = r#"teks adalah "Äpel"
+kecil adalah huruf kecil dengan teks
+besar adalah huruf besar dengan teks
+awal adalah teks diawali dengan teks dan "Ä"
+akhir adalah teks diakhiri dengan teks dan "el"
+buat daftar kata
+tambahkan "apel" ke kata
+tambahkan "jeruk" ke kata
+gabungan adalah gabung teks dengan kata dan " | "
+buat daftar angka
+tambahkan 2 ke angka
+tambahkan 3 ke angka
+jumlah adalah jumlah daftar angka dengan angka
+tampilkan kecil
+tampilkan besar
+tampilkan awal
+tampilkan akhir
+tampilkan gabungan
+tampilkan jumlah
+"#;
+    assert_eq!(
+        run(source).expect("text and collection builtins should execute"),
+        vec!["äpel", "ÄPEL", "benar", "benar", "apel | jeruk", "5"]
+    );
+}
