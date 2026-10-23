@@ -1,0 +1,75 @@
+name: ONE Linux Distribution Conformance
+
+on:
+  push:
+    branches: [ milestone/100-ecosystem-20261023 ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu:
+    name: Ubuntu ${{ matrix.version }}
+    runs-on: ubuntu-${{ matrix.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["22.04", "24.04"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Record environment
+        run: |
+          cat /etc/os-release
+          rustc --version
+          cargo --version
+          python3 --version
+      - name: Contract checks
+        run: python3 tools/check_contract.py
+      - name: Build
+        run: cargo build --workspace --all-targets
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Workspace tests
+        run: cargo test --workspace --all-targets
+      - name: Real-network tests
+        run: cargo test -p one-core --features real-network --all-targets
+
+  debian:
+    name: Debian 12 container
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:12
+    steps:
+      - name: Install base tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git python3 build-essential pkg-config clang
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Record environment
+        run: |
+          cat /etc/os-release
+          rustc --version
+          cargo --version
+          python3 --version
+      - name: Contract checks
+        run: python3 tools/check_contract.py
+      - name: Build
+        run: cargo build --workspace --all-targets
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Workspace tests
+        run: cargo test --workspace --all-targets
+      - name: Real-network tests
+        run: cargo test -p one-core --features real-network --all-targets
