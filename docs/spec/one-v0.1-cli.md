@@ -50,7 +50,7 @@ The command refuses to overwrite an existing folder.
 
 For project workflows, if `src/main.one` begins with `Buat program <nama>`, the `build`, `test`, and `package` commands select the human-core compiler explicitly. The compiler resolves relative `Gunakan modul` imports inside the source directory and lowers all module bodies through the canonical semantic analyzer and IR. The build artifact remains a textual `.oneir` artifact, `test` executes the project through the reference interpreter, and `package` emits the separate deterministic `One human-core package v1` format.
 
-This detection does not change the ordinary v0.1 source path or the existing `One package v0.1` artifact format. For human-core projects, `one test` also dispatches `tests/conformance/valid/*.one` through the matching human-core compiler path and rejects any `tests/conformance/invalid/*.one` fixture that unexpectedly compiles. The human-core project workflow does not yet resolve external package dependencies or produce a dependency lockfile.
+This detection does not change the ordinary v0.1 source path or the existing `One package v0.1` artifact format. For human-core projects, `one test` also dispatches `tests/conformance/valid/*.one` through the matching human-core compiler path and rejects any `tests/conformance/invalid/*.one` fixture that unexpectedly compiles. When a local module lock exists, `build` and `test` verify that it still matches the root and imported source files; stale locks fail with `ETOOL006` until `one package` refreshes them. The human-core project workflow does not yet resolve external package dependencies or provide cryptographic dependency integrity.
 
 ## Verification
 
