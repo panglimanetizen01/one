@@ -30,6 +30,7 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
             ("huruf besar".to_owned(), 1),
             ("gabung teks".to_owned(), 2),
             ("jumlah daftar angka".to_owned(), 1),
+            ("nilai dari json".to_owned(), 1),
         ]),
     }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
 pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
@@ -111,6 +112,7 @@ impl Analyzer {
             let expected_types: Option<Vec<Type>> = match name.as_str() {
                 "panjang teks" | "pangkas teks" => Some(vec![Type::Text]),
                 "ubah nilai ke json" => Some(vec![Type::Any]),
+                "nilai dari json" => Some(vec![Type::Text]),
                 "teks diawali" | "teks diakhiri" => Some(vec![Type::Text, Type::Text]),
                 "huruf kecil" | "huruf besar" => Some(vec![Type::Text]),
                 "gabung teks" => Some(vec![Type::List, Type::Text]),
@@ -143,7 +145,7 @@ impl Analyzer {
                 "pangkas teks" | "ganti teks" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "gabung teks" => Type::Text,
                 "pisah teks" => Type::List,
                 "atur pemetaan" => Type::Map,
-                "ambil indeks" => Type::Any,
+                "ambil indeks" | "nilai dari json" => Type::Any,
                 _ => Type::Any,
             }) } } }
 }
