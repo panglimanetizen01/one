@@ -123,7 +123,7 @@ mod tests {
     #[test]
     fn http2_rejects_path_controls_spaces_and_fragments() {
         let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
-        for path in ["", "relative", "/has space", "/bad\\rpath", "/bad\\npath", "/path#fragment"] {
+        for path in ["", "relative", "/has space", "/bad\rpath", "/bad\npath", "/path#fragment"] {
             assert!(
                 execute_http2("127.0.0.1:80", path, &capabilities, Duration::from_millis(10)).is_err(),
                 "path should be rejected: {path:?}"
