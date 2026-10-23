@@ -186,8 +186,10 @@ for marker in (
     "cargo test --workspace --all-targets",
     "does not manufacture CI results",
     "panglimanetizen01/one-windows-verification",
-    "independent hosted cross-platform verification",
-    "both `ubuntu-latest` and `windows-2025` jobs finish successfully",
+    "Independent hosted cross-platform verification",
+    "CANONICAL_COMMIT.txt",
+    "ubuntu-latest",
+    "windows-2025",
 ):
     if marker not in verification_contract + verification_script:
         raise SystemExit(f"EXACT-SHA VERIFICATION CONTRACT: missing required rule/command {marker!r}")
