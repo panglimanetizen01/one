@@ -138,6 +138,14 @@ pub fn number_divide(left: &Value, right: &Value) -> Option<Value> {
     }
 }
 
+/// Checked signed-integer remainder. Zero divisors and i64::MIN % -1 are rejected.
+pub fn number_modulo(left: &Value, right: &Value) -> Option<Value> {
+    match (left, right) {
+        (Value::Number(left), Value::Number(right)) => left.checked_rem(*right).map(Value::Number),
+        _ => None,
+    }
+}
+
 /// Return the smaller integer.
 pub fn number_min(left: &Value, right: &Value) -> Option<Value> {
     match (left, right) {
@@ -653,6 +661,11 @@ mod tests {
         assert_eq!(number_divide(&Value::Number(7), &Value::Number(2)), Some(Value::Number(3)));
         assert_eq!(number_divide(&Value::Number(1), &Value::Number(0)), None);
         assert_eq!(number_divide(&Value::Number(i64::MIN), &Value::Number(-1)), None);
+        assert_eq!(number_modulo(&Value::Number(7), &Value::Number(3)), Some(Value::Number(1)));
+        assert_eq!(number_modulo(&Value::Number(-7), &Value::Number(3)), Some(Value::Number(-1)));
+        assert_eq!(number_modulo(&Value::Number(7), &Value::Number(0)), None);
+        assert_eq!(number_modulo(&Value::Number(i64::MIN), &Value::Number(-1)), None);
+        assert_eq!(number_modulo(&Value::Text("7".into()), &Value::Number(3)), None);
         assert_eq!(number_min(&Value::Number(4), &Value::Number(-2)), Some(Value::Number(-2)));
         assert_eq!(number_max(&Value::Number(4), &Value::Number(-2)), Some(Value::Number(4)));
         assert_eq!(number_max(&Value::Text("4".into()), &Value::Number(2)), None);
