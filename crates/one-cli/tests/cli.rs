@@ -176,6 +176,15 @@ buat pekerjaan tambah
     hasilnya adalah kiri ditambah kanan
 "#).unwrap();
 
+    let main_path = root.join("src/main.one");
+    let build_output = run(&["build", main_path.to_str().unwrap()]);
+    assert!(build_output.status.success(), "{}", String::from_utf8_lossy(&build_output.stderr));
+    assert!(root.join("src/target/main.oneir").is_file());
+
+    let test_output = run(&["test", root.to_str().unwrap()]);
+    assert!(test_output.status.success(), "{}", String::from_utf8_lossy(&test_output.stderr));
+    assert!(String::from_utf8_lossy(&test_output.stdout).contains("Tests berhasil"));
+
     let output = run(&["package", root.to_str().unwrap()]);
     assert!(output.status.success(), "stdout: {}\nstderr: {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
     let artifact = root.join("target/humanapp-1.0.0.onepkg");
