@@ -32,6 +32,7 @@ Buka kembali proses dengan perintah yang sama untuk memuat data dari berkas. Dat
 ## 3. Batasan saat ini
 
 - Sintaks human-vNext belum normatif dan hanya mendukung bentuk tindakan yang dipakai oleh contoh ini.
+- Runner menolak deklarasi data, koleksi persistensi selain `tugas`, nama aksi yang tidak didukung, dan urutan instruksi yang tidak cocok; sintaks yang dapat diparse tidak otomatis dianggap dapat dijalankan.
 - Runner task-list adalah interpreter eksperimental khusus untuk vertical slice ini; AST belum diturunkan ke IR kanonis ONE v0.1.
 - Judul tugas harus satu baris dan tidak boleh kosong atau mengandung karakter kontrol.
 - File storage adalah format internal tab-delimited; migrasi format belum dijanjikan.
