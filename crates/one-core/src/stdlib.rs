@@ -262,10 +262,10 @@ pub fn value_to_json(value: &Value) -> Option<Value> {
     encode(value, 0).map(Value::Text)
 }
 
-/// Parse JSON containing text, signed 64-bit integers, booleans, null, arrays, and objects.
-/// Decimal/exponent numbers are rejected because the runtime has no floating-point value type.
 const MAX_JSON_INPUT_BYTES: usize = 16 * 1024 * 1024;
 
+/// Parse JSON containing text, signed 64-bit integers, booleans, null, arrays, and objects.
+/// Decimal/exponent numbers are rejected because the runtime has no floating-point value type.
 pub fn json_to_value(value: &Value) -> Option<Value> {
     match value {
         Value::Text(source) if source.len() <= MAX_JSON_INPUT_BYTES => JsonParser::parse(source),
