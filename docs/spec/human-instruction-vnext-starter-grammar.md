@@ -1,6 +1,6 @@
 # ONE Human-Instruction vNext Starter Grammar
 
-**Status:** Proposed, implementation-bounded starter contract; not normative for ONE generally.  
+**Status:** Reviewed and accepted for the implementation-bounded experimental subset; not normative for ONE generally. See [the review record](../verification/human-vnext-grammar-review.md).  
 **Version:** human-vnext-starter/0.1  
 **Implementation entry point:** one_core::human_vnext::parse, selected only by the explicit jalankan-human-vnext CLI command.  
 **Compatibility:** The default ONE v0.1 lexer, parser, AST, and CLI behavior are unchanged.
@@ -85,7 +85,32 @@ For structural lines, the parser rejects tabs and indentation widths that are no
 - The current prototype's persistence runner requires exactly one collection named `tugas`, no data declarations, and these exact action names and bodies: `menambahkan tugas` with `Terima judul tugas` then `Simpan tugas baru`; `melihat semua tugas` with `Tampilkan semua tugas`; and `menandai tugas sebagai selesai` with `Terima tugas yang dipilih` then `Tandai tugas sebagai selesai`. Extra persistence collections and any unsupported action name/body are rejected before storage is opened. Other validly parsed declarations are not automatically executable by that runner.
 - Diagnostic codes are stable within this starter version only; changing a code or its meaning requires updating tests and this contract together.
 
-## 6. Required conformance matrix
+## 6. Stable diagnostic classes
+
+| Code | Rejection class |
+|---|---|
+| H0001 | Tab used in structural indentation |
+| H0002 | Noncanonical structural indentation or invalid text-block prefix |
+| H0003 | Empty source or missing application declaration |
+| H0004 | Invalid application name |
+| H0005 | Indented application declaration |
+| H0006 | Orphaned nested instruction |
+| H0007 | Invalid data name |
+| H0008 | Missing or malformed text-block header |
+| H0010 | Invalid action name |
+| H0011 | Action body indentation is not exactly one four-space level |
+| H0012 | Invalid name in a display instruction |
+| H0013 | Unsupported action-body instruction |
+| H0014 | Empty action body |
+| H0015 | Invalid persistence collection name |
+| H0016 | Unknown top-level instruction |
+| H0017 | Duplicate data/action declaration name |
+| H0018 | Display reference does not resolve to a data declaration |
+| H0019 | Duplicate persistence declaration |
+
+H0009 is unused and has no meaning in this version. Codes and rejection classes are versioned behavior; changes require updated fixtures and an explicit compatibility decision. For semantic conflicts and unresolved references, the diagnostic line identifies the declaration whose semantics cannot be validated.
+
+## 7. Required conformance matrix
 
 | Area | Positive evidence | Negative evidence |
 |---|---|---|
