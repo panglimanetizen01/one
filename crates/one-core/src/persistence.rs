@@ -105,9 +105,8 @@ impl KeyValueStore {
 }
 
 fn validate_field(value: &str, label: &'static str) -> Result<(), StoreError> {
-    if value.is_empty() { return Err(StoreError::Limit(if label == "kunci" { "kunci kosong" } else { "nilai kosong tidak didukung" })); }
+    if label == "kunci" && value.is_empty() { return Err(StoreError::Limit("kunci kosong")); }
     if value.len() > MAX_FIELD_BYTES { return Err(StoreError::Limit("kunci/nilai melebihi 1 MiB")); }
-    if value.contains(['\n', '\r', '\t']) { return Err(StoreError::Limit("kunci/nilai tidak boleh mengandung newline atau tab")); }
     Ok(())
 }
 
@@ -158,7 +157,7 @@ fn hex_encode(bytes: &[u8]) -> String {
 }
 
 fn hex_decode(value: &str) -> Result<Vec<u8>, String> {
-    if value.len() % 2 != 0 { return Err("panjang data heksadesimal ganjil".into()); }
+    if !value.len().is_multiple_of(2) { return Err("panjang data heksadesimal ganjil".into()); }
     let bytes = value.as_bytes();
     let mut output = Vec::with_capacity(bytes.len() / 2);
     for pair in bytes.chunks_exact(2) {
@@ -173,8 +172,19 @@ fn hex_decode(value: &str) -> Result<Vec<u8>, String> {
 fn replace_file(temp: &Path, target: &Path) -> std::io::Result<()> {
     // Windows rename does not replace an existing destination. This fallback avoids
     // claiming crash-atomic replacement on Windows; recovery remains fail-closed.
-    if target.exists() { fs::remove_file(target)?; }
-    fs::rename(temp, target)
+    if target.exists() {
+        let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let backup = target.with_extension(format!("one-backup-{}-{sequence}", std::process::id()));
+        fs::rename(target, &backup)?;
+        if let Err(error) = fs::rename(temp, target) {
+            let _ = fs::rename(&backup, target);
+            return Err(error);
+        }
+        let _ = fs::remove_file(backup);
+        Ok(())
+    } else {
+        fs::rename(temp, target)
+    }
 }
 #[cfg(not(windows))]
 fn replace_file(temp: &Path, target: &Path) -> std::io::Result<()> { fs::rename(temp, target) }
