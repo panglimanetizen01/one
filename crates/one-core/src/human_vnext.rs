@@ -128,6 +128,7 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
     }
     let project = parse_project(first_text, first_line)?;
     let mut declarations = Vec::new();
+    let mut declaration_lines = Vec::new();
     let mut index = 1;
 
     while index < meaningful.len() {
@@ -182,6 +183,7 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
                     }
                 }
             }
+            declaration_lines.push(line_number);
             declarations.push(HumanDeclaration::Data {
                 name,
                 value: HumanValue::Text(text_lines.join("\n")),
@@ -221,6 +223,7 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
             if body.is_empty() {
                 return Err(error(line_number, "H0014", "Tindakan harus memiliki isi"));
             }
+            declaration_lines.push(line_number);
             declarations.push(HumanDeclaration::Action { name: action_name, body });
             continue;
         }
@@ -231,6 +234,7 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
             if !is_name(collection) {
                 return Err(error(line_number, "H0015", "Nama koleksi penyimpanan tidak boleh kosong"));
             }
+            declaration_lines.push(line_number);
             declarations.push(HumanDeclaration::Persist { collection: collection.to_owned() });
             index += 1;
             continue;
@@ -242,11 +246,12 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
     let mut declaration_names = std::collections::HashSet::new();
     let mut data_names = std::collections::HashSet::new();
     let mut persisted_collections = std::collections::HashSet::new();
-    for declaration in &declarations {
+    for (declaration_index, declaration) in declarations.iter().enumerate() {
+        let declaration_line = declaration_lines[declaration_index];
         if let HumanDeclaration::Persist { collection } = declaration
             && !persisted_collections.insert(collection.as_str())
         {
-            return Err(error(1, "H0019", format!("Deklarasi penyimpanan ganda untuk {}", collection)));
+            return Err(error(declaration_line, "H0019", format!("Deklarasi penyimpanan ganda untuk {}", collection)));
         }
         let name = match declaration {
             HumanDeclaration::Data { name, .. } => {
@@ -259,16 +264,17 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
         if let Some(name) = name
             && !declaration_names.insert(name.as_str())
         {
-            return Err(error(1, "H0017", format!("Nama deklarasi ganda {}", name)));
+            return Err(error(declaration_line, "H0017", format!("Nama deklarasi ganda {}", name)));
         }
     }
 
-    for declaration in &declarations {
+    for (declaration_index, declaration) in declarations.iter().enumerate() {
         if let HumanDeclaration::Action { body, .. } = declaration {
+            let declaration_line = declaration_lines[declaration_index];
             for instruction in body {
                 match instruction {
                     HumanInstruction::Display { name } if !data_names.contains(name.as_str()) => {
-                        return Err(error(1, "H0018", format!("Nilai {} belum dideklarasikan sebagai data", name)));
+                        return Err(error(declaration_line, "H0018", format!("Nilai {} belum dideklarasikan sebagai data", name)));
                     }
                     _ => {}
                 }
@@ -426,6 +432,40 @@ mod tests {
         let source = "Buat aplikasi catatan\n    Tampilkan pesan\n";
         let error = parse(source).expect_err("nested instruction without a parent must fail");
         assert_eq!(error.code, "H0006");
+    }
+
+
+    #[test]
+    fn semantic_errors_report_the_relevant_declaration_line() {
+        let duplicate = concat!(
+            "Buat aplikasi catatan\n",
+            "Buat data pesan\n",
+            "    Isi teks berikut\n",
+            "        isi\n",
+            "Pengguna bisa pesan\n",
+            "    Tampilkan pesan\n",
+        );
+        let error = parse(duplicate).expect_err("duplicate declaration name");
+        assert_eq!(error.code, "H0017");
+        assert_eq!(error.line, 5);
+
+        let unresolved = concat!(
+            "Buat aplikasi catatan\n",
+            "Pengguna bisa melihat\n",
+            "    Tampilkan belum ada\n",
+        );
+        let error = parse(unresolved).expect_err("unresolved data reference");
+        assert_eq!(error.code, "H0018");
+        assert_eq!(error.line, 2);
+
+        let duplicate_persistence = concat!(
+            "Buat aplikasi catatan\n",
+            "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+            "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+        );
+        let error = parse(duplicate_persistence).expect_err("duplicate persistence declaration");
+        assert_eq!(error.code, "H0019");
+        assert_eq!(error.line, 3);
     }
 
     #[test]
