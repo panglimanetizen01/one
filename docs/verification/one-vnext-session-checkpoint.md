@@ -1,6 +1,6 @@
 # ONE vNext Session Checkpoint
 
-**Updated:** 2026-10-22  
+**Updated:** 2026-10-23  
 **Active target:** Milestone 30% — foundation and first runnable reference application  
 **Repository:** [panglimanetizen01/one](https://github.com/panglimanetizen01/one)  
 **Pull request:** [#78](https://github.com/panglimanetizen01/one/pull/78)  
@@ -8,66 +8,66 @@
 
 ## Completion
 
-The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledger.md). Its weights are fixed for future sessions.
+The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledger.md). Its weights are fixed; do not alter them to force a milestone pass.
 
-- **Implementation progress:** 21/100 points (provisional, includes work not yet verified).
-- **Progress inside the 30-point foundation tranche:** 21/30 points implemented (70% of that tranche).
-- **Verified completion:** 0/100 points for this newly introduced vNext tranche at the current code revision because no Rust build/test/Clippy run has completed successfully on the exact revision.
-- **Milestone 30% gate:** **NOT PASSED**. Do not report the overall project as 30% complete or PASS GREEN LOCKED.
+- **Implementation progress:** 30/100 points recorded for the Foundation tranche.
+- **Verified completion:** 30/100 points, based on the exact-SHA cross-platform evidence recorded in the ledger.
+- **Active milestone:** 30%.
+- **Gate:** **PASS GREEN LOCKED** for the implementation-bounded `human-vnext-starter/0.1` scope at code SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc`, as documented in the ledger. This does not certify the broader vNext draft or the 60%/100% milestones.
 
-## Latest code revision
+## Git state (refreshed 2026-10-23)
 
-- **Last code-changing SHA:** `8c4f7c4706365972797446382989b81335434d92`
-- **Source:** [human_vnext.rs](https://github.com/panglimanetizen01/one/blob/8c4f7c4706365972797446382989b81335434d92/crates/one-core/src/human_vnext.rs)
-- **CLI:** [main.rs](https://github.com/panglimanetizen01/one/blob/8c4f7c4706365972797446382989b81335434d92/crates/one-cli/src/main.rs)
-- **CLI integration test:** [cli.rs](https://github.com/panglimanetizen01/one/blob/8c4f7c4706365972797446382989b81335434d92/crates/one-cli/tests/cli.rs)
-- **Example:** [daftar-tugas.one](https://github.com/panglimanetizen01/one/blob/spec/human-instruction-grammar-vnext-20261022/examples/human-vnext/daftar-tugas.one)
-- **Grammar contract:** [grammar draft](https://github.com/panglimanetizen01/one/blob/spec/human-instruction-grammar-vnext-20261022/docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md)
-- **User instructions:** [task-list guide](human-vnext-task-list.md)
+- PR #78 is **open, draft, not merged**; base branch is `main`.
+- Current PR head / branch HEAD: `4df102144ae58dbbb683f1e90022dc3f9b1d5f8a`.
+- Base SHA: `d86c3be75c81a27d6d4f040f21718f6248413e47`.
+- Comparing the verified implementation SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` with the current HEAD shows 3 commits ahead and only `docs/verification/one-completion-ledger.md` changed. No source-code, test, workflow, or example files changed in that range.
+- The current HEAD is therefore a documentation-only descendant of the verified implementation snapshot. The code verification evidence remains attached to SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc`; do not relabel it as a test run executed against the documentation commit.
+- `main` was not modified and no merge was performed.
 
-## Implemented in this session
+## Implementation and scope
 
-- Added preservation and tests for blank lines, trailing newlines, CRLF, relative indentation and Unicode text in text blocks.
-- Defined stricter deterministic name syntax and duplicate-persistence rejection.
-- Added task-list action instructions to the human-vNext parser.
-- Added an experimental task-list runner supporting add, list, mark-complete, input validation, durable file storage, reload on restart, corrupt-record errors, and temporary-file/rename writes.
-- Added explicit `one jalankan-human-vnext <program.one> [--data <file>]` CLI entry; the default v0.1 command path remains separate.
-- Added a runnable human-vNext source example and usage documentation.
-- Added core runtime tests and a CLI subprocess test for persistence across process restarts.
-- Formalized the starter subset grammar and versioning/boundary rules.
-- Added a weighted completion ledger and static contract checks for the example and ledger.
+The branch contains the experimental human-vNext parser, deterministic starter grammar and fixtures, an explicit `jalankan-human-vnext` CLI entry point isolated from the default v0.1 path, a task-list reference application with durable storage, CLI/runtime regression tests, user documentation, and exact-SHA verification tooling.
 
-## Verification and failures
+Scope boundaries remain mandatory:
 
-- **Source presence:** VERIFIED through GitHub file reads and commit metadata.
-- **Rust compile, format, Clippy and unit/integration tests:** **NOT VERIFIED**. This environment has no functioning Rust execution path for the private checkout.
-- **CI:** [Exact-code-SHA run](https://github.com/panglimanetizen01/one/actions/runs/39752818112) failed on Ubuntu and Windows with zero steps in both jobs. The logs endpoint returned 404 and no runner IDs were allocated. This is a runner/workflow execution blocker, not evidence that the Rust source failed, and not a passing result.
-- **Exact current code SHA CI:** run [39752818112](https://github.com/panglimanetizen01/one/actions/runs/39752818112) is attached to `8c4f7c4706365972797446382989b81335434d92`; both matrix jobs failed before any steps started.
-- **Canonical ONE AST/IR integration:** NOT IMPLEMENTED. The human-vNext task runner is a dedicated experimental interpreter for the supported task-list action shapes; it does not yet lower into the canonical ONE v0.1 IR.
-- **General-purpose vNext execution:** NOT IMPLEMENTED. Unsupported constructs must not be presented as working.
-- **Persistence end-to-end:** implementation and regression tests are present, but actual test execution is NOT VERIFIED.
+- The accepted contract is `human-vnext-starter/0.1`, not the broader `one-human-vnext/0.1-draft`.
+- The task-list runner is a dedicated experimental interpreter for a bounded vertical slice; it is not canonical AST/IR integration or a general-purpose vNext compiler/runtime.
+- Unsupported constructs must be rejected rather than described as executable.
+- One remains LLM-independent for program semantics and execution.
 
-## Git state
+## Verification evidence and current CI state
 
-- PR #78 remains **open, draft, not merged**.
-- Base branch: `main`; base SHA observed: `d86c3be75c81a27d6d4f040f21718f6248413e47`.
-- Last code-changing SHA: `8c4f7c4706365972797446382989b81335434d92`.
-- Main was not modified and no merge was performed.
-- Documentation-only checkpoint/ledger commits may follow the code SHA; refresh the actual PR head before further work.
+### Exact implementation SHA
 
-## Remaining work to reach 30%
+The completion ledger records independent cross-platform verification for canonical source SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` through the verification mirror:
 
-1. Get a functioning exact-SHA Linux/Windows CI run. Diagnose repository Actions availability/runner setup outside source code if jobs still terminate before their first step.
-2. Run `cargo fmt --check`, `cargo build --workspace --all-targets`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace --all-targets`, and `python tools/check_contract.py`; fix actual failures and rerun.
-3. Review storage atomic replacement on Windows, invalid/corrupt data handling, Unicode/control-character cases, empty text and block-boundary cases.
-4. Verify default v0.1 parser/CLI compatibility on the same SHA.
-5. Resolve the frontend integration gate: either lower supported vNext nodes into the canonical AST/IR/runtime or explicitly revise the milestone contract only through reviewed governance. Do not call the current task-specific runner the general compiler pipeline.
-6. Once all F1–F6 criteria earn their full 30 verified points, update the ledger and checkpoint with exact SHA and successful CI evidence.
+- [Workflow run 39929244544](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39929244544): overall **SUCCESS**.
+- `ubuntu-latest`: **SUCCESS**.
+- `windows-2025`: **SUCCESS**.
+- Both jobs verified the same canonical source SHA and completed the required contract, build, Clippy, workspace test, network vertical-slice, and platform-appropriate offline checks.
+- One Android AArch64 native execution test was explicitly ignored because an Android execution-capable environment was unavailable; it is not claimed as passed.
+- This is independent hosted cross-platform verification, not a claim that canonical repository Actions passed.
+
+### Canonical repository Actions on current PR head
+
+- Current PR head SHA `4df102144ae58dbbb683f1e90022dc3f9b1d5f8a` has Ubuntu and Windows jobs marked **failure** in [run 39929931431](https://github.com/panglimanetizen01/one/actions/runs/39929931431).
+- The GitHub job API returns an empty step list for both jobs. No build/test command output is available from that run.
+- Therefore, the cause of the latest canonical Actions failure is **NOT DETERMINED** from available evidence. Do not label it a source failure or a proven infrastructure failure.
+- The independent mirror evidence is for code SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc`, not a newly executed run against the documentation-only HEAD.
+
+## Remaining work
+
+The 30% Foundation gate is recorded as passed for its bounded, reviewed scope. The following are not part of that claim and remain future work or separate verification tasks:
+
+1. Diagnose why canonical repository Actions jobs terminate before reporting steps, without weakening or disabling checks.
+2. Keep the checkpoint and ledger aligned whenever source or verification evidence changes.
+3. For milestone 60%, implement canonical vNext AST/IR integration, a general frontend/runtime pipeline, expanded semantic/type/scope diagnostics, reusable persistence APIs, and additional real applications.
+4. Do not award 60% or 100% points until the corresponding fixed-weight acceptance criteria pass on recorded source SHAs.
 
 ## Next action
 
-First, refresh PR #78 head and workflow state. Then restore a functioning Rust/Actions verification path and run the exact-SHA suite. Fix code defects revealed by real diagnostics; do not weaken or disable gates to get green.
+Continue from the current feature branch and current PR head. Before the next code change, refresh the PR head and inspect any new CI/check results. For any source change, rerun the required exact-SHA verification and update the ledger/checkpoint only with evidence tied to the resulting source SHA.
 
 ## Gate
 
-**NOT PASSED** — substantial implementation is committed, but exact-SHA tests/CI and canonical execution-pipeline acceptance are not proven.
+**PASS GREEN LOCKED** — only for the 30-point Foundation scope `human-vnext-starter/0.1` at verified implementation SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc`, as recorded in the completion ledger. Canonical Actions at the current documentation-only PR HEAD remain failed with no step details; this does not get reclassified as green.
