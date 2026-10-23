@@ -194,3 +194,9 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - The previous matrix failure was actionable: E0277 in IMAP FETCH and E0596 in the HTTP/2 loopback fixture were fixed and then the corrected source passed the matrix above. No checks were disabled or removed.
 - This checkpoint update creates a new source SHA. To keep release evidence exact-SHA, the independent matrix selector must now be retargeted to the resulting checkpoint commit and rerun. The successful run above remains evidence for aaa1245ac44e95eef3a564a08ba88e10aeb16433 only.
 - Ledger weights and point totals are unchanged: 75/100 provisional implementation, 60/100 verified. A green cross-platform engineering matrix does not by itself complete E1–E6; no extra ledger points are awarded until each row's full acceptance evidence is met.
+
+### Bound HTTP/2 loopback test teardown
+
+- Source commit 88703a34885c8727ea3317a690ae0bf024028f99 wraps the HTTP/2 test server's accept loop in a five-second timeout. The client request still has to complete and return the expected status, body, and response header; the timeout only bounds test-server teardown if peer closure is delayed.
+- The exact-SHA matrix for d1951f14d79e4255cc6bc9374af6c33833017bed had Linux pass and Windows reach the real-network test step; Windows completion was still pending when this change was made. That run cannot verify this teardown change.
+- The next matrix must target the checkpoint SHA produced by this update.
