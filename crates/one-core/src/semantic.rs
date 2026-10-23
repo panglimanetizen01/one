@@ -31,7 +31,12 @@ impl Analyzer {
                     if args.len() != 1 || !matches!(&args[0], Expr::Identifier(_)) {
                         return Err(DiagnosticBundle::single(Diagnostic::error("E2032", "'buat pemetaan' membutuhkan nama pemetaan.", Some(span.clone()))));
                     }
-                    if let Expr::Identifier(name) = &args[0] { self.current_scope().insert(name.clone(), Type::Map); }
+                    if let Expr::Identifier(name) = &args[0] {
+                        if self.lookup(name).is_some() {
+                            return Err(DiagnosticBundle::single(Diagnostic::error("E2001", format!("Nama '{}' sudah dibuat di ruang lingkup ini.", name), Some(span.clone()))));
+                        }
+                        self.current_scope().insert(name.clone(), Type::Map);
+                    }
                 }
                 "masukkan ke pemetaan" => {
                     if args.len() != 3 { return Err(DiagnosticBundle::single(Diagnostic::error("E2033", "'masukkan' membutuhkan kunci, nilai, dan nama pemetaan.", Some(span.clone())))); }
