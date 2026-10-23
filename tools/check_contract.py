@@ -35,6 +35,7 @@ required = [
     "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",
     "docs/verification/human-vnext-exact-sha-verification-contract.md", "tools/verify-human-vnext.sh",
     "docs/spec/human-instruction-vnext-starter-grammar.md",
+    "docs/verification/human-vnext-grammar-review.md",
     "examples/human-vnext/daftar-tugas.one",
     "tests/human-vnext/valid/minimal-data.one",
     "tests/human-vnext/valid/unicode-name.one",
@@ -108,6 +109,7 @@ for marker in (
     "invalid_human_vnext_fixtures_are_rejected",
     "instruction_like_lines_remain_opaque_text_data",
     "text_block_preserves_extra_spaces_and_tabs_as_data",
+    "semantic_errors_report_the_relevant_declaration_line",
 ):
     if marker not in human_parser_tests:
         raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
@@ -165,6 +167,10 @@ for marker in (
 ledger = (ROOT / "docs/verification/one-completion-ledger.md").read_text(encoding="utf-8")
 if "30% GATE NOT PASSED" not in ledger or "TOTAL" not in ledger:
     raise SystemExit("COMPLETION LEDGER: missing explicit milestone status or weighted total")
+
+grammar_review = (ROOT / "docs/verification/human-vnext-grammar-review.md").read_text(encoding="utf-8")
+if "ACCEPTED WITH EXPLICIT SCOPE BOUNDARIES" not in grammar_review or "External sign-off: none claimed" not in grammar_review:
+    raise SystemExit("HUMAN vNEXT GRAMMAR REVIEW: missing bounded acceptance or external-review boundary")
 
 verification_contract = (ROOT / "docs/verification/human-vnext-exact-sha-verification-contract.md").read_text(encoding="utf-8")
 verification_script = (ROOT / "tools/verify-human-vnext.sh").read_text(encoding="utf-8")
