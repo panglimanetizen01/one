@@ -41,7 +41,7 @@ impl HttpRequest {
             || !(self.path.starts_with('/') || self.path == "*")
             || self.path.bytes().any(|byte| byte <= 0x20 || byte == 0x7f)
             || self.authority.is_empty()
-            || self.authority.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == b'\\r' || byte == b'\\n')
+            || self.authority.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == b'\r' || byte == b'\n')
             || self.authority.contains('@')
             || self.authority.contains('/')
             || self.authority.contains('#')
@@ -50,7 +50,7 @@ impl HttpRequest {
             return Err(invalid());
         }
 
-        let mut bytes = format!("{} {} HTTP/1.1\\r\\nHost: {}\\r\\n", self.method, self.path, self.authority).into_bytes();
+        let mut bytes = format!("{} {} HTTP/1.1\r\nHost: {}\r\n", self.method, self.path, self.authority).into_bytes();
         let mut has_length = false;
         for (name, value) in &self.headers {
             if !valid_http_header_name(name)
@@ -66,12 +66,12 @@ impl HttpRequest {
                 }
                 has_length = true;
             }
-            bytes.extend_from_slice(format!("{}: {}\\r\\n", name, value).as_bytes());
+            bytes.extend_from_slice(format!("{}: {}\r\n", name, value).as_bytes());
         }
         if !has_length && (!self.body.is_empty() || self.method.eq_ignore_ascii_case("POST") || self.method.eq_ignore_ascii_case("PUT") || self.method.eq_ignore_ascii_case("PATCH")) {
-            bytes.extend_from_slice(format!("Content-Length: {}\\r\\n", self.body.len()).as_bytes());
+            bytes.extend_from_slice(format!("Content-Length: {}\r\n", self.body.len()).as_bytes());
         }
-        bytes.extend_from_slice(b"Connection: close\\r\\n\\r\\n");
+        bytes.extend_from_slice(b"Connection: close\r\n\r\n");
         bytes.extend_from_slice(&self.body);
         Ok(bytes)
     }
@@ -214,8 +214,8 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
     #[test]
     fn http_request_rejects_request_smuggling_and_header_injection() {
         for request in [
-            HttpRequest { method: "GET\\r\\nInjected: yes".into(), authority: "example.com".into(), path: "/".into(), headers: vec![], body: vec![] },
-            HttpRequest { method: "GET".into(), authority: "example.com".into(), path: "/\\r\\nInjected: yes".into(), headers: vec![], body: vec![] },
+            HttpRequest { method: "GET\r\nInjected: yes".into(), authority: "example.com".into(), path: "/".into(), headers: vec![], body: vec![] },
+            HttpRequest { method: "GET".into(), authority: "example.com".into(), path: "/\r\nInjected: yes".into(), headers: vec![], body: vec![] },
             HttpRequest { method: "GET".into(), authority: "user@example.com".into(), path: "/".into(), headers: vec![], body: vec![] },
             HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![("Content-Length".into(), "1".into()), ("content-length".into(), "2".into())], body: b"x".to_vec() },
             HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![("Transfer-Encoding".into(), "chunked".into())], body: b"x".to_vec() },
@@ -229,7 +229,7 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
     fn http_request_generates_content_length_for_empty_body_methods_that_carry_content() {
         let request = HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![], body: vec![] };
         let wire = String::from_utf8(request.to_bytes().expect("valid request")).expect("UTF-8");
-        assert!(wire.contains("Content-Length: 0\\r\\n"));
+        assert!(wire.contains("Content-Length: 0\r\n"));
     }
 
     #[test]
