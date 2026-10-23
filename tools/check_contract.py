@@ -168,6 +168,10 @@ verification_contract = (ROOT / "docs/verification/human-vnext-exact-sha-verific
 verification_script = (ROOT / "tools/verify-human-vnext.sh").read_text(encoding="utf-8")
 for marker in (
     "git ls-remote origin",
+    "https://github.com/panglimanetizen01/one.git",
+    "bash -n tools/verify-human-vnext.sh",
+    "VERIFIED SOURCE SHA",
+    "checks changed the worktree",
     "cargo build --workspace --all-targets",
     "cargo clippy --workspace --all-targets -- -D warnings",
     "cargo test --workspace --all-targets",
