@@ -536,8 +536,8 @@ fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> s
 
     #[link(name = "Kernel32")]
     unsafe extern "system" {
-        #[allow(non_snake_case)]
-        fn MoveFileExW(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
+        #[link_name = "MoveFileExW"]
+        fn move_file_ex_w(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
     }
 
     const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
@@ -547,7 +547,7 @@ fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> s
     // SAFETY: both paths are NUL-terminated UTF-16 buffers that remain alive for
     // the call; MoveFileExW does not retain either pointer.
     let result = unsafe {
-        MoveFileExW(
+        move_file_ex_w(
             from.as_ptr(),
             to.as_ptr(),
             MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
