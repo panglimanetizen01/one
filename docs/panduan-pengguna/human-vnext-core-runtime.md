@@ -36,10 +36,31 @@ Deklarasi program manusia
 
 Dengan demikian, ekspresi, fungsi, kondisi, dan diagnostik menggunakan implementasi semantik kanonis yang sama. Kesalahan parse/semantik menghasilkan kode keluar bukan nol. Perintah v0.1 tetap menjadi jalur terpisah dan tidak otomatis mendeteksi format vNext.
 
+## Modul multi-file
+
+Program dapat mengimpor modul relatif yang berada di dalam direktori proyek. Deklarasi modul harus berada tepat setelah header program:
+
+```one
+Buat program aplikasi modular
+Gunakan modul "matematika.one"
+
+hasil adalah jumlahkan dengan 20 dan 22
+tampilkan hasil
+```
+
+File modul menggunakan header `Buat modul matematika` lalu mendeklarasikan fungsi dengan grammar ONE yang sama. Jalur absolut, `..`, ekstensi selain `.one`, siklus, dan import ganda ditolak. Semua badan modul digabungkan sebelum parse/semantic analysis kanonis, sehingga konflik nama terdeteksi oleh analyzer yang sama.
+
+Jalankan contoh dengan `one jalankan-human-core examples/human-vnext/modul-utama.one`.
+
+## Penyimpanan reusable
+
+Core kini menyediakan `one_core::persistence::KeyValueStore`: format `ONE-KV-1` berversi, urutan serialisasi deterministik, batas ukuran/jumlah entri, penyimpanan melalui file sementara, serta penolakan data rusak dan kunci duplikat. API ini sudah memiliki unit tests untuk restart, corrupt storage, dan penghapusan. Aplikasi daftar tugas yang ada masih memakai format penyimpanan sendiri; migrasi ke API baru belum diklaim selesai.
+
 ## Contoh
 
 - `examples/human-vnext/kalkulator.one` — fungsi, parameter, hasil, ekspresi, kondisi, dan output.
 - `examples/human-vnext/pencatat-skor.one` — nilai, ekspresi dan kondisi.
+- `examples/human-vnext/modul-utama.one` + `matematika.one` — import modul dan fungsi lintas file.
 
 ## Batasan yang belum diklaim selesai
 
