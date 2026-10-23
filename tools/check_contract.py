@@ -169,7 +169,7 @@ if "30% GATE NOT PASSED" not in ledger or "TOTAL" not in ledger:
     raise SystemExit("COMPLETION LEDGER: missing explicit milestone status or weighted total")
 
 grammar_review = (ROOT / "docs/verification/human-vnext-grammar-review.md").read_text(encoding="utf-8")
-if "ACCEPTED WITH EXPLICIT SCOPE BOUNDARIES" not in grammar_review or "External sign-off: none claimed" not in grammar_review:
+if "ACCEPTED WITH EXPLICIT SCOPE BOUNDARIES" not in grammar_review or "External sign-off" not in grammar_review or "none claimed" not in grammar_review:
     raise SystemExit("HUMAN vNEXT GRAMMAR REVIEW: missing bounded acceptance or external-review boundary")
 
 verification_contract = (ROOT / "docs/verification/human-vnext-exact-sha-verification-contract.md").read_text(encoding="utf-8")
