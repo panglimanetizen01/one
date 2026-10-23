@@ -184,7 +184,7 @@ impl ImapClient {
     }
 
     pub fn fetch_body(&mut self, sequence: u32) -> Result<Vec<u8>, MailProtocolError> {
-        let tag = self.tag();
+        let tag = self.tag()?;
         self.stream.write_all(format!("{tag} FETCH {sequence} BODY[]\r\n").as_bytes()).map_err(io_error)?;
         let line = read_line(&mut self.stream)?;
         if !line.starts_with("* ") || !line.contains("FETCH") { return Err(MailProtocolError::InvalidResponse); }
