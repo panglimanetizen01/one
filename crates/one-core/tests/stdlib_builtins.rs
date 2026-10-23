@@ -148,3 +148,20 @@ tampilkan jumlah
         vec!["äpel", "ÄPEL", "benar", "benar", "apel | jeruk", "5"]
     );
 }
+
+#[test]
+fn json_parse_and_serialize_builtins_round_trip_through_one() {
+    let source = r#"data adalah "{\"a\":1}"
+nilai adalah nilai dari json dengan data
+hasil adalah ubah nilai ke json dengan nilai
+tampilkan nilai
+tampilkan hasil
+"#;
+    assert_eq!(run(source).expect("JSON builtins should execute"), vec!["{a: 1}", r#"{"a":1}"#]);
+
+    let invalid = r#"data adalah "1.5"
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#;
+    assert!(run(invalid).unwrap_err().contains("R3022"));
+}
