@@ -805,7 +805,7 @@ mod task_runtime_tests {
     #[test]
     fn task_app_rejects_non_tab_control_characters_in_titles() {
         let path = storage_path();
-        let mut input = Cursor::new(b"tambah\njudul\\x0bberbahaya\nkeluar\n".to_vec());
+        let mut input = Cursor::new(b"tambah\njudul\x0bberbahaya\nkeluar\n".to_vec());
         let mut output = Vec::new();
         run_task_app(&task_program(), &path, &mut input, &mut output)
             .expect("invalid title is reported without aborting the session");
