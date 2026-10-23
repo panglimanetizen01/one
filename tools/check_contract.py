@@ -195,6 +195,11 @@ for marker in (
     "CANONICAL_COMMIT.txt",
     "ubuntu-latest",
     "windows-2025",
+    "repository-internal technical review",
+    "at least 15 minutes",
+    "same canonical source SHA",
+    "BLOCKED/INFRASTRUCTURE",
+    "do not call the overall mirror matrix green",
 ):
     if marker not in verification_contract + verification_script:
         raise SystemExit(f"EXACT-SHA VERIFICATION CONTRACT: missing required rule/command {marker!r}")
