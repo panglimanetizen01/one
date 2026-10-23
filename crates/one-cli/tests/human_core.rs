@@ -97,3 +97,20 @@ fn human_frontend_rejects_module_path_traversal() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("HV1016"));
 }
+
+#[test]
+fn human_frontend_executes_collection_operations_through_canonical_runtime() {
+    let path = fixture(concat!(
+        "Buat program daftar belanja\\n",
+        "buat daftar belanja\\n",
+        "tambahkan \"roti\" ke belanja\\n",
+        "tambahkan \"susu\" ke belanja\\n",
+        "tampilkan belanja\\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("roti"));
+    assert!(stdout.contains("susu"));
+}
