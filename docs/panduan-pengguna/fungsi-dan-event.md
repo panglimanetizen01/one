@@ -38,8 +38,20 @@ Subset bawaan yang saat ini terhubung ke jalur parser → analisis semantik → 
 - Bilangan: `nilai mutlak`, `bagi bulat`, `angka minimum`, `angka maksimum`.
 - Pemetaan: `nilai pemetaan`, `atur pemetaan` (saat ini digunakan bersama grammar pemetaan human-core yang opt-in).
 - Serialisasi/pertukaran data: `ubah nilai ke json` dan `nilai dari json` mendukung JSON deterministik untuk nilai ONE yang tersedia; angka pecahan/eksponen dan kedalaman lebih dari 128 tingkat ditolak.
+- Waktu UTC: `waktu utc dari unix` memformat detik Unix menjadi `YYYY-MM-DDTHH:MM:SSZ`; `unix dari waktu utc` mem-parsing format UTC ketat itu kembali menjadi detik Unix. Keduanya memakai kalender Gregorian tahun 0000–9999 dan tidak membaca jam lokal host.
 
 Analisis semantik memeriksa jumlah dan tipe argumen yang diketahui. Indeks negatif/di luar rentang, konversi yang gagal, pembagian nol, dan operasi integer yang tidak dapat direpresentasikan menghasilkan error; operasi tersebut tidak boleh dianggap berhasil atau menghasilkan nilai tebakan. Helper pemetaan saat ini belum seluruhnya tersedia sebagai fungsi bawaan sumber.
+
+## Contoh waktu UTC
+
+```text
+waktu adalah waktu utc dari unix dengan 0
+epoch adalah unix dari waktu utc dengan waktu
+tampilkan waktu
+tampilkan epoch
+```
+
+Format parser harus tepat `YYYY-MM-DDTHH:MM:SSZ`. Tanggal yang tidak valid, offset zona waktu, pecahan detik, dan detik kabisat ditolak secara deterministik.
 
 ## Event
 
