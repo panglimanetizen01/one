@@ -15,7 +15,7 @@
 
 ## Required commands
 
-Run `tools/verify-human-vnext.sh` from a clean worktree fetched from GitHub. The script runs, in order:
+Run `bash tools/verify-human-vnext.sh` from a clean worktree fetched from GitHub. The script runs, in order:
 
 1. source cleanliness and exact remote-HEAD checks;
 2. `python3 tools/check_contract.py`;
