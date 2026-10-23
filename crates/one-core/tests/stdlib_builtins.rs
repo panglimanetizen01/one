@@ -63,7 +63,14 @@ fn checked_in_stdlib_example_runs_through_one() {
 
 #[test]
 fn mapping_builtins_work_in_the_opt_in_human_core_pipeline() {
-    let source = "buat pemetaan kontak\nmasukkan \\"nama\\" dan \\"Budi\\" ke kontak\nnama awal adalah nilai pemetaan dengan kontak dan \\"nama\\"\nkontak menjadi atur pemetaan dengan kontak dan \\"nama\\" dan \\"Ani\\"\nnama baru adalah nilai pemetaan dengan kontak dan \\"nama\\"\ntampilkan nama awal\ntampilkan nama baru\n";
+    let source = r#"buat pemetaan kontak
+masukkan "nama" dan "Budi" ke kontak
+nama awal adalah nilai pemetaan dengan kontak dan "nama"
+kontak menjadi atur pemetaan dengan kontak dan "nama" dan "Ani"
+nama baru adalah nilai pemetaan dengan kontak dan "nama"
+tampilkan nama awal
+tampilkan nama baru
+"#;
     let program = parse_human_core(source).expect("human-core mapping grammar should parse");
     let typed = analyze(&program).expect("mapping builtin types should analyze");
     let ir = lower(&typed).expect("mapping program should lower");
