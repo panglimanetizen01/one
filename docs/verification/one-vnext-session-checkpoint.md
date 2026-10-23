@@ -11,18 +11,18 @@
 
 Canonical ledger: [one-completion-ledger.md](one-completion-ledger.md).
 
-- **Implementation subtotal:** 75/100 provisional points.
-- **Verified completion:** 60/100 points.
-- **E1–E6 verified points:** 0/40. The 15 provisional ecosystem implementation points are not verified completion.
+- **Implementation subtotal:** 82/100 provisional points.
+- **Verified completion:** 68/100 points.
+- **E1–E6 verified points:** 8/40 (E3 cross-platform/conformance row verified); E1, E2, E4, E5, and E6 remain unverified. The 14 remaining provisional ecosystem implementation points are not verified completion.
 - **Milestone 100% gate:** **NOT PASSED**.
 - The previously earned 60% milestone remains historical and scoped to its exact source SHA and evidence. It does not make the current 100% candidate green.
 
 ## Current Git and CI evidence
 
 - PR #80 is **open, draft, and unmerged**; no merge is authorized by this checkpoint.
-- Latest code-bearing source SHA for this implementation slice: `07780078c2563f3622d036f483735b262eb298d6`. This candidate adds checked integer remainder coverage, bounded JSON serialization, and explicit JSON control-character escaping tests. This checkpoint commit is documentation-only and is tracked separately from the tested code SHA.
+- Latest code-bearing source SHA for this implementation slice: `5da1f4dfcfba7bc64186eaa6a4ab018e6703c8a6`. This candidate adds checked integer remainder coverage, bounded JSON serialization, explicit JSON control-character escaping tests, and retries for interrupted FTP/SMTP protocol reads. This checkpoint commit is documentation-only and is tracked separately from the tested code SHA.
 - Canonical workflow run [39994484534](https://github.com/panglimanetizen01/one/actions/runs/39994484534), “One CI”, completed with **failure**. The two reported jobs (`test (windows-2025)` and `test (ubuntu-latest)`) failed; job-step details/logs were not returned by the available connector. Root cause is **UNKNOWN** from available evidence; do not infer a source failure or a pass.
-- The associated Linux Distribution Conformance run [39994484625](https://github.com/panglimanetizen01/one/actions/runs/39994484625) and Standard Library Focused Verification run [39994484574](https://github.com/panglimanetizen01/one/actions/runs/39994484574) were **cancelled**. Subsequent runs on the integer-remainder candidate also report failure: [One CI 39995112864](https://github.com/panglimanetizen01/one/actions/runs/39995112864), [Linux distro 39995112888](https://github.com/panglimanetizen01/one/actions/runs/39995112888), and [focused stdlib 39995112905](https://github.com/panglimanetizen01/one/actions/runs/39995112905). The available job-step endpoint returned empty step lists for these jobs, so the underlying failure cause is **UNKNOWN**; this does not establish that the source tests failed or passed. The latest canonical runs for source SHA `07780078c2563f3622d036f483735b262eb298d6` — [One CI 39999289170](https://github.com/panglimanetizen01/one/actions/runs/39999289170), [Linux distro 39999289139](https://github.com/panglimanetizen01/one/actions/runs/39999289139), and [focused stdlib 39999289192](https://github.com/panglimanetizen01/one/actions/runs/39999289192) — failed before steps started. Their jobs have `runner_id: 0` and `steps: []`; retry attempt 2 also failed identically. This is an Actions runner provisioning failure, not evidence that source tests failed. The independent mirror fallback ran the source checks.
+- The associated Linux Distribution Conformance run [39994484625](https://github.com/panglimanetizen01/one/actions/runs/39994484625) and Standard Library Focused Verification run [39994484574](https://github.com/panglimanetizen01/one/actions/runs/39994484574) were **cancelled**. Subsequent runs on the integer-remainder candidate also report failure: [One CI 39995112864](https://github.com/panglimanetizen01/one/actions/runs/39995112864), [Linux distro 39995112888](https://github.com/panglimanetizen01/one/actions/runs/39995112888), and [focused stdlib 39995112905](https://github.com/panglimanetizen01/one/actions/runs/39995112905). The available job-step endpoint returned empty step lists for these jobs, so the underlying failure cause is **UNKNOWN**; this does not establish that the source tests failed or passed. The latest canonical runs on this branch have repeatedly failed before steps start: jobs report `runner_id: 0` and `steps: []`; retry attempt 2 also failed identically. This is an Actions runner provisioning failure, not evidence that source tests failed. The independent mirror fallback runs the required source checks.
 - Older independent-mirror PASS results only apply to their explicitly recorded older source SHAs. They do not verify the current PR head.
 - Exact-SHA independent verification is established for code SHA `07780078c2563f3622d036f483735b262eb298d6`: focused stdlib, Ubuntu/Debian distro, and Ubuntu/Windows cross-platform runs passed. This evidence applies to that SHA only; after this checkpoint-only commit, the new branch tip must be re-verified before claiming it is the final tested SHA.
 
@@ -65,7 +65,7 @@ Remaining mandatory requirements include, at minimum:
 ## Next execution sequence
 
 1. Re-pin the mirror selector to the checkpoint commit SHA and rerun focused stdlib, Linux distro, and Ubuntu/Windows cross-platform workflows on that exact final checkpoint SHA.
-2. Continue E1–E5 implementation against the fixed acceptance criteria; each slice must receive focused and full-matrix verification before any ledger credit.
+2. Continue E1, E2, E4, and E5 implementation against the fixed acceptance criteria; each slice must receive focused and full-matrix verification before ledger credit.
 3. Finish required standard-library breadth, dependency/package provenance, target artifacts, race-resistant filesystem confinement/resource quotas, security review, compatibility and developer workflow gaps.
 4. Resolve the main-repository Actions runner provisioning failure if the repository's runner service becomes available; do not fabricate or manually mark checks green.
 5. Perform E6 forensic audit only after every mandatory gate is satisfied.
