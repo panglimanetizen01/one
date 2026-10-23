@@ -411,6 +411,22 @@ mod tests {
     }
 
     #[test]
+    fn identifier_names_are_case_sensitive() {
+        let source = concat!(
+            "Buat aplikasi catatan\n",
+            "Buat data Pesan\n",
+            "    Isi teks berikut\n",
+            "        pertama\n",
+            "Buat data pesan\n",
+            "    Isi teks berikut\n",
+            "        kedua\n",
+        );
+        let program = parse(source).expect("names differing by case are distinct");
+        assert!(matches!(&program.declarations[0], HumanDeclaration::Data { name, .. } if name == "Pesan"));
+        assert!(matches!(&program.declarations[1], HumanDeclaration::Data { name, .. } if name == "pesan"));
+    }
+
+    #[test]
     fn rejects_noncanonical_identifier_edges_and_punctuation() {
         for name in [" leading", "trailing ", "two  spaces", "nama!", "nama/tugas", "nama🙂"] {
             let source = format!("Buat aplikasi {name}\n");
@@ -964,6 +980,7 @@ mod grammar_fixture_tests {
             ("tab-indentation", include_str!("../../../tests/human-vnext/invalid/tab-indentation.one"), "H0001", 3),
             ("noncanonical-indent", include_str!("../../../tests/human-vnext/invalid/noncanonical-indent.one"), "H0002", 2),
             ("invalid-action-name", include_str!("../../../tests/human-vnext/invalid/invalid-action-name.one"), "H0010", 2),
+            ("unicode-combining-mark", include_str!("../../../tests/human-vnext/invalid/unicode-combining-mark.one"), "H0004", 1),
         ] {
             let error = parse(source).expect_err(&format!("invalid fixture {name} was accepted"));
             assert_eq!(error.code, expected_code, "fixture {name} diagnostic code changed");
