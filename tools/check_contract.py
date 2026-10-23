@@ -185,6 +185,9 @@ for marker in (
     "cargo clippy --workspace --all-targets -- -D warnings",
     "cargo test --workspace --all-targets",
     "does not manufacture CI results",
+    "panglimanetizen01/one-windows-verification",
+    "independent hosted cross-platform verification",
+    "both `ubuntu-latest` and `windows-2025` jobs finish successfully",
 ):
     if marker not in verification_contract + verification_script:
         raise SystemExit(f"EXACT-SHA VERIFICATION CONTRACT: missing required rule/command {marker!r}")
