@@ -126,3 +126,17 @@ Verified in Debian 12/Termux from a clean worktree fetched from GitHub at exact 
 - GitHub Actions is not confirmed passing at this SHA. This is local verification only; earlier Actions runs failed before steps began.
 
 **Evidence boundary:** this checkpoint provides exact-SHA local contract/build/Clippy/test evidence, but does not by itself satisfy all F1–F6 acceptance criteria or substitute for hosted CI. Verified points remain unchanged pending the remaining acceptance work and an explicitly reviewed CI/replacement-verification contract. The 30% gate remains NOT PASSED.
+
+## Exact-SHA local verification — 2026-10-23 (grammar clarification checkpoint)
+
+Verified by the user in Debian 12/Termux from the clean GitHub branch worktree at code commit `89b6ace` (full SHA to be resolved from the branch history):
+
+- `python3 tools/check_contract.py`: PASS — 75 required artifacts, 73 indexed concrete artifacts, 6 existing valid fixtures, 6 existing invalid fixtures, 3 golden fixtures, 4 human-vNext valid fixtures, and 10 human-vNext invalid fixtures.
+- `git diff --check`: PASS.
+- `cargo build --workspace --all-targets`: PASS.
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS.
+- `ONE_ANDROID_CLANG=/tmp/one-android-clang-wrapper cargo test --workspace --all-targets`: all executed suites passed, including 16 CLI tests, 137 one-core unit tests, 5 conformance tests, and the remaining displayed integration suites. One Android AArch64 native execution test was ignored because the Android AArch64 Clang environment was unavailable.
+- Human-vNext fixture suite passed for all 4 valid and 10 invalid fixtures.
+
+**Evidence boundary:** this is user-run local verification, not hosted GitHub Actions evidence. The prior Actions failures before any steps started remain unresolved. No verified points are assigned by this entry; F1–F6 and the 30% gate remain NOT PASSED until the replacement verification contract is explicitly reviewed and each acceptance criterion is satisfied.
+
