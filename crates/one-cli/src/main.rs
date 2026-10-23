@@ -10,7 +10,34 @@ fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("
 fn project_metadata(root: &Path) -> Result<(String, String), String> { let manifest = root.join("one.toml"); let text = fs::read_to_string(&manifest).map_err(|e| format!("Tidak dapat membaca '{}': {}", manifest.display(), e))?; let mut seen = HashSet::new(); let mut name = None; let mut version = None; for (index, raw_line) in text.lines().enumerate() { let line = raw_line.trim(); if line.is_empty() || line.starts_with('#') { continue; } let Some((raw_key, raw_value)) = line.split_once('=') else { return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1)); }; let key = raw_key.trim(); let value = raw_value.trim(); if !matches!(key, "nama" | "versi") || !seen.insert(key) { return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1)); } let Some(value) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else { return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1)); }; if value.is_empty() { return Err(format!("Manifest '{}' memiliki nilai kosong pada baris {}.", manifest.display(), index + 1)); } match key { "nama" => name = Some(value.to_owned()), "versi" => version = Some(value.to_owned()), _ => unreachable!() } } match (name, version) { (Some(name), Some(version)) => Ok((name, version)), _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())) } }
 fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
 fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir() { return Ok(Vec::new()); } let mut files = fs::read_dir(root).map_err(|e| format!("Tidak dapat membaca '{}': {}", root.display(), e))?.map(|entry| entry.map(|e| e.path()).map_err(|e| format!("Tidak dapat membaca fixture: {}", e))).collect::<Result<Vec<_>, _>>()?; files.retain(|path| path.extension().and_then(|v| v.to_str()) == Some("one")); files.sort(); Ok(files) }
-fn run_conformance_fixtures(root: &Path) -> Result<usize, String> { let valid = fixture_files(&root.join("tests/conformance/valid"))?; let invalid = fixture_files(&root.join("tests/conformance/invalid"))?; let mut count = 0; for path in valid { let (_, typed) = compile_file(&path).map_err(|bundle| format!("Fixture valid '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?; let ir = lower(&typed).map_err(|bundle| format!("Fixture valid '{}' gagal diturunkan: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?; let mut interpreter = Interpreter::new(CapabilitySet::none()); interpreter.execute(&ir).map_err(|error| format!("Fixture valid '{}' gagal saat runtime: {}", path.display(), error.message))?; count += 1; } for path in invalid { let result = compile_file(&path); if result.is_ok() { return Err(format!("Fixture invalid '{}' diterima.", path.display())); } count += 1; } Ok(count) }
+fn run_conformance_fixtures(root: &Path) -> Result<usize, String> {
+ let valid = fixture_files(&root.join("tests/conformance/valid"))?;
+ let invalid = fixture_files(&root.join("tests/conformance/invalid"))?;
+ let mut count = 0;
+ for path in valid {
+  let source = fs::read_to_string(&path).map_err(|error| format!("Fixture '{}' tidak dapat dibaca: {}", path.display(), error))?;
+  let ir = if source.lines().next().unwrap_or("").starts_with("Buat program ") {
+   one_core::human_compiler::compile_file(&path).map(|compiled| compiled.ir).map_err(|bundle| format!("Fixture valid human-core '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?
+  } else {
+   let (_, typed) = compile_file(&path).map_err(|bundle| format!("Fixture valid '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?;
+   lower(&typed).map_err(|bundle| format!("Fixture valid '{}' gagal diturunkan: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?
+  };
+  let mut interpreter = Interpreter::new(CapabilitySet::none());
+  interpreter.execute(&ir).map_err(|error| format!("Fixture valid '{}' gagal saat runtime: {}", path.display(), error.message))?;
+  count += 1;
+ }
+ for path in invalid {
+  let source = fs::read_to_string(&path).map_err(|error| format!("Fixture '{}' tidak dapat dibaca: {}", path.display(), error))?;
+  let accepted = if source.lines().next().unwrap_or("").starts_with("Buat program ") {
+   one_core::human_compiler::compile_file(&path).is_ok()
+  } else {
+   compile_file(&path).is_ok()
+  };
+  if accepted { return Err(format!("Fixture invalid '{}' diterima.", path.display())); }
+  count += 1;
+ }
+ Ok(count)
+}
 fn main() -> ExitCode {
  let mut args = env::args().skip(1); let Some(first) = args.next() else { usage(); return ExitCode::from(2); }; if first == "help" { if args.next().is_some() { usage(); return ExitCode::from(2); } usage(); return ExitCode::SUCCESS; } if first == "version" { if args.next().is_some() { usage(); return ExitCode::from(2); } println!("one {VERSION}"); return ExitCode::SUCCESS; }
  if first == "jalankan-human-vnext" || first == "run-human-vnext" {
