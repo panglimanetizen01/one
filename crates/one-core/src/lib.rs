@@ -139,4 +139,12 @@ mod tests {
             .expect_err("orchestration must be denied by default");
         assert_eq!(error.code, "N3209");
     }
+
+    #[test]
+    fn mapping_grammar_is_opt_in_and_does_not_change_v01_parser() {
+        let source = "buat pemetaan profil\n";
+        assert!(parse(source).is_err(), "v0.1 must not accept experimental mapping syntax");
+        assert!(parse_human_core(source).is_ok(), "explicit human-core parser accepts mapping syntax");
+    }
+
 }
