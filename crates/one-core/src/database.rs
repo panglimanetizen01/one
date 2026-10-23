@@ -1,7 +1,7 @@
 use crate::adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 use crate::capability::Capability;
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
-use rusqlite::{types::ValueRef, Connection};
+use rusqlite::{types::ValueRef, Connection, OpenFlags};
 
 const MAX_DATABASE_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
 const MAX_DATABASE_ROWS: usize = 100_000;
@@ -98,7 +98,17 @@ impl ToolAdapter for SqliteAdapter {
             _ => return Err(AdapterError::InvalidArguments),
         };
 
-        let connection = Connection::open(path).map_err(|_| AdapterError::BackendFailure)?;
+        // DatabaseQuery is a read-only effect. Keep in-memory queries available for
+        // deterministic tests, but never create or open a file-backed database writable.
+        let connection = if path == ":memory:" {
+            Connection::open_in_memory()
+        } else {
+            Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+        }
+        .map_err(|_| AdapterError::BackendFailure)?;
+        connection
+            .pragma_update(None, "query_only", true)
+            .map_err(|_| AdapterError::BackendFailure)?;
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
