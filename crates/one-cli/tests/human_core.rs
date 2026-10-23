@@ -50,3 +50,50 @@ fn human_frontend_requires_explicit_program_declaration() {
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stderr).contains("HV1001"));
 }
+
+#[test]
+fn human_frontend_resolves_relative_modules_and_executes_shared_functions() {
+    let root = std::env::temp_dir().join(format!(
+        "one-human-modules-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+    let module = root.join("matematika.one");
+    let program = root.join("main.one");
+    fs::write(&module, concat!(
+        "Buat modul matematika\\n",
+        "buat pekerjaan jumlahkan\\n",
+        "    terima kiri\\n",
+        "    terima kanan\\n",
+        "    hasilnya adalah kiri ditambah kanan\\n",
+    )).unwrap();
+    fs::write(&program, concat!(
+        "Buat program modular\\n",
+        "Gunakan modul \"matematika.one\"\\n",
+        "hasil adalah jumlahkan dengan 20 dan 22\\n",
+        "tampilkan hasil\\n",
+    )).unwrap();
+    let output = run(&program);
+    let _ = fs::remove_dir_all(&root);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "42");
+}
+
+#[test]
+fn human_frontend_rejects_module_path_traversal() {
+    let root = std::env::temp_dir().join(format!(
+        "one-human-module-traversal-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+    let program = root.join("main.one");
+    fs::write(&program, concat!(
+        "Buat program tidak aman\\n",
+        "Gunakan modul \"../rahasia.one\"\\n",
+        "tampilkan \"tidak boleh berjalan\"\\n",
+    )).unwrap();
+    let output = run(&program);
+    let _ = fs::remove_dir_all(&root);
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("HV1016"));
+}
