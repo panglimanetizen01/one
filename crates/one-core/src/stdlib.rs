@@ -557,6 +557,24 @@ mod tests {
     }
 
     #[test]
+    fn json_parser_round_trips_supported_values_and_rejects_ambiguous_numbers() {
+        let source = Value::Text(r#"{"z":"line\n\"","a":[2,true,null]}"#.into());
+        let parsed = json_to_value(&source).expect("supported JSON should parse");
+        assert_eq!(
+            value_to_json(&parsed),
+            Some(Value::Text(r#"{"a":[2,true,null],"z":"line\n\""}"#.into()))
+        );
+        assert_eq!(
+            json_to_value(&Value::Text(r#""\uD83D\uDE00""#.into())),
+            Some(Value::Text("😀".into()))
+        );
+        assert_eq!(json_to_value(&Value::Text("[1.5]".into())), None);
+        assert_eq!(json_to_value(&Value::Text(r#"{"a":1,"a":2}"#.into())), None);
+        assert_eq!(json_to_value(&Value::Text(r#""\uD800""#.into())), None);
+        assert_eq!(json_to_value(&Value::Text("true trailing".into())), None);
+    }
+
+    #[test]
     fn integer_helpers_reject_overflow_division_by_zero_and_wrong_types() {
         assert_eq!(number_abs(&Value::Number(-7)), Some(Value::Number(7)));
         assert_eq!(number_abs(&Value::Number(i64::MIN)), None);
