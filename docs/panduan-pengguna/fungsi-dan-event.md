@@ -37,7 +37,7 @@ Subset bawaan yang saat ini terhubung ke jalur parser → analisis semantik → 
 - Daftar: `panjang daftar`, `ambil indeks` (indeks mulai dari nol), `gabung teks` (hanya daftar teks), `jumlah daftar angka` (penjumlahan integer dengan pemeriksaan overflow).
 - Bilangan: `nilai mutlak`, `bagi bulat`, `angka minimum`, `angka maksimum`.
 - Pemetaan: `nilai pemetaan`, `atur pemetaan` (saat ini digunakan bersama grammar pemetaan human-core yang opt-in).
-- Serialisasi: `ubah nilai ke json` menghasilkan JSON deterministik; kedalaman lebih dari 128 tingkat ditolak.
+- Serialisasi/pertukaran data: `ubah nilai ke json` dan `nilai dari json` mendukung JSON deterministik untuk nilai ONE yang tersedia; angka pecahan/eksponen dan kedalaman lebih dari 128 tingkat ditolak.
 
 Analisis semantik memeriksa jumlah dan tipe argumen yang diketahui. Indeks negatif/di luar rentang, konversi yang gagal, pembagian nol, dan operasi integer yang tidak dapat direpresentasikan menghasilkan error; operasi tersebut tidak boleh dianggap berhasil atau menghasilkan nilai tebakan. Helper pemetaan saat ini belum seluruhnya tersedia sebagai fungsi bawaan sumber.
 
