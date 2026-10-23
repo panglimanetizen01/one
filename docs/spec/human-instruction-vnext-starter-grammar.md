@@ -36,33 +36,35 @@ declaration          = data_declaration
                      | action_declaration
                      | persistence_declaration ;
 
-data_declaration     = "Buat data ", NAME, NL, text_block ;
-text_block           = INDENT, "Isi teks berikut", NL, text_line,
-                       (NL, text_line)* ;
-text_line            = INDENT, TEXT ;
+data_declaration     = "Buat data ", NAME, NL, text_block_header, text_block_payload ;
+text_block_header    = INDENT, "Isi teks berikut", NL ;
+text_block_payload   = { blank | text_payload_line } ;
+text_payload_line    = INDENT, INDENT, TEXT, NL ;
 action_declaration   = "Pengguna bisa ", NAME, NL, instruction_block ;
-instruction_block    = instruction, (NL, INDENT, instruction)* ;
-instruction          = display_instruction
+instruction_block    = instruction, (NL, instruction)* ;
+instruction          = INDENT, (display_instruction
                      | accept_title
                      | add_task
                      | display_all_tasks
                      | accept_task_id
-                     | complete_task ;
-display_instruction  = INDENT, "Tampilkan ", NAME ;
-accept_title         = INDENT, "Terima judul tugas" ;
-add_task             = INDENT, "Simpan tugas baru" ;
-display_all_tasks    = INDENT, "Tampilkan semua tugas" ;
-accept_task_id       = INDENT, "Terima tugas yang dipilih" ;
-complete_task        = INDENT, "Tandai tugas sebagai selesai" ;
+                     | complete_task) ;
+display_instruction  = "Tampilkan ", NAME ;
+accept_title         = "Terima judul tugas" ;
+add_task             = "Simpan tugas baru" ;
+display_all_tasks    = "Tampilkan semua tugas" ;
+accept_task_id       = "Terima tugas yang dipilih" ;
+complete_task        = "Tandai tugas sebagai selesai" ;
 persistence_declaration
                      = "Simpan semua ", NAME,
                        " agar tidak hilang saat aplikasi ditutup", NL ;
 blank                = NL ;
 ```
 
-TEXT is the remaining source content on a line after the text-block indentation. Text-block collection continues until the next non-blank line at indentation zero or until end-of-file. The implementation may preserve empty lines and indentation relative to the block's content indentation. An empty text block is currently accepted and produces an empty text value; the required conformance matrix must preserve this behavior unless a versioned contract change deliberately changes it.
+This EBNF is a structural summary, not a standalone scanner specification: the parser first identifies nonblank structural lines and then collects raw source lines for text blocks. For a text block, a nonblank payload line must have at least eight leading ASCII spaces. Exactly the first eight spaces are removed from the stored payload; any additional indentation is retained. Blank lines between payload lines are preserved as empty payload lines. Trailing blank lines before the next nonblank structural line are also preserved when the block contains at least one payload line. If there is no payload line, the value is the empty string. A final source newline alone does not create an extra newline in an otherwise empty block. A text block ends at the next nonblank line with fewer than eight leading spaces, or at end-of-file.
 
-**Important implementation boundary:** the EBNF above names the currently supported forms, but text-block boundaries and indentation are governed by the prose rules and parser tests; this starter contract does not yet define a general-purpose expression language.
+For structural lines, the parser rejects tabs and indentation widths that are not multiples of four. Application, data, action, and persistence declarations must begin at column zero; the text-block header is indented four spaces; action instructions are indented four spaces; text payload lines are indented at least eight spaces. Blank source lines are ignored while finding structural lines but are interpreted as text data while collecting a text block according to the rules above.
+
+**Important implementation boundary:** this grammar defines only the currently supported forms and exact text-block behavior. It does not define a general-purpose expression language, and a successful parse does not imply that every parsed program is executable by the current task-list runner.
 
 ## 4. Name binding and rejection rules
 
