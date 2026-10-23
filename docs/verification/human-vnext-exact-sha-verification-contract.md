@@ -4,6 +4,8 @@
 **Purpose:** reproducibly verify the human-vNext foundation when GitHub-hosted Actions cannot start jobs.  
 **Scope:** independent Linux/Termux-Debian execution of source fetched from the GitHub feature branch. This contract does not claim Windows execution or hosted CI passed.
 
+**Authority:** this procedure implements the user-directed rule that implementation changes stay on GitHub and local Termux/Debian is used only to fetch GitHub source and validate/test it.
+
 ## Source-of-truth rules
 
 1. GitHub branch `spec/human-instruction-grammar-vnext-20261022` is the only source of implementation changes for this workstream.
