@@ -44,10 +44,6 @@ fn main() -> ExitCode {
   let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-core <program.one>"); return ExitCode::from(2); };
   if args.next().is_some() { eprintln!("EHV1001: terlalu banyak argumen."); return ExitCode::from(2); }
   let path = Path::new(&source_arg);
-  let source = match fs::read_to_string(path) {
-   Ok(source) => source,
-   Err(error) => { eprintln!("EHV1002: tidak dapat membaca '{}': {}", path.display(), error); return ExitCode::from(2); }
-  };
   let compiled = match one_core::human_compiler::compile_file(path) {
    Ok(program) => program,
    Err(bundle) => { print_diagnostics(&bundle); return ExitCode::from(1); }
