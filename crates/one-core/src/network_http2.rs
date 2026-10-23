@@ -162,7 +162,7 @@ mod tests {
                 let (stream, _) = listener.accept().await.expect("accept");
                 let mut connection = h2::server::handshake(stream).await.expect("h2 handshake");
                 while let Some(result) = connection.accept().await {
-                    let (request, respond) = result.expect("h2 request");
+                    let (request, mut respond) = result.expect("h2 request");
                     assert_eq!(request.uri().path(), "/probe");
                     tokio::spawn(async move {
                         let response = http::Response::builder()
