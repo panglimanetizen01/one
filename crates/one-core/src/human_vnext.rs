@@ -530,38 +530,9 @@ fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
     Ok(tasks)
 }
 
-#[cfg(windows)]
 fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
-    use std::os::windows::ffi::OsStrExt;
-
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        #[link_name = "MoveFileExW"]
-        fn move_file_ex_w(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
-    }
-
-    const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
-    const MOVEFILE_WRITE_THROUGH: u32 = 0x8;
-    let from: Vec<u16> = temporary.as_os_str().encode_wide().chain(Some(0)).collect();
-    let to: Vec<u16> = destination.as_os_str().encode_wide().chain(Some(0)).collect();
-    // SAFETY: both paths are NUL-terminated UTF-16 buffers that remain alive for
-    // the call; MoveFileExW does not retain either pointer.
-    let result = unsafe {
-        move_file_ex_w(
-            from.as_ptr(),
-            to.as_ptr(),
-            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
-        )
-    };
-    if result == 0 {
-        Err(std::io::Error::last_os_error())
-    } else {
-        Ok(())
-    }
-}
-
-#[cfg(not(windows))]
-fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+    // std::fs::rename replaces an existing destination file on supported
+    // platforms; keeping this boundary in one helper makes that contract testable.
     std::fs::rename(temporary, destination)
 }
 
