@@ -108,6 +108,12 @@ for marker in (
         raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
 
 for marker in (
+    "task_app_persists_across_sessions_and_marks_completion",
+    "task_app_rejects_missing_persistence_declaration",
+    "task_storage_rejects_corrupt_records",
+    "task_app_rejects_blank_title_without_persisting_it",
+    "task_app_rejects_non_numeric_and_unknown_task_ids",
+    "task_storage_reports_parent_path_write_failure",
     "task_storage_replaces_existing_records_on_repeated_saves",
     "task_storage_cleans_temporary_file_when_replacement_fails",
     "task_app_rejects_non_tab_control_characters_in_titles",
