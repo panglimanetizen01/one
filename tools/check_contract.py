@@ -39,6 +39,7 @@ required = [
     "tests/human-vnext/valid/unicode-name.one",
     "tests/human-vnext/valid/task-list.one",
     "tests/human-vnext/valid/text-block-boundaries.one",
+    "tests/human-vnext/valid/instruction-like-text.one",
     "tests/human-vnext/invalid/empty.one",
     "tests/human-vnext/invalid/orphan-instruction.one",
     "tests/human-vnext/invalid/unknown-instruction.one",
@@ -50,6 +51,11 @@ required = [
     "tests/human-vnext/invalid/action-name-as-data.one",
     "tests/human-vnext/invalid/repeated-spaces.one",
     "tests/human-vnext/invalid/duplicate-data-action-name.one",
+    "tests/human-vnext/invalid/second-application.one",
+    "tests/human-vnext/invalid/empty-action.one",
+    "tests/human-vnext/invalid/tab-indentation.one",
+    "tests/human-vnext/invalid/noncanonical-indent.one",
+    "tests/human-vnext/invalid/invalid-action-name.one",
     "crates/one-core/src/human_vnext.rs",
     "crates/one-cli/tests/cli.rs",
 ]
@@ -96,6 +102,7 @@ for marker in (
     "semantic_errors_report_the_relevant_declaration_line",
     "rejects_noncanonical_identifier_edges_and_punctuation",
     "invalid_human_vnext_fixtures_are_rejected",
+    "instruction_like_lines_remain_opaque_text_data",
 ):
     if marker not in human_parser_tests:
         raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
@@ -147,8 +154,8 @@ print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
 human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
 human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
-if len(human_valid) < 4 or len(human_invalid) < 11:
-    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 4 valid and 11 invalid fixtures")
+if len(human_valid) < 5 or len(human_invalid) < 16:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 5 valid and 16 invalid fixtures")
 
 print(f"golden fixtures: {len(golden)}")
 print(f"human-vNext valid fixtures: {len(human_valid)}")
