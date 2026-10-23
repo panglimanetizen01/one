@@ -90,97 +90,110 @@ pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, Diag
         DiagnosticBundle::single(Diagnostic::error("HV1011", format!("Tidak dapat menyelesaikan jalur proyek '{}': {}", path.display(), error), None))
     })?;
     let root_dir = canonical_root.parent().unwrap_or_else(|| std::path::Path::new(".")).to_path_buf();
-    let mut seen = std::collections::HashSet::new();
-    let mut stack = std::collections::HashSet::new();
-    let mut combined = String::new();
-    let mut modules = Vec::new();
-    collect_module_bodies(&canonical_root, &root_dir, &root_source, true, &mut seen, &mut stack, &mut modules, &mut combined)?;
-    let wrapped = format!("Buat program {}\n{}", root.name, combined);
+    let mut collection = ModuleCollection::new(root_dir);
+    collection.collect(&canonical_root, &root_source, true)?;
+    let wrapped = format!("Buat program {}\n{}", root.name, collection.output);
     let mut compiled = compile(&wrapped)?;
-    compiled.modules = modules;
+    compiled.modules = collection.modules;
     Ok(compiled)
 }
 
-fn collect_module_bodies(
-    path: &std::path::Path,
-    root_dir: &std::path::Path,
-    source: &str,
-    is_root: bool,
-    seen: &mut std::collections::HashSet<std::path::PathBuf>,
-    stack: &mut std::collections::HashSet<std::path::PathBuf>,
-    modules: &mut Vec<std::path::PathBuf>,
-    output: &mut String,
-) -> Result<(), DiagnosticBundle> {
-    let canonical = std::fs::canonicalize(path).map_err(|error| {
-        DiagnosticBundle::single(Diagnostic::error(
-            "HV1011", format!("Tidak dapat menyelesaikan jalur modul '{}': {}", path.display(), error), None,
-        ))
-    })?;
-    if !canonical.starts_with(root_dir) {
-        return Err(DiagnosticBundle::single(Diagnostic::error(
-            "HV1018", format!("Modul '{}' berada di luar direktori proyek.", path.display()), None,
-        )));
-    }
-    if stack.contains(&canonical) {
-        return Err(DiagnosticBundle::single(Diagnostic::error(
-            "HV1012", format!("Siklus import terdeteksi pada '{}'.", path.display()), None,
-        )));
-    }
-    if !seen.insert(canonical.clone()) {
-        return Err(DiagnosticBundle::single(Diagnostic::error(
-            "HV1013", format!("Modul '{}' diimpor lebih dari sekali.", path.display()), None,
-        )));
-    }
-    stack.insert(canonical.clone());
-    modules.push(canonical.clone());
-    let mut lines = source.lines();
-    let header = lines.next().unwrap_or_default();
-    let expected = if is_root { "Buat program " } else { "Buat modul " };
-    if !header.starts_with(expected) || header[expected.len()..].trim().is_empty() {
-        return Err(DiagnosticBundle::single(Diagnostic::error(
-            "HV1014", format!("Header '{}' harus diawali '{}'.", path.display(), expected), None,
-        )));
-    }
-    let remaining: Vec<&str> = lines.collect();
-    let mut body_start = 0;
-    while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
-        body_start += 1;
-    }
-    while body_start < remaining.len() && remaining[body_start].starts_with("Gunakan modul ") {
-        let declaration = remaining[body_start].trim();
-        let Some(raw) = declaration.strip_prefix("Gunakan modul ") else { unreachable!() };
-        let Some(relative) = raw.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else {
-            return Err(DiagnosticBundle::single(Diagnostic::error(
-                "HV1015", "Jalur modul harus diapit tanda kutip.", None,
-            )));
-        };
-        let relative_path = std::path::Path::new(relative);
-        if relative_path.is_absolute()
-            || relative_path.extension().and_then(|value| value.to_str()) != Some("one")
-            || relative_path.components().any(|component| !matches!(component, std::path::Component::Normal(_)))
-        {
-            return Err(DiagnosticBundle::single(Diagnostic::error(
-                "HV1016", format!("Jalur modul '{}' harus relatif, berakhiran .one, dan tidak boleh keluar dari direktori proyek.", relative), None,
-            )));
+struct ModuleCollection {
+    root_dir: std::path::PathBuf,
+    seen: std::collections::HashSet<std::path::PathBuf>,
+    stack: std::collections::HashSet<std::path::PathBuf>,
+    modules: Vec<std::path::PathBuf>,
+    output: String,
+}
+
+impl ModuleCollection {
+    fn new(root_dir: std::path::PathBuf) -> Self {
+        Self {
+            root_dir,
+            seen: std::collections::HashSet::new(),
+            stack: std::collections::HashSet::new(),
+            modules: Vec::new(),
+            output: String::new(),
         }
-        let child = canonical.parent().unwrap_or_else(|| std::path::Path::new(".")).join(relative_path);
-        let child_source = std::fs::read_to_string(&child).map_err(|error| {
+    }
+
+    fn collect(
+        &mut self,
+        path: &std::path::Path,
+        source: &str,
+        is_root: bool,
+    ) -> Result<(), DiagnosticBundle> {
+        let canonical = std::fs::canonicalize(path).map_err(|error| {
             DiagnosticBundle::single(Diagnostic::error(
-                "HV1017", format!("Tidak dapat membaca modul '{}': {}", child.display(), error), None,
+                "HV1011", format!("Tidak dapat menyelesaikan jalur modul '{}': {}", path.display(), error), None,
             ))
         })?;
-        collect_module_bodies(&child, root_dir, &child_source, false, seen, stack, modules, output)?;
-        body_start += 1;
+        if !canonical.starts_with(&self.root_dir) {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "HV1018", format!("Modul '{}' berada di luar direktori proyek.", path.display()), None,
+            )));
+        }
+        if self.stack.contains(&canonical) {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "HV1012", format!("Siklus import terdeteksi pada '{}'.", path.display()), None,
+            )));
+        }
+        if !self.seen.insert(canonical.clone()) {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "HV1013", format!("Modul '{}' diimpor lebih dari sekali.", path.display()), None,
+            )));
+        }
+        self.stack.insert(canonical.clone());
+        self.modules.push(canonical.clone());
+        let mut lines = source.lines();
+        let header = lines.next().unwrap_or_default();
+        let expected = if is_root { "Buat program " } else { "Buat modul " };
+        if !header.starts_with(expected) || header[expected.len()..].trim().is_empty() {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "HV1014", format!("Header '{}' harus diawali '{}'.", path.display(), expected), None,
+            )));
+        }
+        let remaining: Vec<&str> = lines.collect();
+        let mut body_start = 0;
         while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
             body_start += 1;
         }
+        while body_start < remaining.len() && remaining[body_start].starts_with("Gunakan modul ") {
+            let declaration = remaining[body_start].trim();
+            let Some(raw) = declaration.strip_prefix("Gunakan modul ") else { unreachable!() };
+            let Some(relative) = raw.strip_prefix('"').and_then(|value| value.strip_suffix('"')) else {
+                return Err(DiagnosticBundle::single(Diagnostic::error(
+                    "HV1015", "Jalur modul harus diapit tanda kutip.", None,
+                )));
+            };
+            let relative_path = std::path::Path::new(relative);
+            if relative_path.is_absolute()
+                || relative_path.extension().and_then(|value| value.to_str()) != Some("one")
+                || relative_path.components().any(|component| !matches!(component, std::path::Component::Normal(_)))
+            {
+                return Err(DiagnosticBundle::single(Diagnostic::error(
+                    "HV1016", format!("Jalur modul '{}' harus relatif, berakhiran .one, dan tidak boleh keluar dari direktori proyek.", relative), None,
+                )));
+            }
+            let child = canonical.parent().unwrap_or_else(|| std::path::Path::new(".")).join(relative_path);
+            let child_source = std::fs::read_to_string(&child).map_err(|error| {
+                DiagnosticBundle::single(Diagnostic::error(
+                    "HV1017", format!("Tidak dapat membaca modul '{}': {}", child.display(), error), None,
+                ))
+            })?;
+            self.collect(&child, &child_source, false)?;
+            body_start += 1;
+            while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
+                body_start += 1;
+            }
+        }
+        for line in &remaining[body_start..] {
+            self.output.push_str(line);
+            self.output.push('\n');
+        }
+        self.stack.remove(&canonical);
+        Ok(())
     }
-    for line in &remaining[body_start..] {
-        output.push_str(line);
-        output.push('\n');
-    }
-    stack.remove(&canonical);
-    Ok(())
 }
 
 #[cfg(test)]
