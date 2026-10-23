@@ -111,14 +111,14 @@ impl Interpreter {
     let builtin = matches!(name,
         "panjang teks" | "teks memuat" | "pangkas teks" | "ganti teks" |
         "pisah teks" | "ubah teks ke angka" | "panjang daftar" | "ambil indeks" |
-        "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" |
+        "nilai mutlak" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" |
         "nilai pemetaan" | "atur pemetaan" | "ubah nilai ke json" |
         "teks diawali" | "teks diakhiri" | "huruf kecil" | "huruf besar" | "gabung teks" | "jumlah daftar angka" | "nilai dari json" | "waktu utc dari unix"
     );
     if builtin {
         let expected_arity = match name {
             "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "jumlah daftar angka" | "nilai dari json" | "waktu utc dari unix" => 1,
-            "teks memuat" | "pisah teks" | "ambil indeks" | "bagi bulat" | "angka minimum" | "angka maksimum" | "nilai pemetaan" | "teks diawali" | "teks diakhiri" | "gabung teks" => 2,
+            "teks memuat" | "pisah teks" | "ambil indeks" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" | "nilai pemetaan" | "teks diawali" | "teks diakhiri" | "gabung teks" => 2,
             "atur pemetaan" => 3,
             "ganti teks" => 3,
             _ => 0,
@@ -141,6 +141,7 @@ impl Interpreter {
             "ambil indeks" => stdlib::list_get(&values[0], &values[1]),
             "nilai mutlak" => stdlib::number_abs(&values[0]),
             "bagi bulat" => stdlib::number_divide(&values[0], &values[1]),
+            "angka sisa bagi" => stdlib::number_modulo(&values[0], &values[1]),
             "angka minimum" => stdlib::number_min(&values[0], &values[1]),
             "angka maksimum" => stdlib::number_max(&values[0], &values[1]),
             "nilai pemetaan" => stdlib::map_get(&values[0], &values[1]),
