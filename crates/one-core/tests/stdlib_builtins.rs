@@ -198,7 +198,7 @@ tampilkan nilai
 
 #[test]
 fn checked_integer_remainder_runs_through_the_canonical_pipeline() {
-    let source = "positif adalah angka sisa bagi dengan 7 dan 3\nnegatif adalah angka sisa bagi dengan 0 dikurangi 7 dan 3\ntampilkan positif\ntampilkan negatif\n";
+    let source = "positif adalah angka sisa bagi dengan 7 dan 3\nnegatif adalah 0 dikurangi 7\nnegatif sisa adalah angka sisa bagi dengan negatif dan 3\ntampilkan positif\ntampilkan negatif sisa\n";
     assert_eq!(
         run(source).expect("integer remainder should execute"),
         vec!["1", "-1"]
@@ -209,5 +209,4 @@ fn checked_integer_remainder_runs_through_the_canonical_pipeline() {
 
     let zero_divisor = "hasil adalah angka sisa bagi dengan 7 dan 0\ntampilkan hasil\n";
     assert!(run(zero_divisor).unwrap_err().contains("R3022"));
-
 }
