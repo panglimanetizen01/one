@@ -97,13 +97,37 @@ impl Analyzer {
             bundle
         })
     }
-    fn infer(&self, expr: &Expr) -> Result<Type, DiagnosticBundle> { match expr { Expr::Text(_) => Ok(Type::Text), Expr::Number(_) => Ok(Type::Number), Expr::Boolean(_) => Ok(Type::Boolean), Expr::Nothing => Ok(Type::Nothing), Expr::Identifier(name) => self.lookup(name).ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2014", format!("Saya belum menemukan '{}'.", name), None))), Expr::Binary { left, op, right } => { let l = self.infer(left)?; let r = self.infer(right)?; match op { BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide => if matches!(l, Type::Number | Type::Any) && matches!(r, Type::Number | Type::Any) { Ok(Type::Number) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2015", "Operasi hitung membutuhkan angka.", None))) }, BinaryOp::Equal | BinaryOp::Greater | BinaryOp::Less | BinaryOp::AtLeast | BinaryOp::AtMost => if compatible(l, r) || l == Type::Any || r == Type::Any { Ok(Type::Boolean) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2016", "Dua nilai dibandingkan dengan tipe yang tidak kompatibel.", None))) } } }, Expr::Call { name, args } => { let arity = self.functions.get(name).copied().ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2017", format!("Pekerjaan '{}' belum dibuat.", name), None)))?; if arity != args.len() { return Err(DiagnosticBundle::single(Diagnostic::error("E2018", format!("Pekerjaan '{}' membutuhkan {} parameter.", name, arity), None))); } for arg in args { self.infer(arg)?; } Ok(match name.as_str() {
-            "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
-            "teks memuat" => Type::Boolean,
-            "pangkas teks" | "ganti teks" => Type::Text,
-            "pisah teks" => Type::List,
-            "ambil indeks" => Type::Any,
-            _ => Type::Any,
-        }) } } }
+    fn infer(&self, expr: &Expr) -> Result<Type, DiagnosticBundle> { match expr { Expr::Text(_) => Ok(Type::Text), Expr::Number(_) => Ok(Type::Number), Expr::Boolean(_) => Ok(Type::Boolean), Expr::Nothing => Ok(Type::Nothing), Expr::Identifier(name) => self.lookup(name).ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2014", format!("Saya belum menemukan '{}'.", name), None))), Expr::Binary { left, op, right } => { let l = self.infer(left)?; let r = self.infer(right)?; match op { BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide => if matches!(l, Type::Number | Type::Any) && matches!(r, Type::Number | Type::Any) { Ok(Type::Number) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2015", "Operasi hitung membutuhkan angka.", None))) }, BinaryOp::Equal | BinaryOp::Greater | BinaryOp::Less | BinaryOp::AtLeast | BinaryOp::AtMost => if compatible(l, r) || l == Type::Any || r == Type::Any { Ok(Type::Boolean) } else { Err(DiagnosticBundle::single(Diagnostic::error("E2016", "Dua nilai dibandingkan dengan tipe yang tidak kompatibel.", None))) } } }, Expr::Call { name, args } => { let arity = self.functions.get(name).copied().ok_or_else(|| DiagnosticBundle::single(Diagnostic::error("E2017", format!("Pekerjaan '{}' belum dibuat.", name), None)))?; if arity != args.len() { return Err(DiagnosticBundle::single(Diagnostic::error("E2018", format!("Pekerjaan '{}' membutuhkan {} parameter.", name, arity), None))); } let mut arg_types = Vec::with_capacity(args.len());
+            for arg in args { arg_types.push(self.infer(arg)?); }
+            let expected_types: Option<Vec<Type>> = match name.as_str() {
+                "panjang teks" | "pangkas teks" => Some(vec![Type::Text]),
+                "teks memuat" | "pisah teks" => Some(vec![Type::Text, Type::Text]),
+                "ganti teks" => Some(vec![Type::Text, Type::Text, Type::Text]),
+                "ubah teks ke angka" => Some(vec![Type::Text]),
+                "panjang daftar" => Some(vec![Type::List]),
+                "ambil indeks" => Some(vec![Type::List, Type::Number]),
+                "nilai mutlak" => Some(vec![Type::Number]),
+                "bagi bulat" | "angka minimum" | "angka maksimum" => Some(vec![Type::Number, Type::Number]),
+                _ => None,
+            };
+            if let Some(expected_types) = expected_types {
+                for (index, (actual, expected)) in arg_types.iter().zip(expected_types.iter()).enumerate() {
+                    if !compatible(*expected, *actual) {
+                        return Err(DiagnosticBundle::single(Diagnostic::error(
+                            "E2032",
+                            format!("Argumen {} fungsi '{}' harus bertipe {}.", index + 1, name, expected.name()),
+                            None,
+                        )));
+                    }
+                }
+            }
+            Ok(match name.as_str() {
+                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
+                "teks memuat" => Type::Boolean,
+                "pangkas teks" | "ganti teks" => Type::Text,
+                "pisah teks" => Type::List,
+                "ambil indeks" => Type::Any,
+                _ => Type::Any,
+            }) } } }
 }
 fn compatible(expected: Type, actual: Type) -> bool { expected == actual || expected == Type::Any || actual == Type::Any }
