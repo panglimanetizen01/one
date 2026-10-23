@@ -56,6 +56,25 @@ fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
 }
 
 #[test]
+fn unix_timestamp_formatter_runs_through_the_canonical_pipeline() {
+    let source = "epoch adalah waktu utc dari unix dengan 0\nantes adalah waktu utc dari unix dengan -1\nleap adalah waktu utc dari unix dengan 1709164800\ntampilkan epoch\ntampilkan antes\ntampilkan leap\n";
+    assert_eq!(
+        run(source).expect("UTC timestamp formatter should execute"),
+        vec![
+            "1970-01-01T00:00:00Z",
+            "1969-12-31T23:59:59Z",
+            "2024-02-29T00:00:00Z",
+        ]
+    );
+
+    let invalid_type = "hasil adalah waktu utc dari unix dengan \"0\"\ntampilkan hasil\n";
+    assert!(run(invalid_type).unwrap_err().contains("E2043"));
+
+    let out_of_range = "hasil adalah waktu utc dari unix dengan 253402300800\ntampilkan hasil\n";
+    assert!(run(out_of_range).unwrap_err().contains("R3022"));
+}
+
+#[test]
 fn checked_in_stdlib_example_runs_through_one() {
     let output = run(include_str!("../../../examples/stdlib.one")).expect("example should execute");
     assert_eq!(output, vec!["2", r#"["apel","jeruk"]"#, "benar", "pir,jeruk", "42", "7", "3"]);
