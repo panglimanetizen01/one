@@ -1,0 +1,8 @@
+Buat program daftar kontak
+
+buat pemetaan kontak
+masukkan "nama" dan "Budi" ke kontak
+masukkan "umur" dan 32 ke kontak
+ambil kunci "nama" dari kontak
+hapus kunci "umur" dari kontak
+tampilkan kontak
