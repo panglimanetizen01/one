@@ -167,3 +167,9 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - Latest code-bearing commit before this checkpoint: 9f2ed1647b7a85a551b8b7dd48886296779640bd.
 - The prior matrix run 39977368466 targeted the previous checkpoint and does not verify these latest edits. The next exact-SHA matrix must use the checkpoint SHA produced by this update.
 - Ledger weights remain unchanged. No additional points are awarded for source changes without passing exact-SHA verification and full milestone acceptance.
+
+### QUIC timeout and release-verification target
+
+- Source commit d67a98a2c7dd2e0b4273814b6ebecf35015049d2 applies the configured timeout to QUIC payload writes as well as handshake, stream opening, and response reads.
+- The current exact-SHA matrix run 39977590301 targets the prior checkpoint SHA cbf1c08ce0d0e3a55df07b92b72e23409f80bda3. Ubuntu build, AST contract checks, strict Clippy, and workspace tests completed successfully on that prior snapshot; real-network tests were still running at the last inspection. This does not verify the subsequent QUIC timeout edit.
+- The next matrix target is the checkpoint SHA produced by this update. Do not transfer results from earlier source SHAs to the newer release candidate.
