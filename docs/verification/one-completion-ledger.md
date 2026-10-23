@@ -32,13 +32,13 @@ For each row, **implemented points** are provisional progress based on code actu
 | C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart, rollback and bounded-size replacement tests | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C5 | Additional real application vertical slices — **4** | Calculator, score tracker, module and mapping examples executed through the same compiler/runtime | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
-| E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 4/10 | 0/10 | IMPLEMENTED — PARTIAL; EXACT-SHA VERIFICATION PENDING |
+| E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 5/10 | 0/10 | IMPLEMENTED — PARTIAL; EXACT-SHA VERIFICATION PENDING |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 3/8 | 0/8 | IMPLEMENTED — PARTIAL; DEPENDENCY/LOCK WORK PENDING |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 1/8 | 0/8 | IMPLEMENTED — PARTIAL; FULL MATRIX PENDING |
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 2/6 | 0/6 | IMPLEMENTED — PARTIAL; FULL THREAT REVIEW PENDING |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 1/4 | 0/4 | IMPLEMENTED — PARTIAL; FULL DOCS/TOOLING REVIEW PENDING |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **71/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **72/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -84,7 +84,7 @@ PASS only when every weighted row earns its full verified points, all required C
 - **Verified completion:** 60/100 points.
 - **Milestone target:** 100%.
 - **Gate:** **NOT PASSED** for milestone 100%. The prior 60% gate remains scope-limited to code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`.
-- **E1 partial work:** public deterministic text/list/map/integer helper APIs, a bounded deterministic JSON serializer, and source-level built-ins are implemented; exact-SHA verification for the latest source remains pending, so E1 verified points remain 0/10.
+- **E1 partial work:** public deterministic text/list/map/integer helper APIs, a bounded deterministic JSON serializer, Unicode case/prefix/suffix operations, checked list joining/summing, and source-level built-ins are implemented; exact-SHA verification for the latest source remains pending, so E1 verified points remain 0/10.
 - **E2 partial work:** `one build`, `one test`, and `one package` now detect a `Buat program` project entry and use the human-core compiler to process relative modules through canonical IR; package emits a deterministic versioned artifact. Dependency declarations/lockfile, package resolution beyond relative source modules, and full provenance remain incomplete; E2 verified points remain 0/8.
 - **E3 partial work:** human-core valid/invalid conformance fixtures are now dispatched through the matching compiler path; the full compatibility matrix and latest exact-SHA Linux/Windows pass remain pending, so E3 verified points remain 0/8.
 - **E4 partial work:** checked integer arithmetic, recursion-depth limit, and error-path tests are implemented; comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain incomplete, so E4 verified points remain 0/6.
