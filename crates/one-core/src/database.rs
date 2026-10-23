@@ -141,6 +141,56 @@ impl ToolAdapter for SqliteAdapter {
 mod tests {
     use super::*;
 
+    fn temporary_database_path(label: &str) -> std::path::PathBuf {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        std::env::temp_dir().join(format!("one-db-{label}-{}-{nonce}.sqlite", std::process::id()))
+    }
+
+    fn select_request(path: &std::path::Path, sql: String) -> AdapterRequest {
+        AdapterRequest::new(CapabilityRequest::new(
+            crate::orchestration::SemanticCapabilityId::DatabaseQuery,
+            Capability::DatabaseQuery,
+            ExecutionScope::resource(path.to_string_lossy()),
+            crate::orchestration::EffectClass::Read,
+        ))
+        .with_argument(AdapterArgument::Text(sql))
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_query_results_over_the_output_byte_limit() {
+        let path = temporary_database_path("output-limit");
+        let connection = Connection::open(&path).expect("database");
+        connection
+            .execute_batch(&format!(
+                "CREATE TABLE data (value BLOB); INSERT INTO data VALUES (zeroblob({}));",
+                MAX_DATABASE_OUTPUT_BYTES + 1
+            ))
+            .expect("large blob");
+        drop(connection);
+
+        let adapter = SqliteAdapter::new();
+        let result = adapter.invoke(&select_request(&path, "SELECT value FROM data".into()));
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_query_results_over_the_row_limit() {
+        let path = temporary_database_path("row-limit");
+        drop(Connection::open(&path).expect("database"));
+        let sql = format!(
+            "SELECT '' FROM (WITH RECURSIVE rows(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM rows WHERE x < {}) SELECT x FROM rows)",
+            MAX_DATABASE_ROWS + 1
+        );
+        let adapter = SqliteAdapter::new();
+        let result = adapter.invoke(&select_request(&path, sql));
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+        let _ = std::fs::remove_file(path);
+    }
+
     #[test]
     fn sqlite_adapter_rejects_non_select_statements() {
         let adapter = SqliteAdapter::new();
