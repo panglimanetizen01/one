@@ -24,6 +24,12 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
             ("nilai pemetaan".to_owned(), 2),
             ("atur pemetaan".to_owned(), 3),
             ("ubah nilai ke json".to_owned(), 1),
+            ("teks diawali".to_owned(), 2),
+            ("teks diakhiri".to_owned(), 2),
+            ("huruf kecil".to_owned(), 1),
+            ("huruf besar".to_owned(), 1),
+            ("gabung teks".to_owned(), 2),
+            ("jumlah daftar angka".to_owned(), 1),
         ]),
     }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
 pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
@@ -105,6 +111,10 @@ impl Analyzer {
             let expected_types: Option<Vec<Type>> = match name.as_str() {
                 "panjang teks" | "pangkas teks" => Some(vec![Type::Text]),
                 "ubah nilai ke json" => Some(vec![Type::Any]),
+                "teks diawali" | "teks diakhiri" => Some(vec![Type::Text, Type::Text]),
+                "huruf kecil" | "huruf besar" => Some(vec![Type::Text]),
+                "gabung teks" => Some(vec![Type::List, Type::Text]),
+                "jumlah daftar angka" => Some(vec![Type::List]),
                 "teks memuat" | "pisah teks" => Some(vec![Type::Text, Type::Text]),
                 "ganti teks" => Some(vec![Type::Text, Type::Text, Type::Text]),
                 "ubah teks ke angka" => Some(vec![Type::Text]),
@@ -128,9 +138,9 @@ impl Analyzer {
                 }
             }
             Ok(match name.as_str() {
-                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
-                "teks memuat" => Type::Boolean,
-                "pangkas teks" | "ganti teks" | "ubah nilai ke json" => Type::Text,
+                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "jumlah daftar angka" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
+                "teks memuat" | "teks diawali" | "teks diakhiri" => Type::Boolean,
+                "pangkas teks" | "ganti teks" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "gabung teks" => Type::Text,
                 "pisah teks" => Type::List,
                 "atur pemetaan" => Type::Map,
                 "ambil indeks" => Type::Any,
