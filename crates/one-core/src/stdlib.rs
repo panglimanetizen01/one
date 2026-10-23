@@ -274,35 +274,32 @@ pub fn json_to_value(value: &Value) -> Option<Value> {
     }
 }
 
-struct JsonParser {
-    characters: Vec<char>,
+struct JsonParser<'a> {
+    source: &'a str,
     position: usize,
 }
 
-impl JsonParser {
+impl JsonParser<'_> {
     fn parse(source: &str) -> Option<Value> {
-        let mut parser = Self {
-            characters: source.chars().collect(),
-            position: 0,
-        };
+        let mut parser = JsonParser { source, position: 0 };
         let value = parser.parse_value(0)?;
         parser.skip_whitespace();
-        (parser.position == parser.characters.len()).then_some(value)
+        (parser.position == source.len()).then_some(value)
     }
 
     fn peek(&self) -> Option<char> {
-        self.characters.get(self.position).copied()
+        self.source.get(self.position..)?.chars().next()
     }
 
     fn next(&mut self) -> Option<char> {
         let value = self.peek()?;
-        self.position += 1;
+        self.position += value.len_utf8();
         Some(value)
     }
 
     fn skip_whitespace(&mut self) {
         while matches!(self.peek(), Some(' ' | '\t' | '\r' | '\n')) {
-            self.position += 1;
+            self.next();
         }
     }
 
@@ -335,19 +332,19 @@ impl JsonParser {
     fn parse_integer(&mut self) -> Option<Value> {
         let start = self.position;
         if self.peek() == Some('-') {
-            self.position += 1;
+            self.next();
         }
         match self.peek()? {
             '0' => {
-                self.position += 1;
+                self.next();
                 if matches!(self.peek(), Some('0'..='9')) {
                     return None;
                 }
             }
             '1'..='9' => {
-                self.position += 1;
+                self.next();
                 while matches!(self.peek(), Some('0'..='9')) {
-                    self.position += 1;
+                    self.next();
                 }
             }
             _ => return None,
@@ -355,8 +352,7 @@ impl JsonParser {
         if matches!(self.peek(), Some('.' | 'e' | 'E')) {
             return None;
         }
-        let literal = self.characters[start..self.position].iter().collect::<String>();
-        literal.parse::<i64>().ok().map(Value::Number)
+        self.source.get(start..self.position)?.parse::<i64>().ok().map(Value::Number)
     }
 
     fn parse_hex_quad(&mut self) -> Option<u16> {
@@ -424,7 +420,7 @@ impl JsonParser {
         self.skip_whitespace();
         let mut values = Vec::new();
         if self.peek() == Some(']') {
-            self.position += 1;
+            self.next();
             return Some(Value::List(values));
         }
         loop {
@@ -445,7 +441,7 @@ impl JsonParser {
         self.skip_whitespace();
         let mut values = BTreeMap::new();
         if self.peek() == Some('}') {
-            self.position += 1;
+            self.next();
             return Some(Value::Map(values));
         }
         loop {
