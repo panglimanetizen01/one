@@ -89,3 +89,12 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 ## Gate
 
 **NOT PASSED** — milestone 100% remains in progress. Text/list/map/integer/JSON helper operations are wired to the interpreter's built-in function dispatch, and an end-to-end human-core built-in test passes on Ubuntu. Windows verification for source SHA `d9d696fa87683027b78fdcbbec504696904055aa` remains in progress. The required wider standard-library, dependency, security, documentation, and final audit work remains incomplete.
+
+
+## Session continuation — JSON parser input bound evidence (2026-10-23)
+
+- Direct source inspection on branch `milestone/100-ecosystem-20261023` confirms `crates/one-core/src/stdlib.rs` defines `MAX_JSON_INPUT_BYTES = 16 * 1024 * 1024`, rejects larger UTF-8 inputs before constructing `JsonParser`, and includes `json_parser_rejects_inputs_above_the_byte_limit_before_allocating_parser_state`. This is direct repository-content evidence for implementation presence, not a fresh execution result.
+- Related commit `fc8f7548722c21522e9be773cbf4773e0deb8ee4` is available at https://github.com/panglimanetizen01/one/commit/fc8f7548722c21522e9be773cbf4773e0deb8ee4. The exact current branch HEAD SHA was not exposed by the branch-search/read tools in this session, so this commit is not asserted to be the current branch HEAD.
+- Canonical CI run [39969715091](https://github.com/panglimanetizen01/one/actions/runs/39969715091) reports Ubuntu and Windows jobs as failed, but the available job payload exposes no step results/logs. Cause is **UNKNOWN**; no source-test failure or pass is inferred from that payload. Earlier run [39965785392](https://github.com/panglimanetizen01/one/actions/runs/39965785392) likewise reports both jobs failed with no step details available through the current connector.
+- No verified ledger points are added. Ledger weights and totals remain unchanged at **75/100 provisional implementation, 60/100 verified** until full exact-SHA acceptance evidence is available.
+- Gate remains **NOT PASSED**. This entry does not assert a new release SHA or a complete milestone.
