@@ -179,3 +179,8 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - The real-network build on the previous source snapshot found E0596 in the new HTTP/2 loopback test because the response handle was not mutable, plus an unused Read import left after HTTPS switched to the bounded reader.
 - Fixed in commits 31e20504da8c58620c1a40a18bf7be8336f75ed8 and 763fd6765c17928a070d3b77e04381ea9fa1c1dc: the test now binds the response handle mutably, and the obsolete TLS Read import is removed.
 - The failed prior matrix remains failed and earns no points. The next exact-SHA run must target this checkpoint commit and execute the real-network suite again.
+
+### TLS test-only trait import
+
+- Source commit c44ee995bd6db99d55c419aa8bd2390b45c78636 moves the Read trait import into the TLS test module after bounded response reads stopped needing it in production. This avoids both the unused-import warning and a test-only method-resolution error.
+- The exact-SHA matrix must target the new checkpoint commit after this change; the previous matrix's E0596 result is already addressed, but this latest import correction still needs compilation on the selected SHA.
