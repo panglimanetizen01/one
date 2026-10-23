@@ -602,11 +602,23 @@ fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> s
 
     #[link(name = "Kernel32")]
     unsafe extern "system" {
-        fn MoveFileExW(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
+        fn MoveFileExW(
+            existing_file_name: *const u16,
+            new_file_name: *const u16,
+            flags: u32,
+        ) -> i32;
     }
 
-    let existing: Vec<u16> = temporary.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
-    let destination: Vec<u16> = destination.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
+    let existing: Vec<u16> = temporary
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+    let destination: Vec<u16> = destination
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
     // SAFETY: both arguments are valid, NUL-terminated UTF-16 paths that live
     // for the duration of the call. The flags request replacement and write-through.
     let succeeded = unsafe {
