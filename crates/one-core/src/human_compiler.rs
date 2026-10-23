@@ -221,6 +221,19 @@ mod tests {
     }
 
     #[test]
+    fn human_core_builtin_calls_execute_through_canonical_interpreter() {
+        let source = concat!(
+            "Buat program uji pustaka\n",
+            "panjang adalah panjang teks dengan \"kucing\"\n",
+            "tampilkan panjang\n",
+        );
+        let compiled = compile(source).unwrap();
+        let mut interpreter = crate::interpreter::Interpreter::new(crate::capability::CapabilitySet::none());
+        let result = interpreter.execute(&compiled.ir).unwrap();
+        assert!(result.output.iter().any(|line| line == "6"), "unexpected output: {:?}", result.output);
+    }
+
+    #[test]
     fn rejects_missing_program_declaration() {
         let error = compile("tampilkan \"halo\"\n").unwrap_err();
         assert_eq!(error.0[0].code, "HV1001");
