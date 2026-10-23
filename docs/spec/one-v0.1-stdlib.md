@@ -39,6 +39,7 @@ The following calls use the existing deterministic expression-call syntax and ca
 | `angka maksimum` | 2 | Number | Maximum of two integers |
 | `nilai pemetaan` | 2 | Any | Read a text-keyed mapping entry; missing keys are errors |
 | `ubah nilai ke json` | 1 | Text | Deterministic JSON serialization with ordered map keys; nesting deeper than 128 levels is rejected |
+| `nilai dari json` | 1 | Any | Parse JSON text, supporting strings, signed integers, booleans, null, arrays, and objects; duplicate keys, floats/exponents, invalid escapes, and excessive nesting are rejected |
 | `atur pemetaan` | 3 | Map | Return a mapping with the specified text key inserted or replaced |
 
 Argument count is checked during semantic analysis and again at runtime for directly constructed IR. Known argument types are checked statically when possible; a known mismatch produces diagnostic `E2043`. Invalid runtime values, failed conversions, missing mapping keys, invalid indexes, and division by zero produce runtime error `R3022`. Checked arithmetic overflow produces `R3023`. These errors must not be converted to guessed values.
