@@ -71,43 +71,6 @@ fn shift_diagnostics(mut bundle: DiagnosticBundle, offset: usize) -> DiagnosticB
     bundle
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn human_program_uses_canonical_ir_for_values_control_flow_and_functions() {
-        let source = concat!(
-            "Buat program jumlahkan nilai\n",
-            "buat pekerjaan jumlahkan\n",
-            "    terima kiri\n",
-            "    terima kanan\n",
-            "    hasilnya adalah kiri ditambah kanan\n",
-            "hasil adalah jumlahkan dengan 20 dan 22\n",
-            "kalau hasil sama dengan 42\n",
-            "    tampilkan hasil\n",
-            "kalau tidak\n",
-            "    tampilkan \"hasil salah\"\n",
-        );
-        let compiled = compile(source).unwrap();
-        assert_eq!(compiled.name, "jumlahkan nilai");
-        assert!(compiled.ir.canonical_text().contains("function jumlahkan"));
-        assert!(compiled.ir.canonical_text().contains("if (hasil equal 42)"));
-    }
-
-    #[test]
-    fn rejects_missing_program_declaration() {
-        let error = compile("tampilkan \"halo\"\n").unwrap_err();
-        assert_eq!(error.0[0].code, "HV1001");
-    }
-
-    #[test]
-    fn shifts_semantic_diagnostic_to_original_source_line() {
-        let error = compile("Buat program rusak\ntampilkan tidak_ada\n").unwrap_err();
-        assert_eq!(error.0[0].span.as_ref().unwrap().line, 2);
-    }
-}
-
 /// Compile a multi-file human project. Imports are explicit, relative .one paths
 /// declared immediately after the root/module header; path traversal and import cycles
 /// are rejected. All module bodies enter the same canonical semantic pipeline.
@@ -213,3 +176,39 @@ fn collect_module_bodies(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn human_program_uses_canonical_ir_for_values_control_flow_and_functions() {
+        let source = concat!(
+            "Buat program jumlahkan nilai\n",
+            "buat pekerjaan jumlahkan\n",
+            "    terima kiri\n",
+            "    terima kanan\n",
+            "    hasilnya adalah kiri ditambah kanan\n",
+            "hasil adalah jumlahkan dengan 20 dan 22\n",
+            "kalau hasil sama dengan 42\n",
+            "    tampilkan hasil\n",
+            "kalau tidak\n",
+            "    tampilkan \"hasil salah\"\n",
+        );
+        let compiled = compile(source).unwrap();
+        assert_eq!(compiled.name, "jumlahkan nilai");
+        assert!(compiled.ir.canonical_text().contains("function jumlahkan"));
+        assert!(compiled.ir.canonical_text().contains("if (hasil equal 42)"));
+    }
+
+    #[test]
+    fn rejects_missing_program_declaration() {
+        let error = compile("tampilkan \"halo\"\n").unwrap_err();
+        assert_eq!(error.0[0].code, "HV1001");
+    }
+
+    #[test]
+    fn shifts_semantic_diagnostic_to_original_source_line() {
+        let error = compile("Buat program rusak\ntampilkan tidak_ada\n").unwrap_err();
+        assert_eq!(error.0[0].span.as_ref().unwrap().line, 2);
+    }
+}
