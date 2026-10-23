@@ -37,7 +37,11 @@ fn read_line(stream: &mut TcpStream) -> Result<String, ApplicationProtocolError>
     let mut data = Vec::new();
     let mut byte = [0u8; 1];
     loop {
-        let n = stream.read(&mut byte).map_err(io_error)?;
+        let n = match stream.read(&mut byte) {
+            Ok(n) => n,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(io_error(error)),
+        };
         if n == 0 { return Err(ApplicationProtocolError::InvalidResponse); }
         data.push(byte[0]);
         if data.ends_with(b"\r\n") { break; }
