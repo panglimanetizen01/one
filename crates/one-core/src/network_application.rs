@@ -70,8 +70,7 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
 }
 
 fn validate_command_field(value: &str) -> Result<(), ApplicationProtocolError> {
-    if value.is_empty()
-        || value.len() > MAX_APPLICATION_FIELD_BYTES
+    if value.len() > MAX_APPLICATION_FIELD_BYTES
         || value.bytes().any(|byte| byte < 0x20 || byte == 0x7f)
     {
         Err(ApplicationProtocolError::InvalidResponse)
@@ -90,6 +89,7 @@ fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), A
 pub fn ftp_login(address: &str, user: &str, password: &str, timeout: Duration, caps: &CapabilitySet) -> Result<(), ApplicationProtocolError> {
     validate_command_field(user)?;
     validate_command_field(password)?;
+    if user.is_empty() { return Err(ApplicationProtocolError::InvalidResponse); }
     let mut stream = connect(address, timeout, caps)?;
     let (code, _) = read_ftp_reply(&mut stream)?;
     if code / 100 != 2 { return Err(ApplicationProtocolError::Server(code, "FTP greeting rejected".into())); }
@@ -104,8 +104,11 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
     validate_command_field(sender)?;
     validate_command_field(recipient)?;
     validate_command_field(subject)?;
+    if sender.is_empty() || recipient.is_empty() {
+        return Err(ApplicationProtocolError::InvalidResponse);
+    }
     if body.len() > MAX_APPLICATION_REPLY_BYTES
-        || body.bytes().any(|byte| byte == 0 || (byte < 0x20 && !matches!(byte, b'\r' | b'\n' | b'\t')))
+        || body.bytes().any(|byte| byte == 0 || byte == 0x7f || (byte < 0x20 && !matches!(byte, b'\r' | b'\n' | b'\t')))
     {
         return Err(ApplicationProtocolError::InvalidResponse);
     }
@@ -124,6 +127,9 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
         .map(|line| if line.starts_with('.') { format!(".{line}") } else { line.to_string() })
         .collect::<String>();
     let message = format!("From: <{sender}>\r\nTo: <{recipient}>\r\nSubject: {subject}\r\n\r\n{stuffed}\r\n.\r\n");
+    if message.len() > MAX_APPLICATION_REPLY_BYTES {
+        return Err(ApplicationProtocolError::InvalidResponse);
+    }
     stream.write_all(message.as_bytes()).map_err(io_error)?;
     let (code, text) = read_ftp_reply(&mut stream)?;
     if code != 250 { return Err(ApplicationProtocolError::Server(code, text)); }
