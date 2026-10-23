@@ -57,7 +57,7 @@ A function call:
 5. executes the function body;
 6. returns the result or structured error.
 
-Recursive calls are permitted unless a later resource-limit contract restricts them.
+Recursive calls are permitted but bounded by the reference interpreter's configured call-depth limit. The default limit is 128 nested user-function calls; exceeding it returns structured runtime error `R3024`.
 
 ## 7. Control flow
 
@@ -94,7 +94,7 @@ Event registration is runtime state. An event handler executes only when a match
 
 ## 12. Resource limits
 
-The runtime may enforce explicit limits for stack depth, memory, execution steps, open resources, and effect payload sizes. Limits are configuration, not semantic coercion. Exceeding a limit produces a structured resource error.
+The reference interpreter enforces a default execution-step limit of 100,000 statements (`max_steps`) and a default call-depth limit of 128 nested user-function calls (`max_call_depth`). Exceeding the call-depth limit returns `R3024`; exceeding the execution-step limit returns the existing step-limit runtime error. Integer addition, subtraction, multiplication, and division use checked signed 64-bit arithmetic: overflow returns `R3023`, and division by zero returns `R3017`. These limits do not establish a general memory quota, open-file quota, or universal effect-payload quota; those remain separate work until implemented and tested.
 
 ## 13. Host isolation
 
@@ -121,5 +121,7 @@ This contract does not define garbage-collection algorithm, bytecode encoding, r
 - type-invalid operations cannot silently execute;
 - effect requests pass through capability enforcement;
 - deterministic tests are reproducible;
+- recursive calls terminate with `R3024` at the configured depth limit;
+- integer overflow returns `R3023` rather than panicking;
 - structured runtime errors preserve provenance;
 - reference interpreter and future compiler backends share the same observable semantics.
