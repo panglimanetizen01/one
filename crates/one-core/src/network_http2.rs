@@ -148,6 +148,49 @@ mod tests {
     }
 
     #[test]
+    fn http2_loopback_performs_real_request_response_over_h2() {
+        use std::net::TcpListener;
+        use std::thread;
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        listener.set_nonblocking(true).expect("nonblocking");
+        let address = listener.local_addr().expect("address");
+        let server = thread::spawn(move || {
+            let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("runtime");
+            runtime.block_on(async move {
+                let listener = tokio::net::TcpListener::from_std(listener).expect("tokio listener");
+                let (stream, _) = listener.accept().await.expect("accept");
+                let mut connection = h2::server::handshake(stream).await.expect("h2 handshake");
+                while let Some(result) = connection.accept().await {
+                    let (request, respond) = result.expect("h2 request");
+                    assert_eq!(request.uri().path(), "/probe");
+                    tokio::spawn(async move {
+                        let response = http::Response::builder()
+                            .status(200)
+                            .header("x-test", "yes")
+                            .body(())
+                            .expect("response");
+                        let mut stream = respond.send_response(response, false).expect("send headers");
+                        stream.send_data(bytes::Bytes::from_static(b"pong"), true).expect("send body");
+                    });
+                }
+            });
+        });
+
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        let response = execute_http2(
+            &format!("127.0.0.1:{}", address.port()),
+            "/probe",
+            &capabilities,
+            Duration::from_secs(3),
+        ).expect("HTTP/2 round trip");
+        assert_eq!(response.status, 200);
+        assert_eq!(response.body, b"pong");
+        assert!(response.headers.iter().any(|(name, value)| name == "x-test" && value == "yes"));
+        server.join().expect("server");
+    }
+
+    #[test]
     fn http2_response_headers_enforce_count_and_byte_budgets() {
         let mut headers = http::HeaderMap::new();
         for index in 0..257 {
