@@ -47,7 +47,7 @@ This draft chooses an explicit text-introduction phrase followed by an indented 
         Tanda baca seperti titik koma kurung dan tanda kutip
         tetap menjadi data bukan sintaks ONE
 
-The block content is data, not executable ONE instructions. Its leading indentation is removed by the common block indentation amount; internal relative indentation and blank lines are preserved. The parser records a text-block node distinct from a statement block.
+The block content is data, not executable ONE instructions. In the current starter prototype, exactly the first eight leading ASCII spaces are structural and removed; additional leading spaces are preserved as payload indentation. Blank lines inside the block are represented as empty payload lines, and a trailing source newline after a nonempty payload is preserved as a terminal LF. The parser records this value as text data, distinct from an executable statement block.
 
 This candidate avoids requiring quote marks and permits punctuation and command-like words inside data. It does mean a multi-line text literal is visually a block. The implementation must test empty text, trailing newline, leading spaces, Unicode normalization, CRLF normalization, and round-trip fidelity before this rule can be promoted to normative status.
 
@@ -251,7 +251,7 @@ Do not promote this draft to normative until all of the following are true:
 
 This remains a proposed, non-normative grammar draft. The parser and task-list runner live in `crates/one-core/src/human_vnext.rs`; the explicit CLI entry point is `one jalankan-human-vnext`; the runnable source fixture is `examples/human-vnext/daftar-tugas.one`.
 
-The current vertical slice recognizes the task app's add/list/complete action shapes, validates that a persistence requirement is declared, stores records in a tab-delimited UTF-8 file using a temporary file and rename, and reloads the file at startup. It does not yet lower the human-vNext AST into ONE's canonical v0.1 IR, and the task runner is a dedicated experimental interpreter for this narrow app shape. Therefore the general human-vNext compiler/execution pipeline requirement remains **NOT IMPLEMENTED**.
+The current vertical slice recognizes only the exact task app action names and add/list/complete instruction sequences, rejects data declarations and persistence collections it cannot execute, validates that exactly one supported persistence requirement is declared, stores records in a tab-delimited UTF-8 file through an exclusive temporary file and replacement rename, and reloads the file at startup. It does not yet lower the human-vNext AST into ONE's canonical v0.1 IR, and the task runner is a dedicated experimental interpreter for this narrow app shape. Therefore the general human-vNext compiler/execution pipeline requirement remains **NOT IMPLEMENTED**.
 
 Regression tests were added for text-block fidelity, CRLF/relative indentation, task persistence across sessions, completion persistence, missing persistence declarations, and corrupted storage. They are committed but remain **NOT VERIFIED** until the Rust tests and exact-SHA Linux/Windows CI execute successfully. The CI run currently fails before any job steps start, so this is not evidence of either a code failure or a code pass.
 
