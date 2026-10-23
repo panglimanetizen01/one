@@ -1,10 +1,10 @@
 #![cfg(feature = "real-network")]
 
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
-use crate::network_runtime::{HttpResponse, NetworkRuntimeError};
+use crate::network_runtime::{HttpResponse, NetworkRuntimeError, parse_http_authority, resolve_target};
 
 const MAX_BODY: usize = 16 * 1024 * 1024;
 
@@ -19,29 +19,17 @@ pub fn execute_http2(
             "Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into(),
         ));
     }
-    if authority.is_empty()
-        || authority.contains('\r')
-        || authority.contains('\n')
-        || path.is_empty()
-        || path.contains('\r')
-        || path.contains('\n')
+    if path.is_empty()
+        || !(path.starts_with('/') || path == "*")
+        || path.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == b'#')
     {
         return Err(NetworkRuntimeError::InvalidOperation(
-            "Tujuan HTTP/2 tidak valid.".into(),
+            "Path HTTP/2 tidak valid.".into(),
         ));
     }
 
-    let (host, port) = authority
-        .rsplit_once(':')
-        .and_then(|(host, port)| port.parse::<u16>().ok().map(|port| (host, port)))
-        .unwrap_or((authority, 80));
-    let address = format!("{host}:{port}")
-        .to_socket_addrs()
-        .map_err(|error| NetworkRuntimeError::Resolution(error.to_string()))?
-        .next()
-        .ok_or_else(|| {
-            NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))
-        })?;
+    let (host, port) = parse_http_authority(authority)?;
+    let address = resolve_target(&host, port, None)?;
     let authority = authority.to_owned();
     let path = path.to_owned();
 
