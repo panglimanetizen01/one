@@ -667,6 +667,18 @@ mod tests {
     }
 
     #[test]
+    fn json_serializer_enforces_the_utf8_output_byte_limit() {
+        let exact_limit = Value::Text("x".repeat(MAX_JSON_OUTPUT_BYTES - 2));
+        let serialized = value_to_json(&exact_limit).expect("JSON exactly at the output limit should serialize");
+        let Value::Text(serialized) = serialized else { panic!("serializer must return text"); };
+        assert_eq!(serialized.len(), MAX_JSON_OUTPUT_BYTES);
+        drop(serialized);
+
+        let over_limit = Value::Text("x".repeat(MAX_JSON_OUTPUT_BYTES - 1));
+        assert_eq!(value_to_json(&over_limit), None);
+    }
+
+    #[test]
     fn json_parser_round_trips_supported_values_and_rejects_ambiguous_numbers() {
         let source = Value::Text(r#"{"z":"line\n\"","a":[2,true,null]}"#.into());
         let parsed = json_to_value(&source).expect("supported JSON should parse");
