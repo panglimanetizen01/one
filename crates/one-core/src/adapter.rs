@@ -46,7 +46,7 @@ impl AdapterRequest { pub fn new(capability: CapabilityRequest) -> Self { Self {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdapterResult { pub success: bool, pub output: Vec<u8> }
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AdapterError { InvalidRequest(crate::orchestration::OrchestrationValidationError), UndeclaredCapability, InvalidArguments, UnsupportedPlatform, ResolutionFailed, BackendFailure }
+pub enum AdapterError { InvalidRequest(crate::orchestration::OrchestrationValidationError), UndeclaredCapability, InvalidArguments, UnsupportedPlatform, ResolutionFailed, ResourceLimitExceeded, BackendFailure }
 pub trait ToolAdapter { fn metadata(&self) -> &AdapterMetadata; fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError>; }
 
 pub struct FileReadAdapter { metadata: AdapterMetadata }
