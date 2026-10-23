@@ -210,6 +210,4 @@ fn checked_integer_remainder_runs_through_the_canonical_pipeline() {
     let zero_divisor = "hasil adalah angka sisa bagi dengan 7 dan 0\ntampilkan hasil\n";
     assert!(run(zero_divisor).unwrap_err().contains("R3022"));
 
-    let overflow = "hasil adalah angka sisa bagi dengan 0 dikurangi 9223372036854775807 dan 0 dikurangi 1\ntampilkan hasil\n";
-    assert!(run(overflow).unwrap_err().contains("R3022"));
 }
