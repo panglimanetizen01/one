@@ -735,6 +735,7 @@ mod grammar_fixture_tests {
             ("duplicate-persistence", include_str!("../../../tests/human-vnext/invalid/duplicate-persistence.one")),
             ("action-name-as-data", include_str!("../../../tests/human-vnext/invalid/action-name-as-data.one")),
             ("repeated-spaces", include_str!("../../../tests/human-vnext/invalid/repeated-spaces.one")),
+            ("duplicate-data-action-name", include_str!("../../../tests/human-vnext/invalid/duplicate-data-action-name.one")),
         ] {
             assert!(parse(source).is_err(), "invalid fixture {name} was accepted");
         }
