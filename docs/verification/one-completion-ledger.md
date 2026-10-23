@@ -206,7 +206,7 @@ Verified canonical source SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` on bran
 - SQLite query resource limits are explicit and enforced before prepare/bind work: SQL statement 1 MiB, each text parameter 1 MiB, aggregate parameter bytes 16 MiB, parameter count 256, result rows 100,000, serialized output 16 MiB. Regression tests cover SQL length, individual parameter length, aggregate parameter bytes, and parameter count.
 - Added `utc_text_to_unix_seconds` and the source-level builtin `unix dari waktu utc`, integrated through semantic type/arity validation and the canonical interpreter. The parser accepts only Gregorian UTC `YYYY-MM-DDTHH:MM:SSZ` for years 0000–9999 and rejects invalid dates/times, offsets, fractional seconds, leap seconds, and non-canonical forms. Unit and parse→semantic→IR→interpreter tests cover valid boundaries, leap dates, pre-epoch values, invalid types and malformed dates.
 - Updated the standard-library contract, standard-library boundary document, user guide, and focused verification workflow to document and exercise the new behavior.
-- Fixed a false-green in `tools/verify_offline.ps1`: it now enables `$PSNativeCommandUseErrorActionPreference = $true` so failed native commands terminate the script, and skips only `android_target_explicit_mempertahankan_build_native` on Windows. The Android-native test is explicitly skipped, not counted as passed.
+- Fixed a false-green in `tools/verify_offline.ps1`: it now enables `$PSNativeCommandUseErrorActionPreference = $true` so failed native commands terminate the script, and skips only `android_target_explicit_mempertahankan_build_native` on Windows. The Windows-only Android-native CLI test is explicitly skipped on Windows; the corresponding Android AArch64 native execution test passed on Ubuntu in the later exact-SHA matrix.
 
 ### Exact-SHA evidence
 
@@ -214,7 +214,7 @@ All three independent verification workflows checked out the exact source SHA ab
 
 - Focused standard-library/database regressions: [run 40006470057](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470057) — **SUCCESS**. UTC formatter/parser unit and integration tests, JSON output boundary, SQLite SQL/parameter resource-limit tests, missing-file read-only regression, and strict one-core Clippy passed.
 - Linux distro matrix: [run 40006470246](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470246) — **SUCCESS** on Ubuntu 24.04 and Debian 12; contract checks, build, Clippy, workspace tests, and real-network tests passed.
-- Cross-platform matrix: [run 40006470017](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470017) — **SUCCESS** on both `ubuntu-latest` and `windows-2025`. Both jobs passed contract artifacts, build, AST contract tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Workspace test summaries included 215 core tests passed on Ubuntu and 210 on Windows; one Android AArch64 native execution test remained ignored, and the Windows-only CLI suite explicitly filtered out the Android-target test. Neither is counted as passed.
+- Cross-platform matrix: [run 40006470017](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470017) — **SUCCESS** on both `ubuntu-latest` and `windows-2025`. Both jobs passed contract artifacts, build, AST contract tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Workspace test summaries show 215 passed / 0 failed / 0 ignored on Ubuntu and 210 passed / 0 failed / 0 ignored on Windows. The Android AArch64 native execution test passed on Ubuntu; the Windows-only CLI suite filtered out its Android-target test because the Windows runner is not an Android toolchain. That Windows-specific skip is not counted as a pass, while the Ubuntu execution supplies the Android-target evidence.
 - The source repository's own Actions on this same SHA remain infrastructure failures: [CI run 40006462899](https://github.com/panglimanetizen01/one/actions/runs/40006462899), [Linux distribution run 40006463227](https://github.com/panglimanetizen01/one/actions/runs/40006463227), and [focused run 40006463315](https://github.com/panglimanetizen01/one/actions/runs/40006463315) failed with `runner_id=0` and empty step lists. They produced no source build/test result. The documented independent mirror was used instead; no paid plan upgrade or fabricated CI result was used.
 
 ### Forensic correction
@@ -228,5 +228,18 @@ The earlier mirror run [40005692552](https://github.com/panglimanetizen01/one-wi
 - E2 remains 5/8; E3 remains 8/8 verified for its scoped cross-platform/conformance criterion; E5 remains 1/4; E6 remains 0/4.
 - **Implementation subtotal: 84/100. Verified completion: 68/100.** Fixed row weights are unchanged. The 16-point implementation/verification gap does not count toward a PASS gate.
 
-**Remaining mandatory work:** external dependency resolution and authenticated package provenance; broader standard-library coverage; race-resistant filesystem confinement and wider resource quotas; compatibility/release review; full developer-tooling/docs acceptance; Android-native execution in an appropriate environment if required by the declared target contract; and the E6 forensic audit.  
+**Remaining mandatory work:** external dependency resolution and authenticated package provenance; broader standard-library coverage; race-resistant filesystem confinement and wider resource quotas; compatibility/release review; full developer-tooling/docs acceptance; and the E6 forensic audit.  
 **Gate:** **NOT PASSED — Milestone 100% remains in progress.**
+
+
+## Post-checkpoint exact-SHA confirmation — `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`
+
+The documentation-only checkpoint snapshot `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974` was also checked out and verified exactly:
+
+- [Focused stdlib/database run 40007463554](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463554) — SUCCESS.
+- [Linux distro run 40007463563](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463563) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- [Cross-platform run 40007463527](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463527) — Ubuntu and Windows SUCCESS. Logs verify exact source SHA `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`, no `test result: FAILED` markers, and one clean `OFFLINE VERIFICATION: PASS` per platform.
+- Ubuntu workspace logs show 215 passed, 0 failed, 0 ignored; Windows shows 210 passed, 0 failed, 0 ignored. The Android AArch64 native execution test passed on Ubuntu (logged as `test android_target_explicit_mempertahankan_build_native ... ok`). The Windows-only CLI variant is filtered out on Windows because that runner is not an Android toolchain; it is not counted as passed on Windows.
+- Canonical repository workflows on the same source SHA still failed before steps with `runner_id=0`; independent mirror runs provide the actual test evidence.
+
+The later ledger/checkpoint corrections are documentation-only and do not change the tested code snapshot. **Gate remains NOT PASSED** because the full E1/E2/E4/E5/E6 Definition of Done is not complete.
