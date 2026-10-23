@@ -129,7 +129,7 @@ Verified in Debian 12/Termux from a clean worktree fetched from GitHub at exact 
 
 ## Exact-SHA local verification — 2026-10-23 (grammar clarification checkpoint)
 
-Verified by the user in Debian 12/Termux from the clean GitHub branch worktree at code commit `89b6ace` (full SHA to be resolved from the branch history):
+Verified by the user in Debian 12/Termux from the clean GitHub branch worktree at code commit `89b6ace035450511496764510867d3bd82cc109d`:
 
 - `python3 tools/check_contract.py`: PASS — 75 required artifacts, 73 indexed concrete artifacts, 6 existing valid fixtures, 6 existing invalid fixtures, 3 golden fixtures, 4 human-vNext valid fixtures, and 10 human-vNext invalid fixtures.
 - `git diff --check`: PASS.
