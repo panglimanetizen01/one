@@ -128,3 +128,10 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 - crates/one-core/src/network_runtime.rs now rejects attempts to exceed 1,024 active connections, checks connection ID increment for overflow before creating a socket, and rejects outbound payloads above 16 MiB before connection lookup/write. A regression test checks oversized payload rejection.
 - This adds implementation coverage only; no ledger points are added without the full acceptance matrix. The next exact-SHA matrix must target the resulting checkpoint commit.
+
+### Exact-SHA retarget after final code edit
+
+- Additional source commit: 24f454188dfb6ef8d97d63964af78bb5b65bd079. It factors active-connection quota validation into a pure helper and adds boundary tests for 1,023 versus 1,024 active connections. It also includes the borrow correction for the oversized HTTP/2 header regression fixture.
+- The in-progress mirror run 39976171105 targeted the prior checkpoint SHA 54779adc74032cc88fa30950e6700d135b521353 and therefore does not verify this newer source edit. The mirror selector must be updated again to the checkpoint SHA produced by this update.
+- Canonical repository CI continues to return zero-step failures; it cannot substitute for the independent mirror's required build, Clippy, workspace, real-network, and offline checks.
+- Ledger stays at 75/100 provisional and 60/100 verified. No new points are awarded until the final exact-SHA matrix and remaining acceptance requirements pass.
