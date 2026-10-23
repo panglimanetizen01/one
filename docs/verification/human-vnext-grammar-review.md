@@ -18,10 +18,10 @@ Accept the implementation-bounded starter grammar as the deterministic contract 
 | Version identity and compatibility | PASS | The contract has its own identifier/version; only the explicit `jalankan-human-vnext` entry point selects it. |
 | Deterministic parsing | PASS | Unsupported forms fail with stable `Hxxxx` classes; no LLM or fuzzy fallback participates in parsing. |
 | Names and binding | PASS | Names are case-sensitive, are not Unicode-normalized, use the documented Unicode-alphanumeric/`_`/`-`/single-space class, and data/action declarations share a namespace. |
-| Structure and indentation | PASS | Structural lines use the documented four-space levels; tabs and noncanonical structural indentation are rejected. |
+| Structure and indentation | PASS | Structural lines use the documented four-space levels; tabs and noncanonical structural indentation are rejected, including a tab before the text-payload prefix. |
 | Text-block fidelity | PASS after the opaque-whitespace regression fix | Exactly the first eight leading ASCII spaces are structural. Further spaces and tabs are payload; LF/CRLF behavior, blank lines, empty blocks, relative indentation, trailing newlines, Unicode, and instruction-like payload text have executable coverage. |
 | Semantic validation | PASS | Duplicate declarations/persistence and unresolved display references are rejected with stable codes and relevant declaration-line diagnostics. |
-| Fixture coverage | PASS for the stated starter subset | The contract checker requires at least six valid and seventeen invalid human-vNext fixtures. This is representative coverage, not exhaustive coverage of a general-purpose language. |
+| Fixture coverage | PASS for the stated starter subset | The contract checker requires at least six valid and eighteen invalid human-vNext fixtures. This is representative coverage, not exhaustive coverage of a general-purpose language. |
 | Executability claim | PASS with restriction | Parsing is separate from execution. The current runner accepts only the exact task-list vertical slice and rejects unsupported parsed declarations/actions before opening storage. |
 | v0.1 isolation | PASS | The default v0.1 command does not auto-detect this grammar; its regression tests remain part of the same workspace test run. |
 
