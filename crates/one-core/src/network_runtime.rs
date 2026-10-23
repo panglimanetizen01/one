@@ -133,11 +133,11 @@ fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, Netw
             return Err(NetworkRuntimeError::Protocol("HTTP chunk tidak diakhiri CRLF.".into()));
         }
         bytes = &bytes[framed_size..]; } }
-const MAX_HTTP_BODY_BYTES: usize = 16 * 1024 * 1024;
-const MAX_HTTP_HEADER_BYTES: usize = 64 * 1024;
-const MAX_HTTP_RESPONSE_BYTES: usize = MAX_HTTP_BODY_BYTES + MAX_HTTP_HEADER_BYTES;
+pub(crate) const MAX_HTTP_BODY_BYTES: usize = 16 * 1024 * 1024;
+pub(crate) const MAX_HTTP_HEADER_BYTES: usize = 64 * 1024;
+pub(crate) const MAX_HTTP_RESPONSE_BYTES: usize = MAX_HTTP_BODY_BYTES + MAX_HTTP_HEADER_BYTES;
 
-fn read_bounded_response<R: Read>(reader: R, max_bytes: usize) -> Result<Vec<u8>, NetworkRuntimeError> {
+pub(crate) fn read_bounded_response<R: Read>(reader: R, max_bytes: usize) -> Result<Vec<u8>, NetworkRuntimeError> {
     let limit = u64::try_from(max_bytes).unwrap_or(u64::MAX).saturating_add(1);
     let mut response = Vec::new();
     reader.take(limit).read_to_end(&mut response).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
@@ -147,7 +147,7 @@ fn read_bounded_response<R: Read>(reader: R, max_bytes: usize) -> Result<Vec<u8>
     Ok(response)
 }
 
-fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
+pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
     let invalid = || NetworkRuntimeError::Protocol("Authority HTTP tidak valid.".into());
     if authority.is_empty()
         || authority.chars().any(|character| character.is_ascii_control() || character.is_ascii_whitespace())
