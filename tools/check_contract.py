@@ -32,6 +32,7 @@ required = [
     "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
     "docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md",
     "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",
+    "docs/verification/human-vnext-exact-sha-verification-contract.md", "tools/verify-human-vnext.sh",
     "docs/spec/human-instruction-vnext-starter-grammar.md",
     "examples/human-vnext/daftar-tugas.one",
     "tests/human-vnext/valid/minimal-data.one",
@@ -126,6 +127,18 @@ for marker in (
 ledger = (ROOT / "docs/verification/one-completion-ledger.md").read_text(encoding="utf-8")
 if "30% GATE NOT PASSED" not in ledger or "TOTAL" not in ledger:
     raise SystemExit("COMPLETION LEDGER: missing explicit milestone status or weighted total")
+
+verification_contract = (ROOT / "docs/verification/human-vnext-exact-sha-verification-contract.md").read_text(encoding="utf-8")
+verification_script = (ROOT / "tools/verify-human-vnext.sh").read_text(encoding="utf-8")
+for marker in (
+    "git ls-remote origin",
+    "cargo build --workspace --all-targets",
+    "cargo clippy --workspace --all-targets -- -D warnings",
+    "cargo test --workspace --all-targets",
+    "does not manufacture CI results",
+):
+    if marker not in verification_contract + verification_script:
+        raise SystemExit(f"EXACT-SHA VERIFICATION CONTRACT: missing required rule/command {marker!r}")
 
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")
