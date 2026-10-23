@@ -114,6 +114,18 @@ impl Interpreter {
         "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum"
     );
     if builtin {
+        let expected_arity = match name {
+            "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" => 1,
+            "teks memuat" | "pisah teks" | "ambil indeks" | "bagi bulat" | "angka minimum" | "angka maksimum" => 2,
+            "ganti teks" => 3,
+            _ => 0,
+        };
+        if args.len() != expected_arity {
+            return Err(RuntimeError {
+                code: "R3020",
+                message: format!("Fungsi bawaan '{}' membutuhkan {} argumen.", name, expected_arity),
+            });
+        }
         let values = args.iter().map(|arg| self.eval(arg, caller_env)).collect::<Result<Vec<_>, _>>()?;
         let result = match name {
             "panjang teks" => stdlib::text_length(&values[0]),
