@@ -90,7 +90,7 @@ PASS only when every weighted row earns its full verified points, all required C
 - **E4 partial work:** checked integer arithmetic, recursion-depth bounds, and error-path tests are implemented. Comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain incomplete; E4 verified points remain 0/6.
 - **E5 partial work:** standard-library/runtime/package contracts, runnable examples, and CLI integration tests exist. Complete tutorials, API reference coverage, debugging workflow, and end-to-end developer workflow review remain incomplete; E5 verified points remain 0/4.
 - **E6:** final forensic audit and release evidence have not been completed; 0/4.
-- **Current verification:** exact-SHA mirror run [39958423196](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39958423196) is running against the module-collector refactor. Until both required platform jobs complete successfully on the canonical source SHA, no additional verified points are awarded.
+- **Current verification:** exact-SHA mirror run [39958882035](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39958882035) targets source SHA `d9d696fa87683027b78fdcbbec504696904055aa`. Ubuntu build, AST contract tests, strict Clippy, workspace tests, real-network tests, and offline verification passed; Windows is still running. Until the required platform matrix completes successfully on the canonical source SHA, no additional verified points are awarded.
 - **Not claimed complete:** ONE is not 100% complete. No ledger weights have changed.
 
 ## Repository work checkpoint — 2026-10-22
