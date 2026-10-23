@@ -86,14 +86,14 @@ pub fn tftp_read(socket: &UdpSocket, server: SocketAddr, filename: &str, timeout
 
 pub fn tftp_write(socket: &UdpSocket, server: SocketAddr, filename: &str, data: &[u8], timeout: Duration, capabilities: &CapabilitySet) -> Result<(), DatagramProtocolError> {
     permit(capabilities)?;
+    if data.len() > MAX_TFTP_FILE_BYTES {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
     socket.set_read_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     socket.set_write_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let request = tftp_request(2, filename)?;
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut buffer = [0u8; 4 + 512];
-    if data.len() > MAX_TFTP_FILE_BYTES {
-        return Err(DatagramProtocolError::InvalidPacket);
-    }
     let (size, peer) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
     if peer.ip() != server.ip() {
         return Err(DatagramProtocolError::InvalidPacket);
