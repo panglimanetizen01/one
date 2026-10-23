@@ -129,8 +129,9 @@ impl KeyValueStore {
             return Err(StoreError::Io(error));
         }
         #[cfg(unix)]
-        if let Some(parent) = self.path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-            if let Ok(directory) = fs::File::open(parent) { let _ = directory.sync_all(); }
+        if let Some(parent) = self.path.parent().filter(|parent| !parent.as_os_str().is_empty())
+            && let Ok(directory) = fs::File::open(parent) {
+            let _ = directory.sync_all();
         }
         Ok(())
     }
