@@ -195,3 +195,21 @@ tampilkan nilai
 "#;
     assert!(run(invalid).unwrap_err().contains("R3022"));
 }
+
+#[test]
+fn checked_integer_remainder_runs_through_the_canonical_pipeline() {
+    let source = "positif adalah angka sisa bagi dengan 7 dan 3\nnegatif adalah angka sisa bagi dengan 0 dikurangi 7 dan 3\ntampilkan positif\ntampilkan negatif\n";
+    assert_eq!(
+        run(source).expect("integer remainder should execute"),
+        vec!["1", "-1"]
+    );
+
+    let wrong_type = "hasil adalah angka sisa bagi dengan \"7\" dan 3\ntampilkan hasil\n";
+    assert!(run(wrong_type).unwrap_err().contains("E2043"));
+
+    let zero_divisor = "hasil adalah angka sisa bagi dengan 7 dan 0\ntampilkan hasil\n";
+    assert!(run(zero_divisor).unwrap_err().contains("R3022"));
+
+    let overflow = "hasil adalah angka sisa bagi dengan 0 dikurangi 9223372036854775807 dan 0 dikurangi 1\ntampilkan hasil\n";
+    assert!(run(overflow).unwrap_err().contains("R3022"));
+}
