@@ -82,7 +82,7 @@ For structural lines, the parser rejects tabs and indentation widths that are no
 - Duplicate persistence declarations are rejected.
 - A display instruction must resolve to a declared data name; an action name is not a data value.
 - Unknown action-body instructions, missing text blocks, empty/invalid names, tabs, invalid indentation, and orphaned nested lines are rejected.
-- The current prototype's persistence runner requires the collection name tugas and the supported add/list/complete instruction shapes. Other validly parsed declarations are not automatically executable by that runner.
+- The current prototype's persistence runner requires exactly one collection named `tugas`, no data declarations, and these exact action names and bodies: `menambahkan tugas` with `Terima judul tugas` then `Simpan tugas baru`; `melihat semua tugas` with `Tampilkan semua tugas`; and `menandai tugas sebagai selesai` with `Terima tugas yang dipilih` then `Tandai tugas sebagai selesai`. Extra persistence collections and any unsupported action name/body are rejected before storage is opened. Other validly parsed declarations are not automatically executable by that runner.
 - Diagnostic codes are stable within this starter version only; changing a code or its meaning requires updating tests and this contract together.
 
 ## 6. Required conformance matrix
