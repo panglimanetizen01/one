@@ -39,7 +39,7 @@ The following calls use the existing deterministic expression-call syntax and ca
 | `angka minimum` | 2 | Number | Minimum of two integers |
 | `angka maksimum` | 2 | Number | Maximum of two integers |
 | `nilai pemetaan` | 2 | Any | Read a text-keyed mapping entry; missing keys are errors |
-| `ubah nilai ke json` | 1 | Text | Deterministic JSON serialization with ordered map keys; nesting deeper than 128 levels is rejected |
+| `ubah nilai ke json` | 1 | Text | Deterministic JSON serialization with ordered map keys; nesting deeper than 128 levels or output larger than 16 MiB is rejected |
 | `nilai dari json` | 1 | Any | Parse JSON text, supporting strings, signed integers, booleans, null, arrays, and objects; duplicate keys, floats/exponents, invalid escapes, and excessive nesting are rejected |
 | `atur pemetaan` | 3 | Map | Return a mapping with the specified text key inserted or replaced |
 
