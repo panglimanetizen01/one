@@ -212,7 +212,7 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 - File-backed SQLite `database.query` uses SQLite read-only flags and `query_only`; missing database files are not created. Added enforced budgets for SQL bytes (1 MiB), per-parameter bytes (1 MiB), total parameter bytes (16 MiB), parameter count (256), result rows (100,000), and serialized output (16 MiB), with regression tests.
 - Added strict Gregorian UTC text parsing as the source-level builtin `unix dari waktu utc`, paired with the existing `waktu utc dari unix` formatter. Both are integrated through semantic checks and canonical interpreter execution, with unit/integration tests and updated docs.
-- Fixed `tools/verify_offline.ps1` false-green behavior by propagating nonzero native exit codes and skipping only the Android-native CLI test on Windows. Android native execution remains explicitly unverified, not passed.
+- Fixed `tools/verify_offline.ps1` false-green behavior by propagating nonzero native exit codes and skipping only the Android-native CLI test on Windows. Android AArch64 native execution passed on Ubuntu in the later exact-SHA matrix (run 40007463527); the Windows-specific CLI Android-target test was filtered out on Windows and is not counted as a Windows pass.
 
 ### Evidence
 
@@ -228,3 +228,19 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - **Verified completion:** 68/100. E1, E2, E4, E5 and E6 remain unverified.
 - Remaining mandatory work: external dependency resolution and authenticated package provenance; wider standard-library APIs; race-resistant filesystem confinement and broader quotas; compatibility and developer tooling/docs completion; Android-native execution if required by declared targets; and E6 forensic Definition-of-Done audit.
 - **GATE: NOT PASSED — Milestone 100% remains in progress.**
+
+
+## Final continuation evidence — checkpoint snapshot `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`
+
+- [Focused stdlib/database](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463554) — SUCCESS.
+- [Linux distro matrix](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463563) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- [Ubuntu/Windows cross-platform matrix](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463527) — both jobs SUCCESS on exact source SHA `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`. Both passed build, contract artifacts, AST tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification. No failed test summary was found in the logs; each platform printed `OFFLINE VERIFICATION: PASS`.
+- Ubuntu workspace tests: 215 passed, 0 failed, 0 ignored. The Android AArch64 native execution test passed on Ubuntu. Windows workspace tests: 210 passed, 0 failed, 0 ignored; its Android-target CLI test is filtered out because the Windows runner is not an Android toolchain.
+- The previous Windows false-green was corrected in `tools/verify_offline.ps1` by enabling native-command failure propagation and explicitly excluding only the Windows-inapplicable Android CLI test. The earlier run with a swallowed test failure is not credited.
+- Canonical repository Actions still fail before steps with `runner_id=0`; the independent exact-SHA mirror supplied actual verification evidence.
+
+**Current ledger:** 84/100 provisional implementation points, 68/100 verified.  
+**Remaining:** external dependency resolution/provenance, wider standard library, race-resistant filesystem confinement and broader quotas, full compatibility/release and developer-tooling/documentation acceptance, and E6 forensic audit.  
+**GATE: NOT PASSED — Milestone 100% remains in progress.**
+
+This is a documentation-only checkpoint update; the verified source code snapshot is unchanged.
