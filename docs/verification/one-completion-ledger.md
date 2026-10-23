@@ -26,11 +26,11 @@ For each row, **implemented points** are provisional progress based on code actu
 | F4 | Task-list app actions — **5** | Source example supports add/list/complete with input validation through public CLI | 5/5 | 5/5 | VERIFIED |
 | F5 | Durable task persistence — **3** | Data survives a new process; corrupt storage and write failures are reported | 3/3 | 3/3 | VERIFIED |
 | F6 | Beginner docs, example, exact-SHA build/CI evidence and checkpoint — **2** | Reproducible commands, docs agree with implementation, build/test/Clippy/CI green at exact SHA | 2/2 | 2/2 | VERIFIED |
-| C1 | Canonical vNext AST/IR integration — **8** | Human frontend lowers into canonical IR with golden semantic tests | 8/8 | 0/8 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
-| C2 | General frontend-to-runtime execution pipeline — **8** | More than the task-list special-case; ordinary programs run through canonical compiler/interpreter | 8/8 | 0/8 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
-| C3 | Expanded semantic/type/scope model and diagnostics — **6** | Defined scope/type rules and positive/negative fixture suite | 6/6 | 0/6 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
-| C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart and atomicity tests | 4/4 | 0/4 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
-| C5 | Additional real application vertical slices — **4** | At least two additional source programs integrated through the same compiler/runtime | 4/4 | 0/4 | IMPLEMENTED — EXACT-SHA VERIFICATION PENDING |
+| C1 | Canonical vNext AST/IR integration — **8** | Human frontend lowers into canonical IR with golden semantic tests | 8/8 | 8/8 | VERIFIED — PASS GREEN LOCKED |
+| C2 | General frontend-to-runtime execution pipeline — **8** | More than the task-list special-case; ordinary programs run through canonical compiler/interpreter | 8/8 | 8/8 | VERIFIED — PASS GREEN LOCKED |
+| C3 | Expanded semantic/type/scope model and diagnostics — **6** | Explicit type/scope rules, list/map operations, source-located diagnostics and positive/negative fixtures | 6/6 | 6/6 | VERIFIED — PASS GREEN LOCKED |
+| C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart, rollback and bounded-size replacement tests | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
+| C5 | Additional real application vertical slices — **4** | Calculator, score tracker, module and mapping examples executed through the same compiler/runtime | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 0/10 | 0/10 | NOT IMPLEMENTED |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 0/8 | 0/8 | NOT IMPLEMENTED |
@@ -38,7 +38,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 0/6 | 0/6 | NOT IMPLEMENTED |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 0/4 | 0/4 | NOT IMPLEMENTED |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **60/100** | **30/100** | **60% IMPLEMENTATION PRESENT; 30% VERIFIED; 60% GATE NOT PASSED** |
+|  | **TOTAL** |  | **60/100** | **60/100** | **PASS GREEN LOCKED — MILESTONE 60% ONLY** |
 
 ## Baseline and evidence
 
@@ -64,22 +64,27 @@ PASS only when all F1–F6 and C1–C5 are verified (60 points total) and the ch
 
 PASS only when every weighted row earns its full verified points, all required CI/release gates pass on the recorded release SHA, and the final forensic audit finds no outstanding mandatory Definition-of-Done requirement.
 
-## Milestone 60 implementation candidate — 2026-10-23
+## Milestone 60 — exact-SHA cross-platform verification (2026-10-23)
 
-- Feature PR: [#79](https://github.com/panglimanetizen01/one/pull/78), branch `spec/human-instruction-grammar-vnext-20261022`.
-- Implementation now present for C1–C5: human program header adapter to canonical AST/semantic/IR; explicit CLI execution through the canonical interpreter; tests for values, functions, conditions, lists, loops, scope and semantic rejection; relative multi-file module loading with duplicate/cycle/path-traversal rejection; a versioned bounded key/value persistence API with corruption rejection, restart, rollback and bulk replacement tests; calculator and score-tracker programs.
-- The existing vNext task-list CLI and persistence path are left intact. The new key/value API is reusable but has not yet replaced the task-list app's legacy storage format.
-- The canonical repository Actions jobs continued to fail before executing steps on earlier commits. Those runs are not evidence of source failure or success.
-- Independent hosted verification is being run through the documented mirror fallback. Only a completed exact-SHA run with both Linux and Windows jobs green may award C1–C5 verified points.
-- **Implementation subtotal: 60/100. Verified completion: 30/100. Milestone 60 gate: NOT PASSED until exact-SHA acceptance checks succeed.**
-- Do not call this a complete vNext language: map values, broader native vNext grammar beyond the canonical-language adapter, and further ecosystem work remain outside this milestone candidate.
+- **Canonical source branch:** `spec/human-instruction-grammar-vnext-20261022`
+- **PR:** [#78](https://github.com/panglimanetizen01/one/pull/78), open and unmerged.
+- **Code-bearing source SHA:** `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`
+- **Independent verification run:** [39936123376](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39936123376)
+- **Result:** `ubuntu-latest` **SUCCESS** and `windows-2025` **SUCCESS** on the exact selected source SHA. Contract artifacts, build, AST contract regression tests, strict Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification all completed successfully.
+- Workspace test summaries include 160 core tests passed on Linux and 156 on Windows; integration suites passed. One Android AArch64 native execution test is explicitly **ignored** on each platform because the hosted environment lacks the required Android execution-capable Clang setup. That test is not counted as passed and is outside the milestone-60 required gate.
+- Canonical repository Actions for the same SHA ([run 39936118585](https://github.com/panglimanetizen01/one/actions/runs/39936118585)) reported failure with `runner_id=0` and zero steps on both OS jobs. The repository's [exact-SHA verification contract](human-vnext-exact-sha-verification-contract.md) authorizes the independent mirror fallback; the canonical run is not misreported as green.
+- **Implementation subtotal:** 60/100. **Verified completion:** 60/100. F1–F6 contribute 30 verified points and C1–C5 contribute the next 30, using unchanged ledger weights.
+- Integrated scope: explicit opt-in human-core parser/CLI through canonical parse → semantic analysis → IR → interpreter; source-located semantic diagnostics; functions, control flow, lists and maps; relative multi-file modules with duplicate/cycle/path traversal rejection; reusable bounded `ONE-KV-1` persistence; and executable calculator, score-tracker, module, and mapping examples.
+- Compatibility: experimental mapping grammar is gated behind `parse_human_core` and the explicit human-core CLI; default v0.1 parsing does not accept the new mapping actions. The existing task-list app's persistence format was not silently migrated.
+- **Gate:** **PASS GREEN LOCKED — milestone 60% only.** No claim is made that milestone 100% or the full ONE ecosystem is complete.
 
 ## Current result
 
-- **Implementation progress:** 60/100 points present (Foundation plus the current Core/Runtime candidate); C1–C5 points remain provisional until exact-SHA acceptance evidence passes.
-- **Verified completion:** 30/100 points (30%); the current Core/Runtime candidate has 0 additional verified points pending exact-SHA Linux/Windows checks.
-- **Milestone target:** 60%.
-- **Gate:** **NOT PASSED** for milestone 60 until the current candidate passes exact-SHA checks. The prior 30-point Foundation scope remains separately locked only at its recorded implementation SHA.
+- **Implementation progress:** 60/100.
+- **Verified completion:** 60/100.
+- **Active milestone:** 60%.
+- **Gate:** **PASS GREEN LOCKED** for the fixed-weight 60% scope at code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`, based on exact-SHA independent Linux/Windows evidence in run 39936123376.
+- **Not claimed complete:** ecosystem/release tranche E1–E6, full native vNext grammar, per-module private/export visibility, source-map preservation for imported-file diagnostics, and migration of the task-list app to the reusable persistence API remain future work.
 
 ## Repository work checkpoint — 2026-10-22
 
@@ -174,4 +179,4 @@ Verified canonical source SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` on bran
 - **F5 — 3/3:** task data survives a new process; corrupt records, write/replace failures, temporary-file cleanup, invalid titles/IDs, and atomic replacement behavior have tests.
 - **F6 — 2/2:** beginner documentation, runnable example, contract checker, exact-SHA verifier, reviewed fallback contract, and successful exact-SHA Linux/Windows hosted evidence are recorded above.
 
-**Gate decision:** award all 30 Foundation points. The 30% target is reached without changing weights or counting ignored tests as passed. Later C/E milestones remain unimplemented and uncredited.
+**Gate decision:** award 30 Foundation points plus 30 Core/Runtime points. The 60% target is reached at the exact code SHA recorded above without changing weights or counting the ignored Android-native test as passed. E1–E6 remain unimplemented and uncredited.

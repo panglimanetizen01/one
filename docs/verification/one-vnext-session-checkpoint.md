@@ -3,51 +3,53 @@
 **Updated:** 2026-10-23  
 **Active target:** Milestone 60% — core language/runtime  
 **Repository:** [panglimanetizen01/one](https://github.com/panglimanetizen01/one)  
-**Implementation PR:** [#79](https://github.com/panglimanetizen01/one/pull/78)  
-**Foundation PR:** [#78](https://github.com/panglimanetizen01/one/pull/78)  
-**Active branch:** `spec/human-instruction-grammar-vnext-20261022`
+**PR:** [#78](https://github.com/panglimanetizen01/one/pull/78)  
+**Canonical branch:** `spec/human-instruction-grammar-vnext-20261022`
 
-## Completion and weighted method
+## Completion
 
-The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledger.md). Weights are fixed; provisional implementation points do not count as verified completion.
+The canonical weighted ledger is [one-completion-ledger.md](one-completion-ledger.md). Weights are unchanged.
 
-- **Implementation subtotal:** 60/100 points are now represented by code/tests/docs for F1–F6 and the C1–C5 candidate.
-- **Verified completion:** 30/100 points. The 30-point Foundation scope remains supported only by its recorded exact implementation SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` and evidence in the ledger.
-- **Milestone 60 gate:** **NOT PASSED** until the current candidate passes required exact-SHA Linux and Windows verification. C1–C5 currently earn 0 additional verified points.
-- The adapter does not claim a complete native vNext grammar. Map values and broader vNext-specific syntax remain unimplemented.
+- **Implementation:** 60/100 points.
+- **Verified completion:** 60/100 points.
+- **Gate:** **PASS GREEN LOCKED — milestone 60% only.**
+- **Code-bearing source SHA:** `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`.
+- **Exact-SHA verification:** [run 39936123376](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39936123376) — Ubuntu and Windows jobs both successful.
 
-## Current Git state
+## Verified acceptance evidence
 
-- PR #78 is open, draft, and not merged. Base is `main` at `d86c3be75c81a27d6d4f040f21718f6248413e47`.
-- Latest code-bearing implementation SHA: `9f03d55a38a7b4da1ddb92328dc716a439d4a278`. The checkpoint/ledger updates that follow are documentation-only.
-- PR #78 remains open/draft and unmerged; no branch was merged into `main`.
-- Do not change `main`, merge either PR, or touch `~/one-termux` without explicit authorization.
+On exact code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`, the documented independent mirror completed:
+- Contract artifacts and compatibility checks.
+- Build and AST contract regression tests.
+- Strict Clippy.
+- Workspace tests, including human-core integration tests for function calls/results, values and arithmetic, conditions, loops, lists/maps, type errors, scope errors, source-located diagnostics, duplicate/cyclic/path-unsafe module imports, persistence behavior, and actual checked-in example programs.
+- Real-network runtime tests.
+- Platform-appropriate offline verification.
 
-## Implemented candidate scope (not yet verified)
+Linux core test suite: 160 passed, 0 failed; Windows core test suite: 156 passed, 0 failed. One Android AArch64 native execution test is ignored on each OS because the hosted environment lacks the required Android execution-capable Clang setup. It is explicitly not counted as passed and is not a required milestone-60 gate.
 
-1. `crates/one-core/src/human_compiler.rs`: validates a `Buat program <nama>` header and passes the body through canonical parse → semantic analysis → IR lowering.
-2. `one jalankan-human-core <program.one>` / `one run-human-core`: executes through the canonical reference interpreter; no second evaluator was added.
-3. Relative `Gunakan modul "file.one"` resolution for modules declared with `Buat modul <nama>`, with explicit rejection of path traversal, duplicate imports and import cycles.
-4. CLI tests cover function parameters/results, arithmetic, conditions, collection operations, loops, assignment, type errors, scope errors, malformed headers, and module resolution failures.
-5. `crates/one-core/src/persistence.rs`: versioned `ONE-KV-1` key/value storage, deterministic encoding, size/count bounds, corruption/duplicate-key rejection, restart tests, rollback tests and bulk replacement.
-6. Calculator, score-tracker, and multi-file module examples use the same canonical parser/analyzer/IR/interpreter path.
-7. Existing v0.1 command routing and existing human-vNext task-list runner remain separate. The new reusable key/value store has not replaced the task app's legacy storage file format.
+## Implemented and integrated scope
 
-## Exact-SHA verification history
+1. Explicit `Buat program <nama>` frontend and `one jalankan-human-core <program.one>` / `one run-human-core` route through the canonical parser, semantic analyzer, IR lowering, and reference interpreter.
+2. Values and types include text, numbers, booleans, empty values, lists, and deterministic text-keyed maps. Map create/insert/read/delete operations have type/runtime errors; experimental map grammar is opt-in and does not change default v0.1 parser acceptance.
+3. Conditions, loops, assignment, functions/parameters/results, name resolution, block scope, and source-located semantic diagnostics have positive and negative tests.
+4. Relative multi-file modules use `Buat modul` / `Gunakan modul`, reject absolute/traversal paths, external symlinks, duplicate imports and cycles, and share one top-level semantic namespace. Per-module private/export syntax and original-file source maps for imported-file diagnostics remain future work.
+5. `one_core::persistence::KeyValueStore` provides versioned `ONE-KV-1` storage, deterministic encoding, size/entry limits, corruption rejection, restart, rollback, and bounded replacement tests. The existing task-list app continues using its prior storage format; no silent migration was performed.
+6. Checked-in calculator, score-tracker, module and mapping examples execute through the same canonical compiler/runtime.
+7. The completion ledger and ADR-0017 record the fixed weights, design choices and compatibility limits.
 
-- Canonical repository Actions on earlier commits have repeatedly terminated before steps started (empty steps and runner ID 0). Those runs are neither a source pass nor evidence of a code failure.
-- Independent mirror run [39931638753](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39931638753) verified checkout and build on candidate SHA `6efb3aaac6a3559314d5913e5188bac3f5a2fb03`, but Ubuntu Clippy failed due to `items_after_test_module` and strict-Clippy findings in the new persistence file. Those findings were fixed in later commits; that run does not verify the current SHA.
-- Independent mirror run [39931908944](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39931908944) tested SHA `df5439c484cda6cfd3da333a6cabf3856a82579e`; Ubuntu Clippy exposed one additional collapsible-if warning, fixed in `c4b502f3aabea95486f4a506234edde1945da538`. The old run does not verify the fix.
-- The mirror's `CANONICAL_COMMIT.txt` must target code-bearing SHA `9f03d55a38a7b4da1ddb92328dc716a439d4a278`; later checkpoint/ledger-only commits do not alter code, tests, or workflows. Accept only a completed run with both `ubuntu-latest` and `windows-2025` successful and all required steps completed on the exact selected source SHA.
-- Canonical repository Actions status is not described as green based on the mirror; report the two separately.
+## Git and CI state
 
-## Next actions
+- PR #78 remains open/draft and unmerged.
+- `main` was not changed; no merge was performed.
+- `~/one-termux` was not accessed or modified.
+- Canonical repository Actions run [39936118585](https://github.com/panglimanetizen01/one/actions/runs/39936118585) failed before executing steps (`runner_id=0`, zero steps on both OS jobs). This is reported separately and is not claimed as a green canonical run.
+- The repository's [exact-SHA verification contract](human-vnext-exact-sha-verification-contract.md) permits the independent mirror fallback. Run 39936123376 passed both required OS jobs on exact source SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`.
 
-1. Set the independent verification mirror's `CANONICAL_COMMIT.txt` to the final PR #78 HEAD after all code, ledger, and checkpoint edits.
-2. Inspect Linux/Windows build, strict Clippy, workspace tests, real-network tests and offline verification. Fix every source finding and rerun the exact-SHA gate after any code change.
-3. If all required checks pass, update C1–C5 verified points from 0 to their fixed weights, record the final exact SHA and mirror run evidence, and set milestone 60 to PASS GREEN LOCKED.
-4. If any required check is pending or fails, keep milestone 60 NOT PASSED and continue from the exact reported blocker.
+## Next
+
+Continue to milestone 100% using the same fixed-weight ledger. Focus on E1–E6 ecosystem/release requirements, complete native vNext grammar and source-map/visibility work, persistence integration/migration only with explicit compatibility tests, and final forensic audit. Do not change the 60% weights or claim the full ONE ecosystem is complete.
 
 ## Gate
 
-**NOT PASSED** — milestone 60 is implemented as a candidate but has not yet passed the required exact-SHA cross-platform acceptance checks. The previous 30% Foundation gate is a separate, bounded claim tied to its own recorded implementation SHA; it is not evidence that the current 60% milestone passes.
+**PASS GREEN LOCKED — milestone 60% only**, at code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`, supported by exact-SHA cross-platform run 39936123376.
