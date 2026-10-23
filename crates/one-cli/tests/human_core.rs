@@ -251,13 +251,13 @@ fn checked_in_reference_programs_run_through_the_public_cli() {
 #[test]
 fn human_frontend_executes_typed_mapping_operations() {
     let path = fixture(concat!(
-        "Buat program kontak\\n",
-        "buat pemetaan profil\\n",
-        "masukkan \"nama\" dan \"Budi\" ke profil\\n",
-        "masukkan \"umur\" dan 32 ke profil\\n",
-        "ambil kunci \"nama\" dari profil\\n",
-        "hapus kunci \"umur\" dari profil\\n",
-        "tampilkan profil\\n",
+        "Buat program kontak\n",
+        "buat pemetaan profil\n",
+        "masukkan \"nama\" dan \"Budi\" ke profil\n",
+        "masukkan \"umur\" dan 32 ke profil\n",
+        "ambil kunci \"nama\" dari profil\n",
+        "hapus kunci \"umur\" dari profil\n",
+        "tampilkan profil\n",
     ));
     let output = run(&path);
     let _ = fs::remove_file(&path);
@@ -271,9 +271,9 @@ fn human_frontend_executes_typed_mapping_operations() {
 #[test]
 fn human_frontend_rejects_non_text_mapping_keys() {
     let path = fixture(concat!(
-        "Buat program kunci tidak valid\\n",
-        "buat pemetaan profil\\n",
-        "masukkan 5 dan \"Budi\" ke profil\\n",
+        "Buat program kunci tidak valid\n",
+        "buat pemetaan profil\n",
+        "masukkan 5 dan \"Budi\" ke profil\n",
     ));
     let output = run(&path);
     let _ = fs::remove_file(&path);
