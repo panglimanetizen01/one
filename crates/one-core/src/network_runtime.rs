@@ -20,7 +20,7 @@ impl RealNetworkRuntime {
     pub fn new() -> Self { Self { next_id: 1, connections: std::collections::BTreeMap::new() } }
     pub fn execute(&mut self, operation: NetworkOperation, capabilities: &CapabilitySet) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { for capability in operation.required_capabilities() { if !capabilities.permits(capability) { return Err(NetworkRuntimeError::CapabilityDenied(format!("Kemampuan jaringan {:?} belum diberikan kepada program.", capability))); } } operation.validate().map_err(|bundle| NetworkRuntimeError::InvalidOperation(bundle.0.first().map(|d| d.message.clone()).unwrap_or_else(|| "Operasi jaringan tidak valid.".into())))?; match operation { NetworkOperation::Connect { target, constraints } => self.connect(target, constraints), NetworkOperation::Send { connection, data } => self.send(connection, &data), NetworkOperation::Receive { connection } => self.receive(connection) } }
     fn connect(&mut self, target: NetworkTarget, constraints: crate::network::NetworkConstraints) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let (host, port) = match target { NetworkTarget::Service { host, port } => (host, port), NetworkTarget::Host(host) => (host, 0), NetworkTarget::Address(address) => (address, 0) }; let timeout = Duration::from_millis(constraints.timeout_ms); let resolved = resolve_target(&host, port, constraints.address_kind)?; let id = NetworkConnectionId(self.next_id); self.next_id += 1; match constraints.transport { NetworkTransport::Reliable => { let stream = TcpStream::connect_timeout(&resolved, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; self.connections.insert(id, Connection::Tcp(stream)); }, NetworkTransport::Unreliable => { let socket = UdpSocket::bind(match resolved { SocketAddr::V4(_) => "0.0.0.0:0", SocketAddr::V6(_) => "[::]:0" }).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; socket.connect(resolved).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; socket.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; socket.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; self.connections.insert(id, Connection::Udp(socket)); } } Ok(NetworkRuntimeResult::Connected { id, endpoint: NetworkEndpoint { requested: host, resolved } }) }
-    fn send(&mut self, id: NetworkConnectionId, data: &[u8]) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let connection = self.connections.get_mut(&id).ok_or_else(|| NetworkRuntimeError::Connection(format!("Koneksi {} tidak ditemukan.", id.0)))?; let bytes = match connection { Connection::Tcp(stream) => stream.write(data).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?, Connection::Udp(socket) => socket.send(data).map_err(|e| NetworkRuntimeError::Io(e.to_string()))? }; Ok(NetworkRuntimeResult::Sent { id, bytes }) }
+    fn send(&mut self, id: NetworkConnectionId, data: &[u8]) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let connection = self.connections.get_mut(&id).ok_or_else(|| NetworkRuntimeError::Connection(format!("Koneksi {} tidak ditemukan.", id.0)))?; let bytes = match connection { Connection::Tcp(stream) => { stream.write_all(data).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; data.len() }, Connection::Udp(socket) => socket.send(data).map_err(|e| NetworkRuntimeError::Io(e.to_string()))? }; Ok(NetworkRuntimeResult::Sent { id, bytes }) }
     fn receive(&mut self, id: NetworkConnectionId) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let connection = self.connections.get_mut(&id).ok_or_else(|| NetworkRuntimeError::Connection(format!("Koneksi {} tidak ditemukan.", id.0)))?; let mut buffer = vec![0u8; 64 * 1024]; let size = match connection { Connection::Tcp(stream) => stream.read(&mut buffer).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?, Connection::Udp(socket) => socket.recv(&mut buffer).map_err(|e| NetworkRuntimeError::Io(e.to_string()))? }; buffer.truncate(size); Ok(NetworkRuntimeResult::Received { id, data: buffer }) }
     pub fn close(&mut self, id: NetworkConnectionId) -> bool { self.connections.remove(&id).is_some() }
 }
@@ -46,9 +46,123 @@ fn read_bounded_response<R: Read>(reader: R, max_bytes: usize) -> Result<Vec<u8>
     Ok(response)
 }
 
-pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> { if !capabilities.permits(crate::capability::Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); } let host = request.authority.split(':').next().filter(|v| !v.is_empty()).ok_or_else(|| NetworkRuntimeError::InvalidOperation("Host HTTP kosong.".into()))?.to_string(); let port = request.authority.rsplit(':').next().and_then(|v| v.parse::<u16>().ok()).unwrap_or(80); let address = resolve_target(&host, port, None)?; let mut stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let response = read_bounded_response(stream, MAX_HTTP_RESPONSE_BYTES)?; parse_http_response(&response, MAX_HTTP_BODY_BYTES) }
+fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
+    let invalid = || NetworkRuntimeError::Protocol("Authority HTTP tidak valid.".into());
+    if authority.is_empty()
+        || authority.chars().any(|character| character.is_ascii_control() || character.is_ascii_whitespace())
+        || authority.contains('@')
+        || authority.contains('/')
+        || authority.contains('?')
+        || authority.contains('#')
+        || authority.contains('\\')
+    {
+        return Err(invalid());
+    }
+
+    let (host, port) = if let Some(bracketed) = authority.strip_prefix('[') {
+        let close = bracketed.find(']').ok_or_else(invalid)?;
+        let host = &bracketed[..close];
+        host.parse::<std::net::Ipv6Addr>().map_err(|_| invalid())?;
+        let suffix = &bracketed[close + 1..];
+        let port = if suffix.is_empty() {
+            80
+        } else {
+            let port_text = suffix.strip_prefix(':').ok_or_else(invalid)?;
+            if port_text.is_empty() || !port_text.bytes().all(|byte| byte.is_ascii_digit()) {
+                return Err(invalid());
+            }
+            port_text.parse::<u16>().map_err(|_| invalid())?
+        };
+        (host.to_owned(), port)
+    } else {
+        if authority.matches(':').count() > 1 {
+            return Err(invalid());
+        }
+        let (host, port) = match authority.split_once(':') {
+            Some((host, port_text)) => {
+                if port_text.is_empty() || !port_text.bytes().all(|byte| byte.is_ascii_digit()) {
+                    return Err(invalid());
+                }
+                (host, port_text.parse::<u16>().map_err(|_| invalid())?)
+            }
+            None => (authority, 80),
+        };
+        if host.is_empty()
+            || host.len() > 253
+            || host.split('.').any(|label| {
+                label.is_empty()
+                    || label.len() > 63
+                    || label.starts_with('-')
+                    || label.ends_with('-')
+                    || !label.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+            })
+        {
+            return Err(invalid());
+        }
+        (host.to_owned(), port)
+    };
+    Ok((host, port))
+}
+
+pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> {
+    if !capabilities.permits(crate::capability::Capability::NetworkConnect) {
+        return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into()));
+    }
+    let (host, port) = parse_http_authority(&request.authority)?;
+    let address = resolve_target(&host, port, None)?;
+    let mut stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?;
+    stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+    stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+    stream.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+    let response = read_bounded_response(stream, MAX_HTTP_RESPONSE_BYTES)?;
+    parse_http_response(&response, MAX_HTTP_BODY_BYTES)
+}
 #[cfg(test)]
 mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io::{Read, Write}; use std::net::TcpListener; use std::thread;
+    #[test]
+    fn http_authority_parser_handles_ipv6_and_explicit_ports() {
+        assert_eq!(parse_http_authority("example.com"), Ok(("example.com".into(), 80)));
+        assert_eq!(parse_http_authority("example.com:8080"), Ok(("example.com".into(), 8080)));
+        assert_eq!(parse_http_authority("[::1]:8080"), Ok(("::1".into(), 8080)));
+        assert_eq!(parse_http_authority("[::1]"), Ok(("::1".into(), 80)));
+    }
+
+    #[test]
+    fn http_authority_parser_rejects_ambiguous_or_injected_authorities() {
+        for authority in ["", "example.com:", "example.com:abc", "example.com:80:90", "::1", "user@example.com", "example.com/path", "bad host", "[not-ipv6]:80", "example.com:65536"] {
+            assert!(parse_http_authority(authority).is_err(), "authority should be rejected: {authority}");
+        }
+    }
+
+    #[test]
+    fn tcp_send_reports_all_bytes_after_write_all() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let address = listener.local_addr().expect("address");
+        let payload = vec![b'x'; 128 * 1024];
+        let expected = payload.clone();
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept");
+            let mut received = vec![0; expected.len()];
+            stream.read_exact(&mut received).expect("read full payload");
+            assert_eq!(received, expected);
+        });
+        let mut runtime = RealNetworkRuntime::new();
+        let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect);
+        let connected = runtime.execute(NetworkOperation::Connect {
+            target: NetworkTarget::Service { host: address.ip().to_string(), port: address.port() },
+            constraints: crate::network::NetworkConstraints {
+                address_kind: Some(NetworkAddressKind::Ipv4),
+                transport: NetworkTransport::Reliable,
+                security: Some(crate::network::NetworkSecurity::Insecure),
+                timeout_ms: 2_000,
+                protocol: Some(NetworkProtocolFamily::Tcp),
+            },
+        }, &capabilities).expect("connect");
+        let id = match connected { NetworkRuntimeResult::Connected { id, .. } => id, _ => panic!("unexpected result") };
+        assert_eq!(runtime.execute(NetworkOperation::Send { connection: id, data: payload.clone() }, &capabilities), Ok(NetworkRuntimeResult::Sent { id, bytes: payload.len() }));
+        server.join().expect("server");
+    }
+
     #[test] fn localhost_resolution_returns_a_real_socket_address() { let address = resolve_target("localhost", 80, None).expect("localhost must resolve"); assert!(address.ip().is_loopback()); }
     #[test] fn tcp_round_trip_uses_real_loopback_socket() { let listener = TcpListener::bind("127.0.0.1:0").expect("bind"); let address = listener.local_addr().expect("address"); let server = thread::spawn(move || { let (mut stream, _) = listener.accept().expect("accept"); let mut input = [0u8; 4]; stream.read_exact(&mut input).expect("read"); assert_eq!(&input, b"ping"); stream.write_all(b"pong").expect("write"); }); let mut runtime = RealNetworkRuntime::new(); let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect); let connected = runtime.execute(NetworkOperation::Connect { target: NetworkTarget::Service { host: address.ip().to_string(), port: address.port() }, constraints: crate::network::NetworkConstraints { address_kind: Some(NetworkAddressKind::Ipv4), transport: NetworkTransport::Reliable, security: Some(crate::network::NetworkSecurity::Insecure), timeout_ms: 2_000, protocol: Some(NetworkProtocolFamily::Tcp) } }, &capabilities).expect("connect"); let id = match connected { NetworkRuntimeResult::Connected { id, .. } => id, _ => panic!("unexpected result") }; runtime.execute(NetworkOperation::Send { connection: id, data: b"ping".to_vec() }, &capabilities).expect("send"); let received = runtime.execute(NetworkOperation::Receive { connection: id }, &capabilities).expect("receive"); assert_eq!(received, NetworkRuntimeResult::Received { id, data: b"pong".to_vec() }); server.join().expect("server"); }
     #[test] fn capability_denial_happens_before_connection() { let mut runtime = RealNetworkRuntime::new(); let result = runtime.execute(NetworkOperation::Connect { target: NetworkTarget::Service { host: "127.0.0.1".into(), port: 9 }, constraints: crate::network::NetworkConstraints { address_kind: Some(NetworkAddressKind::Ipv4), transport: NetworkTransport::Reliable, security: Some(crate::network::NetworkSecurity::Insecure), timeout_ms: 50, protocol: Some(NetworkProtocolFamily::Tcp) } }, &CapabilitySet::none()); assert!(matches!(result, Err(NetworkRuntimeError::CapabilityDenied(_)))); }
