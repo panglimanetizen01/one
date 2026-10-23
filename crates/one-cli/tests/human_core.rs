@@ -207,3 +207,18 @@ fn second_real_program_runs_through_the_same_human_compiler_and_runtime() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Skor tervalidasi");
 }
+
+#[test]
+fn human_frontend_reports_source_line_for_invalid_condition_type() {
+    let path = fixture(concat!(
+        "Buat program kondisi salah\n",
+        "kalau 5\n",
+        "    tampilkan \"tidak boleh berjalan\"\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success());
+    assert!(stderr.contains("E2010"), "{stderr}");
+    assert!(stderr.contains("baris 2"), "{stderr}");
+}
