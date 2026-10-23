@@ -80,18 +80,19 @@ PASS only when every weighted row earns its full verified points, all required C
 
 ## Current result
 
-- **Implementation progress:** 68/100 provisional points (60 previously verified points plus 3 provisional E1, 2 provisional E2, 2 provisional E4, and 1 provisional E5 implementation points; no new points are verified).
+- **Implementation progress:** 75/100 provisional points (60 previously verified points plus 6 provisional E1, 5 provisional E2, 1 provisional E3, 2 provisional E4, and 1 provisional E5 implementation points; no new points are verified).
 - **Verified completion:** 60/100 points.
 - **Milestone target:** 100%.
 - **Gate:** **NOT PASSED** for milestone 100%. The prior 60% gate remains scope-limited to code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`.
-- **E1 partial work:** public deterministic text/list/map/integer helper APIs, a bounded deterministic JSON serializer/parser, Unicode case/prefix/suffix operations, checked list joining/summing, and source-level built-ins are implemented; JSON floating-point/exponent parsing remains intentionally unsupported because ONE has no float value type. Exact-SHA verification for the latest source remains pending, so E1 verified points remain 0/10.
-- **E2 partial work:** `one build`, `one test`, and `one package` now detect a `Buat program` project entry and use the human-core compiler to process relative modules through canonical IR; package emits a deterministic versioned artifact. A deterministic local module lockfile is generated and embedded in the package; build/test reject stale lockfiles, and FNV-1a fingerprints are explicitly non-cryptographic. External dependency declarations/registry resolution and the full provenance envelope remain incomplete; E2 verified points remain 0/8.
-- **E3 partial work:** human-core valid/invalid conformance fixtures are now dispatched through the matching compiler path; the full compatibility matrix and latest exact-SHA Linux/Windows pass remain pending, so E3 verified points remain 0/8.
-- **E4 partial work:** checked integer arithmetic, recursion-depth limit, and error-path tests are implemented; comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain incomplete, so E4 verified points remain 0/6.
-- **E5 partial work:** standard-library/runtime/package contracts, a runnable example, and CLI integration tests are added; complete tutorials, API reference coverage, and end-to-end developer workflow review remain incomplete, so E5 verified points remain 0/4.
-- **Remaining E1–E6:** full standard-library coverage, package dependency/lock workflow, compatibility/conformance matrix, security/reliability hardening, full docs/tooling review, and final forensic audit.
-- **Known evidence boundary:** canonical repository Actions may fail before steps start (`runner_id=0`, zero steps); only a completed independent mirror run on the exact selected source SHA can provide the accepted fallback evidence. Do not call an in-progress, failed, wrong-SHA, or partial platform matrix green.
+- **E1 partial work:** public deterministic text/list/map/integer helper APIs, bounded deterministic JSON serialization/parsing, Unicode case/prefix/suffix operations, checked list joining/summing, and source-level built-ins are implemented. JSON floating-point/exponent parsing remains unsupported because ONE has no float value type. Filesystem, HTTP/networking, time/date, concurrency, logging/configuration, and complete persistence integration remain incomplete. E1 verified points remain 0/10 pending exact-SHA acceptance evidence.
+- **E2 partial work:** `one build`, `one test`, and `one package` process human-core projects through the canonical compiler path; package emits a deterministic versioned artifact and a local module lock. Build/test reject stale locks with `ETOOL006`; the FNV-1a fingerprints are non-cryptographic reproducibility aids. External dependency declarations/registry resolution, cryptographic integrity, target-specific artifacts, and full provenance remain incomplete; E2 verified points remain 0/8.
+- **E3 partial work:** valid/invalid human-core conformance fixtures are dispatched through the matching compiler path. Full compatibility coverage and a latest exact-SHA Linux/Windows pass remain pending; E3 verified points remain 0/8.
+- **E4 partial work:** checked integer arithmetic, recursion-depth bounds, and error-path tests are implemented. Comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain incomplete; E4 verified points remain 0/6.
+- **E5 partial work:** standard-library/runtime/package contracts, runnable examples, and CLI integration tests exist. Complete tutorials, API reference coverage, debugging workflow, and end-to-end developer workflow review remain incomplete; E5 verified points remain 0/4.
+- **E6:** final forensic audit and release evidence have not been completed; 0/4.
+- **Current verification:** exact-SHA mirror run [39958423196](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39958423196) is running against the module-collector refactor. Until both required platform jobs complete successfully on the canonical source SHA, no additional verified points are awarded.
 - **Not claimed complete:** ONE is not 100% complete. No ledger weights have changed.
+
 ## Repository work checkpoint — 2026-10-22
 
 Changes committed directly to the feature branch after the baseline above:
