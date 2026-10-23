@@ -105,7 +105,7 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
     validate_command_field(recipient)?;
     validate_command_field(subject)?;
     if body.len() > MAX_APPLICATION_REPLY_BYTES
-        || body.bytes().any(|byte| byte == 0 || (byte < 0x20 && !matches!(byte, b'\\r' | b'\\n' | b'\\t')))
+        || body.bytes().any(|byte| byte == 0 || (byte < 0x20 && !matches!(byte, b'\r' | b'\n' | b'\t')))
     {
         return Err(ApplicationProtocolError::InvalidResponse);
     }
