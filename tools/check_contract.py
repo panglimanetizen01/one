@@ -6,6 +6,7 @@ required = [
     "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
     ".github/workflows/ci.yml", ".github/workflows/release-check.yml", ".github/workflows/windows-native-verification.yml",
     "docs/README.md",
+    "docs/panduan-pengguna/human-vnext-daftar-tugas.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
     "docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md",
