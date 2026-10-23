@@ -32,7 +32,7 @@ Minimum v0.1 classes:
 - `random.read`
 - `database.query`
 
-Database query is currently defined as a read-only, parameterized SQLite `SELECT` boundary. Database mutation requires a separate capability/effect contract and is not implied by `database.query`.
+Database query is a read-only, parameterized SQLite `SELECT` boundary. File-backed databases must already exist and are opened with SQLite read-only flags; the connection also enables `query_only`. The special `:memory:` resource creates an isolated ephemeral in-memory database for queries and tests. Query access must not create or mutate a file-backed database. Database mutation requires a separate capability/effect contract and is not implied by `database.query`.
 
 The current language-level HTTP GET slice uses `network.connect` with an exact URL target and is limited to explicit `http://` HTTP/1.1 GET requests. It does not imply HTTPS, redirects, arbitrary methods, custom headers/bodies, cookies, or API-specific authentication.
 
