@@ -43,6 +43,20 @@ For each run, retain the full terminal output and record:
 
 A valid record is invalidated if the source SHA does not match the recorded SHA or the remote branch moved during the run.
 
+## Independent hosted cross-platform verification fallback
+
+When canonical `one` repository Actions jobs terminate before executing any steps, the existing free verification mirror may provide hosted exact-SHA evidence without upgrading the canonical repository plan:
+
+- Mirror repository: `panglimanetizen01/one-windows-verification`.
+- Workflow: `.github/workflows/windows-verification.yml`, branch `verification`.
+- Source selector: `CANONICAL_COMMIT.txt` must contain the complete 40-character source SHA from the canonical ONE feature branch.
+- The workflow checks out the canonical private source at that exact SHA and independently verifies the checked-out HEAD before running checks.
+- Replacement evidence is valid only if **both** `ubuntu-latest` and `windows-2025` jobs finish successfully and the run's source SHA matches the recorded canonical SHA. Required successful steps include contract artifacts, build, Clippy, all workspace tests, real-network tests, and platform-appropriate offline verification.
+- Record the mirror run URL, mirror commit, exact canonical source SHA, both job conclusions, and ignored/skipped test counts in the ledger.
+- This is **independent hosted cross-platform verification**, not a claim that canonical `one` repository Actions passed. Do not credit a pending, failed, zero-step, wrong-SHA, or partial matrix run. Do not upgrade the repository plan to obtain a runner.
+
+This fallback preserves the platform-evidence requirement rather than waiving it: the mirror must actually execute both Linux and Windows jobs on the exact source snapshot.
+
 ## Replacement boundary
 
 This is a controlled replacement for the **local build/test evidence collection procedure only** when hosted Actions cannot start. It does not manufacture CI results and does not independently waive any acceptance criterion that requires Windows execution, external review, or a platform-specific runtime result. The milestone ledger may credit points only after its full acceptance criteria are met and the evidence is explicitly reviewed.
