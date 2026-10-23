@@ -12,8 +12,8 @@
 Canonical ledger: [one-completion-ledger.md](one-completion-ledger.md).
 
 - **Implementation subtotal:** 84/100 provisional points.
-- **Verified completion:** 68/100 points.
-- **E1–E6 verified points:** 8/40 (E3 cross-platform/conformance row verified); E1, E2, E4, E5, and E6 remain unverified. The 16-point implementation/verification gap is not verified completion.
+- **Verified completion:** 60/100 points.
+- **E1–E6 verified points:** 0/40. E1, E2, E3, E4, E5, and E6 are not fully verified under the 100% acceptance criteria; the 24-point implementation/verification gap is not verified completion.
 - **Milestone 100% gate:** **NOT PASSED**.
 - The previously earned 60% milestone remains historical and scoped to its exact source SHA and evidence. It does not make the current 100% candidate green.
 
@@ -67,7 +67,7 @@ Remaining mandatory requirements include, at minimum:
 1. Continue implementation on the existing PR branch; after any code-changing slice, pin the independent verification mirror to that exact source SHA and run focused, Linux-distro, and Ubuntu/Windows cross-platform workflows.
 2. Prioritize E2 external dependency resolution and authenticated package provenance; do not treat the current unsigned module lock as publisher authentication.
 3. Continue E1 standard-library breadth and E4 security work, especially race-resistant filesystem confinement and broader resource quotas, with focused regression tests.
-4. Complete E5 documentation/tooling review and preserve explicit limitations; the Android AArch64 native execution test remains ignored/skipped and is not a pass.
+4. Complete E5 documentation/tooling review and preserve explicit limitations; the Android AArch64 ELF build-and-execute test remains ignored/skipped and is not a pass.
 5. Keep the source repository's runner-provisioning failure visible, use the reviewed exact-SHA mirror fallback, and perform E6 forensic audit only after all mandatory criteria are satisfied.
 
 ## Gate
@@ -101,7 +101,7 @@ Remaining mandatory requirements include, at minimum:
 ### Completion and gate
 
 - **Implementation subtotal:** 84/100 provisional points (E1=7/10, E2=5/8, E3=8/8, E4=3/6, E5=1/4, E6=0/4; fixed weights unchanged).
-- **Verified completion:** 68/100. E1, E2, E4, E5 and E6 still have 0 verified points.
+- **Verified completion:** 60/100. E1, E2, E3, E4, E5 and E6 have 0 verified points under the current 100% gate.
 - **Next:** implement external dependency resolution/provenance, broaden stdlib, harden filesystem race/resource controls, finish developer tooling/docs, then perform E6 forensic audit.
 - **GATE:** **NOT PASSED — Milestone 100% remains in progress.**
 
@@ -115,10 +115,28 @@ The branch snapshot `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974` (after documentat
 - Focused standard-library/database: [40007463554](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463554) — SUCCESS.
 - Linux distro: [40007463563](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463563) — Ubuntu 24.04 and Debian 12 SUCCESS.
 - Cross-platform: [40007463527](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463527) — Ubuntu and Windows SUCCESS. Exact SHA is present in both job logs. Both platform jobs passed build, AST contract tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification. No `test result: FAILED` markers appear; each platform logs `OFFLINE VERIFICATION: PASS`.
-- Test counts: Ubuntu workspace run 215 passed / 0 failed / 0 ignored; Windows 210 passed / 0 failed / 0 ignored. The Android AArch64 native execution test ran and passed on Ubuntu. The Windows-specific native CLI test was filtered out because Windows is not an Android toolchain; it is not counted as passed on Windows.
+- Main workspace suite summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The separate Android AArch64 ELF build-and-execute test remains ignored on both platforms. The Android-target CLI test on Ubuntu only verifies artifact creation; it is not an Android runtime test. The Windows-specific CLI Android-target test was filtered out because Windows is not an Android toolchain.
 - Canonical source repository workflows for this SHA failed before steps with `runner_id=0` and empty step lists; those are infrastructure failures, not source test results.
 
-**Current totals:** implementation 84/100 provisional; verified 68/100; fixed ledger weights unchanged.  
+**Current totals:** implementation 84/100 provisional; verified 60/100; fixed ledger weights unchanged.  
 **GATE: NOT PASSED — Milestone 100% remains in progress.** External dependency resolution/provenance, broader stdlib, race-resistant filesystem/resource security, release/tooling/documentation completion and the E6 final audit remain outstanding.
 
 This checkpoint addition is documentation-only; the tested source snapshot is unchanged.
+
+
+## Forensic scoring correction — Android ELF execution remains unverified
+
+The prior checkpoint credited E3's 8/8 verified points based on Linux/Windows CI and an Android-target CLI build test. Inspection of `crates/one-core/tests/native_backend_android_aarch64.rs` shows the separate `build_native_menghasilkan_dan_menjalankan_elf_android_aarch64` test is explicitly `#[ignore]`; the CLI test `android_target_explicit_mempertahankan_build_native` only verifies that a build artifact exists. A successful artifact build is not a runtime execution pass.
+
+Therefore E3 remains **8/8 implemented, 0/8 verified** until the declared Android AArch64 ELF build-and-execute acceptance is satisfied or the repository contract explicitly excludes it. This is a correction to the verified score, not a weight change: implementation remains **84/100**, verified completion is **60/100**, E1–E6 verified points are **0/40**, and the 100% gate remains **NOT PASSED**.
+
+### Latest exact-SHA matrix
+
+The latest tested source snapshot is `8552fa915b972aeb47ed27c4e5f577ffdb539ecf`:
+
+- Focused stdlib/database [40008200945](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200945) — SUCCESS.
+- Linux distro [40008200684](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200684) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform [40008200962](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200962) — Ubuntu and Windows SUCCESS. Exact SHA verified in both logs; build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; one `OFFLINE VERIFICATION: PASS` per platform.
+- Main workspace summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The separate Android ELF build-and-execute test remains ignored on both platforms and is not counted as passed. Canonical repository Actions fail before steps with `runner_id=0`.
+
+This correction is documentation-only and does not change the tested source code snapshot.
