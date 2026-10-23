@@ -58,7 +58,7 @@ fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
 #[test]
 fn checked_in_stdlib_example_runs_through_one() {
     let output = run(include_str!("../../../examples/stdlib.one")).expect("example should execute");
-    assert_eq!(output, vec!["2", "benar", "pir,jeruk", "42", "7", "3"]);
+    assert_eq!(output, vec!["2", r#"["apel","jeruk"]"#, "benar", "pir,jeruk", "42", "7", "3"]);
 }
 
 #[test]
@@ -68,15 +68,17 @@ masukkan "nama" dan "Budi" ke kontak
 nama awal adalah nilai pemetaan dengan kontak dan "nama"
 kontak menjadi atur pemetaan dengan kontak dan "nama" dan "Ani"
 nama baru adalah nilai pemetaan dengan kontak dan "nama"
+json adalah ubah nilai ke json dengan kontak
 tampilkan nama awal
 tampilkan nama baru
+tampilkan json
 "#;
     let program = parse_human_core(source).expect("human-core mapping grammar should parse");
     let typed = analyze(&program).expect("mapping builtin types should analyze");
     let ir = lower(&typed).expect("mapping program should lower");
     let mut interpreter = Interpreter::new(CapabilitySet::none());
     let result = interpreter.execute(&ir).expect("mapping builtins should execute");
-    assert_eq!(result.output, vec!["Budi", "Ani"]);
+    assert_eq!(result.output, vec!["Budi", "Ani", r#"{"nama":"Ani"}"#]);
 }
 
 #[test]
