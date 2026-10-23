@@ -41,6 +41,7 @@ required = [
     "tests/human-vnext/valid/task-list.one",
     "tests/human-vnext/valid/text-block-boundaries.one",
     "tests/human-vnext/valid/instruction-like-text.one",
+    "tests/human-vnext/valid/opaque-text-whitespace.one",
     "tests/human-vnext/invalid/empty.one",
     "tests/human-vnext/invalid/orphan-instruction.one",
     "tests/human-vnext/invalid/unknown-instruction.one",
@@ -106,6 +107,7 @@ for marker in (
     "identifier_names_are_case_sensitive",
     "invalid_human_vnext_fixtures_are_rejected",
     "instruction_like_lines_remain_opaque_text_data",
+    "text_block_preserves_extra_spaces_and_tabs_as_data",
 ):
     if marker not in human_parser_tests:
         raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
@@ -187,8 +189,8 @@ print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
 human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
 human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
-if len(human_valid) < 5 or len(human_invalid) < 17:
-    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 5 valid and 17 invalid fixtures")
+if len(human_valid) < 6 or len(human_invalid) < 17:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 6 valid and 17 invalid fixtures")
 
 print(f"golden fixtures: {len(golden)}")
 print(f"human-vNext valid fixtures: {len(human_valid)}")
