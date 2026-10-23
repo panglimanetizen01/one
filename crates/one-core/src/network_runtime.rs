@@ -49,6 +49,7 @@ impl HttpRequest {
         {
             return Err(invalid());
         }
+        parse_http_authority(&self.authority)?;
 
         let mut bytes = format!("{} {} HTTP/1.1\r\nHost: {}\r\n", self.method, self.path, self.authority).into_bytes();
         let mut has_length = false;
@@ -88,7 +89,15 @@ pub fn parse_http_response(mut bytes: &[u8], max_body: usize) -> Result<HttpResp
     .and_then(|value| value.parse::<u16>().ok())
     .filter(|status| (100..=599).contains(status))
     .ok_or_else(|| NetworkRuntimeError::Protocol("Status HTTP tidak valid.".into()))?; let reason = parts.next().unwrap_or_default().to_string(); let mut headers = Vec::new(); let mut content_length = None; let mut chunked = false; for line in lines { let (name, value) = line.split_once(':').ok_or_else(|| NetworkRuntimeError::Protocol("Header HTTP tidak memiliki pemisah ':'.".into()))?; if !valid_http_header_name(name) || value.bytes().any(|byte| (byte < 0x20 && byte != b'\t') || byte == 0x7f) { return Err(NetworkRuntimeError::Protocol("Nama atau nilai header HTTP tidak valid.".into())); } let value = value.trim().to_string(); if name.eq_ignore_ascii_case("content-length") { if content_length.is_some() { return Err(NetworkRuntimeError::Protocol("Header Content-Length duplikat tidak diizinkan.".into())); } content_length = Some(value.parse::<usize>().map_err(|_| NetworkRuntimeError::Protocol("Content-Length tidak valid.".into()))?); } if name.eq_ignore_ascii_case("transfer-encoding") { if !value.eq_ignore_ascii_case("chunked") || chunked { return Err(NetworkRuntimeError::Protocol("Transfer-Encoding tidak didukung atau duplikat.".into())); } chunked = true; } if headers.len() >= 256 { return Err(NetworkRuntimeError::Protocol("Jumlah header HTTP melebihi batas.".into())); } headers.push((name.to_string(), value)); } if chunked && content_length.is_some() { return Err(NetworkRuntimeError::Protocol("Content-Length dan Transfer-Encoding tidak boleh hadir bersamaan.".into())); } let body = if chunked { parse_chunked_body(bytes, max_body)? } else if let Some(length) = content_length { if length > max_body { return Err(NetworkRuntimeError::Protocol("HTTP body melebihi batas ukuran.".into())); } if bytes.len() < length { return Err(NetworkRuntimeError::Protocol("HTTP body terpotong.".into())); } if bytes.len() > length { return Err(NetworkRuntimeError::Protocol("Data setelah Content-Length tidak diizinkan.".into())); } bytes.to_vec() } else { if bytes.len() > max_body { return Err(NetworkRuntimeError::Protocol("HTTP body melebihi batas ukuran.".into())); } bytes.to_vec() }; Ok(HttpResponse { status, reason, headers, body }) }
-fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, NetworkRuntimeError> { let mut output = Vec::new(); loop { let line_end = bytes.windows(2).position(|w| w == b"\r\n").ok_or_else(|| NetworkRuntimeError::Protocol("Ukuran HTTP chunk tidak lengkap.".into()))?; let size_text = std::str::from_utf8(&bytes[..line_end]).map_err(|_| NetworkRuntimeError::Protocol("Ukuran HTTP chunk tidak valid.".into()))?; let size = usize::from_str_radix(size_text.trim(), 16).map_err(|_| NetworkRuntimeError::Protocol("Ukuran HTTP chunk bukan heksadesimal.".into()))?; bytes = &bytes[line_end + 2..]; if size == 0 {
+fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, NetworkRuntimeError> { let mut output = Vec::new(); loop { let line_end = bytes.windows(2).position(|w| w == b"\r\n").ok_or_else(|| NetworkRuntimeError::Protocol("Ukuran HTTP chunk tidak lengkap.".into()))?;
+        if line_end == 0 || line_end > 1024 {
+            return Err(NetworkRuntimeError::Protocol("Baris ukuran HTTP chunk kosong atau melebihi batas.".into()));
+        }
+        let size_text = std::str::from_utf8(&bytes[..line_end]).map_err(|_| NetworkRuntimeError::Protocol("Ukuran HTTP chunk tidak valid.".into()))?;
+        if !size_text.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err(NetworkRuntimeError::Protocol("Ukuran HTTP chunk bukan heksadesimal kanonis.".into()));
+        }
+        let size = usize::from_str_radix(size_text, 16).map_err(|_| NetworkRuntimeError::Protocol("Ukuran HTTP chunk melampaui batas integer.".into()))?; bytes = &bytes[line_end + 2..]; if size == 0 {
             if bytes == b"\r\n" {
                 return Ok(output);
             }
@@ -312,6 +321,21 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
             16,
         ).expect("valid chunked response with a trailer");
         assert_eq!(response.body, b"hello");
+    }
+
+    #[test]
+    fn chunked_http_body_rejects_whitespace_and_overlong_size_lines() {
+        for body in [
+            &b"1 \r\nx\r\n0\r\n\r\n"[..],
+            &b" 1\r\nx\r\n0\r\n\r\n"[..],
+            &b"1;extension=yes\r\nx\r\n0\r\n\r\n"[..],
+        ] {
+            let response = [b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n".as_slice(), body].concat();
+            assert!(parse_http_response(&response, 16).is_err());
+        }
+        let huge_line = format!("{}\r\n", "a".repeat(1025));
+        let response = format!("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n{huge_line}");
+        assert!(parse_http_response(response.as_bytes(), usize::MAX).is_err());
     }
 
     #[test]
