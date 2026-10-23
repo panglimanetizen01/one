@@ -88,7 +88,7 @@ pub use orchestration_result::{
     OrchestrationResultError, normalize_result,
 };
 pub use orchestrator::{OrchestrationError, Orchestrator};
-pub use parser::parse;
+pub use parser::{parse, parse_human_core};
 pub use semantic::{TypedProgram, analyze, analyze_network};
 pub use target::{
     ArtifactFormat, ExecutionProfile, LinkerStrategy, ReferenceTargetBackend, ReferenceToolchain,
