@@ -49,6 +49,8 @@ required = [
     "tests/human-vnext/invalid/action-name-as-data.one",
     "tests/human-vnext/invalid/repeated-spaces.one",
     "tests/human-vnext/invalid/duplicate-data-action-name.one",
+    "crates/one-core/src/human_vnext.rs",
+    "crates/one-cli/tests/cli.rs",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -87,6 +89,27 @@ fixture = (ROOT / "tests/spec/grammar_examples.one").read_text(encoding="utf-8")
 for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika "):
     if marker not in fixture:
         raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
+
+human_parser_tests = (ROOT / "crates/one-core/src/human_vnext.rs").read_text(encoding="utf-8")
+for marker in (
+    "semantic_errors_report_the_relevant_declaration_line",
+    "rejects_noncanonical_identifier_edges_and_punctuation",
+    "invalid_human_vnext_fixtures_are_rejected",
+):
+    if marker not in human_parser_tests:
+        raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
+
+human_cli_tests = (ROOT / "crates/one-cli/tests/cli.rs").read_text(encoding="utf-8")
+for marker in (
+    "human_vnext_cli_runs_task_app_and_reopens_persistent_data",
+    "human_vnext_cli_rejects_missing_source_argument",
+    "human_vnext_cli_rejects_unknown_option_without_running_program",
+    "human_vnext_cli_reports_missing_source_file",
+    "human_vnext_cli_rejects_invalid_source_with_parser_diagnostic",
+    "human_vnext_cli_rejects_task_app_without_persistence_contract",
+):
+    if marker not in human_cli_tests:
+        raise SystemExit(f"HUMAN vNEXT CLI TESTS: missing required test {marker!r}")
 
 human_vnext = (ROOT / "examples/human-vnext/daftar-tugas.one").read_text(encoding="utf-8")
 for marker in (
