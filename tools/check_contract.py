@@ -165,8 +165,13 @@ for marker in (
         raise SystemExit(f"HUMAN vNEXT EXAMPLE: missing required instruction {marker!r}")
 
 ledger = (ROOT / "docs/verification/one-completion-ledger.md").read_text(encoding="utf-8")
-if "30% GATE NOT PASSED" not in ledger or "TOTAL" not in ledger:
-    raise SystemExit("COMPLETION LEDGER: missing explicit milestone status or weighted total")
+current_result = ledger.partition("## Current result")[2].partition("## Repository work checkpoint")[0]
+if (
+    "TOTAL" not in ledger
+    or "Milestone target: 30%" not in current_result
+    or not any(marker in current_result for marker in ("**Gate:** **NOT PASSED**", "**Gate:** **PASS GREEN LOCKED**"))
+):
+    raise SystemExit("COMPLETION LEDGER: missing valid current milestone status or weighted total")
 
 grammar_review = (ROOT / "docs/verification/human-vnext-grammar-review.md").read_text(encoding="utf-8")
 if "ACCEPTED WITH EXPLICIT SCOPE BOUNDARIES" not in grammar_review or "External sign-off" not in grammar_review or "none claimed" not in grammar_review:
