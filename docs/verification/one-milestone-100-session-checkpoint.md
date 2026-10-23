@@ -135,3 +135,9 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - The in-progress mirror run 39976171105 targeted the prior checkpoint SHA 54779adc74032cc88fa30950e6700d135b521353 and therefore does not verify this newer source edit. The mirror selector must be updated again to the checkpoint SHA produced by this update.
 - Canonical repository CI continues to return zero-step failures; it cannot substitute for the independent mirror's required build, Clippy, workspace, real-network, and offline checks.
 - Ledger stays at 75/100 provisional and 60/100 verified. No new points are awarded until the final exact-SHA matrix and remaining acceptance requirements pass.
+
+### HTTPS default-port correction
+
+- Source commits 4859114360ccd41943230a0f8faf95eda129a1da and 07e73e1deb7100c01094523fd3f1c9a005ebf70 add a protocol-specific default-port argument to the shared HTTP authority parser and ensure HTTPS uses port 443 when no port is supplied. Regression coverage checks default ports for DNS names and bracketed IPv6 while preserving explicit ports.
+- This fix was made after the earlier mirror target; it invalidates any verification run targeting the earlier SHA. The final matrix target must be the commit produced by the next checkpoint update.
+- No ledger points are added until the required exact-SHA checks and broader Definition of Done pass.
