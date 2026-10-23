@@ -527,6 +527,40 @@ fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
     Ok(tasks)
 }
 
+#[cfg(windows)]
+fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+
+    #[link(name = "Kernel32")]
+    unsafe extern "system" {
+        fn MoveFileExW(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
+    }
+
+    const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
+    const MOVEFILE_WRITE_THROUGH: u32 = 0x8;
+    let from: Vec<u16> = temporary.as_os_str().encode_wide().chain(Some(0)).collect();
+    let to: Vec<u16> = destination.as_os_str().encode_wide().chain(Some(0)).collect();
+    // SAFETY: both paths are NUL-terminated UTF-16 buffers that remain alive for
+    // the call; MoveFileExW does not retain either pointer.
+    let result = unsafe {
+        MoveFileExW(
+            from.as_ptr(),
+            to.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(windows))]
+fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+    std::fs::rename(temporary, destination)
+}
+
 fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
     if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)
@@ -539,12 +573,14 @@ fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
         }
         contents.push_str(&format!("{}\t{}\t{}\n", task.id, if task.done { 1 } else { 0 }, task.title));
     }
-    let mut temporary = path.as_os_str().to_os_string();
-    temporary.push(".tmp");
-    let temporary = std::path::PathBuf::from(temporary);
-    std::fs::write(&temporary, contents)
-        .map_err(|error| format!("Tidak dapat menulis data sementara: {error}"))?;
-    if let Err(error) = std::fs::rename(&temporary, path) {
+    let mut temporary_name = path.as_os_str().to_os_string();
+    temporary_name.push(format!(".tmp.{}", std::process::id()));
+    let temporary = std::path::PathBuf::from(temporary_name);
+    if let Err(error) = std::fs::write(&temporary, contents) {
+        let _ = std::fs::remove_file(&temporary);
+        return Err(format!("Tidak dapat menulis data sementara: {error}"));
+    }
+    if let Err(error) = replace_file(&temporary, path) {
         let _ = std::fs::remove_file(&temporary);
         return Err(format!("Tidak dapat menyimpan data tugas secara atomik: {error}"));
     }
