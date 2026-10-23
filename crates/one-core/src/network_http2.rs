@@ -204,7 +204,7 @@ mod tests {
         let mut oversized = http::HeaderMap::new();
         oversized.insert(
             http::HeaderName::from_static("x-large"),
-            http::HeaderValue::from_bytes(&vec![b'x'; MAX_HTTP2_HEADER_BYTES]).expect("header value"),
+            http::HeaderValue::from_bytes(&[b'x'; MAX_HTTP2_HEADER_BYTES]).expect("header value"),
         );
         assert!(collect_bounded_headers(&oversized).is_err());
     }
