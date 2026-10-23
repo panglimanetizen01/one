@@ -27,7 +27,19 @@ The v0.1 boundary reserves domains for:
 
 Only domains whose semantic/effect contracts are already defined may be implemented as stable v0.1 APIs.
 
-## 4. Capability enforcement
+## 4. Current deterministic host-helper implementation
+
+The `one_core::stdlib` Rust module currently exposes the following pure helper operations for runtime integration and tests:
+
+- `display_value`: stable display representation of a runtime value.
+- `text_length`, `text_contains`, `text_trim`, `text_replace`, `text_split`, and `text_to_integer`: deterministic text operations. Length counts Unicode scalar values, not grapheme clusters; split/replace use literal separators/needles; empty split separators and invalid input types return `None`.
+- `list_length` and `list_get`: checked list access with zero-based indexes; negative and out-of-range indexes fail.
+- `map_get`, `map_set`, and `map_from_entries`: text-keyed mappings backed by ordered keys for deterministic display.
+- `number_abs`, `number_divide`, `number_min`, and `number_max`: checked integer helpers; overflow and division by zero are rejected.
+
+These are currently public Rust library helpers with module unit tests. **They are not yet all callable as built-ins from `.one` source programs and do not, by themselves, satisfy the standard-library completion gate.** Runtime/source-level registration, structured language diagnostics for helper failures, and cross-backend conformance remain required before the corresponding API can be marked fully supported.
+
+## 5. Capability enforcement
 
 Effectful library calls retain their declared capability requirements. Wrapping `filesystem.read` in a library function cannot bypass or erase that requirement.
 
