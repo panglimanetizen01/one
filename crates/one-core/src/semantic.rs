@@ -27,6 +27,35 @@ impl Analyzer {
                 "jalankan proses" => { if args.len() != 1 { return Err(DiagnosticBundle::single(Diagnostic::error("E2023", "'jalankan proses' membutuhkan tepat satu target.", Some(span.clone())))); } let target = self.infer_at(&args[0], span)?; if !matches!(target, Type::Text | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2024", "Target 'jalankan proses' harus berupa teks.", Some(span.clone())))); } }
                 "kueri database" => { if args.len() < 2 { return Err(DiagnosticBundle::single(Diagnostic::error("E2028", "'kueri database' membutuhkan database dan SQL.", Some(span.clone())))); } for (index, arg) in args.iter().enumerate() { let ty = self.infer_at(arg, span)?; if !matches!(ty, Type::Text | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2029", format!("Argumen {} 'kueri database' harus berupa teks.", index + 1), Some(span.clone())))); } } }
                 "buat daftar" => { if args.len() != 1 || !matches!(&args[0], Expr::Identifier(_)) { return Err(DiagnosticBundle::single(Diagnostic::error("E2005", "'buat daftar' membutuhkan nama daftar.", Some(span.clone())))); } if let Expr::Identifier(name) = &args[0] { self.current_scope().insert(name.clone(), Type::List); } }
+                "buat pemetaan" => {
+                    if args.len() != 1 || !matches!(&args[0], Expr::Identifier(_)) {
+                        return Err(DiagnosticBundle::single(Diagnostic::error("E2032", "'buat pemetaan' membutuhkan nama pemetaan.", Some(span.clone()))));
+                    }
+                    if let Expr::Identifier(name) = &args[0] { self.current_scope().insert(name.clone(), Type::Map); }
+                }
+                "masukkan ke pemetaan" => {
+                    if args.len() != 3 { return Err(DiagnosticBundle::single(Diagnostic::error("E2033", "'masukkan' membutuhkan kunci, nilai, dan nama pemetaan.", Some(span.clone())))); }
+                    let key_type = self.infer_at(&args[0], span)?;
+                    if !matches!(key_type, Type::Text | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2034", "Kunci pemetaan harus berupa teks.", Some(span.clone())))); }
+                    self.infer_at(&args[1], span)?;
+                    let map_name = match &args[2] { Expr::Identifier(name) => name, _ => return Err(DiagnosticBundle::single(Diagnostic::error("E2035", "Nama pemetaan harus berupa identifier.", Some(span.clone())))) };
+                    match self.lookup(map_name) {
+                        Some(Type::Map | Type::Any) => {},
+                        Some(_) => return Err(DiagnosticBundle::single(Diagnostic::error("E2036", format!("'{}' bukan pemetaan.", map_name), Some(span.clone())))),
+                        None => return Err(DiagnosticBundle::single(Diagnostic::error("E2037", format!("Pemetaan '{}' belum dibuat.", map_name), Some(span.clone())))),
+                    }
+                }
+                "ambil kunci dari pemetaan" | "hapus kunci dari pemetaan" => {
+                    if args.len() != 2 { return Err(DiagnosticBundle::single(Diagnostic::error("E2038", "Operasi kunci pemetaan membutuhkan kunci dan nama pemetaan.", Some(span.clone())))); }
+                    let key_type = self.infer_at(&args[0], span)?;
+                    if !matches!(key_type, Type::Text | Type::Any) { return Err(DiagnosticBundle::single(Diagnostic::error("E2039", "Kunci pemetaan harus berupa teks.", Some(span.clone())))); }
+                    let map_name = match &args[1] { Expr::Identifier(name) => name, _ => return Err(DiagnosticBundle::single(Diagnostic::error("E2040", "Nama pemetaan harus berupa identifier.", Some(span.clone())))) };
+                    match self.lookup(map_name) {
+                        Some(Type::Map | Type::Any) => {},
+                        Some(_) => return Err(DiagnosticBundle::single(Diagnostic::error("E2041", format!("'{}' bukan pemetaan.", map_name), Some(span.clone())))),
+                        None => return Err(DiagnosticBundle::single(Diagnostic::error("E2042", format!("Pemetaan '{}' belum dibuat.", map_name), Some(span.clone())))),
+                    }
+                }
                 "tambahkan" | "hapus" => { if args.len() != 2 { return Err(DiagnosticBundle::single(Diagnostic::error("E2006", format!("'{}' membutuhkan nilai dan nama daftar.", name), Some(span.clone())))); } if let Expr::Identifier(list_name) = &args[1] { match self.lookup(list_name) { Some(Type::List | Type::Any) => {}, Some(_) => return Err(DiagnosticBundle::single(Diagnostic::error("E2007", format!("'{}' bukan daftar.", list_name), Some(span.clone())))), None => return Err(DiagnosticBundle::single(Diagnostic::error("E2008", format!("Saya belum menemukan daftar '{}'.", list_name), Some(span.clone())))), } } else { return Err(DiagnosticBundle::single(Diagnostic::error("E2009", "Nama daftar harus berupa identifier.", Some(span.clone())))); } }
                 _ => { for arg in args { self.infer_at(arg, span)?; } }
             },
