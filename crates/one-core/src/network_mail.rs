@@ -138,15 +138,15 @@ impl ImapClient {
         Ok(Self { stream, next_tag: 1 })
     }
 
-    fn tag(&mut self) -> String {
-        let tag = format!("a{:03}", self.next_tag);
-        self.next_tag += 1;
-        tag
+    fn tag(&mut self) -> Result<String, MailProtocolError> {
+        let current = self.next_tag;
+        self.next_tag = self.next_tag.checked_add(1).ok_or(MailProtocolError::InvalidResponse)?;
+        Ok(format!("a{:03}", current))
     }
 
     fn send(&mut self, command_text: &str) -> Result<(String, Vec<String>), MailProtocolError> {
         validate_command_field(command_text)?;
-        let tag = self.tag();
+        let tag = self.tag()?;
         self.stream.write_all(format!("{tag} {command_text}\r\n").as_bytes()).map_err(io_error)?;
         let mut untagged = Vec::new();
         let mut response_bytes = 0usize;
