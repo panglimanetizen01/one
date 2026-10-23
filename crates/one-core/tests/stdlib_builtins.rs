@@ -32,7 +32,7 @@ fn list_builtins_read_values_and_length() {
 #[test]
 fn builtins_report_invalid_arguments_and_zero_division() {
     let bad_type = "hasil adalah panjang teks dengan 42\ntampilkan hasil\n";
-    assert!(run(bad_type).unwrap_err().contains("R3022"));
+    assert!(run(bad_type).unwrap_err().contains("E2032"));
 
     let zero_division = "hasil adalah bagi bulat dengan 7 dan 0\ntampilkan hasil\n";
     assert!(run(zero_division).unwrap_err().contains("R3022"));
