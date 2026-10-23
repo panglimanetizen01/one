@@ -716,6 +716,7 @@ mod grammar_fixture_tests {
             ("minimal-data", include_str!("../../../tests/human-vnext/valid/minimal-data.one")),
             ("unicode-name", include_str!("../../../tests/human-vnext/valid/unicode-name.one")),
             ("task-list", include_str!("../../../tests/human-vnext/valid/task-list.one")),
+            ("text-block-boundaries", include_str!("../../../tests/human-vnext/valid/text-block-boundaries.one")),
         ] {
             parse(source).unwrap_or_else(|error| panic!("valid fixture {name} rejected: {error}"));
         }
@@ -728,6 +729,12 @@ mod grammar_fixture_tests {
             ("orphan-instruction", include_str!("../../../tests/human-vnext/invalid/orphan-instruction.one")),
             ("unknown-instruction", include_str!("../../../tests/human-vnext/invalid/unknown-instruction.one")),
             ("unresolved-display", include_str!("../../../tests/human-vnext/invalid/unresolved-display.one")),
+            ("indented-application", include_str!("../../../tests/human-vnext/invalid/indented-application.one")),
+            ("missing-text-block", include_str!("../../../tests/human-vnext/invalid/missing-text-block.one")),
+            ("duplicate-data", include_str!("../../../tests/human-vnext/invalid/duplicate-data.one")),
+            ("duplicate-persistence", include_str!("../../../tests/human-vnext/invalid/duplicate-persistence.one")),
+            ("action-name-as-data", include_str!("../../../tests/human-vnext/invalid/action-name-as-data.one")),
+            ("repeated-spaces", include_str!("../../../tests/human-vnext/invalid/repeated-spaces.one")),
         ] {
             assert!(parse(source).is_err(), "invalid fixture {name} was accepted");
         }
