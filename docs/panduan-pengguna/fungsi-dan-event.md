@@ -33,8 +33,8 @@ tampilkan jumlah
 
 Subset bawaan yang saat ini terhubung ke jalur parser → analisis semantik → IR → interpreter:
 
-- Teks: `panjang teks`, `teks memuat`, `pangkas teks`, `ganti teks`, `pisah teks`, `ubah teks ke angka`.
-- Daftar: `panjang daftar`, `ambil indeks` (indeks mulai dari nol).
+- Teks: `panjang teks`, `teks memuat`, `teks diawali`, `teks diakhiri`, `huruf kecil`, `huruf besar`, `pangkas teks`, `ganti teks`, `pisah teks`, `ubah teks ke angka`.
+- Daftar: `panjang daftar`, `ambil indeks` (indeks mulai dari nol), `gabung teks` (hanya daftar teks), `jumlah daftar angka` (penjumlahan integer dengan pemeriksaan overflow).
 - Bilangan: `nilai mutlak`, `bagi bulat`, `angka minimum`, `angka maksimum`.
 - Pemetaan: `nilai pemetaan`, `atur pemetaan` (saat ini digunakan bersama grammar pemetaan human-core yang opt-in).
 - Serialisasi: `ubah nilai ke json` menghasilkan JSON deterministik; kedalaman lebih dari 128 tingkat ditolak.
