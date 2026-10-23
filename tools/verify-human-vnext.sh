@@ -12,6 +12,14 @@ if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
   git status --short >&2
   exit 2
 fi
+REMOTE_URL="$(git remote get-url origin)"
+case "$REMOTE_URL" in
+  https://github.com/panglimanetizen01/one.git|https://github.com/panglimanetizen01/one|git@github.com:panglimanetizen01/one.git) ;;
+  *)
+    echo "VERIFICATION ERROR: origin is not the canonical ONE GitHub repository." >&2
+    exit 2
+    ;;
+esac
 LOCAL_SHA="$(git rev-parse HEAD)"
 REMOTE_SHA="$(git ls-remote origin "refs/heads/$BRANCH" | awk 'NR == 1 {print $1}')"
 if [[ -z "$REMOTE_SHA" || "$LOCAL_SHA" != "$REMOTE_SHA" ]]; then
