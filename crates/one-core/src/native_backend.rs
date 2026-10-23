@@ -523,10 +523,13 @@ mod linker_discovery_tests {
         std::fs::create_dir_all(&root).unwrap();
         std::fs::create_dir_all(&path_candidate).unwrap();
 
-        // Use system executables rather than scripts in the temporary directory:
-        // some hosted runners mount temporary directories with noexec.
-        std::os::unix::fs::symlink("/bin/true", &expected).unwrap();
-        std::os::unix::fs::symlink("/bin/false", &path_linker).unwrap();
+        // Use the current test executable rather than hard-coded /bin paths.
+        // Minimal containers and hosted runners may not provide those paths.
+        // Rust test binaries exit successfully for --version, so they provide a
+        // portable executable probe without relying on a shell or noexec temp dirs.
+        let test_executable = std::env::current_exe().unwrap();
+        std::os::unix::fs::symlink(&test_executable, &expected).unwrap();
+        std::os::unix::fs::symlink(&test_executable, &path_linker).unwrap();
 
         assert_eq!(
             resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
