@@ -155,7 +155,7 @@ fn stdlib_example_runs_through_the_official_cli() {
     );
     assert_eq!(
         String::from_utf8_lossy(&output.stdout).lines().collect::<Vec<_>>(),
-        vec!["2", "benar", "pir,jeruk", "42", "7", "3"]
+        vec!["2", r#"["apel","jeruk"]"#, "benar", "pir,jeruk", "42", "7", "3"]
     );
 }
 
