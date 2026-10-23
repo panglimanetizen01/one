@@ -98,6 +98,21 @@ fn unix_timestamp_formatter_runs_through_the_canonical_pipeline() {
 }
 
 #[test]
+fn utc_timestamp_parser_runs_through_the_canonical_pipeline() {
+    let source = "epoch adalah unix dari waktu utc dengan \"1970-01-01T00:00:00Z\"\npre_epoch adalah unix dari waktu utc dengan \"1969-12-31T23:59:59Z\"\nleap adalah unix dari waktu utc dengan \"2024-02-29T00:00:00Z\"\ntampilkan epoch\ntampilkan pre_epoch\ntampilkan leap\n";
+    assert_eq!(
+        run(source).expect("UTC timestamp parser should execute"),
+        vec!["0", "-1", "1709164800"]
+    );
+
+    let invalid_type = "hasil adalah unix dari waktu utc dengan 0\ntampilkan hasil\n";
+    assert!(run(invalid_type).unwrap_err().contains("E2043"));
+
+    let invalid_date = "hasil adalah unix dari waktu utc dengan \"2023-02-29T00:00:00Z\"\ntampilkan hasil\n";
+    assert!(run(invalid_date).unwrap_err().contains("R3022"));
+}
+
+#[test]
 fn checked_in_stdlib_example_runs_through_one() {
     let output = run(include_str!("../../../examples/stdlib.one")).expect("example should execute");
     assert_eq!(output, vec!["2", r#"["apel","jeruk"]"#, "benar", "pir,jeruk", "42", "7", "3"]);
