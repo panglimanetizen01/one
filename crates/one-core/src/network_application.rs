@@ -4,6 +4,10 @@ use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
 
+const MAX_APPLICATION_REPLY_BYTES: usize = 16 * 1024 * 1024;
+const MAX_APPLICATION_REPLY_LINES: usize = 100_000;
+const MAX_APPLICATION_FIELD_BYTES: usize = 64 * 1024;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ApplicationProtocolError {
     CapabilityDenied,
@@ -47,10 +51,17 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
     if first.len() < 5 { return Err(ApplicationProtocolError::InvalidResponse); }
     let code: u16 = first[..3].parse().map_err(|_| ApplicationProtocolError::InvalidResponse)?;
     let multiline = first.as_bytes()[3] == b'-';
+    let mut total_bytes = first.len();
+    let mut line_count = 1usize;
     let mut text = first[4..].trim_end().to_string();
     if multiline {
         loop {
             let line = read_line(stream)?;
+            total_bytes = total_bytes.checked_add(line.len()).ok_or(ApplicationProtocolError::InvalidResponse)?;
+            line_count = line_count.checked_add(1).ok_or(ApplicationProtocolError::InvalidResponse)?;
+            if total_bytes > MAX_APPLICATION_REPLY_BYTES || line_count > MAX_APPLICATION_REPLY_LINES {
+                return Err(ApplicationProtocolError::InvalidResponse);
+            }
             if line.len() >= 5 && line[..3].parse::<u16>().ok() == Some(code) && line.as_bytes()[3] == b' ' { text.push('\n'); text.push_str(line[4..].trim_end()); break; }
             text.push('\n'); text.push_str(line.trim_end());
         }
@@ -59,7 +70,14 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
 }
 
 fn validate_command_field(value: &str) -> Result<(), ApplicationProtocolError> {
-    if value.contains('\r') || value.contains('\n') { Err(ApplicationProtocolError::InvalidResponse) } else { Ok(()) }
+    if value.is_empty()
+        || value.len() > MAX_APPLICATION_FIELD_BYTES
+        || value.bytes().any(|byte| byte < 0x20 || byte == 0x7f)
+    {
+        Err(ApplicationProtocolError::InvalidResponse)
+    } else {
+        Ok(())
+    }
 }
 
 fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), ApplicationProtocolError> {
@@ -86,6 +104,11 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
     validate_command_field(sender)?;
     validate_command_field(recipient)?;
     validate_command_field(subject)?;
+    if body.len() > MAX_APPLICATION_REPLY_BYTES
+        || body.bytes().any(|byte| byte == 0 || (byte < 0x20 && !matches!(byte, b'\\r' | b'\\n' | b'\\t')))
+    {
+        return Err(ApplicationProtocolError::InvalidResponse);
+    }
     let mut stream = connect(address, timeout, caps)?;
     let (code, _) = read_ftp_reply(&mut stream)?;
     if code != 220 { return Err(ApplicationProtocolError::Server(code, "SMTP greeting rejected".into())); }
