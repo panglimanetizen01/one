@@ -264,9 +264,12 @@ pub fn value_to_json(value: &Value) -> Option<Value> {
 
 /// Parse JSON containing text, signed 64-bit integers, booleans, null, arrays, and objects.
 /// Decimal/exponent numbers are rejected because the runtime has no floating-point value type.
+const MAX_JSON_INPUT_BYTES: usize = 16 * 1024 * 1024;
+
 pub fn json_to_value(value: &Value) -> Option<Value> {
     match value {
-        Value::Text(source) => JsonParser::parse(source),
+        Value::Text(source) if source.len() <= MAX_JSON_INPUT_BYTES => JsonParser::parse(source),
+        Value::Text(_) => None,
         _ => None,
     }
 }
@@ -584,5 +587,11 @@ mod tests {
         assert_eq!(number_min(&Value::Number(4), &Value::Number(-2)), Some(Value::Number(-2)));
         assert_eq!(number_max(&Value::Number(4), &Value::Number(-2)), Some(Value::Number(4)));
         assert_eq!(number_max(&Value::Text("4".into()), &Value::Number(2)), None);
+    }
+
+    #[test]
+    fn json_parser_rejects_inputs_above_the_byte_limit_before_allocating_parser_state() {
+        let oversized = Value::Text(" ".repeat(MAX_JSON_INPUT_BYTES + 1));
+        assert_eq!(json_to_value(&oversized), None);
     }
 }
