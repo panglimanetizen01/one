@@ -59,7 +59,7 @@ fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, Netw
                 if !valid_http_header_name(name)
                     || name.eq_ignore_ascii_case("content-length")
                     || name.eq_ignore_ascii_case("transfer-encoding")
-                    || value.bytes().any(|byte| (byte < 0x20 && byte != b'\\t') || byte == 0x7f)
+                    || value.bytes().any(|byte| (byte < 0x20 && byte != b'\t') || byte == 0x7f)
                 {
                     return Err(NetworkRuntimeError::Protocol("Trailer HTTP tidak valid atau mengubah framing.".into()));
                 }
