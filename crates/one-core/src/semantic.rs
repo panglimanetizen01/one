@@ -21,6 +21,8 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
             ("bagi bulat".to_owned(), 2),
             ("angka minimum".to_owned(), 2),
             ("angka maksimum".to_owned(), 2),
+            ("nilai pemetaan".to_owned(), 2),
+            ("atur pemetaan".to_owned(), 3),
         ]),
     }; analyzer.register_functions(&program.statements)?; analyzer.analyze_block(&program.statements)?; Ok(TypedProgram { program: program.clone() }) }
 pub fn analyze_network(operation: &NetworkOperation) -> Result<(), DiagnosticBundle> { operation.validate() }
@@ -106,6 +108,8 @@ impl Analyzer {
                 "ubah teks ke angka" => Some(vec![Type::Text]),
                 "panjang daftar" => Some(vec![Type::List]),
                 "ambil indeks" => Some(vec![Type::List, Type::Number]),
+                "nilai pemetaan" => Some(vec![Type::Map, Type::Text]),
+                "atur pemetaan" => Some(vec![Type::Map, Type::Text, Type::Any]),
                 "nilai mutlak" => Some(vec![Type::Number]),
                 "bagi bulat" | "angka minimum" | "angka maksimum" => Some(vec![Type::Number, Type::Number]),
                 _ => None,
