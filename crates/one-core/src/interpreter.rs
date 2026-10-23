@@ -13,6 +13,7 @@ use crate::orchestration_audit::AuditRecord;
 use crate::orchestration_result::{normalize_result, NormalizationExpectation, NormalizedValue};
 use crate::orchestrator::{OrchestrationError, Orchestrator};
 use crate::runtime::{Environment, Value};
+use crate::stdlib;
 #[derive(Debug, Clone, PartialEq, Eq)] pub struct ExecutionResult { pub output: Vec<String> }
 #[derive(Debug, Clone, PartialEq, Eq)] pub struct NetworkExecutionResult { pub description: String, pub performed_external_io: bool }
 #[derive(Debug, Clone, PartialEq, Eq)] pub struct RuntimeError { pub code: &'static str, pub message: String }
@@ -106,5 +107,52 @@ impl Interpreter {
 }, "tambahkan" | "hapus" => { if args.len() != 2 { return Err(RuntimeError { code: "R3010", message: format!("'{}' membutuhkan nilai dan nama daftar.", name) }); } let item = match &args[0] { IrExpr::Identifier(word) => env.get(word).unwrap_or_else(|| Value::Text(word.clone())), _ => self.eval(&args[0], env)? }; let list_name = match &args[1] { IrExpr::Identifier(value) => value, _ => return Err(RuntimeError { code: "R3011", message: "Nama daftar harus berupa identifier.".into() }) }; let mut list = env.get(list_name).ok_or_else(|| RuntimeError { code: "R3012", message: format!("Saya belum menemukan daftar '{}'.", list_name) })?; match &mut list { Value::List(values) if name == "tambahkan" => values.push(item), Value::List(values) => { if let Some(index) = values.iter().position(|v| v == &item) { values.remove(index); } }, _ => return Err(RuntimeError { code: "R3013", message: format!("'{}' bukan daftar.", list_name) }) } let _ = env.assign(list_name, list); }, "gunakan proses" => { if !self.capabilities.permits(Capability::Process) { return Err(RuntimeError { code: "R3014", message: "Kemampuan proses belum diberikan kepada program.".into() }); } }, _ => return Err(RuntimeError { code: "R3015", message: format!("Aksi '{}' belum memiliki implementasi standard library.", name) }) } Ok(()) }
  fn eval(&mut self, expr: &IrExpr, env: &Environment) -> Result<Value, RuntimeError> { match expr { IrExpr::Text(v) => Ok(Value::Text(v.clone())), IrExpr::Number(v) => Ok(Value::Number(*v)), IrExpr::Boolean(v) => Ok(Value::Boolean(*v)), IrExpr::Nothing => Ok(Value::Nothing), IrExpr::Identifier(name) => env.get(name).ok_or_else(|| RuntimeError { code: "R3016", message: format!("Saya belum menemukan '{}'.", name) }), IrExpr::Binary { left, op, right } => { let left_value = self.eval(left, env)?; let right_value = self.eval(right, env)?; self.eval_binary(*op, left_value, right_value) }, IrExpr::Call { name, args } => self.call_function(name, args, env) } }
  fn eval_binary(&self, op: BinaryOp, left: Value, right: Value) -> Result<Value, RuntimeError> { match (op, left, right) { (BinaryOp::Add, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)), (BinaryOp::Subtract, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a - b)), (BinaryOp::Multiply, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a * b)), (BinaryOp::Divide, Value::Number(a), Value::Number(b)) if b != 0 => Ok(Value::Number(a / b)), (BinaryOp::Divide, _, Value::Number(0)) => Err(RuntimeError { code: "R3017", message: "Pembagian dengan nol tidak diperbolehkan.".into() }), (BinaryOp::Equal, a, b) => Ok(Value::Boolean(a == b)), (BinaryOp::Greater, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a > b)), (BinaryOp::Less, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a < b)), (BinaryOp::AtMost, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a <= b)), (BinaryOp::AtLeast, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a >= b)), (BinaryOp::Add, Value::Text(a), Value::Text(b)) => Ok(Value::Text(format!("{}{}", a, b))), _ => Err(RuntimeError { code: "R3018", message: "Operasi tidak cocok dengan tipe nilai.".into() }) } }
- fn call_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Environment) -> Result<Value, RuntimeError> { let (params, result, body) = self.functions.get(name).cloned().ok_or_else(|| RuntimeError { code: "R3019", message: format!("Pekerjaan '{}' belum dibuat.", name) })?; if params.len() != args.len() { return Err(RuntimeError { code: "R3020", message: format!("Pekerjaan '{}' membutuhkan {} parameter.", name, params.len()) }); } let mut env = caller_env.clone(); env.push(); for (param, arg) in params.iter().zip(args) { let value = self.eval(arg, caller_env)?; env.define(param.clone(), value); } let mut ignored_output = Vec::new(); self.exec_block(&body, &mut env, &mut ignored_output)?; self.eval(&result, &env) }
+ fn call_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Environment) -> Result<Value, RuntimeError> {
+    let builtin = matches!(name,
+        "panjang teks" | "teks memuat" | "pangkas teks" | "ganti teks" |
+        "pisah teks" | "ubah teks ke angka" | "panjang daftar" | "ambil indeks" |
+        "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum"
+    );
+    if builtin {
+        let values = args.iter().map(|arg| self.eval(arg, caller_env)).collect::<Result<Vec<_>, _>>()?;
+        let result = match name {
+            "panjang teks" => stdlib::text_length(&values[0]),
+            "teks memuat" => stdlib::text_contains(&values[0], &values[1]),
+            "pangkas teks" => stdlib::text_trim(&values[0]),
+            "ganti teks" => stdlib::text_replace(&values[0], &values[1], &values[2]),
+            "pisah teks" => stdlib::text_split(&values[0], &values[1]),
+            "ubah teks ke angka" => stdlib::text_to_integer(&values[0]),
+            "panjang daftar" => stdlib::list_length(&values[0]),
+            "ambil indeks" => stdlib::list_get(&values[0], &values[1]),
+            "nilai mutlak" => stdlib::number_abs(&values[0]),
+            "bagi bulat" => stdlib::number_divide(&values[0], &values[1]),
+            "angka minimum" => stdlib::number_min(&values[0], &values[1]),
+            "angka maksimum" => stdlib::number_max(&values[0], &values[1]),
+            _ => None,
+        };
+        return result.ok_or_else(|| RuntimeError {
+            code: "R3022",
+            message: format!("Argumen tidak valid atau operasi '{}' gagal.", name),
+        });
+    }
+    let (params, result, body) = self.functions.get(name).cloned().ok_or_else(|| RuntimeError {
+        code: "R3019",
+        message: format!("Pekerjaan '{}' belum dibuat.", name),
+    })?;
+    if params.len() != args.len() {
+        return Err(RuntimeError {
+            code: "R3020",
+            message: format!("Pekerjaan '{}' membutuhkan {} parameter.", name, params.len()),
+        });
+    }
+    let mut env = caller_env.clone();
+    env.push();
+    for (param, arg) in params.iter().zip(args) {
+        let value = self.eval(arg, caller_env)?;
+        env.define(param.clone(), value);
+    }
+    let mut ignored_output = Vec::new();
+    self.exec_block(&body, &mut env, &mut ignored_output)?;
+    self.eval(&result, &env)
+}
 }
