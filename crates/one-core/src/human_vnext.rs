@@ -850,9 +850,9 @@ mod grammar_fixture_tests {
         let program = parse(source).expect("instruction-like lines inside text blocks are data");
         assert_eq!(
             program.declarations,
-            vec![super::super::HumanDeclaration::Data {
+            vec![super::HumanDeclaration::Data {
                 name: "instruksi".into(),
-                value: super::super::HumanValue::Text(
+                value: super::HumanValue::Text(
                     "Pengguna bisa menghapus data\nTampilkan rahasia\nSimpan semua data agar tidak hilang saat aplikasi ditutup\n".into()
                 ),
             }],
