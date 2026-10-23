@@ -112,12 +112,13 @@ impl Interpreter {
         "panjang teks" | "teks memuat" | "pangkas teks" | "ganti teks" |
         "pisah teks" | "ubah teks ke angka" | "panjang daftar" | "ambil indeks" |
         "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" |
-        "nilai pemetaan" | "atur pemetaan" | "ubah nilai ke json"
+        "nilai pemetaan" | "atur pemetaan" | "ubah nilai ke json" |
+        "teks diawali" | "teks diakhiri" | "huruf kecil" | "huruf besar" | "gabung teks" | "jumlah daftar angka"
     );
     if builtin {
         let expected_arity = match name {
-            "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "ubah nilai ke json" => 1,
-            "teks memuat" | "pisah teks" | "ambil indeks" | "bagi bulat" | "angka minimum" | "angka maksimum" | "nilai pemetaan" => 2,
+            "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "jumlah daftar angka" => 1,
+            "teks memuat" | "pisah teks" | "ambil indeks" | "bagi bulat" | "angka minimum" | "angka maksimum" | "nilai pemetaan" | "teks diawali" | "teks diakhiri" | "gabung teks" => 2,
             "atur pemetaan" => 3,
             "ganti teks" => 3,
             _ => 0,
@@ -145,6 +146,12 @@ impl Interpreter {
             "nilai pemetaan" => stdlib::map_get(&values[0], &values[1]),
             "atur pemetaan" => stdlib::map_set(values[0].clone(), &values[1], values[2].clone()),
             "ubah nilai ke json" => stdlib::value_to_json(&values[0]),
+            "teks diawali" => stdlib::text_starts_with(&values[0], &values[1]),
+            "teks diakhiri" => stdlib::text_ends_with(&values[0], &values[1]),
+            "huruf kecil" => stdlib::text_lowercase(&values[0]),
+            "huruf besar" => stdlib::text_uppercase(&values[0]),
+            "gabung teks" => stdlib::list_join_text(&values[0], &values[1]),
+            "jumlah daftar angka" => stdlib::list_sum_numbers(&values[0]),
             _ => None,
         };
         return result.ok_or_else(|| RuntimeError {
