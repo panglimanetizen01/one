@@ -764,20 +764,22 @@ mod grammar_fixture_tests {
 
     #[test]
     fn invalid_human_vnext_fixtures_are_rejected() {
-        for (name, source) in [
-            ("empty", include_str!("../../../tests/human-vnext/invalid/empty.one")),
-            ("orphan-instruction", include_str!("../../../tests/human-vnext/invalid/orphan-instruction.one")),
-            ("unknown-instruction", include_str!("../../../tests/human-vnext/invalid/unknown-instruction.one")),
-            ("unresolved-display", include_str!("../../../tests/human-vnext/invalid/unresolved-display.one")),
-            ("indented-application", include_str!("../../../tests/human-vnext/invalid/indented-application.one")),
-            ("missing-text-block", include_str!("../../../tests/human-vnext/invalid/missing-text-block.one")),
-            ("duplicate-data", include_str!("../../../tests/human-vnext/invalid/duplicate-data.one")),
-            ("duplicate-persistence", include_str!("../../../tests/human-vnext/invalid/duplicate-persistence.one")),
-            ("action-name-as-data", include_str!("../../../tests/human-vnext/invalid/action-name-as-data.one")),
-            ("repeated-spaces", include_str!("../../../tests/human-vnext/invalid/repeated-spaces.one")),
-            ("duplicate-data-action-name", include_str!("../../../tests/human-vnext/invalid/duplicate-data-action-name.one")),
+        for (name, source, expected_code, expected_line) in [
+            ("empty", include_str!("../../../tests/human-vnext/invalid/empty.one"), "H0003", 1),
+            ("orphan-instruction", include_str!("../../../tests/human-vnext/invalid/orphan-instruction.one"), "H0005", 1),
+            ("unknown-instruction", include_str!("../../../tests/human-vnext/invalid/unknown-instruction.one"), "H0013", 3),
+            ("unresolved-display", include_str!("../../../tests/human-vnext/invalid/unresolved-display.one"), "H0018", 2),
+            ("indented-application", include_str!("../../../tests/human-vnext/invalid/indented-application.one"), "H0005", 1),
+            ("missing-text-block", include_str!("../../../tests/human-vnext/invalid/missing-text-block.one"), "H0008", 2),
+            ("duplicate-data", include_str!("../../../tests/human-vnext/invalid/duplicate-data.one"), "H0017", 5),
+            ("duplicate-persistence", include_str!("../../../tests/human-vnext/invalid/duplicate-persistence.one"), "H0019", 3),
+            ("action-name-as-data", include_str!("../../../tests/human-vnext/invalid/action-name-as-data.one"), "H0018", 2),
+            ("repeated-spaces", include_str!("../../../tests/human-vnext/invalid/repeated-spaces.one"), "H0007", 2),
+            ("duplicate-data-action-name", include_str!("../../../tests/human-vnext/invalid/duplicate-data-action-name.one"), "H0017", 5),
         ] {
-            assert!(parse(source).is_err(), "invalid fixture {name} was accepted");
+            let error = parse(source).expect_err(&format!("invalid fixture {name} was accepted"));
+            assert_eq!(error.code, expected_code, "fixture {name} diagnostic code changed");
+            assert_eq!(error.line, expected_line, "fixture {name} diagnostic line changed");
         }
     }
 }
