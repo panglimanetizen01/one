@@ -13,7 +13,7 @@ fn text_builtins_execute_through_the_canonical_pipeline() {
     let source = "teks adalah \"  kucing-kucing  \"\njumlah adalah panjang teks dengan teks\nbersih adalah pangkas teks dengan teks\nada adalah teks memuat dengan teks dan \"kucing\"\nhasil adalah ganti teks dengan bersih dan \"kucing\" dan \"anjing\"\ntampilkan jumlah\ntampilkan bersih\ntampilkan ada\ntampilkan hasil\n";
     assert_eq!(
         run(source).expect("builtins should execute"),
-        vec!["16", "kucing-kucing", "benar", "anjing-anjing"]
+        vec!["17", "kucing-kucing", "benar", "anjing-anjing"]
     );
 }
 
