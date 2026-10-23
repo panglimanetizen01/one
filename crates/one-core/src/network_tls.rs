@@ -1,6 +1,6 @@
 #![cfg(feature = "real-network")]
 
-use std::io::{Read, Write};
+use std::io::Write;
 use std::net::{TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use std::time::Duration;
