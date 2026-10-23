@@ -21,7 +21,7 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 ## Work added in this session
 
 - `crates/one-core/src/stdlib.rs`: deterministic public Rust helpers for text length/contains/trim/literal replace/literal split/integer conversion; list length/index access; deterministic text-keyed map construction/get/set; checked integer absolute value/division/min/max; and unit tests for Unicode, bounds, invalid types, overflow, division by zero, and stable map ordering.
-- `crates/one-core/src/semantic.rs`: registers 14 built-ins with arity, return-type, and static argument-type rules (`E2032`).
+- `crates/one-core/src/semantic.rs`: registers 14 built-ins with arity, return-type, and static argument-type rules (`E2043`).
 - `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/map/integer built-ins through the canonical IR interpreter and checks runtime arity before indexing arguments; invalid builtin operations return `R3022`. Integer arithmetic uses checked add/subtract/multiply/divide and reports `R3023` on overflow rather than panicking.
 - `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter, including opt-in mapping tests, a checked-in example, overflow, invalid conversion, invalid index, and missing-map-key cases.
 - `crates/one-cli/tests/cli.rs`: verifies that the official CLI can execute the checked-in stdlib example.
