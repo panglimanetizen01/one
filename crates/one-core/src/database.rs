@@ -3,6 +3,9 @@ use crate::capability::Capability;
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
 use rusqlite::{types::ValueRef, Connection};
 
+const MAX_DATABASE_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+const MAX_DATABASE_ROWS: usize = 100_000;
+
 pub struct SqliteAdapter {
     metadata: AdapterMetadata,
 }
@@ -28,20 +31,39 @@ impl SqliteAdapter {
         }
     }
 
-    fn value_text(value: ValueRef<'_>) -> String {
+    fn value_text(value: ValueRef<'_>) -> Result<String, AdapterError> {
         match value {
-            ValueRef::Null => "null".into(),
-            ValueRef::Integer(value) => value.to_string(),
-            ValueRef::Real(value) => value.to_string(),
-            ValueRef::Text(value) => String::from_utf8_lossy(value).into_owned(),
-            ValueRef::Blob(value) => {
-                let mut output = String::with_capacity(value.len() * 2);
-                for byte in value {
-                    output.push_str(&format!("{byte:02x}"));
+            ValueRef::Null => Ok("null".into()),
+            ValueRef::Integer(value) => Ok(value.to_string()),
+            ValueRef::Real(value) => Ok(value.to_string()),
+            ValueRef::Text(value) => {
+                if value.len() > MAX_DATABASE_OUTPUT_BYTES {
+                    return Err(AdapterError::ResourceLimitExceeded);
                 }
-                output
+                Ok(String::from_utf8_lossy(value).into_owned())
+            }
+            ValueRef::Blob(value) => {
+                let capacity = value.len().checked_mul(2).ok_or(AdapterError::ResourceLimitExceeded)?;
+                if capacity > MAX_DATABASE_OUTPUT_BYTES {
+                    return Err(AdapterError::ResourceLimitExceeded);
+                }
+                let mut output = String::with_capacity(capacity);
+                for byte in value {
+                    use std::fmt::Write as _;
+                    write!(&mut output, "{byte:02x}").map_err(|_| AdapterError::BackendFailure)?;
+                }
+                Ok(output)
             }
         }
+    }
+
+    fn append_bounded(output: &mut String, fragment: &str) -> Result<(), AdapterError> {
+        let length = output.len().checked_add(fragment.len()).ok_or(AdapterError::ResourceLimitExceeded)?;
+        if length > MAX_DATABASE_OUTPUT_BYTES {
+            return Err(AdapterError::ResourceLimitExceeded);
+        }
+        output.push_str(fragment);
+        Ok(())
     }
 }
 
@@ -89,17 +111,23 @@ impl ToolAdapter for SqliteAdapter {
             .query(rusqlite::params_from_iter(parameter_refs))
             .map_err(|_| AdapterError::BackendFailure)?;
         let mut output = String::new();
+        let mut row_count = 0usize;
         while let Some(row) = rows.next().map_err(|_| AdapterError::BackendFailure)? {
+            row_count = row_count.checked_add(1).ok_or(AdapterError::ResourceLimitExceeded)?;
+            if row_count > MAX_DATABASE_ROWS {
+                return Err(AdapterError::ResourceLimitExceeded);
+            }
             for index in 0..column_count {
                 if index > 0 {
-                    output.push('\t');
+                    Self::append_bounded(&mut output, "\t")?;
                 }
                 let value = row
                     .get_ref(index)
                     .map_err(|_| AdapterError::BackendFailure)?;
-                output.push_str(&Self::value_text(value));
+                let rendered = Self::value_text(value)?;
+                Self::append_bounded(&mut output, &rendered)?;
             }
-            output.push('\n');
+            Self::append_bounded(&mut output, "\n")?;
         }
 
         Ok(AdapterResult {
