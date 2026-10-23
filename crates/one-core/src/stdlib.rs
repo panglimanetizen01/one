@@ -299,7 +299,7 @@ impl JsonParser<'_> {
 
     fn skip_whitespace(&mut self) {
         while matches!(self.peek(), Some(' ' | '\t' | '\r' | '\n')) {
-            self.next();
+            let _ = self.next();
         }
     }
 
@@ -332,19 +332,19 @@ impl JsonParser<'_> {
     fn parse_integer(&mut self) -> Option<Value> {
         let start = self.position;
         if self.peek() == Some('-') {
-            self.next();
+            self.next()?;
         }
         match self.peek()? {
             '0' => {
-                self.next();
+                self.next()?;
                 if matches!(self.peek(), Some('0'..='9')) {
                     return None;
                 }
             }
             '1'..='9' => {
-                self.next();
+                self.next()?;
                 while matches!(self.peek(), Some('0'..='9')) {
-                    self.next();
+                    self.next()?;
                 }
             }
             _ => return None,
