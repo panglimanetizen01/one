@@ -70,7 +70,7 @@ impl HttpRequest {
             if !valid_http_header_name(name)
                 || name.eq_ignore_ascii_case("host")
                 || name.eq_ignore_ascii_case("transfer-encoding")
-                || value.bytes().any(|byte| (byte < 0x20 && byte != b'\\t') || byte == 0x7f)
+                || value.bytes().any(|byte| (byte < 0x20 && byte != b'\t') || byte == 0x7f)
             {
                 return Err(invalid());
             }
