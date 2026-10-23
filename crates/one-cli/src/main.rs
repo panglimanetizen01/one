@@ -2,6 +2,7 @@
 #![allow(clippy::needless_return)]
 use std::{collections::HashSet, env, fs, path::{Path, PathBuf}, process::ExitCode};
 use one_core::{analyze, lower, parse, Capability, CapabilitySet, ExecutionPolicy, Interpreter, ScopeRule};
+use sha2::{Digest, Sha256};
 const VERSION: &str = "0.1.0";
 fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one jalankan-human-core <program.one> (frontend vNext ke IR kanonis)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &bundle.0 { eprintln!("{}: {}", diagnostic.code, diagnostic.message); if let Some(span) = &diagnostic.span { eprintln!("  baris {}, kolom {}", span.line, span.column); } for note in &diagnostic.notes { eprintln!("  catatan: {}", note); } for suggestion in &diagnostic.suggestions { eprintln!("  saran: {}", suggestion); } } }
@@ -10,12 +11,8 @@ fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("
 fn project_metadata(root: &Path) -> Result<(String, String), String> { let manifest = root.join("one.toml"); let text = fs::read_to_string(&manifest).map_err(|e| format!("Tidak dapat membaca '{}': {}", manifest.display(), e))?; let mut seen = HashSet::new(); let mut name = None; let mut version = None; for (index, raw_line) in text.lines().enumerate() { let line = raw_line.trim(); if line.is_empty() || line.starts_with('#') { continue; } let Some((raw_key, raw_value)) = line.split_once('=') else { return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1)); }; let key = raw_key.trim(); let value = raw_value.trim(); if !matches!(key, "nama" | "versi") || !seen.insert(key) { return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1)); } let Some(value) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else { return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1)); }; if value.is_empty() { return Err(format!("Manifest '{}' memiliki nilai kosong pada baris {}.", manifest.display(), index + 1)); } match key { "nama" => name = Some(value.to_owned()), "versi" => version = Some(value.to_owned()), _ => unreachable!() } } match (name, version) { (Some(name), Some(version)) => Ok((name, version)), _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())) } }
 fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
 fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir() { return Ok(Vec::new()); } let mut files = fs::read_dir(root).map_err(|e| format!("Tidak dapat membaca '{}': {}", root.display(), e))?.map(|entry| entry.map(|e| e.path()).map_err(|e| format!("Tidak dapat membaca fixture: {}", e))).collect::<Result<Vec<_>, _>>()?; files.retain(|path| path.extension().and_then(|v| v.to_str()) == Some("one")); files.sort(); Ok(files) }
-fn fnv1a64(bytes: &[u8]) -> u64 {
- let mut hash = 0xcbf29ce484222325_u64;
- for byte in bytes {
-  hash = (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3);
- }
- hash
+fn sha256_hex(bytes: &[u8]) -> String {
+ Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
 fn module_lock_contents(root: &Path, modules: &[PathBuf]) -> Result<String, String> {
@@ -28,12 +25,12 @@ fn module_lock_contents(root: &Path, modules: &[PathBuf]) -> Result<String, Stri
    return Err(format!("Jalur modul tidak valid untuk lockfile: '{}'.", module.display()));
   }
   let bytes = fs::read(module).map_err(|error| format!("Modul '{}' tidak dapat dibaca untuk lockfile: {error}", module.display()))?;
-  entries.push((name, fnv1a64(&bytes)));
+  entries.push((name, sha256_hex(&bytes)));
  }
  entries.sort_by(|left, right| left.0.cmp(&right.0));
- let mut lock = String::from("One module lock v1\n# FNV-1a-64 is a reproducibility fingerprint, not a cryptographic integrity guarantee.\n");
- for (name, fingerprint) in entries {
-  lock.push_str(&format!("{name} fnv1a64={fingerprint:016x}\n"));
+ let mut lock = String::from("One module lock v2\n# SHA-256 content digests; this lock does not authenticate publisher provenance.\n");
+ for (name, digest) in entries {
+  lock.push_str(&format!("{name} sha256={digest}\n"));
  }
  Ok(lock)
 }
@@ -150,11 +147,11 @@ fn main() -> ExitCode {
 }
 #[cfg(test)]
 mod package_lock_tests {
-    use super::fnv1a64;
+    use super::sha256_hex;
 
     #[test]
-    fn fnv1a64_uses_stable_known_vectors() {
-        assert_eq!(fnv1a64(b""), 0xcbf29ce484222325);
-        assert_eq!(fnv1a64(b"a"), 0xaf63dc4c8601ec8c);
+    fn sha256_uses_stable_known_vectors() {
+        assert_eq!(sha256_hex(b""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        assert_eq!(sha256_hex(b"a"), "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb");
     }
 }
