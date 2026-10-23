@@ -11,7 +11,24 @@ use crate::capability::{Capability, CapabilitySet};
 use crate::network_runtime::{HttpRequest, HttpResponse, NetworkRuntimeError, parse_http_response};
 fn client_config_with_roots(roots: RootCertStore) -> Result<Arc<ClientConfig>, NetworkRuntimeError> { Ok(Arc::new(ClientConfig::builder().with_root_certificates(roots).with_no_client_auth())) }
 fn client_config() -> Result<Arc<ClientConfig>, NetworkRuntimeError> { client_config_with_roots(RootCertStore::from_iter(TLS_SERVER_ROOTS.iter().cloned())) }
-fn execute_https11_with_config(request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration, config: Arc<ClientConfig>) -> Result<HttpResponse, NetworkRuntimeError> { if !capabilities.permits(Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); } let host = request.authority.split(':').next().filter(|v| !v.is_empty()).ok_or_else(|| NetworkRuntimeError::InvalidOperation("Host HTTPS kosong.".into()))?.to_string(); let port = request.authority.rsplit(':').next().and_then(|v| v.parse::<u16>().ok()).unwrap_or(443); let address = (host.as_str(), port).to_socket_addrs().map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?.next().ok_or_else(|| NetworkRuntimeError::Resolution("Nama host tidak memiliki alamat.".into()))?; let stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let server_name = ServerName::try_from(host.clone()).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?; let connection = ClientConnection::new(config, server_name).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?; let mut tls = StreamOwned::new(connection, stream); tls.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let mut response = Vec::new(); tls.read_to_end(&mut response).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; parse_http_response(&response, 16 * 1024 * 1024) }
+fn execute_https11_with_config(request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration, config: Arc<ClientConfig>) -> Result<HttpResponse, NetworkRuntimeError> {
+    if !capabilities.permits(Capability::NetworkConnect) {
+        return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into()));
+    }
+    let (host, port) = crate::network_runtime::parse_http_authority(&request.authority)?;
+    let address = (host.as_str(), port).to_socket_addrs()
+        .map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?
+        .next().ok_or_else(|| NetworkRuntimeError::Resolution("Nama host tidak memiliki alamat.".into()))?;
+    let stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?;
+    stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+    stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+    let server_name = ServerName::try_from(host.clone()).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?;
+    let connection = ClientConnection::new(config, server_name).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?;
+    let mut tls = StreamOwned::new(connection, stream);
+    tls.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+    let response = crate::network_runtime::read_bounded_response(tls, crate::network_runtime::MAX_HTTP_RESPONSE_BYTES)?;
+    parse_http_response(&response, crate::network_runtime::MAX_HTTP_BODY_BYTES)
+}
 pub fn execute_https11(request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> { execute_https11_with_config(request, capabilities, timeout, client_config()?) }
 #[cfg(test)]
 mod tests { use super::*; use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer}; use rustls::ServerConfig; use std::net::TcpListener; use std::thread;
