@@ -60,6 +60,19 @@ When canonical `one` repository Actions jobs terminate before executing any step
 
 This fallback preserves the platform-evidence requirement rather than waiving it: the mirror must actually execute both Linux and Windows jobs on the exact source snapshot.
 
+## Reviewed secondary fallback when the mirror's Ubuntu setup is blocked
+
+**Review status:** accepted for the 30% foundation gate by repository-internal technical review; no external sign-off is claimed.
+
+If the mirror's `ubuntu-latest` job remains in dependency installation for at least 15 minutes without reaching contract/build/test steps, or fails before those steps for runner/package infrastructure reasons, use this alternative without changing the acceptance criteria:
+
+1. The mirror's `windows-2025` job must finish successfully on the exact canonical source SHA, including contract artifacts, build, Clippy, workspace tests, real-network tests, and Windows offline verification.
+2. A clean GitHub-fetched Termux/Debian worktree must run `bash tools/verify-human-vnext.sh` successfully on that **same canonical source SHA**. This executes the contract checker, build, Clippy, and workspace tests locally.
+3. Record the Ubuntu job as **BLOCKED/INFRASTRUCTURE**, never as passed; record the successful Windows job and the exact-SHA local Debian output separately. Do not call the overall mirror matrix green when its Ubuntu job is still blocked.
+4. Do not upgrade the canonical repository plan, suppress tests, reclassify ignored tests as passed, or change the point weights to use this route.
+
+This is a location-of-execution fallback, not a test waiver: both Linux and Windows must actually execute the required checks against the identical source SHA. It is valid only for this bounded 30% gate and does not certify Android native execution, release readiness, or later 60%/100% milestones.
+
 ## Replacement boundary
 
 This is a controlled replacement for the **local build/test evidence collection procedure only** when hosted Actions cannot start. It does not manufacture CI results and does not independently waive any acceptance criterion that requires Windows execution, external review, or a platform-specific runtime result. The milestone ledger may credit points only after its full acceptance criteria are met and the evidence is explicitly reviewed.
