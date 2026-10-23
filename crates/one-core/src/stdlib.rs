@@ -154,6 +154,57 @@ pub fn number_max(left: &Value, right: &Value) -> Option<Value> {
     }
 }
 
+
+/// Serialize a runtime value as deterministic JSON. Nesting deeper than 128 levels is rejected.
+pub fn value_to_json(value: &Value) -> Option<Value> {
+    fn quote(text: &str) -> String {
+        let mut output = String::from("\"");
+        for character in text.chars() {
+            match character {
+                '"' => output.push_str("\\\""),
+                '\\' => output.push_str("\\\\"),
+                '\u{0008}' => output.push_str("\\b"),
+                '\u{000c}' => output.push_str("\\f"),
+                '\n' => output.push_str("\\n"),
+                '\r' => output.push_str("\\r"),
+                '\t' => output.push_str("\\t"),
+                character if character <= '\u{001f}' => {
+                    output.push_str(&format!("\\u{:04x}", u32::from(character)));
+                }
+                character => output.push(character),
+            }
+        }
+        output.push('"');
+        output
+    }
+
+    fn encode(value: &Value, depth: usize) -> Option<String> {
+        if depth > 128 {
+            return None;
+        }
+        match value {
+            Value::Text(text) => Some(quote(text)),
+            Value::Number(number) => Some(number.to_string()),
+            Value::Boolean(boolean) => Some(boolean.to_string()),
+            Value::Nothing => Some("null".to_owned()),
+            Value::List(values) => {
+                let encoded = values.iter()
+                    .map(|value| encode(value, depth + 1))
+                    .collect::<Option<Vec<_>>>()?;
+                Some(format!("[{}]", encoded.join(",")))
+            }
+            Value::Map(values) => {
+                let encoded = values.iter()
+                    .map(|(key, value)| Some(format!("{}:{}", quote(key), encode(value, depth + 1)?)))
+                    .collect::<Option<Vec<_>>>()?;
+                Some(format!("{{{}}}", encoded.join(",")))
+            }
+        }
+    }
+
+    encode(value, 0).map(Value::Text)
+}
+
 /// Construct a deterministic text-keyed mapping.
 pub fn map_from_entries(entries: impl IntoIterator<Item = (String, Value)>) -> Value {
     Value::Map(entries.into_iter().collect::<BTreeMap<_, _>>())
@@ -207,6 +258,19 @@ mod tests {
         assert_eq!(map_get(&updated, &Value::Text("a".into())), Some(Value::Number(3)));
         assert_eq!(map_get(&updated, &Value::Text("missing".into())), None);
         assert_eq!(map_set(Value::Number(1), &Value::Text("x".into()), Value::Nothing), None);
+    }
+
+    #[test]
+    fn json_serialization_escapes_text_and_orders_mapping_keys() {
+        let value = map_from_entries([
+            ("z".into(), Value::Text("baris\\n\\\"".into())),
+            ("a".into(), Value::List(vec![Value::Number(2), Value::Nothing])),
+        ]);
+        assert_eq!(
+            value_to_json(&value),
+            Some(Value::Text("{\\\"a\\\":[2,null],\\\"z\\\":\\\"baris\\\\n\\\\\\\"\\\"}".into()))
+        );
+        assert_eq!(value_to_json(&Value::Boolean(true)), Some(Value::Text("true".into())));
     }
 
     #[test]
