@@ -239,4 +239,28 @@ mod tests {
         assert_eq!(KeyValueStore::open(&path).unwrap().get("k"), None);
         let _ = fs::remove_file(path);
     }
+
+    #[test]
+    fn failed_write_rolls_back_in_memory_mutation() {
+        let blocker = path("blocked-parent");
+        fs::write(&blocker, "not a directory").unwrap();
+        let store_path = blocker.join("store.db");
+        let mut store = KeyValueStore::open(&store_path).unwrap();
+        assert!(store.set("k", "v").is_err());
+        assert_eq!(store.get("k"), None);
+        let _ = fs::remove_file(blocker);
+    }
+
+    #[test]
+    fn empty_values_and_multiline_values_round_trip() {
+        let path = path("multiline");
+        let mut store = KeyValueStore::open(&path).unwrap();
+        store.set("empty", "").unwrap();
+        store.set("multiline", "baris satu\\nbaris dua\\takhir").unwrap();
+        let reopened = KeyValueStore::open(&path).unwrap();
+        assert_eq!(reopened.get("empty"), Some(""));
+        assert_eq!(reopened.get("multiline"), Some("baris satu\\nbaris dua\\takhir"));
+        let _ = fs::remove_file(path);
+    }
+
 }
