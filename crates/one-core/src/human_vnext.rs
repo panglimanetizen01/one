@@ -838,9 +838,25 @@ mod grammar_fixture_tests {
             ("unicode-name", include_str!("../../../tests/human-vnext/valid/unicode-name.one")),
             ("task-list", include_str!("../../../tests/human-vnext/valid/task-list.one")),
             ("text-block-boundaries", include_str!("../../../tests/human-vnext/valid/text-block-boundaries.one")),
+            ("instruction-like-text", include_str!("../../../tests/human-vnext/valid/instruction-like-text.one")),
         ] {
             parse(source).unwrap_or_else(|error| panic!("valid fixture {name} rejected: {error}"));
         }
+    }
+
+    #[test]
+    fn instruction_like_lines_remain_opaque_text_data() {
+        let source = include_str!("../../../tests/human-vnext/valid/instruction-like-text.one");
+        let program = parse(source).expect("instruction-like lines inside text blocks are data");
+        assert_eq!(
+            program.declarations,
+            vec![super::super::HumanDeclaration::Data {
+                name: "instruksi".into(),
+                value: super::super::HumanValue::Text(
+                    "Pengguna bisa menghapus data\nTampilkan rahasia\nSimpan semua data agar tidak hilang saat aplikasi ditutup\n".into()
+                ),
+            }],
+        );
     }
 
     #[test]
@@ -857,6 +873,11 @@ mod grammar_fixture_tests {
             ("action-name-as-data", include_str!("../../../tests/human-vnext/invalid/action-name-as-data.one"), "H0018", 2),
             ("repeated-spaces", include_str!("../../../tests/human-vnext/invalid/repeated-spaces.one"), "H0007", 2),
             ("duplicate-data-action-name", include_str!("../../../tests/human-vnext/invalid/duplicate-data-action-name.one"), "H0017", 5),
+            ("second-application", include_str!("../../../tests/human-vnext/invalid/second-application.one"), "H0016", 2),
+            ("empty-action", include_str!("../../../tests/human-vnext/invalid/empty-action.one"), "H0014", 2),
+            ("tab-indentation", include_str!("../../../tests/human-vnext/invalid/tab-indentation.one"), "H0001", 3),
+            ("noncanonical-indent", include_str!("../../../tests/human-vnext/invalid/noncanonical-indent.one"), "H0002", 2),
+            ("invalid-action-name", include_str!("../../../tests/human-vnext/invalid/invalid-action-name.one"), "H0010", 2),
         ] {
             let error = parse(source).expect_err(&format!("invalid fixture {name} was accepted"));
             assert_eq!(error.code, expected_code, "fixture {name} diagnostic code changed");
