@@ -93,4 +93,6 @@ TEXT is the remaining source content on a line after the text-block indentation.
 | Persistence | one tugas declaration | duplicate persistence declarations |
 | Compatibility | explicit vNext CLI path | default v0.1 regression suite must remain green |
 
-The conformance matrix is a requirement, not a claim that every row already has a dedicated test. The completion ledger remains authoritative for milestone credit; no points are earned by adding this document alone.
+Executable fixture coverage is stored under `tests/human-vnext/valid/` and `tests/human-vnext/invalid/`. The Rust unit tests parse each positive fixture and require every negative fixture to be rejected; `tools/check_contract.py` also fails if the minimum fixture inventory is missing. This fixture set covers representative structure, Unicode names, task-list declarations, empty source, orphan instructions, unknown instructions, and unresolved display references. It does not yet claim exhaustive coverage of every row above.
+
+The completion ledger remains authoritative for milestone credit; adding fixtures alone does not earn verified points until the exact commit passes the required verification contract.
