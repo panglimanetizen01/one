@@ -48,7 +48,7 @@ fn read_line(stream: &mut TcpStream) -> Result<String, ApplicationProtocolError>
 
 fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationProtocolError> {
     let first = read_line(stream)?;
-    if first.len() < 5 { return Err(ApplicationProtocolError::InvalidResponse); }
+    if first.len() < 5 || !first.is_ascii() { return Err(ApplicationProtocolError::InvalidResponse); }
     let code: u16 = first[..3].parse().map_err(|_| ApplicationProtocolError::InvalidResponse)?;
     let multiline = first.as_bytes()[3] == b'-';
     let mut total_bytes = first.len();
@@ -57,6 +57,7 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
     if multiline {
         loop {
             let line = read_line(stream)?;
+            if !line.is_ascii() { return Err(ApplicationProtocolError::InvalidResponse); }
             total_bytes = total_bytes.checked_add(line.len()).ok_or(ApplicationProtocolError::InvalidResponse)?;
             line_count = line_count.checked_add(1).ok_or(ApplicationProtocolError::InvalidResponse)?;
             if total_bytes > MAX_APPLICATION_REPLY_BYTES || line_count > MAX_APPLICATION_REPLY_LINES {
@@ -179,6 +180,19 @@ mod tests {
         });
         ftp_login(&addr.to_string(), "alice", "secret", Duration::from_secs(2), &caps()).expect("ftp login");
         handle.join().expect("server");
+    }
+
+    #[test]
+    fn ftp_reply_parser_rejects_non_ascii_status_prefix_without_panicking() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let address = listener.local_addr().expect("address");
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept");
+            stream.write_all("éé220 malformed\r\n".as_bytes()).expect("reply");
+        });
+        let result = ftp_login(&address.to_string(), "alice", "secret", Duration::from_secs(2), &caps());
+        assert!(matches!(result, Err(ApplicationProtocolError::InvalidResponse)));
+        server.join().expect("server");
     }
 
     #[test]
