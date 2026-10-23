@@ -264,6 +264,7 @@ fn human_frontend_executes_typed_mapping_operations() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Budi"));
+    assert!(stdout.contains("Ani"), "{stdout}");
     assert!(stdout.contains("nama"));
     assert!(!stdout.contains("umur"));
 }
