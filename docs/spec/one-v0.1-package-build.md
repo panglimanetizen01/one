@@ -46,7 +46,7 @@ Final artifacts retain enough provenance to identify language version, toolchain
 
 ## 10A. Experimental human-core packaging extension (milestone 100)
 
-The milestone-100 feature branch adds an explicitly detected packaging path for projects whose `src/main.one` first line is `Buat program <nama>`. It invokes `one_core::human_compiler::compile_file`, so relative `Gunakan modul` imports are resolved and compiled through the canonical semantic IR before packaging. Its deterministic artifact starts with `One human-core package v1` and records the manifest, the `human-core` frontend marker, and canonical IR.
+The milestone-100 feature branch adds an explicitly detected project path for projects whose `src/main.one` first line is `Buat program <nama>`. The `build`, `test`, and `package` commands invoke `one_core::human_compiler::compile_file`, so relative `Gunakan modul` imports are resolved and compiled through the canonical semantic IR. Build emits a textual `.oneir`, test executes the program through the reference interpreter, and package emits the versioned artifact described below. Its deterministic artifact starts with `One human-core package v1` and records the manifest, the `human-core` frontend marker, and canonical IR.
 
 This is a separate experimental artifact format. It does not change the existing `One package v0.1` format for ordinary v0.1 source projects, and it does not imply external package dependency resolution, lockfile support, target-specific native artifacts, or the full provenance envelope. Those requirements remain unimplemented and the E2 completion gate remains open until they are implemented and verified.
 
