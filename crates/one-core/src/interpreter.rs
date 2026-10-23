@@ -113,11 +113,11 @@ impl Interpreter {
         "pisah teks" | "ubah teks ke angka" | "panjang daftar" | "ambil indeks" |
         "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" |
         "nilai pemetaan" | "atur pemetaan" | "ubah nilai ke json" |
-        "teks diawali" | "teks diakhiri" | "huruf kecil" | "huruf besar" | "gabung teks" | "jumlah daftar angka" | "nilai dari json"
+        "teks diawali" | "teks diakhiri" | "huruf kecil" | "huruf besar" | "gabung teks" | "jumlah daftar angka" | "nilai dari json" | "waktu utc dari unix"
     );
     if builtin {
         let expected_arity = match name {
-            "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "jumlah daftar angka" | "nilai dari json" => 1,
+            "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "jumlah daftar angka" | "nilai dari json" | "waktu utc dari unix" => 1,
             "teks memuat" | "pisah teks" | "ambil indeks" | "bagi bulat" | "angka minimum" | "angka maksimum" | "nilai pemetaan" | "teks diawali" | "teks diakhiri" | "gabung teks" => 2,
             "atur pemetaan" => 3,
             "ganti teks" => 3,
@@ -147,6 +147,7 @@ impl Interpreter {
             "atur pemetaan" => stdlib::map_set(values[0].clone(), &values[1], values[2].clone()),
             "ubah nilai ke json" => stdlib::value_to_json(&values[0]),
             "nilai dari json" => stdlib::json_to_value(&values[0]),
+            "waktu utc dari unix" => stdlib::unix_seconds_to_utc_text(&values[0]),
             "teks diawali" => stdlib::text_starts_with(&values[0], &values[1]),
             "teks diakhiri" => stdlib::text_ends_with(&values[0], &values[1]),
             "huruf kecil" => stdlib::text_lowercase(&values[0]),
