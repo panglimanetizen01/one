@@ -8,6 +8,8 @@ pub mod interop;
 pub mod interpreter;
 /// Experimental, isolated parser for the proposed human-instruction surface.
 pub mod human_vnext;
+/// Human-language source adapter compiled through the canonical AST, semantic analyzer and IR.
+pub mod human_compiler;
 pub mod ir;
 pub mod lexer;
 pub mod native_backend;
