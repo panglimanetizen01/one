@@ -152,3 +152,40 @@ fn human_frontend_executes_bounded_while_loop_and_assignment() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "3");
 }
+
+#[test]
+fn human_frontend_rejects_duplicate_module_imports() {
+    let root = std::env::temp_dir().join(format!(
+        "one-human-module-duplicate-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+    fs::write(root.join("shared.one"), "Buat modul shared\\n").unwrap();
+    let program = root.join("main.one");
+    fs::write(&program, concat!(
+        "Buat program duplikat\\n",
+        "Gunakan modul \"shared.one\"\\n",
+        "Gunakan modul \"shared.one\"\\n",
+        "tampilkan \"tidak boleh berjalan\"\\n",
+    )).unwrap();
+    let output = run(&program);
+    let _ = fs::remove_dir_all(&root);
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("HV1013"));
+}
+
+#[test]
+fn human_frontend_rejects_import_cycles() {
+    let root = std::env::temp_dir().join(format!(
+        "one-human-module-cycle-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+    let program = root.join("main.one");
+    fs::write(&program, "Buat program siklus\\nGunakan modul \"modul.one\"\\ntampilkan \"x\"\\n").unwrap();
+    fs::write(root.join("modul.one"), "Buat modul modul\\nGunakan modul \"main.one\"\\n").unwrap();
+    let output = run(&program);
+    let _ = fs::remove_dir_all(&root);
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("HV1012"));
+}
