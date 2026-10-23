@@ -112,3 +112,17 @@ Verified in Debian 12 from the fetched GitHub branch at exact commit `742d30c506
 - GitHub Actions has not been shown passing for this SHA; this evidence is local Debian verification only.
 
 **Evidence boundary:** this confirms the fixture checkpoint's local contract/build/Clippy/test checks, not hosted CI. It does not alone satisfy F1–F6. Verified points and the 30% gate remain unchanged until every acceptance criterion and the reviewed CI/replacement-verification contract are satisfied.
+
+## Exact-SHA local verification — 2026-10-23 (expanded fixture checkpoint)
+
+Verified in Debian 12/Termux from a clean worktree fetched from GitHub at exact commit `d76360b661a16caceb840d2a1eba8c7beb60882f` on branch `spec/human-instruction-grammar-vnext-20261022`:
+
+- `python3 tools/check_contract.py`: PASS — 75 required artifacts, 73 indexed concrete artifacts, 6 existing valid fixtures, 6 existing invalid fixtures, 3 golden fixtures, 4 human-vNext valid fixtures, and 10 human-vNext invalid fixtures.
+- `git diff --check`: PASS.
+- `cargo build --workspace --all-targets`: PASS.
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS.
+- `ONE_ANDROID_CLANG=/tmp/one-android-clang-wrapper cargo test --workspace --all-targets`: all executed test suites passed. CLI: 16 passed; one-core unit tests: 137 passed; conformance: 5 passed; other displayed suites passed. One Android AArch64 native execution test was ignored because the Android AArch64 Clang verification environment was unavailable.
+- The expanded human-vNext fixture tests passed for all 4 valid and 10 invalid fixtures.
+- GitHub Actions is not confirmed passing at this SHA. This is local verification only; earlier Actions runs failed before steps began.
+
+**Evidence boundary:** this checkpoint provides exact-SHA local contract/build/Clippy/test evidence, but does not by itself satisfy all F1–F6 acceptance criteria or substitute for hosted CI. Verified points remain unchanged pending the remaining acceptance work and an explicitly reviewed CI/replacement-verification contract. The 30% gate remains NOT PASSED.
