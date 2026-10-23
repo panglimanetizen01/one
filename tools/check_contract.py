@@ -57,6 +57,7 @@ required = [
     "tests/human-vnext/invalid/second-application.one",
     "tests/human-vnext/invalid/empty-action.one",
     "tests/human-vnext/invalid/tab-indentation.one",
+    "tests/human-vnext/invalid/tab-before-text-prefix.one",
     "tests/human-vnext/invalid/noncanonical-indent.one",
     "tests/human-vnext/invalid/invalid-action-name.one",
     "tests/human-vnext/invalid/unicode-combining-mark.one",
@@ -206,8 +207,8 @@ print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
 human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
 human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
-if len(human_valid) < 6 or len(human_invalid) < 17:
-    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 6 valid and 17 invalid fixtures")
+if len(human_valid) < 6 or len(human_invalid) < 18:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 6 valid and 18 invalid fixtures")
 
 print(f"golden fixtures: {len(golden)}")
 print(f"human-vNext valid fixtures: {len(human_valid)}")
