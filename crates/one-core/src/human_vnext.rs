@@ -108,15 +108,57 @@ fn parse_project(line: &str, line_number: usize) -> Result<String, HumanParseErr
 ///
 /// This parser is experimental and is selected only through the explicit
 /// human-vNext CLI command; the default v0.1 parser remains unchanged.
+fn text_payload_line_mask(lines: &[&str]) -> Vec<bool> {
+    let mut payload = vec![false; lines.len()];
+    let mut in_payload = false;
+    let mut expecting_header = false;
+
+    for (index, raw) in lines.iter().enumerate() {
+        if in_payload {
+            if raw.trim().is_empty() || leading_spaces(raw) >= 8 {
+                payload[index] = true;
+                continue;
+            }
+            in_payload = false;
+        }
+
+        if raw.trim().is_empty() {
+            continue;
+        }
+
+        let indent = leading_spaces(raw);
+        if expecting_header {
+            if indent == 4 && raw.get(4..) == Some("Isi teks berikut") {
+                in_payload = true;
+                expecting_header = false;
+                continue;
+            }
+            expecting_header = false;
+        }
+
+        if indent == 0 && raw.starts_with("Buat data ") {
+            expecting_header = true;
+        }
+    }
+
+    payload
+}
+
 pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
     let lines: Vec<&str> = source.split('\n').map(trim_line_ending).collect();
+    let payload_mask = text_payload_line_mask(&lines);
     let mut meaningful: Vec<(usize, usize, &str)> = Vec::new();
     for (index, raw) in lines.iter().enumerate() {
         if raw.trim().is_empty() {
             continue;
         }
         let line_number = index + 1;
-        let indent = validate_indentation(raw, line_number)?;
+        let indent = leading_spaces(raw);
+        if !payload_mask[index] {
+            validate_indentation(raw, line_number)?;
+        } else if indent < 8 {
+            return Err(error(line_number, "H0002", "Indentasi isi teks tidak valid"));
+        }
         meaningful.push((line_number, indent, &raw[indent..]));
     }
 
@@ -154,7 +196,7 @@ pub fn parse(source: &str) -> Result<HumanProgram, HumanParseError> {
             let mut next_source_line = header_line + 1;
             while index < meaningful.len() && meaningful[index].1 >= 8 {
                 let (text_line, text_indent, text_content) = meaningful[index];
-                if text_indent < 8 || text_indent % 4 != 0 {
+                if text_indent < 8 {
                     return Err(error(text_line, "H0002", "Indentasi isi teks tidak valid"));
                 }
                 // Blank source lines inside a text block are data. Reinsert them
@@ -958,9 +1000,23 @@ mod grammar_fixture_tests {
             ("task-list", include_str!("../../../tests/human-vnext/valid/task-list.one")),
             ("text-block-boundaries", include_str!("../../../tests/human-vnext/valid/text-block-boundaries.one")),
             ("instruction-like-text", include_str!("../../../tests/human-vnext/valid/instruction-like-text.one")),
+            ("opaque-text-whitespace", include_str!("../../../tests/human-vnext/valid/opaque-text-whitespace.one")),
         ] {
             parse(source).unwrap_or_else(|error| panic!("valid fixture {name} rejected: {error}"));
         }
+    }
+
+    #[test]
+    fn text_block_preserves_extra_spaces_and_tabs_as_data() {
+        let source = include_str!("../../../tests/human-vnext/valid/opaque-text-whitespace.one");
+        let program = parse(source).expect("text payload indentation beyond its eight-space prefix is data");
+        assert_eq!(
+            program.declarations,
+            vec![super::HumanDeclaration::Data {
+                name: "isi".into(),
+                value: super::HumanValue::Text("Awal\n  Dua spasi relatif\n\tTab relatif\n".into()),
+            }],
+        );
     }
 
     #[test]
