@@ -111,6 +111,13 @@ for marker in (
         raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
 
 for marker in (
+    '"menambahkan tugas"',
+    '"melihat semua tugas"',
+    '"menandai tugas sebagai selesai"',
+    "OpenOptions::new()",
+    ".create_new(true)",
+    "file.sync_all()",
+    "replace_file(&temporary, path)",
     "task_app_persists_across_sessions_and_marks_completion",
     "task_app_rejects_missing_persistence_declaration",
     "task_storage_rejects_corrupt_records",
@@ -121,6 +128,7 @@ for marker in (
     "task_storage_cleans_temporary_file_when_replacement_fails",
     "task_app_rejects_non_tab_control_characters_in_titles",
     "task_app_rejects_actions_the_runner_cannot_execute",
+    "task_app_rejects_supported_body_under_an_unrecognized_action_name",
     "task_app_rejects_data_the_runner_cannot_execute",
     "task_app_rejects_unhandled_persistence_collections",
 ):
