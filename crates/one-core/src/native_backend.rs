@@ -516,20 +516,17 @@ mod linker_discovery_tests {
             "one-native-linker-override-{}",
             std::process::id()
         ));
-        let expected = root.join("x86_64-linux-gnu-ld");
+        let expected = std::env::current_exe().unwrap();
         let path_candidate = root.join("path-bin");
         let path_linker = path_candidate.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&root).unwrap();
         std::fs::create_dir_all(&path_candidate).unwrap();
 
-        // Use the current test executable rather than hard-coded /bin paths.
-        // Minimal containers and hosted runners may not provide those paths.
-        // Rust test binaries exit successfully for --version, so they provide a
-        // portable executable probe without relying on a shell or noexec temp dirs.
-        let test_executable = std::env::current_exe().unwrap();
-        std::os::unix::fs::symlink(&test_executable, &expected).unwrap();
-        std::os::unix::fs::symlink(&test_executable, &path_linker).unwrap();
+        // The override executable must stay outside the temporary directory:
+        // some hosted runners mount temp directories with noexec. The PATH
+        // candidate remains under that directory so it cannot win accidentally.
+        std::os::unix::fs::symlink(&expected, &path_linker).unwrap();
 
         assert_eq!(
             resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
