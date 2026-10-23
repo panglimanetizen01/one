@@ -25,6 +25,15 @@ fn io_error(e: std::io::Error) -> ApplicationProtocolError {
     if matches!(e.kind(), std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock) { ApplicationProtocolError::Timeout } else { ApplicationProtocolError::Io(e.to_string()) }
 }
 
+fn retry_interrupted<T>(mut operation: impl FnMut() -> std::io::Result<T>) -> std::io::Result<T> {
+    loop {
+        match operation() {
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            result => return result,
+        }
+    }
+}
+
 fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet) -> Result<TcpStream, ApplicationProtocolError> {
     permit(caps)?;
     let stream = TcpStream::connect_timeout(&address.to_socket_addrs().map_err(io_error)?.next().ok_or_else(|| ApplicationProtocolError::Io("no address resolved".into()))?, timeout).map_err(io_error)?;
@@ -37,11 +46,7 @@ fn read_line(stream: &mut TcpStream) -> Result<String, ApplicationProtocolError>
     let mut data = Vec::new();
     let mut byte = [0u8; 1];
     loop {
-        let n = match stream.read(&mut byte) {
-            Ok(n) => n,
-            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
-            Err(error) => return Err(io_error(error)),
-        };
+        let n = retry_interrupted(|| stream.read(&mut byte)).map_err(io_error)?;
         if n == 0 { return Err(ApplicationProtocolError::InvalidResponse); }
         data.push(byte[0]);
         if data.ends_with(b"\r\n") { break; }
@@ -168,6 +173,21 @@ mod tests {
             data.push(byte[0]);
         }
         data
+    }
+
+    #[test]
+    fn interrupted_protocol_reads_are_retried() {
+        let mut attempts = 0;
+        let result = retry_interrupted(|| {
+            attempts += 1;
+            if attempts == 1 {
+                Err(std::io::Error::from(std::io::ErrorKind::Interrupted))
+            } else {
+                Ok(42)
+            }
+        }).expect("interrupted reads should retry");
+        assert_eq!(result, 42);
+        assert_eq!(attempts, 2);
     }
 
     #[test]
