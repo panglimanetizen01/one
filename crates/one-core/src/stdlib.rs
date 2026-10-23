@@ -476,12 +476,13 @@ pub fn unix_seconds_to_utc_text(value: &Value) -> Option<Value> {
     let days = seconds.div_euclid(SECONDS_PER_DAY);
     let second_of_day = seconds.rem_euclid(SECONDS_PER_DAY);
     let shifted_days = days.checked_add(719_468)?;
-    let era = if shifted_days >= 0 {
+    // The negative branch biases the value before truncating division,
+    // matching the Gregorian civil-from-days algorithm for year zero and earlier.
+    let era = (if shifted_days >= 0 {
         shifted_days
     } else {
         shifted_days.checked_sub(146_096)?
-    }
-    .div_euclid(146_097);
+    }) / 146_097;
     let day_of_era = shifted_days.checked_sub(era.checked_mul(146_097)?)?;
     let year_of_era = (day_of_era
         - day_of_era / 1_460
@@ -525,6 +526,10 @@ mod tests {
         assert_eq!(
             unix_seconds_to_utc_text(&Value::Number(-1)),
             Some(Value::Text("1969-12-31T23:59:59Z".into()))
+        );
+        assert_eq!(
+            unix_seconds_to_utc_text(&Value::Number(-62_167_219_200)),
+            Some(Value::Text("0000-01-01T00:00:00Z".into()))
         );
         assert_eq!(
             unix_seconds_to_utc_text(&Value::Number(951_782_400)),
