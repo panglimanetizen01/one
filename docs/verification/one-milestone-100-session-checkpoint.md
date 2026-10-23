@@ -156,3 +156,14 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - FTP/SMTP reply accumulation is bounded by 16 MiB and 100,000 lines; application fields are capped and control bytes rejected; SMTP message size is capped; FTP reply parsing rejects non-ASCII status prefixes before byte slicing.
 - HTTP request serialization now caps method length, path length, body size, user-supplied header count and header bytes before building the wire buffer. HTTP/2 has a real loopback request/response test; QUIC rejects outbound payloads over 16 MiB before copying.
 - These edits follow the previous checkpoint SHA, so the next independent matrix must target this checkpoint's exact SHA. Prior results remain tied to their recorded source snapshots and do not verify these changes.
+
+### Final source snapshot for the next exact-SHA run
+
+- Additional source changes after the previous checkpoint:
+  - network_datagrams.rs: TFTP write-size validation now happens before sending the write request; NTP validates the server's originate timestamp and rejects unsynchronized replies; regression fixtures echo the request timestamp and set a valid stratum.
+  - network_application.rs: FTP multiline reply accumulation has explicit byte/line limits, non-ASCII status prefixes are rejected before byte-index slicing, SMTP fields/body and the assembled message are bounded, and control bytes are rejected. Empty SMTP subjects remain valid.
+  - network_runtime.rs: HTTP request method/path/body/header-count/header-byte bounds are checked before serializing the wire buffer.
+  - network_http2.rs: the real HTTP/2 loopback test uses a fixed-size byte array for the oversized-header fixture, avoiding an unnecessary heap allocation.
+- Latest code-bearing commit before this checkpoint: 9f2ed1647b7a85a551b8b7dd48886296779640bd.
+- The prior matrix run 39977368466 targeted the previous checkpoint and does not verify these latest edits. The next exact-SHA matrix must use the checkpoint SHA produced by this update.
+- Ledger weights remain unchanged. No additional points are awarded for source changes without passing exact-SHA verification and full milestone acceptance.
