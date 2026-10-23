@@ -30,7 +30,7 @@ This index records the dependency order and review state of the language specifi
 
 ## Experimental language surfaces
 
-- [Human-instruction vNext starter grammar](./human-instruction-vnext-starter-grammar.md) — proposed, implementation-bounded experimental contract; it does not alter normative ONE v0.1.
+- [Human-instruction vNext starter grammar](./human-instruction-vnext-starter-grammar.md) — reviewed and accepted only for the implementation-bounded experimental subset; it does not accept the broader vNext draft or alter normative ONE v0.1. See the [review record](../verification/human-vnext-grammar-review.md).
 
 ## Cross-cutting contracts
 
