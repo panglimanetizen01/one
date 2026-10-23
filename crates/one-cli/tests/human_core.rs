@@ -114,3 +114,41 @@ fn human_frontend_executes_collection_operations_through_canonical_runtime() {
     assert!(stdout.contains("roti"));
     assert!(stdout.contains("susu"));
 }
+
+#[test]
+fn human_frontend_rejects_invalid_type_operations_with_semantic_diagnostic() {
+    let path = fixture("Buat program tipe salah\\nnilai adalah \"empat\" ditambah 1\\ntampilkan nilai\\n");
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("E20"));
+}
+
+#[test]
+fn human_frontend_enforces_block_scope() {
+    let path = fixture(concat!(
+        "Buat program ruang lingkup\\n",
+        "kalau benar\\n",
+        "    rahasia adalah 7\\n",
+        "tampilkan rahasia\\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("E2002"));
+}
+
+#[test]
+fn human_frontend_executes_bounded_while_loop_and_assignment() {
+    let path = fixture(concat!(
+        "Buat program hitung\\n",
+        "jumlah adalah 0\\n",
+        "selama jumlah lebih kecil dari 3\\n",
+        "    jumlah menjadi jumlah ditambah 1\\n",
+        "tampilkan jumlah\\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "3");
+}
