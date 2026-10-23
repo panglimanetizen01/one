@@ -184,3 +184,13 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 - Source commit c44ee995bd6db99d55c419aa8bd2390b45c78636 moves the Read trait import into the TLS test module after bounded response reads stopped needing it in production. This avoids both the unused-import warning and a test-only method-resolution error.
 - The exact-SHA matrix must target the new checkpoint commit after this change; the previous matrix's E0596 result is already addressed, but this latest import correction still needs compilation on the selected SHA.
+
+### Exact-SHA matrix result — 2026-10-23
+
+- Source SHA tested: aaa1245ac44e95eef3a564a08ba88e10aeb16433.
+- Independent Linux/Windows matrix: run 39978071592 — SUCCESS for both ubuntu-latest and windows-2025.
+- Both jobs checked out the exact source SHA above and passed the contract-target check, build, AST contract regression tests, strict Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. The Ubuntu log records the core suite as 204 passed, 0 failed; additional integration/conformance suites passed. Real-network and offline steps completed successfully on both platforms.
+- The matrix still explicitly ignores one Android native execution test because the hosted runner lacks the required Android execution-capable Clang setup. It is not counted as passed. The full milestone 100 Definition of Done also still requires complete standard-library coverage, external dependency resolution and authenticated provenance, full compatibility/conformance coverage, comprehensive threat review, completed docs/tooling audit, and forensic release audit.
+- The previous matrix failure was actionable: E0277 in IMAP FETCH and E0596 in the HTTP/2 loopback fixture were fixed and then the corrected source passed the matrix above. No checks were disabled or removed.
+- This checkpoint update creates a new source SHA. To keep release evidence exact-SHA, the independent matrix selector must now be retargeted to the resulting checkpoint commit and rerun. The successful run above remains evidence for aaa1245ac44e95eef3a564a08ba88e10aeb16433 only.
+- Ledger weights and point totals are unchanged: 75/100 provisional implementation, 60/100 verified. A green cross-platform engineering matrix does not by itself complete E1–E6; no extra ledger points are awarded until each row's full acceptance evidence is met.
