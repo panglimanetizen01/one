@@ -586,6 +586,25 @@ mod tests {
     }
 
     #[test]
+    fn json_parser_handles_raw_unicode_and_integer_boundaries_without_byte_cursor_errors() {
+        assert_eq!(
+            json_to_value(&Value::Text("\"猫😀\"".into())),
+            Some(Value::Text("猫😀".into()))
+        );
+        assert_eq!(
+            json_to_value(&Value::Text(i64::MIN.to_string())),
+            Some(Value::Number(i64::MIN))
+        );
+        assert_eq!(
+            json_to_value(&Value::Text(i64::MAX.to_string())),
+            Some(Value::Number(i64::MAX))
+        );
+        for invalid in ["-", "01", "-01", "9223372036854775808", "-9223372036854775809", "1e2", "1.0"] {
+            assert_eq!(json_to_value(&Value::Text(invalid.into())), None, "invalid integer form: {invalid}");
+        }
+    }
+
+    #[test]
     fn json_parser_accepts_valid_input_exactly_at_the_byte_limit() {
         let padding = " ".repeat(MAX_JSON_INPUT_BYTES - 4);
         let source = Value::Text(format!("null{padding}"));
