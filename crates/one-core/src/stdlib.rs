@@ -262,6 +262,210 @@ pub fn value_to_json(value: &Value) -> Option<Value> {
     encode(value, 0).map(Value::Text)
 }
 
+/// Parse JSON containing text, signed 64-bit integers, booleans, null, arrays, and objects.
+/// Decimal/exponent numbers are rejected because the runtime has no floating-point value type.
+pub fn json_to_value(value: &Value) -> Option<Value> {
+    match value {
+        Value::Text(source) => JsonParser::parse(source),
+        _ => None,
+    }
+}
+
+struct JsonParser {
+    characters: Vec<char>,
+    position: usize,
+}
+
+impl JsonParser {
+    fn parse(source: &str) -> Option<Value> {
+        let mut parser = Self {
+            characters: source.chars().collect(),
+            position: 0,
+        };
+        let value = parser.parse_value(0)?;
+        parser.skip_whitespace();
+        (parser.position == parser.characters.len()).then_some(value)
+    }
+
+    fn peek(&self) -> Option<char> {
+        self.characters.get(self.position).copied()
+    }
+
+    fn next(&mut self) -> Option<char> {
+        let value = self.peek()?;
+        self.position += 1;
+        Some(value)
+    }
+
+    fn skip_whitespace(&mut self) {
+        while matches!(self.peek(), Some(' ' | '\t' | '\r' | '\n')) {
+            self.position += 1;
+        }
+    }
+
+    fn parse_value(&mut self, depth: usize) -> Option<Value> {
+        if depth > 128 {
+            return None;
+        }
+        self.skip_whitespace();
+        match self.peek()? {
+            '"' => self.parse_string().map(Value::Text),
+            '[' => self.parse_array(depth),
+            '{' => self.parse_object(depth),
+            't' => self.parse_literal("true").map(|()| Value::Boolean(true)),
+            'f' => self.parse_literal("false").map(|()| Value::Boolean(false)),
+            'n' => self.parse_literal("null").map(|()| Value::Nothing),
+            '-' | '0'..='9' => self.parse_integer(),
+            _ => None,
+        }
+    }
+
+    fn parse_literal(&mut self, literal: &str) -> Option<()> {
+        for expected in literal.chars() {
+            if self.next()? != expected {
+                return None;
+            }
+        }
+        Some(())
+    }
+
+    fn parse_integer(&mut self) -> Option<Value> {
+        let start = self.position;
+        if self.peek() == Some('-') {
+            self.position += 1;
+        }
+        match self.peek()? {
+            '0' => {
+                self.position += 1;
+                if matches!(self.peek(), Some('0'..='9')) {
+                    return None;
+                }
+            }
+            '1'..='9' => {
+                self.position += 1;
+                while matches!(self.peek(), Some('0'..='9')) {
+                    self.position += 1;
+                }
+            }
+            _ => return None,
+        }
+        if matches!(self.peek(), Some('.' | 'e' | 'E')) {
+            return None;
+        }
+        let literal = self.characters[start..self.position].iter().collect::<String>();
+        literal.parse::<i64>().ok().map(Value::Number)
+    }
+
+    fn parse_hex_quad(&mut self) -> Option<u16> {
+        let mut value = 0_u16;
+        for _ in 0..4 {
+            let digit = self.next()?.to_digit(16)?;
+            value = value.checked_mul(16)?.checked_add(u16::try_from(digit).ok()?)?;
+        }
+        Some(value)
+    }
+
+    fn parse_string(&mut self) -> Option<String> {
+        if self.next()? != '"' {
+            return None;
+        }
+        let mut output = String::new();
+        loop {
+            let character = self.next()?;
+            match character {
+                '"' => return Some(output),
+                '\\' => {
+                    let escaped = self.next()?;
+                    match escaped {
+                        '"' => output.push('"'),
+                        '\\' => output.push('\\'),
+                        '/' => output.push('/'),
+                        'b' => output.push('\u{0008}'),
+                        'f' => output.push('\u{000c}'),
+                        'n' => output.push('\n'),
+                        'r' => output.push('\r'),
+                        't' => output.push('\t'),
+                        'u' => {
+                            let first = self.parse_hex_quad()?;
+                            let scalar = if (0xd800..=0xdbff).contains(&first) {
+                                if self.next()? != '\\' || self.next()? != 'u' {
+                                    return None;
+                                }
+                                let second = self.parse_hex_quad()?;
+                                if !(0xdc00..=0xdfff).contains(&second) {
+                                    return None;
+                                }
+                                0x1_0000
+                                    + ((u32::from(first) - 0xd800) << 10)
+                                    + (u32::from(second) - 0xdc00)
+                            } else if (0xdc00..=0xdfff).contains(&first) {
+                                return None;
+                            } else {
+                                u32::from(first)
+                            };
+                            output.push(char::from_u32(scalar)?);
+                        }
+                        _ => return None,
+                    }
+                }
+                character if u32::from(character) <= 0x1f => return None,
+                character => output.push(character),
+            }
+        }
+    }
+
+    fn parse_array(&mut self, depth: usize) -> Option<Value> {
+        if self.next()? != '[' {
+            return None;
+        }
+        self.skip_whitespace();
+        let mut values = Vec::new();
+        if self.peek() == Some(']') {
+            self.position += 1;
+            return Some(Value::List(values));
+        }
+        loop {
+            values.push(self.parse_value(depth + 1)?);
+            self.skip_whitespace();
+            match self.next()? {
+                ']' => return Some(Value::List(values)),
+                ',' => self.skip_whitespace(),
+                _ => return None,
+            }
+        }
+    }
+
+    fn parse_object(&mut self, depth: usize) -> Option<Value> {
+        if self.next()? != '{' {
+            return None;
+        }
+        self.skip_whitespace();
+        let mut values = BTreeMap::new();
+        if self.peek() == Some('}') {
+            self.position += 1;
+            return Some(Value::Map(values));
+        }
+        loop {
+            self.skip_whitespace();
+            let key = self.parse_string()?;
+            self.skip_whitespace();
+            if self.next()? != ':' {
+                return None;
+            }
+            let value = self.parse_value(depth + 1)?;
+            if values.insert(key, value).is_some() {
+                return None;
+            }
+            self.skip_whitespace();
+            match self.next()? {
+                '}' => return Some(Value::Map(values)),
+                ',' => self.skip_whitespace(),
+                _ => return None,
+            }
+        }
+    }
+}
+
 /// Construct a deterministic text-keyed mapping.
 pub fn map_from_entries(entries: impl IntoIterator<Item = (String, Value)>) -> Value {
     Value::Map(entries.into_iter().collect::<BTreeMap<_, _>>())
