@@ -290,12 +290,14 @@ mod tests {
     fn bulk_write_rejects_oversized_store_before_serializing() {
         let path = path("oversized");
         let mut store = KeyValueStore::open(&path).unwrap();
+        store.set("retained", "old value").unwrap();
         let values = (0..9)
             .map(|index| (format!("k{index}"), "x".repeat(1024 * 1024)))
             .collect::<BTreeMap<_, _>>();
         assert!(matches!(store.replace_all(values), Err(StoreError::Limit(_))));
-        assert!(store.is_empty());
-        assert!(!path.exists());
+        assert_eq!(store.get("retained"), Some("old value"));
+        assert_eq!(KeyValueStore::open(&path).unwrap().get("retained"), Some("old value"));
+        let _ = fs::remove_file(path);
     }
 
     #[test]
