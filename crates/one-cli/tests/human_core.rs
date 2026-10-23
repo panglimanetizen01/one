@@ -247,3 +247,38 @@ fn checked_in_reference_programs_run_through_the_public_cli() {
         );
     }
 }
+
+#[test]
+fn human_frontend_executes_typed_mapping_operations() {
+    let path = fixture(concat!(
+        "Buat program kontak\\n",
+        "buat pemetaan profil\\n",
+        "masukkan \"nama\" dan \"Budi\" ke profil\\n",
+        "masukkan \"umur\" dan 32 ke profil\\n",
+        "ambil kunci \"nama\" dari profil\\n",
+        "hapus kunci \"umur\" dari profil\\n",
+        "tampilkan profil\\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Budi"));
+    assert!(stdout.contains("nama"));
+    assert!(!stdout.contains("umur"));
+}
+
+#[test]
+fn human_frontend_rejects_non_text_mapping_keys() {
+    let path = fixture(concat!(
+        "Buat program kunci tidak valid\\n",
+        "buat pemetaan profil\\n",
+        "masukkan 5 dan \"Budi\" ke profil\\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success());
+    assert!(stderr.contains("E2034"), "{stderr}");
+    assert!(stderr.contains("baris 3"), "{stderr}");
+}
