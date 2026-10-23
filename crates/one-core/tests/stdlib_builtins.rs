@@ -46,11 +46,11 @@ fn builtin_arity_is_checked_during_semantic_analysis() {
 
 #[test]
 fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
-    let add_overflow = "hasil adalah 9223372036854775807 ditambah 1\\ntampilkan hasil\\n";
+    let add_overflow = "hasil adalah 9223372036854775807 ditambah 1\ntampilkan hasil\n";
     let add_error = run(add_overflow).unwrap_err();
     assert!(add_error.contains("R3023"), "unexpected addition overflow error: {add_error}");
 
-    let multiply_overflow = "hasil adalah 9223372036854775807 dikali 2\\ntampilkan hasil\\n";
+    let multiply_overflow = "hasil adalah 9223372036854775807 dikali 2\ntampilkan hasil\n";
     let multiply_error = run(multiply_overflow).unwrap_err();
     assert!(multiply_error.contains("R3023"), "unexpected multiplication overflow error: {multiply_error}");
 }
@@ -63,7 +63,7 @@ fn checked_in_stdlib_example_runs_through_one() {
 
 #[test]
 fn mapping_builtins_work_in_the_opt_in_human_core_pipeline() {
-    let source = "buat pemetaan kontak\\nmasukkan \\"nama\\" dan \\"Budi\\" ke kontak\\nnama awal adalah nilai pemetaan dengan kontak dan \\"nama\\"\\nkontak menjadi atur pemetaan dengan kontak dan \\"nama\\" dan \\"Ani\\"\\nnama baru adalah nilai pemetaan dengan kontak dan \\"nama\\"\\ntampilkan nama awal\\ntampilkan nama baru\\n";
+    let source = "buat pemetaan kontak\nmasukkan \\"nama\\" dan \\"Budi\\" ke kontak\nnama awal adalah nilai pemetaan dengan kontak dan \\"nama\\"\nkontak menjadi atur pemetaan dengan kontak dan \\"nama\\" dan \\"Ani\\"\nnama baru adalah nilai pemetaan dengan kontak dan \\"nama\\"\ntampilkan nama awal\ntampilkan nama baru\n";
     let program = parse_human_core(source).expect("human-core mapping grammar should parse");
     let typed = analyze(&program).expect("mapping builtin types should analyze");
     let ir = lower(&typed).expect("mapping program should lower");
