@@ -119,7 +119,8 @@ pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, Diag
             None,
         ))
     })?;
-    let root = parse(&root_source)?;
+    let root_header = root_source.lines().next().unwrap_or_default();
+    let root = parse(&format!("{}\ntampilkan \"header probe\"\n", root_header))?;
     let mut seen = std::collections::HashSet::new();
     let mut stack = std::collections::HashSet::new();
     let mut combined = String::new();
