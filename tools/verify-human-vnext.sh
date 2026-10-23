@@ -46,7 +46,12 @@ python3 tools/check_contract.py
 git diff --check
 cargo build --workspace --all-targets
 cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace --all-targets
+if [[ -n "${ONE_ANDROID_CLANG:-}" ]]; then
+  ONE_ANDROID_CLANG="$ONE_ANDROID_CLANG" cargo test --workspace --all-targets
+else
+  echo "NOTE: skipping android_target_explicit_mempertahankan_build_native; ONE_ANDROID_CLANG is not configured."
+  cargo test --workspace --all-targets -- --skip android_target_explicit_mempertahankan_build_native
+fi
 
 if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
   echo "VERIFICATION ERROR: checks changed the worktree." >&2
