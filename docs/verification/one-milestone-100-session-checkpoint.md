@@ -250,10 +250,10 @@ This is a documentation-only checkpoint update; the verified source code snapsho
 
 The earlier 68/100 verified subtotal credited E3's 8 points based on Linux/Windows tests and an Android-target CLI build test. Source inspection confirms that `android_target_explicit_mempertahankan_build_native` only asserts an artifact was created; the separate `build_native_menghasilkan_dan_menjalankan_elf_android_aarch64` test is explicitly ignored on both platforms. Therefore the Android ELF runtime acceptance is **not verified**, and E3 is 8/8 implemented but 0/8 verified. Verified completion is corrected to **60/100**; implementation remains **84/100**. No row weights changed.
 
-## Latest exact-SHA verification — `8552fa915b972aeb47ed27c4e5f577ffdb539ecf`
+## Latest exact-SHA verification — `ebf254d1194a903a3b582f3a18abfc402f2003d2`
 
-- Focused stdlib/database [40008200945](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200945) — SUCCESS.
-- Linux distro [40008200684](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200684) — Ubuntu 24.04 and Debian 12 SUCCESS.
-- Cross-platform [40008200962](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200962) — Ubuntu and Windows SUCCESS, exact source SHA verified in both logs. Build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; each platform printed `OFFLINE VERIFICATION: PASS`.
-- The separate Android ELF build-and-execute test remains ignored on both platforms; no Android runtime pass is claimed. Canonical repository Actions still fail before steps with `runner_id=0`.
+- Focused stdlib/database [40009389100](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389100) — SUCCESS.
+- Linux distro [40009389164](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389164) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform [40009389190](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389190) — Ubuntu and Windows SUCCESS, exact source SHA verified in both logs. Build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; each platform printed `OFFLINE VERIFICATION: PASS`.
+- Main workspace summaries show 215 passed / 0 failed on Ubuntu and 210 passed / 0 failed on Windows. The separate Android ELF build-and-execute test remains ignored on both platforms; no Android runtime pass is claimed. Canonical repository Actions still fail before steps with `runner_id=0`.
 - **Gate: NOT PASSED** — external dependency resolution/provenance, broader stdlib, race-resistant filesystem/resource security, developer tooling/docs, Android runtime acceptance if required by the declared target contract, and E6 forensic audit remain outstanding.
