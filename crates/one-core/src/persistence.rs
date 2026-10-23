@@ -113,10 +113,23 @@ impl KeyValueStore {
         }
         let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
         let temp = self.path.with_extension(format!("one-tmp-{}-{sequence}", std::process::id()));
-        fs::write(&temp, encoded)?;
+        let write_result = (|| -> std::io::Result<()> {
+            use std::io::Write as _;
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&temp)?;
+            file.write_all(encoded.as_bytes())?;
+            file.sync_all()
+        })();
+        if let Err(error) = write_result {
+            let _ = fs::remove_file(&temp);
+            return Err(StoreError::Io(error));
+        }
         if let Err(error) = replace_file(&temp, &self.path) {
             let _ = fs::remove_file(&temp);
             return Err(StoreError::Io(error));
+        }
+        #[cfg(unix)]
+        if let Some(parent) = self.path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+            if let Ok(directory) = fs::File::open(parent) { let _ = directory.sync_all(); }
         }
         Ok(())
     }
