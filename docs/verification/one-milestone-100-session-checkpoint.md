@@ -212,7 +212,7 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 
 - File-backed SQLite `database.query` uses SQLite read-only flags and `query_only`; missing database files are not created. Added enforced budgets for SQL bytes (1 MiB), per-parameter bytes (1 MiB), total parameter bytes (16 MiB), parameter count (256), result rows (100,000), and serialized output (16 MiB), with regression tests.
 - Added strict Gregorian UTC text parsing as the source-level builtin `unix dari waktu utc`, paired with the existing `waktu utc dari unix` formatter. Both are integrated through semantic checks and canonical interpreter execution, with unit/integration tests and updated docs.
-- Fixed `tools/verify_offline.ps1` false-green behavior by propagating nonzero native exit codes and skipping only the Android-native CLI test on Windows. Android AArch64 native execution passed on Ubuntu in the later exact-SHA matrix (run 40007463527); the Windows-specific CLI Android-target test was filtered out on Windows and is not counted as a Windows pass.
+- Fixed `tools/verify_offline.ps1` false-green behavior by propagating nonzero native exit codes and skipping only the Android-native CLI test on Windows. The Android-target CLI build test passed on Ubuntu, but the separate Android AArch64 ELF build-and-execute test remains ignored on both platforms. The Windows-specific CLI Android-target test was filtered out and is not counted as a Windows pass.
 
 ### Evidence
 
@@ -225,8 +225,8 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 ### Completion ledger and remaining work
 
 - **Implementation subtotal:** 84/100 provisional points; E1=7/10, E2=5/8, E3=8/8, E4=3/6, E5=1/4, E6=0/4. Fixed weights unchanged.
-- **Verified completion:** 68/100. E1, E2, E4, E5 and E6 remain unverified.
-- Remaining mandatory work: external dependency resolution and authenticated package provenance; wider standard-library APIs; race-resistant filesystem confinement and broader quotas; compatibility and developer tooling/docs completion; Android-native execution if required by declared targets; and E6 forensic Definition-of-Done audit.
+- **Verified completion:** 60/100. E1, E2, E3, E4, E5 and E6 are not fully verified under the current 100% acceptance criteria.
+- Remaining mandatory work: external dependency resolution and authenticated package provenance; wider standard-library APIs; race-resistant filesystem confinement and broader quotas; compatibility and developer tooling/docs completion; Android ELF build-and-execute verification in a toolchain-capable environment if required by declared targets; and E6 forensic Definition-of-Done audit.
 - **GATE: NOT PASSED — Milestone 100% remains in progress.**
 
 
@@ -235,12 +235,25 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - [Focused stdlib/database](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463554) — SUCCESS.
 - [Linux distro matrix](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463563) — Ubuntu 24.04 and Debian 12 SUCCESS.
 - [Ubuntu/Windows cross-platform matrix](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463527) — both jobs SUCCESS on exact source SHA `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`. Both passed build, contract artifacts, AST tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification. No failed test summary was found in the logs; each platform printed `OFFLINE VERIFICATION: PASS`.
-- Ubuntu workspace tests: 215 passed, 0 failed, 0 ignored. The Android AArch64 native execution test passed on Ubuntu. Windows workspace tests: 210 passed, 0 failed, 0 ignored; its Android-target CLI test is filtered out because the Windows runner is not an Android toolchain.
+- Main workspace suite summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The Android-target CLI test passed on Ubuntu but only checks artifact creation. The separate Android AArch64 ELF build-and-execute test remains ignored on both platforms because Android AArch64 Clang/runtime setup is unavailable. The Windows-specific CLI Android-target test is filtered out on Windows.
 - The previous Windows false-green was corrected in `tools/verify_offline.ps1` by enabling native-command failure propagation and explicitly excluding only the Windows-inapplicable Android CLI test. The earlier run with a swallowed test failure is not credited.
 - Canonical repository Actions still fail before steps with `runner_id=0`; the independent exact-SHA mirror supplied actual verification evidence.
 
-**Current ledger:** 84/100 provisional implementation points, 68/100 verified.  
+**Current ledger:** 84/100 provisional implementation points, 60/100 verified.  
 **Remaining:** external dependency resolution/provenance, wider standard library, race-resistant filesystem confinement and broader quotas, full compatibility/release and developer-tooling/documentation acceptance, and E6 forensic audit.  
 **GATE: NOT PASSED — Milestone 100% remains in progress.**
 
 This is a documentation-only checkpoint update; the verified source code snapshot is unchanged.
+
+
+## Forensic correction — E3 Android runtime acceptance
+
+The earlier 68/100 verified subtotal credited E3's 8 points based on Linux/Windows tests and an Android-target CLI build test. Source inspection confirms that `android_target_explicit_mempertahankan_build_native` only asserts an artifact was created; the separate `build_native_menghasilkan_dan_menjalankan_elf_android_aarch64` test is explicitly ignored on both platforms. Therefore the Android ELF runtime acceptance is **not verified**, and E3 is 8/8 implemented but 0/8 verified. Verified completion is corrected to **60/100**; implementation remains **84/100**. No row weights changed.
+
+## Latest exact-SHA verification — `8552fa915b972aeb47ed27c4e5f577ffdb539ecf`
+
+- Focused stdlib/database [40008200945](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200945) — SUCCESS.
+- Linux distro [40008200684](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200684) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform [40008200962](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40008200962) — Ubuntu and Windows SUCCESS, exact source SHA verified in both logs. Build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; each platform printed `OFFLINE VERIFICATION: PASS`.
+- The separate Android ELF build-and-execute test remains ignored on both platforms; no Android runtime pass is claimed. Canonical repository Actions still fail before steps with `runner_id=0`.
+- **Gate: NOT PASSED** — external dependency resolution/provenance, broader stdlib, race-resistant filesystem/resource security, developer tooling/docs, Android runtime acceptance if required by the declared target contract, and E6 forensic audit remain outstanding.
