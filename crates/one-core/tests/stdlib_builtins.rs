@@ -30,6 +30,18 @@ fn text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline() {
 }
 
 #[test]
+fn case_conversion_and_numeric_builtins_execute_through_the_canonical_pipeline() {
+    let source = "kecil adalah huruf kecil dengan \"KUCING\"\nbesar adalah huruf besar dengan \"kucing\"\nminimum adalah angka minimum dengan 7 dan 3\nmaksimum adalah angka maksimum dengan 7 dan 3\nmutlak adalah nilai mutlak dengan 7\nbuat daftar nilai\ntambahkan 2 ke nilai\ntambahkan 3 ke nilai\njumlah adalah jumlah daftar angka dengan nilai\ntampilkan kecil\ntampilkan besar\ntampilkan minimum\ntampilkan maksimum\ntampilkan mutlak\ntampilkan jumlah\n";
+    assert_eq!(
+        run(source).expect("case conversion and numeric builtins should execute"),
+        vec!["kucing", "KUCING", "3", "7", "7", "5"]
+    );
+
+    let bad_type = "hasil adalah angka minimum dengan \"7\" dan 3\ntampilkan hasil\n";
+    assert!(run(bad_type).unwrap_err().contains("E2043"));
+}
+
+#[test]
 fn split_and_integer_conversion_return_typed_values() {
     let source = "bagian adalah pisah teks dengan \"apel,jeruk\" dan \",\"\nangka adalah ubah teks ke angka dengan \"42\"\ntampilkan bagian\ntampilkan angka\n";
     assert_eq!(run(source).expect("conversion should execute"), vec!["[apel, jeruk]", "42"]);
