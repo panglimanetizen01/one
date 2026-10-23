@@ -799,6 +799,23 @@ mod task_runtime_tests {
     }
 
     #[test]
+    fn task_app_rejects_supported_body_under_an_unrecognized_action_name() {
+        let mut program = task_program();
+        if let HumanDeclaration::Action { name, .. } = &mut program.declarations[0] {
+            *name = "buat tugas".into();
+        } else {
+            panic!("first task declaration must be the add action");
+        }
+        let path = storage_path();
+        let mut input = Cursor::new(Vec::<u8>::new());
+        let mut output = Vec::new();
+        let error = run_task_app(&program, &path, &mut input, &mut output)
+            .expect_err("action name is part of the supported task-app contract");
+        assert!(error.contains("belum didukung runner daftar tugas"));
+        assert!(!path.exists());
+    }
+
+    #[test]
     fn task_app_rejects_data_the_runner_cannot_execute() {
         let mut program = task_program();
         program.declarations.push(HumanDeclaration::Data {
