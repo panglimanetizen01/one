@@ -178,6 +178,7 @@ for marker in (
     "git ls-remote origin",
     "https://github.com/panglimanetizen01/one.git",
     "bash -n tools/verify-human-vnext.sh",
+    "cargo fmt --all -- --check",
     "VERIFIED SOURCE SHA",
     "checks changed the worktree",
     "cargo build --workspace --all-targets",
