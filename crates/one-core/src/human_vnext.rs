@@ -1092,6 +1092,7 @@ mod grammar_fixture_tests {
             ("second-application", include_str!("../../../tests/human-vnext/invalid/second-application.one"), "H0016", 2),
             ("empty-action", include_str!("../../../tests/human-vnext/invalid/empty-action.one"), "H0014", 2),
             ("tab-indentation", include_str!("../../../tests/human-vnext/invalid/tab-indentation.one"), "H0001", 3),
+            ("tab-before-text-prefix", include_str!("../../../tests/human-vnext/invalid/tab-before-text-prefix.one"), "H0001", 4),
             ("noncanonical-indent", include_str!("../../../tests/human-vnext/invalid/noncanonical-indent.one"), "H0002", 2),
             ("invalid-action-name", include_str!("../../../tests/human-vnext/invalid/invalid-action-name.one"), "H0010", 2),
             ("unicode-combining-mark", include_str!("../../../tests/human-vnext/invalid/unicode-combining-mark.one"), "H0004", 1),
