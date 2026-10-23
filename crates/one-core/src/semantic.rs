@@ -21,6 +21,7 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
             ("ambil indeks".to_owned(), 2),
             ("nilai mutlak".to_owned(), 1),
             ("bagi bulat".to_owned(), 2),
+            ("angka sisa bagi".to_owned(), 2),
             ("angka minimum".to_owned(), 2),
             ("angka maksimum".to_owned(), 2),
             ("nilai pemetaan".to_owned(), 2),
@@ -127,7 +128,7 @@ impl Analyzer {
                 "nilai pemetaan" => Some(vec![Type::Map, Type::Text]),
                 "atur pemetaan" => Some(vec![Type::Map, Type::Text, Type::Any]),
                 "nilai mutlak" => Some(vec![Type::Number]),
-                "bagi bulat" | "angka minimum" | "angka maksimum" => Some(vec![Type::Number, Type::Number]),
+                "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" => Some(vec![Type::Number, Type::Number]),
                 _ => None,
             };
             if let Some(expected_types) = expected_types {
@@ -142,7 +143,7 @@ impl Analyzer {
                 }
             }
             Ok(match name.as_str() {
-                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "jumlah daftar angka" | "nilai mutlak" | "bagi bulat" | "angka minimum" | "angka maksimum" => Type::Number,
+                "panjang teks" | "ubah teks ke angka" | "panjang daftar" | "jumlah daftar angka" | "nilai mutlak" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" => Type::Number,
                 "teks memuat" | "teks diawali" | "teks diakhiri" => Type::Boolean,
                 "pangkas teks" | "ganti teks" | "ubah nilai ke json" | "waktu utc dari unix" | "huruf kecil" | "huruf besar" | "gabung teks" => Type::Text,
                 "pisah teks" => Type::List,
