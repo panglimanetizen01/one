@@ -58,16 +58,55 @@ fn spesifikasi_toolchain_android_aarch64_memakai_executable() {
 }
 
 #[test]
-#[ignore = "membutuhkan Clang Android AArch64 pada lingkungan verifikasi"]
+#[ignore = "membutuhkan Clang Android AArch64 dan Android emulator; set ONE_ANDROID_CLANG dan ONE_ANDROID_ADB"]
 fn build_native_menghasilkan_dan_menjalankan_elf_android_aarch64() {
     let root = std::env::temp_dir().join(format!("one-native-test-{}", std::process::id()));
     fs::create_dir_all(&root).expect("temp dir harus dapat dibuat");
     let output = root.join("hello-android-aarch64");
     let ir = compile("tampilkan \"ONE_NATIVE_BACKEND_OK\"\n");
-    let artifact = NativeAndroidAarch64Backend::new().build(&ir, &output).expect("backend harus menghasilkan artifact native");
-    let run = Command::new(&artifact.path).output().expect("artifact Android harus dapat dijalankan");
-    assert!(run.status.success());
-    assert_eq!(String::from_utf8_lossy(&run.stdout), "ONE_NATIVE_BACKEND_OK\n");
-    assert!(artifact.path.is_file());
+    let artifact = NativeAndroidAarch64Backend::new()
+        .build(&ir, &output)
+        .expect("backend harus menghasilkan artifact native");
+    assert!(artifact.path.is_file(), "artifact Android tidak dibuat");
+
+    let adb = std::env::var("ONE_ANDROID_ADB")
+        .expect("ONE_ANDROID_ADB harus menunjuk ke adb yang terhubung ke emulator Android");
+    let remote = format!("/data/local/tmp/one-native-test-{}", std::process::id());
+    let artifact_path = artifact.path.to_str().expect("path artifact harus UTF-8");
+    let push = Command::new(&adb)
+        .args(["push", artifact_path, &remote])
+        .output()
+        .expect("adb push harus dapat dijalankan");
+    assert!(
+        push.status.success(),
+        "gagal mengirim ELF ke emulator: {}",
+        String::from_utf8_lossy(&push.stderr)
+    );
+
+    let chmod = Command::new(&adb)
+        .args(["shell", "chmod", "700", &remote])
+        .output()
+        .expect("adb chmod harus dapat dijalankan");
+    assert!(
+        chmod.status.success(),
+        "gagal mengatur izin ELF di emulator: {}",
+        String::from_utf8_lossy(&chmod.stderr)
+    );
+
+    let run = Command::new(&adb)
+        .args(["shell", &remote])
+        .output()
+        .expect("ELF Android harus dapat dijalankan melalui adb shell");
+    assert!(
+        run.status.success(),
+        "ELF Android gagal dieksekusi: {}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&run.stdout).trim(),
+        "ONE_NATIVE_BACKEND_OK"
+    );
+
+    let _ = Command::new(&adb).args(["shell", "rm", "-f", &remote]).status();
     let _ = fs::remove_dir_all(root);
 }
