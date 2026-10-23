@@ -509,24 +509,24 @@ fn resolve_linux_x86_64_linker(
 mod linker_discovery_tests {
     use super::*;
 
-    #[cfg(unix)]
+    #[cfg(target_os = "linux")]
     #[test]
     fn linux_x86_64_linker_override_diprioritaskan() {
         let root = std::env::temp_dir().join(format!(
             "one-native-linker-override-{}",
             std::process::id()
         ));
-        let expected = std::env::current_exe().unwrap();
+        let expected = PathBuf::from("/bin/true");
         let path_candidate = root.join("path-bin");
         let path_linker = path_candidate.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&root).unwrap();
         std::fs::create_dir_all(&path_candidate).unwrap();
 
-        // The override executable must stay outside the temporary directory:
-        // some hosted runners mount temp directories with noexec. The PATH
-        // candidate remains under that directory so it cannot win accidentally.
-        std::os::unix::fs::symlink(&expected, &path_linker).unwrap();
+        // /bin/true is outside the temporary directory because hosted runners
+        // may mount temp with noexec. The PATH candidate fails if selected,
+        // proving that the explicit override takes priority.
+        std::os::unix::fs::symlink("/bin/false", &path_linker).unwrap();
 
         assert_eq!(
             resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
