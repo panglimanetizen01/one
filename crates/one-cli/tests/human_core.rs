@@ -222,3 +222,28 @@ fn human_frontend_reports_source_line_for_invalid_condition_type() {
     assert!(stderr.contains("E2010"), "{stderr}");
     assert!(stderr.contains("baris 2"), "{stderr}");
 }
+
+#[test]
+fn checked_in_reference_programs_run_through_the_public_cli() {
+    let examples = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../examples/human-vnext");
+    let cases = [
+        ("kalkulator.one", "Hasil melebihi seribu"),
+        ("pencatat-skor.one", "Skor tervalidasi"),
+        ("modul-utama.one", "42"),
+    ];
+    for (file, expected) in cases {
+        let path = examples.join(file);
+        let output = run(&path);
+        assert!(
+            output.status.success(),
+            "contoh {file} gagal: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout).trim(),
+            expected,
+            "hasil contoh {file} tidak cocok"
+        );
+    }
+}
