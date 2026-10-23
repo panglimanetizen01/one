@@ -308,3 +308,17 @@ fn human_frontend_reports_missing_mapping_key_instead_of_returning_success() {
     assert!(!output.status.success());
     assert!(stderr.contains("R3041"), "{stderr}");
 }
+
+#[test]
+fn human_frontend_rejects_duplicate_mapping_declarations() {
+    let path = fixture(concat!(
+        "Buat program pemetaan ganda\n",
+        "buat pemetaan profil\n",
+        "buat pemetaan profil\n",
+    ));
+    let output = run(&path);
+    let _ = fs::remove_file(&path);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success());
+    assert!(stderr.contains("E2001"), "{stderr}");
+}
