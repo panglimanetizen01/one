@@ -121,16 +121,21 @@ pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, Diag
     })?;
     let root_header = root_source.lines().next().unwrap_or_default();
     let root = parse(&format!("{}\ntampilkan \"header probe\"\n", root_header))?;
+    let canonical_root = std::fs::canonicalize(path).map_err(|error| {
+        DiagnosticBundle::single(Diagnostic::error("HV1011", format!("Tidak dapat menyelesaikan jalur proyek '{}': {}", path.display(), error), None))
+    })?;
+    let root_dir = canonical_root.parent().unwrap_or_else(|| std::path::Path::new(".")).to_path_buf();
     let mut seen = std::collections::HashSet::new();
     let mut stack = std::collections::HashSet::new();
     let mut combined = String::new();
-    collect_module_bodies(path, &root_source, true, &mut seen, &mut stack, &mut combined)?;
+    collect_module_bodies(&canonical_root, &root_dir, &root_source, true, &mut seen, &mut stack, &mut combined)?;
     let wrapped = format!("Buat program {}\n{}", root.name, combined);
     compile(&wrapped)
 }
 
 fn collect_module_bodies(
     path: &std::path::Path,
+    root_dir: &std::path::Path,
     source: &str,
     is_root: bool,
     seen: &mut std::collections::HashSet<std::path::PathBuf>,
@@ -142,6 +147,11 @@ fn collect_module_bodies(
             "HV1011", format!("Tidak dapat menyelesaikan jalur modul '{}': {}", path.display(), error), None,
         ))
     })?;
+    if !canonical.starts_with(root_dir) {
+        return Err(DiagnosticBundle::single(Diagnostic::error(
+            "HV1018", format!("Modul '{}' berada di luar direktori proyek.", path.display()), None,
+        )));
+    }
     if stack.contains(&canonical) {
         return Err(DiagnosticBundle::single(Diagnostic::error(
             "HV1012", format!("Siklus import terdeteksi pada '{}'.", path.display()), None,
@@ -189,7 +199,7 @@ fn collect_module_bodies(
                 "HV1017", format!("Tidak dapat membaca modul '{}': {}", child.display(), error), None,
             ))
         })?;
-        collect_module_bodies(&child, &child_source, false, seen, stack, output)?;
+        collect_module_bodies(&child, root_dir, &child_source, false, seen, stack, output)?;
         body_start += 1;
         while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
             body_start += 1;
