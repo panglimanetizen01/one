@@ -206,12 +206,34 @@ mod tests {
             assert_eq!(request[0], 0x23);
             let mut response = [0u8; 48];
             response[0] = 0x24;
+            response[1] = 1;
             response[40..48].copy_from_slice(&(1_700_000_000u64 << 32).to_be_bytes());
             server.send_to(&response, peer).expect("ntp response");
         });
         let socket = UdpSocket::bind("127.0.0.1:0").expect("bind");
         let timestamp = ntp_query(&socket, server_addr, Duration::from_secs(2), &caps()).expect("ntp");
         assert_eq!(timestamp, 1_700_000_000u64 << 32);
+        handle.join().expect("server");
+    }
+
+    #[test]
+    fn ntp_query_rejects_unsynchronized_or_non_server_packets() {
+        let server = UdpSocket::bind("127.0.0.1:0").expect("bind");
+        let server_addr = server.local_addr().expect("addr");
+        let handle = thread::spawn(move || {
+            let mut request = [0u8; 48];
+            let (_, peer) = server.recv_from(&mut request).expect("request");
+            let mut response = [0u8; 48];
+            response[0] = 0x24;
+            response[1] = 0;
+            response[40..48].copy_from_slice(&(1_700_000_000u64 << 32).to_be_bytes());
+            server.send_to(&response, peer).expect("unsynchronized response");
+        });
+        let socket = UdpSocket::bind("127.0.0.1:0").expect("client");
+        assert_eq!(
+            ntp_query(&socket, server_addr, Duration::from_secs(2), &caps()),
+            Err(DatagramProtocolError::InvalidPacket)
+        );
         handle.join().expect("server");
     }
 
