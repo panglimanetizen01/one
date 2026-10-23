@@ -263,12 +263,12 @@ mod tests {
     #[test]
     fn json_serialization_escapes_text_and_orders_mapping_keys() {
         let value = map_from_entries([
-            ("z".into(), Value::Text("baris\\n\\\"".into())),
+            ("z".into(), Value::Text("baris\n\"".into())),
             ("a".into(), Value::List(vec![Value::Number(2), Value::Nothing])),
         ]);
         assert_eq!(
             value_to_json(&value),
-            Some(Value::Text("{\\\"a\\\":[2,null],\\\"z\\\":\\\"baris\\\\n\\\\\\\"\\\"}".into()))
+            Some(Value::Text(r#"{"a":[2,null],"z":"baris\n\""}"#.into()))
         );
         assert_eq!(value_to_json(&Value::Boolean(true)), Some(Value::Text("true".into())));
     }
