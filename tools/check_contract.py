@@ -199,7 +199,7 @@ for marker in (
     "at least 15 minutes",
     "same canonical source SHA",
     "BLOCKED/INFRASTRUCTURE",
-    "do not call the overall mirror matrix green",
+    "Do not call the overall mirror matrix green",
 ):
     if marker not in verification_contract + verification_script:
         raise SystemExit(f"EXACT-SHA VERIFICATION CONTRACT: missing required rule/command {marker!r}")
