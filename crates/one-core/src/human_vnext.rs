@@ -864,7 +864,7 @@ mod task_runtime_tests {
             ("1\t0\n", "judul hilang"),
             ("1\t2\tjudul\n", "field tidak valid"),
             ("1\t0\t\n", "field tidak valid"),
-            ("1\t0\tjudul\\u{1}\n", "field tidak valid"),
+            ("1\t0\tjudul\u{1}\n", "field tidak valid"),
             ("1\t0\tjudul\n1\t1\tduplikat\n", "ID duplikat"),
         ] {
             std::fs::write(&path, contents).expect("write corrupt fixture");
