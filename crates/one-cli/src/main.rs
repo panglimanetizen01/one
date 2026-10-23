@@ -10,6 +10,34 @@ fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("
 fn project_metadata(root: &Path) -> Result<(String, String), String> { let manifest = root.join("one.toml"); let text = fs::read_to_string(&manifest).map_err(|e| format!("Tidak dapat membaca '{}': {}", manifest.display(), e))?; let mut seen = HashSet::new(); let mut name = None; let mut version = None; for (index, raw_line) in text.lines().enumerate() { let line = raw_line.trim(); if line.is_empty() || line.starts_with('#') { continue; } let Some((raw_key, raw_value)) = line.split_once('=') else { return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1)); }; let key = raw_key.trim(); let value = raw_value.trim(); if !matches!(key, "nama" | "versi") || !seen.insert(key) { return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1)); } let Some(value) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else { return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1)); }; if value.is_empty() { return Err(format!("Manifest '{}' memiliki nilai kosong pada baris {}.", manifest.display(), index + 1)); } match key { "nama" => name = Some(value.to_owned()), "versi" => version = Some(value.to_owned()), _ => unreachable!() } } match (name, version) { (Some(name), Some(version)) => Ok((name, version)), _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())) } }
 fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
 fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir() { return Ok(Vec::new()); } let mut files = fs::read_dir(root).map_err(|e| format!("Tidak dapat membaca '{}': {}", root.display(), e))?.map(|entry| entry.map(|e| e.path()).map_err(|e| format!("Tidak dapat membaca fixture: {}", e))).collect::<Result<Vec<_>, _>>()?; files.retain(|path| path.extension().and_then(|v| v.to_str()) == Some("one")); files.sort(); Ok(files) }
+fn fnv1a64(bytes: &[u8]) -> u64 {
+ let mut hash = 0xcbf29ce484222325_u64;
+ for byte in bytes {
+  hash = (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3);
+ }
+ hash
+}
+
+fn module_lock_contents(root: &Path, modules: &[PathBuf]) -> Result<String, String> {
+ let canonical_root = fs::canonicalize(root).map_err(|error| format!("Direktori sumber tidak dapat diresolusi: {error}"))?;
+ let mut entries = Vec::new();
+ for module in modules {
+  let relative = module.strip_prefix(&canonical_root).map_err(|_| format!("Modul '{}' berada di luar direktori sumber paket.", module.display()))?;
+  let name = relative.components().map(|component| component.as_os_str().to_string_lossy().into_owned()).collect::<Vec<_>>().join("/");
+  if name.is_empty() || name.split('/').any(|part| part == ".." || part.is_empty() || part.contains(['\n', '\r'])) {
+   return Err(format!("Jalur modul tidak valid untuk lockfile: '{}'.", module.display()));
+  }
+  let bytes = fs::read(module).map_err(|error| format!("Modul '{}' tidak dapat dibaca untuk lockfile: {error}", module.display()))?;
+  entries.push((name, fnv1a64(&bytes)));
+ }
+ entries.sort_by(|left, right| left.0.cmp(&right.0));
+ let mut lock = String::from("One module lock v1\n# FNV-1a-64 is a reproducibility fingerprint, not a cryptographic integrity guarantee.\n");
+ for (name, fingerprint) in entries {
+  lock.push_str(&format!("{name} fnv1a64={fingerprint:016x}\n"));
+ }
+ Ok(lock)
+}
+
 fn run_conformance_fixtures(root: &Path) -> Result<usize, String> {
  let valid = fixture_files(&root.join("tests/conformance/valid"))?;
  let invalid = fixture_files(&root.join("tests/conformance/invalid"))?;
