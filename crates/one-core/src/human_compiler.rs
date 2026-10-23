@@ -17,6 +17,8 @@ pub struct HumanSource {
 pub struct CompiledHumanProgram {
     pub name: String,
     pub ir: IrProgram,
+    /// Canonical root and relative module files in deterministic traversal order.
+    pub modules: Vec<std::path::PathBuf>,
 }
 
 pub fn parse(source: &str) -> Result<HumanSource, DiagnosticBundle> {
@@ -59,7 +61,7 @@ pub fn compile(source: &str) -> Result<CompiledHumanProgram, DiagnosticBundle> {
     let ast = crate::parse_human_core(&parsed.body).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
     let typed = crate::analyze(&ast).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
     let ir = crate::lower(&typed).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
-    Ok(CompiledHumanProgram { name: parsed.name, ir })
+    Ok(CompiledHumanProgram { name: parsed.name, ir, modules: Vec::new() })
 }
 
 fn shift_diagnostics(mut bundle: DiagnosticBundle, offset: usize) -> DiagnosticBundle {
@@ -91,9 +93,12 @@ pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, Diag
     let mut seen = std::collections::HashSet::new();
     let mut stack = std::collections::HashSet::new();
     let mut combined = String::new();
-    collect_module_bodies(&canonical_root, &root_dir, &root_source, true, &mut seen, &mut stack, &mut combined)?;
+    let mut modules = Vec::new();
+    collect_module_bodies(&canonical_root, &root_dir, &root_source, true, &mut seen, &mut stack, &mut modules, &mut combined)?;
     let wrapped = format!("Buat program {}\n{}", root.name, combined);
-    compile(&wrapped)
+    let mut compiled = compile(&wrapped)?;
+    compiled.modules = modules;
+    Ok(compiled)
 }
 
 fn collect_module_bodies(
@@ -103,6 +108,7 @@ fn collect_module_bodies(
     is_root: bool,
     seen: &mut std::collections::HashSet<std::path::PathBuf>,
     stack: &mut std::collections::HashSet<std::path::PathBuf>,
+    modules: &mut Vec<std::path::PathBuf>,
     output: &mut String,
 ) -> Result<(), DiagnosticBundle> {
     let canonical = std::fs::canonicalize(path).map_err(|error| {
@@ -126,6 +132,7 @@ fn collect_module_bodies(
         )));
     }
     stack.insert(canonical.clone());
+    modules.push(canonical.clone());
     let mut lines = source.lines();
     let header = lines.next().unwrap_or_default();
     let expected = if is_root { "Buat program " } else { "Buat modul " };
@@ -162,7 +169,7 @@ fn collect_module_bodies(
                 "HV1017", format!("Tidak dapat membaca modul '{}': {}", child.display(), error), None,
             ))
         })?;
-        collect_module_bodies(&child, root_dir, &child_source, false, seen, stack, output)?;
+        collect_module_bodies(&child, root_dir, &child_source, false, seen, stack, modules, output)?;
         body_start += 1;
         while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
             body_start += 1;
