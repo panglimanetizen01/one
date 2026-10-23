@@ -29,6 +29,8 @@ The following calls use the existing deterministic expression-call syntax and ca
 | `ganti teks` | 3 | Text | Replace all literal, non-empty occurrences |
 | `pisah teks` | 2 | List | Split on a literal, non-empty separator |
 | `ubah teks ke angka` | 1 | Number | Parse a base-10 signed 64-bit integer; whitespace and overflow are rejected |
+| `waktu utc dari unix` | 1 | Text | Format integer Unix epoch seconds as strict Gregorian UTC `YYYY-MM-DDTHH:MM:SSZ`; years 0000–9999 are supported |
+| `unix dari waktu utc` | 1 | Number | Parse strict Gregorian UTC `YYYY-MM-DDTHH:MM:SSZ`; invalid dates/times, offsets, fractional seconds, leap seconds, and non-canonical forms are rejected |
 | `panjang daftar` | 1 | Number | List element count |
 | `gabung teks` | 2 | Text | Join a list containing only text values with a literal separator |
 | `jumlah daftar angka` | 1 | Number | Checked sum of integer values; overflow and non-integer items are errors |
