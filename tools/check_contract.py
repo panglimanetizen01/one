@@ -37,10 +37,17 @@ required = [
     "tests/human-vnext/valid/minimal-data.one",
     "tests/human-vnext/valid/unicode-name.one",
     "tests/human-vnext/valid/task-list.one",
+    "tests/human-vnext/valid/text-block-boundaries.one",
     "tests/human-vnext/invalid/empty.one",
     "tests/human-vnext/invalid/orphan-instruction.one",
     "tests/human-vnext/invalid/unknown-instruction.one",
     "tests/human-vnext/invalid/unresolved-display.one",
+    "tests/human-vnext/invalid/indented-application.one",
+    "tests/human-vnext/invalid/missing-text-block.one",
+    "tests/human-vnext/invalid/duplicate-data.one",
+    "tests/human-vnext/invalid/duplicate-persistence.one",
+    "tests/human-vnext/invalid/action-name-as-data.one",
+    "tests/human-vnext/invalid/repeated-spaces.one",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -103,8 +110,8 @@ print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
 human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
 human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
-if len(human_valid) < 3 or len(human_invalid) < 4:
-    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 3 valid and 4 invalid fixtures")
+if len(human_valid) < 4 or len(human_invalid) < 10:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 4 valid and 10 invalid fixtures")
 
 print(f"golden fixtures: {len(golden)}")
 print(f"human-vNext valid fixtures: {len(human_valid)}")
