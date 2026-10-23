@@ -35,10 +35,13 @@ echo "platform: $(uname -srm)"
 rustc --version
 cargo --version
 python3 --version
+if [[ -z "${ONE_ANDROID_CLANG:-}" && -x /tmp/one-android-clang-wrapper ]]; then
+  export ONE_ANDROID_CLANG=/tmp/one-android-clang-wrapper
+fi
 if [[ -n "${ONE_ANDROID_CLANG:-}" ]]; then
   echo "ONE_ANDROID_CLANG: configured"
 else
-  echo "ONE_ANDROID_CLANG: not configured (Android native execution test may be ignored)"
+  echo "ONE_ANDROID_CLANG: not configured (Android native build test will be explicitly skipped)"
 fi
 
 bash -n tools/verify-human-vnext.sh
