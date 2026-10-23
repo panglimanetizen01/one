@@ -546,6 +546,76 @@ pub fn unix_seconds_to_utc_text(value: &Value) -> Option<Value> {
     )))
 }
 
+/// Parse a strict UTC timestamp (YYYY-MM-DDTHH:MM:SSZ) into Unix epoch seconds.
+/// The accepted calendar is proleptic Gregorian with years 0000 through 9999.
+/// Offsets, fractional seconds, leap seconds, and non-canonical forms are rejected.
+pub fn utc_text_to_unix_seconds(value: &Value) -> Option<Value> {
+    let Value::Text(text) = value else {
+        return None;
+    };
+    let bytes = text.as_bytes();
+    if bytes.len() != 20
+        || bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || bytes[10] != b'T'
+        || bytes[13] != b':'
+        || bytes[16] != b':'
+        || bytes[19] != b'Z'
+    {
+        return None;
+    }
+
+    let parse_digits = |start: usize, end: usize| -> Option<i64> {
+        bytes.get(start..end)?.iter().try_fold(0_i64, |value, byte| {
+            if byte.is_ascii_digit() {
+                value.checked_mul(10)?.checked_add((*byte - b'0') as i64)
+            } else {
+                None
+            }
+        })
+    };
+    let year = parse_digits(0, 4)?;
+    let month = parse_digits(5, 7)?;
+    let day = parse_digits(8, 10)?;
+    let hour = parse_digits(11, 13)?;
+    let minute = parse_digits(14, 16)?;
+    let second = parse_digits(17, 19)?;
+
+    if !(1..=12).contains(&month)
+        || !(0..=23).contains(&hour)
+        || !(0..=59).contains(&minute)
+        || !(0..=59).contains(&second)
+    {
+        return None;
+    }
+    let leap_year = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    let days_in_month = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 if leap_year => 29,
+        2 => 28,
+        _ => return None,
+    };
+    if !(1..=days_in_month).contains(&day) {
+        return None;
+    }
+
+    // Howard Hinnant's civil-from-days inverse, using Euclidean division so
+    // year 0000 and dates before 1970 remain correct.
+    let adjusted_year = year - if month <= 2 { 1 } else { 0 };
+    let era = adjusted_year.div_euclid(400);
+    let year_of_era = adjusted_year - era * 400;
+    let adjusted_month = month + if month > 2 { -3 } else { 9 };
+    let day_of_year = (153 * adjusted_month + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    let days_since_epoch = era * 146_097 + day_of_era - 719_468;
+    let seconds_of_day = hour * 3_600 + minute * 60 + second;
+    let unix_seconds = days_since_epoch
+        .checked_mul(86_400)?
+        .checked_add(seconds_of_day)?;
+    Some(Value::Number(unix_seconds))
+}
+
 /// Construct a deterministic text-keyed mapping.
 pub fn map_from_entries(entries: impl IntoIterator<Item = (String, Value)>) -> Value {
     Value::Map(entries.into_iter().collect::<BTreeMap<_, _>>())
@@ -583,6 +653,49 @@ mod tests {
             Some(Value::Text("9999-12-31T23:59:59Z".into()))
         );
         assert_eq!(unix_seconds_to_utc_text(&Value::Number(253_402_300_800)), None);
+    }
+
+    #[test]
+    fn utc_text_parses_strict_bounded_gregorian_timestamps() {
+        assert_eq!(
+            utc_text_to_unix_seconds(&Value::Text("1970-01-01T00:00:00Z".into())),
+            Some(Value::Number(0))
+        );
+        assert_eq!(
+            utc_text_to_unix_seconds(&Value::Text("1969-12-31T23:59:59Z".into())),
+            Some(Value::Number(-1))
+        );
+        assert_eq!(
+            utc_text_to_unix_seconds(&Value::Text("0000-01-01T00:00:00Z".into())),
+            Some(Value::Number(-62_167_219_200))
+        );
+        assert_eq!(
+            utc_text_to_unix_seconds(&Value::Text("2000-02-29T00:00:00Z".into())),
+            Some(Value::Number(951_782_400))
+        );
+        assert_eq!(
+            utc_text_to_unix_seconds(&Value::Text("9999-12-31T23:59:59Z".into())),
+            Some(Value::Number(253_402_300_799))
+        );
+
+        for invalid in [
+            "2023-02-29T00:00:00Z",
+            "2024-13-01T00:00:00Z",
+            "2024-01-00T00:00:00Z",
+            "2024-01-01T24:00:00Z",
+            "2024-01-01T00:60:00Z",
+            "2024-01-01T00:00:60Z",
+            "2024-01-01T00:00:00+00:00",
+            "2024-01-01T00:00:00z",
+            "2024-01-01T00:00:00.1Z",
+        ] {
+            assert_eq!(
+                utc_text_to_unix_seconds(&Value::Text(invalid.into())),
+                None,
+                "invalid UTC timestamp accepted: {invalid}"
+            );
+        }
+        assert_eq!(utc_text_to_unix_seconds(&Value::Number(0)), None);
     }
 
     #[test]
