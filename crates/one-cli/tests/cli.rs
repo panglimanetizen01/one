@@ -175,6 +175,14 @@ buat pekerjaan tambah
     terima kanan
     hasilnya adalah kiri ditambah kanan
 "#).unwrap();
+    fs::create_dir_all(root.join("tests/conformance/valid")).unwrap();
+    fs::write(root.join("tests/conformance/valid/valid.one"), r#"Buat program fixture valid
+tampilkan "fixture valid"
+"#).unwrap();
+    fs::create_dir_all(root.join("tests/conformance/invalid")).unwrap();
+    fs::write(root.join("tests/conformance/invalid/invalid.one"), r#"Buat program fixture invalid
+hasil adalah belum dibuat
+"#).unwrap();
 
     let main_path = root.join("src/main.one");
     let build_output = run(&["build", main_path.to_str().unwrap()]);
