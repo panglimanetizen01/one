@@ -106,3 +106,19 @@ Remaining mandatory requirements include, at minimum:
 - **GATE:** **NOT PASSED — Milestone 100% remains in progress.**
 
 This checkpoint update is documentation-only; the exact source SHA and evidence above remain the code-verification reference.
+
+
+## Latest exact-SHA verification — `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`
+
+The branch snapshot `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974` (after documentation-only ledger/checkpoint commits) was verified through the independent exact-SHA mirror:
+
+- Focused standard-library/database: [40007463554](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463554) — SUCCESS.
+- Linux distro: [40007463563](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463563) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform: [40007463527](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463527) — Ubuntu and Windows SUCCESS. Exact SHA is present in both job logs. Both platform jobs passed build, AST contract tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification. No `test result: FAILED` markers appear; each platform logs `OFFLINE VERIFICATION: PASS`.
+- Test counts: Ubuntu workspace run 215 passed / 0 failed / 0 ignored; Windows 210 passed / 0 failed / 0 ignored. The Android AArch64 native execution test ran and passed on Ubuntu. The Windows-specific native CLI test was filtered out because Windows is not an Android toolchain; it is not counted as passed on Windows.
+- Canonical source repository workflows for this SHA failed before steps with `runner_id=0` and empty step lists; those are infrastructure failures, not source test results.
+
+**Current totals:** implementation 84/100 provisional; verified 68/100; fixed ledger weights unchanged.  
+**GATE: NOT PASSED — Milestone 100% remains in progress.** External dependency resolution/provenance, broader stdlib, race-resistant filesystem/resource security, release/tooling/documentation completion and the E6 final audit remain outstanding.
+
+This checkpoint addition is documentation-only; the tested source snapshot is unchanged.
