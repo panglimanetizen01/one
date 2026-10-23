@@ -659,10 +659,10 @@ mod tests {
 
     #[test]
     fn json_serialization_escapes_every_json_control_class() {
-        let value = Value::Text("\\0\\u{0008}\\u{000c}\\n\\r\\t\\u{001f}".into());
+        let value = Value::Text("\0\u{0008}\u{000c}\n\r\t\u{001f}".into());
         assert_eq!(
             value_to_json(&value),
-            Some(Value::Text(r#""\\u0000\\b\\f\\n\\r\\t\\u001f""#.into()))
+            Some(Value::Text(r#""\u0000\b\f\n\r\t\u001f""#.into()))
         );
     }
 
