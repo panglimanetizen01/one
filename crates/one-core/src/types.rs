@@ -4,6 +4,7 @@ pub enum Type {
     Number,
     Boolean,
     List,
+    Map,
     Nothing,
     Any,
 }
@@ -15,6 +16,7 @@ impl Type {
             Type::Number => "angka",
             Type::Boolean => "boolean",
             Type::List => "daftar",
+            Type::Map => "pemetaan",
             Type::Nothing => "kosong",
             Type::Any => "apa saja",
         }
