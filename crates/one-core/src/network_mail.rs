@@ -34,7 +34,33 @@ fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet
 }
 
 fn validate_command_field(value: &str) -> Result<(), MailProtocolError> {
-    if value.contains('\r') || value.contains('\n') { Err(MailProtocolError::InvalidResponse) } else { Ok(()) }
+    if value.bytes().any(|byte| byte < 0x20 || byte == 0x7f) {
+        Err(MailProtocolError::InvalidResponse)
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_pop3_username(value: &str) -> Result<(), MailProtocolError> {
+    validate_command_field(value)?;
+    if value.is_empty() || value.bytes().any(|byte| byte.is_ascii_whitespace()) {
+        return Err(MailProtocolError::InvalidResponse);
+    }
+    Ok(())
+}
+
+fn quote_imap_string(value: &str) -> Result<String, MailProtocolError> {
+    validate_command_field(value)?;
+    let mut quoted = String::with_capacity(value.len().saturating_add(2));
+    quoted.push('"');
+    for character in value.chars() {
+        if character == '"' || character == '\\' {
+            quoted.push('\\');
+        }
+        quoted.push(character);
+    }
+    quoted.push('"');
+    Ok(quoted)
 }
 
 fn read_line(stream: &mut TcpStream) -> Result<String, MailProtocolError> {
@@ -71,7 +97,7 @@ impl Pop3Client {
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
-        validate_command_field(user)?;
+        validate_pop3_username(user)?;
         validate_command_field(password)?;
         require_ok(&command(&mut self.stream, &format!("USER {user}"))?, "+OK")?;
         require_ok(&command(&mut self.stream, &format!("PASS {password}"))?, "+OK")
@@ -126,14 +152,14 @@ impl ImapClient {
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
-        validate_command_field(user)?;
-        validate_command_field(password)?;
+        let user = quote_imap_string(user)?;
+        let password = quote_imap_string(password)?;
         let (status, _) = self.send(&format!("LOGIN {user} {password}"))?;
         if status.starts_with("OK") { Ok(()) } else { Err(MailProtocolError::Server(status)) }
     }
 
     pub fn select(&mut self, mailbox: &str) -> Result<u32, MailProtocolError> {
-        validate_command_field(mailbox)?;
+        let mailbox = quote_imap_string(mailbox)?;
         let (status, lines) = self.send(&format!("SELECT {mailbox}"))?;
         if !status.starts_with("OK") { return Err(MailProtocolError::Server(status)); }
         for line in lines {
@@ -171,6 +197,14 @@ mod tests {
     fn mail_clients_require_network_connect_capability_before_io() {
         assert!(matches!(Pop3Client::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
         assert!(matches!(ImapClient::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
+    }
+
+    #[test]
+    fn imap_arguments_are_quoted_and_escape_protocol_metacharacters() {
+        assert_eq!(quote_imap_string("safe mailbox").expect("quoted"), "\"safe mailbox\"");
+        assert_eq!(quote_imap_string("a\"b\\c").expect("escaped"), "\"a\\\"b\\\\c\"");
+        assert!(quote_imap_string("bad\r\nLOGIN attacker").is_err());
+        assert!(validate_pop3_username("user name").is_err());
     }
 
     #[test]
