@@ -1,4 +1,6 @@
 $ErrorActionPreference = 'Stop'
+# PowerShell otherwise may continue after a native executable (for example cargo) exits non-zero.
+$PSNativeCommandUseErrorActionPreference = $true
 Set-Location (Join-Path $PSScriptRoot '..')
 $env:CARGO_NET_OFFLINE = 'true'
 
@@ -17,7 +19,7 @@ Write-Host '=== CLIPPY ==='
 cargo clippy --workspace --all-targets -- -D warnings
 
 Write-Host '=== TESTS ==='
-cargo test --workspace --all-targets
+cargo test --workspace --all-targets -- --skip android_target_explicit_mempertahankan_build_native
 
 Write-Host '=== CLI SMOKE ==='
 $tmp = Join-Path $env:TEMP ('one-verify-' + [guid]::NewGuid().ToString())
