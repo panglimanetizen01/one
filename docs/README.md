@@ -8,6 +8,7 @@ For people who want to **use One**, start here:
 
 - `panduan-pengguna/README.md` — official beginner entry point.
 - `panduan-pengguna/mulai-dari-nol.md` — first-run orientation.
+- `panduan-pengguna/human-vnext-daftar-tugas.md` — experimental human-vNext task-list walkthrough.
 - `panduan-pengguna/instalasi.md` — current installation/distribution boundary.
 - `panduan-pengguna/program-pertama.md` — first usable program.
 - `panduan-pengguna/konsep-dasar.md` — current language concepts.
