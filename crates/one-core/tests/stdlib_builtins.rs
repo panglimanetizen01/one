@@ -18,6 +18,18 @@ fn text_builtins_execute_through_the_canonical_pipeline() {
 }
 
 #[test]
+fn text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline() {
+    let source = "teks adalah \"kucing\"\nawal adalah teks diawali dengan teks dan \"ku\"\nakhir adalah teks diakhiri dengan teks dan \"ing\"\nbukan awal adalah teks diawali dengan teks dan \"anjing\"\nbukan akhir adalah teks diakhiri dengan teks dan \"kucing\"\ntampilkan awal\ntampilkan akhir\ntampilkan bukan awal\ntampilkan bukan akhir\n";
+    assert_eq!(
+        run(source).expect("prefix and suffix builtins should execute"),
+        vec!["benar", "benar", "salah", "salah"]
+    );
+
+    let bad_type = "hasil adalah teks diawali dengan 42 dan \"4\"\ntampilkan hasil\n";
+    assert!(run(bad_type).unwrap_err().contains("E2043"));
+}
+
+#[test]
 fn split_and_integer_conversion_return_typed_values() {
     let source = "bagian adalah pisah teks dengan \"apel,jeruk\" dan \",\"\nangka adalah ubah teks ke angka dengan \"42\"\ntampilkan bagian\ntampilkan angka\n";
     assert_eq!(run(source).expect("conversion should execute"), vec!["[apel, jeruk]", "42"]);
