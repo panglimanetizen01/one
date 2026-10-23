@@ -1,4 +1,4 @@
-use one_core::{analyze, lower, parse, CapabilitySet, Interpreter};
+use one_core::{analyze, lower, parse, parse_human_core, CapabilitySet, Interpreter};
 
 fn run(source: &str) -> Result<Vec<String>, String> {
     let program = parse(source).map_err(|error| format!("parse: {error:?}"))?;
@@ -57,4 +57,15 @@ fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
 fn checked_in_stdlib_example_runs_through_one() {
     let output = run(include_str!("../../../examples/stdlib.one")).expect("example should execute");
     assert_eq!(output, vec!["2", "benar", "pir,jeruk", "42", "7", "3"]);
+}
+
+#[test]
+fn mapping_builtins_work_in_the_opt_in_human_core_pipeline() {
+    let source = "buat pemetaan kontak\\nmasukkan \\"nama\\" dan \\"Budi\\" ke kontak\\nnama awal adalah nilai pemetaan dengan kontak dan \\"nama\\"\\nkontak menjadi atur pemetaan dengan kontak dan \\"nama\\" dan \\"Ani\\"\\nnama baru adalah nilai pemetaan dengan kontak dan \\"nama\\"\\ntampilkan nama awal\\ntampilkan nama baru\\n";
+    let program = parse_human_core(source).expect("human-core mapping grammar should parse");
+    let typed = analyze(&program).expect("mapping builtin types should analyze");
+    let ir = lower(&typed).expect("mapping program should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let result = interpreter.execute(&ir).expect("mapping builtins should execute");
+    assert_eq!(result.output, vec!["Budi", "Ani"]);
 }
