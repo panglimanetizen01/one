@@ -32,8 +32,8 @@ Only domains whose semantic/effect contracts are already defined may be implemen
 The `one_core::stdlib` Rust module currently exposes the following pure helper operations for runtime integration and tests:
 
 - `display_value`: stable display representation of a runtime value.
-- `text_length`, `text_contains`, `text_trim`, `text_replace`, `text_split`, and `text_to_integer`: deterministic text operations. Length counts Unicode scalar values, not grapheme clusters; split/replace use literal separators/needles; empty split separators and invalid input types return `None`.
-- `list_length` and `list_get`: checked list access with zero-based indexes; negative and out-of-range indexes fail.
+- `text_length`, `text_contains`, `text_starts_with`, `text_ends_with`, `text_lowercase`, `text_uppercase`, `text_trim`, `text_replace`, `text_split`, and `text_to_integer`: deterministic text operations. Length counts Unicode scalar values, not grapheme clusters; split/replace use literal separators/needles; empty split separators and invalid input types return `None`.
+- `list_length`, `list_get`, `list_join_text`, and `list_sum_numbers`: checked list access, joining, and integer summation; negative/out-of-range indexes, non-text joins, non-integer sums, and sum overflow fail.
 - `map_get`, `map_set`, and `map_from_entries`: text-keyed mappings backed by ordered keys for deterministic display.
 - `value_to_json`: bounded, deterministic JSON serialization for text, integer, boolean, empty, list, and mapping values.
 - `number_abs`, `number_divide`, `number_min`, and `number_max`: checked integer helpers; overflow and division by zero are rejected.
