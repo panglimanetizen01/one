@@ -4,6 +4,10 @@ use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, Executio
 use rusqlite::{types::ValueRef, Connection, OpenFlags};
 
 const MAX_DATABASE_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+const MAX_DATABASE_QUERY_BYTES: usize = 1024 * 1024;
+const MAX_DATABASE_PARAMETER_BYTES: usize = 1024 * 1024;
+const MAX_DATABASE_TOTAL_PARAMETER_BYTES: usize = 16 * 1024 * 1024;
+const MAX_DATABASE_PARAMETERS: usize = 256;
 const MAX_DATABASE_ROWS: usize = 100_000;
 
 pub struct SqliteAdapter {
@@ -83,13 +87,31 @@ impl ToolAdapter for SqliteAdapter {
         let path = Self::database_path(request.capability())?;
         let (sql, parameters) = match request.arguments() {
             [AdapterArgument::Text(sql), rest @ ..] => {
+                if sql.len() > MAX_DATABASE_QUERY_BYTES {
+                    return Err(AdapterError::ResourceLimitExceeded);
+                }
+                if rest.len() > MAX_DATABASE_PARAMETERS {
+                    return Err(AdapterError::ResourceLimitExceeded);
+                }
                 if !sql.trim_start().to_ascii_uppercase().starts_with("SELECT") {
                     return Err(AdapterError::InvalidArguments);
                 }
                 let mut values = Vec::with_capacity(rest.len());
+                let mut total_parameter_bytes = 0usize;
                 for argument in rest {
                     match argument {
-                        AdapterArgument::Text(value) => values.push(value.clone()),
+                        AdapterArgument::Text(value) => {
+                            if value.len() > MAX_DATABASE_PARAMETER_BYTES {
+                                return Err(AdapterError::ResourceLimitExceeded);
+                            }
+                            total_parameter_bytes = total_parameter_bytes
+                                .checked_add(value.len())
+                                .ok_or(AdapterError::ResourceLimitExceeded)?;
+                            if total_parameter_bytes > MAX_DATABASE_TOTAL_PARAMETER_BYTES {
+                                return Err(AdapterError::ResourceLimitExceeded);
+                            }
+                            values.push(value.clone());
+                        }
                         _ => return Err(AdapterError::InvalidArguments),
                     }
                 }
@@ -167,6 +189,45 @@ mod tests {
             crate::orchestration::EffectClass::Read,
         ))
         .with_argument(AdapterArgument::Text(sql))
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_sql_over_query_byte_limit() {
+        let sql = format!("SELECT {}", " ".repeat(MAX_DATABASE_QUERY_BYTES));
+        let adapter = SqliteAdapter::new();
+        let result = adapter.invoke(&select_request(std::path::Path::new(":memory:"), sql));
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_individually_oversized_parameters() {
+        let adapter = SqliteAdapter::new();
+        let result = adapter.invoke(
+            &select_request(std::path::Path::new(":memory:"), "SELECT ?1".into())
+                .with_argument(AdapterArgument::Text("x".repeat(MAX_DATABASE_PARAMETER_BYTES + 1))),
+        );
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_excessive_parameter_count() {
+        let mut request = select_request(std::path::Path::new(":memory:"), "SELECT ?1".into());
+        for _ in 0..=MAX_DATABASE_PARAMETERS {
+            request = request.with_argument(AdapterArgument::Text("x".into()));
+        }
+        let result = SqliteAdapter::new().invoke(&request);
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_aggregate_parameter_bytes_over_the_limit() {
+        let mut request = select_request(std::path::Path::new(":memory:"), "SELECT ?1".into());
+        for _ in 0..MAX_DATABASE_PARAMETERS {
+            request = request.with_argument(AdapterArgument::Text("x".repeat(MAX_DATABASE_PARAMETER_BYTES)));
+        }
+        request = request.with_argument(AdapterArgument::Text("x".into()));
+        let result = SqliteAdapter::new().invoke(&request);
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
     }
 
     #[test]
