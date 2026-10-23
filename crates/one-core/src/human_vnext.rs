@@ -642,7 +642,7 @@ pub fn run_task_app<R: std::io::BufRead, W: std::io::Write>(
                     break;
                 }
                 let title = title.trim_end_matches(['\r', '\n']);
-                if title.trim().is_empty() || title.chars().any(|ch| matches!(ch, '\r' | '\n' | '\t')) {
+                if title.trim().is_empty() || title.chars().any(char::is_control) {
                     writeln!(output, "Kesalahan: judul tidak boleh kosong atau mengandung karakter kontrol").map_err(|error| error.to_string())?;
                     continue;
                 }
@@ -800,6 +800,19 @@ mod task_runtime_tests {
         assert!(output.contains("ID harus berupa angka positif"));
         assert!(output.contains("tugas 999 tidak ditemukan"));
         assert!(!path.exists(), "unknown IDs must not create storage");
+    }
+
+    #[test]
+    fn task_app_rejects_non_tab_control_characters_in_titles() {
+        let path = storage_path();
+        let mut input = Cursor::new(b"tambah\njudul\\x0bberbahaya\nkeluar\n".to_vec());
+        let mut output = Vec::new();
+        run_task_app(&task_program(), &path, &mut input, &mut output)
+            .expect("invalid title is reported without aborting the session");
+        assert!(
+            String::from_utf8(output).unwrap().contains("judul tidak boleh kosong atau mengandung karakter kontrol")
+        );
+        assert!(!path.exists(), "control characters must never reach the storage format");
     }
 
     #[test]
