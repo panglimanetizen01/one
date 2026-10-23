@@ -95,3 +95,16 @@ For v0.1, the normative AST schema is the public structure in `crates/one-core/s
 This decision avoids treating an aspirational draft schema as if it were already implemented or silently changing the public AST to a much larger shape without tests. It does not remove the requirement for deterministic parsing, formal grammar boundaries, stable diagnostics, or LLM-independent semantics.
 
 Any future addition of structured `Name` nodes, component spans, full node ranges, or action-specific variants requires fail-first tests and a coordinated compatibility review across parser, semantic analysis, IR lowering, diagnostics, and tooling. It must not silently alter v0.1 meaning.
+
+
+## ADR-0016 — Human instruction grammar acceptance invariants
+
+**Status:** Accepted
+
+See [ADR-0016](decisions/ADR-0016-accept-language-invariants.md) for explicit grammar, ambiguity rejection, and v0.1 isolation invariants.
+
+## ADR-0017 — Human frontend integration, modules, mappings, and persistence
+
+**Status:** Accepted for the experimental core/runtime slice
+
+See [ADR-0017](decisions/ADR-0017-human-vnext-core-runtime.md) for the canonical-pipeline adapter, module visibility, mapping semantics, persistence format, and compatibility boundaries.
