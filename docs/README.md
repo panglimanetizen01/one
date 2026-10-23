@@ -95,6 +95,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
+- `../tools/verify-human-vnext.sh` — clean, exact-GitHub-SHA human-vNext local verification script.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 - `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
