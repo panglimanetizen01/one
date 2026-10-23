@@ -20,9 +20,9 @@ Canonical ledger: [one-completion-ledger.md](one-completion-ledger.md).
 ## Current Git and CI evidence
 
 - PR #80 is **open, draft, and unmerged**; no merge is authorized by this checkpoint.
-- Latest PR head: `cac099caa28bd9eeed3c72ded101a70ccec39b5a` (checkpoint/documentation tip; preceding code/test changes are listed below). This SHA is not claimed as verified.
+- Latest code-bearing source SHA for this implementation slice: `809a26d12a411b492f0888610dc9ebabf1a6992b`. The checkpoint commit that records these results is documentation-only and is tracked separately from this tested code SHA.
 - Canonical workflow run [39994484534](https://github.com/panglimanetizen01/one/actions/runs/39994484534), “One CI”, completed with **failure**. The two reported jobs (`test (windows-2025)` and `test (ubuntu-latest)`) failed; job-step details/logs were not returned by the available connector. Root cause is **UNKNOWN** from available evidence; do not infer a source failure or a pass.
-- The associated Linux Distribution Conformance run [39994484625](https://github.com/panglimanetizen01/one/actions/runs/39994484625) and Standard Library Focused Verification run [39994484574](https://github.com/panglimanetizen01/one/actions/runs/39994484574) were **cancelled**. Subsequent runs on the integer-remainder candidate also report failure: [One CI 39995112864](https://github.com/panglimanetizen01/one/actions/runs/39995112864), [Linux distro 39995112888](https://github.com/panglimanetizen01/one/actions/runs/39995112888), and [focused stdlib 39995112905](https://github.com/panglimanetizen01/one/actions/runs/39995112905). The available job-step endpoint returned empty step lists for these jobs, so the underlying failure cause is **UNKNOWN**; this does not establish that the source tests failed or passed. The newest post-change runs [One CI 39995310019](https://github.com/panglimanetizen01/one/actions/runs/39995310019), [Linux distro 39995309384](https://github.com/panglimanetizen01/one/actions/runs/39995309384), and [focused stdlib 39995309389](https://github.com/panglimanetizen01/one/actions/runs/39995309389) also completed as failure with empty step lists.
+- The associated Linux Distribution Conformance run [39994484625](https://github.com/panglimanetizen01/one/actions/runs/39994484625) and Standard Library Focused Verification run [39994484574](https://github.com/panglimanetizen01/one/actions/runs/39994484574) were **cancelled**. Subsequent runs on the integer-remainder candidate also report failure: [One CI 39995112864](https://github.com/panglimanetizen01/one/actions/runs/39995112864), [Linux distro 39995112888](https://github.com/panglimanetizen01/one/actions/runs/39995112888), and [focused stdlib 39995112905](https://github.com/panglimanetizen01/one/actions/runs/39995112905). The available job-step endpoint returned empty step lists for these jobs, so the underlying failure cause is **UNKNOWN**; this does not establish that the source tests failed or passed. The newest post-change canonical runs [One CI 39995310019](https://github.com/panglimanetizen01/one/actions/runs/39995310019), [Linux distro 39995309384](https://github.com/panglimanetizen01/one/actions/runs/39995309384), and [focused stdlib 39995309389](https://github.com/panglimanetizen01/one/actions/runs/39995309389) also completed as failure with empty step lists. This is why the independent mirror fallback was used.
 - Older independent-mirror PASS results only apply to their explicitly recorded older source SHAs. They do not verify the current PR head.
 - Current-head exact-SHA independent cross-platform and distro verification: **NOT VERIFIED** in this session. Do not award additional ledger points.
 
@@ -54,14 +54,20 @@ Remaining mandatory requirements include, at minimum:
   - `f93be7ea2e98a577abb3b764e7f0b72ab4d0fd08` — end-to-end regression test (follow-up test-fixture cleanup).
   - `0f826510595472777cceab887cf2e36bb77d015b` — standard-library contract documentation.
   - `cac099caa28bd9eeed3c72ded101a70ccec39b5a` — checkpoint update recording implementation and verification boundaries.
-- Verification is **NOT YET ESTABLISHED**: this environment cannot resolve `github.com` for a local clone, and the canonical workflow runs associated with the test candidate report failure with empty step lists. No build/test pass is claimed, and no verified ledger points are added for this slice.
+- Verification evidence for source SHA `809a26d12a411b492f0888610dc9ebabf1a6992b` from the independent mirror:
+  - Focused stdlib run [39995613378](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995613378): **PASS** — exact-SHA checkout succeeded; UTC unit/boundary test, UTC pipeline test, prefix/suffix pipeline test, checked integer remainder pipeline test, and strict one-core Clippy all passed.
+  - Linux distro run [39995613439](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995613439): **SUCCESS** — Ubuntu 24.04 and Debian 12 both passed contract checks, build, Clippy, native workspace tests and real-network tests.
+  - Full cross-platform run [39995613393](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995613393): **IN PROGRESS** at the last inspection. Ubuntu had passed build, AST contract tests, Clippy and workspace tests; real-network runtime tests were still running. Windows was still provisioning the cross-compiler. No full cross-platform PASS is claimed yet.
+  - The first focused run [39995473148](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995473148) correctly caught the invalid arithmetic-in-argument fixture (E1014). The fixture was fixed in `809a26d12a411b492f0888610dc9ebabf1a6992b` and the focused workflow then passed.
+  - Local clone/test execution is unavailable because this environment cannot resolve `github.com`; verification evidence above comes from the independent GitHub Actions mirror.
+- No verified ledger points are added for this narrow stdlib slice: E1 acceptance remains partial and E1–E6 verified points remain 0/40. The 100% gate remains NOT PASSED.
 
 ## Next execution sequence
 
-1. Obtain actionable CI logs or an operational independent verification path and run the new `angka sisa bagi` tests, full contract checks, build and strict Clippy on the exact current source SHA.
-2. Fix any demonstrated compile/test failures without disabling required tests.
-3. Continue E1–E5 implementation against the fixed acceptance criteria; each slice must receive exact-SHA focused and full-matrix verification before any ledger credit.
-4. Finish the required standard-library, dependency/package provenance, resource quota/filesystem confinement, compatibility and developer workflow gaps.
+1. Complete and inspect the exact-SHA Ubuntu/Windows matrix for `809a26d12a411b492f0888610dc9ebabf1a6992b`; fix any demonstrated failures without disabling tests.
+2. Continue E1–E5 implementation against the fixed acceptance criteria; each slice must receive focused and full-matrix verification before any ledger credit.
+3. Finish required standard-library breadth, dependency/package provenance, target artifacts, race-resistant filesystem confinement/resource quotas, security review, compatibility and developer workflow gaps.
+4. Update the mirror selector and re-run required matrices on the final release candidate SHA after code changes stop.
 5. Perform E6 forensic audit only after every mandatory gate is satisfied.
 
 ## Gate
