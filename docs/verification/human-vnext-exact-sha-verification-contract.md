@@ -73,6 +73,10 @@ If the mirror's `ubuntu-latest` job remains in dependency installation for at le
 
 This is a location-of-execution fallback, not a test waiver: both Linux and Windows must actually execute the required checks against the identical source SHA. It is valid only for this bounded 30% gate and does not certify Android native execution, release readiness, or later 60%/100% milestones.
 
+## Windows offline verifier failure propagation
+
+The Windows offline verifier must set `$PSNativeCommandUseErrorActionPreference = $true` so a non-zero exit from `cargo`, `python`, or another native executable fails the script instead of allowing a false PASS. Its workspace test command excludes only `android_target_explicit_mempertahankan_build_native`, which requires an Android AArch64 toolchain/runtime not supplied by the Windows runner. This exclusion is a skip, never a pass; Android-native execution remains separately unverified unless run in an appropriate environment.
+
 ## Replacement boundary
 
 This is a controlled replacement for the **local build/test evidence collection procedure only** when hosted Actions cannot start. It does not manufacture CI results and does not independently waive any acceptance criterion that requires Windows execution, external review, or a platform-specific runtime result. The milestone ledger may credit points only after its full acceptance criteria are met and the evidence is explicitly reviewed.
