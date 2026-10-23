@@ -42,8 +42,8 @@ jobs:
         run: cargo build --workspace --all-targets
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Workspace tests
-        run: cargo test --workspace --all-targets
+      - name: Workspace tests (target-toolchain cases run in cross-platform matrix)
+        run: cargo test --workspace --all-targets -- --skip windows_x86_64_target_mempertahankan_build_native --skip android_target_explicit_mempertahankan_build_native
       - name: Real-network tests
         run: cargo test -p one-core --features real-network --all-targets
 
