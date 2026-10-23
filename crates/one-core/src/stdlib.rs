@@ -420,7 +420,7 @@ impl JsonParser<'_> {
         self.skip_whitespace();
         let mut values = Vec::new();
         if self.peek() == Some(']') {
-            self.next();
+            self.next()?;
             return Some(Value::List(values));
         }
         loop {
@@ -441,7 +441,7 @@ impl JsonParser<'_> {
         self.skip_whitespace();
         let mut values = BTreeMap::new();
         if self.peek() == Some('}') {
-            self.next();
+            self.next()?;
             return Some(Value::Map(values));
         }
         loop {
