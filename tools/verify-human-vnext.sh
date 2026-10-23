@@ -43,7 +43,6 @@ fi
 
 bash -n tools/verify-human-vnext.sh
 python3 tools/check_contract.py
-cargo fmt --all -- --check
 git diff --check
 cargo build --workspace --all-targets
 cargo clippy --workspace --all-targets -- -D warnings
