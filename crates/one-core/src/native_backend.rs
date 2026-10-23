@@ -523,18 +523,10 @@ mod linker_discovery_tests {
         std::fs::create_dir_all(&root).unwrap();
         std::fs::create_dir_all(&path_candidate).unwrap();
 
-        std::fs::write(&expected, b"#!/bin/sh\nexit 0\n").unwrap();
-        std::fs::write(&path_linker, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            for path in [&expected, &path_linker] {
-                let mut permissions = std::fs::metadata(path).unwrap().permissions();
-                permissions.set_mode(0o755);
-                std::fs::set_permissions(path, permissions).unwrap();
-            }
-        }
+        // Use system executables rather than scripts in the temporary directory:
+        // some hosted runners mount temporary directories with noexec.
+        std::os::unix::fs::symlink("/bin/true", &expected).unwrap();
+        std::os::unix::fs::symlink("/bin/false", &path_linker).unwrap();
 
         assert_eq!(
             resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
