@@ -17,12 +17,20 @@ enum Connection { Tcp(TcpStream), Udp(UdpSocket) }
 const MAX_NETWORK_CONNECTIONS: usize = 1024;
 const MAX_NETWORK_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
 
+fn ensure_connection_capacity(active: usize) -> Result<(), NetworkRuntimeError> {
+    if active >= MAX_NETWORK_CONNECTIONS {
+        Err(NetworkRuntimeError::InvalidOperation("Jumlah koneksi jaringan aktif melebihi batas.".into()))
+    } else {
+        Ok(())
+    }
+}
+
 pub struct RealNetworkRuntime { next_id: u64, connections: std::collections::BTreeMap<NetworkConnectionId, Connection> }
 impl Default for RealNetworkRuntime { fn default() -> Self { Self::new() } }
 impl RealNetworkRuntime {
     pub fn new() -> Self { Self { next_id: 1, connections: std::collections::BTreeMap::new() } }
     pub fn execute(&mut self, operation: NetworkOperation, capabilities: &CapabilitySet) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { for capability in operation.required_capabilities() { if !capabilities.permits(capability) { return Err(NetworkRuntimeError::CapabilityDenied(format!("Kemampuan jaringan {:?} belum diberikan kepada program.", capability))); } } operation.validate().map_err(|bundle| NetworkRuntimeError::InvalidOperation(bundle.0.first().map(|d| d.message.clone()).unwrap_or_else(|| "Operasi jaringan tidak valid.".into())))?; match operation { NetworkOperation::Connect { target, constraints } => self.connect(target, constraints), NetworkOperation::Send { connection, data } => self.send(connection, &data), NetworkOperation::Receive { connection } => self.receive(connection) } }
-    fn connect(&mut self, target: NetworkTarget, constraints: crate::network::NetworkConstraints) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let (host, port) = match target { NetworkTarget::Service { host, port } => (host, port), NetworkTarget::Host(host) => (host, 0), NetworkTarget::Address(address) => (address, 0) }; let timeout = Duration::from_millis(constraints.timeout_ms); let resolved = resolve_target(&host, port, constraints.address_kind)?; if self.connections.len() >= MAX_NETWORK_CONNECTIONS { return Err(NetworkRuntimeError::InvalidOperation("Jumlah koneksi jaringan aktif melebihi batas.".into())); } let id = NetworkConnectionId(self.next_id); let next_id = self.next_id.checked_add(1).ok_or_else(|| NetworkRuntimeError::InvalidOperation("ID koneksi jaringan melampaui batas integer.".into()))?; match constraints.transport { NetworkTransport::Reliable => { let stream = TcpStream::connect_timeout(&resolved, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; self.connections.insert(id, Connection::Tcp(stream)); }, NetworkTransport::Unreliable => { let socket = UdpSocket::bind(match resolved { SocketAddr::V4(_) => "0.0.0.0:0", SocketAddr::V6(_) => "[::]:0" }).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; socket.connect(resolved).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; socket.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; socket.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; self.connections.insert(id, Connection::Udp(socket)); } } self.next_id = next_id; Ok(NetworkRuntimeResult::Connected { id, endpoint: NetworkEndpoint { requested: host, resolved } }) }
+    fn connect(&mut self, target: NetworkTarget, constraints: crate::network::NetworkConstraints) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let (host, port) = match target { NetworkTarget::Service { host, port } => (host, port), NetworkTarget::Host(host) => (host, 0), NetworkTarget::Address(address) => (address, 0) }; let timeout = Duration::from_millis(constraints.timeout_ms); let resolved = resolve_target(&host, port, constraints.address_kind)?; ensure_connection_capacity(self.connections.len())?; let id = NetworkConnectionId(self.next_id); let next_id = self.next_id.checked_add(1).ok_or_else(|| NetworkRuntimeError::InvalidOperation("ID koneksi jaringan melampaui batas integer.".into()))?; match constraints.transport { NetworkTransport::Reliable => { let stream = TcpStream::connect_timeout(&resolved, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; self.connections.insert(id, Connection::Tcp(stream)); }, NetworkTransport::Unreliable => { let socket = UdpSocket::bind(match resolved { SocketAddr::V4(_) => "0.0.0.0:0", SocketAddr::V6(_) => "[::]:0" }).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; socket.connect(resolved).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; socket.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; socket.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; self.connections.insert(id, Connection::Udp(socket)); } } self.next_id = next_id; Ok(NetworkRuntimeResult::Connected { id, endpoint: NetworkEndpoint { requested: host, resolved } }) }
     fn send(&mut self, id: NetworkConnectionId, data: &[u8]) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { if data.len() > MAX_NETWORK_PAYLOAD_BYTES { return Err(NetworkRuntimeError::InvalidOperation("Payload jaringan melebihi batas 16 MiB.".into())); } let connection = self.connections.get_mut(&id).ok_or_else(|| NetworkRuntimeError::Connection(format!("Koneksi {} tidak ditemukan.", id.0)))?; let bytes = match connection { Connection::Tcp(stream) => { stream.write_all(data).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; data.len() }, Connection::Udp(socket) => socket.send(data).map_err(|e| NetworkRuntimeError::Io(e.to_string()))? }; Ok(NetworkRuntimeResult::Sent { id, bytes }) }
     fn receive(&mut self, id: NetworkConnectionId) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let connection = self.connections.get_mut(&id).ok_or_else(|| NetworkRuntimeError::Connection(format!("Koneksi {} tidak ditemukan.", id.0)))?; let mut buffer = vec![0u8; 64 * 1024]; let size = match connection { Connection::Tcp(stream) => stream.read(&mut buffer).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?, Connection::Udp(socket) => socket.recv(&mut buffer).map_err(|e| NetworkRuntimeError::Io(e.to_string()))? }; buffer.truncate(size); Ok(NetworkRuntimeResult::Received { id, data: buffer }) }
     pub fn close(&mut self, id: NetworkConnectionId) -> bool { self.connections.remove(&id).is_some() }
@@ -266,6 +274,15 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         for authority in ["", "example.com:", "example.com:abc", "example.com:80:90", "::1", "user@example.com", "example.com/path", "bad host", "[not-ipv6]:80", "example.com:65536"] {
             assert!(parse_http_authority(authority).is_err(), "authority should be rejected: {authority}");
         }
+    }
+
+    #[test]
+    fn network_runtime_enforces_active_connection_quota() {
+        assert!(ensure_connection_capacity(MAX_NETWORK_CONNECTIONS - 1).is_ok());
+        assert!(matches!(
+            ensure_connection_capacity(MAX_NETWORK_CONNECTIONS),
+            Err(NetworkRuntimeError::InvalidOperation(message)) if message.contains("koneksi")
+        ));
     }
 
     #[test]
