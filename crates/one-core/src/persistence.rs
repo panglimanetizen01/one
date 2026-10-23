@@ -60,6 +60,24 @@ impl KeyValueStore {
 
     pub fn len(&self) -> usize { self.values.len() }
     pub fn is_empty(&self) -> bool { self.values.is_empty() }
+    pub fn entries(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.values.iter().map(|(key, value)| (key.as_str(), value.as_str()))
+    }
+
+    /// Replace the complete logical contents with one durable write.
+    pub fn replace_all(&mut self, values: BTreeMap<String, String>) -> Result<(), StoreError> {
+        if values.len() > MAX_ENTRIES { return Err(StoreError::Limit("jumlah entri melebihi 100000")); }
+        for (key, value) in &values {
+            validate_field(key, "kunci")?;
+            validate_field(value, "nilai")?;
+        }
+        let previous = std::mem::replace(&mut self.values, values);
+        if let Err(error) = self.flush() {
+            self.values = previous;
+            return Err(error);
+        }
+        Ok(())
+    }
 
     pub fn set(&mut self, key: impl Into<String>, value: impl Into<String>) -> Result<(), StoreError> {
         let key = key.into();
