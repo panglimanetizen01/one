@@ -21,19 +21,21 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 ## Work added in this session
 
 - `crates/one-core/src/stdlib.rs`: deterministic public Rust helpers for text length/contains/trim/literal replace/literal split/integer conversion; list length/index access; deterministic text-keyed map construction/get/set; checked integer absolute value/division/min/max; and unit tests for Unicode, bounds, invalid types, overflow, division by zero, and stable map ordering.
-- `crates/one-core/src/semantic.rs`: registers 12 built-ins with arity and return-type rules, plus static argument-type diagnostics (`E2032`).
-- `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/integer built-ins through the same canonical IR interpreter and checks runtime arity before indexing arguments; invalid builtin operations return `R3022`. Integer arithmetic now uses checked add/subtract/multiply/divide and reports `R3023` on overflow rather than panicking.
-- `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter, including a checked-in example and overflow/error cases.
+- `crates/one-core/src/semantic.rs`: registers 14 built-ins with arity, return-type, and static argument-type rules (`E2032`).
+- `crates/one-core/src/interpreter.rs`: dispatches source-level text/list/map/integer built-ins through the canonical IR interpreter and checks runtime arity before indexing arguments; invalid builtin operations return `R3022`. Integer arithmetic uses checked add/subtract/multiply/divide and reports `R3023` on overflow rather than panicking.
+- `crates/one-core/tests/stdlib_builtins.rs`: adds end-to-end tests through parse → semantic analysis → IR → interpreter, including an opt-in mapping test, a checked-in example, and overflow/error cases.
+- `crates/one-cli/tests/cli.rs`: verifies that the official CLI can execute the checked-in stdlib example.
 - `examples/stdlib.one`: runnable example exercising the current source-level builtin subset.
-- `docs/panduan-pengguna/fungsi-dan-event.md`: documents supported builtin syntax and explicit limitations.
+- `docs/panduan-pengguna/fungsi-dan-event.md`: documents supported builtin syntax and explicit limitations, including opt-in mapping grammar.
 - `docs/spec/one-v0.1-standard-library.md`: documents which helpers are source-level built-ins and which remain Rust-only helpers.
 - Main implementation commits include `652d4dc6662b62538dde602ef215cfe05b340cd1`, `7f196f64b2b181ebb87ac6a2fb35642b3f6d5112`, `449caf6b33c28d10d59674e6bb4e850d6ad4be1c`, `c2f16baa1ab26184c74c7908faa1557419c1e277`, `66cf560fe30928318ea619a565422303c8806ef9`, `abd105a4515c3c1b96b8695f6c9061646a6dfca2`, `c56d841ed914f384975f9e224e1db014336a72c7`, `6656abed12c0b0d5dba983c2261c516ca98e5b55`, and `2b98153907eaa1e96f160bf2efc7b59aef06eaf0`.
 
 ## Verification status
 
 - Canonical repository CI run [39940416046](https://github.com/panglimanetizen01/one/actions/runs/39940416046) targeted exact SHA `66cf560fe30928318ea619a565422303c8806ef9` but both OS jobs failed before any steps (`runner_id=0`, empty step lists). This is an infrastructure failure, not a source test result.
-- Independent mirror run [39940719805](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39940719805) targeted SHA `9d08dc8f3facb9060f6391552318951f58aa1a8a`; the contract-artifact step passed after the checker/ledger correction, but the run has not completed the required platform matrix. It does not verify later source changes.
-- The current branch source has additional overflow handling and a checked-in executable example after that SHA. Exact-SHA build, strict Clippy, and workspace tests for the latest branch are **NOT YET VERIFIED**.
+- Independent mirror run [39940968766](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39940968766) targeted SHA `b6362a15bdd59715726be424453bc64c23e24063`. Contract artifacts and strict Clippy passed on Ubuntu; the workspace test suite failed at `integer_arithmetic_overflow_returns_a_runtime_diagnostic` because the returned error did not match the expected `R3023`. The actual returned diagnostic is being surfaced in a follow-up assertion; this is a real test failure and is not waived.
+- Windows for that run is still in progress at the time of this checkpoint. Later map builtin and CLI test changes are not covered by that run.
+- Current branch code SHA has advanced beyond `b6362a15bdd59715726be424453bc64c23e24063`; exact-SHA build, strict Clippy, and workspace tests for the latest branch remain **NOT YET VERIFIED**.
 - No points are added to the verified completion total for this work. The completion ledger has not been altered.
 
 ## Remaining required work
