@@ -512,6 +512,9 @@ fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
         let mut fields = line.splitn(3, '\t');
         let id = fields.next().and_then(|value| value.parse::<u64>().ok())
             .ok_or_else(|| format!("Data tugas rusak pada baris {}: ID tidak valid", index + 1))?;
+        if id == 0 {
+            return Err(format!("Data tugas rusak pada baris {}: ID tidak valid", index + 1));
+        }
         let status = fields.next()
             .ok_or_else(|| format!("Data tugas rusak pada baris {}: status hilang", index + 1))?;
         let title = fields.next()
@@ -854,8 +857,20 @@ mod task_runtime_tests {
     #[test]
     fn task_storage_rejects_corrupt_records() {
         let path = storage_path();
-        std::fs::write(&path, "not-an-id\t0\tjudul\n").expect("write corrupt fixture");
-        assert!(load_tasks(&path).expect_err("corrupt record must fail").contains("ID tidak valid"));
+        for (contents, expected) in [
+            ("not-an-id\t0\tjudul\n", "ID tidak valid"),
+            ("0\t0\tjudul\n", "ID tidak valid"),
+            ("1\n", "status hilang"),
+            ("1\t0\n", "judul hilang"),
+            ("1\t2\tjudul\n", "field tidak valid"),
+            ("1\t0\t\n", "field tidak valid"),
+            ("1\t0\tjudul\\u{1}\n", "field tidak valid"),
+            ("1\t0\tjudul\n1\t1\tduplikat\n", "ID duplikat"),
+        ] {
+            std::fs::write(&path, contents).expect("write corrupt fixture");
+            let error = load_tasks(&path).expect_err("corrupt record must fail");
+            assert!(error.contains(expected), "expected {expected:?} in {error:?}");
+        }
         let _ = std::fs::remove_file(path);
     }
     
