@@ -213,5 +213,21 @@ hasil adalah belum dibuat
     assert!(run(&["package", root.to_str().unwrap()]).status.success());
     assert_eq!(first, fs::read(&artifact).unwrap(), "human-core package must be deterministic");
     assert_eq!(first_lock, fs::read(&lock_path).unwrap(), "module lock must be deterministic");
+
+    fs::write(root.join("src/math.one"), r#"Buat modul math
+buat pekerjaan tambah
+    terima kiri
+    terima kanan
+    hasilnya adalah kiri dikurangi kanan
+"#).unwrap();
+    let stale_test = run(&["test", root.to_str().unwrap()]);
+    assert!(!stale_test.status.success());
+    assert!(String::from_utf8_lossy(&stale_test.stderr).contains("ETOOL006"));
+    let stale_build = run(&["build", main_path.to_str().unwrap()]);
+    assert!(!stale_build.status.success());
+    assert!(String::from_utf8_lossy(&stale_build.stderr).contains("ETOOL006"));
+
+    assert!(run(&["package", root.to_str().unwrap()]).status.success());
+    assert!(run(&["test", root.to_str().unwrap()]).status.success());
     let _ = fs::remove_dir_all(&root);
 }
