@@ -11,16 +11,16 @@
 
 Canonical ledger: [one-completion-ledger.md](one-completion-ledger.md).
 
-- **Implementation subtotal:** 82/100 provisional points.
+- **Implementation subtotal:** 84/100 provisional points.
 - **Verified completion:** 68/100 points.
-- **E1–E6 verified points:** 8/40 (E3 cross-platform/conformance row verified); E1, E2, E4, E5, and E6 remain unverified. The 14 remaining provisional ecosystem implementation points are not verified completion.
+- **E1–E6 verified points:** 8/40 (E3 cross-platform/conformance row verified); E1, E2, E4, E5, and E6 remain unverified. The 16-point implementation/verification gap is not verified completion.
 - **Milestone 100% gate:** **NOT PASSED**.
 - The previously earned 60% milestone remains historical and scoped to its exact source SHA and evidence. It does not make the current 100% candidate green.
 
 ## Current Git and CI evidence
 
 - PR #80 is **open, draft, and unmerged**; no merge is authorized by this checkpoint.
-- Latest code-bearing source SHA for this implementation slice: `5da1f4dfcfba7bc64186eaa6a4ab018e6703c8a6`. This candidate adds checked integer remainder coverage, bounded JSON serialization, explicit JSON control-character escaping tests, and retries for interrupted FTP/SMTP protocol reads. This checkpoint commit is documentation-only and is tracked separately from the tested code SHA.
+- Historical code-bearing source SHA for the previous narrow stdlib slice: `5da1f4dfcfba7bc64186eaa6a4ab018e6703c8a6`. The latest exact-SHA verification and continuation changes are recorded in the section appended below.
 - Canonical workflow run [39994484534](https://github.com/panglimanetizen01/one/actions/runs/39994484534), “One CI”, completed with **failure**. The two reported jobs (`test (windows-2025)` and `test (ubuntu-latest)`) failed; job-step details/logs were not returned by the available connector. Root cause is **UNKNOWN** from available evidence; do not infer a source failure or a pass.
 - The associated Linux Distribution Conformance run [39994484625](https://github.com/panglimanetizen01/one/actions/runs/39994484625) and Standard Library Focused Verification run [39994484574](https://github.com/panglimanetizen01/one/actions/runs/39994484574) were **cancelled**. Subsequent runs on the integer-remainder candidate also report failure: [One CI 39995112864](https://github.com/panglimanetizen01/one/actions/runs/39995112864), [Linux distro 39995112888](https://github.com/panglimanetizen01/one/actions/runs/39995112888), and [focused stdlib 39995112905](https://github.com/panglimanetizen01/one/actions/runs/39995112905). The available job-step endpoint returned empty step lists for these jobs, so the underlying failure cause is **UNKNOWN**; this does not establish that the source tests failed or passed. The latest canonical runs on this branch have repeatedly failed before steps start: jobs report `runner_id: 0` and `steps: []`; retry attempt 2 also failed identically. This is an Actions runner provisioning failure, not evidence that source tests failed. The independent mirror fallback runs the required source checks.
 - Older independent-mirror PASS results only apply to their explicitly recorded older source SHAs. They do not verify the current PR head.
@@ -64,12 +64,45 @@ Remaining mandatory requirements include, at minimum:
 
 ## Next execution sequence
 
-1. Re-pin the mirror selector to the checkpoint commit SHA and rerun focused stdlib, Linux distro, and Ubuntu/Windows cross-platform workflows on that exact final checkpoint SHA.
-2. Continue E1, E2, E4, and E5 implementation against the fixed acceptance criteria; each slice must receive focused and full-matrix verification before ledger credit.
-3. Finish required standard-library breadth, dependency/package provenance, target artifacts, race-resistant filesystem confinement/resource quotas, security review, compatibility and developer workflow gaps.
-4. Resolve the main-repository Actions runner provisioning failure if the repository's runner service becomes available; do not fabricate or manually mark checks green.
-5. Perform E6 forensic audit only after every mandatory gate is satisfied.
+1. Continue implementation on the existing PR branch; after any code-changing slice, pin the independent verification mirror to that exact source SHA and run focused, Linux-distro, and Ubuntu/Windows cross-platform workflows.
+2. Prioritize E2 external dependency resolution and authenticated package provenance; do not treat the current unsigned module lock as publisher authentication.
+3. Continue E1 standard-library breadth and E4 security work, especially race-resistant filesystem confinement and broader resource quotas, with focused regression tests.
+4. Complete E5 documentation/tooling review and preserve explicit limitations; the Android AArch64 native execution test remains ignored/skipped and is not a pass.
+5. Keep the source repository's runner-provisioning failure visible, use the reviewed exact-SHA mirror fallback, and perform E6 forensic audit only after all mandatory criteria are satisfied.
 
 ## Gate
 
-**NOT PASSED — Milestone 100%.** The current PR is draft/unmerged; the latest reported canonical CI failed, companion verification workflows were cancelled, and no current-head exact-SHA green matrix was established in this session.
+**NOT PASSED — Milestone 100%.** PR #80 remains draft/unmerged. Canonical repository Actions still fail before executing steps (`runner_id=0`); the independent exact-SHA mirror matrix passed on source SHA `64985b51599c1531b6b8e07aa0aa9d16551e6e38`. Mandatory E1, E2, E4, E5, and E6 criteria remain incomplete.
+
+
+## 2026-10-24 continuation checkpoint — exact source SHA verified
+
+**Code-bearing source SHA:** `cec949631f3c91a5419957b1a8820904daa6bcd7`  
+**Exact SHA selected and verified:** `64985b51599c1531b6b8e07aa0aa9d16551e6e38` (the selected commit adds verification-contract documentation after the code-bearing commit above).  
+**Mirror selector commit:** `f0510674e46bf96a1a7356441c896d1e67697f4a`, file `CANONICAL_COMMIT.txt` points to the exact source SHA.  
+**PR / Git state:** [PR #80](https://github.com/panglimanetizen01/one/pull/80) remains open and draft; base `main` was not changed and no merge occurred.
+
+### Changes made
+
+- SQLite file-backed queries now open read-only, enable `query_only`, and do not create a missing database file. Query resource budgets: 1 MiB SQL, 1 MiB per parameter, 16 MiB aggregate parameters, 256 parameters, 100,000 rows, and 16 MiB output.
+- Added strict UTC timestamp parsing builtin `unix dari waktu utc` with Gregorian validation and end-to-end parser → semantic → IR → interpreter tests; documented the round-trip with `waktu utc dari unix`.
+- Corrected `tools/verify_offline.ps1` to propagate native command failures and explicitly skip only the Android-native CLI test on Windows.
+- Updated standard-library contracts and user documentation.
+
+### Verification evidence at exact source SHA `64985b51599c1531b6b8e07aa0aa9d16551e6e38`
+
+- Focused stdlib/database: [run 40006470057](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470057) — **SUCCESS**.
+- Linux distro: [run 40006470246](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470246) — **SUCCESS**, Ubuntu 24.04 and Debian 12.
+- Cross-platform: [run 40006470017](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470017) — **SUCCESS**, Ubuntu and Windows. Build, contract artifacts, AST tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification passed.
+- Windows offline verifier log confirms `OFFLINE VERIFICATION: PASS`, contains no `test result: FAILED`, and the Android-target CLI test is filtered out rather than falsely counted as passed. The separate Android AArch64 execution test remains ignored; no Android-native runtime pass is claimed.
+- Canonical repository Actions for source SHA `64985...` still fail with `runner_id=0` and empty steps; those runs did not execute source checks. The independent mirror is the documented fallback, not a claim that canonical Actions passed.
+- Earlier run [40005692552](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40005692552) is **not credited**: its Windows offline log exposed a failed Android test swallowed by PowerShell. The verifier fix above was applied and the exact-SHA matrix rerun successfully.
+
+### Completion and gate
+
+- **Implementation subtotal:** 84/100 provisional points (E1=7/10, E2=5/8, E3=8/8, E4=3/6, E5=1/4, E6=0/4; fixed weights unchanged).
+- **Verified completion:** 68/100. E1, E2, E4, E5 and E6 still have 0 verified points.
+- **Next:** implement external dependency resolution/provenance, broaden stdlib, harden filesystem race/resource controls, finish developer tooling/docs, then perform E6 forensic audit.
+- **GATE:** **NOT PASSED — Milestone 100% remains in progress.**
+
+This checkpoint update is documentation-only; the exact source SHA and evidence above remain the code-verification reference.
