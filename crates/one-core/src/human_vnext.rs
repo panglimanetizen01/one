@@ -605,27 +605,47 @@ fn save_tasks(path: &std::path::Path, tasks: &[Task]) -> Result<(), String> {
 }
 
 fn validate_task_app(program: &HumanProgram) -> Result<(), String> {
-    if !program.declarations.iter().any(|declaration| matches!(
-        declaration,
-        HumanDeclaration::Persist { collection } if collection == "tugas"
-    )) {
-        return Err("Aplikasi daftar tugas wajib mendeklarasikan: Simpan semua tugas agar tidak hilang saat aplikasi ditutup".into());
-    }
+    let mut persistence = false;
     let mut add = false;
     let mut list = false;
     let mut complete = false;
+
     for declaration in &program.declarations {
-        if let HumanDeclaration::Action { body, .. } = declaration {
-            match body.as_slice() {
-                [HumanInstruction::AcceptTaskTitle, HumanInstruction::AddTask] if !add => add = true,
-                [HumanInstruction::DisplayAllTasks] if !list => list = true,
-                [HumanInstruction::AcceptTaskId, HumanInstruction::CompleteTask] if !complete => complete = true,
-                _ => {}
+        match declaration {
+            HumanDeclaration::Persist { collection } if collection == "tugas" && !persistence => {
+                persistence = true;
             }
+            HumanDeclaration::Persist { collection } if collection == "tugas" => {
+                return Err("Deklarasi penyimpanan tugas tidak boleh berulang".into());
+            }
+            HumanDeclaration::Persist { collection } => {
+                return Err(format!("Koleksi penyimpanan '{}' belum didukung runner daftar tugas", collection));
+            }
+            HumanDeclaration::Data { name, .. } => {
+                return Err(format!("Data '{}' belum didukung runner daftar tugas", name));
+            }
+            HumanDeclaration::Action { name, body } => match (name.as_str(), body.as_slice()) {
+                ("menambahkan tugas", [HumanInstruction::AcceptTaskTitle, HumanInstruction::AddTask]) if !add => {
+                    add = true;
+                }
+                ("melihat semua tugas", [HumanInstruction::DisplayAllTasks]) if !list => {
+                    list = true;
+                }
+                ("menandai tugas sebagai selesai", [HumanInstruction::AcceptTaskId, HumanInstruction::CompleteTask]) if !complete => {
+                    complete = true;
+                }
+                _ => {
+                    return Err(format!("Aksi '{}' atau urutan instruksinya belum didukung runner daftar tugas", name));
+                }
+            },
         }
     }
+
+    if !persistence {
+        return Err("Aplikasi daftar tugas wajib mendeklarasikan: Simpan semua tugas agar tidak hilang saat aplikasi ditutup".into());
+    }
     if !add || !list || !complete {
-        return Err("Aplikasi daftar tugas membutuhkan aksi tambah, lihat semua, dan tandai selesai dengan instruksi yang didukung".into());
+        return Err("Aplikasi daftar tugas membutuhkan aksi tambah, lihat semua, dan tandai selesai dengan nama serta urutan instruksi yang tepat".into());
     }
     Ok(())
 }
@@ -769,6 +789,51 @@ mod task_runtime_tests {
         let error = run_task_app(&program, &path, &mut input, &mut output)
             .expect_err("durable storage must be declared");
         assert!(error.contains("wajib mendeklarasikan"));
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn task_app_rejects_actions_the_runner_cannot_execute() {
+        let mut program = task_program();
+        program.declarations.push(HumanDeclaration::Action {
+            name: "aksi tambahan".into(),
+            body: vec![HumanInstruction::Display { name: "pesan".into() }],
+        });
+        let path = storage_path();
+        let mut input = Cursor::new(Vec::<u8>::new());
+        let mut output = Vec::new();
+        let error = run_task_app(&program, &path, &mut input, &mut output)
+            .expect_err("unsupported action must not be silently ignored");
+        assert!(error.contains("belum didukung runner daftar tugas"));
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn task_app_rejects_data_the_runner_cannot_execute() {
+        let mut program = task_program();
+        program.declarations.push(HumanDeclaration::Data {
+            name: "pesan".into(),
+            value: HumanValue::Text("halo".into()),
+        });
+        let path = storage_path();
+        let mut input = Cursor::new(Vec::<u8>::new());
+        let mut output = Vec::new();
+        let error = run_task_app(&program, &path, &mut input, &mut output)
+            .expect_err("unexecuted data must not be silently accepted");
+        assert!(error.contains("belum didukung runner daftar tugas"));
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn task_app_rejects_unhandled_persistence_collections() {
+        let mut program = task_program();
+        program.declarations.push(HumanDeclaration::Persist { collection: "catatan".into() });
+        let path = storage_path();
+        let mut input = Cursor::new(Vec::<u8>::new());
+        let mut output = Vec::new();
+        let error = run_task_app(&program, &path, &mut input, &mut output)
+            .expect_err("unsupported persistence collection must be rejected");
+        assert!(error.contains("belum didukung runner daftar tugas"));
         assert!(!path.exists());
     }
 
