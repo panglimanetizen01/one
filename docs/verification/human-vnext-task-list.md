@@ -36,5 +36,6 @@ Buka kembali proses dengan perintah yang sama untuk memuat data dari berkas. Dat
 - Runner task-list adalah interpreter eksperimental khusus untuk vertical slice ini; AST belum diturunkan ke IR kanonis ONE v0.1.
 - Judul tugas harus satu baris dan tidak boleh kosong atau mengandung karakter kontrol.
 - File storage adalah format internal tab-delimited; migrasi format belum dijanjikan.
+- Setiap record memakai ID numerik positif yang unik, status `0` atau `1`, dan judul nonkosong tanpa karakter kontrol. Record yang tidak memenuhi format ditolak seluruhnya saat dibaca.
 - Build, test, Clippy, dan CI pada commit yang berisi contoh ini harus lulus sebelum slice dinyatakan verified.
 - Jangan gunakan direktori data produksi untuk eksperimen. Pilih path eksplisit melalui `--data` bila diperlukan.
