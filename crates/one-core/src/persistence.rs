@@ -106,8 +106,10 @@ impl KeyValueStore {
     }
 
     pub fn flush(&self) -> Result<(), StoreError> {
+        let encoded_size = encoded_size(&self.values)
+            .ok_or(StoreError::Limit("ukuran serialisasi melampaui batas bilangan"))?;
+        if encoded_size > MAX_FILE_BYTES { return Err(StoreError::Limit("berkas hasil lebih besar dari 16 MiB")); }
         let encoded = encode(&self.values);
-        if encoded.len() as u64 > MAX_FILE_BYTES { return Err(StoreError::Limit("berkas hasil lebih besar dari 16 MiB")); }
         if let Some(parent) = self.path.parent()
             && !parent.as_os_str().is_empty() {
             fs::create_dir_all(parent)?;
@@ -141,6 +143,17 @@ fn validate_field(value: &str, label: &'static str) -> Result<(), StoreError> {
     if label == "kunci" && value.is_empty() { return Err(StoreError::Limit("kunci kosong")); }
     if value.len() > MAX_FIELD_BYTES { return Err(StoreError::Limit("kunci/nilai melebihi 1 MiB")); }
     Ok(())
+}
+
+fn encoded_size(values: &BTreeMap<String, String>) -> Option<u64> {
+    let mut total = (MAGIC.len() + 1) as u64;
+    for (key, value) in values {
+        total = total.checked_add((key.len() as u64).checked_mul(2)?)?;
+        total = total.checked_add(1)?;
+        total = total.checked_add((value.len() as u64).checked_mul(2)?)?;
+        total = total.checked_add(1)?;
+    }
+    Some(total)
 }
 
 fn encode(values: &BTreeMap<String, String>) -> String {
@@ -271,6 +284,18 @@ mod tests {
         assert!(!store.remove("k").unwrap());
         assert_eq!(KeyValueStore::open(&path).unwrap().get("k"), None);
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn bulk_write_rejects_oversized_store_before_serializing() {
+        let path = path("oversized");
+        let mut store = KeyValueStore::open(&path).unwrap();
+        let values = (0..9)
+            .map(|index| (format!("k{index}"), "x".repeat(1024 * 1024)))
+            .collect::<BTreeMap<_, _>>();
+        assert!(matches!(store.replace_all(values), Err(StoreError::Limit(_))));
+        assert!(store.is_empty());
+        assert!(!path.exists());
     }
 
     #[test]
