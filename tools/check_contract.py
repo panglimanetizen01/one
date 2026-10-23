@@ -107,6 +107,16 @@ for marker in (
     if marker not in human_parser_tests:
         raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
 
+for marker in (
+    "task_storage_replaces_existing_records_on_repeated_saves",
+    "task_app_rejects_non_tab_control_characters_in_titles",
+    "task_app_rejects_actions_the_runner_cannot_execute",
+    "task_app_rejects_data_the_runner_cannot_execute",
+    "task_app_rejects_unhandled_persistence_collections",
+):
+    if marker not in human_parser_tests:
+        raise SystemExit(f"HUMAN vNEXT RUNTIME TESTS: missing required test {marker!r}")
+
 human_cli_tests = (ROOT / "crates/one-cli/tests/cli.rs").read_text(encoding="utf-8")
 for marker in (
     "human_vnext_cli_runs_task_app_and_reopens_persistent_data",
