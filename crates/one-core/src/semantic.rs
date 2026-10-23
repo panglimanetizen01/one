@@ -11,6 +11,8 @@ pub fn analyze(program: &Program) -> Result<TypedProgram, DiagnosticBundle> { le
         functions: HashMap::from([
             ("panjang teks".to_owned(), 1),
             ("teks memuat".to_owned(), 2),
+            ("teks diawali".to_owned(), 2),
+            ("teks diakhiri".to_owned(), 2),
             ("pangkas teks".to_owned(), 1),
             ("ganti teks".to_owned(), 3),
             ("pisah teks".to_owned(), 2),
@@ -119,7 +121,7 @@ impl Analyzer {
                 "huruf kecil" | "huruf besar" => Some(vec![Type::Text]),
                 "gabung teks" => Some(vec![Type::List, Type::Text]),
                 "jumlah daftar angka" => Some(vec![Type::List]),
-                "teks memuat" | "pisah teks" => Some(vec![Type::Text, Type::Text]),
+                "teks memuat" | "teks diawali" | "teks diakhiri" | "pisah teks" => Some(vec![Type::Text, Type::Text]),
                 "ganti teks" => Some(vec![Type::Text, Type::Text, Type::Text]),
                 "ubah teks ke angka" => Some(vec![Type::Text]),
                 "panjang daftar" => Some(vec![Type::List]),
