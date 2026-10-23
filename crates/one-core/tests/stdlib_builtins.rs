@@ -52,3 +52,9 @@ fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
     let multiply_overflow = "hasil adalah 9223372036854775807 dikali 2\\ntampilkan hasil\\n";
     assert!(run(multiply_overflow).unwrap_err().contains("R3023"));
 }
+
+#[test]
+fn checked_in_stdlib_example_runs_through_one() {
+    let output = run(include_str!("../../../examples/stdlib.one")).expect("example should execute");
+    assert_eq!(output, vec!["2", "benar", "pir,jeruk", "42", "7", "3"]);
+}
