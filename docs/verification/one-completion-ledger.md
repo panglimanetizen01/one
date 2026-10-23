@@ -32,20 +32,20 @@ For each row, **implemented points** are provisional progress based on code actu
 | C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart, rollback and bounded-size replacement tests | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C5 | Additional real application vertical slices — **4** | Calculator, score tracker, module and mapping examples executed through the same compiler/runtime | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
-| E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 6/10 | 0/10 | IMPLEMENTED — PARTIAL; EXACT-SHA VERIFICATION PENDING |
+| E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 7/10 | 0/10 | IMPLEMENTED — PARTIAL; UTC parser integrated; full stdlib acceptance pending |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 5/8 | 0/8 | IMPLEMENTED — PARTIAL; EXTERNAL DEPENDENCY RESOLUTION PENDING |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 8/8 | VERIFIED — exact-SHA Linux/Windows plus Android target checks passed on the independent mirror |
-| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 2/6 | 0/6 | IMPLEMENTED — PARTIAL; FULL THREAT REVIEW PENDING |
+| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 3/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets added; full threat review pending |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 1/4 | 0/4 | IMPLEMENTED — PARTIAL; FULL DOCS/TOOLING REVIEW PENDING |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **82/100** | **68/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **84/100** | **68/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
 - This ledger is the first weighted completion ledger located for the vNext workstream; no prior canonical weighted formula was found during repository discovery.
 - Current source branch: `milestone/100-ecosystem-20261023`.
-- Last code-changing SHA at the current repository checkpoint: `26199c0114ea0da5f9784ea4d000ab185799e4fc`. Later commits in this checkpoint sequence only update verification documentation/ledger evidence; the tested source snapshot is unchanged.
-- Latest checkpoint update commit: `d936b96283162eea3eff7b4bccec7c6abbcb5f2b`; this records the verified Foundation decision, while later documentation-only commits may advance the branch head.
+- Historical code-changing SHA at the initial ledger checkpoint: `26199c0114ea0da5f9784ea4d000ab185799e4fc`. The latest continuation evidence and tested source SHA are recorded in the 2026-10-24 section below.
+- Historical Foundation checkpoint update commit: `d936b96283162eea3eff7b4bccec7c6abbcb5f2b`; later documentation-only commits may advance the branch head without changing the tested source snapshot.
 - Current code includes the experimental parser, the dedicated task-list runner, an explicit CLI command, a runnable example, and regression tests. These changes are not credited as verified until they execute successfully.
 - The GitHub Actions runs inspected for earlier commits failed before any steps started; the jobs reported an empty step list and logs were unavailable. This is an infrastructure/runner blocker, not evidence of a Rust source failure or a pass.
 - Exact-code-SHA Actions run: [39752818112](https://github.com/panglimanetizen01/one/actions/runs/39752818112), triggered for `8c4f7c4706365972797446382989b81335434d92`; both OS jobs failed before any steps started. No build/test result was produced.
@@ -192,3 +192,41 @@ Verified canonical source SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` on bran
 - **F6 — 2/2:** beginner documentation, runnable example, contract checker, exact-SHA verifier, reviewed fallback contract, and successful exact-SHA Linux/Windows hosted evidence are recorded above.
 
 **Gate decision:** award 30 Foundation points plus 30 Core/Runtime points. The 60% target is reached at the exact code SHA recorded above without changing weights or counting the ignored Android-native test as passed. E1–E6 remain unimplemented and uncredited.
+
+
+## 2026-10-24 continuation — exact-SHA hardening and verification
+
+**Tested source SHA:** `64985b51599c1531b6b8e07aa0aa9d16551e6e38`  
+**Latest code-changing commit in this slice:** `cec949631f3c91a5419957b1a8820904daa6bcd7`; the tested SHA above adds verification-contract documentation after that code commit.  
+**Branch / PR:** `milestone/100-ecosystem-20261023` / [PR #80](https://github.com/panglimanetizen01/one/pull/80), still open and draft; no merge performed.
+
+### Implemented and integrated
+
+- SQLite `database.query` now opens file-backed databases with `SQLITE_OPEN_READ_ONLY` and enables `PRAGMA query_only`. The `:memory:` resource remains an isolated ephemeral connection. A regression test verifies a read query against a missing file returns a backend error and does not create that file.
+- SQLite query resource limits are explicit and enforced before prepare/bind work: SQL statement 1 MiB, each text parameter 1 MiB, aggregate parameter bytes 16 MiB, parameter count 256, result rows 100,000, serialized output 16 MiB. Regression tests cover SQL length, individual parameter length, aggregate parameter bytes, and parameter count.
+- Added `utc_text_to_unix_seconds` and the source-level builtin `unix dari waktu utc`, integrated through semantic type/arity validation and the canonical interpreter. The parser accepts only Gregorian UTC `YYYY-MM-DDTHH:MM:SSZ` for years 0000–9999 and rejects invalid dates/times, offsets, fractional seconds, leap seconds, and non-canonical forms. Unit and parse→semantic→IR→interpreter tests cover valid boundaries, leap dates, pre-epoch values, invalid types and malformed dates.
+- Updated the standard-library contract, standard-library boundary document, user guide, and focused verification workflow to document and exercise the new behavior.
+- Fixed a false-green in `tools/verify_offline.ps1`: it now enables `$PSNativeCommandUseErrorActionPreference = $true` so failed native commands terminate the script, and skips only `android_target_explicit_mempertahankan_build_native` on Windows. The Android-native test is explicitly skipped, not counted as passed.
+
+### Exact-SHA evidence
+
+All three independent verification workflows checked out the exact source SHA above from the canonical repository:
+
+- Focused standard-library/database regressions: [run 40006470057](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470057) — **SUCCESS**. UTC formatter/parser unit and integration tests, JSON output boundary, SQLite SQL/parameter resource-limit tests, missing-file read-only regression, and strict one-core Clippy passed.
+- Linux distro matrix: [run 40006470246](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470246) — **SUCCESS** on Ubuntu 24.04 and Debian 12; contract checks, build, Clippy, workspace tests, and real-network tests passed.
+- Cross-platform matrix: [run 40006470017](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470017) — **SUCCESS** on both `ubuntu-latest` and `windows-2025`. Both jobs passed contract artifacts, build, AST contract tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Workspace test summaries included 215 core tests passed on Ubuntu and 210 on Windows; one Android AArch64 native execution test remained ignored, and the Windows-only CLI suite explicitly filtered out the Android-target test. Neither is counted as passed.
+- The source repository's own Actions on this same SHA remain infrastructure failures: [CI run 40006462899](https://github.com/panglimanetizen01/one/actions/runs/40006462899), [Linux distribution run 40006463227](https://github.com/panglimanetizen01/one/actions/runs/40006463227), and [focused run 40006463315](https://github.com/panglimanetizen01/one/actions/runs/40006463315) failed with `runner_id=0` and empty step lists. They produced no source build/test result. The documented independent mirror was used instead; no paid plan upgrade or fabricated CI result was used.
+
+### Forensic correction
+
+The earlier mirror run [40005692552](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40005692552) was initially marked successful, but its Windows offline-script log contained a failed Android-target native CLI test followed by `OFFLINE VERIFICATION: PASS`. That run is **not credited as valid full verification**. The failure-propagation and platform-specific skip fix was committed, and the exact-SHA cross-platform run 40006470017 was then rerun successfully. Its Windows offline log has no `test result: FAILED` marker and ends with `OFFLINE VERIFICATION: PASS`.
+
+### Updated point accounting
+
+- E1 implementation: **7/10** provisional; verified remains **0/10** because the full required standard-library acceptance set is incomplete.
+- E4 implementation: **3/6** provisional; verified remains **0/6** because race-resistant filesystem resolution, broader quotas, and full threat review remain incomplete.
+- E2 remains 5/8; E3 remains 8/8 verified for its scoped cross-platform/conformance criterion; E5 remains 1/4; E6 remains 0/4.
+- **Implementation subtotal: 84/100. Verified completion: 68/100.** Fixed row weights are unchanged. The 16-point implementation/verification gap does not count toward a PASS gate.
+
+**Remaining mandatory work:** external dependency resolution and authenticated package provenance; broader standard-library coverage; race-resistant filesystem confinement and wider resource quotas; compatibility/release review; full developer-tooling/docs acceptance; Android-native execution in an appropriate environment if required by the declared target contract; and the E6 forensic audit.  
+**Gate:** **NOT PASSED — Milestone 100% remains in progress.**
