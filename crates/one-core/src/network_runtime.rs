@@ -29,7 +29,53 @@ fn resolve_target(host: &str, port: u16, address_kind: Option<NetworkAddressKind
 pub struct HttpRequest { pub method: String, pub authority: String, pub path: String, pub headers: Vec<(String, String)>, pub body: Vec<u8> }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HttpResponse { pub status: u16, pub reason: String, pub headers: Vec<(String, String)>, pub body: Vec<u8> }
-impl HttpRequest { pub fn get(authority: impl Into<String>, path: impl Into<String>) -> Self { Self { method: "GET".into(), authority: authority.into(), path: path.into(), headers: Vec::new(), body: Vec::new() } } pub fn to_bytes(&self) -> Result<Vec<u8>, NetworkRuntimeError> { if self.method.is_empty() || self.path.is_empty() || self.path.contains('\r') || self.path.contains('\n') || self.authority.contains('\r') || self.authority.contains('\n') { return Err(NetworkRuntimeError::Protocol("Permintaan HTTP memiliki token awal yang tidak valid.".into())); } let mut bytes = format!("{} {} HTTP/1.1\r\nHost: {}\r\n", self.method, self.path, self.authority).into_bytes(); let mut has_length = false; for (name, value) in &self.headers { if name.eq_ignore_ascii_case("host") || name.contains('\r') || name.contains('\n') || value.contains('\r') || value.contains('\n') { return Err(NetworkRuntimeError::Protocol("Header HTTP tidak valid.".into())); } if name.eq_ignore_ascii_case("content-length") { has_length = true; } bytes.extend_from_slice(format!("{}: {}\r\n", name, value).as_bytes()); } if !self.body.is_empty() && !has_length { bytes.extend_from_slice(format!("Content-Length: {}\r\n", self.body.len()).as_bytes()); } bytes.extend_from_slice(b"Connection: close\r\n\r\n"); bytes.extend_from_slice(&self.body); Ok(bytes) } }
+impl HttpRequest {
+    pub fn get(authority: impl Into<String>, path: impl Into<String>) -> Self {
+        Self { method: "GET".into(), authority: authority.into(), path: path.into(), headers: Vec::new(), body: Vec::new() }
+    }
+
+    pub fn to_bytes(&self) -> Result<Vec<u8>, NetworkRuntimeError> {
+        let invalid = || NetworkRuntimeError::Protocol("Permintaan HTTP memiliki token atau framing yang tidak valid.".into());
+        if !valid_http_header_name(&self.method)
+            || self.path.is_empty()
+            || !(self.path.starts_with('/') || self.path == "*")
+            || self.path.bytes().any(|byte| byte <= 0x20 || byte == 0x7f)
+            || self.authority.is_empty()
+            || self.authority.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == b'\\r' || byte == b'\\n')
+            || self.authority.contains('@')
+            || self.authority.contains('/')
+            || self.authority.contains('#')
+            || self.authority.contains('?')
+        {
+            return Err(invalid());
+        }
+
+        let mut bytes = format!("{} {} HTTP/1.1\\r\\nHost: {}\\r\\n", self.method, self.path, self.authority).into_bytes();
+        let mut has_length = false;
+        for (name, value) in &self.headers {
+            if !valid_http_header_name(name)
+                || name.eq_ignore_ascii_case("host")
+                || name.eq_ignore_ascii_case("transfer-encoding")
+                || value.bytes().any(|byte| (byte < 0x20 && byte != b'\\t') || byte == 0x7f)
+            {
+                return Err(invalid());
+            }
+            if name.eq_ignore_ascii_case("content-length") {
+                if has_length || value.parse::<usize>().ok() != Some(self.body.len()) {
+                    return Err(invalid());
+                }
+                has_length = true;
+            }
+            bytes.extend_from_slice(format!("{}: {}\\r\\n", name, value).as_bytes());
+        }
+        if !has_length && (!self.body.is_empty() || self.method.eq_ignore_ascii_case("POST") || self.method.eq_ignore_ascii_case("PUT") || self.method.eq_ignore_ascii_case("PATCH")) {
+            bytes.extend_from_slice(format!("Content-Length: {}\\r\\n", self.body.len()).as_bytes());
+        }
+        bytes.extend_from_slice(b"Connection: close\\r\\n\\r\\n");
+        bytes.extend_from_slice(&self.body);
+        Ok(bytes)
+    }
+}
 fn valid_http_header_name(name: &str) -> bool {
     !name.is_empty()
         && name.bytes().all(|byte| {
@@ -165,6 +211,27 @@ pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, c
 }
 #[cfg(test)]
 mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io::{Read, Write}; use std::net::TcpListener; use std::thread;
+    #[test]
+    fn http_request_rejects_request_smuggling_and_header_injection() {
+        for request in [
+            HttpRequest { method: "GET\\r\\nInjected: yes".into(), authority: "example.com".into(), path: "/".into(), headers: vec![], body: vec![] },
+            HttpRequest { method: "GET".into(), authority: "example.com".into(), path: "/\\r\\nInjected: yes".into(), headers: vec![], body: vec![] },
+            HttpRequest { method: "GET".into(), authority: "user@example.com".into(), path: "/".into(), headers: vec![], body: vec![] },
+            HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![("Content-Length".into(), "1".into()), ("content-length".into(), "2".into())], body: b"x".to_vec() },
+            HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![("Transfer-Encoding".into(), "chunked".into())], body: b"x".to_vec() },
+            HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![("Content-Length".into(), "999".into())], body: b"x".to_vec() },
+        ] {
+            assert!(request.to_bytes().is_err());
+        }
+    }
+
+    #[test]
+    fn http_request_generates_content_length_for_empty_body_methods_that_carry_content() {
+        let request = HttpRequest { method: "POST".into(), authority: "example.com".into(), path: "/".into(), headers: vec![], body: vec![] };
+        let wire = String::from_utf8(request.to_bytes().expect("valid request")).expect("UTF-8");
+        assert!(wire.contains("Content-Length: 0\\r\\n"));
+    }
+
     #[test]
     fn http_authority_parser_handles_ipv6_and_explicit_ports() {
         assert_eq!(parse_http_authority("example.com"), Ok(("example.com".into(), 80)));
