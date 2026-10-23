@@ -18,7 +18,16 @@ This contract describes only the deterministic subset implemented by the current
 7. This version's identifiers allow Unicode alphanumeric characters, underscore, hyphen, and single ASCII spaces between non-space characters. Leading/trailing/repeated spaces and punctuation are rejected.
 8. A declaration or instruction outside this grammar is an error. A successful parse is not by itself proof that a program can execute: the current runner accepts only the task-list vertical slice.
 
-## 2. Lexical conventions
+## 2. Versioning and compatibility rules
+
+- The contract identifier is `human-vnext-starter/0.1`. It is a versioned experimental grammar, not the version of the ONE language as a whole.
+- A source file has no implicit grammar-version negotiation. It is parsed only when the caller explicitly selects the human-vNext entry point; the ordinary v0.1 CLI commands never auto-detect or fall back to this grammar.
+- A future incompatible change to keywords, identifier validity, indentation, text-block boundaries, declaration binding, or diagnostic codes must use a new contract version and add fixtures. It must not silently change the meaning of a file accepted by this version.
+- This contract treats source as UTF-8 text supplied to the parser. It preserves Unicode text as-is and does not normalize it. Names are exact, case-sensitive strings.
+- Duplicate data/action names share one declaration namespace and are rejected with `H0017`. A display reference resolves only to a data declaration; references to action names and missing names are rejected with `H0018`. Repeated persistence declarations for the same collection are rejected with `H0019`.
+- Diagnostic codes are part of the experimental conformance surface. Tests assert codes for stable rejection classes; line numbers identify the declaration that caused a semantic conflict or unresolved reference.
+
+## 3. Lexical conventions
 
 - NL is LF or CRLF.
 - SP is one ASCII space.
@@ -27,7 +36,7 @@ This contract describes only the deterministic subset implemented by the current
 - Blank lines are ignored for declaration parsing. Inside a text block, blank lines and relative indentation are preserved as text.
 - Keywords are literal, case-sensitive Indonesian strings shown below. No synonym expansion is implied.
 
-## 3. Starter grammar (EBNF)
+## 4. Starter grammar (EBNF)
 
 ```ebnf
 program              = blank*, application, (blank* declaration)*, blank* ;
@@ -66,7 +75,7 @@ For structural lines, the parser rejects tabs and indentation widths that are no
 
 **Important implementation boundary:** this grammar defines only the currently supported forms and exact text-block behavior. It does not define a general-purpose expression language, and a successful parse does not imply that every parsed program is executable by the current task-list runner.
 
-## 4. Name binding and rejection rules
+## 5. Name binding and rejection rules
 
 - The application declaration must be first (ignoring blank lines) and must not be indented.
 - Duplicate data/action names are rejected by the parser's current declaration namespace.
