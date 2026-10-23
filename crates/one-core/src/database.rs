@@ -222,10 +222,9 @@ mod tests {
     #[test]
     fn sqlite_adapter_rejects_aggregate_parameter_bytes_over_the_limit() {
         let mut request = select_request(std::path::Path::new(":memory:"), "SELECT ?1".into());
-        for _ in 0..MAX_DATABASE_PARAMETERS {
+        for _ in 0..=(MAX_DATABASE_TOTAL_PARAMETER_BYTES / MAX_DATABASE_PARAMETER_BYTES) {
             request = request.with_argument(AdapterArgument::Text("x".repeat(MAX_DATABASE_PARAMETER_BYTES)));
         }
-        request = request.with_argument(AdapterArgument::Text("x".into()));
         let result = SqliteAdapter::new().invoke(&request);
         assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
     }
