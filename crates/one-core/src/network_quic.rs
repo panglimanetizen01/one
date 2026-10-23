@@ -8,8 +8,13 @@ use webpki_roots::TLS_SERVER_ROOTS;
 use crate::capability::{Capability, CapabilitySet};
 use crate::network_runtime::NetworkRuntimeError;
 
+const MAX_QUIC_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
+
 pub fn execute_quic(host: &str, address: SocketAddr, payload: &[u8], capabilities: &CapabilitySet, timeout: Duration) -> Result<Vec<u8>, NetworkRuntimeError> {
     if !capabilities.permits(Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); }
+    if payload.len() > MAX_QUIC_PAYLOAD_BYTES {
+        return Err(NetworkRuntimeError::InvalidOperation("Payload QUIC melebihi batas 16 MiB.".into()));
+    }
     let host = host.to_owned(); let payload = payload.to_vec(); let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
     runtime.block_on(async move {
         let mut roots = RootCertStore::empty(); roots.extend(TLS_SERVER_ROOTS.iter().cloned()); let client_config = ClientConfig::with_root_certificates(Arc::new(roots)).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?;
@@ -23,6 +28,15 @@ pub fn execute_quic(host: &str, address: SocketAddr, payload: &[u8], capabilitie
 #[cfg(test)]
 mod tests {
     use super::*; use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
+    #[test]
+    fn quic_rejects_oversized_payload_before_copying_or_connecting() {
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        let payload = vec![b'x'; MAX_QUIC_PAYLOAD_BYTES + 1];
+        assert!(matches!(
+            execute_quic("localhost", "127.0.0.1:4433".parse().unwrap(), &payload, &capabilities, Duration::from_millis(50)),
+            Err(NetworkRuntimeError::InvalidOperation(message)) if message.contains("16 MiB")
+        ));
+    }
     #[test] fn quic_denial_happens_before_endpoint_creation() { let result = execute_quic("localhost", "127.0.0.1:4433".parse().unwrap(), b"ping", &CapabilitySet::none(), Duration::from_millis(50)); assert!(matches!(result, Err(NetworkRuntimeError::CapabilityDenied(_)))); }
     #[test] fn quic_loopback_round_trip_is_real_transport() { let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("runtime"); runtime.block_on(async { tokio::time::timeout(Duration::from_secs(5), async {
         let certified = rcgen::generate_simple_self_signed(vec!["localhost".into()]).expect("certificate"); let cert = CertificateDer::from(certified.cert.der().to_vec()); let key = PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(certified.key_pair.serialize_der())); let server_config = quinn::ServerConfig::with_single_cert(vec![cert.clone()], key).expect("server config"); let server = Endpoint::server(server_config, "127.0.0.1:0".parse().unwrap()).expect("server"); let server_addr = server.local_addr().expect("server address");
