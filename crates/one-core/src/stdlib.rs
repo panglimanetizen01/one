@@ -465,6 +465,48 @@ impl JsonParser<'_> {
     }
 }
 
+/// Format Unix epoch seconds as a Gregorian UTC timestamp (YYYY-MM-DDTHH:MM:SSZ).
+/// Years outside 0000..=9999 and non-integer inputs are rejected.
+pub fn unix_seconds_to_utc_text(value: &Value) -> Option<Value> {
+    let Value::Number(seconds) = value else {
+        return None;
+    };
+
+    const SECONDS_PER_DAY: i64 = 86_400;
+    let days = seconds.div_euclid(SECONDS_PER_DAY);
+    let second_of_day = seconds.rem_euclid(SECONDS_PER_DAY);
+    let shifted_days = days.checked_add(719_468)?;
+    let era = if shifted_days >= 0 {
+        shifted_days
+    } else {
+        shifted_days.checked_sub(146_096)?
+    }
+    .div_euclid(146_097);
+    let day_of_era = shifted_days.checked_sub(era.checked_mul(146_097)?)?;
+    let year_of_era = (day_of_era
+        - day_of_era / 1_460
+        + day_of_era / 36_524
+        - day_of_era / 146_096)
+        / 365;
+    let mut year = year_of_era.checked_add(era.checked_mul(400)?)?;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_prime = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * month_prime + 2) / 5 + 1;
+    let month = month_prime + if month_prime < 10 { 3 } else { -9 };
+    year += i64::from(month <= 2);
+
+    if !(0..=9_999).contains(&year) {
+        return None;
+    }
+
+    let hour = second_of_day / 3_600;
+    let minute = (second_of_day % 3_600) / 60;
+    let second = second_of_day % 60;
+    Some(Value::Text(format!(
+        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z"
+    )))
+}
+
 /// Construct a deterministic text-keyed mapping.
 pub fn map_from_entries(entries: impl IntoIterator<Item = (String, Value)>) -> Value {
     Value::Map(entries.into_iter().collect::<BTreeMap<_, _>>())
@@ -473,6 +515,28 @@ pub fn map_from_entries(entries: impl IntoIterator<Item = (String, Value)>) -> V
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unix_seconds_format_as_valid_bounded_gregorian_utc_timestamps() {
+        assert_eq!(
+            unix_seconds_to_utc_text(&Value::Number(0)),
+            Some(Value::Text("1970-01-01T00:00:00Z".into()))
+        );
+        assert_eq!(
+            unix_seconds_to_utc_text(&Value::Number(-1)),
+            Some(Value::Text("1969-12-31T23:59:59Z".into()))
+        );
+        assert_eq!(
+            unix_seconds_to_utc_text(&Value::Number(951_782_400)),
+            Some(Value::Text("2000-02-29T00:00:00Z".into()))
+        );
+        assert_eq!(
+            unix_seconds_to_utc_text(&Value::Number(1_709_164_800)),
+            Some(Value::Text("2024-02-29T00:00:00Z".into()))
+        );
+        assert_eq!(unix_seconds_to_utc_text(&Value::Text("0".into())), None);
+        assert_eq!(unix_seconds_to_utc_text(&Value::Number(253_402_300_800)), None);
+    }
 
     #[test]
     fn text_length_counts_unicode_scalar_values_not_bytes() {
