@@ -20,12 +20,13 @@
 Run `bash tools/verify-human-vnext.sh` from a clean worktree fetched from GitHub. The script runs, in order:
 
 1. source cleanliness and exact remote-HEAD checks;
-2. `python3 tools/check_contract.py`;
-3. `git diff --check`;
-4. `cargo build --workspace --all-targets`;
-5. `cargo clippy --workspace --all-targets -- -D warnings`;
-6. `cargo test --workspace --all-targets`;
-7. a second exact-HEAD check to detect branch movement during verification.
+2. `bash -n tools/verify-human-vnext.sh`;
+3. `python3 tools/check_contract.py`;
+4. `git diff --check`;
+5. `cargo build --workspace --all-targets`;
+6. `cargo clippy --workspace --all-targets -- -D warnings`;
+7. `cargo test --workspace --all-targets`;
+8. final worktree cleanliness and a second exact-HEAD check to detect local changes or branch movement during verification.
 
 If the Android AArch64 native execution test is intended to run, set `ONE_ANDROID_CLANG` to a compatible Android AArch64 Clang executable before running the script. If unavailable, the test may be ignored and must be recorded as such.
 
