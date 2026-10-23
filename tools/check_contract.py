@@ -34,6 +34,13 @@ required = [
     "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",
     "docs/spec/human-instruction-vnext-starter-grammar.md",
     "examples/human-vnext/daftar-tugas.one",
+    "tests/human-vnext/valid/minimal-data.one",
+    "tests/human-vnext/valid/unicode-name.one",
+    "tests/human-vnext/valid/task-list.one",
+    "tests/human-vnext/invalid/empty.one",
+    "tests/human-vnext/invalid/orphan-instruction.one",
+    "tests/human-vnext/invalid/unknown-instruction.one",
+    "tests/human-vnext/invalid/unresolved-display.one",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -94,4 +101,11 @@ print(f"required artifacts: {len(required)}")
 print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
 print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
+human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
+human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
+if len(human_valid) < 3 or len(human_invalid) < 4:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 3 valid and 4 invalid fixtures")
+
 print(f"golden fixtures: {len(golden)}")
+print(f"human-vNext valid fixtures: {len(human_valid)}")
+print(f"human-vNext invalid fixtures: {len(human_invalid)}")
