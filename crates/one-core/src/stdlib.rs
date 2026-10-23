@@ -344,6 +344,15 @@ mod tests {
     }
 
     #[test]
+    fn json_serialization_rejects_excessive_nesting() {
+        let mut value = Value::Nothing;
+        for _ in 0..130 {
+            value = Value::List(vec![value]);
+        }
+        assert_eq!(value_to_json(&value), None);
+    }
+
+    #[test]
     fn integer_helpers_reject_overflow_division_by_zero_and_wrong_types() {
         assert_eq!(number_abs(&Value::Number(-7)), Some(Value::Number(7)));
         assert_eq!(number_abs(&Value::Number(i64::MIN)), None);
