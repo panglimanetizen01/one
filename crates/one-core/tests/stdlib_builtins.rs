@@ -106,3 +106,15 @@ tampilkan hasil
     let mut interpreter = Interpreter::new(CapabilitySet::none());
     assert_eq!(interpreter.execute(&ir).unwrap_err().code, "R3022");
 }
+
+#[test]
+fn recursive_calls_stop_at_the_runtime_depth_limit() {
+    let source = r#"buat pekerjaan ulang
+    terima nilai
+    hasilnya adalah ulang dengan nilai
+hasil adalah ulang dengan 1
+tampilkan hasil
+"#;
+    let error = run(source).unwrap_err();
+    assert!(error.contains("R3024"), "unexpected recursion error: {error}");
+}
