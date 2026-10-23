@@ -78,3 +78,31 @@ tampilkan nama baru
     let result = interpreter.execute(&ir).expect("mapping builtins should execute");
     assert_eq!(result.output, vec!["Budi", "Ani"]);
 }
+
+#[test]
+fn checked_builtin_failures_are_runtime_errors_not_guessed_values() {
+    let bad_conversion = r#"hasil adalah ubah teks ke angka dengan "bukan angka"
+tampilkan hasil
+"#;
+    assert!(run(bad_conversion).unwrap_err().contains("R3022"));
+
+    let invalid_index = r#"buat daftar buah
+negatif adalah 0 dikurangi 1
+hasil adalah ambil indeks dengan buah dan negatif
+tampilkan hasil
+"#;
+    assert!(run(invalid_index).unwrap_err().contains("R3022"));
+}
+
+#[test]
+fn mapping_lookup_of_a_missing_key_returns_a_runtime_error() {
+    let source = r#"buat pemetaan kontak
+hasil adalah nilai pemetaan dengan kontak dan "tidak ada"
+tampilkan hasil
+"#;
+    let program = parse_human_core(source).expect("mapping source should parse");
+    let typed = analyze(&program).expect("mapping source should analyze");
+    let ir = lower(&typed).expect("mapping source should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    assert_eq!(interpreter.execute(&ir).unwrap_err().code, "R3022");
+}
