@@ -107,3 +107,98 @@ mod tests {
         assert_eq!(error.0[0].span.as_ref().unwrap().line, 2);
     }
 }
+
+/// Compile a multi-file human project. Imports are explicit, relative .one paths
+/// declared immediately after the root/module header; path traversal and import cycles
+/// are rejected. All module bodies enter the same canonical semantic pipeline.
+pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, DiagnosticBundle> {
+    let root_source = std::fs::read_to_string(path).map_err(|error| {
+        DiagnosticBundle::single(Diagnostic::error(
+            "HV1010",
+            format!("Tidak dapat membaca '{}': {}", path.display(), error),
+            None,
+        ))
+    })?;
+    let root = parse(&root_source)?;
+    let mut seen = std::collections::HashSet::new();
+    let mut stack = std::collections::HashSet::new();
+    let mut combined = String::new();
+    collect_module_bodies(path, &root_source, true, &mut seen, &mut stack, &mut combined)?;
+    let wrapped = format!("Buat program {}\n{}", root.name, combined);
+    compile(&wrapped)
+}
+
+fn collect_module_bodies(
+    path: &std::path::Path,
+    source: &str,
+    is_root: bool,
+    seen: &mut std::collections::HashSet<std::path::PathBuf>,
+    stack: &mut std::collections::HashSet<std::path::PathBuf>,
+    output: &mut String,
+) -> Result<(), DiagnosticBundle> {
+    let canonical = std::fs::canonicalize(path).map_err(|error| {
+        DiagnosticBundle::single(Diagnostic::error(
+            "HV1011", format!("Tidak dapat menyelesaikan jalur modul '{}': {}", path.display(), error), None,
+        ))
+    })?;
+    if stack.contains(&canonical) {
+        return Err(DiagnosticBundle::single(Diagnostic::error(
+            "HV1012", format!("Siklus import terdeteksi pada '{}'.", path.display()), None,
+        )));
+    }
+    if !seen.insert(canonical.clone()) {
+        return Err(DiagnosticBundle::single(Diagnostic::error(
+            "HV1013", format!("Modul '{}' diimpor lebih dari sekali.", path.display()), None,
+        )));
+    }
+    stack.insert(canonical.clone());
+    let mut lines = source.lines();
+    let header = lines.next().unwrap_or_default();
+    let expected = if is_root { "Buat program " } else { "Buat modul " };
+    if !header.starts_with(expected) || header[expected.len()..].trim().is_empty() {
+        return Err(DiagnosticBundle::single(Diagnostic::error(
+            "HV1014", format!("Header '{}' harus diawali '{}'.", path.display(), expected), None,
+        )));
+    }
+    let remaining: Vec<&str> = lines.collect();
+    let mut body_start = 0;
+    while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
+        body_start += 1;
+    }
+    while body_start < remaining.len() && remaining[body_start].starts_with("Gunakan modul ") {
+        let declaration = remaining[body_start].trim();
+        let Some(raw) = declaration.strip_prefix("Gunakan modul ") else { unreachable!() };
+        let Some(relative) = raw.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "HV1015", "Jalur modul harus diapit tanda kutip.", None,
+            )));
+        };
+        let relative_path = std::path::Path::new(relative);
+        if relative_path.is_absolute()
+            || relative_path.extension().and_then(|value| value.to_str()) != Some("one")
+            || relative_path.components().any(|component| !matches!(component, std::path::Component::Normal(_)))
+        {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "HV1016", format!("Jalur modul '{}' harus relatif, berakhiran .one, dan tidak boleh keluar dari direktori proyek.", relative), None,
+            )));
+        }
+        let child = canonical.parent().unwrap_or_else(|| std::path::Path::new(".")).join(relative_path);
+        let child_source = std::fs::read_to_string(&child).map_err(|error| {
+            DiagnosticBundle::single(Diagnostic::error(
+                "HV1017", format!("Tidak dapat membaca modul '{}': {}", child.display(), error), None,
+            ))
+        })?;
+        collect_module_bodies(&child, &child_source, false, seen, stack, output)?;
+        body_start += 1;
+        while body_start < remaining.len() && remaining[body_start].trim().is_empty() {
+            body_start += 1;
+        }
+    }
+    for line in &remaining[body_start..] {
+        output.push_str(line);
+        output.push('\n');
+    }
+    stack.remove(&canonical);
+    Ok(())
+}
+
