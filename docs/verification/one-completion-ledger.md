@@ -35,10 +35,10 @@ For each row, **implemented points** are provisional progress based on code actu
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 3/10 | 0/10 | IMPLEMENTED — PARTIAL; EXACT-SHA VERIFICATION PENDING |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 2/8 | 0/8 | IMPLEMENTED — PARTIAL; DEPENDENCY/LOCK WORK PENDING |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 0/8 | 0/8 | NOT IMPLEMENTED |
-| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 0/6 | 0/6 | NOT IMPLEMENTED |
-| E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 0/4 | 0/4 | NOT IMPLEMENTED |
+| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 2/6 | 0/6 | IMPLEMENTED — PARTIAL; FULL THREAT REVIEW PENDING |
+| E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 1/4 | 0/4 | IMPLEMENTED — PARTIAL; FULL DOCS/TOOLING REVIEW PENDING |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **65/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **68/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -80,13 +80,15 @@ PASS only when every weighted row earns its full verified points, all required C
 
 ## Current result
 
-- **Implementation progress:** 65/100 provisional points (60 previously implemented and verified points plus 3 provisional E1 points and 2 provisional E2 points; no new points are verified).
+- **Implementation progress:** 68/100 provisional points (60 previously verified points plus 3 provisional E1, 2 provisional E2, 2 provisional E4, and 1 provisional E5 implementation points; no new points are verified).
 - **Verified completion:** 60/100 points.
 - **Milestone target:** 100%.
 - **Gate:** **NOT PASSED** for milestone 100%. The prior 60% gate remains scope-limited to code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`.
 - **E1 partial work:** public deterministic text/list/map/integer helper APIs and source-level built-ins are implemented; exact-SHA verification for the latest source remains pending, so E1 verified points remain 0/10.
 - **E2 partial work:** `one package` now detects a `Buat program` project entry and packages the human-core compiler's canonical IR, including relative modules, into a deterministic versioned artifact. Dependency declarations/lockfile, package resolution beyond relative source modules, and project test/build workflows for human-core remain incomplete; E2 verified points remain 0/8.
-- **Remaining E1–E6:** full standard-library coverage and source integration, packaging/dependency workflow, compatibility/conformance matrix, security/reliability hardening, user docs/tooling review, and final forensic audit.
+- **E4 partial work:** checked integer arithmetic, recursion-depth limit, and error-path tests are implemented; comprehensive threat review, general memory/open-resource quotas, and broader failure recovery remain incomplete, so E4 verified points remain 0/6.
+- **E5 partial work:** standard-library/runtime/package contracts, a runnable example, and CLI integration tests are added; complete tutorials, API reference coverage, and end-to-end developer workflow review remain incomplete, so E5 verified points remain 0/4.
+- **Remaining E1–E6:** full standard-library coverage, package dependency/lock workflow, compatibility/conformance matrix, security/reliability hardening, full docs/tooling review, and final forensic audit.
 - **Known evidence boundary:** canonical repository Actions may fail before steps start (`runner_id=0`, zero steps); only a completed independent mirror run on the exact selected source SHA can provide the accepted fallback evidence. Do not call an in-progress, failed, wrong-SHA, or partial platform matrix green.
 - **Not claimed complete:** ONE is not 100% complete. No ledger weights have changed.
 ## Repository work checkpoint — 2026-10-22
