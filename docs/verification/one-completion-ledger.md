@@ -80,6 +80,10 @@ PASS only when every weighted row earns its full verified points, all required C
 
 ## Current result
 
+- **Security hardening added after the previous checkpoint:** HTTP responses are read with a 16 MiB body limit and a 64 KiB header allowance; HTTP headers are limited to 256 fields, duplicate Content-Length and Content-Length/Transfer-Encoding conflicts are rejected, and unsupported Transfer-Encoding is rejected. Filesystem adapters limit reads/writes to 16 MiB and reject parent-directory components and existing symlink path components. These changes are defensive bounds, not a complete sandbox; race-resistant path resolution and the broader threat review remain open.
+- **SHA-256 module lock v2:** module content digests now use the sha2 crate and known-vector tests. This improves content mismatch detection against a trusted lock, but does not provide signed package identity or authenticated provenance. E2 remains partial.
+
+
 - **Implementation progress:** 75/100 provisional points (60 previously verified points plus 6 provisional E1, 5 provisional E2, 1 provisional E3, 2 provisional E4, and 1 provisional E5 implementation points; no new points are verified).
 - **Verified completion:** 60/100 points.
 - **Milestone target:** 100%.
