@@ -65,6 +65,26 @@ fn human_vnext_cli_runs_task_app_and_reopens_persistent_data() {
 
 
 #[test]
+fn default_v01_cli_does_not_auto_detect_human_vnext_source() {
+    let source = fixture("human-vnext-no-autodetect", concat!(
+        "Buat aplikasi daftar tugas\n",
+        "Pengguna bisa menambahkan tugas\n",
+        "    Terima judul tugas\n",
+        "    Simpan tugas baru\n",
+        "Pengguna bisa melihat semua tugas\n",
+        "    Tampilkan semua tugas\n",
+        "Pengguna bisa menandai tugas sebagai selesai\n",
+        "    Terima tugas yang dipilih\n",
+        "    Tandai tugas sebagai selesai\n",
+        "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+    ));
+    let output = run(&["periksa", source.to_str().unwrap()]);
+    let _ = fs::remove_file(&source);
+    assert!(!output.status.success(), "v0.1 must not silently select the human-vNext parser");
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("EHV002"));
+}
+
+#[test]
 fn human_vnext_cli_rejects_missing_source_argument() {
     let output = run(&["jalankan-human-vnext"]);
     assert_eq!(output.status.code(), Some(2));
