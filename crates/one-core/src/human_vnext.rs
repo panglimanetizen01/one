@@ -533,6 +533,7 @@ fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> s
 
     #[link(name = "Kernel32")]
     unsafe extern "system" {
+        #[allow(non_snake_case)]
         fn MoveFileExW(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
     }
 
@@ -753,6 +754,20 @@ mod task_runtime_tests {
             .expect_err("durable storage must be declared");
         assert!(error.contains("wajib mendeklarasikan"));
         assert!(!path.exists());
+    }
+
+    #[test]
+    fn task_storage_replaces_existing_records_on_repeated_saves() {
+        let path = storage_path();
+        save_tasks(&path, &[Task { id: 1, title: "lama".into(), done: false }])
+            .expect("initial save should succeed");
+        save_tasks(&path, &[Task { id: 1, title: "baru".into(), done: true }])
+            .expect("replacement save should succeed on every supported platform");
+        assert_eq!(
+            load_tasks(&path).expect("replacement storage should load"),
+            vec![Task { id: 1, title: "baru".into(), done: true }],
+        );
+        let _ = std::fs::remove_file(path);
     }
 
     #[test]
