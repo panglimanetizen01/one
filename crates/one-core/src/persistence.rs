@@ -258,7 +258,7 @@ mod tests {
     fn duplicate_keys_and_invalid_fields_are_rejected() {
         assert!(matches!(decode("ONE-KV-1\n61\t31\n61\t32\n"), Err(StoreError::Corrupt { .. })));
         let mut store = KeyValueStore::open(path("invalid")).unwrap();
-        assert!(store.set("bad\nkey", "value").is_err());
+        assert!(store.set("", "value").is_err());
         let _ = fs::remove_file(store.path);
     }
 
