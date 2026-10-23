@@ -118,7 +118,7 @@ impl Analyzer {
                 for (index, (actual, expected)) in arg_types.iter().zip(expected_types.iter()).enumerate() {
                     if !compatible(*expected, *actual) {
                         return Err(DiagnosticBundle::single(Diagnostic::error(
-                            "E2032",
+                            "E2043",
                             format!("Argumen {} fungsi '{}' harus bertipe {}.", index + 1, name, expected.name()),
                             None,
                         )));
