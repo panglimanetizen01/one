@@ -43,3 +43,12 @@ fn builtin_arity_is_checked_during_semantic_analysis() {
     let source = "hasil adalah ganti teks dengan \"satu\" dan \"dua\"\ntampilkan hasil\n";
     assert!(run(source).unwrap_err().contains("E2018"));
 }
+
+#[test]
+fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
+    let add_overflow = "hasil adalah 9223372036854775807 ditambah 1\\ntampilkan hasil\\n";
+    assert!(run(add_overflow).unwrap_err().contains("R3023"));
+
+    let multiply_overflow = "hasil adalah 9223372036854775807 dikali 2\\ntampilkan hasil\\n";
+    assert!(run(multiply_overflow).unwrap_err().contains("R3023"));
+}
