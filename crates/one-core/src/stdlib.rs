@@ -155,6 +155,63 @@ pub fn number_max(left: &Value, right: &Value) -> Option<Value> {
 }
 
 
+/// Return whether text starts with a literal prefix.
+pub fn text_starts_with(value: &Value, prefix: &Value) -> Option<Value> {
+    match (value, prefix) {
+        (Value::Text(text), Value::Text(prefix)) => Some(Value::Boolean(text.starts_with(prefix))),
+        _ => None,
+    }
+}
+
+/// Return whether text ends with a literal suffix.
+pub fn text_ends_with(value: &Value, suffix: &Value) -> Option<Value> {
+    match (value, suffix) {
+        (Value::Text(text), Value::Text(suffix)) => Some(Value::Boolean(text.ends_with(suffix))),
+        _ => None,
+    }
+}
+
+/// Apply Unicode lowercase mapping.
+pub fn text_lowercase(value: &Value) -> Option<Value> {
+    match value {
+        Value::Text(text) => Some(Value::Text(text.to_lowercase())),
+        _ => None,
+    }
+}
+
+/// Apply Unicode uppercase mapping.
+pub fn text_uppercase(value: &Value) -> Option<Value> {
+    match value {
+        Value::Text(text) => Some(Value::Text(text.to_uppercase())),
+        _ => None,
+    }
+}
+
+/// Join a list of text values with a literal separator.
+pub fn list_join_text(value: &Value, separator: &Value) -> Option<Value> {
+    match (value, separator) {
+        (Value::List(values), Value::Text(separator)) => {
+            let parts = values.iter().map(|value| match value {
+                Value::Text(text) => Some(text.as_str()),
+                _ => None,
+            }).collect::<Option<Vec<_>>>()?;
+            Some(Value::Text(parts.join(separator)))
+        }
+        _ => None,
+    }
+}
+
+/// Sum a list of integers, rejecting non-integer elements and overflow.
+pub fn list_sum_numbers(value: &Value) -> Option<Value> {
+    match value {
+        Value::List(values) => values.iter().try_fold(0_i64, |sum, value| match value {
+            Value::Number(number) => sum.checked_add(*number),
+            _ => None,
+        }).map(Value::Number),
+        _ => None,
+    }
+}
+
 /// Serialize a runtime value as deterministic JSON. Nesting deeper than 128 levels is rejected.
 pub fn value_to_json(value: &Value) -> Option<Value> {
     fn quote(text: &str) -> String {
@@ -258,6 +315,19 @@ mod tests {
         assert_eq!(map_get(&updated, &Value::Text("a".into())), Some(Value::Number(3)));
         assert_eq!(map_get(&updated, &Value::Text("missing".into())), None);
         assert_eq!(map_set(Value::Number(1), &Value::Text("x".into()), Value::Nothing), None);
+    }
+
+    #[test]
+    fn text_case_prefix_suffix_and_list_helpers_are_checked() {
+        assert_eq!(text_starts_with(&Value::Text("apel".into()), &Value::Text("ap".into())), Some(Value::Boolean(true)));
+        assert_eq!(text_ends_with(&Value::Text("apel".into()), &Value::Text("el".into())), Some(Value::Boolean(true)));
+        assert_eq!(text_lowercase(&Value::Text("Ä".into())), Some(Value::Text("ä".into())));
+        assert_eq!(text_uppercase(&Value::Text("ß".into())), Some(Value::Text("SS".into())));
+        let list = Value::List(vec![Value::Text("a".into()), Value::Text("b".into())]);
+        assert_eq!(list_join_text(&list, &Value::Text(" | ".into())), Some(Value::Text("a | b".into())));
+        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Number(2), Value::Number(3)])), Some(Value::Number(5)));
+        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Number(i64::MAX), Value::Number(1)])), None);
+        assert_eq!(list_join_text(&Value::List(vec![Value::Number(1)]), &Value::Text(",".into())), None);
     }
 
     #[test]
