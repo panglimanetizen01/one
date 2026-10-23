@@ -56,7 +56,7 @@ pub fn parse(source: &str) -> Result<HumanSource, DiagnosticBundle> {
 /// and IR lowering. There is intentionally no vNext-only execution semantics here.
 pub fn compile(source: &str) -> Result<CompiledHumanProgram, DiagnosticBundle> {
     let parsed = parse(source)?;
-    let ast = crate::parse(&parsed.body).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
+    let ast = crate::parse_human_core(&parsed.body).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
     let typed = crate::analyze(&ast).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
     let ir = crate::lower(&typed).map_err(|bundle| shift_diagnostics(bundle, parsed.body_line_offset))?;
     Ok(CompiledHumanProgram { name: parsed.name, ir })
