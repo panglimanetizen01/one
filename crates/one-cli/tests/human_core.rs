@@ -282,3 +282,15 @@ fn human_frontend_rejects_non_text_mapping_keys() {
     assert!(stderr.contains("E2034"), "{stderr}");
     assert!(stderr.contains("baris 3"), "{stderr}");
 }
+
+#[test]
+fn checked_in_mapping_reference_program_runs_through_the_public_cli() {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../examples/human-vnext/pemetaan-kontak.one");
+    let output = run(&path);
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Budi"));
+    assert!(stdout.contains("nama"));
+    assert!(!stdout.contains("umur"));
+}
