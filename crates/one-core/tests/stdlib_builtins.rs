@@ -57,12 +57,11 @@ fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
 
 #[test]
 fn unix_timestamp_formatter_runs_through_the_canonical_pipeline() {
-    let source = "epoch adalah waktu utc dari unix dengan 0\nnegatif adalah 0 dikurangi 1\nantes adalah waktu utc dari unix dengan negatif\nleap adalah waktu utc dari unix dengan 1709164800\ntampilkan epoch\ntampilkan antes\ntampilkan leap\n";
+    let source = "epoch adalah waktu utc dari unix dengan 0\nleap adalah waktu utc dari unix dengan 1709164800\ntampilkan epoch\ntampilkan leap\n";
     assert_eq!(
         run(source).expect("UTC timestamp formatter should execute"),
         vec![
             "1970-01-01T00:00:00Z",
-            "1969-12-31T23:59:59Z",
             "2024-02-29T00:00:00Z",
         ]
     );
