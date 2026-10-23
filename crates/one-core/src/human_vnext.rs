@@ -588,10 +588,39 @@ fn load_tasks(path: &std::path::Path) -> Result<Vec<Task>, String> {
     Ok(tasks)
 }
 
+#[cfg(not(windows))]
 fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
-    // std::fs::rename replaces an existing destination file on supported
-    // platforms; keeping this boundary in one helper makes that contract testable.
     std::fs::rename(temporary, destination)
+}
+
+#[cfg(windows)]
+fn replace_file(temporary: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+
+    const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
+    const MOVEFILE_WRITE_THROUGH: u32 = 0x8;
+
+    #[link(name = "Kernel32")]
+    unsafe extern "system" {
+        fn MoveFileExW(existing_file_name: *const u16, new_file_name: *const u16, flags: u32) -> i32;
+    }
+
+    let existing: Vec<u16> = temporary.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
+    let destination: Vec<u16> = destination.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
+    // SAFETY: both arguments are valid, NUL-terminated UTF-16 paths that live
+    // for the duration of the call. The flags request replacement and write-through.
+    let succeeded = unsafe {
+        MoveFileExW(
+            existing.as_ptr(),
+            destination.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+    if succeeded == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
 }
 
 static NEXT_STORAGE_TEMP_ID: std::sync::atomic::AtomicU64 =
