@@ -141,3 +141,9 @@ The canonical ledger remains `docs/verification/one-completion-ledger.md`, ledge
 - Source commits 4859114360ccd41943230a0f8faf95eda129a1da and 07e73e1deb7100c01094523fd3f1c9a005ebf70 add a protocol-specific default-port argument to the shared HTTP authority parser and ensure HTTPS uses port 443 when no port is supplied. Regression coverage checks default ports for DNS names and bracketed IPv6 while preserving explicit ports.
 - This fix was made after the earlier mirror target; it invalidates any verification run targeting the earlier SHA. The final matrix target must be the commit produced by the next checkpoint update.
 - No ledger points are added until the required exact-SHA checks and broader Definition of Done pass.
+
+### Build failure found and corrected from the exact-SHA matrix
+
+- The Ubuntu build in earlier matrix run 39976287701 exposed a real compile error in IMAP FETCH: the tag counter API had changed to return Result<String, MailProtocolError>, but fetch_body still used it without propagating the error. This produced E0277 when formatting the tag.
+- Fixed in source commit 510ce2e97c89246b25a3c8ca162e877284804338 by changing the remaining FETCH call site to use the checked result, self.tag()? . This is a root-cause fix, not a test waiver.
+- The prior matrix is a failed run and is not credited. A fresh exact-SHA matrix must target the checkpoint commit produced by this update; build, Clippy, workspace tests, real-network tests, and offline checks must all execute and pass on that SHA.
