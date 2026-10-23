@@ -704,3 +704,32 @@ mod task_runtime_tests {
         let _ = std::fs::remove_file(root);
     }
 }
+
+
+#[cfg(test)]
+mod grammar_fixture_tests {
+    use super::parse;
+
+    #[test]
+    fn valid_human_vnext_fixtures_parse() {
+        for (name, source) in [
+            ("minimal-data", include_str!("../../../tests/human-vnext/valid/minimal-data.one")),
+            ("unicode-name", include_str!("../../../tests/human-vnext/valid/unicode-name.one")),
+            ("task-list", include_str!("../../../tests/human-vnext/valid/task-list.one")),
+        ] {
+            parse(source).unwrap_or_else(|error| panic!("valid fixture {name} rejected: {error}"));
+        }
+    }
+
+    #[test]
+    fn invalid_human_vnext_fixtures_are_rejected() {
+        for (name, source) in [
+            ("empty", include_str!("../../../tests/human-vnext/invalid/empty.one")),
+            ("orphan-instruction", include_str!("../../../tests/human-vnext/invalid/orphan-instruction.one")),
+            ("unknown-instruction", include_str!("../../../tests/human-vnext/invalid/unknown-instruction.one")),
+            ("unresolved-display", include_str!("../../../tests/human-vnext/invalid/unresolved-display.one")),
+        ] {
+            assert!(parse(source).is_err(), "invalid fixture {name} was accepted");
+        }
+    }
+}
