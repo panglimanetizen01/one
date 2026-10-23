@@ -32,13 +32,13 @@ For each row, **implemented points** are provisional progress based on code actu
 | C4 | Reusable persistence abstraction and recovery policy — **4** | Versioned storage contract, corruption handling, restart, rollback and bounded-size replacement tests | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C5 | Additional real application vertical slices — **4** | Calculator, score tracker, module and mapping examples executed through the same compiler/runtime | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
-| E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 0/10 | 0/10 | NOT IMPLEMENTED |
+| E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 3/10 | 0/10 | IMPLEMENTED — PARTIAL; EXACT-SHA VERIFICATION PENDING |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 0/8 | 0/8 | NOT IMPLEMENTED |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 0/8 | 0/8 | NOT IMPLEMENTED |
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 0/6 | 0/6 | NOT IMPLEMENTED |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 0/4 | 0/4 | NOT IMPLEMENTED |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **60/100** | **60/100** | **PASS GREEN LOCKED — MILESTONE 60% ONLY** |
+|  | **TOTAL** |  | **63/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -80,12 +80,14 @@ PASS only when every weighted row earns its full verified points, all required C
 
 ## Current result
 
-- **Implementation progress:** 60/100.
-- **Verified completion:** 60/100.
-- **Active milestone:** 60%.
-- **Gate:** **PASS GREEN LOCKED** for the fixed-weight 60% scope at code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`, based on exact-SHA independent Linux/Windows evidence in run 39936123376.
-- **Not claimed complete:** ecosystem/release tranche E1–E6, full native vNext grammar, per-module private/export visibility, source-map preservation for imported-file diagnostics, and migration of the task-list app to the reusable persistence API remain future work.
-
+- **Implementation progress:** 63/100 provisional points (60 previously implemented and verified points plus 3 provisional E1 implementation points; no new points are verified).
+- **Verified completion:** 60/100 points.
+- **Milestone target:** 100%.
+- **Gate:** **NOT PASSED** for milestone 100%. The prior 60% gate remains scope-limited to code SHA `3027e43b9e2481d73bdb67dbbbbb2e27c3419639`.
+- **E1 partial work:** public deterministic text/list/map/integer helper APIs and a first source-level builtin slice are implemented in the milestone-100 branch. The exact-SHA build, strict Clippy, and workspace tests have not yet completed successfully for this work; E1 verified points remain 0/10.
+- **Remaining E1–E6:** full standard-library coverage and source integration, packaging/dependency workflow, compatibility/conformance matrix, security/reliability hardening, user docs/tooling review, and final forensic audit.
+- **Known evidence boundary:** canonical repository Actions may fail before steps start (`runner_id=0`, zero steps); only a completed independent mirror run on the exact selected source SHA can provide the accepted fallback evidence. Do not call an in-progress, failed, wrong-SHA, or partial platform matrix green.
+- **Not claimed complete:** ONE is not 100% complete. No ledger weights have changed.
 ## Repository work checkpoint — 2026-10-22
 
 Changes committed directly to the feature branch after the baseline above:
