@@ -32,7 +32,7 @@ pub fn list_remove(mut list: Value, value: &Value) -> Option<Value> {
 /// Number of Unicode scalar values in text (not UTF-8 bytes or grapheme clusters).
 pub fn text_length(value: &Value) -> Option<Value> {
     match value {
-        Value::Text(text) => Some(Value::Number(text.chars().count() as i64)),
+        Value::Text(text) => i64::try_from(text.chars().count()).ok().map(Value::Number),
         _ => None,
     }
 }
