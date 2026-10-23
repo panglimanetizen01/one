@@ -20,12 +20,12 @@ For each row, **implemented points** are provisional progress based on code actu
 
 | ID | Requirement / weight | Acceptance evidence | Current implementation points | Current verified points | Status |
 |---|---|---|---:|---:|---|
-| F1 | Versioned grammar contract, lexical/name rules, block and newline rules — **8** | Reviewed formal grammar; Unicode, identifier, ambiguity and versioning rules; positive/negative fixtures | 5/8 | 0/8 | IN PROGRESS |
-| F2 | Deterministic parser and semantic rejection — **7** | Exact text-block tests, CRLF, blank lines, indentation, Unicode, duplicate names, unresolved references, stable diagnostics | 5/7 | 0/7 | IMPLEMENTED, NOT VERIFIED |
-| F3 | Explicit CLI integration isolated from v0.1 — **5** | CLI command invokes vNext parser and supported runtime; v0.1 regression tests pass | 4/5 | 0/5 | IMPLEMENTED, NOT VERIFIED |
-| F4 | Task-list app actions — **5** | Source example supports add/list/complete with input validation through public CLI | 4/5 | 0/5 | IMPLEMENTED, NOT VERIFIED |
-| F5 | Durable task persistence — **3** | Data survives a new process; corrupt storage and write failures are reported | 2/3 | 0/3 | IMPLEMENTED, NOT VERIFIED |
-| F6 | Beginner docs, example, exact-SHA build/CI evidence and checkpoint — **2** | Reproducible commands, docs agree with implementation, build/test/Clippy/CI green at exact SHA | 1/2 | 0/2 | IN PROGRESS |
+| F1 | Versioned grammar contract, lexical/name rules, block and newline rules — **8** | Reviewed formal grammar; Unicode, identifier, ambiguity and versioning rules; positive/negative fixtures | 8/8 | 8/8 | VERIFIED |
+| F2 | Deterministic parser and semantic rejection — **7** | Exact text-block tests, CRLF, blank lines, indentation, Unicode, duplicate names, unresolved references, stable diagnostics | 7/7 | 7/7 | VERIFIED |
+| F3 | Explicit CLI integration isolated from v0.1 — **5** | CLI command invokes vNext parser and supported runtime; v0.1 regression tests pass | 5/5 | 5/5 | VERIFIED |
+| F4 | Task-list app actions — **5** | Source example supports add/list/complete with input validation through public CLI | 5/5 | 5/5 | VERIFIED |
+| F5 | Durable task persistence — **3** | Data survives a new process; corrupt storage and write failures are reported | 3/3 | 3/3 | VERIFIED |
+| F6 | Beginner docs, example, exact-SHA build/CI evidence and checkpoint — **2** | Reproducible commands, docs agree with implementation, build/test/Clippy/CI green at exact SHA | 2/2 | 2/2 | VERIFIED |
 | C1 | Canonical vNext AST/IR integration — **8** | Human frontend lowers into canonical IR with golden semantic tests | 0/8 | 0/8 | NOT IMPLEMENTED |
 | C2 | General frontend-to-runtime execution pipeline — **8** | More than the task-list special-case; ordinary programs run through canonical compiler/interpreter | 0/8 | 0/8 | NOT IMPLEMENTED |
 | C3 | Expanded semantic/type/scope model and diagnostics — **6** | Defined scope/type rules and positive/negative fixture suite | 0/6 | 0/6 | NOT IMPLEMENTED |
@@ -66,10 +66,10 @@ PASS only when every weighted row earns its full verified points, all required C
 
 ## Current result
 
-- **Implementation progress:** 21/100 points (provisional, unverified work is shown separately).
-- **Verified completion:** 0/100 points for this newly introduced vNext tranche on the current head; tests/build/Clippy/CI have not completed successfully on the exact current SHA.
+- **Implementation progress:** 30/100 points for the completed Foundation tranche.
+- **Verified completion:** 30/100 points (30%); all F1–F6 acceptance evidence is recorded below.
 - **Milestone target:** 30%.
-- **Gate:** **NOT PASSED**.
+- **Gate:** **PASS GREEN LOCKED**. The verified scope is the reviewed implementation-bounded `human-vnext-starter/0.1`, not the broader draft language or later 60%/100% milestones.
 
 ## Repository work checkpoint — 2026-10-22
 
@@ -140,3 +140,28 @@ Verified by the user in Debian 12/Termux from the clean GitHub branch worktree a
 
 **Evidence boundary:** this is user-run local verification, not hosted GitHub Actions evidence. The prior Actions failures before any steps started remain unresolved. No verified points are assigned by this entry; F1–F6 and the 30% gate remain NOT PASSED until the replacement verification contract is explicitly reviewed and each acceptance criterion is satisfied.
 
+
+
+## Exact-SHA cross-platform verification — 2026-10-23 (30% Foundation gate)
+
+Verified canonical source SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc` on branch `spec/human-instruction-grammar-vnext-20261022` through the independent free verification mirror, pinned by `CANONICAL_COMMIT.txt` in commit `d03eeecbae523237c66aa553aebfcda68036df5b`:
+
+- Workflow: [One Cross-Platform Verification run 39929244544](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39929244544) — **overall SUCCESS**.
+- `ubuntu-latest`: **SUCCESS** — contract artifacts, build, AST contract regression tests, strict Clippy, all workspace tests, real-network runtime tests, and offline verification all passed.
+- `windows-2025`: **SUCCESS** — contract artifacts, build, AST contract regression tests, strict Clippy, all workspace tests, real-network runtime tests, and Windows offline verification all passed.
+- Both jobs checked out and printed the same canonical source SHA `26199c0114ea0da5f9784ea4d000ab185799e4fc`.
+- Human-vNext fixture inventory at this SHA: 6 valid and 18 invalid fixtures; the contract checker passed (91 required artifacts and 77 indexed concrete artifacts).
+- CLI tests: 22 passed on both platforms. Core tests: 153 passed on Ubuntu and 149 passed on Windows. All other displayed test suites passed.
+- One Android AArch64 native execution test remained explicitly ignored on both platforms because the test requires an Android execution-capable verification environment. It is not claimed as passed; this does not block the scoped Foundation milestone.
+- The canonical ONE repository's own Actions still is not claimed as passing; the independent mirror is the documented cross-platform replacement, and its Linux/Windows matrix actually executed successfully on the exact source SHA.
+
+### F1–F6 acceptance review at the verified SHA
+
+- **F1 — 8/8:** reviewed versioned starter grammar, Unicode/name and binding rules, structural indentation and newline/text-block rules, explicit compatibility/versioning boundaries, and required positive/negative fixtures.
+- **F2 — 7/7:** deterministic parser and semantic rejection tests cover opaque text-block fidelity, LF/CRLF, blank lines, Unicode, canonical indentation, duplicate data/action and persistence names, unresolved references, and stable diagnostics.
+- **F3 — 5/5:** explicit `jalankan-human-vnext` CLI path; invalid/missing argument diagnostics and unsupported task-app contracts are tested; default v0.1 does not auto-detect human-vNext and regression tests pass.
+- **F4 — 5/5:** the documented runnable task-list example adds, lists, and completes tasks through the public CLI with title and task-ID validation.
+- **F5 — 3/3:** task data survives a new process; corrupt records, write/replace failures, temporary-file cleanup, invalid titles/IDs, and atomic replacement behavior have tests.
+- **F6 — 2/2:** beginner documentation, runnable example, contract checker, exact-SHA verifier, reviewed fallback contract, and successful exact-SHA Linux/Windows hosted evidence are recorded above.
+
+**Gate decision:** award all 30 Foundation points. The 30% target is reached without changing weights or counting ignored tests as passed. Later C/E milestones remain unimplemented and uncredited.
