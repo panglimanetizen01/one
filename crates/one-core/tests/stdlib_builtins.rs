@@ -47,10 +47,12 @@ fn builtin_arity_is_checked_during_semantic_analysis() {
 #[test]
 fn integer_arithmetic_overflow_returns_a_runtime_diagnostic() {
     let add_overflow = "hasil adalah 9223372036854775807 ditambah 1\\ntampilkan hasil\\n";
-    assert!(run(add_overflow).unwrap_err().contains("R3023"));
+    let add_error = run(add_overflow).unwrap_err();
+    assert!(add_error.contains("R3023"), "unexpected addition overflow error: {add_error}");
 
     let multiply_overflow = "hasil adalah 9223372036854775807 dikali 2\\ntampilkan hasil\\n";
-    assert!(run(multiply_overflow).unwrap_err().contains("R3023"));
+    let multiply_error = run(multiply_overflow).unwrap_err();
+    assert!(multiply_error.contains("R3023"), "unexpected multiplication overflow error: {multiply_error}");
 }
 
 #[test]
