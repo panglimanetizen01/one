@@ -16,3 +16,4 @@ path = "src/native_main.rs"
 
 [dependencies]
 one-core = { path = "../one-core" }
+sha2 = "0.10"
