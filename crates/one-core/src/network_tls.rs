@@ -15,7 +15,7 @@ fn execute_https11_with_config(request: HttpRequest, capabilities: &CapabilitySe
     if !capabilities.permits(Capability::NetworkConnect) {
         return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into()));
     }
-    let (host, port) = crate::network_runtime::parse_http_authority(&request.authority)?;
+    let (host, port) = crate::network_runtime::parse_http_authority_with_default(&request.authority, 443)?;
     let address = (host.as_str(), port).to_socket_addrs()
         .map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?
         .next().ok_or_else(|| NetworkRuntimeError::Resolution("Nama host tidak memiliki alamat.".into()))?;
