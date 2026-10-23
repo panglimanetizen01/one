@@ -41,12 +41,18 @@ else
   echo "ONE_ANDROID_CLANG: not configured (Android native execution test may be ignored)"
 fi
 
+bash -n tools/verify-human-vnext.sh
 python3 tools/check_contract.py
 git diff --check
 cargo build --workspace --all-targets
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --all-targets
 
+if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
+  echo "VERIFICATION ERROR: checks changed the worktree." >&2
+  git status --short >&2
+  exit 2
+fi
 FINAL_SHA="$(git rev-parse HEAD)"
 FINAL_REMOTE_SHA="$(git ls-remote origin "refs/heads/$BRANCH" | awk 'NR == 1 {print $1}')"
 if [[ "$FINAL_SHA" != "$LOCAL_SHA" || "$FINAL_REMOTE_SHA" != "$LOCAL_SHA" ]]; then
