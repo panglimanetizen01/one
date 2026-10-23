@@ -42,5 +42,7 @@ jobs:
         run: cargo test -p one-core --test stdlib_builtins text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline
       - name: Source-level checked integer remainder integration tests
         run: cargo test -p one-core --test stdlib_builtins checked_integer_remainder_runs_through_the_canonical_pipeline
+      - name: Source-level case conversion and numeric integration tests
+        run: cargo test -p one-core --test stdlib_builtins case_conversion_and_numeric_builtins_execute_through_the_canonical_pipeline
       - name: Standard-library lint
         run: cargo clippy -p one-core --all-targets -- -D warnings
