@@ -34,7 +34,7 @@ The following calls use the existing deterministic expression-call syntax and ca
 | `nilai pemetaan` | 2 | Any | Read a text-keyed mapping entry; missing keys are errors |
 | `atur pemetaan` | 3 | Map | Return a mapping with the specified text key inserted or replaced |
 
-Argument count is checked during semantic analysis and again at runtime for directly constructed IR. Known argument types are checked statically when possible; a known mismatch produces diagnostic `E2032`. Invalid runtime values, failed conversions, missing mapping keys, invalid indexes, and division by zero produce runtime error `R3022`. Checked arithmetic overflow produces `R3023`. These errors must not be converted to guessed values.
+Argument count is checked during semantic analysis and again at runtime for directly constructed IR. Known argument types are checked statically when possible; a known mismatch produces diagnostic `E2043`. Invalid runtime values, failed conversions, missing mapping keys, invalid indexes, and division by zero produce runtime error `R3022`. Checked arithmetic overflow produces `R3023`. These errors must not be converted to guessed values.
 
 Mapping values are currently constructed through the explicit, opt-in human-core mapping grammar. The public Rust helper APIs and source-level call surface are a partial library slice; they do not imply that filesystem, time, networking, serialization, concurrency, or every other reserved standard-library domain is complete.
 
