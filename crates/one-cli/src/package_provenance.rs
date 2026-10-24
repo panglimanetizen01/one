@@ -5,11 +5,32 @@
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::fs::{self, File, OpenOptions};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 const HEADER: &str = "ONE_PACKAGE_PROVENANCE_V1";
+const MAX_PACKAGE_BYTES: usize = 64 * 1024 * 1024;
+const MAX_PRIVATE_KEY_BYTES: usize = 256;
+const MAX_SIDECAR_BYTES: usize = 16 * 1024;
+const MAX_TRUST_STORE_BYTES: usize = 1024 * 1024;
+
+fn read_bounded(path: &Path, limit: usize, label: &str) -> Result<Vec<u8>, String> {
+    let file = File::open(path).map_err(|error| format!("cannot open {label}: {error}"))?;
+    let mut bytes = Vec::new();
+    file.take(limit as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| format!("cannot read {label}: {error}"))?;
+    if bytes.len() > limit {
+        return Err(format!("{label} exceeds the {}-byte resource limit", limit));
+    }
+    Ok(bytes)
+}
+
+fn read_bounded_text(path: &Path, limit: usize, label: &str) -> Result<String, String> {
+    let bytes = read_bounded(path, limit, label)?;
+    String::from_utf8(bytes).map_err(|_| format!("{label} is not valid UTF-8"))
+}
 
 fn sha256_hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
@@ -70,8 +91,8 @@ pub fn sign_artifact(artifact: &Path, publisher: &str, private_key_file: &Path) 
     if !metadata.is_file() {
         return Err("package artifact must be a regular file".into());
     }
-    let bytes = fs::read(artifact).map_err(|error| format!("cannot read package artifact: {error}"))?;
-    let seed_text = fs::read_to_string(private_key_file).map_err(|error| format!("cannot read publisher key: {error}"))?;
+    let bytes = read_bounded(artifact, MAX_PACKAGE_BYTES, "package artifact")?;
+    let seed_text = read_bounded_text(private_key_file, MAX_PRIVATE_KEY_BYTES, "publisher key")?;
     let seed = decode_hex::<32>(seed_text.trim(), "private key seed")?;
     let signing_key = SigningKey::from_bytes(&seed);
     let public_key = signing_key.verifying_key().to_bytes();
@@ -101,9 +122,9 @@ pub fn sign_artifact(artifact: &Path, publisher: &str, private_key_file: &Path) 
 /// Verify content integrity, the Ed25519 signature, and the publisher-to-key trust binding.
 /// Trust store format: one publisher_id=64_hex_character_public_key entry per line.
 pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, String> {
-    let bytes = fs::read(artifact).map_err(|error| format!("cannot read package artifact: {error}"))?;
+    let bytes = read_bounded(artifact, MAX_PACKAGE_BYTES, "package artifact")?;
     let sidecar = sidecar_path(artifact);
-    let contents = fs::read_to_string(&sidecar).map_err(|error| format!("cannot read provenance sidecar '{}': {error}", sidecar.display()))?;
+    let contents = read_bounded_text(&sidecar, MAX_SIDECAR_BYTES, &format!("provenance sidecar {}", sidecar.display()))?;
     let mut lines = contents.lines();
     if lines.next() != Some(HEADER) {
         return Err("unsupported package provenance format".into());
@@ -134,7 +155,7 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
         return Err("package artifact SHA-256 does not match its provenance sidecar".into());
     }
 
-    let trust_text = fs::read_to_string(trust_store).map_err(|error| format!("cannot read publisher trust store: {error}"))?;
+    let trust_text = read_bounded_text(trust_store, MAX_TRUST_STORE_BYTES, "publisher trust store")?;
     let mut trusted = BTreeMap::new();
     for (index, raw_line) in trust_text.lines().enumerate() {
         let line = raw_line.trim();
@@ -164,6 +185,21 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
 mod tests {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn bounded_reads_reject_oversized_inputs() {
+        let root = std::env::temp_dir().join(format!(
+            "one-package-bounded-read-{}",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        let input = root.join("oversized.bin");
+        fs::write(&input, b"12345").unwrap();
+        let error = read_bounded(&input, 4, "test input").unwrap_err();
+        assert!(error.contains("4-byte resource limit"), "{error}");
+        assert_eq!(read_bounded(&input, 5, "test input").unwrap(), b"12345");
+        let _ = fs::remove_dir_all(root);
+    }
 
     #[test]
     fn signed_package_provenance_requires_trusted_key_and_unchanged_content() {
