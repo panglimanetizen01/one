@@ -6,9 +6,9 @@ Status: **EXACT-SHA CROSS-PLATFORM VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRA
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
 
-## Verified source revision and exact-SHA evidence boundary
+## Historical v0.1 baseline evidence boundary
 
-The last code-bearing canonical source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) on Ubuntu and Windows Server 2025.
+Historical baseline revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) on Ubuntu and Windows Server 2025. This is baseline evidence only; it is not a verification claim for the current milestone-100 branch head.
 
 The matrix passed contract-artifact checks, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. It also provisioned the Windows/Android cross-toolchains and Linux cross-compilers required by the native CLI integration coverage.
 
@@ -94,3 +94,13 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 ## Verification infrastructure rule
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution. **Do not purchase an upgrade** merely to obtain hosted runner execution; use the independent verification path when the canonical hosted runner is unavailable.
+
+
+## 2026-10-24 milestone-100 candidate status — release gate still open
+
+- The current milestone-100 branch is PR [#80](https://github.com/panglimanetizen01/one/pull/80), still **open, draft, and unmerged**. The release candidate must not be described as final or approved while required gates remain open.
+- The completion ledger and session checkpoint were reconciled against the approved package-build and security contracts. The ledger now records Windows reparse-point/opened-handle checks and Unix descriptor-relative no-follow opens, while retaining explicit root confinement, broader quotas, and full threat review as E4 gaps. It also clarifies that external registry/version-conflict resolution is outside the executable v0.1 subset; the E2 release gate is final-artifact V2 source-bound signing and verification against an independently provisioned trusted-publisher store.
+- The manual release-check workflow now includes an explicit one-cli test for V2 package provenance signing, trusted-publisher verification, tamper rejection, and source-tree mismatch rejection: `cargo --locked test -p one-cli --test cli package_signature_cli_authenticates_trusted_publisher_and_detects_tampering -- --exact`. This test uses an isolated test key/trust store; it is not a substitute for signing an actual published artifact with the release publisher's independently provisioned key.
+- The source SHA `a058321cb66074299f791299ad5989dd47bc7b9c` had exact-SHA focused stdlib/database and Cargo lockfile checks pass ([40066888254](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066888254), [40066888253](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066888253)); Ubuntu 24.04 and Debian 12 conformance passed ([40066888255](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066888255)). Its cross-platform matrix ([40066888283](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066888283)) and Android AArch64 runtime ([40066888256](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066888256)) were in progress when this note was prepared.
+- A subsequent release-check workflow commit was created after those runs started; therefore those results are historical for the newer head. The new head requires its own exact-SHA verification, including Android execution. Canonical repository CI continues to fail before executable steps; the independent mirror is used for runnable evidence and must be checked against the final SHA.
+- **Current gate:** NOT PASSED. Implementation remains 88/100 provisional and verified remains 60/100 until all required E1–E6 acceptance criteria are evidenced. No release tag, merge, or PASS GREEN LOCKED claim is authorized by this status note.
