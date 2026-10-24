@@ -609,3 +609,13 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 ### GATE
 **NOT PASSED — do not label GREEN LOCKED or release-ready until every required criterion has evidence on the recorded source SHA.**
+
+
+## 2026-10-24 follow-up: runner provisioning evidence
+
+- Ledger clarification commit: `e5b31ed1cc558ca0a6d2095fe3a6d4f631527f01`.
+- The latest failed canonical jobs expose `runner_id: 0`, empty `steps: []`, and completion within a few seconds. This supports a runner/job provisioning failure before any test step, not a conclusion about source correctness.
+- The two failed workflows were retried; they again had no steps and no retrievable logs. Avoid endless retries without new runner evidence.
+- The independent mirror selector on branch `verification` is pinned to `1c450863cdfcb824dcf7cef6b64e86e58bc25b44`. The mirror workflow must fetch private source using `CANONICAL_READ_TOKEN`; successful mirror execution has not yet been observed, so do not count this as verification.
+- This checkpoint update itself must be treated as documentation only. Final verification still needs to target the exact resulting branch HEAD and successful runnable evidence.
+- **Gate remains NOT PASSED.** No score increase.
