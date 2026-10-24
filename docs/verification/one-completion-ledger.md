@@ -380,3 +380,7 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 
 
 - Follow-up: added the committed release fixture at `examples/package-release/{one.toml,src/main.one}` and documented it in `docs/RELEASE_PROVENANCE.md`. It gives the protected manual release workflow a reproducible project input. This does not count as a release run; the workflow still requires the independently provisioned environment secrets and approval controls.
+
+
+- Release workflow hardening follow-up: validated the publisher ID and 32-byte seed format before use, bounded the project path to the checked-out repository, required an exact publisher entry in the protected trust store, and changed artifact upload to use the exact package path emitted by the build step. The workflow uploads only the signed package, its provenance sidecar, and checksums.
+- The workflow and committed fixture are implementation artifacts; they do not substitute for a protected-environment release dispatch. Keep E2 verified points at 0 until the final exact-SHA test matrix passes and the actual protected signing/trust-store process is exercised.
