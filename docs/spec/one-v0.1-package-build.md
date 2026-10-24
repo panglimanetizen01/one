@@ -71,3 +71,15 @@ For the executable v0.1 subset:
 - Windows/Linux host execution through the existing platform contract;
 - structured source/semantic/build/manifest failures;
 - no hidden dependency or target substitution.
+
+## 10B. Experimental Ed25519 package provenance sidecar (milestone 100)
+
+The CLI now provides additive commands to sign and verify an existing package artifact without changing the .onepkg artifact format:
+
+- one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file> signs the exact artifact bytes with Ed25519. The key file contains a 32-byte seed encoded as 64 hexadecimal characters; it must remain outside the repository and must never be committed.
+- one verify-package <file.onepkg> --trusted-publishers <trust-store> checks the artifact SHA-256, Ed25519 signature, and the binding between publisher ID and a separately configured trust-store public key.
+- The sidecar is <file.onepkg>.provenance, with a version marker, publisher ID, public key, artifact digest, and signature. The trust store contains one publisher-id=public-key-hex entry per line; duplicate or malformed entries are rejected.
+- SHA-256 is used as the signed content identifier, not as a substitute for the signature. Verification fails closed for changed bytes, unknown publishers, key mismatches, malformed sidecars, and invalid signatures.
+
+This closes the artifact-signature and trusted-publisher verification slice, but it does not yet implement an external One package registry, dependency graph resolution/version-conflict handling, automatic signing as part of one package, or a full build-provenance envelope. The signed sidecar must be verified against a trust store delivered through an independently trusted channel. E2 remains open until dependency resolution and release integration are implemented and verified.
+
