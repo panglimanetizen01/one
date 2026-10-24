@@ -54,6 +54,10 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: User documentation consistency
+        run: python tools/check_user_docs.py
+      - name: User documentation checker tests
+        run: python tools/check_user_docs_test.py
       - name: Exact-SHA verifier shell syntax
         shell: bash
         run: bash -n tools/verify-human-vnext.sh
