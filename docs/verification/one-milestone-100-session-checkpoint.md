@@ -628,3 +628,30 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - Completion-ledger reconciliation commit: `5b2d28ac4ea596ab211b8cfd5a925a59611924a7`.
 - This checkpoint is now the current branch update and must be the next exact-SHA verification target. The mirror's previous selector is behind this documentation commit and must be updated before its run can verify the final branch HEAD.
 - **Gate remains NOT PASSED.** No merge or release claim.
+
+
+## 2026-10-24 continuation — exact-SHA reconciliation after filesystem audit
+
+### CURRENT BRANCH STATE AT CHECKPOINT PREPARATION
+- PR #80 head at the start of this checkpoint update: `b4f19b7c2a401d4e97d4e998937264673903b15e`; PR remains open, draft, and unmerged.
+- The completion ledger was corrected to reflect current Unix descriptor-relative no-follow filesystem opens (Linux/Android/macOS) and Windows reparse-point/opened-handle validation. The remaining E4 gaps are explicit root confinement, broader runtime-wide quotas, and full threat review; E4 remains 5/6 provisional, 0/6 verified.
+- The verification mirror selector was advanced to `b4f19b7c2a401d4e97d4e998937264673903b15e`.
+
+### EXACT-SHA VERIFICATION RUNS FOR `b4f19b7c2a401d4e97d4e998937264673903b15e`
+- Focused standard-library/database regressions: **PASS**, [run 40066726176](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066726176).
+- Cargo lockfile bootstrap evidence: **PASS**, [run 40066726181](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066726181).
+- Cross-platform Ubuntu/Windows matrix: [run 40066726184](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066726184), in progress at checkpoint preparation.
+- Ubuntu 24.04 and Debian 12 conformance: [run 40066726205](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066726205), in progress at checkpoint preparation.
+- Android AArch64 ELF build-and-execute: [run 40066726187](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40066726187), in progress at checkpoint preparation on a macOS ARM64 host. The earlier x86-host TCG attempt timed out booting the emulator; the Linux ARM64 attempt could not locate a compatible Android emulator package. Neither failed attempt counts as Android runtime acceptance.
+- Canonical private-repository CI for this SHA again failed before any executable job steps; the available job records contain no steps. The independent mirror provides usable exact-SHA execution evidence and remains the fallback.
+
+### REMAINING ACCEPTANCE — DO NOT EXPAND SCOPE
+1. Finish all exact-SHA workflows above and inspect actual logs/artifacts. Any documentation-only change after them creates a new verification target.
+2. Award no E3 verification points unless the Android AArch64 ELF is built, pushed to Android, executed, and returns the expected output.
+3. Keep the fixed ledger totals at **88/100 provisional implementation, 60/100 verified** until every relevant E1–E6 criterion is accepted with evidence.
+4. Continue remaining E1 standard-library breadth, E2 dependency/registry contract, E4 root confinement/quotas/threat review, E5 release documentation/tooling review, and E6 final forensic audit. Do not represent implemented features as fully verified.
+5. Reconcile the checkpoint and ledger with the final exact-SHA results, then run the required verification against the resulting branch head before any final release claim.
+
+### GATE
+**NOT PASSED.** This checkpoint is a continuation record, not release approval. PR #80 is not merged; no PASS GREEN LOCKED or final release claim is authorized by the current evidence.
+
