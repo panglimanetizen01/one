@@ -50,10 +50,18 @@ impl SqliteAdapter {
             return AdapterError::ResourceLimitExceeded;
         }
         match error {
-            SqliteError::SqliteFailure(code, _)
-                if matches!(code.code, ErrorCode::TooBig | ErrorCode::OperationInterrupted) =>
-            {
-                AdapterError::ResourceLimitExceeded
+            SqliteError::SqliteFailure(code, message) => {
+                let is_limit_error = matches!(
+                    code.code,
+                    ErrorCode::TooBig | ErrorCode::OperationInterrupted
+                ) || message
+                    .as_deref()
+                    .is_some_and(|message| message.contains("too many columns in result set"));
+                if is_limit_error {
+                    AdapterError::ResourceLimitExceeded
+                } else {
+                    AdapterError::BackendFailure
+                }
             }
             _ => AdapterError::BackendFailure,
         }
@@ -320,7 +328,7 @@ mod tests {
 
     #[test]
     fn sqlite_adapter_interrupts_long_running_queries_with_a_typed_limit_error() {
-        let sql = "WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n WHERE x < 1000000000) SELECT sum(x) FROM n".to_owned();
+        let sql = "SELECT sum(x) FROM (WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n WHERE x < 1000000000) SELECT x FROM n)".to_owned();
         let started = Instant::now();
         let result = SqliteAdapter::new().invoke(&select_request(std::path::Path::new(":memory:"), sql));
         assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
