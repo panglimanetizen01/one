@@ -533,7 +533,9 @@ mod tests {
         let main = root.join("main.one");
         let outside_module = outside.join("math.one");
         std::fs::write(&main, "Buat program utama\\n").unwrap();
-        std::fs::write(&outside_module, "Buat modul luar\\ntampilkan \\"jangan baca\\"\\n").unwrap();
+        std::fs::write(&outside_module, r#"Buat modul luar
+tampilkan "jangan baca"
+"#).unwrap();
 
         let status = std::process::Command::new("cmd")
             .args(["/C", "mklink", "/J"])
