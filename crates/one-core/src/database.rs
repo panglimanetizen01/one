@@ -21,17 +21,28 @@ pub struct SqliteAdapter {
 }
 
 impl SqliteAdapter {
-    fn configure_connection(connection: &Connection) {
-        connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, (MAX_DATABASE_VALUE_BYTES + 64 * 1024) as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, MAX_DATABASE_QUERY_BYTES as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_COLUMN, MAX_DATABASE_COLUMNS as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_EXPR_DEPTH, 1_000);
-        connection.set_limit(Limit::SQLITE_LIMIT_COMPOUND_SELECT, 32);
-        connection.set_limit(Limit::SQLITE_LIMIT_VDBE_OP, MAX_DATABASE_VDBE_OPS);
-        connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, MAX_DATABASE_PARAMETERS as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 64);
-        connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0);
-        connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 50_000);
+    fn configure_connection(connection: &Connection) -> Result<(), AdapterError> {
+        connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, (MAX_DATABASE_VALUE_BYTES + 64 * 1024) as i32)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, MAX_DATABASE_QUERY_BYTES as i32)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_COLUMN, MAX_DATABASE_COLUMNS as i32)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_EXPR_DEPTH, 1_000)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_COMPOUND_SELECT, 32)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_VDBE_OP, MAX_DATABASE_VDBE_OPS)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, MAX_DATABASE_PARAMETERS as i32)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 64)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 50_000)
+            .map_err(|_| AdapterError::BackendFailure)?;
+        Ok(())
     }
 
     fn map_sqlite_error(error: SqliteError, timed_out: &AtomicBool) -> AdapterError {
@@ -169,7 +180,7 @@ impl ToolAdapter for SqliteAdapter {
             Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         }
         .map_err(|_| AdapterError::BackendFailure)?;
-        Self::configure_connection(&connection);
+        Self::configure_connection(&connection)?;
         connection
             .busy_timeout(Duration::from_millis(250))
             .map_err(|_| AdapterError::BackendFailure)?;
@@ -187,7 +198,7 @@ impl ToolAdapter for SqliteAdapter {
             } else {
                 false
             }
-        }));
+        })).map_err(|_| AdapterError::BackendFailure)?;
 
         let mut statement = connection
             .prepare(sql)
