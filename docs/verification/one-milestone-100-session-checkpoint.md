@@ -540,3 +540,40 @@ Milestone 100 — scoped strictly to E1-E6.
 
 ### GATE
 **NOT PASSED — milestone 100% remains in progress.**
+
+## 2026-10-24 continuation — module path confinement regression coverage
+
+### MILESTONE
+100% ecosystem/release, scope limited to E1-E6.
+
+### COMPLETION
+Implementation **88/100 provisional**; verified **60/100**. No score change from this continuation: added regression coverage is awaiting the exact-SHA cross-platform run. Fixed ledger weights remain unchanged.
+
+### DONE
+- Added Linux/Android module-reader regression tests for parent-directory traversal and symlink escape in `crates/one-core/src/human_compiler.rs`.
+- The existing reader opens root/path components descriptor-relatively with `openat` + `O_NOFOLLOW`, requires a regular file, and bounds module source to 16 MiB. Non-Linux/Android currently uses canonical-path containment and is **not claimed race-resistant**.
+- Source commit with these tests: `dbbd26bf0e9f56ce0e4fe82292297dbf4eee5686`.
+
+### EVIDENCE
+- Exact-source focused standard-library/database run [40054619379](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40054619379): **success**.
+- Exact-source Cargo lockfile bootstrap [40054619371](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40054619371): **success**.
+- Exact-source Linux distro [40054619377](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40054619377), cross-platform [40054619427](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40054619427), and Android AArch64 [40054619387](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40054619387) were still in progress at checkpoint time. Their outcomes are not credited as PASS here.
+
+### REMAINING
+- E1 full standard-library acceptance beyond the focused suite.
+- E2 reconcile dependency behavior against the normative package contract: executable v0.1 explicitly supports an empty dependency set only; do not invent a registry requirement beyond that contract. Package signature/trust-store and complete provenance acceptance still require audit.
+- E3 complete exact-SHA cross-platform and Android ELF execution evidence.
+- E4 race-resistant confinement/root controls on Windows/macOS and full threat/resource review.
+- E5 compatibility and release-readiness audit.
+- E6 final forensic DoD audit on the final release SHA.
+
+### GIT STATE
+PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-20261023`, base `main`. The source SHA above was current before this checkpoint update. Re-pin the verification mirror to the resulting PR head and rerun required exact-SHA workflows; do not treat evidence for the prior SHA as evidence for the checkpoint commit.
+
+### NEXT
+1. Update the mirror's `CANONICAL_COMMIT.txt` to the post-checkpoint PR head and rerun focused, lockfile, Linux, Windows cross-platform and Android runtime workflows.
+2. Fix any current-SHA failure, especially compiler/test failures from the new confinement regression tests.
+3. Finish E1-E6 acceptance and update the ledger only with criteria and evidence actually passing.
+
+### GATE
+**NOT PASSED — exact-SHA cross-platform/Android verification and mandatory E1-E6 acceptance remain incomplete.**
