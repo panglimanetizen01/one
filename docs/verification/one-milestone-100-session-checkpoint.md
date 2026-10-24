@@ -718,3 +718,6 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - Added a source-level Standard Library API reference and an end-to-end developer verification/release guide; expanded diagnostic troubleshooting and CLI root-scope documentation; linked the new guides from documentation indexes and clarified candidate status.
 - Documentation examples and links must be reviewed against the final code; no E5 verified points are awarded solely from file presence.
 - Re-read the canonical branch head after this checkpoint update and pin the independent verification selector to that exact SHA. Current gate remains NOT PASSED; verified score remains 60/100.
+
+
+- Documentation review follow-up: repaired literal escaped-newline text in `docs/README.md` so the verification map renders as separate links. This is documentation-only and still needs exact-SHA acceptance after the current candidate is pinned.
