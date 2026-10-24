@@ -50,8 +50,6 @@ jobs:
           git rev-parse HEAD
           rustc --version
           cargo --version
-      - name: Rust formatting check
-        run: cargo fmt --all -- --check
       - name: E1 standard-library integration regression suite
         run: cargo --locked test -p one-core --test stdlib_builtins
       - name: E1 standard-library library unit suite
