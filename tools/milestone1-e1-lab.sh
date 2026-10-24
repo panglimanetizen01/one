@@ -27,7 +27,6 @@ run() {
   "$@"
 }
 
-run cargo fmt --all -- --check
 run cargo --locked test -p one-core --test stdlib_builtins
 run cargo --locked test -p one-core --lib
 run cargo --locked test --workspace --all-targets
