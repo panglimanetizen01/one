@@ -1,4 +1,5 @@
 use std::{fs, process::Command, time::{SystemTime, UNIX_EPOCH}};
+use ed25519_dalek::SigningKey;
 fn fixture(name: &str, source: &str) -> std::path::PathBuf { let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let path = std::env::temp_dir().join(format!("one-{name}-{id}.one")); fs::write(&path, source).unwrap(); path }
 fn run(args: &[&str]) -> std::process::Output { Command::new(env!("CARGO_BIN_EXE_one")).args(args).output().unwrap() }
 fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().replace('\\', "/") }
@@ -254,6 +255,69 @@ fn package_rejects_unsupported_dependency_declarations_instead_of_ignoring_them(
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(!root.join("target/paket-0.1.0.onepkg").exists());
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering() {
+    let root = std::env::temp_dir().join(format!(
+        "one-package-signature-cli-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+    let artifact = root.join("demo.onepkg");
+    let private_key = root.join("publisher.seed");
+    let trust_store = root.join("trusted-publishers.txt");
+    let untrusted_store = root.join("untrusted-publishers.txt");
+    fs::write(&artifact, b"One package v0.1\npackage payload").unwrap();
+
+    let seed = [7u8; 32];
+    let signing_key = SigningKey::from_bytes(&seed);
+    let seed_hex = seed.iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+    let public_hex = signing_key.verifying_key().to_bytes().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+    fs::write(&private_key, seed_hex).unwrap();
+    fs::write(&trust_store, format!("example-publisher={public_hex}\n")).unwrap();
+    fs::write(&untrusted_store, format!("other-publisher={}\n", "00".repeat(32))).unwrap();
+
+    let signed = run(&[
+        "sign-package",
+        artifact.to_str().unwrap(),
+        "--publisher",
+        "example-publisher",
+        "--private-key",
+        private_key.to_str().unwrap(),
+    ]);
+    assert!(signed.status.success(), "{}", String::from_utf8_lossy(&signed.stderr));
+    assert!(root.join("demo.onepkg.provenance").is_file());
+
+    let verified = run(&[
+        "verify-package",
+        artifact.to_str().unwrap(),
+        "--trusted-publishers",
+        trust_store.to_str().unwrap(),
+    ]);
+    assert!(verified.status.success(), "{}", String::from_utf8_lossy(&verified.stderr));
+    assert!(String::from_utf8_lossy(&verified.stdout).contains("example-publisher"));
+
+    let untrusted = run(&[
+        "verify-package",
+        artifact.to_str().unwrap(),
+        "--trusted-publishers",
+        untrusted_store.to_str().unwrap(),
+    ]);
+    assert!(!untrusted.status.success());
+    assert!(String::from_utf8_lossy(&untrusted.stderr).contains("not trusted"));
+
+    fs::write(&artifact, b"tampered package payload").unwrap();
+    let tampered = run(&[
+        "verify-package",
+        artifact.to_str().unwrap(),
+        "--trusted-publishers",
+        trust_store.to_str().unwrap(),
+    ]);
+    assert!(!tampered.status.success());
+    assert!(String::from_utf8_lossy(&tampered.stderr).contains("SHA-256"));
+
     let _ = fs::remove_dir_all(root);
 }
 
