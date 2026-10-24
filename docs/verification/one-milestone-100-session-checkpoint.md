@@ -450,3 +450,49 @@ Milestone 100 — only E1–E6.
 ### GATE
 **NOT PASSED — milestone 100% remains in progress.**
 
+## 2026-10-24 continuation — Linux pass, exact-SHA command audit, Android pending
+
+This entry supersedes earlier status summaries above.
+
+### MILESTONE
+Milestone 100, E1–E6 only.
+
+### COMPLETION
+- Implementation: **87/100 provisional**.
+- Verified: **60/100**; no verified score increase.
+
+### DONE
+- Committed Cargo.lock and Rust 1.99.0 pin remain in place.
+- release-check.yml and tools/verify_exact_sha.sh now use --locked as well; recursive audit found no unlocked Cargo build/test/run/Clippy command in source workflows/scripts.
+- Fixed the mirror Linux distro workflow's duplicate YAML with blocks; the valid workflow now passes.
+
+### EVIDENCE
+- Focused standard-library/database run passed on source SHA 102741eddac431cfe4f1b4b24bec3d7a2032428b, using Rust 1.99.0 and 28 --locked Cargo commands: https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40052736966
+- Linux distro run passed on the same source SHA on Ubuntu 24.04 and Debian 12, each with Rust 1.99.0, seven --locked Cargo commands, and 64 successful test-result groups: https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40052736970
+- Those passes include the new Linux filesystem no-follow regression tests and unsupported dependency declaration fail-closed test. They do not prove the newer SHA after release-check.yml and tools/verify_exact_sha.sh changes.
+- Windows cross-platform run on SHA 102741 was cancelled by a subsequent mirror workflow update after the test steps had completed but before cleanup; it is not counted as a full pass.
+- Android arm64 runtime job on SHA 102741 is still at emulator boot and has not executed the ELF. The revised bounded-boot workflow is now running separately and will preserve emulator diagnostics if boot fails.
+- Latest source before this checkpoint update: 9bf679bb52810031a533025cbc5a18e97450d63b. After this update, pin the mirror to the new PR head SHA and rerun all gates.
+
+### REMAINING
+- E1: complete the full standard-library acceptance contract.
+- E2: One-language registry/dependency resolution and authenticated publisher provenance.
+- E3: complete exact-SHA Windows/Ubuntu matrix and actual Android AArch64 ELF execution.
+- E4: Windows/macOS race-resistant filesystem resolution, confinement root, and full threat/resource review.
+- E5: compatibility, package distribution and release-readiness audit.
+- E6: final forensic Definition-of-Done audit after E1–E5 evidence is complete.
+
+### GIT STATE
+- Branch milestone/100-ecosystem-20261023; PR #80 open, draft, unmerged; base main.
+- HEAD before this checkpoint update: 9f2eae322104ecd4a655b4e5673e329ca537100f.
+- Update mirror CANONICAL_COMMIT.txt after this checkpoint update to the exact new source head.
+
+### NEXT
+1. Pin the mirror to the new checkpoint SHA.
+2. Complete the exact-SHA Windows/Ubuntu and Linux distro jobs.
+3. Resolve Android emulator boot; run and inspect ELF execution exit code and logs.
+4. Continue remaining E1–E6 gaps; do not claim 100/100 until all mandatory acceptance is proved.
+
+### GATE
+**NOT PASSED — milestone 100% remains in progress.**
+
