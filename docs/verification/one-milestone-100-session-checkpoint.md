@@ -704,3 +704,10 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 - Release workflow hardening: the workflow validates the publisher ID and signing-seed shape, rejects project paths outside the checkout or containing control line breaks, checks the selected publisher against the protected trust store, and uploads the exact package path emitted by the build step. This is not an actual signed release run; environment protection and independently provisioned trust material remain operational acceptance requirements.
 - Canonical source head after this checkpoint update must be re-read and pinned in the independent verification mirror before final claims. Keep the gate NOT PASSED until all required E1–E6 criteria and exact-SHA platform checks pass.
+
+
+## 2026-10-24 continuation — E4 filesystem root scope
+
+- Added `ScopeRule::Root`, CLI `--root <directory>` for filesystem read/write capabilities, path-component boundary regressions, and a CLI inside-root/outside-root regression. Existing exact-target grants remain unchanged when `--root` is omitted.
+- Documented the limitation: this is an explicit policy boundary combined with the existing no-follow/reparse-point adapter checks, not a complete OS sandbox. Runtime-wide memory/open-resource quotas and the full threat review remain outstanding.
+- Re-read the canonical branch head after this checkpoint commit and pin the verification mirror to that exact SHA. Do not award E4 points until the final exact-SHA test matrix and threat/DoD review pass.
