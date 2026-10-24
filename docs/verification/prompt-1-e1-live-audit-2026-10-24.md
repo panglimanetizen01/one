@@ -78,3 +78,20 @@ Candidate source SHA `d3976f072389d84382bea05b85030b26693d16a2` was checked by t
 - E1 code and tests have now passed focused and broad Linux verification. This checkpoint refresh changes only documentation, creating a new exact source SHA; re-pin that resulting SHA and rerun the focused E1 suite plus Linux distro verification before considering E1 fully closed.
 - Do not infer whole-project 100% acceptance from these E1 checks. This checkpoint does not close E2/E3/E4/E6 and does not authorize merge/release.
 
+
+
+## Final exact-SHA lab checkpoint — 2026-10-24
+
+The latest executable independent matrix tested canonical source SHA `25b9b2385281c01280b46589c3bf9346bfdc2ea4`:
+
+- Focused Standard Library/database and `cargo --locked clippy -p one-core --all-targets -- -D warnings`: PASS — [run 40102204980](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204980).
+- Linux distro conformance: PASS on Ubuntu 24.04 and Debian 12; workspace build/tests, Clippy, and `tools/check_contract.py` passed — [run 40102204891](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204891).
+- Deterministic Cargo lockfile bootstrap: PASS — [run 40102204901](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204901).
+- Cross-platform Ubuntu + Windows Server 2025: PASS; both jobs passed workspace tests, Clippy, and offline verification — [run 40102204904](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204904).
+- Candidate artifact integrity: PASS; exact-SHA Linux/Windows candidate bundles, archive digests, embedded checksums, build metadata, ELF64 and PE32+ headers validated — [run 40102204878](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204878).
+- Android AArch64 ELF execution is not accepted yet. The API 35 boot attempt was cancelled after stalling; a smaller API 30 arm64 emulator retry is running at [run 40103088590](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40103088590). Acceptance requires the log to show the built ELF was executed and its output observed.
+- The fixed-weight ledger gate [run 40102204973](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204973) correctly remained NOT PASSED: it ran while the matrix was still in progress, the evidence index was stale, nine Definition of Done items were unchecked, broader E1/E2/E3/E4/E6 rows were not accepted, and the canonical protected-release evidence query was denied because `CANONICAL_READ_TOKEN` lacks Actions:read on the private canonical repository.
+
+These are independent verification-repository results, not canonical-repository hosted-CI results. The canonical hosted workflows still failed before any steps ran. The exact-SHA E1 API slice (text, collections, mappings, checked integers, JSON, UTC) passed focused and broad Linux/Windows tests, including malformed JSON, Unicode/surrogates, integer overflow, UTC canonical forms/year boundaries, invalid indexes and collection values, and deterministic mapping/JSON output. The broader ledger row remains partial until its full stated scope is reconciled; this checkpoint does not authorize merge or release.
+
+This checkpoint is documentation-only and therefore creates a new canonical source SHA. Re-pin that resulting SHA and rerun the exact-SHA matrix before treating the new HEAD as verified. The independent evidence index is maintained at [CANDIDATE_VERIFICATION.md](https://github.com/panglimanetizen01/one-windows-verification/blob/verification/CANDIDATE_VERIFICATION.md).
