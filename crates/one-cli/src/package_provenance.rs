@@ -323,4 +323,83 @@ mod tests {
         assert!(verify_artifact(&artifact, &trust_file).unwrap_err().contains("not trusted"));
         let _ = fs::remove_dir_all(root);
     }
+
+    fn init_git_source(root: &Path) {
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::write(root.join("one.toml"), "nama = \"demo\"\nversi = \"0.1.0\"\n").unwrap();
+        fs::write(root.join("src/main.one"), "Buat program demo\ntampilkan \"halo\"\n").unwrap();
+        for args in [
+            vec!["init"],
+            vec!["config", "user.name", "ONE Provenance Test"],
+            vec!["config", "user.email", "one-provenance-test@example.invalid"],
+            vec!["config", "core.autocrlf", "false"],
+            vec!["add", "--", "one.toml", "src/main.one"],
+            vec!["commit", "-m", "source fixture"],
+        ] {
+            let output = Command::new("git").arg("-C").arg(root).args(args).output().unwrap();
+            assert!(output.status.success(), "git fixture setup failed: {}", String::from_utf8_lossy(&output.stderr));
+        }
+    }
+
+    #[test]
+    fn source_bound_attestation_authenticates_artifact_and_clean_source_snapshot() {
+        let root = std::env::temp_dir().join(format!(
+            "one-package-build-attestation-{}",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let source_root = root.join("project");
+        fs::create_dir_all(&root).unwrap();
+        init_git_source(&source_root);
+
+        let artifact = root.join("demo.onepkg");
+        let key_file = root.join("publisher.seed");
+        let trust_file = root.join("trusted-publishers.txt");
+        fs::write(&artifact, b"One package v0.1\nartifact bytes").unwrap();
+        let seed = [17u8; 32];
+        let signing_key = SigningKey::from_bytes(&seed);
+        fs::write(&key_file, hex(&seed)).unwrap();
+        fs::write(&trust_file, format!("example-publisher={}\n", hex(&signing_key.verifying_key().to_bytes()))).unwrap();
+
+        sign_build_provenance(&artifact, "example-publisher", &key_file, &source_root).unwrap();
+        assert_eq!(verify_artifact(&artifact, &trust_file).unwrap(), "example-publisher");
+        assert_eq!(
+            verify_build_provenance(&artifact, &trust_file, &source_root).unwrap(),
+            "example-publisher"
+        );
+
+        let sidecar = sidecar_path(&artifact);
+        let original_sidecar = fs::read_to_string(&sidecar).unwrap();
+        let tampered = original_sidecar.replace("builder_arch=", "builder_arch=tampered_");
+        fs::write(&sidecar, tampered).unwrap();
+        assert!(verify_artifact(&artifact, &trust_file).unwrap_err().contains("signature"));
+        fs::write(&sidecar, original_sidecar).unwrap();
+
+        fs::write(source_root.join("src/main.one"), "Buat program demo\ntampilkan \"changed\"\n").unwrap();
+        let output = Command::new("git").arg("-C").arg(&source_root).args(["add", "--", "src/main.one"]).output().unwrap();
+        assert!(output.status.success());
+        let output = Command::new("git").arg("-C").arg(&source_root).args(["commit", "-m", "change source"]).output().unwrap();
+        assert!(output.status.success());
+        assert!(verify_build_provenance(&artifact, &trust_file, &source_root).unwrap_err().contains("source tree digest"));
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_attestation_rejects_dependency_declarations_outside_v01_contract() {
+        let root = std::env::temp_dir().join(format!(
+            "one-package-dependency-contract-{}",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::write(
+            root.join("one.toml"),
+            "nama = \"demo\"\nversi = \"0.1.0\"\ndependencies = \"example\"\n",
+        )
+        .unwrap();
+        fs::write(root.join("src/main.one"), "Buat program demo\n").unwrap();
+        assert!(source_snapshot(&root).unwrap_err().contains("empty-dependency"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+
 }
