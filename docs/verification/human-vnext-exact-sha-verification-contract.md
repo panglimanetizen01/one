@@ -80,3 +80,12 @@ The Windows offline verifier must set `$PSNativeCommandUseErrorActionPreference 
 ## Replacement boundary
 
 This is a controlled replacement for the **local build/test evidence collection procedure only** when hosted Actions cannot start. It does not manufacture CI results and does not independently waive any acceptance criterion that requires Windows execution, external review, or a platform-specific runtime result. The milestone ledger may credit points only after its full acceptance criteria are met and the evidence is explicitly reviewed.
+
+## Cargo dependency lockfile policy — milestone 100
+
+The repository now commits the workspace Cargo.lock and removes Cargo.lock from .gitignore. CI and the local verification scripts invoke Cargo build, test, run, and Clippy commands with --locked so dependency resolution must match the committed lockfile instead of silently rewriting it during verification.
+
+The lockfile was generated with Cargo against canonical source SHA cd4aa9f9be450ecc43a0419d057867967d23e469. Its SHA-256 is 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21 and it records 113 package entries. The subsequent workflow changes enforce --locked and require exact-SHA re-verification.
+
+This closes the Rust workspace lockfile/reproducibility gap only. It does **not** implement One-language external package declarations or registry resolution, authenticate a One package publisher, or sign package provenance. Those remain separate E2 acceptance criteria and must not be inferred from Cargo.lock.
+
