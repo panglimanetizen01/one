@@ -711,3 +711,10 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - Added `ScopeRule::Root`, CLI `--root <directory>` for filesystem read/write capabilities, path-component boundary regressions, and a CLI inside-root/outside-root regression. Existing exact-target grants remain unchanged when `--root` is omitted.
 - Documented the limitation: this is an explicit policy boundary combined with the existing no-follow/reparse-point adapter checks, not a complete OS sandbox. Runtime-wide memory/open-resource quotas and the full threat review remain outstanding.
 - Re-read the canonical branch head after this checkpoint commit and pin the verification mirror to that exact SHA. Do not award E4 points until the final exact-SHA test matrix and threat/DoD review pass.
+
+
+## 2026-10-24 continuation — documentation coverage
+
+- Added a source-level Standard Library API reference and an end-to-end developer verification/release guide; expanded diagnostic troubleshooting and CLI root-scope documentation; linked the new guides from documentation indexes and clarified candidate status.
+- Documentation examples and links must be reviewed against the final code; no E5 verified points are awarded solely from file presence.
+- Re-read the canonical branch head after this checkpoint update and pin the independent verification selector to that exact SHA. Current gate remains NOT PASSED; verified score remains 60/100.
