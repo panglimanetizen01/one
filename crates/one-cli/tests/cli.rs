@@ -231,3 +231,29 @@ buat pekerjaan tambah
     assert!(run(&["test", root.to_str().unwrap()]).status.success());
     let _ = fs::remove_dir_all(&root);
 }
+
+#[test]
+fn package_rejects_unsupported_dependency_declarations_instead_of_ignoring_them() {
+    let root = std::env::temp_dir().join(format!(
+        "one-project-unsupported-dependency-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(
+        root.join("one.toml"),
+        "nama = \"paket\"\nversi = \"0.1.0\"\ndependensi = \"contoh = 1.0.0\"\n",
+    )
+    .unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"paket\"\n").unwrap();
+
+    let output = run(&["package", root.to_str().unwrap()]);
+    assert!(!output.status.success(), "unsupported dependency metadata must fail closed");
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("field tidak valid atau duplikat"),
+        "unexpected diagnostic: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(!root.join("target/paket-0.1.0.onepkg").exists());
+    let _ = fs::remove_dir_all(root);
+}
+
