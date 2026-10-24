@@ -406,3 +406,12 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 
 
 - Acceptance-boundary correction: `docs/spec/one-v0.1-effect-capability.md` now records that the new `--root` policy is defense-in-depth but **not full E4 root-confinement acceptance**. Root-relative descriptor anchoring, race-resistant resolution, mount behavior, and cross-platform case/path semantics remain open; E4 verified points remain 0/6.
+
+
+## 2026-10-24 — E5 user-facing release guidance and documentation gate
+
+- Added `docs/panduan-pengguna/provenance-rilis.md`, linked it from both documentation indexes, and changed the end-to-end guide to keep its relative links within the user-documentation tree. The new page explains that the manual release workflow becomes dispatchable after it is present on the default branch, and documents protected environment, key/trust-store separation, and the acceptance boundary.
+- The independent verification mirror now runs `tools/check_user_docs.py` and its regression tests alongside contract checks on both Linux and Windows. Canonical `.github/workflows/ci.yml` now also runs the user-doc consistency checker and its tests on both platforms.
+- Exact-SHA runs started after these documentation/CI changes; the final ledger/checkpoint commits will change the source SHA again, so the selector must be repinned and the full matrix rerun after those commits. Do not reuse results from earlier source SHAs as final-release evidence.
+- Android emulator diagnostics identified `qemu-system-aarch64: failed to initialize HVF: Invalid argument` on the hosted macOS ARM64 runner. The independent Android workflow now uses `-accel off` to avoid unavailable host acceleration. Actual Android ELF execution remains unverified until a run completes successfully.
+- **Scores unchanged: 88/100 provisional implementation, 60/100 verified.** E1–E6 remain incomplete; **GATE: NOT PASSED**. This entry awards no points from documentation or workflow presence alone.
