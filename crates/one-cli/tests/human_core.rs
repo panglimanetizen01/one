@@ -98,6 +98,38 @@ fn human_frontend_rejects_module_path_traversal() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("HV1016"));
 }
 
+#[cfg(unix)]
+#[test]
+fn human_frontend_rejects_final_and_parent_symlinks_for_module_imports() {
+    use std::os::unix::fs::symlink;
+
+    let root = std::env::temp_dir().join(format!(
+        "one-human-module-symlink-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let outside = root.with_extension("outside");
+    fs::create_dir_all(&root).unwrap();
+    fs::create_dir_all(&outside).unwrap();
+    fs::write(outside.join("secret.one"), "Buat modul rahasia\ntampilkan \"bocor\"\n").unwrap();
+
+    let program = root.join("main.one");
+    symlink(outside.join("secret.one"), root.join("secret.one")).unwrap();
+    fs::write(&program, "Buat program uji symlink\nGunakan modul \"secret.one\"\ntampilkan \"tidak boleh berjalan\"\n").unwrap();
+    let final_link = run(&program);
+    assert!(!final_link.status.success());
+    assert!(String::from_utf8_lossy(&final_link.stderr).contains("HV1017"));
+
+    fs::remove_file(root.join("secret.one")).unwrap();
+    symlink(&outside, root.join("link")).unwrap();
+    fs::write(&program, "Buat program uji symlink\nGunakan modul \"link/secret.one\"\ntampilkan \"tidak boleh berjalan\"\n").unwrap();
+    let parent_link = run(&program);
+    assert!(!parent_link.status.success());
+    assert!(String::from_utf8_lossy(&parent_link.stderr).contains("HV1017"));
+
+    let _ = fs::remove_dir_all(&root);
+    let _ = fs::remove_dir_all(&outside);
+}
+
 #[test]
 fn human_frontend_executes_collection_operations_through_canonical_runtime() {
     let path = fixture(concat!(
