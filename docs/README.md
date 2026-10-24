@@ -72,9 +72,13 @@ User documentation is intentionally separate from normative engineering contract
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
-- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.\n- `verification/one-completion-ledger.md` — fixed weighted vNext completion method, milestone gates, and evidence status.\n- `verification/one-vnext-session-checkpoint.md` — continuation checkpoint for the active vNext workstream.\n- `verification/human-vnext-task-list.md` — experimental task-list example usage and current limitations.
+- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
+- `verification/one-completion-ledger.md` — fixed weighted vNext completion method, milestone gates, and evidence status.
+- `verification/one-vnext-session-checkpoint.md` — continuation checkpoint for the active vNext workstream.
+- `verification/human-vnext-task-list.md` — experimental task-list example usage and current limitations.
 - `verification/human-vnext-grammar-review.md` — bounded technical review of the experimental starter grammar and its explicit limitations.
-- `verification/human-vnext-exact-sha-verification-contract.md` — clean GitHub-HEAD local verification procedure and evidence boundaries.\n- `../examples/human-vnext/daftar-tugas.one` — runnable source fixture for the experimental human-vNext task-list command.
+- `verification/human-vnext-exact-sha-verification-contract.md` — clean GitHub-HEAD local verification procedure and evidence boundaries.
+- `../examples/human-vnext/daftar-tugas.one` — runnable source fixture for the experimental human-vNext task-list command.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `RELEASE_PROVENANCE.md` — protected manual workflow for building, signing, and verifying source-bound package provenance.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
