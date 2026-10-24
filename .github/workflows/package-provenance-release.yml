@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       project_path:
-        description: "Repository-relative path to a committed ONE project (must contain one.toml and src/main.one)"
+        description: "Repository-relative path to a committed ONE project containing one.toml and src/main.one"
         required: true
         type: string
       publisher_id:
-        description: "Publisher ID that must already exist in the protected trust store"
+        description: "Publisher ID already present in the protected trusted-publisher store"
         required: true
         type: string
 
@@ -23,6 +23,7 @@ jobs:
   sign-and-verify:
     name: Build, sign, and verify source-bound package provenance
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: one-release
     steps:
       - name: Checkout exact release source
@@ -33,7 +34,7 @@ jobs:
       - name: Toolchain
         run: rustc --version && cargo --version
 
-      - name: Validate release inputs
+      - name: Validate release inputs and protected trust material
         shell: bash
         env:
           PROJECT_PATH: ${{ inputs.project_path }}
@@ -46,10 +47,10 @@ jobs:
           test -n "$PUBLISHER_ID" || { echo "publisher_id is required" >&2; exit 2; }
           [[ "$PROJECT_PATH" != *$'\n'* && "$PROJECT_PATH" != *$'\r'* ]] || { echo "project_path must not contain control line breaks" >&2; exit 2; }
           [[ "$PUBLISHER_ID" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || { echo "publisher_id has an invalid format" >&2; exit 2; }
-          test -n "$ONE_RELEASE_SIGNING_SEED" || { echo "Missing protected environment secret ONE_RELEASE_SIGNING_SEED" >&2; exit 2; }
+          [[ "$ONE_RELEASE_SIGNING_SEED" =~ ^[0-9a-fA-F]{64}$ ]] || { echo "ONE_RELEASE_SIGNING_SEED must be a 32-byte hex seed in the protected one-release environment" >&2; exit 2; }
           test -n "$ONE_TRUSTED_PUBLISHERS" || { echo "Missing protected environment secret ONE_TRUSTED_PUBLISHERS" >&2; exit 2; }
           case "$PROJECT_PATH" in
-            /*|..|../*|*/../*|*/..) echo "project_path must be a repository-relative path without parent traversal" >&2; exit 2 ;;
+            /*|..|../*|*/../*|*/..) echo "project_path must be repository-relative and must not traverse parents" >&2; exit 2 ;;
           esac
           project_root="$(realpath -e -- "$GITHUB_WORKSPACE/$PROJECT_PATH")"
           case "$project_root" in
@@ -61,10 +62,14 @@ jobs:
           printf '%s\n' "$ONE_RELEASE_SIGNING_SEED" > "$RUNNER_TEMP/one-release.seed"
           printf '%s\n' "$ONE_TRUSTED_PUBLISHERS" > "$RUNNER_TEMP/one-trusted-publishers.txt"
           chmod 600 "$RUNNER_TEMP/one-release.seed" "$RUNNER_TEMP/one-trusted-publishers.txt"
-          if ! awk -F= -v publisher="$PUBLISHER_ID" 'NF == 2 && $1 == publisher && $2 ~ /^[0-9a-fA-F]{64}$/ { found = 1 } END { exit !found }' "$RUNNER_TEMP/one-trusted-publishers.txt"; then
-            echo "publisher_id must have a matching public key in the protected trusted-publisher store" >&2
-            exit 2
-          fi
+          trusted_key=""
+          while IFS='=' read -r id key; do
+            if [[ "$id" == "$PUBLISHER_ID" && "$key" =~ ^[0-9a-fA-F]{64}$ ]]; then
+              trusted_key="$key"
+              break
+            fi
+          done < "$RUNNER_TEMP/one-trusted-publishers.txt"
+          test -n "$trusted_key" || { echo "publisher_id has no valid public key in the protected trust store" >&2; exit 2; }
           echo "project_root=$project_root" >> "$GITHUB_ENV"
           echo "publisher_id=$PUBLISHER_ID" >> "$GITHUB_ENV"
 
@@ -89,7 +94,7 @@ jobs:
           set -euo pipefail
           target/release/one sign-package "$release_artifact" --publisher "$publisher_id" --private-key "$RUNNER_TEMP/one-release.seed" --source-root "$project_root"
 
-      - name: Verify final artifact against protected publisher trust store and exact source tree
+      - name: Verify final artifact against protected trust store and exact source tree
         shell: bash
         run: |
           set -euo pipefail
@@ -102,12 +107,12 @@ jobs:
           sha256sum "$release_artifact" "$release_artifact.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
           cat "$RUNNER_TEMP/one-release-sha256.txt"
 
-      - name: Upload verified release package and provenance
+      - name: Upload verified package, provenance, and checksums
         uses: actions/upload-artifact@v4
         with:
           name: one-package-release-${{ github.run_id }}
           if-no-files-found: error
           path: |
-            ${{ env.release_artifact }}
-            ${{ env.release_artifact }}.provenance
+            ${{ inputs.project_path }}/target/*.onepkg
+            ${{ inputs.project_path }}/target/*.onepkg.provenance
             ${{ runner.temp }}/one-release-sha256.txt
