@@ -3,6 +3,7 @@
 //! silently returning an empty store.
 use std::collections::BTreeMap;
 use std::fmt;
+use std::io::Read;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -18,6 +19,38 @@ pub enum StoreError {
     Io(std::io::Error),
     Corrupt { line: usize, reason: String },
     Limit(&'static str),
+
+    #[test]
+    fn open_enforces_store_byte_limit_during_read() {
+        let path = path("oversized-open");
+        fs::write(&path, vec![b'x'; MAX_FILE_BYTES as usize + 1]).unwrap();
+        assert!(matches!(KeyValueStore::open(&path), Err(StoreError::Limit(_))));
+        let _ = fs::remove_file(path);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn open_rejects_symlink_and_non_regular_store_paths() {
+        use std::os::unix::ffi::OsStrExt;
+        use std::os::unix::fs::symlink;
+
+        let target = path("target");
+        let link = path("symlink");
+        fs::write(&target, "ONE-KV-1\\n").unwrap();
+        symlink(&target, &link).unwrap();
+        assert!(KeyValueStore::open(&link).is_err());
+
+        let fifo = path("fifo");
+        let c_path = std::ffi::CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        // SAFETY: c_path is NUL-terminated and points to a unique test path.
+        assert_eq!(unsafe { libc::mkfifo(c_path.as_ptr(), 0o600) }, 0);
+        assert!(KeyValueStore::open(&fifo).is_err());
+
+        let _ = fs::remove_file(link);
+        let _ = fs::remove_file(target);
+        let _ = fs::remove_file(fifo);
+    }
+
 }
 
 impl fmt::Display for StoreError {
@@ -34,6 +67,35 @@ impl From<std::io::Error> for StoreError {
     fn from(value: std::io::Error) -> Self { Self::Io(value) }
 }
 
+/// Read only a regular store file, without following a final symlink, and enforce
+/// the byte limit while reading rather than trusting a prior metadata length.
+fn read_existing_store(path: &Path) -> Result<String, StoreError> {
+    #[cfg(unix)]
+    let file = {
+        use std::os::unix::fs::OpenOptionsExt;
+        fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
+            .open(path)?
+    };
+    #[cfg(not(unix))]
+    let file = fs::File::open(path)?;
+
+    if !file.metadata()?.is_file() {
+        return Err(StoreError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "jalur penyimpanan harus berupa berkas reguler",
+        )));
+    }
+
+    let mut source = String::new();
+    file.take(MAX_FILE_BYTES + 1).read_to_string(&mut source)?;
+    if source.len() as u64 > MAX_FILE_BYTES {
+        return Err(StoreError::Limit("berkas lebih besar dari 16 MiB"));
+    }
+    Ok(source)
+}
+
 #[derive(Debug, Clone)]
 pub struct KeyValueStore {
     path: PathBuf,
@@ -44,12 +106,18 @@ impl KeyValueStore {
     /// Open an existing store or create a new empty one. Existing malformed files fail closed.
     pub fn open(path: impl AsRef<Path>) -> Result<Self, StoreError> {
         let path = path.as_ref().to_path_buf();
-        let values = if path.exists() {
-            let metadata = fs::metadata(&path)?;
-            if metadata.len() > MAX_FILE_BYTES { return Err(StoreError::Limit("berkas lebih besar dari 16 MiB")); }
-            decode(&fs::read_to_string(&path)?)?
-        } else {
-            BTreeMap::new()
+        let values = match fs::symlink_metadata(&path) {
+            Ok(metadata) => {
+                if metadata.file_type().is_symlink() {
+                    return Err(StoreError::Io(std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        "jalur penyimpanan tidak boleh berupa symlink",
+                    )));
+                }
+                decode(&read_existing_store(&path)?)?
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => BTreeMap::new(),
+            Err(error) => return Err(StoreError::Io(error)),
         };
         Ok(Self { path, values })
     }
