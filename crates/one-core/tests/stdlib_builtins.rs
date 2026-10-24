@@ -478,7 +478,7 @@ tampilkan hasil
 "#;
     assert_eq!(
         run(source).expect("valid escaped JSON should parse and serialize deterministically"),
-        vec![r#"{"a":0,"z":"line\\n猫"}"#]
+        vec![r#"{"a":0,"z":"line\n猫"}"#]
     );
 
     let surrogate_pair = r#"data adalah "\"\\uD83D\\uDE00\""
