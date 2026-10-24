@@ -289,6 +289,7 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
     );
     let artifact = source_root.join("target/demo-0.1.0.onepkg");
     assert!(artifact.is_file(), "package command did not produce the final artifact");
+    let artifact_bytes = fs::read(&artifact).unwrap();
 
     let private_key = root.join("publisher.seed");
     let trust_store = root.join("trusted-publishers.txt");
