@@ -328,6 +328,53 @@ mod tests {
         let _ = std::fs::remove_file(path);
     }
 
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    fn confined_module_reader_rejects_parent_traversal() {
+        let base = std::env::temp_dir().join(format!(
+            "one-module-traversal-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        std::fs::create_dir_all(&base).unwrap();
+        let root = base.join("project");
+        std::fs::create_dir_all(&root).unwrap();
+        let main = root.join("main.one");
+        std::fs::write(&main, "Buat program utama\\n").unwrap();
+        std::fs::write(base.join("outside.one"), "Buat program luar\\n").unwrap();
+
+        let error = read_confined_module(&root, &main, std::path::Path::new("../outside.one"), &base.join("outside.one"))
+            .unwrap_err();
+        assert!(error.contains("tetap berada di dalam"), "unexpected error: {error}");
+
+        std::fs::remove_dir_all(base).unwrap();
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    fn confined_module_reader_rejects_symlink_escape() {
+        use std::os::unix::fs::symlink;
+
+        let base = std::env::temp_dir().join(format!(
+            "one-module-symlink-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        std::fs::create_dir_all(&base).unwrap();
+        let root = base.join("project");
+        std::fs::create_dir_all(&root).unwrap();
+        let main = root.join("main.one");
+        let outside = base.join("outside.one");
+        let link = root.join("escape.one");
+        std::fs::write(&main, "Buat program utama\\n").unwrap();
+        std::fs::write(&outside, "Buat program luar\\n").unwrap();
+        symlink(&outside, &link).unwrap();
+
+        let error = read_confined_module(&root, &main, std::path::Path::new("escape.one"), &link)
+            .unwrap_err();
+        assert!(error.contains("tanpa mengikuti symlink"), "unexpected error: {error}");
+
+        std::fs::remove_dir_all(base).unwrap();
+    }
+
     #[test]
     fn human_program_uses_canonical_ir_for_values_control_flow_and_functions() {
         let source = concat!(
