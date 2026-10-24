@@ -185,7 +185,7 @@ impl ToolAdapter for SqliteAdapter {
         let connection = if path == ":memory:" {
             Connection::open_in_memory()
         } else {
-            Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
+            Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NOFOLLOW)
         }
         .map_err(|_| AdapterError::BackendFailure)?;
         Self::configure_connection(&connection)?;
@@ -269,6 +269,30 @@ mod tests {
             crate::orchestration::EffectClass::Read,
         ))
         .with_argument(AdapterArgument::Text(sql))
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn sqlite_read_only_open_rejects_symlink_even_if_precheck_races() {
+        use std::os::unix::fs::symlink;
+
+        let real = temporary_database_path("nofollow-real");
+        let link = temporary_database_path("nofollow-link");
+        drop(Connection::open(&real).expect("create real database"));
+        symlink(&real, &link).expect("create symlink to database");
+
+        let direct_open = Connection::open_with_flags(
+            &link,
+            OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NOFOLLOW,
+        );
+        assert!(direct_open.is_err(), "SQLite NOFOLLOW must reject a final symlink");
+
+        let adapter_result = SqliteAdapter::new()
+            .invoke(&select_request(&link, "SELECT 1".into()));
+        assert_eq!(adapter_result, Err(AdapterError::InvalidArguments));
+
+        let _ = std::fs::remove_file(&link);
+        let _ = std::fs::remove_file(&real);
     }
 
     #[test]
