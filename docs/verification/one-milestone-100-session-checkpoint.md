@@ -577,3 +577,35 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 ### GATE
 **NOT PASSED — exact-SHA cross-platform/Android verification and mandatory E1-E6 acceptance remain incomplete.**
+
+
+## 2026-10-24 continuation — latest Android CI audit
+
+### CURRENT STATE
+- Code/workflow change under review: `4291a820e07b99820f1789f344bc2ab427f7f9d5`.
+- Verification-ledger documentation update: `0e21cce77aae4302ce61cafdfefdad1e04ad4d5e`.
+- PR #80 remains open, draft and unmerged; no merge was performed.
+- Implementation remains **88/100 provisional**; verified remains **60/100**. Do not promote unverified implementation points to verified points.
+
+### WORK COMPLETED
+- Replaced the Android SDK license pipeline's blanket `|| true` with explicit capture and checking of `sdkmanager`'s exit status while tolerating `yes` receiving SIGPIPE.
+- Inspected the Android AArch64 acceptance test. It verifies ELF magic/class/endianness/machine type, then executes the generated binary on the Android emulator and checks exact output.
+- Recorded the latest run IDs and their evidence limits in `docs/verification/one-completion-ledger.md`.
+
+### EXACT-SHA EVIDENCE
+- One CI: [40060363429](https://github.com/panglimanetizen01/one/actions/runs/40060363429) — failure.
+- Focused standard-library verification: [40060363449](https://github.com/panglimanetizen01/one/actions/runs/40060363449) — failure.
+- Linux distribution conformance: [40060363463](https://github.com/panglimanetizen01/one/actions/runs/40060363463) — failure.
+- For all six jobs, the available job-step endpoint returned an empty step list, log retrieval returned `BlobNotFound`, and no artifacts were listed. Therefore no successful test execution is evidenced and no specific failing test can be responsibly identified from these run records.
+
+### REMAINING — STRICT E1–E6 SCOPE
+1. Obtain usable exact-SHA workflow evidence; inspect actual steps/logs and repair any concrete failure rather than guessing.
+2. Complete E1 standard-library contract coverage.
+3. Complete E2 package/dependency contract audit; do not overstate external registry or dependency-resolution support.
+4. Complete E3 Linux/Windows verification and actual Android AArch64 ELF runtime execution on the selected exact SHA.
+5. Complete E4 resource, path confinement and cross-platform race-resistance review; do not claim Windows/macOS race-resistant confinement without implementation and tests.
+6. Complete E5 compatibility/release readiness audit against the declared support contract.
+7. Complete E6 forensic Definition-of-Done audit and reconcile ledger/checkpoint to the final tested SHA.
+
+### GATE
+**NOT PASSED — do not label GREEN LOCKED or release-ready until every required criterion has evidence on the recorded source SHA.**
