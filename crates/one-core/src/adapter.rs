@@ -295,7 +295,7 @@ fn windows_final_path(file: &std::fs::File) -> std::io::Result<String> {
     // SAFETY: the handle is live and buffer is writable for its declared length.
     let length = unsafe {
         GetFinalPathNameByHandleW(
-            file.as_raw_handle() as *mut std::ffi::c_void,
+            file.as_raw_handle(),
             buffer.as_mut_ptr(),
             buffer.len() as u32,
             0,
@@ -354,7 +354,7 @@ fn windows_delete_opened_file(file: &std::fs::File) {
     // SAFETY: information is a correctly sized FILE_DISPOSITION_INFO and the handle is live.
     let _ = unsafe {
         SetFileInformationByHandle(
-            file.as_raw_handle() as *mut std::ffi::c_void,
+            file.as_raw_handle(),
             4,
             &information as *const FileDispositionInfo as *const std::ffi::c_void,
             std::mem::size_of::<FileDispositionInfo>() as u32,
