@@ -321,3 +321,14 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - Current exact-SHA Windows cross-platform and Android arm64 emulator runs are still in progress. Do not credit E3 verified points until Windows and the actual Android ELF execution acceptance both complete.
 - E2 correction: artifact signing/trusted publisher verification is implemented, but the external One package registry, dependency graph/version conflict resolution, automatic package signing, and complete build provenance remain unimplemented.
 - GATE: NOT PASSED — mandatory E1-E6 acceptance is incomplete.
+
+
+## 2026-10-24 continuation — Android SDK license handling and latest-SHA evidence audit
+
+- **Code/workflow SHA:** `4291a820e07b99820f1789f344bc2ab427f7f9d5` ([commit](https://github.com/panglimanetizen01/one/commit/4291a820e07b99820f1789f344bc2ab427f7f9d5)).
+- Corrected the Android emulator job's SDK license pipeline. The previous `yes | sdkmanager --licenses || true` masked genuine SDK-manager failures. The replacement tolerates the expected SIGPIPE from `yes` while explicitly checking `sdkmanager`'s exit status and failing closed when it is nonzero.
+- Exact-SHA GitHub Actions runs inspected for this commit: One CI [40060363429](https://github.com/panglimanetizen01/one/actions/runs/40060363429), focused standard-library verification [40060363449](https://github.com/panglimanetizen01/one/actions/runs/40060363449), and Linux distribution conformance [40060363463](https://github.com/panglimanetizen01/one/actions/runs/40060363463). All three report `failure`.
+- The GitHub job-details API returned empty step arrays for all six jobs; log retrieval returned `BlobNotFound` and there were no workflow artifacts. Consequently, these runs do **not** provide executable build/test logs or establish whether test steps ran. Do not infer a source-code failure from this alone, and do not infer a pass.
+- The Android acceptance test source explicitly checks ELF magic, ELFCLASS64, little-endian encoding and `EM_AARCH64`, then pushes and executes the artifact through ADB and asserts exact output. This source-level inspection is not a substitute for successful emulator execution evidence.
+- PR #80 remains open, draft and unmerged. The verified score remains **60/100**; implementation remains **88/100 provisional**. No new verified points are awarded.
+- **GATE: NOT PASSED.** E1–E6 acceptance and usable exact-SHA verification evidence are still incomplete.
