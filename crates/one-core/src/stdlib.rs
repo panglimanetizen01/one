@@ -920,4 +920,4 @@ mod tests {
             json_to_value(&Value::Text("-0".into())),
             Some(Value::Number(0))
         );
-    }}
+    }
