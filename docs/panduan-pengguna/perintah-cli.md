@@ -63,7 +63,7 @@ Aturan boundary:
 - tanpa permission, policy menolak orchestration sebelum adapter filesystem dipanggil;
 - fitur ini tidak boleh diperlakukan sebagai filesystem management umum atau sandbox/path-confinement guarantee.
 
-Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/Android. Contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification lulus. Belum ada exact-SHA Ubuntu/Windows evidence untuk executable revision ini.
+Exact-SHA cross-platform evidence on candidate `1dec26abcc90ac27d892cf3ff0a83dedb8b90fd8`: [mirror run `40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) passed Ubuntu and Windows Server 2025 workspace tests, including `filesystem_write_requires_explicit_capability_and_writes_target`, `run_command_executes_filesystem_write_from_one_source`, final-symlink denial, and bounded-write regressions. The earlier Termux/Android result at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` remains historical. This is still an experimental, explicitly target-scoped write slice—not a general filesystem manager or sandbox guarantee.
 
 ## Menjalankan proses — eksperimental
 
@@ -79,9 +79,9 @@ one jalankan main.one --izinkan process.execute --target rustc
 
 Boundary saat ini: satu program yang ditargetkan secara eksplisit tanpa argumen tambahan.
 
-## Menjalankan kueri database — dalam pengembangan
+## Menjalankan kueri database — eksperimental
 
-SQLite-backed database query sudah diimplementasikan, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
+SQLite-backed database query tersedia sebagai vertical slice terbatas; jangan menyamakannya dengan API persistence umum.
 
 Source One:
 
@@ -99,15 +99,16 @@ Boundary implementasi saat ini:
 
 - capability `database.query` wajib diberikan secara eksplisit;
 - `--target` adalah resource database dan harus cocok persis;
-- adapter menggunakan SQLite nyata dan parameterized SELECT;
+- adapter menggunakan SQLite nyata dan parameterized `SELECT`;
 - hasil dinormalisasi sebagai teks UTF-8;
 - INSERT/UPDATE/DELETE/DDL belum termasuk boundary query ini;
-- current implementation lineage `0aa4acdf3796235eac432138fec829b6508879e3` belum executable-verified;
-- hosted CI run `550` gagal tanpa step yang dieksekusi, sehingga bukan source-failure evidence.
+- query, parameter, row/output, VM-opcode, dan waktu eksekusi dibatasi;
+- final-component symlink diblokir oleh `SQLITE_OPEN_NOFOLLOW`, dengan regresi Unix;
+- exact-SHA cross-platform run [`40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) menjalankan `database_vertical_slice` dan `database_orchestration` pada Ubuntu + Windows; focused run [`40084595238`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595238) lulus batas sumber daya SQLite dan symlink regression.
 
-## Mengambil HTTP — dalam pengembangan
+## Mengambil HTTP — eksperimental
 
-HTTP GET sudah diimplementasikan sebagai vertical slice terbatas, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
+HTTP GET tersedia sebagai vertical slice terbatas, bukan HTTP client/API SDK umum.
 
 Source One:
 
@@ -125,13 +126,12 @@ Boundary implementasi saat ini:
 
 - capability `network.connect` wajib diberikan secara eksplisit;
 - `--target` harus sama persis dengan URL source;
-- adapter `network.http.get` menggunakan HTTP/1.1 GET yang sudah tersedia di network runtime;
+- adapter `network.http.get` menggunakan HTTP/1.1 GET;
 - hanya skema `http://` yang termasuk slice ini;
-- hasil yang dikembalikan adalah response body di bawah ekspektasi UTF-8;
+- response body dinormalisasi ke UTF-8 dan dibatasi;
 - response non-2xx diperlakukan sebagai adapter failure;
 - HTTPS, method selain GET, custom headers/body, redirects, cookies, dan API-specific authentication belum termasuk boundary ini;
-- current implementation head `913e644ea665711c669590a80d7ff19866cb7671` belum executable-verified;
-- latest inspected hosted CI run `585` gagal dengan zero reported steps pada Ubuntu dan Windows, sehingga bukan source-failure evidence.
+- exact-SHA cross-platform run [`40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) menjalankan `http_get_vertical_slice` dan `http_get_orchestration` pada Ubuntu + Windows; real-network tests juga lulus pada kedua platform.
 
 ## `bangun` dan `package`
 
@@ -144,10 +144,9 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for filesystem write/CLI is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
+The current candidate evidence is [cross-platform run `40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236), which checks out source SHA `1dec26abcc90ac27d892cf3ff0a83dedb8b90fd8` and passes Ubuntu + Windows Server 2025 workspace tests, CLI vertical slices, real-network tests, offline verification, and bundle generation. Focused standard-library/database/provenance regressions pass in [run `40084595238`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595238); Ubuntu 24.04 and Debian 12 pass in [run `40084595259`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595259).
 
-The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write, database, or HTTP changes.
-
+These links are exact evidence for the SHA named in the logs, not automatic evidence for a later documentation commit. If source changes, rerun the required matrix on the new SHA. The canonical repository's Actions jobs have also failed before executable steps with empty `steps: []`; those are infrastructure failures, not source-test passes or failures.
 
 ## Pembatasan root filesystem
 
