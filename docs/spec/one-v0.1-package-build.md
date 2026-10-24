@@ -80,6 +80,7 @@ The CLI now provides additive commands to sign and verify an existing package ar
 - one verify-package <file.onepkg> --trusted-publishers <trust-store> checks the artifact SHA-256, Ed25519 signature, and the binding between publisher ID and a separately configured trust-store public key.
 - The sidecar is <file.onepkg>.provenance, with a version marker, publisher ID, public key, artifact digest, and signature. The trust store contains one publisher-id=public-key-hex entry per line; duplicate or malformed entries are rejected.
 - SHA-256 is used as the signed content identifier, not as a substitute for the signature. Verification fails closed for changed bytes, unknown publishers, key mismatches, malformed sidecars, and invalid signatures.
+- Signing and verification bound package reads to 64 MiB, private-key seed reads to 256 bytes, provenance sidecars to 16 KiB, and trust-store reads to 1 MiB. Inputs beyond these limits are rejected before complete allocation.
 
 This closes the artifact-signature and trusted-publisher verification slice, but it does not yet implement an external One package registry, dependency graph resolution/version-conflict handling, automatic signing as part of one package, or a full build-provenance envelope. The signed sidecar must be verified against a trust store delivered through an independently trusted channel. E2 remains open until dependency resolution and release integration are implemented and verified.
 
