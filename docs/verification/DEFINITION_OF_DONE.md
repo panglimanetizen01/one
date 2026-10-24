@@ -11,7 +11,7 @@ This checklist is an acceptance control, not a claim that the release is complet
 
 ## 1. Immutable evidence rules
 
-- [x] Candidate source SHA is recorded explicitly in the ledger, PR, and independent verification harness.
+- [x] Candidate source SHA is recorded explicitly in the PR and independent verification selector; the ledger records the freeze rule without embedding a self-referential commit SHA.
 - [x] Independent Linux/Windows build and test evidence is tied to the candidate source SHA.
 - [x] Candidate Linux and Windows bundles were inspected; embedded checksum manifests verify and build metadata pins the source SHA.
 - [ ] Final candidate SHA is frozen after all remaining source changes; all evidence is rerun against that exact SHA.
