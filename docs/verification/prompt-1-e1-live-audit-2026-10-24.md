@@ -54,3 +54,17 @@ The Rust helper module additionally exposes `display_value`, `list_append`, `lis
 - Before E1 can close: restore a functioning runner or an approved independent execution environment; execute the focused suite on the exact source SHA, `cargo --locked test --workspace`, `cargo --locked clippy --workspace --all-targets -- -D warnings`, and `python tools/check_contract.py`; triage any actual failing assertion, fix only a reproducible root cause, then rerun the complete matrix on the resulting exact SHA. Independent verification must remain labelled as independent, never hosted CI.
 - Prompt 2 should begin only after E1 has a reproducible exact-SHA test record and this checkpoint is superseded with actual results. E2 provenance/protected-release acceptance, E3 Android AArch64 runtime, E4 open security/root-confinement/resource-bound review, and E6 final forensic reconciliation remain open.
 - Release gate remains **NOT PASSED**. PR #80 remains open/unmerged; no release was authorized or published.
+
+## Alternative E1 test lab added on 2026-10-24
+
+- Dedicated workflow: `.github/workflows/milestone-1-e1-lab.yml`.
+- Portable local entry point: `bash tools/milestone1-e1-lab.sh`.
+- Lab guide: `docs/verification/milestone-1-e1-test-lab.md`.
+- The lab executes the entire `one-core` stdlib integration test target, `one-core` library unit tests, workspace tests, workspace Clippy with warnings denied, and `tools/check_contract.py`; it prints the exact tested SHA and toolchain.
+- The dedicated hosted workflow was actually triggered on candidate SHA `266d51340b78f15bb52b742fd2e4c80d7353dccc`: https://github.com/panglimanetizen01/one/actions/runs/40100991584. It hit the same infrastructure symptom (`runner_id: 0`, empty runner name, `steps: []`), so it yielded no test result.
+- Attempted local execution is not possible in this session: the container has no Rust toolchain and cannot resolve `github.com` for a clone. No local pass is claimed.
+- To use a separate functioning runner pool, updated the independent verifier repository's `verification/CANONICAL_COMMIT.txt` to the current candidate revision. Pin update commit: https://github.com/panglimanetizen01/one-windows-verification/commit/29bfea16e6e630fffa9100d6e44c3ce36551013e. Its workflows did not start automatically after this API-driven commit, so trigger **Run workflow** manually on the verifier branch for the Linux distro, focused standard-library, and cross-platform workflows. Those new runs must show the exact candidate SHA before their results count.
+- Current candidate before this checkpoint refresh: `5aca770bb69f266577be8a2514635de09efa15be`. The checkpoint refresh itself will be the new candidate SHA; update the verifier pin to that resulting SHA before running its tests.
+
+**Gate remains NOT PASSED** until the dedicated or independent lab completes every required check successfully against one exact candidate SHA.
+
