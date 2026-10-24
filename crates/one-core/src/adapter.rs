@@ -479,5 +479,32 @@ mod filesystem_nofollow_tests {
         assert_eq!(std::fs::read(root.join("real.txt")).expect("read target"), b"preserve");
         let _ = std::fs::remove_dir_all(root);
     }
+#[cfg(all(test, windows))]
+mod filesystem_windows_reparse_tests {
+    use super::*;
+
+    #[test]
+    fn filesystem_reader_rejects_directory_junction_escape() {
+        let root = std::env::temp_dir().join(format!("one-fs-junction-{}", std::process::id()));
+        let outside = root.join("outside");
+        let junction = root.join("junction");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&outside).expect("create outside directory");
+        std::fs::write(outside.join("secret.txt"), b"secret").expect("create target");
+
+        let status = std::process::Command::new("cmd")
+            .args(["/C", "mklink", "/J"])
+            .arg(&junction)
+            .arg(&outside)
+            .status()
+            .expect("cmd should be available on Windows");
+        assert!(status.success(), "directory junction must be created for the filesystem regression");
+
+        assert!(open_read_target(&junction.join("secret.txt")).is_err());
+        let _ = std::fs::remove_dir(&junction);
+        let _ = std::fs::remove_dir_all(root);
+    }
+}
+
 }
 
