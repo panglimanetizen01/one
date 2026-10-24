@@ -218,6 +218,9 @@ fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
             }
             let file = OpenOptions::new()
                 .write(true)
+                // GENERIC_WRITE | DELETE permits cleanup by the already-open handle if
+                // the parent is swapped between validation and creation.
+                .access_mode(0x4000_0000 | 0x0001_0000)
                 .create_new(true)
                 .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
                 .open(path)?;
