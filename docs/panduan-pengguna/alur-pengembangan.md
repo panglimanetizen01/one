@@ -63,7 +63,7 @@ Workflow manual `ONE Package Provenance Release` di GitHub Actions membangun pro
 
 Sebelum menjalankannya, admin harus mengonfigurasi environment terlindungi `one-release`, aturan approval, secret `ONE_RELEASE_SIGNING_SEED`, dan `ONE_TRUSTED_PUBLISHERS`. Trust store harus diprovisikan melalui proses yang terautentikasi secara independen; jangan membuatnya dari private key selama job rilis. Jangan memasukkan private key ke repository, chat, log, atau artifact.
 
-Lihat [panduan provenance rilis](../RELEASE_PROVENANCE.md).
+Lihat [panduan provenance rilis](provenance-rilis.md).
 
 ## 6. Gate final
 
