@@ -76,3 +76,5 @@ Private key seed files must be stored outside the repository and must not be com
 
 The current signing commands authenticate the package bytes and publisher key binding, but do not yet resolve external One package dependencies, sign the build environment/source dependency graph, or automatically sign every output from the package command. Those release-integrity requirements remain open.
 
+Signing and verification now apply bounded reads before parsing or hashing: package artifacts are limited to 64 MiB, private-key seed files to 256 bytes, provenance sidecars to 16 KiB, and publisher trust stores to 1 MiB. Oversized inputs are rejected before full allocation. These limits do not replace trust-store authenticity or filesystem confinement.
+
