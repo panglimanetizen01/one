@@ -30,9 +30,13 @@ concurrency:
 
 jobs:
   e1-focused-and-workspace:
-    name: E1 contract, regression, workspace, and lint
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    name: E1 contract, regression, workspace, and lint (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     steps:
       - name: Checkout exact candidate revision
         uses: actions/checkout@v4
@@ -43,13 +47,19 @@ jobs:
         with:
           toolchain: 1.99.0
           components: rustfmt, clippy
+      - name: Install Python for contract checker
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
       - name: Print exact revision and toolchain
+        shell: bash
         run: |
           git rev-parse HEAD
           rustc --version
           cargo --version
+          python --version
       - name: E1 standard-library integration regression suite
         run: cargo --locked test -p one-core --test stdlib_builtins
       - name: E1 standard-library library unit suite
@@ -59,13 +69,15 @@ jobs:
       - name: Workspace Clippy with warnings denied
         run: cargo --locked clippy --workspace --all-targets -- -D warnings
       - name: Repository contract checker
-        run: python3 tools/check_contract.py
+        run: python tools/check_contract.py
       - name: Record test-lab evidence
         if: always()
+        shell: bash
         run: |
           {
             echo "## Milestone 1 / E1 test lab"
             echo "- Commit: `$(git rev-parse HEAD)`"
+            echo "- OS: `$(uname -a)`"
             echo "- Rust: `$(rustc --version)`"
             echo "- Cargo: `$(cargo --version)`"
             echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
