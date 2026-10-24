@@ -163,3 +163,13 @@ Latest milestone-100 scoring and evidence are in docs/verification/one-completio
 - The source branch head must be read again after this checkpoint commit; the mirror selector must then be pinned to that exact SHA and the complete workflow evidence reviewed.
 - Gate: NOT PASSED.
 
+## 2026-10-24 E5 reproducible toolchain pointer
+
+Latest milestone-100 state is recorded in docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation subtotal is now 87/100 provisional; verified remains 60/100. This supersedes the earlier 86/100 provisional note in the continuation pointer above; weights are unchanged.
+- rust-toolchain.toml pins Rust 1.99.0, matching the toolchain reported by the successful Cargo lockfile-generation workflow. Canonical CI and the independent mirror's distro, focused stdlib and Android workflows explicitly request 1.99.0.
+- The mirror cross-platform workflow uses Cargo --locked. Final exact-SHA verification of these workflow revisions is pending.
+- External One-language registry resolution and authenticated publisher provenance remain unimplemented; E2 is partial. Android AArch64 runtime execution and cross-platform filesystem confinement remain unverified/incomplete.
+- Gate: NOT PASSED.
+
