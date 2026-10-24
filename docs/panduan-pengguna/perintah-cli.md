@@ -32,7 +32,7 @@ Vertical slice filesystem read yang tersedia secara eksperimental adalah `baca b
 one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
 ```
 
-Tanpa capability `filesystem.read`, source orchestration ditolak. Target harus sama persis dengan target yang diberi izin.
+Tanpa capability `filesystem.read`, source orchestration ditolak. Tanpa opsi `--root`, target harus sama persis dengan target yang diberi izin. Untuk pembatasan direktori, gunakan `--root <dir>` bersama target yang berada di bawah root tersebut.
 
 ## Menulis berkas melalui orchestration filesystem — eksperimental
 
@@ -57,7 +57,7 @@ one run main.one --allow filesystem.write --target data/hasil.txt
 Aturan boundary:
 
 - `filesystem.write` harus diberikan secara eksplisit;
-- `--target` wajib sama dengan file target yang diminta source;
+- `--target` wajib cocok dengan file target yang diminta source; jika `--root` diberikan, target juga harus berada di dalam root berdasarkan komponen path;
 - payload saat ini satu nilai teks;
 - implementasi menulis satu payload ke satu file target;
 - tanpa permission, policy menolak orchestration sebelum adapter filesystem dipanggil;
@@ -147,3 +147,19 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 Latest exact-SHA executable evidence for filesystem write/CLI is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
 
 The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write, database, or HTTP changes.
+
+
+## Pembatasan root filesystem
+
+Untuk operasi baca/tulis, `--root <dir>` menambahkan aturan containment berbasis komponen path:
+
+```text
+one jalankan main.one --izinkan filesystem.read --root data --target data/input.txt
+one jalankan main.one --izinkan filesystem.write --root data --target data/output.txt
+```
+
+Target di luar root, path dengan komponen parent `..`, dan ketidakcocokan path absolut/relatif ditolak. Tanpa `--root`, perilaku exact-target lama tetap berlaku. Root scope tidak boleh dipasarkan sebagai sandbox sistem operasi lengkap; proteksi adapter no-follow/reparse-point dan batas sumber daya tetap berlaku.
+
+## Catatan bukti
+
+Nomor SHA/run yang tercantum pada bagian verification di atas adalah bukti historis untuk revision yang disebut di sana, bukan otomatis bukti untuk branch head terbaru. Untuk status milestone-100 saat ini, gunakan `docs/verification/one-completion-ledger.md` dan `docs/verification/one-milestone-100-session-checkpoint.md`. Candidate belum boleh disebut rilis final sebelum semua gerbang exact-SHA, Android, standard library, keamanan, dokumentasi, dan Definition of Done lulus.
