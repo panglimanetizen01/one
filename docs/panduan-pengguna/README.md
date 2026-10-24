@@ -24,6 +24,8 @@ Setelah memahami dasar, lanjutkan ke topik yang sesuai kebutuhan:
 - [Fungsi dan event](fungsi-dan-event.md)
 - [Kesalahan dan debugging](kesalahan-dan-debugging.md)
 - [Test, build, dan package](test-build-package.md)
+- [Referensi Standard Library](referensi-standard-library.md)
+- [Alur pengembangan end-to-end](alur-pengembangan.md)
 - [Jaringan](jaringan.md)
 - [Interoperabilitas](interoperabilitas.md)
 - [FAQ](faq.md)
