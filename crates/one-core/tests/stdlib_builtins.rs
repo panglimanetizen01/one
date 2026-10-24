@@ -436,3 +436,58 @@ tampilkan akhir
     );
 }
 
+#[test]
+fn json_parser_rejects_malformed_escapes_surrogates_trailing_input_and_integer_overflow() {
+    for source in [
+        r#"data adalah "\"\\q\""
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#,
+        r#"data adalah "\"\\uD800\""
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#,
+        r#"data adalah "\"\\uDC00\""
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#,
+        r#"data adalah "true false"
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#,
+        r#"data adalah "01"
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#,
+        r#"data adalah "9223372036854775808"
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#,
+    ] {
+        let error = run(source).expect_err("malformed JSON must be rejected");
+        assert!(error.contains("R3022"), "unexpected diagnostic for {source:?}: {error}");
+    }
+}
+
+#[test]
+fn json_round_trip_preserves_unicode_escapes_and_deterministic_integer_values() {
+    let source = r#"data adalah "{\"z\":\"line\\n\\u732b\",\"a\":-0}"
+nilai adalah nilai dari json dengan data
+hasil adalah ubah nilai ke json dengan nilai
+tampilkan hasil
+"#;
+    assert_eq!(
+        run(source).expect("valid escaped JSON should parse and serialize deterministically"),
+        vec![r#"{"a":0,"z":"line\\n猫"}"#]
+    );
+
+    let surrogate_pair = r#"data adalah "\"\\uD83D\\uDE00\""
+nilai adalah nilai dari json dengan data
+hasil adalah ubah nilai ke json dengan nilai
+tampilkan hasil
+"#;
+    assert_eq!(
+        run(surrogate_pair).expect("valid UTF-16 surrogate pairs should decode to a Unicode scalar"),
+        vec![r#""😀""#]
+    );
+}
