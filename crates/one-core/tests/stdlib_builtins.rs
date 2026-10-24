@@ -491,3 +491,37 @@ tampilkan hasil
         vec![r#""😀""#]
     );
 }
+
+#[test]
+fn mapping_builtin_rejects_missing_keys_and_invalid_key_types() {
+    let missing_key = r#"buat pemetaan data
+hasil adalah nilai pemetaan dengan data dan "tidak_ada"
+tampilkan hasil
+"#;
+    let program = parse_human_core(missing_key).expect("mapping grammar should parse");
+    let typed = analyze(&program).expect("mapping key lookup should type-check");
+    let ir = lower(&typed).expect("mapping lookup should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let error = interpreter.execute(&ir).expect_err("missing map keys must fail closed");
+    assert_eq!(error.code, "R3022");
+
+    let invalid_key_type = r#"buat pemetaan data
+hasil adalah nilai pemetaan dengan data dan 1
+tampilkan hasil
+"#;
+    let program = parse_human_core(invalid_key_type).expect("mapping grammar should parse");
+    let error = analyze(&program).expect_err("mapping keys must be text");
+    assert!(
+        format!("{error:?}").contains("E2043"),
+        "unexpected diagnostic for non-text mapping key: {error:?}"
+    );
+}
+
+#[test]
+fn runtime_diagnostics_are_deterministic_for_identical_invalid_calls() {
+    let invalid_division = "hasil adalah bagi bulat dengan 7 dan 0\ntampilkan hasil\n";
+    let first = run(invalid_division).expect_err("division by zero must fail");
+    let second = run(invalid_division).expect_err("same invalid call must fail again");
+    assert_eq!(first, second, "identical invalid input must produce stable diagnostics");
+    assert!(first.contains("R3022"), "expected the documented runtime diagnostic: {first}");
+}
