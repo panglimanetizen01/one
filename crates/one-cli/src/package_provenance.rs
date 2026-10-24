@@ -85,20 +85,32 @@ fn signed_message(publisher: &str, digest: &str) -> String {
     format!("{HEADER}\npublisher={publisher}\nartifact_sha256={digest}\n")
 }
 
-fn signed_message_v2(
-    publisher: &str,
-    artifact_digest: &str,
-    source_digest: &str,
-    source_revision: &str,
-    one_version: &str,
-    builder_os: &str,
-    builder_arch: &str,
-    rustc_version: &str,
-    cargo_version: &str,
-    dependency_model: &str,
-) -> String {
+struct V2ProvenanceFields<'a> {
+    publisher: &'a str,
+    artifact_digest: &'a str,
+    source_digest: &'a str,
+    source_revision: &'a str,
+    one_version: &'a str,
+    builder_os: &'a str,
+    builder_arch: &'a str,
+    rustc_version: &'a str,
+    cargo_version: &'a str,
+    dependency_model: &'a str,
+}
+
+fn signed_message_v2(fields: &V2ProvenanceFields<'_>) -> String {
     format!(
-        "{HEADER_V2}\npublisher={publisher}\nartifact_sha256={artifact_digest}\nsource_sha256={source_digest}\nsource_revision={source_revision}\none_version={one_version}\nbuilder_os={builder_os}\nbuilder_arch={builder_arch}\nrustc_version={rustc_version}\ncargo_version={cargo_version}\ndependency_model={dependency_model}\n"
+        "{HEADER_V2}\npublisher={}\nartifact_sha256={}\nsource_sha256={}\nsource_revision={}\none_version={}\nbuilder_os={}\nbuilder_arch={}\nrustc_version={}\ncargo_version={}\ndependency_model={}\n",
+        fields.publisher,
+        fields.artifact_digest,
+        fields.source_digest,
+        fields.source_revision,
+        fields.one_version,
+        fields.builder_os,
+        fields.builder_arch,
+        fields.rustc_version,
+        fields.cargo_version,
+        fields.dependency_model,
     )
 }
 
@@ -314,10 +326,19 @@ pub fn sign_build_provenance(
     let rustc_version = tool_version("rustc")?;
     let cargo_version = tool_version("cargo")?;
     let dependency_model = "empty-v0.1";
-    let message = signed_message_v2(
-        publisher, &artifact_digest, &source_digest, &source_revision, one_version,
-        builder_os, builder_arch, &rustc_version, &cargo_version, dependency_model,
-    );
+    let provenance_fields = V2ProvenanceFields {
+        publisher,
+        artifact_digest: &artifact_digest,
+        source_digest: &source_digest,
+        source_revision: &source_revision,
+        one_version,
+        builder_os,
+        builder_arch,
+        rustc_version: &rustc_version,
+        cargo_version: &cargo_version,
+        dependency_model,
+    };
+    let message = signed_message_v2(&provenance_fields);
     let signature = signing_key.sign(message.as_bytes());
     let contents = format!(
         "{HEADER_V2}\npublisher={publisher}\npublic_key={}\nartifact_sha256={artifact_digest}\nsource_sha256={source_digest}\nsource_revision={source_revision}\none_version={one_version}\nbuilder_os={builder_os}\nbuilder_arch={builder_arch}\nrustc_version={rustc_version}\ncargo_version={cargo_version}\ndependency_model={dependency_model}\nsignature={}\n",
@@ -450,18 +471,19 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
                 return Err(format!("invalid build provenance field: {field}"));
             }
         }
-        signed_message_v2(
+        let provenance_fields = V2ProvenanceFields {
             publisher,
-            digest,
+            artifact_digest: digest,
             source_digest,
             source_revision,
-            fields["one_version"],
-            fields["builder_os"],
-            fields["builder_arch"],
-            fields["rustc_version"],
-            fields["cargo_version"],
-            fields["dependency_model"],
-        )
+            one_version: fields["one_version"],
+            builder_os: fields["builder_os"],
+            builder_arch: fields["builder_arch"],
+            rustc_version: fields["rustc_version"],
+            cargo_version: fields["cargo_version"],
+            dependency_model: fields["dependency_model"],
+        };
+        signed_message_v2(&provenance_fields)
     };
 
     let trust_text = read_bounded_text(trust_store, MAX_TRUST_STORE_BYTES, "publisher trust store")?;
