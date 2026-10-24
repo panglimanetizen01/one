@@ -724,3 +724,12 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 
 - Security contract note: the `--root` rule is recorded as a defense-in-depth partial policy only. Root-relative descriptor anchoring, race-resistant resolution, mount behavior, and cross-platform path/case semantics still need implementation/threat review; E4 is not accepted from lexical containment alone.
+
+
+## 2026-10-24 continuation — documentation gate and final verification pin
+
+- Added user-facing `docs/panduan-pengguna/provenance-rilis.md`, linked it in both indexes, and kept the development guide's internal links inside the user-doc tree. The guide now states that the manual release workflow is dispatchable after it reaches the default branch.
+- Added `tools/check_user_docs.py` and its regression tests to canonical CI and the independent mirror's Linux/Windows contract-artifact stage. The mirror run must confirm the new relative-link/status check on the final candidate.
+- Android hosted-runner failure was traced to unavailable HVF acceleration (`failed to initialize HVF: Invalid argument`). The mirror Android workflow now requests software emulation with `-accel off`; this is a workaround attempt, not evidence of successful Android execution.
+- This checkpoint/ledger update changes the source SHA. Re-read PR #80 head, set the mirror selector to the exact new SHA, and require a fresh complete matrix after the documentation updates. Earlier successful Linux/Windows, distro, focused stdlib/database, and lockfile runs are evidence for their recorded SHAs only.
+- **Scores remain 88/100 provisional implementation and 60/100 verified. Gate NOT PASSED.** E1–E6 acceptance, actual Android ELF execution, protected release dispatch, and final forensic DoD audit remain open.
