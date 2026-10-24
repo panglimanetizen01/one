@@ -401,3 +401,52 @@ Milestone 100, E1–E6 only.
 ### GATE
 **NOT PASSED — milestone 100% remains in progress.**
 
+## 2026-10-24 continuation — latest E2/E3/E4/E5 evidence reconciliation
+
+This entry supersedes prior subtotal notes in this checkpoint.
+
+### MILESTONE
+Milestone 100 — only E1–E6.
+
+### COMPLETION
+- Implementation: **87/100 provisional**.
+- Verified: **60/100**. No new verified points awarded in this continuation.
+
+### DONE
+- E2: Cargo.lock is committed (113 packages; SHA-256 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21), Cargo.lock is no longer ignored, and canonical/local/mirror Cargo build/test/run/Clippy commands use --locked.
+- E5: root rust-toolchain.toml pins Rust 1.99.0; canonical and independent workflows explicitly select 1.99.0. This corrects drift observed when the moving stable channel resolved to 1.99.1.
+- E3: the dedicated exact-SHA Android runtime workflow installs an Android 35 arm64-v8a emulator and explicitly invokes the previously ignored ELF build-and-execute test. The test now asserts ELF magic, ELFCLASS64, little-endian encoding and EM_AARCH64 before execution.
+- E4: Linux/Android file adapters use descriptor-relative no-follow opens; regression tests cover symlinked parents, final-component read symlinks and rejected write symlinks.
+- Fixed two implementation defects exposed by real CI: malformed NUL termination for absolute path roots, then strict Clippy's manual C-string lint. Fixed invalid duplicate YAML with blocks in the mirror distro workflow after its jobs failed to parse.
+
+### EVIDENCE
+- Cargo lock generation succeeded: https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40052223860, generated against source SHA cd4aa9f9be450ecc43a0419d057867967d23e469.
+- Updated focused stdlib/database verification passed on source SHA c740982ef40b680ac8ae8682e738272ffad05331; logs show Rust 1.99.0 and 28 --locked Cargo commands.
+- That focused pass is not a substitute for full exact-SHA workspace/network/Windows/Android acceptance on the current source.
+- Current code/workflow source before this checkpoint documentation: 34f2162918eaff316f68659b51d5666333160a29.
+- The latest mirror Ubuntu/Debian and Windows/Linux jobs for source SHA c740982ef40b680ac8ae8682e738272ffad05331 are still in progress; Android is still installing the arm64 emulator image and has not executed the ELF. Re-read latest run IDs and logs after this checkpoint update.
+- Canonical Actions on source SHA f93a960635d648d6b9390bef42ed42328bf2ddec failed before steps with empty step lists; infrastructure failure only.
+
+### REMAINING
+- E1: full standard-library acceptance remains incomplete.
+- E2: One-language external dependency graph/registry resolution, conflict handling, trusted publisher identity, and signed/authenticated provenance remain incomplete despite the Cargo lockfile improvement.
+- E3: actual ELF AArch64 execution on Android arm64 remains NOT YET VERIFIED.
+- E4: Windows/macOS race-resistant path resolution, explicit confinement root and full resource/threat review remain open.
+- E5: full compatibility/release readiness remains open.
+- E6: final forensic Definition-of-Done audit remains open.
+
+### GIT STATE
+- Repository panglimanetizen01/one; branch milestone/100-ecosystem-20261023.
+- PR #80 remains open, draft, unmerged; base main.
+- HEAD before this checkpoint update: 86e902c08fe536e33ca67812a2d185bcd4f0a6f7.
+- After this checkpoint commit, read PR #80 head_sha and update mirror CANONICAL_COMMIT.txt to that exact SHA before crediting final evidence.
+
+### NEXT
+1. Pin mirror to the new checkpoint SHA and rerun exact-SHA verification.
+2. Fix any failure in --locked, toolchain, workspace/network tests or Windows.
+3. Finish Android emulator boot and inspect ELF execution result; if it fails, fix the cause and rerun.
+4. Continue E1–E6 acceptance, then perform final forensic audit.
+
+### GATE
+**NOT PASSED — milestone 100% remains in progress.**
+
