@@ -8,8 +8,10 @@ use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const HEADER: &str = "ONE_PACKAGE_PROVENANCE_V1";
+const HEADER_V2: &str = "ONE_PACKAGE_PROVENANCE_V2";
 const MAX_PACKAGE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_PRIVATE_KEY_BYTES: usize = 256;
 const MAX_SIDECAR_BYTES: usize = 16 * 1024;
@@ -121,12 +123,10 @@ pub fn sign_artifact(artifact: &Path, publisher: &str, private_key_file: &Path) 
 
 /// Verify content integrity, the Ed25519 signature, and the publisher-to-key trust binding.
 /// Trust store format: one publisher_id=64_hex_character_public_key entry per line.
-pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, String> {
-    let bytes = read_bounded(artifact, MAX_PACKAGE_BYTES, "package artifact")?;
-    let sidecar = sidecar_path(artifact);
-    let contents = read_bounded_text(&sidecar, MAX_SIDECAR_BYTES, &format!("provenance sidecar {}", sidecar.display()))?;
+fn parse_sidecar(contents: &str) -> Result<(&str, BTreeMap<&str, &str>), String> {
     let mut lines = contents.lines();
-    if lines.next() != Some(HEADER) {
+    let header = lines.next().ok_or_else(|| "empty provenance sidecar".to_owned())?;
+    if header != HEADER && header != HEADER_V2 {
         return Err("unsupported package provenance format".into());
     }
     let mut fields = BTreeMap::new();
@@ -134,15 +134,35 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
         let Some((key, value)) = line.split_once('=') else {
             return Err("malformed provenance field".into());
         };
-        if !matches!(key, "publisher" | "public_key" | "artifact_sha256" | "signature")
-            || fields.insert(key, value).is_some()
-        {
+        let allowed = if header == HEADER {
+            matches!(key, "publisher" | "public_key" | "artifact_sha256" | "signature")
+        } else {
+            matches!(
+                key,
+                "publisher" | "public_key" | "artifact_sha256" | "source_sha256"
+                    | "source_revision" | "one_version" | "builder_os" | "builder_arch"
+                    | "rustc_version" | "cargo_version" | "dependency_model" | "signature"
+            )
+        };
+        if !allowed || fields.insert(key, value).is_some() {
             return Err("unknown or duplicate provenance field".into());
         }
     }
-    if fields.len() != 4 {
+    let expected = if header == HEADER { 4 } else { 12 };
+    if fields.len() != expected {
         return Err("provenance sidecar is missing required fields".into());
     }
+    Ok((header, fields))
+}
+
+/// Verify content integrity, the Ed25519 signature, and the publisher-to-key trust binding.
+/// Trust store format: one publisher_id=64_hex_character_public_key entry per line.
+pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, String> {
+    let bytes = read_bounded(artifact, MAX_PACKAGE_BYTES, "package artifact")?;
+    let sidecar = sidecar_path(artifact);
+    let contents = read_bounded_text(&sidecar, MAX_SIDECAR_BYTES, &format!("provenance sidecar {}", sidecar.display()))?;
+    let (header, fields) = parse_sidecar(&contents)?;
+
     let publisher = *fields.get("publisher").ok_or("missing publisher")?;
     validate_publisher(publisher)?;
     let public_key_bytes = decode_hex::<32>(fields["public_key"], "public key")?;
@@ -154,6 +174,41 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
     if sha256_hex(&bytes) != digest.to_ascii_lowercase() {
         return Err("package artifact SHA-256 does not match its provenance sidecar".into());
     }
+
+    let message = if header == HEADER {
+        signed_message(publisher, digest)
+    } else {
+        let source_digest = fields["source_sha256"];
+        if source_digest.len() != 64 || source_digest.bytes().any(|byte| nibble(byte).is_none()) {
+            return Err("source digest must be 64 hexadecimal characters".into());
+        }
+        let source_revision = fields["source_revision"];
+        if !(40..=64).contains(&source_revision.len())
+            || !source_revision.bytes().all(|byte| byte.is_ascii_hexdigit())
+        {
+            return Err("source revision must be a full hexadecimal commit ID".into());
+        }
+        if fields["dependency_model"] != "empty-v0.1" {
+            return Err("unsupported dependency model in build provenance".into());
+        }
+        for field in ["one_version", "builder_os", "builder_arch", "rustc_version", "cargo_version"] {
+            if fields[field].is_empty() || fields[field].contains(['\n', '\r']) {
+                return Err(format!("invalid build provenance field: {field}"));
+            }
+        }
+        signed_message_v2(
+            publisher,
+            digest,
+            source_digest,
+            source_revision,
+            fields["one_version"],
+            fields["builder_os"],
+            fields["builder_arch"],
+            fields["rustc_version"],
+            fields["cargo_version"],
+            fields["dependency_model"],
+        )
+    };
 
     let trust_text = read_bounded_text(trust_store, MAX_TRUST_STORE_BYTES, "publisher trust store")?;
     let mut trusted = BTreeMap::new();
@@ -176,9 +231,31 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
     }
     let verifying_key = VerifyingKey::from_bytes(&public_key_bytes).map_err(|_| "invalid Ed25519 public key".to_owned())?;
     let signature = Signature::from_bytes(&signature_bytes);
-    let message = signed_message(publisher, digest);
     verifying_key.verify(message.as_bytes(), &signature).map_err(|_| "Ed25519 provenance signature verification failed".to_owned())?;
     Ok(publisher.to_owned())
+}
+
+/// Verify the signed attestation against the caller's exact, clean source checkout.
+pub fn verify_build_provenance(
+    artifact: &Path,
+    trust_store: &Path,
+    source_root: &Path,
+) -> Result<String, String> {
+    let publisher = verify_artifact(artifact, trust_store)?;
+    let sidecar = sidecar_path(artifact);
+    let contents = read_bounded_text(&sidecar, MAX_SIDECAR_BYTES, "provenance sidecar")?;
+    let (header, fields) = parse_sidecar(&contents)?;
+    if header != HEADER_V2 {
+        return Err("artifact-only V1 signatures do not contain source-bound build provenance".to_owned());
+    }
+    let (source_digest, source_revision) = source_snapshot(source_root)?;
+    if fields["source_sha256"] != source_digest {
+        return Err("source tree digest does not match signed build provenance".to_owned());
+    }
+    if fields["source_revision"] != source_revision {
+        return Err("source Git revision does not match signed build provenance".to_owned());
+    }
+    Ok(publisher)
 }
 
 #[cfg(test)]
