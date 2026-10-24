@@ -195,3 +195,13 @@ Authoritative milestone-100 state is in docs/verification/one-completion-ledger.
 - Latest source before the checkpoint docs update was 9f2eae322104ecd4a655b4e5673e329ca537100f; the mirror selector must be repinned to the next exact checkpoint SHA.
 - E2 registry resolution/publisher authentication, E4 cross-platform confinement, E5 full release readiness and E6 final audit remain open.
 
+## 2026-10-24 continuation pointer — bounded provenance reads
+
+Authoritative milestone-100 records: `docs/verification/one-completion-ledger.md` and `docs/verification/one-milestone-100-session-checkpoint.md`.
+
+- Implementation subtotal is **88/100 provisional**; verified subtotal remains **60/100**. Fixed scoring weights unchanged.
+- Package signing/verification now bounds artifact, key, sidecar and trust-store reads to 64 MiB, 256 bytes, 16 KiB and 1 MiB respectively; a regression test rejects oversized input.
+- On source SHA `0a0f250dfc2e556bca40f2201752ee5d06f56854`, focused stdlib/database and Ubuntu/Debian distro workflows passed using Rust 1.99.0 and Cargo --locked.
+- Exact-SHA Windows and Android AArch64 emulator runs remain in progress. E2 external dependency resolution and E4 cross-platform root confinement remain incomplete.
+- The checkpoint commit advances the source SHA; rerun exact-SHA workflows against the final PR head before crediting the new code as verified.
+- Gate: **NOT PASSED**.
