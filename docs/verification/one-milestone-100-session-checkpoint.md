@@ -782,3 +782,44 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 ### GATE
 **NOT PASSED — milestone 100% remains in progress.**
+
+
+## 2026-10-24 — Prompt 1/4 continuation: E1 JSON regression attempt
+
+### MILESTONE
+Prompt 1/4 — E1 standard-library contract audit and regression-test foundation. This checkpoint is **not a completed milestone**.
+
+### LIVE STATE
+- Branch: `milestone/100-ecosystem-20261023`.
+- PR #80 remains open, draft, and unmerged; base branch is `main`.
+- The historical checkpoint SHA `54f3de667e05075805fcc5cd5dc621b653075667` is no longer the branch HEAD.
+- Source changes made during this continuation:
+  - `crates/one-core/src/stdlib.rs`: added a regression test for malformed JSON string escapes, invalid surrogate pairs, invalid container syntax, trailing input, invalid integer forms, and valid negative zero.
+  - Follow-up commits corrected the test fixture encoding and removed an extra closing brace.
+- Test-related commits: `d4aefb440f787910c0f7b4132f880160c41c5966`, `376bf49a8ced6e2fd64184ef4393f79f75ebf724`, `7502ffbb92d71bf01964a2f3c468563d3b91654e`, and syntax correction `9a9e31180bb37227ace697433a6a24313a695ddf`.
+- Ledger documentation update: `52cbfc2243f92407f4e8a0c8c11b016d7f95d0de`.
+- Current source branch HEAD at time of this checkpoint: `52cbfc2243f92407f4e8a0c8c11b016d7f95d0de`.
+
+### EVIDENCE
+- Focused standard-library workflow after the regression-test changes: [run 40099262558](https://github.com/panglimanetizen01/one/actions/runs/40099262558), conclusion FAILURE.
+- Workspace CI: [run 40099262555](https://github.com/panglimanetizen01/one/actions/runs/40099262555), conclusion FAILURE.
+- Linux distribution conformance: [run 40099262553](https://github.com/panglimanetizen01/one/actions/runs/40099262553), conclusion FAILURE.
+- The available GitHub connector returned no job step details and could not retrieve the job log blobs (404). Therefore the failure cause for these attempts is UNKNOWN from the accessible evidence. Do not call these runs green or claim that the new test executed successfully.
+- Subsequent workflow attempts were triggered by the syntax correction and ledger update; they must be inspected against the resulting final HEAD. Any result from a prior SHA is historical evidence only.
+
+### E1 STATUS
+- **IMPLEMENTED: PARTIAL (unchanged at 7/10). VERIFIED: 0/10.**
+- The standard-library specification explicitly includes deterministic bounded JSON conversion and strict UTC conversion, text/list/map helpers, checked arithmetic, stable errors, and compatibility across reference interpreter/compiler backends.
+- The new regression test is a test addition, not proof that the contract passes. The full public API inventory and complete contract acceptance have not been established in this session.
+- Do not award verified points until the required tests execute successfully on an identified SHA and broader E1 acceptance is demonstrated.
+
+### BLOCKERS / NEXT ACTIONS
+1. Inspect the exact failed workflow jobs for current HEAD using a GitHub connection that can read private-repository Actions logs; distinguish runner/permission failures from compiler/test failures.
+2. Run the focused standard-library test and workspace checks successfully on the exact candidate SHA. If Actions remains unavailable, run the repository-prescribed offline verifier in an authorized checkout and record it as offline evidence, not hosted CI.
+3. Verify the new JSON test fixtures compile and behave as intended; fix any actual assertion or parser defects, then rerun the tests.
+4. Complete the API-by-API acceptance matrix from `docs/spec/one-v0.1-standard-library.md`, including positive/negative inputs, limits, overflow, determinism, diagnostics, and backend compatibility.
+5. Rerun required checks after the latest ledger/checkpoint documentation commits and reconcile E5's historical exact-SHA evidence without granting it current-SHA acceptance prematurely.
+6. Continue to E3 platform matrix only after tracking its separate Android AArch64 ELF execution requirement.
+
+### GATE
+**NOT PASSED — Prompt 1/4 remains in progress. No final release claim is authorized.**
