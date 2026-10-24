@@ -69,6 +69,15 @@ fn build_native_menghasilkan_dan_menjalankan_elf_android_aarch64() {
         .expect("backend harus menghasilkan artifact native");
     assert!(artifact.path.is_file(), "artifact Android tidak dibuat");
 
+    // Assert the actual artifact format/architecture before handing it to Android.
+    // A successful cross-build alone must not be confused with runtime acceptance.
+    let elf = fs::read(&artifact.path).expect("artifact ELF harus dapat dibaca");
+    assert!(elf.len() >= 20, "artifact terlalu pendek untuk header ELF");
+    assert_eq!(&elf[0..4], b"\x7fELF", "artifact harus ELF");
+    assert_eq!(elf[4], 2, "artifact harus ELFCLASS64");
+    assert_eq!(elf[5], 1, "artifact harus little-endian");
+    assert_eq!(u16::from_le_bytes([elf[18], elf[19]]), 183, "e_machine harus EM_AARCH64");
+
     let adb = std::env::var("ONE_ANDROID_ADB")
         .expect("ONE_ANDROID_ADB harus menunjuk ke adb yang terhubung ke emulator Android");
     let remote = format!("/data/local/tmp/one-native-test-{}", std::process::id());
