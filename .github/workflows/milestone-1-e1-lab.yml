@@ -1,0 +1,74 @@
+name: ONE Milestone 1 — E1 Standard Library Test Lab
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ milestone/100-ecosystem-20261023 ]
+    paths:
+      - "crates/one-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "tools/check_contract.py"
+      - "tools/milestone1-e1-lab.sh"
+      - ".github/workflows/milestone-1-e1-lab.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "crates/one-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "tools/check_contract.py"
+      - "tools/milestone1-e1-lab.sh"
+      - ".github/workflows/milestone-1-e1-lab.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-milestone-1-e1-lab-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  e1-focused-and-workspace:
+    name: E1 contract, regression, workspace, and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact candidate revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.99.0
+          components: rustfmt, clippy
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Print exact revision and toolchain
+        run: |
+          git rev-parse HEAD
+          rustc --version
+          cargo --version
+      - name: Rust formatting check
+        run: cargo fmt --all -- --check
+      - name: E1 standard-library integration regression suite
+        run: cargo --locked test -p one-core --test stdlib_builtins
+      - name: E1 standard-library library unit suite
+        run: cargo --locked test -p one-core --lib
+      - name: Full workspace tests
+        run: cargo --locked test --workspace --all-targets
+      - name: Workspace Clippy with warnings denied
+        run: cargo --locked clippy --workspace --all-targets -- -D warnings
+      - name: Repository contract checker
+        run: python3 tools/check_contract.py
+      - name: Record test-lab evidence
+        if: always()
+        run: |
+          {
+            echo "## Milestone 1 / E1 test lab"
+            echo "- Commit: `$(git rev-parse HEAD)`"
+            echo "- Rust: `$(rustc --version)`"
+            echo "- Cargo: `$(cargo --version)`"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "$GITHUB_STEP_SUMMARY"
