@@ -528,7 +528,7 @@ fn runtime_diagnostics_are_deterministic_for_identical_invalid_calls() {
 
 #[test]
 fn mapping_builtins_work_in_default_parser_after_json_construction() {
-    let source = r#"data adalah nilai dari json dengan "{\\"z\\":1,\\"a\\":2}"
+    let source = r#"data adalah nilai dari json dengan "{\"z\":1,\"a\":2}"
 lama adalah nilai pemetaan dengan data dan "a"
 baru adalah atur pemetaan dengan data dan "b" dan 3
 hasil adalah ubah nilai ke json dengan baru
