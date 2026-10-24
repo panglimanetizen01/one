@@ -15,7 +15,7 @@ fn read_source_bounded(file: std::fs::File, limit: u64, label: &str) -> Result<S
         .read_to_string(&mut source)
         .map_err(|error| format!("Tidak dapat membaca {label}: {error}"))?;
     if source.len() as u64 > limit {
-        return Err(format!("Ukuran {label} melampaui batas {} MiB.", limit / (1024 * 1024)));
+        return Err(format!("Ukuran {label} melampaui batas {limit} byte."));
     }
     Ok(source)
 }
@@ -312,7 +312,7 @@ mod tests {
         file.write_all(b"12345").unwrap();
         drop(file);
         let file = std::fs::File::open(&path).unwrap();
-        assert!(read_source_bounded(file, 4, "test source").unwrap_err().contains("4 MiB"));
+        assert!(read_source_bounded(file, 4, "test source").unwrap_err().contains("4 byte"));
         let file = std::fs::File::open(&path).unwrap();
         assert_eq!(read_source_bounded(file, 5, "test source").unwrap(), "12345");
         let _ = std::fs::remove_file(path);
