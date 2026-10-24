@@ -87,7 +87,40 @@ fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     Ok(file)
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
+fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
+    use std::fs::OpenOptions;
+    use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
+
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
+    const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+
+    let lexical = windows_lexical_absolute(path)?;
+    let canonical = std::fs::canonicalize(path)?;
+    if windows_normalized_path(&canonical.to_string_lossy())
+        != windows_normalized_path(&lexical.to_string_lossy())
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "target resolves through a reparse point or non-canonical path",
+        ));
+    }
+    let file = OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
+        .open(path)?;
+    let metadata = file.metadata()?;
+    if !metadata.is_file() || metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "target is not a regular non-reparse file",
+        ));
+    }
+    windows_validate_opened_file(&file, &canonical)?;
+    Ok(file)
+}
+
+#[cfg(not(any(unix, windows)))]
 fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     std::fs::File::open(path)
 }
@@ -117,9 +150,213 @@ fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     Ok(file)
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
+fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
+    use std::fs::{self, OpenOptions};
+    use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
+
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
+    const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+
+    match fs::symlink_metadata(path) {
+        Ok(existing) => {
+            if existing.file_type().is_symlink() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "target must not be a symlink",
+                ));
+            }
+            let lexical = windows_lexical_absolute(path)?;
+            let canonical = fs::canonicalize(path)?;
+            if windows_normalized_path(&canonical.to_string_lossy())
+                != windows_normalized_path(&lexical.to_string_lossy())
+            {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "target resolves through a reparse point or non-canonical path",
+                ));
+            }
+            let file = OpenOptions::new()
+                .write(true)
+                .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
+                .open(path)?;
+            let metadata = file.metadata()?;
+            if !metadata.is_file() || metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "target is not a regular non-reparse file",
+                ));
+            }
+            windows_validate_opened_file(&file, &canonical)?;
+            file.set_len(0)?;
+            Ok(file)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            let lexical = windows_lexical_absolute(path)?;
+            let parent = path.parent().filter(|value| !value.as_os_str().is_empty()).unwrap_or(Path::new("."));
+            let lexical_parent = windows_lexical_absolute(parent)?;
+            let canonical_parent = fs::canonicalize(parent)?;
+            if windows_normalized_path(&canonical_parent.to_string_lossy())
+                != windows_normalized_path(&lexical_parent.to_string_lossy())
+            {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "parent resolves through a reparse point or non-canonical path",
+                ));
+            }
+            let name = path.file_name().ok_or_else(|| {
+                std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required")
+            })?;
+            let expected = canonical_parent.join(name);
+            if windows_normalized_path(&expected.to_string_lossy())
+                != windows_normalized_path(&lexical.to_string_lossy())
+            {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "target parent changed during path resolution",
+                ));
+            }
+            let file = OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
+                .open(path)?;
+            if let Err(validation_error) = windows_validate_opened_file(&file, &expected) {
+                windows_delete_opened_file(&file);
+                return Err(validation_error);
+            }
+            Ok(file)
+        }
+        Err(error) => Err(error),
+    }
+}
+
+#[cfg(not(any(unix, windows)))]
 fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     std::fs::OpenOptions::new().write(true).create(true).truncate(true).open(path)
+}
+
+#[cfg(windows)]
+fn windows_lexical_absolute(path: &Path) -> std::io::Result<std::path::PathBuf> {
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()?.join(path)
+    };
+    let mut normalized = std::path::PathBuf::new();
+    for component in absolute.components() {
+        match component {
+            Component::Prefix(prefix) => normalized.push(prefix.as_os_str()),
+            Component::RootDir => normalized.push(component.as_os_str()),
+            Component::CurDir => {}
+            Component::ParentDir => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "parent path components are forbidden",
+                ));
+            }
+            Component::Normal(name) => normalized.push(name),
+        }
+    }
+    Ok(normalized)
+}
+
+#[cfg(windows)]
+fn windows_normalized_path(path: &str) -> String {
+    let value = path.replace('/', "\\").to_ascii_lowercase();
+    let value = if let Some(rest) = value.strip_prefix("\\\\?\\unc\\") {
+        format!("\\\\{rest}")
+    } else if let Some(rest) = value.strip_prefix("\\\\?\\") {
+        rest.to_owned()
+    } else {
+        value
+    };
+    value.trim_end_matches('\\').to_owned()
+}
+
+#[cfg(windows)]
+fn windows_final_path(file: &std::fs::File) -> std::io::Result<String> {
+    use std::os::windows::io::AsRawHandle;
+
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetFinalPathNameByHandleW(
+            file: *mut std::ffi::c_void,
+            path: *mut u16,
+            length: u32,
+            flags: u32,
+        ) -> u32;
+    }
+
+    let mut buffer = vec![0u16; 32_768];
+    // SAFETY: the handle is live and buffer is writable for its declared length.
+    let length = unsafe {
+        GetFinalPathNameByHandleW(
+            file.as_raw_handle() as *mut std::ffi::c_void,
+            buffer.as_mut_ptr(),
+            buffer.len() as u32,
+            0,
+        )
+    };
+    if length == 0 || length as usize >= buffer.len() {
+        return Err(std::io::Error::last_os_error());
+    }
+    buffer.truncate(length as usize);
+    String::from_utf16(&buffer).map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, "invalid UTF-16 final handle path")
+    })
+}
+
+#[cfg(windows)]
+fn windows_validate_opened_file(
+    file: &std::fs::File,
+    expected: &Path,
+) -> std::io::Result<()> {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
+    let metadata = file.metadata()?;
+    if !metadata.is_file() || metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "opened target is not a regular non-reparse file",
+        ));
+    }
+    let actual = windows_normalized_path(&windows_final_path(file)?);
+    if actual != windows_normalized_path(&expected.to_string_lossy()) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "opened handle resolved to a different path",
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn windows_delete_opened_file(file: &std::fs::File) {
+    use std::os::windows::io::AsRawHandle;
+    #[repr(C)]
+    struct FileDispositionInfo {
+        delete_file: u8,
+    }
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn SetFileInformationByHandle(
+            file: *mut std::ffi::c_void,
+            class: i32,
+            information: *const std::ffi::c_void,
+            size: u32,
+        ) -> i32;
+    }
+    let information = FileDispositionInfo { delete_file: 1 };
+    // SAFETY: information is a correctly sized FILE_DISPOSITION_INFO and the handle is live.
+    let _ = unsafe {
+        SetFileInformationByHandle(
+            file.as_raw_handle() as *mut std::ffi::c_void,
+            4,
+            &information as *const FileDispositionInfo as *const std::ffi::c_void,
+            std::mem::size_of::<FileDispositionInfo>() as u32,
+        )
+    };
 }
 
 use crate::capability::{Capability, CapabilitySet};
