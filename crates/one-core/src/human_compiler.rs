@@ -20,7 +20,7 @@ fn read_source_bounded(file: std::fs::File, limit: u64, label: &str) -> Result<S
     Ok(source)
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(unix)]
 fn read_confined_module(
     root_dir: &std::path::Path,
     current_file: &std::path::Path,
@@ -99,7 +99,7 @@ fn read_confined_module(
     Err("Jalur modul tidak valid.".to_owned())
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "android")))]
+#[cfg(not(unix))]
 fn read_confined_module(
     root_dir: &std::path::Path,
     _current_file: &std::path::Path,
@@ -328,7 +328,7 @@ mod tests {
         let _ = std::fs::remove_file(path);
     }
 
-    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[cfg(unix)]
     #[test]
     fn confined_module_reader_rejects_parent_traversal() {
         let base = std::env::temp_dir().join(format!(
@@ -349,7 +349,7 @@ mod tests {
         std::fs::remove_dir_all(base).unwrap();
     }
 
-    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[cfg(unix)]
     #[test]
     fn confined_module_reader_rejects_symlink_escape() {
         use std::os::unix::fs::symlink;
