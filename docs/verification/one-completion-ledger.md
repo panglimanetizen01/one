@@ -431,3 +431,11 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - Candidate source was advanced by the Definition of Done document. The independent verification selector must pin the resulting commit SHA and rerun cross-platform, Linux distro, focused standard-library/database/provenance, lockfile, and Android workflows. Results from earlier source revisions are historical only.
 - Do not make further source changes after the next candidate SHA is selected unless a required test reveals a real defect. Any defect fix creates a new candidate and requires the exact-SHA matrix to be rerun.
 - Outstanding acceptance is unchanged: E1–E6 row-level verification is not complete; protected signing/trust-store dispatch has not been exercised; Android AArch64 ELF runtime has not passed; E4 full threat/root-confinement review is open. **No release authorization.**
+
+
+## 2026-10-24 — SQLite final-symlink hardening follow-up
+
+- Security review found that the SQLite adapter performed a path precheck and then reopened the path through SQLite, leaving a final-component symlink time-of-check/time-of-use window.
+- File-backed SQLite connections now combine `SQLITE_OPEN_READ_ONLY` with `SQLITE_OPEN_NOFOLLOW`; a Unix regression checks that SQLite rejects a final symlink and that the adapter denies the target.
+- This is defense in depth only: it does not eliminate parent-component races or establish root confinement across mount points/platforms. E4 verified credit remains **0/6** until the complete scoped security review and exact-SHA matrix pass.
+- The reusable Definition of Done no longer embeds an old candidate SHA. The next source commit is the freeze candidate for the independent matrix. **Implementation 90/100; verified 60/100; gate NOT PASSED.**
