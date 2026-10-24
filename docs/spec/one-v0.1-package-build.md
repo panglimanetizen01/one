@@ -42,7 +42,7 @@ Caches are keyed by complete declared semantic inputs. Cache hits must not depen
 
 ## 10. Artifact provenance
 
-Final artifacts retain enough provenance to identify language version, toolchain version, target, and source/dependency lock state. **The executable v0.1 `.oneir` and `.onepkg` artifacts are intentionally debug/intermediate artifacts and do not yet satisfy the full provenance envelope; this is a documented limitation, not an unsupported claim.**
+The package artifact itself is deterministic content, not a self-authenticating release. The milestone-100 V2 sidecar supplies a separate authenticated source-bound build attestation when signed with a trusted publisher key; an artifact without a verified sidecar is not authenticated.
 
 ## 10A. Experimental human-core packaging extension (milestone 100)
 
@@ -82,5 +82,5 @@ The CLI now provides additive commands to sign and verify an existing package ar
 - SHA-256 is used as the signed content identifier, not as a substitute for the signature. Verification fails closed for changed bytes, unknown publishers, key mismatches, malformed sidecars, and invalid signatures.
 - Signing and verification bound package reads to 64 MiB, private-key seed reads to 256 bytes, provenance sidecars to 16 KiB, and trust-store reads to 1 MiB. Inputs beyond these limits are rejected before complete allocation.
 
-This closes the artifact-signature and trusted-publisher verification slice, but it does not yet implement an external One package registry, dependency graph resolution/version-conflict handling, automatic signing as part of one package, or a full build-provenance envelope. The signed sidecar must be verified against a trust store delivered through an independently trusted channel. E2 remains open until dependency resolution and release integration are implemented and verified.
+The V2 sidecar implements source-bound authenticated provenance for the normative v0.1 empty-dependency package contract. It intentionally does not implement an external One package registry or dependency graph/version-conflict resolution: those are outside the executable v0.1 subset, and unsupported dependency declarations fail closed. Signing remains an explicit release step because private keys must not be embedded in `one package`; the release process must sign the final artifact and verify it against a trust store delivered through an independently trusted channel. Artifact-only V1 signatures are not sufficient for the milestone E2 source-provenance criterion.
 
