@@ -281,12 +281,18 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
         assert!(output.status.success(), "git fixture setup failed: {}", String::from_utf8_lossy(&output.stderr));
     }
 
-    let artifact = root.join("demo.onepkg");
+    let packaged = run(&["package", source_root.to_str().unwrap()]);
+    assert!(
+        packaged.status.success(),
+        "package command failed: {}",
+        String::from_utf8_lossy(&packaged.stderr)
+    );
+    let artifact = source_root.join("target/demo-0.1.0.onepkg");
+    assert!(artifact.is_file(), "package command did not produce the final artifact");
+
     let private_key = root.join("publisher.seed");
     let trust_store = root.join("trusted-publishers.txt");
     let untrusted_store = root.join("untrusted-publishers.txt");
-    let artifact_bytes = b"One package v0.1\npackage payload";
-    fs::write(&artifact, artifact_bytes).unwrap();
 
     let seed = [7u8; 32];
     let signing_key = SigningKey::from_bytes(&seed);
