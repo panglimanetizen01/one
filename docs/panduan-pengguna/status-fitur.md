@@ -43,3 +43,8 @@ Post-merge `One CI` run `39371290853` tidak menghasilkan execution evidence: ked
 HTTP methods/HTTPS/API features yang lebih luas, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
 
 Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implementation-status.md` dan `docs/verification/one-v0.1-evidence-matrix.md`.
+
+
+## Candidate milestone 100 — 2026-10-24
+
+The active candidate is PR #80 on `milestone/100-ecosystem-20261023`. It now includes a CLI filesystem `--root` policy boundary and a protected manual package-provenance release workflow. These are implementation additions, not a final release claim. The candidate remains **Dalam pengembangan** until the latest exact-SHA Linux/Windows and Android AArch64 execution gates complete, the full E1–E6 ledger is accepted, and the protected release environment is exercised with independently provisioned trust material. Historical SHA/run references above apply only to the revisions explicitly named there.
