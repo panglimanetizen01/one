@@ -156,7 +156,7 @@ impl ToolAdapter for SqliteAdapter {
         // DatabaseQuery is a read-only effect. Keep in-memory queries available for
         // deterministic tests, but never create or open a file-backed database writable.
         if path != ":memory:" {
-            crate::adapter::validate_filesystem_target(std::path::Path::new(path))
+            crate::adapter::validate_filesystem_target(path)
                 .map_err(|_| AdapterError::InvalidArguments)?;
             let metadata = std::fs::symlink_metadata(path).map_err(|_| AdapterError::BackendFailure)?;
             if metadata.file_type().is_symlink() || !metadata.is_file() {
@@ -311,7 +311,7 @@ mod tests {
 
     #[test]
     fn sqlite_adapter_enforces_engine_value_limit() {
-        let sql = format!("SELECT randomblob({})", MAX_DATABASE_VALUE_BYTES + 1);
+        let sql = format!("SELECT randomblob({})", MAX_DATABASE_VALUE_BYTES + 64 * 1024 + 1);
         let result = SqliteAdapter::new().invoke(&select_request(std::path::Path::new(":memory:"), sql));
         assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
     }
