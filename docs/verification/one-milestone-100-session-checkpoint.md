@@ -257,3 +257,57 @@ The earlier 68/100 verified subtotal credited E3's 8 points based on Linux/Windo
 - Cross-platform [40009389190](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389190) — Ubuntu and Windows SUCCESS, exact source SHA verified in both logs. Build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; each platform printed `OFFLINE VERIFICATION: PASS`.
 - Main workspace summaries show 215 passed / 0 failed on Ubuntu and 210 passed / 0 failed on Windows. The separate Android ELF build-and-execute test remains ignored on both platforms; no Android runtime pass is claimed. Canonical repository Actions still fail before steps with `runner_id=0`.
 - **Gate: NOT PASSED** — external dependency resolution/provenance, broader stdlib, race-resistant filesystem/resource security, developer tooling/docs, Android runtime acceptance if required by the declared target contract, and E6 forensic audit remain outstanding.
+
+## 2026-10-24 execution checkpoint — E3/E4 implementation slices
+
+### MILESTONE
+Milestone 100 — ecosystem and release quality. Active scope remains E1–E6 only.
+
+### COMPLETION
+- Implementation: **85/100 provisional** (fixed ledger weights retained; E4 implementation moved 3/6 → 4/6 because Linux/Android descriptor-relative no-follow opens are now wired into the file adapters and regression tests are present).
+- Verified: **60/100**. No new verified points were awarded because the new code has not yet completed exact-SHA verification and the overall E1–E6 acceptance remains incomplete.
+- The user's initial 82/100, prior 84/100 implementation, and 60/100 verified values are not interchangeable; 85/100 is the current provisional implementation subtotal only.
+
+### DONE
+- crates/one-core/tests/native_backend_android_aarch64.rs: Android runtime acceptance now checks ELF magic, ELFCLASS64, little-endian encoding, and AArch64 machine ID before pushing and executing the binary.
+- .github/workflows/ci.yml: added a dedicated Android API 35 arm64 emulator job to explicitly execute the previously ignored ELF build-and-run acceptance test.
+- crates/one-core/Cargo.toml and crates/one-core/src/adapter.rs: added the direct libc dependency and Linux/Android directory-descriptor traversal with no-follow opens for parent components and final files.
+- crates/one-core/src/adapter.rs: added regression tests for symlinked parent directories, final-component read symlinks, and rejected write symlinks leaving the referent unchanged.
+- docs/SECURITY.md: documented the actual Linux/Android guarantee and the remaining platform/confinement boundaries.
+- crates/one-cli/tests/cli.rs: added a regression test that unsupported dependency declarations fail closed rather than being silently ignored.
+- Independent verification mirror .github/workflows/windows-verification.yml: added an exact-SHA Android AArch64 emulator job and pinned CANONICAL_COMMIT.txt to source SHA 6361461a81718594c78921abb3106b1fdf86e1c5 before the final CLI regression was added. That selector is stale relative to the current source and must be updated to the final checkpoint SHA before evidence can be credited.
+- Completion ledger updated at commit fb5ffdc542e850b25ed967f6512d1799aea9377e.
+
+### EVIDENCE
+- Code-bearing source SHA before documentation checkpoint commits: b5c3827840a691868a69428ae4032614407f1062.
+- Canonical workflow runs for prior source SHA 6361461a81718594c78921abb3106b1fdf86e1c5:
+  - One CI run 40051833403 — failed before steps; Android, Ubuntu, and Windows jobs had empty step lists.
+  - Linux distro run 40051833390 — failed before steps; Ubuntu and Debian jobs had empty step lists.
+  - Focused stdlib run 40051833400 — failed before steps; empty step list.
+- These canonical failures are runner-provisioning failures, not source pass/fail evidence. The mirror is the fallback, but its current run must be inspected for exact source SHA, Android runtime job result, Ubuntu/Windows job results, and ignored/skipped counts.
+- Android ELF execution and new filesystem regression tests on the current source SHA: **NOT YET VERIFIED**.
+
+### REMAINING
+- E1: complete standard-library acceptance, only where existing contracts require it.
+- E2: external dependency/registry resolution, committed deterministic lock state, signed publisher identity and authenticated provenance remain unimplemented; the new test only confirms unsupported declarations fail closed.
+- E3: actual Android AArch64 ELF execution must pass on an Android arm64 runtime; a build-only result is insufficient.
+- E4: Windows/macOS race-resistant path resolution, explicit confinement root, broader resource quotas, and complete threat/recovery review remain open.
+- E5: full compatibility/release/tooling/documentation acceptance remains open.
+- E6: final forensic Definition-of-Done audit remains open and must follow the E1–E5 evidence review.
+
+### GIT STATE
+- Repository: panglimanetizen01/one.
+- Branch: milestone/100-ecosystem-20261023.
+- PR #80: open, draft, unmerged; base main; no merge performed.
+- HEAD before this checkpoint update: fb5ffdc542e850b25ed967f6512d1799aea9377e (ledger/checkpoint evidence commit).
+- After this checkpoint update, re-read PR #80 head_sha, pin the mirror selector to that exact SHA, and inspect workflow logs before updating verified score.
+
+### NEXT
+1. Pin the mirror to the new checkpoint commit SHA and inspect exact-SHA cross-platform, distro, focused stdlib, and Android emulator job logs.
+2. Fix any compilation, Clippy, test, or emulator failure and rerun on the corrected SHA.
+3. Continue only with demonstrated E1–E6 gaps; do not credit E3 until ELF execution succeeds.
+4. Keep E2, non-Linux/Android filesystem security, and E6 open until their full acceptance evidence exists.
+
+### GATE
+**NOT PASSED — milestone 100% remains in progress.**
+
