@@ -6,6 +6,97 @@
 //! implement a second evaluator or reinterpret expressions at runtime.
 use crate::{Diagnostic, DiagnosticBundle, IrProgram};
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn read_confined_module(
+    root_dir: &std::path::Path,
+    current_file: &std::path::Path,
+    relative_path: &std::path::Path,
+    _candidate: &std::path::Path,
+) -> Result<String, String> {
+    use std::ffi::CString;
+    use std::fs::File;
+    use std::io::Read;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+
+    let root_path = CString::new(root_dir.as_os_str().as_bytes())
+        .map_err(|_| "Direktori proyek memiliki byte NUL.".to_owned())?;
+    let root_fd = unsafe {
+        libc::open(
+            root_path.as_ptr(),
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+        )
+    };
+    if root_fd < 0 {
+        return Err(format!("Tidak dapat membuka direktori proyek dengan aman: {}", std::io::Error::last_os_error()));
+    }
+    // SAFETY: root_fd is a newly opened descriptor and ownership moves into File.
+    let mut current = unsafe { File::from_raw_fd(root_fd) };
+
+    let base = current_file
+        .parent()
+        .unwrap_or(root_dir)
+        .strip_prefix(root_dir)
+        .map_err(|_| "Modul berada di luar direktori proyek.".to_owned())?;
+    let mut components = Vec::new();
+    for component in base.components().chain(relative_path.components()) {
+        match component {
+            std::path::Component::Normal(value) => components.push(value.to_os_string()),
+            std::path::Component::CurDir => {}
+            _ => return Err("Jalur modul harus tetap berada di dalam direktori proyek.".to_owned()),
+        }
+    }
+    if components.is_empty() {
+        return Err("Jalur modul kosong.".to_owned());
+    }
+
+    for (index, component) in components.iter().enumerate() {
+        let name = CString::new(component.as_os_str().as_bytes())
+            .map_err(|_| "Nama modul memiliki byte NUL.".to_owned())?;
+        let final_component = index + 1 == components.len();
+        let mut flags = libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK;
+        if !final_component {
+            flags |= libc::O_DIRECTORY;
+        }
+        let fd = unsafe { libc::openat(current.as_raw_fd(), name.as_ptr(), flags) };
+        if fd < 0 {
+            return Err(format!("Tidak dapat membuka komponen modul '{}' tanpa mengikuti symlink: {}", component.to_string_lossy(), std::io::Error::last_os_error()));
+        }
+        // SAFETY: fd is a newly opened descriptor and ownership moves into File.
+        let opened = unsafe { File::from_raw_fd(fd) };
+        if final_component {
+            let metadata = opened.metadata().map_err(|error| format!("Tidak dapat memeriksa modul: {error}"))?;
+            if !metadata.is_file() {
+                return Err("Modul harus berupa berkas reguler.".to_owned());
+            }
+            let mut source = String::new();
+            opened.take(16 * 1024 * 1024 + 1)
+                .read_to_string(&mut source)
+                .map_err(|error| format!("Tidak dapat membaca modul: {error}"))?;
+            if source.len() > 16 * 1024 * 1024 {
+                return Err("Ukuran modul melampaui batas 16 MiB.".to_owned());
+            }
+            return Ok(source);
+        }
+        current = opened;
+    }
+    Err("Jalur modul tidak valid.".to_owned())
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+fn read_confined_module(
+    root_dir: &std::path::Path,
+    _current_file: &std::path::Path,
+    _relative_path: &std::path::Path,
+    candidate: &std::path::Path,
+) -> Result<String, String> {
+    let canonical = std::fs::canonicalize(candidate).map_err(|error| error.to_string())?;
+    if !canonical.starts_with(root_dir) {
+        return Err("Modul berada di luar direktori proyek.".to_owned());
+    }
+    std::fs::read_to_string(canonical).map_err(|error| error.to_string())
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HumanSource {
     pub name: String,
@@ -176,9 +267,9 @@ impl ModuleCollection {
                 )));
             }
             let child = canonical.parent().unwrap_or_else(|| std::path::Path::new(".")).join(relative_path);
-            let child_source = std::fs::read_to_string(&child).map_err(|error| {
+            let child_source = read_confined_module(&self.root_dir, &canonical, relative_path, &child).map_err(|error| {
                 DiagnosticBundle::single(Diagnostic::error(
-                    "HV1017", format!("Tidak dapat membaca modul '{}': {}", child.display(), error), None,
+                    "HV1017", format!("Tidak dapat membaca modul '{}' dengan aman: {}", child.display(), error), None,
                 ))
             })?;
             self.collect(&child, &child_source, false)?;
