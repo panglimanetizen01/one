@@ -27,7 +27,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.99.0
-        with:
           components: clippy
       - uses: actions/setup-python@v5
         with:
@@ -64,7 +63,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.99.0
-        with:
           components: clippy
       - name: Record environment
         run: |
