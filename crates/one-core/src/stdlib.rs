@@ -889,4 +889,36 @@ mod tests {
         let nested = format!("{}0{}", "[".repeat(129), "]".repeat(129));
         assert_eq!(json_to_value(&Value::Text(nested)), None);
     }
+
+    #[test]
+    fn json_parser_rejects_malformed_string_escapes_and_container_syntax() {
+        // JSON strings must escape control characters and use only the RFC-defined escapes.
+        for invalid in [
+            "\\\"raw\\nline\\\"",
+            "\\\"bad\\qescape\\\"",
+            "\\\"trailing slash\\\\",
+            "\\\"\\uDC00\\\"",
+            "\\\"\\uD800\\u0041\\\"",
+            "[1,]",
+            "{\\\"a\\\":1,}",
+            "{a:1}",
+            "[1] trailing",
+            "01",
+            "+1",
+            "--1",
+        ] {
+            assert_eq!(
+                json_to_value(&Value::Text(invalid.into())),
+                None,
+                "malformed JSON must be rejected: {invalid:?}"
+            );
+        }
+
+        // Negative zero is valid JSON and has the same integer value in One.
+        assert_eq!(
+            json_to_value(&Value::Text("-0".into())),
+            Some(Value::Number(0))
+        );
+    }
+
 }
