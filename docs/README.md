@@ -18,6 +18,8 @@ For people who want to **use One**, start here:
 - `panduan-pengguna/membuat-project.md` — project creation and layout.
 - `panduan-pengguna/perintah-cli.md` — current CLI commands.
 - `panduan-pengguna/test-build-package.md` — testing, build, and package boundaries.
+- `panduan-pengguna/referensi-standard-library.md` — registered source-level built-ins, parameter types, return types, and limits.
+- `panduan-pengguna/alur-pengembangan.md` — end-to-end development, exact-SHA verification, and release gates.
 - `panduan-pengguna/kesalahan-dan-debugging.md` — common mistakes and debugging.
 - `panduan-pengguna/jaringan.md` — verified network boundary.
 - `panduan-pengguna/interoperabilitas.md` — current interoperability boundary.
