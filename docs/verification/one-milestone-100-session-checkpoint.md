@@ -857,3 +857,33 @@ On source commit `e51244958228ab4257aa63ee2411e25c673a9316`:
 
 ### GATE
 **NOT PASSED — Prompt 1/4 is incomplete. No E1 verified points are awarded.**
+
+
+## 2026-10-24 — Prompt 2/4 E2 packaging/provenance acceptance audit
+
+### Candidate and immutable evidence
+- Candidate branch: `milestone/100-ecosystem-20261023`; PR #80 remains open/draft/unmerged.
+- Audited candidate SHA: `a4a146ae22c6629fe606185481055b667321d203`.
+- Package/build contract: `docs/spec/one-v0.1-package-build.md` explicitly scopes executable v0.1 to an empty external dependency set; unsupported dependency declarations must fail closed.
+- Existing implementation includes deterministic package/build and human-core module-lock tests, stale-lock rejection (`ETOOL006`), `Cargo.lock` with `cargo --locked`, Ed25519 V2 source-bound provenance, source tree digest/revision capture, and trusted-publisher verification.
+
+### Exact-SHA CI and retry outcome
+- [One CI run 40103499619](https://github.com/panglimanetizen01/one/actions/runs/40103499619), [Linux distribution run 40103499599](https://github.com/panglimanetizen01/one/actions/runs/40103499599), and [focused stdlib run 40103499595](https://github.com/panglimanetizen01/one/actions/runs/40103499595) report failure on candidate SHA `a4a146ae22c6629fe606185481055b667321d203`.
+- Their inspected jobs report `runner_id: 0` and empty step lists. A rerun request was accepted by the API, but the same jobs still expose no executable steps. Private job-log download returns `BlobNotFound`. Therefore these are runner/infrastructure evidence, not test-pass evidence and not enough to diagnose a source defect.
+- No source or workflow code was changed during this E2 audit. The ledger row was updated in commit `e808ab0dd5fd135f537101b27f3458bd331775f1` to record this evidence and preserve E2 at 0/8 verified points.
+
+### Protected release acceptance — NOT VERIFIED
+- Workflow: `.github/workflows/package-provenance-release.yml`; it requires protected GitHub Actions environment `one-release`, secret `ONE_RELEASE_SIGNING_SEED` (32-byte hex), and secret `ONE_TRUSTED_PUBLISHERS` populated from an independently authenticated publisher-key process.
+- The workflow signs the final `.onepkg` with Ed25519 V2 provenance, then verifies against the supplied trust store and exact source tree before uploading package, provenance sidecar, and SHA-256 digests.
+- The available GitHub integration does not provide a workflow-dispatch action or authorized access to environment secret values / environment protection configuration. No protected release run, trusted publisher signature, or release artifact was available to verify. Do not place secrets in chat, commits, logs, or artifacts. Do not substitute checksums for signature verification.
+- No ledger point is awarded. E2 remains **IMPLEMENTED — PARTIAL, 0/8 VERIFIED**. Do not label PASS GREEN LOCKED.
+
+### Required next actions
+1. An authorized repository administrator verifies environment reviewers and provisions the signing seed and independently sourced publisher trust store as GitHub environment secrets; no secret value should be disclosed.
+2. Dispatch `ONE Package Provenance Release` from the reviewed candidate ref using project `examples/package-release` and its trusted publisher ID; inspect approval and all job steps.
+3. Independently verify the uploaded sidecar against the separately authenticated trust store and verify source revision/tree digest, artifact digest, metadata, and package bytes. Exercise negative cases: wrong signature, untrusted publisher, source/metadata mismatch, and post-signing package mutation.
+4. Restore a functioning runner/log path; rerun focused package/provenance tests, stale-lock/determinism tests, workspace tests, lint/Clippy, contract checker, and required platform jobs against the resulting final SHA.
+5. After any source or documentation change, record the new HEAD and repeat required checks. Update DoD/checkpoint only with actual outcomes.
+
+### Gate
+**NOT PASSED — E2 remains open.** This checkpoint is an evidence record, not release authorization. Do not merge PR #80, publish a release, or alter gate status manually.
