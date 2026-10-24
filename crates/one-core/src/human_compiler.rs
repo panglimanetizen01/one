@@ -139,7 +139,7 @@ fn read_confined_module(
     // SAFETY: the file handle is live and buffer is writable for its declared length.
     let length = unsafe {
         GetFinalPathNameByHandleW(
-            file.as_raw_handle() as *mut std::ffi::c_void,
+            file.as_raw_handle(),
             buffer.as_mut_ptr(),
             buffer.len() as u32,
             0,
