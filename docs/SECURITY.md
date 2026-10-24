@@ -68,6 +68,10 @@ On Unix targets (including Linux, Android, and macOS), filesystem adapter opens 
 
 These checks reduce the check-then-open race for the implemented Unix and Windows paths, but they do **not** constitute a complete filesystem sandbox: adapter capabilities still authorize explicit target paths rather than a separately configured project root, and other non-Unix/non-Windows targets retain a standard-library fallback. Do not claim that an arbitrary target path is confined to a project root merely because symlinks are rejected.
 
+## Bounded database query execution
+
+The SQLite query adapter accepts read-only `SELECT` requests and applies layered resource limits: at most 100,000 rows, 16 MiB of rendered UTF-8 output, 1 MiB per text value, 32 result columns, 1 MiB SQL text, 256 bound parameters, a 100,000-opcode SQLite VM limit, and SQLite limits on expression depth, compound selects, function arguments, attached databases, and LIKE patterns. A 2-second progress-handler deadline and 250 ms database-lock timeout bound query execution/waiting. Blob values are rendered as hexadecimal only when the encoded value fits within the output budget. Resource-limit and SQLite size/interruption errors map to the typed `ResourceLimitExceeded` adapter error; partial results are not returned as success. These controls do not establish a complete runtime-wide quota policy or a project-root sandbox.
+
 ## Signed package provenance
 
 The CLI exposes Ed25519 signing and verification for .onepkg artifacts. V2 signing creates a .onepkg.provenance sidecar that authenticates the publisher ID, artifact SHA-256 and validated package format, deterministic source-tree digest, clean Git revision, ONE CLI version, builder OS/architecture, Rust/Cargo versions, and normative empty-dependency model in one signed message. A V2 sidecar is accepted as source-bound build provenance only when its signature verifies against a separately configured publisher trust store and the source root is rechecked. V1 artifact-only sidecars remain verifiable for compatibility, but they do not satisfy source-bound provenance acceptance. A checksum alone is never treated as authentication.
