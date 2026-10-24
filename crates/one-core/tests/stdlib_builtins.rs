@@ -289,3 +289,63 @@ tampilkan hasil
     let result = interpreter.execute(&ir).expect("mapping operations should execute");
     assert_eq!(result.output, vec![r#"{"alpha":"nilai","kunci":2}"#]);
 }
+
+
+#[test]
+fn text_and_integer_conversion_edge_contracts_reject_invalid_inputs() {
+    for source in [
+        "hasil adalah ganti teks dengan \"abc\" dan \"\" dan \"x\"\ntampilkan hasil\n",
+        "hasil adalah pisah teks dengan \"a,b\" dan \"\"\ntampilkan hasil\n",
+        "hasil adalah ubah teks ke angka dengan \" 42\"\ntampilkan hasil\n",
+        "hasil adalah ubah teks ke angka dengan \"9223372036854775808\"\ntampilkan hasil\n",
+    ] {
+        let error = run(source).expect_err("invalid text/integer input must fail closed");
+        assert!(error.contains("R3022"), "unexpected diagnostic for {source:?}: {error}");
+    }
+
+    let source = "awal adalah waktu utc dari unix dengan -62167219200\nakhir adalah waktu utc dari unix dengan 253402300799\ntampilkan awal\ntampilkan akhir\n";
+    assert_eq!(
+        run(source).expect("UTC formatter must cover the full documented year range"),
+        vec!["0000-01-01T00:00:00Z", "9999-12-31T23:59:59Z"]
+    );
+}
+
+#[test]
+fn utc_parser_rejects_noncanonical_time_forms() {
+    for value in [
+        "2024-01-01T00:00:00+00:00",
+        "2024-01-01T00:00:00.000Z",
+        "2024-01-01T00:00:60Z",
+        "2024-1-01T00:00:00Z",
+        "2023-02-29T00:00:00Z",
+    ] {
+        let source = format!(
+            "hasil adalah unix dari waktu utc dengan \"{}\"\ntampilkan hasil\n",
+            value
+        );
+        let error = run(&source).expect_err("noncanonical UTC form must be rejected");
+        assert!(error.contains("R3022"), "unexpected diagnostic for {value:?}: {error}");
+    }
+}
+
+#[test]
+fn checked_numeric_and_collection_edges_return_typed_runtime_errors() {
+    let min_i64 = "minimum adalah 0 dikurangi 9223372036854775807 dikurangi 1\n";
+    for suffix in [
+        "hasil adalah nilai mutlak dengan minimum\ntampilkan hasil\n",
+        "minus satu adalah 0 dikurangi 1\nhasil adalah bagi bulat dengan minimum dan minus satu\ntampilkan hasil\n",
+        "buat daftar angka\ntambahkan 9223372036854775807 ke angka\ntambahkan 1 ke angka\nhasil adalah jumlah daftar angka dengan angka\ntampilkan hasil\n",
+        "buat daftar angka\nhasil adalah ambil indeks dengan angka dan 0\ntampilkan hasil\n",
+    ] {
+        let error = run(&format!("{min_i64}{suffix}"))
+            .expect_err("overflow, invalid index, or non-integer collection contract must fail");
+        assert!(
+            error.contains("R3022") || error.contains("R3023"),
+            "unexpected diagnostic for {suffix:?}: {error}"
+        );
+    }
+
+    let wrong_list_sum = "buat daftar angka\ntambahkan \"teks\" ke angka\nhasil adalah jumlah daftar angka dengan angka\ntampilkan hasil\n";
+    let error = run(wrong_list_sum).expect_err("non-integer sum item must fail");
+    assert!(error.contains("R3022") || error.contains("R3023"), "unexpected diagnostic: {error}");
+}
