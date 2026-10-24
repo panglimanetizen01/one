@@ -94,7 +94,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses
+          yes | sdkmanager --licenses || true
           sdkmanager --install "ndk;27.2.12479018"
           test -x "$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
       - name: Build and execute ELF AArch64 on Android emulator
