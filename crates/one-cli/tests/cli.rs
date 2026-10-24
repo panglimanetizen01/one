@@ -21,10 +21,13 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
 #[test]
 fn filesystem_root_scope_allows_inside_and_denies_outside_targets() {
     let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    let root = std::env::temp_dir().join(format!("one-filesystem-root-{source_id}"));
+    // Use the checked-out workspace rather than the Windows temp directory,
+    // which may itself resolve through a reparse point rejected by the adapter.
+    let workspace = std::env::current_dir().unwrap();
+    let root = workspace.join(format!("one-filesystem-root-{source_id}"));
     let inside = root.join("inside.txt");
-    let outside = std::env::temp_dir().join(format!("one-filesystem-outside-{source_id}.txt"));
-    let source = std::env::temp_dir().join(format!("one-filesystem-root-source-{source_id}.one"));
+    let outside = workspace.join(format!("one-filesystem-outside-{source_id}.txt"));
+    let source = workspace.join(format!("one-filesystem-root-source-{source_id}.one"));
     fs::create_dir_all(&root).unwrap();
     fs::write(&inside, "inside root\n").unwrap();
     fs::write(&outside, "outside root\n").unwrap();
