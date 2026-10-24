@@ -160,6 +160,17 @@ one jalankan main.one --izinkan filesystem.write --root data --target data/outpu
 
 Target di luar root, path dengan komponen parent `..`, dan ketidakcocokan path absolut/relatif ditolak. Tanpa `--root`, perilaku exact-target lama tetap berlaku. Root scope tidak boleh dipasarkan sebagai sandbox sistem operasi lengkap; proteksi adapter no-follow/reparse-point dan batas sumber daya tetap berlaku.
 
+## Menandatangani dan memverifikasi provenance paket
+
+Perintah rilis terpisah tersedia untuk publisher yang telah memiliki seed privat dan trust store publisher yang dikirim melalui kanal independen:
+
+```text
+one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file> --source-root <project-dir>
+one verify-package <file.onepkg> --trusted-publishers <trust-store> --source-root <project-dir>
+```
+
+Jangan menaruh seed privat di source project atau artefak. Untuk alur rilis terlindungi, konfigurasi environment dan langkah operasional, baca [panduan provenance paket rilis](provenance-rilis.md). Paket hasil `one package` sendiri belum otomatis ditandatangani.
+
 ## Catatan bukti
 
 Nomor SHA/run yang tercantum pada bagian verification di atas adalah bukti historis untuk revision yang disebut di sana, bukan otomatis bukti untuk branch head terbaru. Untuk status milestone-100 saat ini, gunakan `docs/verification/one-completion-ledger.md` dan `docs/verification/one-milestone-100-session-checkpoint.md`. Candidate belum boleh disebut rilis final sebelum semua gerbang exact-SHA, Android, standard library, keamanan, dokumentasi, dan Definition of Done lulus.
