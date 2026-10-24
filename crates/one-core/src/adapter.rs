@@ -4,7 +4,7 @@ use std::time::Duration;
 
 const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 
-fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
+pub(crate) fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
     if target.is_empty() || target.contains('\0') {
         return Err(AdapterError::InvalidArguments);
     }
