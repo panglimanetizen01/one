@@ -823,3 +823,37 @@ Prompt 1/4 — E1 standard-library contract audit and regression-test foundation
 
 ### GATE
 **NOT PASSED — Prompt 1/4 remains in progress. No final release claim is authorized.**
+
+
+## 2026-10-24 — Prompt 1/4 correction and latest exact-SHA status
+
+### CORRECTION
+The previous test-edit sequence accidentally removed the closing delimiter of the Rust test module. This was identified by inspecting the source's raw brace balance and fixed in commit `e51244958228ab4257aa63ee2411e25c673a9316` by restoring the module-closing brace. Do not treat runs from before this correction as evidence about the corrected source.
+
+### LATEST SOURCE / DOCUMENTATION COMMITS
+- Rust regression test and module delimiter correction: `e51244958228ab4257aa63ee2411e25c673a9316`.
+- E1 ledger evidence-boundary update: `c9db4a40243a94497c0010eb509714a3cdee96db`.
+- This checkpoint update is the next commit; the resulting branch HEAD must be reread after the write.
+
+### EXACT-SHA CANONICAL WORKFLOW EVIDENCE
+On source commit `e51244958228ab4257aa63ee2411e25c673a9316`:
+- Focused stdlib [run 40099635185](https://github.com/panglimanetizen01/one/actions/runs/40099635185): FAILURE.
+- Workspace CI [run 40099635191](https://github.com/panglimanetizen01/one/actions/runs/40099635191): FAILURE.
+- Linux distro [run 40099635162](https://github.com/panglimanetizen01/one/actions/runs/40099635162): FAILURE.
+- Direct job API details establish all these jobs have `runner_id: 0` and `steps: []`. They failed before runner execution. This is strong evidence of a GitHub Actions infrastructure/runner allocation failure, **not** evidence that the source tests passed or failed.
+- The private repository's job-log download endpoint is unavailable through the current connector (404 BlobNotFound). No test output or artifact proving the new regression passed is accessible.
+
+### CURRENT ACCEPTANCE
+- E1 remains **7/10 implementation, 0/10 verified**. The new test is not accepted as executed evidence; the full standard-library API contract matrix remains incomplete.
+- The branch head has advanced beyond the original checkpoint. Any prior evidence must remain bound to its original SHA.
+- PR #80 remains open, draft, and unmerged. Do not merge or publish a release as part of this checkpoint.
+
+### NEXT ACTIONS — PROMPT 1 REMAINS OPEN
+1. Obtain a working authorized Actions runner/log path or run the repository-prescribed offline verification in a legitimate checkout. Keep offline evidence distinct from hosted CI.
+2. Execute the focused stdlib test, workspace suite, and lint/Clippy against the exact candidate SHA; fix any real compile/test failure, then rerun.
+3. Complete the specification-derived API acceptance matrix for JSON, UTC, text, lists, mappings, checked arithmetic, diagnostics, determinism, and backend compatibility.
+4. Reconcile the mirror's canonical SHA and rerun required exact-SHA checks after the final source/documentation commit.
+5. Proceed to Prompt 2 only after E1 acceptance is proven and the handoff contains the exact verified SHA.
+
+### GATE
+**NOT PASSED — Prompt 1/4 is incomplete. No E1 verified points are awarded.**
