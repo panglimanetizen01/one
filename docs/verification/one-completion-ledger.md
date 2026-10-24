@@ -332,3 +332,12 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - The Android acceptance test source explicitly checks ELF magic, ELFCLASS64, little-endian encoding and `EM_AARCH64`, then pushes and executes the artifact through ADB and asserts exact output. This source-level inspection is not a substitute for successful emulator execution evidence.
 - PR #80 remains open, draft and unmerged. The verified score remains **60/100**; implementation remains **88/100 provisional**. No new verified points are awarded.
 - **GATE: NOT PASSED.** E1–E6 acceptance and usable exact-SHA verification evidence are still incomplete.
+
+
+### CI infrastructure evidence — run attempt 2 (2026-10-24)
+
+- Follow-up inspection of the raw GitHub Actions job payloads for run `40060644366` and `40060644370` confirms every failed job has `runner_id: 0`, an empty `steps: []` array, and a runtime of only a few seconds. The One CI check runs on the same source SHA `1c450863cdfcb824dcf7cef6b64e86e58bc25b44` also completed in approximately two seconds with failures before any step was recorded.
+- This is evidence of a job/runner provisioning failure before workflow execution, not evidence that the source tests themselves failed. The API exposes no annotation details through the available connector and log downloads return `BlobNotFound`; therefore the exact underlying service/configuration cause remains unproven.
+- Retried the failed focused stdlib and Linux distro jobs. The retry again reported `runner_id: 0` and no steps/logs. Do not repeat retries indefinitely as if they were source-level tests.
+- The verification mirror's `verification` branch selector was advanced to the exact source SHA `1c450863cdfcb824dcf7cef6b64e86e58bc25b44`, which should trigger its push workflow. The mirror workflow requires `CANONICAL_READ_TOKEN` to fetch the private source. No successful mirror run has yet been independently observed for this selector; treat its execution and secret configuration as unverified until a concrete run and logs are available.
+- No verified points are added. **GATE remains NOT PASSED.**
