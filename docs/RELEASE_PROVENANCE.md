@@ -25,3 +25,7 @@ The workflow intentionally fails closed if either secret is absent, the publishe
 ## Acceptance boundary
 
 A successful workflow run is evidence for the exact source SHA, project, package artifact, publisher trust-store configuration, and source-bound V2 attestation used by that run. It does not authenticate a trust store whose public key was provisioned through an untrusted channel, and it does not by itself approve a repository-wide release. Final milestone acceptance still requires all mandatory platform, standard-library, security, compatibility, documentation, and Definition-of-Done checks on the final source SHA.
+
+## Repository fixture
+
+The repository includes a small committed package project at `examples/package-release` for validating the release path. After the protected environment and its two secrets have been provisioned, use `examples/package-release` as the `project_path` input and the matching trusted `publisher_id`. The workflow still signs and verifies the package built from the exact selected repository revision; the fixture is not a substitute for reviewing a real application package before release.
