@@ -403,3 +403,6 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 
 
 - Documentation index review found and repaired literal `\\n` sequences that had collapsed several verification links into single lines in `docs/README.md`. The final doc candidate now includes the standard-library reference, developer workflow, expanded debugging guidance, CLI root-scope instructions, and release provenance operations. The examples and links still require final review on the tested revision.
+
+
+- Acceptance-boundary correction: `docs/spec/one-v0.1-effect-capability.md` now records that the new `--root` policy is defense-in-depth but **not full E4 root-confinement acceptance**. Root-relative descriptor anchoring, race-resistant resolution, mount behavior, and cross-platform case/path semantics remain open; E4 verified points remain 0/6.
