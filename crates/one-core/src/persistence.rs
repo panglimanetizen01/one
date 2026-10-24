@@ -339,9 +339,14 @@ mod tests {
     #[test]
     fn failed_write_rolls_back_in_memory_mutation() {
         let blocker = path("blocked-parent");
-        fs::write(&blocker, "not a directory").unwrap();
+        fs::create_dir_all(&blocker).unwrap();
         let store_path = blocker.join("store.db");
         let mut store = KeyValueStore::open(&store_path).unwrap();
+
+        // Replace the initially valid parent after opening the empty store so the
+        // durable write fails and rollback of the in-memory mutation is exercised.
+        fs::remove_dir(&blocker).unwrap();
+        fs::write(&blocker, "not a directory").unwrap();
         assert!(store.set("k", "v").is_err());
         assert_eq!(store.get("k"), None);
         let _ = fs::remove_file(blocker);
