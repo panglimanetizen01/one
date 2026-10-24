@@ -619,3 +619,12 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - The independent mirror selector on branch `verification` is pinned to `1c450863cdfcb824dcf7cef6b64e86e58bc25b44`. The mirror workflow must fetch private source using `CANONICAL_READ_TOKEN`; successful mirror execution has not yet been observed, so do not count this as verification.
 - This checkpoint update itself must be treated as documentation only. Final verification still needs to target the exact resulting branch HEAD and successful runnable evidence.
 - **Gate remains NOT PASSED.** No score increase.
+
+
+## Branch-head reconciliation — 2026-10-24
+
+- Previously observed latest code/documentation commit: `6826e3a1b41525bbfa5d3f02dda100c7e59a7004`, updating signed package provenance documentation to bind the validated package format.
+- Canonical exact-SHA runs for that SHA are listed in the completion ledger; all returned `runner_id: 0`, empty step arrays, and failure before any test step. This does not establish source tests as failing or passing.
+- Completion-ledger reconciliation commit: `5b2d28ac4ea596ab211b8cfd5a925a59611924a7`.
+- This checkpoint is now the current branch update and must be the next exact-SHA verification target. The mirror's previous selector is behind this documentation commit and must be updated before its run can verify the final branch HEAD.
+- **Gate remains NOT PASSED.** No merge or release claim.
