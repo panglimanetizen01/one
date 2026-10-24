@@ -301,3 +301,15 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - **Score:** implementation remains **87/100 provisional** and verified remains **60/100**. No verified points were added by the current work. E1/E2/E3/E4/E5/E6 acceptance is not complete.
 - **GATE: NOT PASSED — milestone 100% remains in progress.**
 
+## 2026-10-24 continuation — full Linux acceptance and exact-SHA script closure
+
+- **Code/workflow source SHA before this ledger update:** 9bf679bb52810031a533025cbc5a18e97450d63b.
+- The release-check workflow and tools/verify_exact_sha.sh were also updated to use Cargo --locked. A recursive audit of all workflow/shell/PowerShell files found no remaining unlocked Cargo build/test/run/Clippy command; the sole non-locked match is cargo clippy --version, which does not resolve dependencies.
+- **Exact-SHA focused standard-library/database job passed** on source SHA 102741eddac431cfe4f1b4b24bec3d7a2032428b. Log reports rustc 1.99.0 and 28 --locked Cargo invocations.
+- **Exact-SHA Linux distro job passed** on source SHA 102741eddac431cfe4f1b4b24bec3d7a2032428b on both Ubuntu 24.04 and Debian 12. Each job reported Rust 1.99.0, seven --locked Cargo commands, and 64 successful test-result groups; the logs include successful filesystem no-follow regression tests and the fail-closed unsupported-dependency test.
+- These passes are evidence for SHA 102741, not for the newer source SHA 9bf679 containing the release-check/exact-SHA script updates. A final mirror run must target the post-checkpoint SHA.
+- **Current Windows cross-platform job:** prior run on SHA 102741 was cancelled by a later mirror-workflow push after the Windows test steps had completed and before cleanup finished. It is not credited as a complete run; rerun required.
+- **Android runtime:** exact-SHA Android arm64 emulator job has installed the SDK/NDK/system image but has not reached the ELF execution step. The old unbounded boot step is still running; a newer workflow revision now bounds adb wait/boot and uploads emulator logs on failure.
+- **Score remains 87/100 provisional implementation, 60/100 verified.** No new verified points are awarded from the partial/cancelled matrix.
+- **GATE: NOT PASSED — exact-SHA cross-platform and Android runtime results remain pending.**
+
