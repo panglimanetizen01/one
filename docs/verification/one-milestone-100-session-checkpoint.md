@@ -357,3 +357,47 @@ Milestone 100, scope locked to E1–E6.
 ### GATE
 **NOT PASSED — milestone 100% remains in progress.**
 
+## 2026-10-24 continuation — pinned toolchain
+
+This entry supersedes the earlier 86/100 provisional implementation subtotal above.
+
+### MILESTONE
+Milestone 100, E1–E6 only.
+
+### COMPLETION
+- Implementation: **87/100 provisional**. E5 moved 1/4 → 2/4 for a pinned Rust toolchain and documented reproducibility policy; E2 remains 6/8 and E4 remains 4/6.
+- Verified: **60/100**. No new verified points awarded.
+
+### DONE
+- Root rust-toolchain.toml pins Rust 1.99.0 with rustfmt and Clippy.
+- Canonical CI, Linux distro conformance and focused stdlib workflows explicitly request toolchain 1.99.0.
+- Independent mirror Android, Linux distro and focused stdlib workflows explicitly request toolchain 1.99.0; mirror cross-platform commands now use --locked.
+- This corrects a detected drift: a mirror focused run had resolved the moving stable channel to Rust 1.99.1 despite the lockfile having been generated under 1.99.0.
+
+### EVIDENCE
+- The successful lockfile generation log reports rustc 1.99.0 and cargo 1.99.0.
+- Exact-SHA focused verification for source SHA 9e01367179ea1e5714cb6e72308656f580d5fdeb passed before explicit toolchain action inputs were added. It does not prove the final workflow revisions pass.
+- Final source SHA after this checkpoint update must be read from PR #80, then pinned in the mirror selector and rerun. Current code-bearing/workflow source before the latest ledger/checkpoint docs: ec0d3472c0fa9e6551c5db1973dd4300838004f0.
+- Android AArch64 ELF runtime acceptance is still in progress; no pass claim until its run log confirms the exact source SHA, ABI, ELF checks and execution exit code.
+
+### REMAINING
+- E1: full standard-library acceptance.
+- E2: external One registry/dependency resolution and authenticated publisher provenance.
+- E3: exact-SHA Linux/Windows matrix and actual Android arm64 runtime execution.
+- E4: Windows/macOS race-resistant filesystem resolution, root confinement and full resource/threat review.
+- E5: full compatibility, packaging and release readiness.
+- E6: final forensic Definition-of-Done audit.
+
+### GIT STATE
+- Branch milestone/100-ecosystem-20261023; PR #80 open, draft, unmerged; base main.
+- HEAD before this checkpoint update: 73d4e66a208ba5394ebfa21b41bac36d18295521.
+- Pin mirror selector only after this checkpoint commit and confirm the final PR head SHA.
+
+### NEXT
+1. Pin the independent mirror to the exact new checkpoint SHA.
+2. Confirm --locked and Rust 1.99.0 on Ubuntu, Debian, Windows, focused stdlib and Android runtime.
+3. Repair any remaining source failures; then continue E1–E6 acceptance.
+
+### GATE
+**NOT PASSED — milestone 100% remains in progress.**
+
