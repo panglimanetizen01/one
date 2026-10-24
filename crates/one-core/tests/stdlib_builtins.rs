@@ -240,3 +240,52 @@ fn checked_integer_remainder_runs_through_the_canonical_pipeline() {
     let overflow = "minimum adalah 0 dikurangi 9223372036854775807 dikurangi 1\nnegatif satu adalah 0 dikurangi 1\nhasil adalah angka sisa bagi dengan minimum dan negatif satu\ntampilkan hasil\n";
     assert!(run(overflow).unwrap_err().contains("R3022"));
 }
+
+
+#[test]
+fn json_contract_rejects_duplicate_keys_exponents_and_excessive_nesting() {
+    let duplicate_keys = r#"data adalah "{\"a\":1,\"a\":2}"
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#;
+    assert!(
+        run(duplicate_keys).unwrap_err().contains("R3022"),
+        "duplicate JSON object keys must be rejected"
+    );
+
+    let exponent = r#"data adalah "1e2"
+nilai adalah nilai dari json dengan data
+tampilkan nilai
+"#;
+    assert!(
+        run(exponent).unwrap_err().contains("R3022"),
+        "JSON exponents are outside the integer-only v0.1 contract"
+    );
+
+    let nested_json = format!("{}0{}", "[".repeat(129), "]".repeat(129));
+    let nested_source = format!(
+        "data adalah \"{}\"\nnilai adalah nilai dari json dengan data\ntampilkan nilai\n",
+        nested_json
+    );
+    assert!(
+        run(&nested_source).unwrap_err().contains("R3022"),
+        "JSON nesting deeper than 128 levels must be rejected"
+    );
+}
+
+#[test]
+fn mapping_insert_and_replace_preserve_deterministic_json_output() {
+    let source = r#"buat pemetaan data
+data menjadi atur pemetaan dengan data dan "kunci" dan 1
+data menjadi atur pemetaan dengan data dan "kunci" dan 2
+data menjadi atur pemetaan dengan data dan "alpha" dan "nilai"
+hasil adalah ubah nilai ke json dengan data
+tampilkan hasil
+"#;
+    let program = parse_human_core(source).expect("mapping grammar should parse");
+    let typed = analyze(&program).expect("mapping operations should type-check");
+    let ir = lower(&typed).expect("mapping operations should lower");
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let result = interpreter.execute(&ir).expect("mapping operations should execute");
+    assert_eq!(result.output, vec![r#"{"alpha":"nilai","kunci":2}"#]);
+}
