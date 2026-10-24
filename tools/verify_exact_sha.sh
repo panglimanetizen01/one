@@ -33,43 +33,43 @@ echo "=== CONTRACT ==="
 python tools/check_contract.py
 
 echo "=== BUILD ==="
-cargo build --workspace --all-targets
+cargo --locked build --workspace --all-targets
 
 echo "=== CLIPPY ==="
-cargo clippy --workspace --all-targets -- -D warnings
+cargo --locked clippy --workspace --all-targets -- -D warnings
 
 echo "=== TESTS ==="
-cargo test --workspace --all-targets
+cargo --locked test --workspace --all-targets
 
 echo "=== DETERMINISTIC ARTIFACTS ==="
-cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+cargo --locked test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
 
 echo "=== DNS ==="
-cargo test -p one-core --all-targets dns_adapter
+cargo --locked test -p one-core --all-targets dns_adapter
 
 echo "=== ORCHESTRATION ==="
-cargo test -p one-core --all-targets orchestrator
+cargo --locked test -p one-core --all-targets orchestrator
 
 echo "=== FILESYSTEM VERTICAL SLICE ==="
-cargo test -p one-core --test filesystem_vertical_slice
+cargo --locked test -p one-core --test filesystem_vertical_slice
 
 echo "=== FILESYSTEM CAPABILITY ISOLATION ==="
-cargo test -p one-core --test filesystem_capability_isolation
+cargo --locked test -p one-core --test filesystem_capability_isolation
 
 echo "=== PROCESS VERTICAL SLICE ==="
-cargo test -p one-core --test process_vertical_slice
+cargo --locked test -p one-core --test process_vertical_slice
 
 echo "=== DATABASE VERTICAL SLICE ==="
-cargo test -p one-core --test database_vertical_slice
+cargo --locked test -p one-core --test database_vertical_slice
 
 echo "=== DATABASE CLI ==="
-cargo test -p one-cli --test database_orchestration
+cargo --locked test -p one-cli --test database_orchestration
 
 echo "=== HTTP GET VERTICAL SLICE ==="
-cargo test -p one-core --test http_get_vertical_slice
+cargo --locked test -p one-core --test http_get_vertical_slice
 
 echo "=== HTTP GET CLI ==="
-cargo test -p one-cli --test http_get_orchestration
+cargo --locked test -p one-cli --test http_get_orchestration
 
 echo "=== FINAL STATUS ==="
 git status --short
