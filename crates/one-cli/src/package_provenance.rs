@@ -85,12 +85,23 @@ fn signed_message(publisher: &str, digest: &str) -> String {
     format!("{HEADER}\npublisher={publisher}\nartifact_sha256={digest}\n")
 }
 
+fn package_artifact_format(bytes: &[u8]) -> Result<&'static str, String> {
+    if bytes.starts_with(b"One package v0.1\n") {
+        Ok("OnePackageV1")
+    } else if bytes.starts_with(b"One human-core package v1\n") {
+        Ok("OneHumanCorePackageV1")
+    } else {
+        Err("unsupported package artifact header; refusing to attest arbitrary bytes".to_owned())
+    }
+}
+
 struct V2ProvenanceFields<'a> {
     publisher: &'a str,
     artifact_digest: &'a str,
     source_digest: &'a str,
     source_revision: &'a str,
-    one_version: &'a str,
+    artifact_format: &'a str,
+    one_cli_version: &'a str,
     builder_os: &'a str,
     builder_arch: &'a str,
     rustc_version: &'a str,
@@ -100,12 +111,13 @@ struct V2ProvenanceFields<'a> {
 
 fn signed_message_v2(fields: &V2ProvenanceFields<'_>) -> String {
     format!(
-        "{HEADER_V2}\npublisher={}\nartifact_sha256={}\nsource_sha256={}\nsource_revision={}\none_version={}\nbuilder_os={}\nbuilder_arch={}\nrustc_version={}\ncargo_version={}\ndependency_model={}\n",
+        "{HEADER_V2}\npublisher={}\nartifact_sha256={}\nartifact_format={}\nsource_sha256={}\nsource_revision={}\none_cli_version={}\nbuilder_os={\nbuilder_arch={}\nrustc_version={}\ncargo_version={}\ndependency_model={}\n",
         fields.publisher,
         fields.artifact_digest,
+        fields.artifact_format,
         fields.source_digest,
         fields.source_revision,
-        fields.one_version,
+        fields.one_cli_version,
         fields.builder_os,
         fields.builder_arch,
         fields.rustc_version,
@@ -319,8 +331,9 @@ pub fn sign_build_provenance(
     let signing_key = SigningKey::from_bytes(&seed);
     let public_key = signing_key.verifying_key().to_bytes();
     let artifact_digest = sha256_hex(&artifact_bytes);
+    let artifact_format = package_artifact_format(&artifact_bytes)?;
     let (source_digest, source_revision) = source_snapshot(source_root)?;
-    let one_version = env!("CARGO_PKG_VERSION");
+    let one_cli_version = env!("CARGO_PKG_VERSION");
     let builder_os = std::env::consts::OS;
     let builder_arch = std::env::consts::ARCH;
     let rustc_version = tool_version("rustc")?;
@@ -329,9 +342,10 @@ pub fn sign_build_provenance(
     let provenance_fields = V2ProvenanceFields {
         publisher,
         artifact_digest: &artifact_digest,
+        artifact_format,
         source_digest: &source_digest,
         source_revision: &source_revision,
-        one_version,
+        one_cli_version,
         builder_os,
         builder_arch,
         rustc_version: &rustc_version,
@@ -341,7 +355,7 @@ pub fn sign_build_provenance(
     let message = signed_message_v2(&provenance_fields);
     let signature = signing_key.sign(message.as_bytes());
     let contents = format!(
-        "{HEADER_V2}\npublisher={publisher}\npublic_key={}\nartifact_sha256={artifact_digest}\nsource_sha256={source_digest}\nsource_revision={source_revision}\none_version={one_version}\nbuilder_os={builder_os}\nbuilder_arch={builder_arch}\nrustc_version={rustc_version}\ncargo_version={cargo_version}\ndependency_model={dependency_model}\nsignature={}\n",
+        "{HEADER_V2}\npublisher={publisher}\npublic_key={}\nartifact_sha256={artifact_digest}\nartifact_format={artifact_format}\nsource_sha256={source_digest}\nsource_revision={source_revision}\none_cli_version={one_cli_version}\nbuilder_os={builder_os}\nbuilder_arch={builder_arch}\nrustc_version={rustc_version}\ncargo_version={cargo_version}\ndependency_model={dependency_model}\nsignature={}\n",
         hex(&public_key),
         hex(&signature.to_bytes()),
     );
@@ -423,7 +437,7 @@ fn parse_sidecar(contents: &str) -> Result<(&str, BTreeMap<&str, &str>), String>
             return Err("unknown or duplicate provenance field".into());
         }
     }
-    let expected = if header == HEADER { 4 } else { 12 };
+    let expected = if header == HEADER { 4 } else { 13 };
     if fields.len() != expected {
         return Err("provenance sidecar is missing required fields".into());
     }
@@ -453,6 +467,10 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
     let message = if header == HEADER {
         signed_message(publisher, digest)
     } else {
+        let artifact_format = package_artifact_format(&bytes)?;
+        if fields["artifact_format"] != artifact_format {
+            return Err("artifact format does not match signed provenance".into());
+        }
         let source_digest = fields["source_sha256"];
         if source_digest.len() != 64 || source_digest.bytes().any(|byte| nibble(byte).is_none()) {
             return Err("source digest must be 64 hexadecimal characters".into());
@@ -466,7 +484,7 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
         if fields["dependency_model"] != "empty-v0.1" {
             return Err("unsupported dependency model in build provenance".into());
         }
-        for field in ["one_version", "builder_os", "builder_arch", "rustc_version", "cargo_version"] {
+        for field in ["one_cli_version", "builder_os", "builder_arch", "rustc_version", "cargo_version"] {
             if fields[field].is_empty() || fields[field].contains(['\n', '\r']) {
                 return Err(format!("invalid build provenance field: {field}"));
             }
@@ -474,9 +492,10 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
         let provenance_fields = V2ProvenanceFields {
             publisher,
             artifact_digest: digest,
+            artifact_format: fields["artifact_format"],
             source_digest,
             source_revision,
-            one_version: fields["one_version"],
+            one_cli_version: fields["one_cli_version"],
             builder_os: fields["builder_os"],
             builder_arch: fields["builder_arch"],
             rustc_version: fields["rustc_version"],
@@ -677,5 +696,12 @@ mod tests {
         let _ = fs::remove_dir_all(root);
     }
 
+
+    #[test]
+    fn provenance_accepts_only_known_package_artifact_headers() {
+        assert_eq!(package_artifact_format(b"One package v0.1\nrest").unwrap(), "OnePackageV1");
+        assert_eq!(package_artifact_format(b"One human-core package v1\nrest").unwrap(), "OneHumanCorePackageV1");
+        assert!(package_artifact_format(b"not a package").is_err());
+    }
 
 }
