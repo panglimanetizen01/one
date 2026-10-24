@@ -172,3 +172,7 @@ The semantic analyzer may annotate required effects, but actual permission evalu
 - time/randomness are controllable for deterministic tests;
 - capability errors are stable and provenance-aware;
 - reference interpreter and compiled backends enforce equivalent capability semantics.
+
+### Candidate implementation boundary (2026-10-24)
+
+The milestone-100 candidate exposes CLI `--root <directory>` for filesystem read/write policy rules. Its current rule performs path-component containment, rejects parent-directory components, and rejects absolute/relative scope mismatches; the filesystem adapters additionally reject symlink/reparse-point components. This is a useful defense-in-depth policy boundary, but it is **not yet accepted as complete root confinement**: root-relative descriptor anchoring, race-resistant resolution, mount behavior, and cross-platform case/path semantics still require threat review and regression evidence. Do not award the full E4 root-confinement criterion from the lexical policy rule alone.
