@@ -721,3 +721,6 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 
 - Documentation review follow-up: repaired literal escaped-newline text in `docs/README.md` so the verification map renders as separate links. This is documentation-only and still needs exact-SHA acceptance after the current candidate is pinned.
+
+
+- Security contract note: the `--root` rule is recorded as a defense-in-depth partial policy only. Root-relative descriptor anchoring, race-resistant resolution, mount behavior, and cross-platform path/case semantics still need implementation/threat review; E4 is not accepted from lexical containment alone.
