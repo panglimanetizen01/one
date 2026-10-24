@@ -58,24 +58,24 @@ jobs:
         shell: bash
         run: bash -n tools/verify-human-vnext.sh
       - name: Build
-        run: cargo build --workspace --all-targets
+        run: cargo --locked build --workspace --all-targets
       - name: Clippy
         shell: bash
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo --locked clippy --workspace --all-targets -- -D warnings
       - name: Tests
-        run: cargo test --workspace --all-targets
+        run: cargo --locked test --workspace --all-targets
       - name: Deterministic .oneir and .onepkg artifacts
-        run: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+        run: cargo --locked test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - name: DNS success and failure classification
-        run: cargo test -p one-core --all-targets dns_adapter
+        run: cargo --locked test -p one-core --all-targets dns_adapter
       - name: Orchestration policy deny and allow paths
-        run: cargo test -p one-core --all-targets orchestrator
+        run: cargo --locked test -p one-core --all-targets orchestrator
       - name: Database vertical slice
-        run: cargo test -p one-core --test database_vertical_slice
+        run: cargo --locked test -p one-core --test database_vertical_slice
       - name: HTTP GET vertical slice
-        run: cargo test -p one-core --test http_get_vertical_slice
+        run: cargo --locked test -p one-core --test http_get_vertical_slice
       - name: HTTP GET CLI vertical slice
-        run: cargo test -p one-cli --test http_get_orchestration
+        run: cargo --locked test -p one-cli --test http_get_orchestration
 
   android-aarch64-runtime:
     name: Android AArch64 ELF build and runtime acceptance
@@ -109,4 +109,4 @@ jobs:
             export ONE_ANDROID_CLANG="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
             export ONE_ANDROID_ADB="$ANDROID_HOME/platform-tools/adb"
             adb devices
-            cargo test -p one-core --test native_backend_android_aarch64 build_native_menghasilkan_dan_menjalankan_elf_android_aarch64 -- --ignored --exact --nocapture
+            cargo --locked test -p one-core --test native_backend_android_aarch64 build_native_menghasilkan_dan_menjalankan_elf_android_aarch64 -- --ignored --exact --nocapture
