@@ -35,14 +35,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: UTC formatter unit and calendar-boundary tests
-        run: cargo test -p one-core --lib unix_seconds_format_as_valid_bounded_gregorian_utc_timestamps
+        run: cargo --locked test -p one-core --lib unix_seconds_format_as_valid_bounded_gregorian_utc_timestamps
       - name: Source-level UTC formatter integration tests
-        run: cargo test -p one-core --test stdlib_builtins unix_timestamp_formatter_runs_through_the_canonical_pipeline
+        run: cargo --locked test -p one-core --test stdlib_builtins unix_timestamp_formatter_runs_through_the_canonical_pipeline
       - name: Source-level text prefix and suffix integration tests
-        run: cargo test -p one-core --test stdlib_builtins text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline
+        run: cargo --locked test -p one-core --test stdlib_builtins text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline
       - name: Source-level checked integer remainder integration tests
-        run: cargo test -p one-core --test stdlib_builtins checked_integer_remainder_runs_through_the_canonical_pipeline
+        run: cargo --locked test -p one-core --test stdlib_builtins checked_integer_remainder_runs_through_the_canonical_pipeline
       - name: Source-level case conversion and numeric integration tests
-        run: cargo test -p one-core --test stdlib_builtins case_conversion_and_numeric_builtins_execute_through_the_canonical_pipeline
+        run: cargo --locked test -p one-core --test stdlib_builtins case_conversion_and_numeric_builtins_execute_through_the_canonical_pipeline
       - name: Standard-library lint
-        run: cargo clippy -p one-core --all-targets -- -D warnings
+        run: cargo --locked clippy -p one-core --all-targets -- -D warnings
