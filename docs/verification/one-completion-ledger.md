@@ -38,7 +38,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 5/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets, Unix descriptor-relative no-follow opens (Linux/Android/macOS), Windows reparse-point/open-handle checks, and bounded package-provenance reads/tests are present; explicit root confinement, broader runtime quotas, and full threat review remain pending |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 4/4 | 0/4 | IMPLEMENTED; manual user-workflow review and documentation reconciliation are recorded in the independent acceptance review; final exact-SHA test acceptance remains pending |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **90/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **91/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -448,3 +448,11 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - Independent review artifact: [USER_WORKFLOW_ACCEPTANCE.md](https://github.com/panglimanetizen01/one-windows-verification/blob/verification/USER_WORKFLOW_ACCEPTANCE.md). The review passes for the tested workflow and documentation consistency, while final exact-SHA reruns remain mandatory after the documentation commits.
 - **E5 implementation score:** 3/4 → 4/4 because the documentation gaps are corrected and the user workflow has been reviewed. **E5 verified remains 0/4** until the final candidate's cross-platform, focused, distro, and lockfile evidence passes.
 - Current source revision is a documentation/ledger reconciliation candidate; the independent selector must be pinned to the resulting commit SHA and all mandatory exact-SHA checks rerun. No other score or fixed weight changes.
+
+
+## 2026-10-24 — fixed-weight arithmetic reconciliation
+
+- Forensic arithmetic check of the fixed ledger rows: F1–F6 = 30 verified points and C1–C5 = 30 verified points; E1–E6 implementation rows currently total 31 provisional points (E1 7/10 + E2 7/8 + E3 8/8 + E4 5/6 + E5 4/4 + E6 0/4). Therefore the consistent implementation subtotal is **91/100**, not 90/100. Verified completion remains **60/100** because E1–E6 have 0 verified points.
+- This is a correction of arithmetic/reporting only; weights and row scores are unchanged. It does not award verified points or pass the release gate.
+- Candidate SHA before this ledger-only correction: `f46b95ebdd0e26c5ba17f6acb953538f32401aeb`. The ledger commit changes the candidate SHA, so all final-SHA evidence must be rerun against the resulting branch head.
+- **Gate: NOT PASSED.**
