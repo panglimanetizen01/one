@@ -152,3 +152,14 @@ The active continuation and latest E3/E4 evidence boundary are recorded in docs/
 - Current milestone scoring is 85/100 provisional implementation and 60/100 verified; weights remain unchanged. Canonical Actions on the preceding source SHA failed before steps with empty job step lists; those runs are infrastructure failures, not source-test results.
 - Gate: NOT PASSED. The mirror selector must be pinned to the latest checkpoint SHA and its exact-SHA jobs inspected before any verification points are awarded.
 
+## 2026-10-24 E2 lockfile continuation pointer
+
+Latest milestone-100 scoring and evidence are in docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation subtotal is now 86/100 provisional; verified remains 60/100. This supersedes the prior 85/100 provisional note in the continuation pointer above; the 30/30 foundation and 30/30 core verified rows remain unchanged.
+- Cargo.lock is now committed, no longer ignored, and Cargo build/test/run/Clippy commands in the canonical CI and local verification scripts use --locked.
+- Independent lock generation passed against source SHA cd4aa9f9be450ecc43a0419d057867967d23e469. SHA-256 is 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21, with 113 package entries.
+- External One-language registry resolution and authenticated publisher provenance remain unimplemented. E2 remains partial.
+- The source branch head must be read again after this checkpoint commit; the mirror selector must then be pinned to that exact SHA and the complete workflow evidence reviewed.
+- Gate: NOT PASSED.
+
