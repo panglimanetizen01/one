@@ -68,3 +68,13 @@ The Rust helper module additionally exposes `display_value`, `list_append`, `lis
 
 **Gate remains NOT PASSED** until the dedicated or independent lab completes every required check successfully against one exact candidate SHA.
 
+## Independent E1 acceptance evidence — 2026-10-24
+
+Candidate source SHA `d3976f072389d84382bea05b85030b26693d16a2` was checked by the separate verifier repository after its canonical pin was updated.
+
+- Focused Standard Library + database resource-bound regressions, including all three new E1 tests and `cargo --locked clippy -p one-core --all-targets -- -D warnings`: **PASS** — https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40101323707
+- Linux distro verification, Ubuntu 24.04 and Debian 12: **PASS** — https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40101323704. Both jobs verified the exact source SHA, passed `tools/check_contract.py`, workspace build, Clippy, workspace tests (with the workflow's documented platform-specific skips), and real-network tests.
+- The earlier focused attempt on `f1c07bc85cd7b8c62e7eb125ca7697758f5de581` exposed a faulty negative-index test fixture, not a production implementation bug. The source was corrected by computing the negative index in a separate declaration; the corrected test then passed at `d3976f072389d84382bea05b85030b26693d16a2`.
+- E1 code and tests have now passed focused and broad Linux verification. This checkpoint refresh changes only documentation, creating a new exact source SHA; re-pin that resulting SHA and rerun the focused E1 suite plus Linux distro verification before considering E1 fully closed.
+- Do not infer whole-project 100% acceptance from these E1 checks. This checkpoint does not close E2/E3/E4/E6 and does not authorize merge/release.
+
