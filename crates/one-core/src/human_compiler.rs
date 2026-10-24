@@ -29,7 +29,6 @@ fn read_confined_module(
 ) -> Result<String, String> {
     use std::ffi::CString;
     use std::fs::File;
-    use std::io::Read;
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
 
