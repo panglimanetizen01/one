@@ -140,3 +140,15 @@ The latest tested source snapshot is `ebf254d1194a903a3b582f3a18abfc402f2003d2`:
 - Main workspace summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The separate Android ELF build-and-execute test remains ignored on both platforms and is not counted as passed. Canonical repository Actions fail before steps with `runner_id=0`.
 
 This correction is documentation-only and does not change the tested source code snapshot.
+
+## 2026-10-24 milestone-100 continuation pointer
+
+The active continuation and latest E3/E4 evidence boundary are recorded in docs/verification/one-milestone-100-session-checkpoint.md and docs/verification/one-completion-ledger.md. Do not infer milestone-100 completion from the vNext foundation/core rows above.
+
+- Code-bearing source SHA for the latest implementation slice: b5c3827840a691868a69428ae4032614407f1062.
+- The Android AArch64 acceptance test now validates the produced ELF header and the canonical/mirror workflows include an Android arm64 emulator job to run the ignored build-and-execute test explicitly. Actual execution on this source SHA remains NOT YET VERIFIED.
+- Linux/Android filesystem adapters now use descriptor-relative O_NOFOLLOW opens for parent components and final files. This does not yet provide a root-confined sandbox or equivalent race-resistant behavior on Windows/macOS.
+- A CLI regression test now ensures unsupported external dependency declarations fail closed. Registry resolution, committed deterministic Cargo lock state, signed publisher identity, and authenticated provenance remain incomplete.
+- Current milestone scoring is 85/100 provisional implementation and 60/100 verified; weights remain unchanged. Canonical Actions on the preceding source SHA failed before steps with empty job step lists; those runs are infrastructure failures, not source-test results.
+- Gate: NOT PASSED. The mirror selector must be pinned to the latest checkpoint SHA and its exact-SHA jobs inspected before any verification points are awarded.
+
