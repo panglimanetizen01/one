@@ -7,7 +7,7 @@ fn run(args: &[&str]) -> std::process::Output {
 #[test]
 fn run_command_executes_filesystem_write_from_one_source() {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    let target = std::env::temp_dir().join(format!("one-filesystem-write-target-{id}.txt"));
+    let target = std::env::current_dir().unwrap().join(format!("one-filesystem-write-target-{id}.txt"));
     let source = std::env::temp_dir().join(format!("one-filesystem-write-source-{id}.one"));
     let target_arg = target.to_string_lossy().replace('\\', "/");
     fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"halo dari CLI One\"\n")).unwrap();
