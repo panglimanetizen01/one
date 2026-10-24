@@ -422,3 +422,12 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - **E2 implementation:** 6/8 → 7/8. The protected release workflow now builds, signs, verifies, and uploads the final source-bound V2 package path; actual protected-environment dispatch and trusted-store provisioning have not been demonstrated.
 - **E5 implementation:** 2/4 → 3/4. Added a user-facing release-provenance guide, explicit CLI documentation for signing/verifying, clearer unsigned-package boundaries, and enforced documentation consistency checks in canonical CI plus the independent Linux/Windows mirror.
 - These are provisional implementation points only. **Implementation: 90/100; verified completion: 60/100; gate NOT PASSED.** The final candidate SHA changed with this ledger update and must be pinned and tested exactly. E3 earns no verified points until the Android AArch64 ELF is actually executed on the current source SHA.
+
+
+## 2026-10-24 — final acceptance checklist and candidate freeze preparation
+
+- Added [`docs/verification/DEFINITION_OF_DONE.md`](DEFINITION_OF_DONE.md) as the auditable fixed-weight E1–E6 release checklist. It distinguishes implementation artifacts from verified acceptance and explicitly prohibits credit for a running workflow, prior-SHA result, checksum-only provenance, or infrastructure-only CI failure.
+- Reconciled the provisional score: the latest E2/E5 adjustment is authoritative — **90/100 implementation, 60/100 verified, release gate NOT PASSED**. Earlier 88/100 statements in historical entries are superseded, not additional active score.
+- Candidate source was advanced by the Definition of Done document. The independent verification selector must pin the resulting commit SHA and rerun cross-platform, Linux distro, focused standard-library/database/provenance, lockfile, and Android workflows. Results from earlier source revisions are historical only.
+- Do not make further source changes after the next candidate SHA is selected unless a required test reveals a real defect. Any defect fix creates a new candidate and requires the exact-SHA matrix to be rerun.
+- Outstanding acceptance is unchanged: E1–E6 row-level verification is not complete; protected signing/trust-store dispatch has not been exercised; Android AArch64 ELF runtime has not passed; E4 full threat/root-confinement review is open. **No release authorization.**
