@@ -384,3 +384,11 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 
 - Release workflow hardening follow-up: validated the publisher ID and 32-byte seed format before use, bounded the project path to the checked-out repository, required an exact publisher entry in the protected trust store, and changed artifact upload to use the exact package path emitted by the build step. The workflow uploads only the signed package, its provenance sidecar, and checksums.
 - The workflow and committed fixture are implementation artifacts; they do not substitute for a protected-environment release dispatch. Keep E2 verified points at 0 until the final exact-SHA test matrix passes and the actual protected signing/trust-store process is exercised.
+
+
+## 2026-10-24 — E4 explicit filesystem root policy added
+
+- Added `ScopeRule::Root` for filesystem `Target` requests. The rule requires path-component containment, rejects parent-directory components, and rejects absolute/relative scope mismatches.
+- Added CLI `--root <directory>` for `filesystem.read` and `filesystem.write`, preserving the prior exact-target behavior when `--root` is omitted. Added policy regressions for allowed descendants, prefix-sibling denial, parent-traversal denial, and a CLI integration test for inside-root versus outside-root reads.
+- Documented the option in `docs/SECURITY.md` and explicitly limited the claim: this is a capability-policy boundary backed by existing adapter no-follow/reparse-point protections, not an operating-system sandbox or a substitute for general memory/open-resource quotas and full threat review.
+- These changes are not credited as verified until the latest exact-SHA build, Clippy, workspace, network, distro, and Android checks complete successfully. E4 verified points remain 0/6 pending full acceptance.
