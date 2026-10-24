@@ -111,7 +111,7 @@ struct V2ProvenanceFields<'a> {
 
 fn signed_message_v2(fields: &V2ProvenanceFields<'_>) -> String {
     format!(
-        "{HEADER_V2}\npublisher={}\nartifact_sha256={}\nartifact_format={}\nsource_sha256={}\nsource_revision={}\none_cli_version={}\nbuilder_os={\nbuilder_arch={}\nrustc_version={}\ncargo_version={}\ndependency_model={}\n",
+        "{HEADER_V2}\npublisher={}\nartifact_sha256={}\nartifact_format={}\nsource_sha256={}\nsource_revision={}\none_cli_version={}\nbuilder_os={}\nbuilder_arch={}\nrustc_version={}\ncargo_version={}\ndependency_model={}\n",
         fields.publisher,
         fields.artifact_digest,
         fields.artifact_format,
@@ -428,8 +428,8 @@ fn parse_sidecar(contents: &str) -> Result<(&str, BTreeMap<&str, &str>), String>
         } else {
             matches!(
                 key,
-                "publisher" | "public_key" | "artifact_sha256" | "source_sha256"
-                    | "source_revision" | "one_version" | "builder_os" | "builder_arch"
+                "publisher" | "public_key" | "artifact_sha256" | "artifact_format" | "source_sha256"
+                    | "source_revision" | "one_cli_version" | "builder_os" | "builder_arch"
                     | "rustc_version" | "cargo_version" | "dependency_model" | "signature"
             )
         };
@@ -485,7 +485,7 @@ pub fn verify_artifact(artifact: &Path, trust_store: &Path) -> Result<String, St
             return Err("unsupported dependency model in build provenance".into());
         }
         for field in ["one_cli_version", "builder_os", "builder_arch", "rustc_version", "cargo_version"] {
-            if fields[field].is_empty() || fields[field].contains(['\n', '\r']) {
+            if fields[field].is_empty() || (fields[field].contains('\n') || fields[field].contains('\r')) {
                 return Err(format!("invalid build provenance field: {field}"));
             }
         }
