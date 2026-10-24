@@ -18,6 +18,46 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
 #[test] fn run_command_executes_filesystem_read_from_one_source() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let root = std::env::current_dir().unwrap(); let data = root.join(format!("one-filesystem-data-{source_id}.txt")); let source = root.join(format!("one-filesystem-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "isi One\nbaris kedua\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &data_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(output.status.success(), "filesystem read failed: stdout={} stderr={}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr)); assert_eq!(String::from_utf8_lossy(&output.stdout), "isi One\nbaris kedua\n"); }
 #[test] fn filesystem_read_is_denied_without_explicit_capability() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-denied-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-denied-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "rahasia\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap()]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3205")); }
 #[test] fn filesystem_read_rejects_out_of_scope_target() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-scope-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-scope-source-{source_id}.one")); let data_arg = portable_path(&data); let scope_arg = portable_path(&std::env::temp_dir()); fs::write(&data, "di luar\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &scope_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3209")); }
+#[test]
+fn filesystem_root_scope_allows_inside_and_denies_outside_targets() {
+    let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("one-filesystem-root-{source_id}"));
+    let inside = root.join("inside.txt");
+    let outside = std::env::temp_dir().join(format!("one-filesystem-outside-{source_id}.txt"));
+    let source = std::env::temp_dir().join(format!("one-filesystem-root-source-{source_id}.one"));
+    fs::create_dir_all(&root).unwrap();
+    fs::write(&inside, "inside root\n").unwrap();
+    fs::write(&outside, "outside root\n").unwrap();
+
+    let root_arg = portable_path(&root);
+    let inside_arg = portable_path(&inside);
+    let outside_arg = portable_path(&outside);
+    fs::write(&source, format!("baca berkas \"{}\"\n", inside_arg)).unwrap();
+    let allowed = run(&[
+        "run", source.to_str().unwrap(), "--izinkan", "filesystem.read",
+        "--root", &root_arg, "--target", &inside_arg,
+    ]);
+    assert!(
+        allowed.status.success(),
+        "root-contained read failed: stdout={} stderr={}",
+        String::from_utf8_lossy(&allowed.stdout),
+        String::from_utf8_lossy(&allowed.stderr)
+    );
+    assert_eq!(String::from_utf8_lossy(&allowed.stdout), "inside root\n");
+
+    fs::write(&source, format!("baca berkas \"{}\"\n", outside_arg)).unwrap();
+    let denied = run(&[
+        "run", source.to_str().unwrap(), "--izinkan", "filesystem.read",
+        "--root", &root_arg, "--target", &outside_arg,
+    ]);
+    assert!(!denied.status.success());
+    assert!(String::from_utf8_lossy(&denied.stderr).contains("N3209"));
+
+    let _ = fs::remove_dir_all(&root);
+    let _ = fs::remove_file(&outside);
+    let _ = fs::remove_file(&source);
+}
+
 
 
 #[test]
