@@ -33,12 +33,12 @@ For each row, **implemented points** are provisional progress based on code actu
 | C5 | Additional real application vertical slices — **4** | Calculator, score tracker, module and mapping examples executed through the same compiler/runtime | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 7/10 | 0/10 | IMPLEMENTED — PARTIAL; UTC parser integrated; full stdlib acceptance pending |
-| E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 6/8 | 0/8 | IMPLEMENTED — PARTIAL; committed Cargo.lock and --locked verification added; One registry resolution and authenticated publisher provenance pending |
+| E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 6/8 | 0/8 | IMPLEMENTED — PARTIAL; Cargo.lock, --locked verification, Ed25519 publisher signatures and trust-store verification are implemented; external One registry/dependency resolution, conflict handling and full build provenance pending |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 0/8 | IMPLEMENTED — PARTIAL; dedicated exact-SHA Android arm64 emulator workflow invokes the ignored ELF runtime test explicitly; runtime result pending |
-| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 4/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets and Linux/Android descriptor-relative no-follow opens added; Windows/macOS race controls, root confinement, and full threat review pending |
+| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 5/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets, Linux/Android descriptor-relative no-follow opens, and bounded package-provenance reads/tests added; Windows/macOS race controls, root confinement, and full threat review pending |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 2/4 | 0/4 | IMPLEMENTED — PARTIAL; Rust 1.99.0 pinned and lockfile policy documented; full release docs/tooling review pending |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **87/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **88/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -313,3 +313,11 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - **Score remains 87/100 provisional implementation, 60/100 verified.** No new verified points are awarded from the partial/cancelled matrix.
 - **GATE: NOT PASSED — exact-SHA cross-platform and Android runtime results remain pending.**
 
+## 2026-10-24 continuation — bounded package-provenance inputs
+
+- Added bounded file reads to package signing and verification: artifact <=64 MiB, private-key seed file <=256 bytes, provenance sidecar <=16 KiB, and publisher trust store <=1 MiB. The bounded-read regression rejects inputs above the configured limit.
+- Implementation score: E4 4/6 -> 5/6 (+1) because the new bounds are integrated into the signing/verification path with a regression test. Overall implementation subtotal 87/100 -> 88/100. Verified subtotal remains 60/100; the full workspace test matrix for the latest source SHA is still running.
+- Exact source SHA 0a0f250dfc2e556bca40f2201752ee5d06f56854: focused standard-library/database verification passed using Rust 1.99.0 and 28 --locked Cargo commands. Linux distro verification passed on Ubuntu 24.04 and Debian 12; each reports Rust 1.99.0, seven --locked commands, and 64 successful test-result groups.
+- Current exact-SHA Windows cross-platform and Android arm64 emulator runs are still in progress. Do not credit E3 verified points until Windows and the actual Android ELF execution acceptance both complete.
+- E2 correction: artifact signing/trusted publisher verification is implemented, but the external One package registry, dependency graph/version conflict resolution, automatic package signing, and complete build provenance remain unimplemented.
+- GATE: NOT PASSED — mandatory E1-E6 acceptance is incomplete.
