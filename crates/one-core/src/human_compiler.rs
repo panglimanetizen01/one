@@ -247,21 +247,41 @@ fn shift_diagnostics(mut bundle: DiagnosticBundle, offset: usize) -> DiagnosticB
 /// declared immediately after the root/module header; path traversal and import cycles
 /// are rejected. All module bodies enter the same canonical semantic pipeline.
 pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, DiagnosticBundle> {
-    let root_file = std::fs::File::open(path).map_err(|error| {
+    let canonical_root = std::fs::canonicalize(path).map_err(|error| {
         DiagnosticBundle::single(Diagnostic::error(
-            "HV1010",
-            format!("Tidak dapat membuka '{}': {}", path.display(), error),
+            "HV1011",
+            format!("Tidak dapat menyelesaikan jalur proyek '{}': {}", path.display(), error),
             None,
         ))
     })?;
-    let root_source = read_source_bounded(root_file, MAX_HUMAN_SOURCE_BYTES, "berkas program")
-        .map_err(|error| DiagnosticBundle::single(Diagnostic::error("HV1010", error, None)))?;
+    let root_dir = canonical_root
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."))
+        .to_path_buf();
+    let root_name = canonical_root.file_name().ok_or_else(|| {
+        DiagnosticBundle::single(Diagnostic::error(
+            "HV1010",
+            "Jalur program harus menunjuk ke berkas reguler.",
+            None,
+        ))
+    })?;
+    // Open the canonical root through the same no-follow, nonblocking, bounded reader
+    // used for imports. A FIFO or a path swapped to a symlink must fail closed.
+    let root_source = read_confined_module(
+        &root_dir,
+        &canonical_root,
+        std::path::Path::new(root_name),
+        &canonical_root,
+    )
+    .map_err(|error| {
+        DiagnosticBundle::single(Diagnostic::error(
+            "HV1010",
+            format!("Tidak dapat membuka program '{}': {}", path.display(), error),
+            None,
+        ))
+    })?;
     let root_header = root_source.lines().next().unwrap_or_default();
     let root = parse(&format!("{}\ntampilkan \"header probe\"\n", root_header))?;
-    let canonical_root = std::fs::canonicalize(path).map_err(|error| {
-        DiagnosticBundle::single(Diagnostic::error("HV1011", format!("Tidak dapat menyelesaikan jalur proyek '{}': {}", path.display(), error), None))
-    })?;
-    let root_dir = canonical_root.parent().unwrap_or_else(|| std::path::Path::new(".")).to_path_buf();
     let mut collection = ModuleCollection::new(root_dir);
     collection.collect(&canonical_root, &root_source, true)?;
     let wrapped = format!("Buat program {}\n{}", root.name, collection.output);
@@ -480,5 +500,22 @@ mod tests {
     fn shifts_semantic_diagnostic_to_original_source_line() {
         let error = compile("Buat program rusak\ntampilkan tidak_ada\n").unwrap_err();
         assert_eq!(error.0[0].span.as_ref().unwrap().line, 2);
+    } 
+    #[cfg(unix)]
+    #[test]
+    fn compile_file_rejects_fifo_without_blocking() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let fifo = std::env::temp_dir().join(format!(
+            "one-human-root-fifo-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let c_path = std::ffi::CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        // SAFETY: c_path is NUL-terminated and names a unique test path.
+        assert_eq!(unsafe { libc::mkfifo(c_path.as_ptr(), 0o600) }, 0);
+        let error = compile_file(&fifo).expect_err("FIFO program source must fail closed");
+        assert_eq!(error.0[0].code, "HV1010");
+        let _ = std::fs::remove_file(fifo);
     }
+
 }
