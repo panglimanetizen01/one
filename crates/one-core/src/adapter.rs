@@ -194,3 +194,53 @@ mod tests { use super::*; use crate::capability::Capability; use crate::orchestr
 #[cfg(unix)] #[test] fn filesystem_adapters_reject_symlink_targets() { use std::os::unix::fs::symlink; let base = std::env::temp_dir().join("one-filesystem-symlink-target-test"); let target = base.with_extension("target"); let link = base.with_extension("link"); std::fs::write(&target, "secret").expect("target should be created"); symlink(&target, &link).expect("symlink should be created"); assert_eq!(validate_filesystem_target(&link.display().to_string()), Err(AdapterError::InvalidArguments)); let _ = std::fs::remove_file(link); let _ = std::fs::remove_file(target); }
 #[test] fn filesystem_read_adapter_rejects_oversized_files() { let path = std::env::temp_dir().join("one-filesystem-read-adapter-oversize-test.bin"); std::fs::write(&path, vec![0u8; MAX_FILE_BYTES as usize + 1]).expect("oversized fixture should be written"); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target(path.display().to_string()), EffectClass::Read); assert_eq!(FileReadAdapter::new().invoke(&AdapterRequest::new(request)), Err(AdapterError::BackendFailure)); let _ = std::fs::remove_file(path); }
 #[test] fn filesystem_write_adapter_rejects_oversized_content() { let path = std::env::temp_dir().join("one-filesystem-write-adapter-oversize-test.bin"); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemWrite, Capability::FilesystemWrite, ExecutionScope::target(path.display().to_string()), EffectClass::Write); assert_eq!(FileWriteAdapter::new().invoke(&AdapterRequest::new(request).with_argument(AdapterArgument::Text("x".repeat(MAX_FILE_BYTES as usize + 1)))), Err(AdapterError::InvalidArguments)); assert!(!path.exists()); } #[test] fn filesystem_write_adapter_writes_text_target() { let path = std::env::temp_dir().join("one-filesystem-write-adapter-test.txt"); let adapter = FileWriteAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemWrite, Capability::FilesystemWrite, ExecutionScope::target(path.display().to_string()), EffectClass::Write); let result = adapter.invoke(&AdapterRequest::new(request).with_argument(AdapterArgument::Text("adapter write".into()))).expect("write should succeed"); assert!(result.success); assert_eq!(std::fs::read_to_string(&path).unwrap(), "adapter write"); let _ = std::fs::remove_file(path); } #[test] fn process_adapter_executes_scoped_program_and_returns_output() { let adapter = ProcessAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::ProcessExecute, Capability::Process, ExecutionScope::target("rustc"), EffectClass::Execute); let result = adapter.invoke(&AdapterRequest::new(request)).expect("rustc should be executable in the verification environment"); assert!(result.success); assert!(!result.output.is_empty()); } #[test] fn http_get_adapter_rejects_non_http_target() { let adapter = HttpGetAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("https://example.com/"), EffectClass::Connect); assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::InvalidArguments)); } }
+
+#[cfg(all(test, any(target_os = "linux", target_os = "android")))]
+mod filesystem_nofollow_tests {
+    use super::*;
+    use std::os::unix::fs::symlink;
+
+    fn test_root(label: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("one-fs-nofollow-{label}-{}", std::process::id()))
+    }
+
+    #[test]
+    fn descriptor_relative_read_rejects_symlinked_parent_even_without_precheck() {
+        let root = test_root("parent");
+        let real = root.join("real");
+        let link = root.join("link");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&real).expect("create real directory");
+        std::fs::write(real.join("secret.txt"), b"secret").expect("create target");
+        symlink(&real, &link).expect("create directory symlink");
+
+        assert!(open_read_target(&link.join("secret.txt")).is_err());
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn descriptor_relative_read_rejects_final_symlink() {
+        let root = test_root("final-read");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).expect("create directory");
+        std::fs::write(root.join("real.txt"), b"secret").expect("create target");
+        symlink(root.join("real.txt"), root.join("link.txt")).expect("create file symlink");
+
+        assert!(open_read_target(&root.join("link.txt")).is_err());
+        let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn descriptor_relative_write_rejects_final_symlink_without_modifying_target() {
+        let root = test_root("final-write");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).expect("create directory");
+        std::fs::write(root.join("real.txt"), b"preserve").expect("create target");
+        symlink(root.join("real.txt"), root.join("link.txt")).expect("create file symlink");
+
+        assert!(open_write_target(&root.join("link.txt")).is_err());
+        assert_eq!(std::fs::read(root.join("real.txt")).expect("read target"), b"preserve");
+        let _ = std::fs::remove_dir_all(root);
+    }
+}
+
