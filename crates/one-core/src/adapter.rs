@@ -25,10 +25,10 @@ fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
     Ok(())
 }
 
-// On Linux/Android, resolve each directory relative to an already-open directory
+// On Unix platforms, resolve each directory relative to an already-open directory
 // descriptor. O_NOFOLLOW applies at every component, eliminating the check/open
 // symlink race that static symlink_metadata checks alone cannot prevent.
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(unix)]
 fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
 
@@ -62,7 +62,7 @@ fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
     Ok(directory)
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(unix)]
 fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
@@ -87,12 +87,12 @@ fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     Ok(file)
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "android")))]
+#[cfg(not(unix))]
 fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     std::fs::File::open(path)
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(unix)]
 fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
@@ -117,7 +117,7 @@ fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     Ok(file)
 }
 
-#[cfg(not(any(target_os = "linux", target_os = "android")))]
+#[cfg(not(unix))]
 fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     std::fs::OpenOptions::new().write(true).create(true).truncate(true).open(path)
 }
@@ -195,7 +195,7 @@ mod tests { use super::*; use crate::capability::Capability; use crate::orchestr
 #[test] fn filesystem_read_adapter_rejects_oversized_files() { let path = std::env::temp_dir().join("one-filesystem-read-adapter-oversize-test.bin"); std::fs::write(&path, vec![0u8; MAX_FILE_BYTES as usize + 1]).expect("oversized fixture should be written"); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target(path.display().to_string()), EffectClass::Read); assert_eq!(FileReadAdapter::new().invoke(&AdapterRequest::new(request)), Err(AdapterError::BackendFailure)); let _ = std::fs::remove_file(path); }
 #[test] fn filesystem_write_adapter_rejects_oversized_content() { let path = std::env::temp_dir().join("one-filesystem-write-adapter-oversize-test.bin"); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemWrite, Capability::FilesystemWrite, ExecutionScope::target(path.display().to_string()), EffectClass::Write); assert_eq!(FileWriteAdapter::new().invoke(&AdapterRequest::new(request).with_argument(AdapterArgument::Text("x".repeat(MAX_FILE_BYTES as usize + 1)))), Err(AdapterError::InvalidArguments)); assert!(!path.exists()); } #[test] fn filesystem_write_adapter_writes_text_target() { let path = std::env::temp_dir().join("one-filesystem-write-adapter-test.txt"); let adapter = FileWriteAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemWrite, Capability::FilesystemWrite, ExecutionScope::target(path.display().to_string()), EffectClass::Write); let result = adapter.invoke(&AdapterRequest::new(request).with_argument(AdapterArgument::Text("adapter write".into()))).expect("write should succeed"); assert!(result.success); assert_eq!(std::fs::read_to_string(&path).unwrap(), "adapter write"); let _ = std::fs::remove_file(path); } #[test] fn process_adapter_executes_scoped_program_and_returns_output() { let adapter = ProcessAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::ProcessExecute, Capability::Process, ExecutionScope::target("rustc"), EffectClass::Execute); let result = adapter.invoke(&AdapterRequest::new(request)).expect("rustc should be executable in the verification environment"); assert!(result.success); assert!(!result.output.is_empty()); } #[test] fn http_get_adapter_rejects_non_http_target() { let adapter = HttpGetAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("https://example.com/"), EffectClass::Connect); assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::InvalidArguments)); } }
 
-#[cfg(all(test, any(target_os = "linux", target_os = "android")))]
+#[cfg(all(test, unix))]
 mod filesystem_nofollow_tests {
     use super::*;
     use std::os::unix::fs::symlink;
