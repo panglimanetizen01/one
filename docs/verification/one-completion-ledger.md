@@ -341,3 +341,10 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - Retried the failed focused stdlib and Linux distro jobs. The retry again reported `runner_id: 0` and no steps/logs. Do not repeat retries indefinitely as if they were source-level tests.
 - The verification mirror's `verification` branch selector was advanced to the exact source SHA `1c450863cdfcb824dcf7cef6b64e86e58bc25b44`, which should trigger its push workflow. The mirror workflow requires `CANONICAL_READ_TOKEN` to fetch the private source. No successful mirror run has yet been independently observed for this selector; treat its execution and secret configuration as unverified until a concrete run and logs are available.
 - No verified points are added. **GATE remains NOT PASSED.**
+
+
+### Subsequent branch-head reconciliation
+
+- A later branch commit was observed at `6826e3a1b41525bbfa5d3f02dda100c7e59a7004` (`docs(security): document signed artifact format binding`). This commit updates the provenance documentation to bind the validated package format alongside the artifact digest.
+- Exact-SHA runs for this later commit: One CI [40062110808](https://github.com/panglimanetizen01/one/actions/runs/40062110808), focused stdlib [40062110699](https://github.com/panglimanetizen01/one/actions/runs/40062110699), and Linux distro [40062110726](https://github.com/panglimanetizen01/one/actions/runs/40062110726) all failed before recorded steps; each job reports `runner_id: 0`, empty steps, and a 2–3 second runtime.
+- The verification mirror selector has independently advanced to `6826e3a1b41525bbfa5d3f02dda100c7e59a7004`; its runner result is not confirmed. No points are added and the gate remains **NOT PASSED**.
