@@ -99,7 +99,69 @@ fn read_confined_module(
     Err("Jalur modul tidak valid.".to_owned())
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
+fn read_confined_module(
+    root_dir: &std::path::Path,
+    _current_file: &std::path::Path,
+    _relative_path: &std::path::Path,
+    candidate: &std::path::Path,
+) -> Result<String, String> {
+    use std::fs::OpenOptions;
+    use std::os::windows::fs::{MetadataExt, OpenOptionsExt};
+    use std::os::windows::io::AsRawHandle;
+
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
+    const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+
+    let canonical_root = std::fs::canonicalize(root_dir)
+        .map_err(|error| format!("Tidak dapat menyelesaikan akar proyek: {error}"))?;
+    let file = OpenOptions::new()
+        .read(true)
+        .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
+        .open(candidate)
+        .map_err(|error| format!("Tidak dapat membuka modul tanpa mengikuti reparse point: {error}"))?;
+    let metadata = file.metadata().map_err(|error| error.to_string())?;
+    if !metadata.is_file() || metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+        return Err("Modul harus berupa berkas reguler dan bukan reparse point.".to_owned());
+    }
+
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetFinalPathNameByHandleW(
+            file: *mut std::ffi::c_void,
+            path: *mut u16,
+            length: u32,
+            flags: u32,
+        ) -> u32;
+    }
+
+    let mut buffer = vec![0u16; 32_768];
+    // SAFETY: the file handle is live and buffer is writable for its declared length.
+    let length = unsafe {
+        GetFinalPathNameByHandleW(
+            file.as_raw_handle() as *mut std::ffi::c_void,
+            buffer.as_mut_ptr(),
+            buffer.len() as u32,
+            0,
+        )
+    };
+    if length == 0 || length as usize >= buffer.len() {
+        return Err("Tidak dapat memverifikasi jalur final handle modul.".to_owned());
+    }
+    buffer.truncate(length as usize);
+    let final_path = String::from_utf16(&buffer)
+        .map_err(|_| "Jalur final handle modul bukan UTF-16 valid.".to_owned())?;
+
+    let normalize = |path: &str| path.replace('/', "\\").trim_end_matches('\\').to_ascii_lowercase();
+    let root = normalize(&canonical_root.to_string_lossy());
+    let actual = normalize(&final_path);
+    if actual != root && !actual.strip_prefix(&root).is_some_and(|suffix| suffix.starts_with('\\')) {
+        return Err("Modul berada di luar direktori proyek setelah handle dibuka.".to_owned());
+    }
+    read_source_bounded(file, MAX_HUMAN_SOURCE_BYTES, "modul")
+}
+
+#[cfg(not(any(unix, windows)))]
 fn read_confined_module(
     root_dir: &std::path::Path,
     _current_file: &std::path::Path,
