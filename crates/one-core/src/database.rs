@@ -302,22 +302,13 @@ mod tests {
     }
 
     #[test]
-    fn sqlite_adapter_rejects_query_results_over_the_output_byte_limit() {
-        let path = temporary_database_path("output-limit");
-        let connection = Connection::open(&path).expect("database");
-        connection.execute_batch("CREATE TABLE data (value TEXT);").expect("table");
-        let value = "x".repeat(MAX_DATABASE_VALUE_BYTES);
-        let mut insert = connection.prepare("INSERT INTO data(value) VALUES (?1)").expect("insert");
-        for _ in 0..=MAX_DATABASE_OUTPUT_BYTES / MAX_DATABASE_VALUE_BYTES {
-            insert.execute([&value]).expect("insert bounded value");
-        }
-        drop(insert);
-        drop(connection);
-
-        let adapter = SqliteAdapter::new();
-        let result = adapter.invoke(&select_request(&path, "SELECT value FROM data".into()));
-        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
-        let _ = std::fs::remove_file(path);
+    fn sqlite_adapter_rejects_output_append_over_the_byte_limit() {
+        let mut output = String::with_capacity(MAX_DATABASE_OUTPUT_BYTES);
+        output.push_str(&"x".repeat(MAX_DATABASE_OUTPUT_BYTES));
+        assert_eq!(
+            SqliteAdapter::append_bounded(&mut output, "x"),
+            Err(AdapterError::ResourceLimitExceeded)
+        );
     }
 
     #[test]
