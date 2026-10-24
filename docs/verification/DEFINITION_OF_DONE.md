@@ -2,7 +2,7 @@
 
 **Status:** In progress — not a release authorization  
 **Candidate branch:** `milestone/100-ecosystem-20261023`  
-**Candidate source SHA:** `1a48989f213cd000a1eb3143b97549415b733241`  
+**Candidate source SHA:** see the synchronized source pin and evidence index; this reusable checklist intentionally does not embed a self-referential commit SHA.  
 **Fixed-weight ledger:** [one-completion-ledger.md](one-completion-ledger.md)  
 **Independent evidence index:** [CANDIDATE_VERIFICATION.md](https://github.com/panglimanetizen01/one-windows-verification/blob/verification/CANDIDATE_VERIFICATION.md)  
 **PR:** [#80](https://github.com/panglimanetizen01/one/pull/80)
