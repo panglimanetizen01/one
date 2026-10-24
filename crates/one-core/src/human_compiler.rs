@@ -518,4 +518,42 @@ mod tests {
         let _ = std::fs::remove_file(fifo);
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn confined_module_reader_rejects_directory_junction_escape() {
+        let base = std::env::temp_dir().join(format!(
+            "one-module-junction-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let root = base.join("project");
+        let outside = base.join("outside");
+        let junction = root.join("escape");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        let main = root.join("main.one");
+        let outside_module = outside.join("math.one");
+        std::fs::write(&main, "Buat program utama\\n").unwrap();
+        std::fs::write(&outside_module, "Buat modul luar\\ntampilkan \\"jangan baca\\"\\n").unwrap();
+
+        let status = std::process::Command::new("cmd")
+            .args(["/C", "mklink", "/J"])
+            .arg(&junction)
+            .arg(&outside)
+            .status()
+            .expect("cmd should be available on Windows");
+        assert!(status.success(), "directory junction must be created for the confinement regression");
+
+        let error = read_confined_module(
+            &root,
+            &main,
+            std::path::Path::new("escape/math.one"),
+            &junction.join("math.one"),
+        )
+        .unwrap_err();
+        assert!(error.contains("di luar direktori proyek"), "unexpected error: {error}");
+
+        let _ = std::fs::remove_dir(&junction);
+        let _ = std::fs::remove_dir_all(base);
+    }
+
 }
