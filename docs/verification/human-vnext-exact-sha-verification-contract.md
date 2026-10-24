@@ -89,3 +89,7 @@ The lockfile was generated with Cargo against canonical source SHA cd4aa9f9be450
 
 This closes the Rust workspace lockfile/reproducibility gap only. It does **not** implement One-language external package declarations or registry resolution, authenticate a One package publisher, or sign package provenance. Those remain separate E2 acceptance criteria and must not be inferred from Cargo.lock.
 
+## Rust toolchain pin
+
+The repository root rust-toolchain.toml pins Rust 1.99.0 with the minimal profile and the rustfmt/Clippy components. Version 1.99.0 was observed in the successful exact-source Cargo lockfile generation run, not inferred from the moving stable channel. This pin is for reproducible workspace/release verification and does not change the language's public compatibility contract.
+
