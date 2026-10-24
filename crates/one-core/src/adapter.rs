@@ -1,7 +1,6 @@
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Component, Path};
 use std::time::Duration;
-
 
 const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 
@@ -24,6 +23,103 @@ fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
         }
     }
     Ok(())
+}
+
+// On Linux/Android, resolve each directory relative to an already-open directory
+// descriptor. O_NOFOLLOW applies at every component, eliminating the check/open
+// symlink race that static symlink_metadata checks alone cannot prevent.
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+
+    let root = if path.is_absolute() { b"/\\0".as_ptr() } else { b".\\0".as_ptr() };
+    // SAFETY: root is a static NUL-terminated path and open returns a new owned fd.
+    let root_fd = unsafe { libc::open(root.cast(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC) };
+    if root_fd < 0 { return Err(std::io::Error::last_os_error()); }
+    // SAFETY: root_fd was freshly returned by open and is now owned by File.
+    let mut directory = unsafe { std::fs::File::from_raw_fd(root_fd) };
+
+    for component in path.components() {
+        match component {
+            Component::RootDir | Component::CurDir => continue,
+            Component::ParentDir => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "parent path components are forbidden")),
+            Component::Normal(name) => {
+                use std::os::unix::ffi::OsStrExt;
+                let name = std::ffi::CString::new(name.as_bytes())
+                    .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+                // SAFETY: directory is a valid open directory fd and name is NUL terminated.
+                let next_fd = unsafe {
+                    libc::openat(directory.as_raw_fd(), name.as_ptr(),
+                        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW)
+                };
+                if next_fd < 0 { return Err(std::io::Error::last_os_error()); }
+                // SAFETY: next_fd is a fresh owned fd from openat.
+                directory = unsafe { std::fs::File::from_raw_fd(next_fd) };
+            }
+            _ => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "unsupported path prefix")),
+        }
+    }
+    Ok(directory)
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+
+    let parent = path.parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or(Path::new("."));
+    let name = path.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
+    let name = std::ffi::CString::new(name.as_bytes())
+        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+    let directory = open_directory_nofollow(parent)?;
+    // O_NONBLOCK avoids hanging if an attacker swaps a regular file for a FIFO.
+    // SAFETY: directory is an owned directory fd and name is NUL terminated.
+    let fd = unsafe {
+        libc::openat(directory.as_raw_fd(), name.as_ptr(),
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK)
+    };
+    if fd < 0 { return Err(std::io::Error::last_os_error()); }
+    // SAFETY: fd is a fresh owned fd from openat.
+    let file = unsafe { std::fs::File::from_raw_fd(fd) };
+    if !file.metadata()?.is_file() {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file"));
+    }
+    Ok(file)
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
+    std::fs::File::open(path)
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+
+    let parent = path.parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or(Path::new("."));
+    let name = path.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
+    let name = std::ffi::CString::new(name.as_bytes())
+        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+    let directory = open_directory_nofollow(parent)?;
+    // SAFETY: directory is an owned directory fd and name is NUL terminated.
+    let fd = unsafe {
+        libc::openat(directory.as_raw_fd(), name.as_ptr(),
+            libc::O_WRONLY | libc::O_CREAT | libc::O_TRUNC | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK,
+            0o666)
+    };
+    if fd < 0 { return Err(std::io::Error::last_os_error()); }
+    // SAFETY: fd is a fresh owned fd from openat.
+    let file = unsafe { std::fs::File::from_raw_fd(fd) };
+    if !file.metadata()?.is_file() {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file"));
+    }
+    Ok(file)
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
+    std::fs::OpenOptions::new().write(true).create(true).truncate(true).open(path)
 }
 
 use crate::capability::{Capability, CapabilitySet};
@@ -52,12 +148,12 @@ pub trait ToolAdapter { fn metadata(&self) -> &AdapterMetadata; fn invoke(&self,
 pub struct FileReadAdapter { metadata: AdapterMetadata }
 impl FileReadAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.read"), AdapterStatus::Implemented, vec![Capability::FilesystemRead], vec![PlatformKind::Any]) } } }
 impl Default for FileReadAdapter { fn default() -> Self { Self::new() } }
-impl ToolAdapter for FileReadAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); } let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; validate_filesystem_target(path)?; (|| { let file = std::fs::File::open(path).map_err(|_| AdapterError::BackendFailure)?; if file.metadata().map_err(|_| AdapterError::BackendFailure)?.len() > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } let mut output = Vec::new(); file.take(MAX_FILE_BYTES + 1).read_to_end(&mut output).map_err(|_| AdapterError::BackendFailure)?; if output.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } Ok(AdapterResult { success: true, output }) })() } }
+impl ToolAdapter for FileReadAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); } let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; validate_filesystem_target(path)?; (|| { let file = open_read_target(Path::new(path)).map_err(|_| AdapterError::BackendFailure)?; if file.metadata().map_err(|_| AdapterError::BackendFailure)?.len() > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } let mut output = Vec::new(); file.take(MAX_FILE_BYTES + 1).read_to_end(&mut output).map_err(|_| AdapterError::BackendFailure)?; if output.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } Ok(AdapterResult { success: true, output }) })() } }
 
 pub struct FileWriteAdapter { metadata: AdapterMetadata }
 impl FileWriteAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.write"), AdapterStatus::Implemented, vec![Capability::FilesystemWrite], vec![PlatformKind::Any]) } } }
 impl Default for FileWriteAdapter { fn default() -> Self { Self::new() } }
-impl ToolAdapter for FileWriteAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; let content = match request.arguments() { [AdapterArgument::Text(value)] => value.as_bytes().to_vec(), _ => return Err(AdapterError::InvalidArguments) }; let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; validate_filesystem_target(path)?; if content.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::InvalidArguments); } std::fs::write(path, &content).map(|()| AdapterResult { success: true, output: content }).map_err(|_| AdapterError::BackendFailure) } }
+impl ToolAdapter for FileWriteAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; let content = match request.arguments() { [AdapterArgument::Text(value)] => value.as_bytes().to_vec(), _ => return Err(AdapterError::InvalidArguments) }; let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; validate_filesystem_target(path)?; if content.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::InvalidArguments); } open_write_target(Path::new(path)).and_then(|mut file| file.write_all(&content)).map(|()| AdapterResult { success: true, output: content }).map_err(|_| AdapterError::BackendFailure) } }
 
 pub struct ProcessAdapter { metadata: AdapterMetadata }
 impl ProcessAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("process.execute"), AdapterStatus::Implemented, vec![Capability::Process], vec![PlatformKind::Any]) } } }
