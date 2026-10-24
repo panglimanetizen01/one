@@ -700,3 +700,7 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 
 
 - Added committed release fixture `examples/package-release` and documented it for the protected manual workflow. The next acceptance run must use the canonical branch head after this checkpoint update. The release environment has not been dispatched or approved; E2 remains unverified.
+
+
+- Release workflow hardening: the workflow validates the publisher ID and signing-seed shape, rejects project paths outside the checkout or containing control line breaks, checks the selected publisher against the protected trust store, and uploads the exact package path emitted by the build step. This is not an actual signed release run; environment protection and independently provisioned trust material remain operational acceptance requirements.
+- Canonical source head after this checkpoint update must be re-read and pinned in the independent verification mirror before final claims. Keep the gate NOT PASSED until all required E1–E6 criteria and exact-SHA platform checks pass.
