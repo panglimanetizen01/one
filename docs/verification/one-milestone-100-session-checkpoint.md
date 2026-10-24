@@ -733,3 +733,10 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - Android hosted-runner failure was traced to unavailable HVF acceleration (`failed to initialize HVF: Invalid argument`). The mirror Android workflow now requests software emulation with `-accel off`; this is a workaround attempt, not evidence of successful Android execution.
 - This checkpoint/ledger update changes the source SHA. Re-read PR #80 head, set the mirror selector to the exact new SHA, and require a fresh complete matrix after the documentation updates. Earlier successful Linux/Windows, distro, focused stdlib/database, and lockfile runs are evidence for their recorded SHAs only.
 - **Scores remain 88/100 provisional implementation and 60/100 verified. Gate NOT PASSED.** E1–E6 acceptance, actual Android ELF execution, protected release dispatch, and final forensic DoD audit remain open.
+
+
+## 2026-10-24 — E2/E5 implementation score reconciliation
+
+- E2 provisional implementation increases 6/8 → 7/8 because the protected release workflow is now present; protected-environment dispatch and independently provisioned trust-store acceptance remain open.
+- E5 provisional implementation increases 2/4 → 3/4 because the user-facing release provenance guide, CLI signing/verification documentation, and enforced documentation consistency checks are now present. Tested user-workflow review remains open.
+- **Implementation subtotal: 90/100 provisional. Verified completion: 60/100. Gate: NOT PASSED.** This checkpoint commit changes the source SHA; repin the verification mirror and rerun every required check. Android AArch64 ELF execution is still mandatory for E3.
