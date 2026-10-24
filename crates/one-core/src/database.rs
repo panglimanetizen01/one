@@ -1,7 +1,9 @@
 use crate::adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 use crate::capability::Capability;
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
-use rusqlite::{types::ValueRef, Connection, OpenFlags};
+use rusqlite::{limits::Limit, types::ValueRef, Connection, Error as SqliteError, ErrorCode, OpenFlags};
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::time::{Duration, Instant};
 
 const MAX_DATABASE_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
 const MAX_DATABASE_QUERY_BYTES: usize = 1024 * 1024;
@@ -9,12 +11,43 @@ const MAX_DATABASE_PARAMETER_BYTES: usize = 1024 * 1024;
 const MAX_DATABASE_TOTAL_PARAMETER_BYTES: usize = 16 * 1024 * 1024;
 const MAX_DATABASE_PARAMETERS: usize = 256;
 const MAX_DATABASE_ROWS: usize = 100_000;
+const MAX_DATABASE_VALUE_BYTES: usize = 1024 * 1024;
+const MAX_DATABASE_COLUMNS: usize = 32;
+const MAX_DATABASE_VDBE_OPS: i32 = 100_000;
+const MAX_DATABASE_QUERY_DURATION: Duration = Duration::from_secs(2);
 
 pub struct SqliteAdapter {
     metadata: AdapterMetadata,
 }
 
 impl SqliteAdapter {
+    fn configure_connection(connection: &Connection) {
+        connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, (MAX_DATABASE_VALUE_BYTES + 64 * 1024) as i32);
+        connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, MAX_DATABASE_QUERY_BYTES as i32);
+        connection.set_limit(Limit::SQLITE_LIMIT_COLUMN, MAX_DATABASE_COLUMNS as i32);
+        connection.set_limit(Limit::SQLITE_LIMIT_EXPR_DEPTH, 1_000);
+        connection.set_limit(Limit::SQLITE_LIMIT_COMPOUND_SELECT, 32);
+        connection.set_limit(Limit::SQLITE_LIMIT_VDBE_OP, MAX_DATABASE_VDBE_OPS);
+        connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, MAX_DATABASE_PARAMETERS as i32);
+        connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 64);
+        connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0);
+        connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 50_000);
+    }
+
+    fn map_sqlite_error(error: SqliteError, timed_out: &AtomicBool) -> AdapterError {
+        if timed_out.load(Ordering::Relaxed) {
+            return AdapterError::ResourceLimitExceeded;
+        }
+        match error {
+            SqliteError::SqliteFailure(code, _)
+                if matches!(code.code, ErrorCode::TooBig | ErrorCode::OperationInterrupted) =>
+            {
+                AdapterError::ResourceLimitExceeded
+            }
+            _ => AdapterError::BackendFailure,
+        }
+    }
+
     pub fn new() -> Self {
         Self {
             metadata: AdapterMetadata::new(
@@ -41,7 +74,7 @@ impl SqliteAdapter {
             ValueRef::Integer(value) => Ok(value.to_string()),
             ValueRef::Real(value) => Ok(value.to_string()),
             ValueRef::Text(value) => {
-                if value.len() > MAX_DATABASE_OUTPUT_BYTES {
+                if value.len() > MAX_DATABASE_VALUE_BYTES {
                     return Err(AdapterError::ResourceLimitExceeded);
                 }
                 Ok(String::from_utf8_lossy(value).into_owned())
@@ -122,29 +155,57 @@ impl ToolAdapter for SqliteAdapter {
 
         // DatabaseQuery is a read-only effect. Keep in-memory queries available for
         // deterministic tests, but never create or open a file-backed database writable.
+        if path != ":memory:" {
+            crate::adapter::validate_filesystem_target(std::path::Path::new(path))
+                .map_err(|_| AdapterError::InvalidArguments)?;
+            let metadata = std::fs::symlink_metadata(path).map_err(|_| AdapterError::BackendFailure)?;
+            if metadata.file_type().is_symlink() || !metadata.is_file() {
+                return Err(AdapterError::InvalidArguments);
+            }
+        }
         let connection = if path == ":memory:" {
             Connection::open_in_memory()
         } else {
             Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)
         }
         .map_err(|_| AdapterError::BackendFailure)?;
+        Self::configure_connection(&connection);
+        connection
+            .busy_timeout(Duration::from_millis(250))
+            .map_err(|_| AdapterError::BackendFailure)?;
         connection
             .pragma_update(None, "query_only", true)
             .map_err(|_| AdapterError::BackendFailure)?;
+
+        let timed_out = Arc::new(AtomicBool::new(false));
+        let timeout_flag = Arc::clone(&timed_out);
+        let query_started = Instant::now();
+        connection.progress_handler(1_000, Some(move || {
+            if query_started.elapsed() >= MAX_DATABASE_QUERY_DURATION {
+                timeout_flag.store(true, Ordering::Relaxed);
+                true
+            } else {
+                false
+            }
+        }));
+
         let mut statement = connection
             .prepare(sql)
-            .map_err(|_| AdapterError::BackendFailure)?;
+            .map_err(|error| Self::map_sqlite_error(error, &timed_out))?;
         let column_count = statement.column_count();
+        if column_count > MAX_DATABASE_COLUMNS {
+            return Err(AdapterError::ResourceLimitExceeded);
+        }
         let parameter_refs: Vec<&dyn rusqlite::ToSql> = parameters
             .iter()
             .map(|value| value as &dyn rusqlite::ToSql)
             .collect();
         let mut rows = statement
             .query(rusqlite::params_from_iter(parameter_refs))
-            .map_err(|_| AdapterError::BackendFailure)?;
+            .map_err(|error| Self::map_sqlite_error(error, &timed_out))?;
         let mut output = String::new();
         let mut row_count = 0usize;
-        while let Some(row) = rows.next().map_err(|_| AdapterError::BackendFailure)? {
+        while let Some(row) = rows.next().map_err(|error| Self::map_sqlite_error(error, &timed_out))? {
             row_count = row_count.checked_add(1).ok_or(AdapterError::ResourceLimitExceeded)?;
             if row_count > MAX_DATABASE_ROWS {
                 return Err(AdapterError::ResourceLimitExceeded);
@@ -233,18 +294,42 @@ mod tests {
     fn sqlite_adapter_rejects_query_results_over_the_output_byte_limit() {
         let path = temporary_database_path("output-limit");
         let connection = Connection::open(&path).expect("database");
-        connection
-            .execute_batch(&format!(
-                "CREATE TABLE data (value BLOB); INSERT INTO data VALUES (zeroblob({}));",
-                MAX_DATABASE_OUTPUT_BYTES + 1
-            ))
-            .expect("large blob");
+        connection.execute_batch("CREATE TABLE data (value TEXT);").expect("table");
+        let value = "x".repeat(MAX_DATABASE_VALUE_BYTES);
+        let mut insert = connection.prepare("INSERT INTO data(value) VALUES (?1)").expect("insert");
+        for _ in 0..=MAX_DATABASE_OUTPUT_BYTES / MAX_DATABASE_VALUE_BYTES {
+            insert.execute([&value]).expect("insert bounded value");
+        }
+        drop(insert);
         drop(connection);
 
         let adapter = SqliteAdapter::new();
         let result = adapter.invoke(&select_request(&path, "SELECT value FROM data".into()));
         assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
         let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn sqlite_adapter_enforces_engine_value_limit() {
+        let sql = format!("SELECT randomblob({})", MAX_DATABASE_VALUE_BYTES + 1);
+        let result = SqliteAdapter::new().invoke(&select_request(std::path::Path::new(":memory:"), sql));
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+    }
+
+    #[test]
+    fn sqlite_adapter_interrupts_long_running_queries_with_a_typed_limit_error() {
+        let sql = "WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n WHERE x < 1000000000) SELECT sum(x) FROM n".to_owned();
+        let started = Instant::now();
+        let result = SqliteAdapter::new().invoke(&select_request(std::path::Path::new(":memory:"), sql));
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
+        assert!(started.elapsed() < Duration::from_secs(6), "query timeout did not bound execution");
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_excessive_result_columns() {
+        let sql = format!("SELECT {}", vec!["1"; MAX_DATABASE_COLUMNS + 1].join(","));
+        let result = SqliteAdapter::new().invoke(&select_request(std::path::Path::new(":memory:"), sql));
+        assert_eq!(result, Err(AdapterError::ResourceLimitExceeded));
     }
 
     #[test]
