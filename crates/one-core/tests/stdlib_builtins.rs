@@ -349,3 +349,84 @@ fn checked_numeric_and_collection_edges_return_typed_runtime_errors() {
     let error = run(wrong_list_sum).expect_err("non-integer sum item must fail");
     assert!(error.contains("R3022") || error.contains("R3023"), "unexpected diagnostic: {error}");
 }
+
+#[test]
+fn text_builtins_cover_empty_values_unicode_scalars_and_i64_boundaries() {
+    let source = r#"teks adalah "猫😀"
+jumlah adalah panjang teks dengan teks
+kosong adalah ""
+awal adalah teks diawali dengan teks dan kosong
+akhir adalah teks diakhiri dengan teks dan kosong
+minimum adalah ubah teks ke angka dengan "-9223372036854775808"
+maksimum adalah ubah teks ke angka dengan "9223372036854775807"
+tampilkan jumlah
+tampilkan awal
+tampilkan akhir
+tampilkan minimum
+tampilkan maksimum
+"#;
+    assert_eq!(
+        run(source).expect("Unicode, empty text, and signed-i64 boundaries should execute"),
+        vec!["2", "benar", "benar", "-9223372036854775808", "9223372036854775807"]
+    );
+
+    for source in [
+        r#"hasil adalah ganti teks dengan "abc" dan "" dan "x"
+tampilkan hasil
+"#,
+        r#"hasil adalah pisah teks dengan "a,b" dan ""
+tampilkan hasil
+"#,
+        r#"hasil adalah ubah teks ke angka dengan "-9223372036854775809"
+tampilkan hasil
+"#,
+    ] {
+        let error = run(source).expect_err("invalid text or integer boundary must fail closed");
+        assert!(error.contains("R3022"), "unexpected diagnostic for {source:?}: {error}");
+    }
+}
+
+#[test]
+fn collection_builtins_cover_empty_join_and_invalid_indices() {
+    let source = r#"buat daftar kosong
+hasil adalah gabung teks dengan kosong dan ","
+tampilkan hasil
+"#;
+    assert_eq!(
+        run(source).expect("joining an empty list should return empty text"),
+        vec![""]
+    );
+
+    for index_expression in ["0 dikurangi 1", "2"] {
+        let source = format!(
+            "buat daftar nilai\ntambahkan \"satu\" ke nilai\nhasil adalah ambil indeks dengan nilai dan {index_expression}\ntampilkan hasil\n"
+        );
+        let error = run(&source).expect_err("negative and out-of-range indices must fail closed");
+        assert!(error.contains("R3022"), "unexpected diagnostic for index {index_expression}: {error}");
+    }
+
+    let wrong_join_member = r#"buat daftar nilai
+tambahkan 1 ke nilai
+hasil adalah gabung teks dengan nilai dan ","
+tampilkan hasil
+"#;
+    let error = run(wrong_join_member).expect_err("join must reject non-text members");
+    assert!(
+        error.contains("R3022") || error.contains("E2043"),
+        "unexpected diagnostic for non-text join member: {error}"
+    );
+}
+
+#[test]
+fn utc_parser_source_contract_includes_year_zero_and_upper_boundary() {
+    let source = r#"awal adalah unix dari waktu utc dengan "0000-01-01T00:00:00Z"
+akhir adalah unix dari waktu utc dengan "9999-12-31T23:59:59Z"
+tampilkan awal
+tampilkan akhir
+"#;
+    assert_eq!(
+        run(source).expect("UTC parser should support the documented complete year range"),
+        vec!["-62167219200", "253402300799"]
+    );
+}
+
