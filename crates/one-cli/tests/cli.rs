@@ -264,12 +264,29 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
         "one-package-signature-cli-{}",
         SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
     ));
+    let source_root = root.join("project");
     fs::create_dir_all(&root).unwrap();
+    fs::create_dir_all(source_root.join("src")).unwrap();
+    fs::write(source_root.join("one.toml"), "nama = \"demo\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(source_root.join("src/main.one"), "Buat program demo\ntampilkan \"halo\"\n").unwrap();
+    for args in [
+        vec!["init"],
+        vec!["config", "user.name", "ONE CLI Test"],
+        vec!["config", "user.email", "one-cli-test@example.invalid"],
+        vec!["config", "core.autocrlf", "false"],
+        vec!["add", "--", "one.toml", "src/main.one"],
+        vec!["commit", "-m", "source fixture"],
+    ] {
+        let output = Command::new("git").arg("-C").arg(&source_root).args(args).output().unwrap();
+        assert!(output.status.success(), "git fixture setup failed: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
     let artifact = root.join("demo.onepkg");
     let private_key = root.join("publisher.seed");
     let trust_store = root.join("trusted-publishers.txt");
     let untrusted_store = root.join("untrusted-publishers.txt");
-    fs::write(&artifact, b"One package v0.1\npackage payload").unwrap();
+    let artifact_bytes = b"One package v0.1\npackage payload";
+    fs::write(&artifact, artifact_bytes).unwrap();
 
     let seed = [7u8; 32];
     let signing_key = SigningKey::from_bytes(&seed);
@@ -286,6 +303,8 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
         "example-publisher",
         "--private-key",
         private_key.to_str().unwrap(),
+        "--source-root",
+        source_root.to_str().unwrap(),
     ]);
     assert!(signed.status.success(), "{}", String::from_utf8_lossy(&signed.stderr));
     assert!(root.join("demo.onepkg.provenance").is_file());
@@ -295,15 +314,20 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
         artifact.to_str().unwrap(),
         "--trusted-publishers",
         trust_store.to_str().unwrap(),
+        "--source-root",
+        source_root.to_str().unwrap(),
     ]);
     assert!(verified.status.success(), "{}", String::from_utf8_lossy(&verified.stderr));
     assert!(String::from_utf8_lossy(&verified.stdout).contains("example-publisher"));
+    assert!(String::from_utf8_lossy(&verified.stdout).contains("source tree"));
 
     let untrusted = run(&[
         "verify-package",
         artifact.to_str().unwrap(),
         "--trusted-publishers",
         untrusted_store.to_str().unwrap(),
+        "--source-root",
+        source_root.to_str().unwrap(),
     ]);
     assert!(!untrusted.status.success());
     assert!(String::from_utf8_lossy(&untrusted.stderr).contains("not trusted"));
@@ -314,9 +338,28 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
         artifact.to_str().unwrap(),
         "--trusted-publishers",
         trust_store.to_str().unwrap(),
+        "--source-root",
+        source_root.to_str().unwrap(),
     ]);
     assert!(!tampered.status.success());
     assert!(String::from_utf8_lossy(&tampered.stderr).contains("SHA-256"));
+
+    fs::write(&artifact, artifact_bytes).unwrap();
+    fs::write(source_root.join("src/main.one"), "Buat program demo\ntampilkan \"changed\"\n").unwrap();
+    let output = Command::new("git").arg("-C").arg(&source_root).args(["add", "--", "src/main.one"]).output().unwrap();
+    assert!(output.status.success());
+    let output = Command::new("git").arg("-C").arg(&source_root).args(["commit", "-m", "change source"]).output().unwrap();
+    assert!(output.status.success());
+    let source_mismatch = run(&[
+        "verify-package",
+        artifact.to_str().unwrap(),
+        "--trusted-publishers",
+        trust_store.to_str().unwrap(),
+        "--source-root",
+        source_root.to_str().unwrap(),
+    ]);
+    assert!(!source_mismatch.status.success());
+    assert!(String::from_utf8_lossy(&source_mismatch.stderr).contains("source tree digest"));
 
     let _ = fs::remove_dir_all(root);
 }
