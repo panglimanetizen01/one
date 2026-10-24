@@ -39,6 +39,8 @@ jobs:
         run: cargo --locked clippy --workspace --all-targets -- -D warnings
       - name: Tests
         run: cargo --locked test --workspace --all-targets
+      - name: Package provenance signing and trusted-publisher verification
+        run: cargo --locked test -p one-cli --test cli package_signature_cli_authenticates_trusted_publisher_and_detects_tampering -- --exact
       - name: Real network runtime tests
         shell: bash
         run: cargo --locked test -p one-core --features real-network --all-targets
