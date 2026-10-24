@@ -1,0 +1,73 @@
+name: ONE Milestone 1 — E2 Package and Provenance Test Lab
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ milestone/100-ecosystem-20261023 ]
+    paths:
+      - "crates/one-cli/**"
+      - "crates/one-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/milestone-1-e2-lab.yml"
+      - ".github/workflows/package-provenance-release.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "crates/one-cli/**"
+      - "crates/one-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/milestone-1-e2-lab.yml"
+      - ".github/workflows/package-provenance-release.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-milestone-1-e2-lab-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  package-provenance:
+    name: E2 deterministic package, lock, and provenance regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact candidate revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.99.0
+          components: rustfmt, clippy
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Record exact revision and toolchain
+        run: |
+          git rev-parse HEAD
+          rustc --version
+          cargo --version
+      - name: Package provenance cryptographic unit tests
+        run: cargo --locked test -p one-cli --bin one package_provenance::tests
+      - name: CLI package, lock, and signed-provenance acceptance tests
+        run: cargo --locked test -p one-cli --test cli
+      - name: Full workspace regression
+        run: cargo --locked test --workspace --all-targets
+      - name: Workspace Clippy with warnings denied
+        run: cargo --locked clippy --workspace --all-targets -- -D warnings
+      - name: Record test-lab evidence
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Milestone 1 / E2 package-provenance test lab"
+            echo "- Commit: `$(git rev-parse HEAD)`"
+            echo "- Rust: `$(rustc --version)`"
+            echo "- Cargo: `$(cargo --version)`"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Protected release secrets are not read or printed by this test lab."
+            echo "- This lab does not exercise the protected release environment or award E2 completion points by itself."
+          } >> "$GITHUB_STEP_SUMMARY"
