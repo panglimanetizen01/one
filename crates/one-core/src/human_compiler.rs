@@ -32,19 +32,29 @@ fn read_confined_module(
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
 
-    let root_path = CString::new(root_dir.as_os_str().as_bytes())
-        .map_err(|_| "Direktori proyek memiliki byte NUL.".to_owned())?;
-    let root_fd = unsafe {
-        libc::open(
-            root_path.as_ptr(),
-            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
-        )
-    };
-    if root_fd < 0 {
-        return Err(format!("Tidak dapat membuka direktori proyek dengan aman: {}", std::io::Error::last_os_error()));
+    let mut current = File::open("/")
+        .map_err(|error| format!("Tidak dapat membuka akar filesystem: {error}"))?;
+    for component in root_dir.components() {
+        let name = match component {
+            std::path::Component::RootDir => continue,
+            std::path::Component::Normal(value) => value,
+            _ => return Err("Direktori proyek harus berupa jalur absolut kanonis.".to_owned()),
+        };
+        let name = CString::new(name.as_bytes())
+            .map_err(|_| "Direktori proyek memiliki byte NUL.".to_owned())?;
+        let fd = unsafe {
+            libc::openat(
+                current.as_raw_fd(),
+                name.as_ptr(),
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+            )
+        };
+        if fd < 0 {
+            return Err(format!("Tidak dapat membuka komponen direktori proyek tanpa mengikuti symlink: {}", std::io::Error::last_os_error()));
+        }
+        // SAFETY: fd is a newly opened descriptor and ownership moves into File.
+        current = unsafe { File::from_raw_fd(fd) };
     }
-    // SAFETY: root_fd is a newly opened descriptor and ownership moves into File.
-    let mut current = unsafe { File::from_raw_fd(root_fd) };
 
     let base = current_file
         .parent()
