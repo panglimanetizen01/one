@@ -34,7 +34,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 7/10 | 0/10 | IMPLEMENTED — PARTIAL; UTC parser integrated; full stdlib acceptance pending |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 6/8 | 0/8 | IMPLEMENTED — PARTIAL; committed Cargo.lock and --locked verification added; One registry resolution and authenticated publisher provenance pending |
-| E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 0/8 | IMPLEMENTED — PARTIAL; Linux/Windows pass, Android ELF build/run test remains ignored |
+| E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 0/8 | IMPLEMENTED — PARTIAL; dedicated exact-SHA Android arm64 emulator workflow invokes the ignored ELF runtime test explicitly; runtime result pending |
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 4/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets and Linux/Android descriptor-relative no-follow opens added; Windows/macOS race controls, root confinement, and full threat review pending |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 2/4 | 0/4 | IMPLEMENTED — PARTIAL; Rust 1.99.0 pinned and lockfile policy documented; full release docs/tooling review pending |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
@@ -287,4 +287,17 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - **E5 implementation score:** 1/4 → 2/4 because the toolchain pin and documented reproducibility contract are now present alongside the committed lockfile policy. Full compatibility, release packaging and developer workflow review remain incomplete.
 - **Current implementation subtotal: 87/100 provisional. Verified subtotal: 60/100.**
 - **GATE: NOT PASSED — exact-SHA verification for the lockfile/toolchain workflow revisions is still required.**
+
+## 2026-10-24 continuation — exact-SHA lock/toolchain verification and workflow repair
+
+- **Current code/workflow source SHA before this ledger update:** 34f2162918eaff316f68659b51d5666333160a29.
+- **Cargo.lock:** committed root lockfile has 113 package entries and SHA-256 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21. The independent generator workflow succeeded against source SHA cd4aa9f9be450ecc43a0419d057867967d23e469.
+- **Toolchain drift was found and fixed:** an exact-source focused run initially resolved moving stable to Rust 1.99.1. Root rust-toolchain.toml and explicit workflow inputs now pin Rust 1.99.0. The updated independent focused stdlib/database workflow passed on source SHA c740982ef40b680ac8ae8682e738272ffad05331; its log reports rustc 1.99.0, and 28 Cargo commands include --locked. This result is valid for that SHA, not automatically for the current source SHA.
+- **Filesystem regression:** on an earlier exact SHA, workspace tests exposed malformed NUL-terminated root literals in the new absolute-path resolver. This was corrected, then strict Clippy exposed manual C-string literals; those were corrected to Rust C-string literals. The focused lint/test workflow passed after the path correction on the source snapshot before the lockfile/toolchain revisions. The final snapshot still requires a fresh full test run.
+- **Mirror workflow repair:** explicit Rust toolchain configuration initially introduced duplicate YAML with blocks in the Linux distro workflow. The malformed workflow runs had no jobs; the duplicate blocks were merged and a new run was queued. Do not credit those parse failures as source-test failures or passes.
+- **Latest exact-source mirror jobs:** source SHA c740982ef40b680ac8ae8682e738272ffad05331 is undergoing Ubuntu/Debian and Windows/Linux cross-platform verification; the focused job passed. Android arm64 runtime job is still installing its SDK/NDK/system image and has not reached ELF execution.
+- **Canonical Actions:** inspected jobs on source SHA f93a960635d648d6b9390bef42ed42328bf2ddec failed before any steps started (empty step lists). This remains a runner-provisioning failure, not source-test evidence.
+- **E3:** the dedicated Android workflow now explicitly runs the ignored acceptance test and asserts the emulator ABI is arm64-v8a. The workflow has not yet produced an ELF execution result; E3 verified points remain zero.
+- **Score:** implementation remains **87/100 provisional** and verified remains **60/100**. No verified points were added by the current work. E1/E2/E3/E4/E5/E6 acceptance is not complete.
+- **GATE: NOT PASSED — milestone 100% remains in progress.**
 
