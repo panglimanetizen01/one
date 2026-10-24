@@ -173,3 +173,14 @@ Latest milestone-100 state is recorded in docs/verification/one-completion-ledge
 - External One-language registry resolution and authenticated publisher provenance remain unimplemented; E2 is partial. Android AArch64 runtime execution and cross-platform filesystem confinement remain unverified/incomplete.
 - Gate: NOT PASSED.
 
+## 2026-10-24 latest execution evidence pointer
+
+The authoritative milestone-100 ledger and checkpoint are docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation subtotal: 87/100 provisional. Verified subtotal: 60/100. Fixed weights remain unchanged.
+- The workspace now commits Cargo.lock and uses --locked in CI/local verification. Root rust-toolchain.toml and the canonical/mirror workflows pin Rust 1.99.0.
+- The latest focused stdlib/database mirror job passed on source SHA c740982ef40b680ac8ae8682e738272ffad05331 using Rust 1.99.0 and --locked. This is not a full release pass.
+- Linux/Android filesystem path handling received descriptor-relative no-follow opens and regression tests; an absolute-path NUL-literal bug and a strict-Clippy C-string lint were both found and fixed.
+- The Android arm64 emulator workflow has not yet reached ELF execution on the current source snapshot. E2's external One registry and authenticated publisher provenance, E4's cross-platform confinement, and E6's final audit remain incomplete.
+- Gate: NOT PASSED.
+
