@@ -44,6 +44,134 @@ jobs:
           set -euo pipefail
           test -n "$PROJECT_PATH" || { echo "project_path is required" >&2; exit 2; }
           test -n "$PUBLISHER_ID" || { echo "publisher_id is required" >&2; exit 2; }
+          [[ "$PROJECT_PATH" != * || { echo "Missing protected environment secret ONE_RELEASE_SIGNING_SEED" >&2; exit 2; }
+          test -n "$ONE_TRUSTED_PUBLISHERS" || { echo "Missing protected environment secret ONE_TRUSTED_PUBLISHERS" >&2; exit 2; }
+          case "$PROJECT_PATH" in
+            /*|..|../*|*/../*|*/..) echo "project_path must be a repository-relative path without parent traversal" >&2; exit 2 ;;
+          esac
+          project_root="$(realpath -e -- "$GITHUB_WORKSPACE/$PROJECT_PATH")"
+          case "$project_root" in
+            "$GITHUB_WORKSPACE"/*) ;;
+            *) echo "project_path resolves outside the checked-out repository" >&2; exit 2 ;;
+          esac
+          test -f "$project_root/one.toml" || { echo "one.toml is missing" >&2; exit 2; }
+          test -f "$project_root/src/main.one" || { echo "src/main.one is missing" >&2; exit 2; }
+          printf '%s\n' "$ONE_RELEASE_SIGNING_SEED" > "$RUNNER_TEMP/one-release.seed"
+          printf '%s\n' "$ONE_TRUSTED_PUBLISHERS" > "$RUNNER_TEMP/one-trusted-publishers.txt"
+          chmod 600 "$RUNNER_TEMP/one-release.seed" "$RUNNER_TEMP/one-trusted-publishers.txt"
+          if ! grep -Eq "^\${PUBLISHER_ID}=[0-9a-fA-F]{64}$" "$RUNNER_TEMP/one-trusted-publishers.txt"; then
+            echo "publisher_id must have a matching public key in the protected trusted-publisher store" >&2
+            exit 2
+          fi
+          echo "project_root=$project_root" >> "$GITHUB_ENV"
+          echo "publisher_id=$PUBLISHER_ID" >> "$GITHUB_ENV"
+
+      - name: Build ONE CLI
+        run: cargo --locked build --release -p one-cli
+
+      - name: Build final package artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          target/release/one package "$project_root"
+          mapfile -t artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
+          if [[ "${#artifacts[@]}" -ne 1 ]]; then
+            echo "Expected exactly one final .onepkg artifact; found ${#artifacts[@]}" >&2
+            exit 1
+          fi
+          echo "release_artifact=${artifacts[0]}" >> "$GITHUB_ENV"
+
+      - name: Sign final artifact with source-bound Ed25519 V2 provenance
+        run: |
+          set -euo pipefail
+          target/release/one sign-package "$release_artifact" --publisher "$publisher_id" --private-key "$RUNNER_TEMP/one-release.seed" --source-root "$project_root"
+
+      - name: Verify final artifact against protected publisher trust store and exact source tree
+        run: |
+          set -euo pipefail
+          target/release/one verify-package "$release_artifact" --trusted-publishers "$RUNNER_TEMP/one-trusted-publishers.txt" --source-root "$project_root"
+
+      - name: Produce artifact digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum "$release_artifact" "$release_artifact.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
+          cat "$RUNNER_TEMP/one-release-sha256.txt"
+
+      - name: Upload verified release package and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-package-release-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ env.release_artifact }}
+            ${{ env.release_artifact }}.provenance
+            ${{ runner.temp }}/one-release-sha256.txt
+\\n'* && "$PROJECT_PATH" != * || { echo "Missing protected environment secret ONE_RELEASE_SIGNING_SEED" >&2; exit 2; }
+          test -n "$ONE_TRUSTED_PUBLISHERS" || { echo "Missing protected environment secret ONE_TRUSTED_PUBLISHERS" >&2; exit 2; }
+          case "$PROJECT_PATH" in
+            /*|..|../*|*/../*|*/..) echo "project_path must be a repository-relative path without parent traversal" >&2; exit 2 ;;
+          esac
+          project_root="$(realpath -e -- "$GITHUB_WORKSPACE/$PROJECT_PATH")"
+          case "$project_root" in
+            "$GITHUB_WORKSPACE"/*) ;;
+            *) echo "project_path resolves outside the checked-out repository" >&2; exit 2 ;;
+          esac
+          test -f "$project_root/one.toml" || { echo "one.toml is missing" >&2; exit 2; }
+          test -f "$project_root/src/main.one" || { echo "src/main.one is missing" >&2; exit 2; }
+          printf '%s\n' "$ONE_RELEASE_SIGNING_SEED" > "$RUNNER_TEMP/one-release.seed"
+          printf '%s\n' "$ONE_TRUSTED_PUBLISHERS" > "$RUNNER_TEMP/one-trusted-publishers.txt"
+          chmod 600 "$RUNNER_TEMP/one-release.seed" "$RUNNER_TEMP/one-trusted-publishers.txt"
+          if ! grep -Eq "^\${PUBLISHER_ID}=[0-9a-fA-F]{64}$" "$RUNNER_TEMP/one-trusted-publishers.txt"; then
+            echo "publisher_id must have a matching public key in the protected trusted-publisher store" >&2
+            exit 2
+          fi
+          echo "project_root=$project_root" >> "$GITHUB_ENV"
+          echo "publisher_id=$PUBLISHER_ID" >> "$GITHUB_ENV"
+
+      - name: Build ONE CLI
+        run: cargo --locked build --release -p one-cli
+
+      - name: Build final package artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          target/release/one package "$project_root"
+          mapfile -t artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
+          if [[ "${#artifacts[@]}" -ne 1 ]]; then
+            echo "Expected exactly one final .onepkg artifact; found ${#artifacts[@]}" >&2
+            exit 1
+          fi
+          echo "release_artifact=${artifacts[0]}" >> "$GITHUB_ENV"
+
+      - name: Sign final artifact with source-bound Ed25519 V2 provenance
+        run: |
+          set -euo pipefail
+          target/release/one sign-package "$release_artifact" --publisher "$publisher_id" --private-key "$RUNNER_TEMP/one-release.seed" --source-root "$project_root"
+
+      - name: Verify final artifact against protected publisher trust store and exact source tree
+        run: |
+          set -euo pipefail
+          target/release/one verify-package "$release_artifact" --trusted-publishers "$RUNNER_TEMP/one-trusted-publishers.txt" --source-root "$project_root"
+
+      - name: Produce artifact digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum "$release_artifact" "$release_artifact.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
+          cat "$RUNNER_TEMP/one-release-sha256.txt"
+
+      - name: Upload verified release package and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-package-release-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ env.release_artifact }}
+            ${{ env.release_artifact }}.provenance
+            ${{ runner.temp }}/one-release-sha256.txt
+\\r'* ]] || { echo "project_path must not contain control line breaks" >&2; exit 2; }
+          [[ "$PUBLISHER_ID" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || { echo "publisher_id has an invalid format" >&2; exit 2; }
           test -n "$ONE_RELEASE_SIGNING_SEED" || { echo "Missing protected environment secret ONE_RELEASE_SIGNING_SEED" >&2; exit 2; }
           test -n "$ONE_TRUSTED_PUBLISHERS" || { echo "Missing protected environment secret ONE_TRUSTED_PUBLISHERS" >&2; exit 2; }
           case "$PROJECT_PATH" in
