@@ -5,7 +5,8 @@
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 const HEADER: &str = "ONE_PACKAGE_PROVENANCE_V1";
@@ -83,7 +84,17 @@ pub fn sign_artifact(artifact: &Path, publisher: &str, private_key_file: &Path) 
         hex(&public_key),
         hex(&signature.to_bytes()),
     );
-    fs::write(&sidecar, contents).map_err(|error| format!("cannot write provenance sidecar: {error}"))?;
+    let mut output = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&sidecar)
+        .map_err(|error| format!("cannot create provenance sidecar without overwriting an existing path: {error}"))?;
+    if let Err(error) = output.write_all(contents.as_bytes()) {
+        drop(output);
+        let _ = fs::remove_file(&sidecar);
+        return Err(format!("cannot write provenance sidecar: {error}"));
+    }
+    output.sync_all().map_err(|error| format!("cannot sync provenance sidecar: {error}"))?;
     Ok(sidecar)
 }
 
