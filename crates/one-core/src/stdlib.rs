@@ -893,14 +893,15 @@ mod tests {
     #[test]
     fn json_parser_rejects_malformed_string_escapes_and_container_syntax() {
         // JSON strings must escape control characters and use only the RFC-defined escapes.
+        let raw_newline = "\\"raw\\nline\\"";
         for invalid in [
-            "\\\"raw\\nline\\\"",
-            "\\\"bad\\qescape\\\"",
-            "\\\"trailing slash\\\\",
-            "\\\"\\uDC00\\\"",
-            "\\\"\\uD800\\u0041\\\"",
+            raw_newline,
+            r#""bad\qescape""#,
+            r#""trailing slash\"#,
+            r#""\uDC00""#,
+            r#""\uD800\u0041""#,
             "[1,]",
-            "{\\\"a\\\":1,}",
+            r#"{"a":1,}"#,
             "{a:1}",
             "[1] trailing",
             "01",
@@ -920,5 +921,4 @@ mod tests {
             Some(Value::Number(0))
         );
     }
-
 }
