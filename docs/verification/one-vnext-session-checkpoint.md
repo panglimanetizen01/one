@@ -184,3 +184,14 @@ The authoritative milestone-100 ledger and checkpoint are docs/verification/one-
 - The Android arm64 emulator workflow has not yet reached ELF execution on the current source snapshot. E2's external One registry and authenticated publisher provenance, E4's cross-platform confinement, and E6's final audit remain incomplete.
 - Gate: NOT PASSED.
 
+## 2026-10-24 Linux pass and Android pending pointer
+
+Authoritative milestone-100 state is in docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation: 87/100 provisional. Verified: 60/100. Gate remains NOT PASSED.
+- Focused stdlib/database and Linux distro workflows passed on source SHA 102741eddac431cfe4f1b4b24bec3d7a2032428b using Rust 1.99.0 and --locked. The Linux distro run passed on Ubuntu 24.04 and Debian 12.
+- These results include the filesystem no-follow regressions and fail-closed unsupported dependency manifest test, but they are not a full milestone pass.
+- The Windows cross-platform run was cancelled during cleanup after tests had completed; rerun is required. Android emulator boot has not yet reached ELF execution; the bounded diagnostic workflow is now active.
+- Latest source before the checkpoint docs update was 9f2eae322104ecd4a655b4e5673e329ca537100f; the mirror selector must be repinned to the next exact checkpoint SHA.
+- E2 registry resolution/publisher authentication, E4 cross-platform confinement, E5 full release readiness and E6 final audit remain open.
+
