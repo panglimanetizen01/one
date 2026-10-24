@@ -83,7 +83,7 @@ This is a controlled replacement for the **local build/test evidence collection 
 
 ## Cargo dependency lockfile policy — milestone 100
 
-The repository now commits the workspace Cargo.lock and removes Cargo.lock from .gitignore. CI and the local verification scripts invoke Cargo build, test, run, and Clippy commands with --locked so dependency resolution must match the committed lockfile instead of silently rewriting it during verification.
+The repository now commits the workspace Cargo.lock and removes Cargo.lock from .gitignore. Canonical CI, release-check, the exact-SHA verification script, and local verification scripts invoke Cargo build, test, run, and Clippy commands with --locked so dependency resolution must match the committed lockfile instead of silently rewriting it during verification.
 
 The lockfile was generated with Cargo against canonical source SHA cd4aa9f9be450ecc43a0419d057867967d23e469. Its SHA-256 is 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21 and it records 113 package entries. The subsequent workflow changes enforce --locked and require exact-SHA re-verification.
 
