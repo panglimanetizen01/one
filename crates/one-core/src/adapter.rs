@@ -479,6 +479,9 @@ mod filesystem_nofollow_tests {
         assert_eq!(std::fs::read(root.join("real.txt")).expect("read target"), b"preserve");
         let _ = std::fs::remove_dir_all(root);
     }
+
+}
+
 #[cfg(all(test, windows))]
 mod filesystem_windows_reparse_tests {
     use super::*;
@@ -505,6 +508,3 @@ mod filesystem_windows_reparse_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 }
-
-}
-
