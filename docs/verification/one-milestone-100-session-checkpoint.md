@@ -887,3 +887,37 @@ On source commit `e51244958228ab4257aa63ee2411e25c673a9316`:
 
 ### Gate
 **NOT PASSED — E2 remains open.** This checkpoint is an evidence record, not release authorization. Do not merge PR #80, publish a release, or alter gate status manually.
+
+
+## 2026-10-24 — Continued work: isolated E1/E2 GitHub test labs
+
+### Repository changes made
+- Expanded `.github/workflows/milestone-1-e1-lab.yml` to a non-fail-fast Ubuntu 24.04 + Windows Server 2025 matrix. Each job prints the exact source SHA and toolchain and runs focused stdlib tests, core unit tests, workspace tests, Clippy with warnings denied, and the repository contract checker.
+  - Workflow change commit: `0f9a5bc2ad96288b8b3584df32013df954b29363`.
+- Added `.github/workflows/milestone-1-e2-lab.yml` to run the provenance cryptographic unit tests, CLI packaging/lock/provenance integration tests, full workspace tests, and Clippy. It uses synthetic test fixtures and does not read or print protected release secrets.
+  - Workflow commit: `c69cf07472c50944c30a1855c64791a9b69e0783`.
+- Added `docs/verification/milestone-1-e2-test-lab.md`, describing local/hosted commands, positive and negative acceptance cases, exact-SHA evidence rules, and the separation between synthetic-key tests and protected release acceptance.
+  - Documentation commit: `29ee8faf15913a8255a80239155c1acc3a11faf9`.
+- The existing E1 lab guide is `docs/verification/milestone-1-e1-test-lab.md`.
+
+### Live hosted evidence — still blocked before execution
+- E1 matrix run on commit `bf48b274c42582ccf7f435c0245670f342885806`: [run 40105479624](https://github.com/panglimanetizen01/one/actions/runs/40105479624). Both Ubuntu and Windows jobs report failure with empty step arrays; log retrieval returns `BlobNotFound`. No test command ran.
+- E2 lab on commit `c69cf07472c50944c30a1855c64791a9b69e0783`: [run 40105655927](https://github.com/panglimanetizen01/one/actions/runs/40105655927) and duplicate trigger [run 40105651315](https://github.com/panglimanetizen01/one/actions/runs/40105651315). Both report failure before executable steps; no compiler/test output or artifact is available.
+- Standard focused/workspace workflows triggered on the same commits also fail before steps. The symptom persists across workflow types and both matrix operating systems, supporting an Actions runner/log-infrastructure classification rather than a source test diagnosis. It is not a pass.
+- A Linux distribution run for documentation commit `29ee8faf15913a8255a80239155c1acc3a11faf9` was still queued at the last API read: [run 40105681068](https://github.com/panglimanetizen01/one/actions/runs/40105681068). Queued status is not evidence of acceptance.
+- The latest E1/E2 lab definitions have been committed, but no successful test execution is available from this session. Local execution also remains unavailable here: this environment has no `cargo`/Rust compiler and cannot resolve `github.com`.
+
+### Acceptance status (unchanged)
+- E1: **7/10 implementation, 0/10 verified; PARTIAL / NOT VERIFIED**.
+- E2: **7/8 implementation, 0/8 verified; PARTIAL / NOT VERIFIED**.
+- No ledger weights or verified points were changed. No green/locked state was fabricated.
+- PR #80 remains open/draft/unmerged; `main` is untouched; no release was published.
+
+### Next actionable path
+1. Use an authorized runner or GitHub administrator to restore/enable a working runner and downloadable logs for this repository; rerun the E1/E2 labs against the resulting exact candidate SHA.
+2. Diagnose and repair any actual compilation, assertion, Clippy, or contract-check failure revealed by executed steps; repeat the complete matrix after each fix.
+3. For E2, separately configure and approve protected environment `one-release`, provision secrets through GitHub's secure settings only, execute the release workflow, and independently verify the uploaded provenance using an independently authenticated publisher key.
+4. Reconcile all current-SHA evidence in the ledger and Definition of Done only after every required acceptance criterion passes. Never convert runner failure or queued status into PASS.
+
+### Gate
+**NOT PASSED — 25% / Milestone 1 acceptance is not proven.** The repository now has explicit E1 and E2 labs, but the required exact-SHA executions and E2 protected-release verification remain outstanding.
