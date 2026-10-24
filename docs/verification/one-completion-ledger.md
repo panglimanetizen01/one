@@ -35,10 +35,10 @@ For each row, **implemented points** are provisional progress based on code actu
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 7/10 | 0/10 | IMPLEMENTED — PARTIAL; UTC parser integrated; full stdlib acceptance pending |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 5/8 | 0/8 | IMPLEMENTED — PARTIAL; EXTERNAL DEPENDENCY RESOLUTION PENDING |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 0/8 | IMPLEMENTED — PARTIAL; Linux/Windows pass, Android ELF build/run test remains ignored |
-| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 3/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets added; full threat review pending |
+| E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 4/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets and Linux/Android descriptor-relative no-follow opens added; Windows/macOS race controls, root confinement, and full threat review pending |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 1/4 | 0/4 | IMPLEMENTED — PARTIAL; FULL DOCS/TOOLING REVIEW PENDING |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **84/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **85/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -254,3 +254,17 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - Cross-platform [40009389190](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389190) — SUCCESS on Ubuntu and Windows; exact source SHA confirmed in both logs. Both jobs passed build, Clippy, workspace tests, real-network tests and offline verification. Logs contain zero `test result: FAILED` markers and one `OFFLINE VERIFICATION: PASS` per platform.
 - Android AArch64 ELF build-and-execute remains ignored on both platforms; the Android-target CLI check verifies artifact creation only. Therefore E3 stays 8/8 implemented, 0/8 verified. Implementation is 84/100, verified completion 60/100, gate NOT PASSED.
 - The subsequent ledger/checkpoint edit is documentation-only; source implementation remains the tested snapshot.
+
+## 2026-10-24 continuation — Android runtime gate and filesystem no-follow hardening
+
+- **Code-bearing source SHA:** `b5c3827840a691868a69428ae4032614407f1062` (latest source branch head before this ledger/checkpoint update).
+- **Git state at implementation checkpoint:** branch `milestone/100-ecosystem-20261023`; PR #80 remains open, draft, unmerged, base `main`. No merge or direct-main write was performed.
+- **E3 — Android AArch64 runtime:** strengthened `crates/one-core/tests/native_backend_android_aarch64.rs` to assert ELF magic, ELFCLASS64, little-endian encoding, and `EM_AARCH64` before pushing the artifact to Android and executing it. Added a dedicated Android API 35 arm64 emulator job to canonical CI and the independent verification mirror. The job explicitly runs the previously ignored build-and-execute acceptance test; a build-only pass does not count. **Runtime result on this SHA: NOT YET VERIFIED.**
+- **E4 — filesystem race-sensitive resolution:** added direct `libc` dependency and Linux/Android descriptor-relative directory traversal using `openat`, `O_DIRECTORY`, and `O_NOFOLLOW` for each parent component and final file opens. Read/write targets are checked as regular files after opening. Added regression tests for symlinked parent directories, final-component read symlinks, and final-component write symlinks preserving their referent. Updated `docs/SECURITY.md` to state the guarantee and boundaries accurately.
+- **E4 boundary remains open:** Windows/macOS do not yet have equivalent descriptor-relative race-resistant opens; the capability contract still lacks a root confinement directory. Do not claim a complete cross-platform filesystem sandbox.
+- **E2 regression:** added a CLI test ensuring unsupported dependency declarations fail closed instead of being silently ignored. This does **not** implement external registry resolution, a committed Cargo lockfile, signed publisher identity, or authenticated provenance; E2 remains partial.
+- **Verification:** canonical source Actions on prior source SHA `6361461a81718594c78921abb3106b1fdf86e1c5` failed before any steps started; all inspected jobs returned empty step lists. This is a runner provisioning failure, not a source-test result. The independent mirror selector must be pinned to the final checkpoint SHA after this documentation update. No new code verification points are awarded yet.
+- **Score reconciliation:** E4 implementation increases from 3/6 to 4/6 because descriptor-relative no-follow opens are now connected to the Linux/Android file adapters and regression tests exist in source. **Implementation: 85/100 provisional. Verified: 60/100.** E1 0/10, E2 0/8, E3 0/8, E4 0/6, E5 0/4, E6 0/4 verified points remain unchanged under full milestone-100 acceptance.
+- **Remaining E1–E6:** full standard-library contract breadth; external dependency/registry resolution and authenticated package provenance; actual Android AArch64 ELF execution; Windows/macOS race-resistant filesystem handling and defined confinement root; broader resource quotas/threat review; release/compatibility/tooling acceptance; final exact-SHA forensic audit.
+- **GATE: NOT PASSED — milestone 100% remains in progress.**
+
