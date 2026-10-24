@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.99.0
+        with:
           components: clippy
       - uses: actions/setup-python@v5
         with:
@@ -60,6 +62,8 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git python3 build-essential pkg-config clang
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.99.0
         with:
           components: clippy
       - name: Record environment
