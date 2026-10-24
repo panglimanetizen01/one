@@ -115,6 +115,6 @@ jobs:
           name: one-package-release-${{ github.run_id }}
           if-no-files-found: error
           path: |
-            ${{ inputs.project_path }}/target/*.onepkg
-            ${{ inputs.project_path }}/target/*.onepkg.provenance
+            ${{ steps.package.outputs.release_artifact }}
+            ${{ steps.package.outputs.release_artifact }}.provenance
             ${{ runner.temp }}/one-release-sha256.txt
