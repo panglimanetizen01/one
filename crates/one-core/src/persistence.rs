@@ -19,38 +19,6 @@ pub enum StoreError {
     Io(std::io::Error),
     Corrupt { line: usize, reason: String },
     Limit(&'static str),
-
-    #[test]
-    fn open_enforces_store_byte_limit_during_read() {
-        let path = path("oversized-open");
-        fs::write(&path, vec![b'x'; MAX_FILE_BYTES as usize + 1]).unwrap();
-        assert!(matches!(KeyValueStore::open(&path), Err(StoreError::Limit(_))));
-        let _ = fs::remove_file(path);
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn open_rejects_symlink_and_non_regular_store_paths() {
-        use std::os::unix::ffi::OsStrExt;
-        use std::os::unix::fs::symlink;
-
-        let target = path("target");
-        let link = path("symlink");
-        fs::write(&target, "ONE-KV-1\\n").unwrap();
-        symlink(&target, &link).unwrap();
-        assert!(KeyValueStore::open(&link).is_err());
-
-        let fifo = path("fifo");
-        let c_path = std::ffi::CString::new(fifo.as_os_str().as_bytes()).unwrap();
-        // SAFETY: c_path is NUL-terminated and points to a unique test path.
-        assert_eq!(unsafe { libc::mkfifo(c_path.as_ptr(), 0o600) }, 0);
-        assert!(KeyValueStore::open(&fifo).is_err());
-
-        let _ = fs::remove_file(link);
-        let _ = fs::remove_file(target);
-        let _ = fs::remove_file(fifo);
-    }
-
 }
 
 impl fmt::Display for StoreError {
@@ -389,6 +357,37 @@ mod tests {
         assert_eq!(reopened.get("empty"), Some(""));
         assert_eq!(reopened.get("multiline"), Some("baris satu\\nbaris dua\\takhir"));
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn open_enforces_store_byte_limit_during_read() {
+        let path = path("oversized-open");
+        fs::write(&path, vec![b'x'; MAX_FILE_BYTES as usize + 1]).unwrap();
+        assert!(matches!(KeyValueStore::open(&path), Err(StoreError::Limit(_))));
+        let _ = fs::remove_file(path);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn open_rejects_symlink_and_non_regular_store_paths() {
+        use std::os::unix::ffi::OsStrExt;
+        use std::os::unix::fs::symlink;
+
+        let target = path("target");
+        let link = path("symlink");
+        fs::write(&target, "target").unwrap();
+        symlink(&target, &link).unwrap();
+        assert!(KeyValueStore::open(&link).is_err());
+
+        let fifo = path("fifo");
+        let c_path = std::ffi::CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        // SAFETY: c_path is NUL-terminated and points to a unique test path.
+        assert_eq!(unsafe { libc::mkfifo(c_path.as_ptr(), 0o600) }, 0);
+        assert!(KeyValueStore::open(&fifo).is_err());
+
+        let _ = fs::remove_file(link);
+        let _ = fs::remove_file(target);
+        let _ = fs::remove_file(fifo);
     }
 
 }
