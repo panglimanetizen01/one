@@ -100,7 +100,8 @@ fn read_confined_module(
     if !canonical.starts_with(root_dir) {
         return Err("Modul berada di luar direktori proyek.".to_owned());
     }
-    std::fs::read_to_string(canonical).map_err(|error| error.to_string())
+    let file = std::fs::File::open(canonical).map_err(|error| error.to_string())?;
+    read_source_bounded(file, MAX_HUMAN_SOURCE_BYTES, "modul")
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
