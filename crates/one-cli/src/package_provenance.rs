@@ -85,9 +85,263 @@ fn signed_message(publisher: &str, digest: &str) -> String {
     format!("{HEADER}\npublisher={publisher}\nartifact_sha256={digest}\n")
 }
 
+fn signed_message_v2(
+    publisher: &str,
+    artifact_digest: &str,
+    source_digest: &str,
+    source_revision: &str,
+    one_version: &str,
+    builder_os: &str,
+    builder_arch: &str,
+    rustc_version: &str,
+    cargo_version: &str,
+    dependency_model: &str,
+) -> String {
+    format!(
+        "{HEADER_V2}\npublisher={publisher}\nartifact_sha256={artifact_digest}\nsource_sha256={source_digest}\nsource_revision={source_revision}\none_version={one_version}\nbuilder_os={builder_os}\nbuilder_arch={builder_arch}\nrustc_version={rustc_version}\ncargo_version={cargo_version}\ndependency_model={dependency_model}\n"
+    )
+}
+
+fn git_output(root: &Path, arguments: &[&str]) -> Result<Vec<u8>, String> {
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(arguments)
+        .output()
+        .map_err(|error| format!("cannot run git for build provenance: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "git command failed while preparing build provenance: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    Ok(output.stdout)
+}
+
+fn validate_empty_dependency_manifest(contents: &str) -> Result<(), String> {
+    let mut seen = BTreeMap::new();
+    for (index, raw_line) in contents.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((raw_key, raw_value)) = line.split_once('=') else {
+            return Err(format!("invalid package manifest line {}", index + 1));
+        };
+        let key = raw_key.trim();
+        let value = raw_value.trim();
+        if !matches!(key, "nama" | "versi") || seen.insert(key, value).is_some() {
+            return Err(
+                "v0.1 build provenance requires the normative empty-dependency manifest; dependency declarations are unsupported"
+                    .to_owned(),
+            );
+        }
+        if value.strip_prefix('"').and_then(|value| value.strip_suffix('"')).is_none_or(str::is_empty) {
+            return Err(format!("invalid package manifest value on line {}", index + 1));
+        }
+    }
+    if !seen.contains_key("nama") || !seen.contains_key("versi") {
+        return Err("package manifest must declare nama and versi".to_owned());
+    }
+    Ok(())
+}
+
+fn collect_source_files(
+    root: &Path,
+    directory: &Path,
+    files: &mut Vec<(String, PathBuf)>,
+    total_bytes: &mut u64,
+) -> Result<(), String> {
+    let mut entries = fs::read_dir(directory)
+        .map_err(|error| format!("cannot read source directory {}: {error}", directory.display()))?
+        .map(|entry| entry.map(|entry| entry.path()).map_err(|error| error.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    entries.sort();
+    for path in entries {
+        let metadata = fs::symlink_metadata(&path)
+            .map_err(|error| format!("cannot stat source input {}: {error}", path.display()))?;
+        if metadata.file_type().is_symlink() {
+            return Err(format!("source provenance refuses symlinks: {}", path.display()));
+        }
+        if metadata.is_dir() {
+            collect_source_files(root, &path, files, total_bytes)?;
+            continue;
+        }
+        if !metadata.is_file() {
+            return Err(format!("source provenance requires regular files: {}", path.display()));
+        }
+        if metadata.len() > 16 * 1024 * 1024 {
+            return Err(format!("source file exceeds 16 MiB: {}", path.display()));
+        }
+        *total_bytes = total_bytes.saturating_add(metadata.len());
+        if *total_bytes > 64 * 1024 * 1024 {
+            return Err("source tree exceeds 64 MiB".to_owned());
+        }
+        let relative = path.strip_prefix(root).map_err(|_| "source file escaped source root".to_owned())?;
+        let relative_name = relative
+            .components()
+            .map(|component| component.as_os_str().to_str().ok_or_else(|| "source path is not valid UTF-8".to_owned()))
+            .collect::<Result<Vec<_>, _>>()?
+            .join("/");
+        files.push((relative_name, path));
+        if files.len() > 10_000 {
+            return Err("source tree exceeds 10000 files".to_owned());
+        }
+    }
+    Ok(())
+}
+
+/// Return a deterministic source-tree digest and the clean Git commit that identifies it.
+/// Only tracked, clean project inputs are accepted; v0.1 manifests intentionally support no
+/// external dependency declarations.
+fn source_snapshot(root: &Path) -> Result<(String, String), String> {
+    let root = fs::canonicalize(root).map_err(|error| format!("cannot resolve source root: {error}"))?;
+    if !root.is_dir() {
+        return Err("source root must be a directory".to_owned());
+    }
+    let manifest = root.join("one.toml");
+    let manifest_metadata = fs::symlink_metadata(&manifest)
+        .map_err(|error| format!("cannot stat source manifest: {error}"))?;
+    if manifest_metadata.file_type().is_symlink() || !manifest_metadata.is_file() {
+        return Err("one.toml must be a regular non-symlink file".to_owned());
+    }
+    let manifest_bytes = read_bounded(&manifest, 1024 * 1024, "source manifest")?;
+    let manifest_text = String::from_utf8(manifest_bytes)
+        .map_err(|_| "source manifest is not valid UTF-8".to_owned())?;
+    validate_empty_dependency_manifest(&manifest_text)?;
+
+    let source_directory = root.join("src");
+    let source_metadata = fs::symlink_metadata(&source_directory)
+        .map_err(|error| format!("cannot stat source directory: {error}"))?;
+    if source_metadata.file_type().is_symlink() || !source_metadata.is_dir() {
+        return Err("src must be a regular non-symlink directory".to_owned());
+    }
+    if !source_directory.join("main.one").is_file() {
+        return Err("source root must contain src/main.one".to_owned());
+    }
+
+    let status_args = ["status", "--porcelain=v1", "--untracked-files=all", "--ignored=matching", "--", "one.toml", "src"];
+    let status_before = git_output(&root, &status_args)?;
+    if !status_before.is_empty() {
+        return Err("source inputs are dirty, untracked, or ignored; commit the exact source snapshot before signing".to_owned());
+    }
+    let tracked = git_output(&root, &["ls-files", "-z", "--", "one.toml", "src"])?;
+    let tracked = tracked
+        .split(|byte| *byte == 0)
+        .filter(|path| !path.is_empty())
+        .map(|path| String::from_utf8(path.to_vec()).map_err(|_| "tracked source path is not valid UTF-8".to_owned()))
+        .collect::<Result<std::collections::BTreeSet<_>, _>>()?;
+
+    let mut files = vec![("one.toml".to_owned(), manifest.clone())];
+    let mut total_bytes = manifest_metadata.len();
+    collect_source_files(&root, &source_directory, &mut files, &mut total_bytes)?;
+    files.sort_by(|left, right| left.0.cmp(&right.0));
+    for (relative, _) in &files {
+        if !tracked.contains(relative) {
+            return Err(format!("source input is not tracked by Git: {relative}"));
+        }
+    }
+
+    let revision = String::from_utf8(git_output(&root, &["rev-parse", "--verify", "HEAD"])?)
+        .map_err(|_| "Git revision is not valid UTF-8".to_owned())?
+        .trim()
+        .to_owned();
+    if !(40..=64).contains(&revision.len()) || !revision.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err("Git revision must be a full hexadecimal commit ID".to_owned());
+    }
+
+    let mut hasher = Sha256::new();
+    for (relative, path) in files {
+        let bytes = read_bounded(&path, 16 * 1024 * 1024, "source input")?;
+        hasher.update((relative.len() as u64).to_be_bytes());
+        hasher.update(relative.as_bytes());
+        hasher.update((bytes.len() as u64).to_be_bytes());
+        hasher.update(&bytes);
+    }
+    let digest = hasher.finalize().iter().map(|byte| format!("{byte:02x}")).collect::<String>();
+    let status_after = git_output(&root, &status_args)?;
+    let revision_after = String::from_utf8(git_output(&root, &["rev-parse", "--verify", "HEAD"])?)
+        .map_err(|_| "Git revision is not valid UTF-8".to_owned())?
+        .trim()
+        .to_owned();
+    if !status_after.is_empty() || revision_after != revision {
+        return Err("source inputs changed while the provenance digest was being calculated".to_owned());
+    }
+    Ok((digest, revision))
+}
+
+fn tool_version(command: &str) -> Result<String, String> {
+    let output = Command::new(command)
+        .arg("--version")
+        .output()
+        .map_err(|error| format!("cannot read {command} version for provenance: {error}"))?;
+    if !output.status.success() {
+        return Err(format!("{command} --version failed while preparing provenance"));
+    }
+    let version = String::from_utf8(output.stdout)
+        .map_err(|_| format!("{command} version is not valid UTF-8"))?
+        .trim()
+        .to_owned();
+    if version.is_empty() || version.len() > 256 || version.contains('\n') || version.contains('\r') {
+        return Err(format!("{command} version string is invalid"));
+    }
+    Ok(version)
+}
+
+/// Sign a package and a source-bound build attestation. The source must be a clean,
+/// Git-tracked v0.1 project with no dependency declarations.
+pub fn sign_build_provenance(
+    artifact: &Path,
+    publisher: &str,
+    private_key_file: &Path,
+    source_root: &Path,
+) -> Result<PathBuf, String> {
+    validate_publisher(publisher)?;
+    let metadata = fs::metadata(artifact).map_err(|error| format!("cannot stat package artifact: {error}"))?;
+    if !metadata.is_file() {
+        return Err("package artifact must be a regular file".into());
+    }
+    let artifact_bytes = read_bounded(artifact, MAX_PACKAGE_BYTES, "package artifact")?;
+    let seed_text = read_bounded_text(private_key_file, MAX_PRIVATE_KEY_BYTES, "publisher key")?;
+    let seed = decode_hex::<32>(seed_text.trim(), "private key seed")?;
+    let signing_key = SigningKey::from_bytes(&seed);
+    let public_key = signing_key.verifying_key().to_bytes();
+    let artifact_digest = sha256_hex(&artifact_bytes);
+    let (source_digest, source_revision) = source_snapshot(source_root)?;
+    let one_version = env!("CARGO_PKG_VERSION");
+    let builder_os = std::env::consts::OS;
+    let builder_arch = std::env::consts::ARCH;
+    let rustc_version = tool_version("rustc")?;
+    let cargo_version = tool_version("cargo")?;
+    let dependency_model = "empty-v0.1";
+    let message = signed_message_v2(
+        publisher, &artifact_digest, &source_digest, &source_revision, one_version,
+        builder_os, builder_arch, &rustc_version, &cargo_version, dependency_model,
+    );
+    let signature = signing_key.sign(message.as_bytes());
+    let contents = format!(
+        "{HEADER_V2}\npublisher={publisher}\npublic_key={}\nartifact_sha256={artifact_digest}\nsource_sha256={source_digest}\nsource_revision={source_revision}\none_version={one_version}\nbuilder_os={builder_os}\nbuilder_arch={builder_arch}\nrustc_version={rustc_version}\ncargo_version={cargo_version}\ndependency_model={dependency_model}\nsignature={}\n",
+        hex(&public_key),
+        hex(&signature.to_bytes()),
+    );
+    let sidecar = sidecar_path(artifact);
+    let mut output = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&sidecar)
+        .map_err(|error| format!("cannot create provenance sidecar without overwriting an existing path: {error}"))?;
+    if let Err(error) = output.write_all(contents.as_bytes()).and_then(|()| output.sync_all()) {
+        drop(output);
+        let _ = fs::remove_file(&sidecar);
+        return Err(format!("cannot persist provenance sidecar: {error}"));
+    }
+    Ok(sidecar)
+}
+
 /// Sign the exact package bytes with a 32-byte Ed25519 seed stored as 64 hex characters.
 /// The generated sidecar is not trusted until its publisher key appears in a verifier's trust store.
-pub fn sign_artifact(artifact: &Path, publisher: &str, private_key_file: &Path) -> Result<PathBuf, String> {
+#[cfg(test)]
+fn sign_artifact(artifact: &Path, publisher: &str, private_key_file: &Path) -> Result<PathBuf, String> {
     validate_publisher(publisher)?;
     let metadata = fs::metadata(artifact).map_err(|error| format!("cannot stat package artifact: {error}"))?;
     if !metadata.is_file() {
