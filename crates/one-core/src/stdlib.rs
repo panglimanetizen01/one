@@ -893,9 +893,9 @@ mod tests {
     #[test]
     fn json_parser_rejects_malformed_string_escapes_and_container_syntax() {
         // JSON strings must escape control characters and use only the RFC-defined escapes.
-        let raw_newline = "\\"raw\\nline\\"";
+        let raw_newline = format!("\"raw{}line\"", '\n');
         for invalid in [
-            raw_newline,
+            raw_newline.as_str(),
             r#""bad\qescape""#,
             r#""trailing slash\"#,
             r#""\uDC00""#,
@@ -920,5 +920,4 @@ mod tests {
             json_to_value(&Value::Text("-0".into())),
             Some(Value::Number(0))
         );
-    }
-}
+    }}
