@@ -76,6 +76,7 @@ User documentation is intentionally separate from normative engineering contract
 - `verification/human-vnext-grammar-review.md` — bounded technical review of the experimental starter grammar and its explicit limitations.
 - `verification/human-vnext-exact-sha-verification-contract.md` — clean GitHub-HEAD local verification procedure and evidence boundaries.\n- `../examples/human-vnext/daftar-tugas.one` — runnable source fixture for the experimental human-vNext task-list command.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
+- `RELEASE_PROVENANCE.md` — protected manual workflow for building, signing, and verifying source-bound package provenance.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
 - `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded source revision.
