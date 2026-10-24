@@ -36,9 +36,9 @@ For each row, **implemented points** are provisional progress based on code actu
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 6/8 | 0/8 | IMPLEMENTED — PARTIAL; committed Cargo.lock and --locked verification added; One registry resolution and authenticated publisher provenance pending |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 0/8 | IMPLEMENTED — PARTIAL; Linux/Windows pass, Android ELF build/run test remains ignored |
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 4/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets and Linux/Android descriptor-relative no-follow opens added; Windows/macOS race controls, root confinement, and full threat review pending |
-| E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 1/4 | 0/4 | IMPLEMENTED — PARTIAL; FULL DOCS/TOOLING REVIEW PENDING |
+| E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 2/4 | 0/4 | IMPLEMENTED — PARTIAL; Rust 1.99.0 pinned and lockfile policy documented; full release docs/tooling review pending |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **86/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **87/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -278,4 +278,13 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - **Verification on the current lockfile-bearing source SHA:** NOT YET VERIFIED. The mirror must pin the final checkpoint SHA and confirm --locked succeeds on Ubuntu and Windows and the distro/stdlib jobs complete.
 - **Score reconciliation:** E2 implementation increases 5/8 → 6/8 because the Cargo lockfile is committed and the repository's verification commands now enforce it. Implementation subtotal: **86/100 provisional**. Verified subtotal remains **60/100**; no verification credit is assigned for the lockfile until exact-SHA checks pass.
 - **GATE: NOT PASSED — milestone 100% remains in progress.**
+
+## 2026-10-24 continuation — toolchain reproducibility and workflow pin
+
+- Root rust-toolchain.toml now pins Rust 1.99.0 with rustfmt and Clippy. This version was observed in the successful lockfile-generation log; the previous moving stable channel resolved to 1.99.1 in a verification job, so relying on stable alone was not deterministic.
+- Canonical CI, Linux distro conformance, and focused stdlib workflows now explicitly request Rust 1.99.0 from dtolnay/rust-toolchain. The independent mirror's Android, distro, and focused stdlib workflows now do the same. The mirror cross-platform workflow uses the source root rust-toolchain.toml and now invokes Cargo commands with --locked.
+- Source commits containing the lockfile and toolchain pin are followed by workflow changes; the current source branch head must be re-read and mirrored before any release-gate credit.
+- **E5 implementation score:** 1/4 → 2/4 because the toolchain pin and documented reproducibility contract are now present alongside the committed lockfile policy. Full compatibility, release packaging and developer workflow review remain incomplete.
+- **Current implementation subtotal: 87/100 provisional. Verified subtotal: 60/100.**
+- **GATE: NOT PASSED — exact-SHA verification for the lockfile/toolchain workflow revisions is still required.**
 
