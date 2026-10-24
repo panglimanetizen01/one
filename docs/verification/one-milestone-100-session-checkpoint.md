@@ -649,9 +649,17 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 1. Finish all exact-SHA workflows above and inspect actual logs/artifacts. Any documentation-only change after them creates a new verification target.
 2. Award no E3 verification points unless the Android AArch64 ELF is built, pushed to Android, executed, and returns the expected output.
 3. Keep the fixed ledger totals at **88/100 provisional implementation, 60/100 verified** until every relevant E1–E6 criterion is accepted with evidence.
-4. Continue remaining E1 standard-library breadth, E2 dependency/registry contract, E4 root confinement/quotas/threat review, E5 release documentation/tooling review, and E6 final forensic audit. Do not represent implemented features as fully verified.
+4. Continue remaining E1 standard-library breadth; E2 final release signing/verification integration and trusted source-bound provenance acceptance (external registry/version-conflict resolution is outside the executable v0.1 subset); E4 root confinement/quotas/threat review; E5 release documentation/tooling review; and E6 final forensic audit. Do not represent implemented features as fully verified.
 5. Reconcile the checkpoint and ledger with the final exact-SHA results, then run the required verification against the resulting branch head before any final release claim.
 
 ### GATE
 **NOT PASSED.** This checkpoint is a continuation record, not release approval. PR #80 is not merged; no PASS GREEN LOCKED or final release claim is authorized by the current evidence.
+
+
+
+## 2026-10-24 scope clarification — E2 package acceptance
+
+- The completion ledger now reconciles E2 against the approved `docs/spec/one-v0.1-package-build.md`: external registry and dependency/version-conflict resolution are outside the executable v0.1 subset, whose supported dependency set is empty and whose unsupported declarations must fail closed.
+- E2's actual remaining acceptance is release-process integration and exact-SHA evidence that the final built artifact receives Ed25519 V2 source-bound provenance signing and is verified against an independently provisioned trusted-publisher store. V1 artifact-only signatures do not satisfy this gate.
+- The ledger/checkpoint correction changes documentation only; it does not award verified points. The branch head created by this checkpoint update is a new exact-SHA verification target.
 
