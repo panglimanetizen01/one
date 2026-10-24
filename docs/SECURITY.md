@@ -61,3 +61,10 @@ Security-sensitive execution should record observed runtime facts such as capabi
 ## Safe project principle
 
 The project should not artificially cripple the language merely because it can express security tooling. Instead, it should make authorization, scope, and execution boundaries explicit and testable.
+
+## Filesystem path resolution and platform boundary
+
+On Linux and Android, filesystem adapter opens now resolve each parent directory relative to an already-open directory descriptor and apply O_NOFOLLOW to each path component and the final target. Read and write targets are checked as regular files after opening; read/write payloads remain capped at 16 MiB. Regression tests cover symlinked parent directories, final-component symlinks, and ensuring a rejected write symlink does not modify its referent.
+
+This closes the check-then-open symlink race for these Linux/Android adapter paths, but it is **not** a complete filesystem sandbox: operations still use the process working directory for relative paths, the capability contract does not yet define a root confinement directory, and non-Linux/Android targets currently use standard-library opens after static validation rather than equivalent descriptor-relative traversal. Do not describe Windows or macOS filesystem operations as race-resistant until their corresponding primitives and tests exist.
+
