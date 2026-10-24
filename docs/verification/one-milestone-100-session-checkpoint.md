@@ -740,3 +740,45 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - E2 provisional implementation increases 6/8 → 7/8 because the protected release workflow is now present; protected-environment dispatch and independently provisioned trust-store acceptance remain open.
 - E5 provisional implementation increases 2/4 → 3/4 because the user-facing release provenance guide, CLI signing/verification documentation, and enforced documentation consistency checks are now present. Tested user-workflow review remains open.
 - **Implementation subtotal: 90/100 provisional. Verified completion: 60/100. Gate: NOT PASSED.** This checkpoint commit changes the source SHA; repin the verification mirror and rerun every required check. Android AArch64 ELF execution is still mandatory for E3.
+
+
+## 2026-10-24 continuation — ledger arithmetic reconciliation
+
+### MILESTONE
+100% — continue E1–E6 only; do not widen scope.
+
+### COMPLETION
+- Fixed-weight implementation subtotal: **91/100 provisional**. This follows the unchanged ledger rows: 60 previously verified foundation/core points plus 31 provisional E1–E5 implementation points.
+- Verified completion: **60/100**. No E1–E6 verified points are awarded by this arithmetic correction.
+
+### DONE
+- Reconciled a reporting inconsistency: the ledger row values sum to 91/100, while its total row and prior checkpoint summaries said 90/100. Updated the ledger total and recorded the arithmetic basis. No weights or row-level scores changed.
+
+### EVIDENCE
+- Prior candidate source SHA: `f46b95ebdd0e26c5ba17f6acb953538f32401aeb`.
+- Prior candidate exact-SHA mirror runs: cross-platform [40085406746](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40085406746), Linux distro [40085406859](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40085406859), focused stdlib/SQLite/provenance [40085406818](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40085406818), and Cargo lockfile [40085406783](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40085406783) passed on that prior SHA.
+- Android AArch64 ELF execution [40085406752](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40085406752) was still in progress when inspected; its boot step had not yet completed and ELF execution had not started. Do not count Android as passed.
+- This documentation correction creates a new candidate SHA. Prior passes do not verify the new branch head and must be rerun against the exact resulting SHA.
+
+### FAILURE / BLOCKED
+- E1 full standard-library acceptance remains incomplete.
+- E2 protected `one-release` dispatch with independently provisioned signing seed and trusted-publisher store has not been demonstrated.
+- E3 Android AArch64 ELF runtime acceptance remains unproven; exact-SHA platform reruns are required after this commit.
+- E4 filesystem root/mount confinement, parent-component TOCTOU disposition, unsupported-platform fallback guarantees, and runtime-wide resource quotas remain open.
+- E5 exact-SHA acceptance must be rerun for the resulting candidate.
+- E6 final forensic audit remains blocked on E1–E5 acceptance.
+- Canonical repository Actions have failed before executable steps (`runner_id: 0`, `steps: []`); those runs are infrastructure failures, not source-test evidence.
+
+### GIT STATE
+- Branch: `milestone/100-ecosystem-20261023`.
+- PR #80: open, draft, unmerged; base `main`.
+- Ledger arithmetic correction committed to the feature branch. The checkpoint update is being committed next; then the resulting branch HEAD must be re-read and pinned in the verification mirror.
+
+### NEXT
+1. Read the final PR head SHA after this checkpoint commit.
+2. Update the independent verification selector to that exact SHA and rerun focused, lockfile, Linux distro, cross-platform, and Android AArch64 workflows.
+3. Continue closing E1–E5 gaps and complete E6 only after direct acceptance evidence exists.
+4. Do not merge PR #80 or claim PASS GREEN LOCKED without explicit authorization and complete evidence.
+
+### GATE
+**NOT PASSED — milestone 100% remains in progress.**
