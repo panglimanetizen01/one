@@ -9,7 +9,7 @@ Workflow: [ONE Milestone 1 — E1 Standard Library Test Lab](../../actions/workf
 - Run automatically on relevant changes to `milestone/100-ecosystem-20261023`.
 - Can also be started with GitHub Actions → workflow → **Run workflow**.
 - Prints the exact source SHA and toolchain into the run summary.
-- Runs formatting, the complete `one-core` stdlib integration test file, core library unit tests, all workspace targets, Clippy with warnings denied, and the repository contract checker.
+- Runs the complete `one-core` stdlib integration test file, core library unit tests, all workspace targets, Clippy with warnings denied, and the repository contract checker.
 
 ## Local lab
 
