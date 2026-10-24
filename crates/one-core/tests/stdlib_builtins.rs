@@ -303,7 +303,7 @@ fn text_and_integer_conversion_edge_contracts_reject_invalid_inputs() {
         assert!(error.contains("R3022"), "unexpected diagnostic for {source:?}: {error}");
     }
 
-    let source = "awal epoch adalah 0 dikurangi 62167219200\\nawal adalah waktu utc dari unix dengan awal epoch\\nakhir adalah waktu utc dari unix dengan 253402300799\\ntampilkan awal\\ntampilkan akhir\\n";
+    let source = "awal epoch adalah 0 dikurangi 62167219200\nawal adalah waktu utc dari unix dengan awal epoch\nakhir adalah waktu utc dari unix dengan 253402300799\ntampilkan awal\ntampilkan akhir\n";
     assert_eq!(
         run(source).expect("UTC formatter must cover the full documented year range"),
         vec!["0000-01-01T00:00:00Z", "9999-12-31T23:59:59Z"]
