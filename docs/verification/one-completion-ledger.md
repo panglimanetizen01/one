@@ -392,3 +392,11 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - Added CLI `--root <directory>` for `filesystem.read` and `filesystem.write`, preserving the prior exact-target behavior when `--root` is omitted. Added policy regressions for allowed descendants, prefix-sibling denial, parent-traversal denial, and a CLI integration test for inside-root versus outside-root reads.
 - Documented the option in `docs/SECURITY.md` and explicitly limited the claim: this is a capability-policy boundary backed by existing adapter no-follow/reparse-point protections, not an operating-system sandbox or a substitute for general memory/open-resource quotas and full threat review.
 - These changes are not credited as verified until the latest exact-SHA build, Clippy, workspace, network, distro, and Android checks complete successfully. E4 verified points remain 0/6 pending full acceptance.
+
+
+## 2026-10-24 — E5 documentation coverage added; acceptance pending
+
+- Added `docs/panduan-pengguna/referensi-standard-library.md` documenting registered source-level built-ins, parameter/return types, deterministic behavior, limits, and known unsupported domains.
+- Added `docs/panduan-pengguna/alur-pengembangan.md` for the end-to-end project → local verification → exact-SHA evidence → release gate workflow; expanded `kesalahan-dan-debugging.md` with diagnostic families and capability/scope troubleshooting; updated CLI documentation for `--root`, linked the new pages from the documentation indexes, and recorded the current candidate boundary in the feature-status page.
+- These documentation artifacts still require example/link review and exact-SHA contract/build/test evidence. No E5 verified points are awarded from documentation presence alone. Keep the ledger at **88/100 provisional implementation, 60/100 verified** until a fixed-weight forensic reconciliation is completed.
+- The latest source revision after this documentation update must be pinned in the independent verification selector. The release gate remains **NOT PASSED**.
