@@ -496,3 +496,47 @@ Milestone 100, E1–E6 only.
 ### GATE
 **NOT PASSED — milestone 100% remains in progress.**
 
+## 2026-10-24 continuation — bounded package provenance and exact-SHA matrix
+
+### MILESTONE
+Milestone 100 — scoped strictly to E1-E6.
+
+### COMPLETION
+- Implementation: **88/100 provisional**. E4 moved from 4/6 to 5/6 for bounded package/provenance reads plus a regression test. The fixed ledger weights are unchanged.
+- Verified: **60/100**. No milestone-100 verified points are awarded yet.
+
+### DONE
+- Package signing and verification now bound input reads: artifact 64 MiB, private-key seed 256 bytes, sidecar 16 KiB, and publisher trust store 1 MiB. Oversized input is rejected after reading at most limit + 1 bytes.
+- Added a regression test for the bounded-read helper and documented the limits in SECURITY.md and the package/build contract.
+- Corrected E2 ledger wording: Ed25519 signing and separately trusted publisher verification are implemented; the external One package registry, dependency graph/version conflict resolution, automatic package signing and full build-provenance envelope remain open.
+
+### EVIDENCE
+- Source SHA tested: `0a0f250dfc2e556bca40f2201752ee5d06f56854`.
+- Focused standard-library/database workflow [40053737845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40053737845) passed with Rust 1.99.0 and 28 `--locked` Cargo invocations.
+- Linux distro workflow [40053737844](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40053737844) passed on Ubuntu 24.04 and Debian 12. Each log confirms source SHA `0a0f250dfc2e556bca40f2201752ee5d06f56854`, Rust 1.99.0, seven `--locked` commands and 64 successful test-result groups.
+- Cargo lock bootstrap workflow [40053737791](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40053737791) passed for the same selected source SHA.
+- Cross-platform workflow [40053737784](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40053737784) is still running; Ubuntu has passed the main test steps, but Windows has not completed the full job.
+- Android arm64 workflow [40053737740](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40053737740) is still running; emulator boot and actual ELF execution are not yet proven.
+
+### REMAINING
+- E1: complete all standard-library acceptance criteria, not just the focused subset.
+- E2: external One registry/dependency graph resolution, version-conflict handling, automatic signing and full build provenance.
+- E3: complete Windows exact-SHA job and actual Android AArch64 ELF execution with ABI, ELF-header checks, exit code and logs.
+- E4: Windows/macOS race-resistant filesystem resolution, explicit root confinement and complete threat/resource review.
+- E5: full compatibility and release-readiness review.
+- E6: final forensic Definition-of-Done audit after E1-E5 evidence is complete.
+
+### GIT STATE
+- Repository: `panglimanetizen01/one`; branch `milestone/100-ecosystem-20261023`.
+- PR #80 remains open, draft, unmerged, based on `main`.
+- Source HEAD before this checkpoint update: `0d74116d11bcd30c10bd42e6bd118d69afc7b084`.
+- After this checkpoint commit, update mirror `CANONICAL_COMMIT.txt` to the new exact PR head and rerun the required workflows. Prior SHA evidence remains historical for that prior source snapshot.
+
+### NEXT
+1. Pin mirror to the post-checkpoint exact SHA and rerun lockfile, focused stdlib, Linux distro, cross-platform and Android runtime workflows.
+2. Fix any current-SHA failure rather than relying on the prior pass.
+3. Complete the minimum E2 dependency-resolution acceptance within the existing package contract without building a large registry service.
+4. Continue E1-E6 and perform the final forensic audit only after the prerequisite evidence is complete.
+
+### GATE
+**NOT PASSED — milestone 100% remains in progress.**
