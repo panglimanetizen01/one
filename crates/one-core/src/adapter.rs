@@ -32,7 +32,7 @@ fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
 fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
 
-    let root = if path.is_absolute() { b"/\0".as_ptr() } else { b".\0".as_ptr() };
+    let root = if path.is_absolute() { c"/".as_ptr() } else { c".".as_ptr() };
     // SAFETY: root is a static NUL-terminated path and open returns a new owned fd.
     let root_fd = unsafe { libc::open(root.cast(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC) };
     if root_fd < 0 { return Err(std::io::Error::last_os_error()); }
