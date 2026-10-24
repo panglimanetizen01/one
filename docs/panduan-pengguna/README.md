@@ -26,6 +26,7 @@ Setelah memahami dasar, lanjutkan ke topik yang sesuai kebutuhan:
 - [Test, build, dan package](test-build-package.md)
 - [Referensi Standard Library](referensi-standard-library.md)
 - [Alur pengembangan end-to-end](alur-pengembangan.md)
+- [Provenance paket rilis](provenance-rilis.md)
 - [Jaringan](jaringan.md)
 - [Interoperabilitas](interoperabilitas.md)
 - [FAQ](faq.md)
