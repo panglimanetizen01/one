@@ -47,13 +47,13 @@ fi
 bash -n tools/verify-human-vnext.sh
 python3 tools/check_contract.py
 git diff --check
-cargo build --workspace --all-targets
-cargo clippy --workspace --all-targets -- -D warnings
+cargo --locked build --workspace --all-targets
+cargo --locked clippy --workspace --all-targets -- -D warnings
 if [[ -n "${ONE_ANDROID_CLANG:-}" ]]; then
-  ONE_ANDROID_CLANG="$ONE_ANDROID_CLANG" cargo test --workspace --all-targets
+  ONE_ANDROID_CLANG="$ONE_ANDROID_CLANG" cargo --locked test --workspace --all-targets
 else
   echo "NOTE: skipping android_target_explicit_mempertahankan_build_native; ONE_ANDROID_CLANG is not configured."
-  cargo test --workspace --all-targets -- --skip android_target_explicit_mempertahankan_build_native
+  cargo --locked test --workspace --all-targets -- --skip android_target_explicit_mempertahankan_build_native
 fi
 
 if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
