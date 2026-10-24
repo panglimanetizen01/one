@@ -314,7 +314,7 @@ fn package_signature_cli_authenticates_trusted_publisher_and_detects_tampering()
         source_root.to_str().unwrap(),
     ]);
     assert!(signed.status.success(), "{}", String::from_utf8_lossy(&signed.stderr));
-    assert!(root.join("demo.onepkg.provenance").is_file());
+    assert!(artifact.with_extension("onepkg.provenance").is_file());
 
     let verified = run(&[
         "verify-package",
