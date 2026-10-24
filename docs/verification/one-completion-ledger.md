@@ -377,3 +377,6 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - The first exact-SHA build exposed a compile error in the new regression because the original artifact bytes were not retained. Commit `435fefdabc2b90d52883e08ef6edd9dc82b9173f` retains the built artifact bytes; the follow-up exact-SHA matrix must confirm this correction and all release workflow changes.
 - This is implementation evidence, not release acceptance. The protected environment secrets/review rules have not been exercised by an actual release dispatch in this session, and no verified milestone points are awarded until exact-SHA tests pass and the trust-store provisioning is demonstrated.
 - **Scores remain 88/100 provisional implementation and 60/100 verified. GATE: NOT PASSED.**
+
+
+- Follow-up: added the committed release fixture at `examples/package-release/{one.toml,src/main.one}` and documented it in `docs/RELEASE_PROVENANCE.md`. It gives the protected manual release workflow a reproducible project input. This does not count as a release run; the workflow still requires the independently provisioned environment secrets and approval controls.
