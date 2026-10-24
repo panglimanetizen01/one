@@ -5,6 +5,20 @@
 //! IR lowering and reference interpreter as v0.1. This adapter deliberately does not
 //! implement a second evaluator or reinterpret expressions at runtime.
 use crate::{Diagnostic, DiagnosticBundle, IrProgram};
+use std::io::Read;
+
+const MAX_HUMAN_SOURCE_BYTES: u64 = 16 * 1024 * 1024;
+
+fn read_source_bounded(file: std::fs::File, limit: u64, label: &str) -> Result<String, String> {
+    let mut source = String::new();
+    file.take(limit + 1)
+        .read_to_string(&mut source)
+        .map_err(|error| format!("Tidak dapat membaca {label}: {error}"))?;
+    if source.len() as u64 > limit {
+        return Err(format!("Ukuran {label} melampaui batas {} MiB.", limit / (1024 * 1024)));
+    }
+    Ok(source)
+}
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 fn read_confined_module(
@@ -69,14 +83,7 @@ fn read_confined_module(
             if !metadata.is_file() {
                 return Err("Modul harus berupa berkas reguler.".to_owned());
             }
-            let mut source = String::new();
-            opened.take(16 * 1024 * 1024 + 1)
-                .read_to_string(&mut source)
-                .map_err(|error| format!("Tidak dapat membaca modul: {error}"))?;
-            if source.len() > 16 * 1024 * 1024 {
-                return Err("Ukuran modul melampaui batas 16 MiB.".to_owned());
-            }
-            return Ok(source);
+            return read_source_bounded(opened, MAX_HUMAN_SOURCE_BYTES, "modul");
         }
         current = opened;
     }
@@ -168,13 +175,15 @@ fn shift_diagnostics(mut bundle: DiagnosticBundle, offset: usize) -> DiagnosticB
 /// declared immediately after the root/module header; path traversal and import cycles
 /// are rejected. All module bodies enter the same canonical semantic pipeline.
 pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, DiagnosticBundle> {
-    let root_source = std::fs::read_to_string(path).map_err(|error| {
+    let root_file = std::fs::File::open(path).map_err(|error| {
         DiagnosticBundle::single(Diagnostic::error(
             "HV1010",
-            format!("Tidak dapat membaca '{}': {}", path.display(), error),
+            format!("Tidak dapat membuka '{}': {}", path.display(), error),
             None,
         ))
     })?;
+    let root_source = read_source_bounded(root_file, MAX_HUMAN_SOURCE_BYTES, "berkas program")
+        .map_err(|error| DiagnosticBundle::single(Diagnostic::error("HV1010", error, None)))?;
     let root_header = root_source.lines().next().unwrap_or_default();
     let root = parse(&format!("{}\ntampilkan \"header probe\"\n", root_header))?;
     let canonical_root = std::fs::canonicalize(path).map_err(|error| {
@@ -290,6 +299,24 @@ impl ModuleCollection {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bounded_source_reads_reject_inputs_over_the_limit() {
+        use std::io::Write;
+
+        let path = std::env::temp_dir().join(format!(
+            "one-human-source-limit-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let mut file = std::fs::File::create(&path).unwrap();
+        file.write_all(b"12345").unwrap();
+        drop(file);
+        let file = std::fs::File::open(&path).unwrap();
+        assert!(read_source_bounded(file, 4, "test source").unwrap_err().contains("4 MiB"));
+        let file = std::fs::File::open(&path).unwrap();
+        assert_eq!(read_source_bounded(file, 5, "test source").unwrap(), "12345");
+        let _ = std::fs::remove_file(path);
+    }
 
     #[test]
     fn human_program_uses_canonical_ir_for_values_control_flow_and_functions() {
