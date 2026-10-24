@@ -663,3 +663,28 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - E2's actual remaining acceptance is release-process integration and exact-SHA evidence that the final built artifact receives Ed25519 V2 source-bound provenance signing and is verified against an independently provisioned trusted-publisher store. V1 artifact-only signatures do not satisfy this gate.
 - The ledger/checkpoint correction changes documentation only; it does not award verified points. The branch head created by this checkpoint update is a new exact-SHA verification target.
 
+
+
+## 2026-10-24 continuation — release provenance gate and release-document reconciliation
+
+### CURRENT SOURCE REVISION BEFORE THIS CHECKPOINT UPDATE
+- PR #80 source head before this checkpoint change: `b90c2bd630416cc77f0d84658d9458d459f98eb3`; PR remains open, draft, and unmerged.
+- `.github/workflows/release-check.yml` now includes an explicit `one-cli` integration test for package provenance signing, trusted-publisher verification, tamper rejection, and source-tree mismatch rejection: `cargo --locked test -p one-cli --test cli package_signature_cli_authenticates_trusted_publisher_and_detects_tampering -- --exact`.
+- `docs/release/one-v0.1.md` now distinguishes the historical v0.1 baseline from the current milestone-100 candidate and records the current release gate as NOT PASSED.
+- E2 scope was reconciled to the approved package-build contract: external registry and dependency/version-conflict resolution are outside the executable v0.1 subset; the actual remaining gate is final release-process signing of the final artifact with V2 source-bound provenance and verification against an independently provisioned trusted-publisher store. The automated test uses an isolated test key/trust store and is not proof of a real published artifact signed with the release publisher's key.
+
+### EXACT-SHA CHECKS STARTED FOR `b90c2bd630416cc77f0d84658d9458d459f98eb3`
+- Cross-platform Ubuntu/Windows: [run 40067125143](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40067125143), queued when checked.
+- Ubuntu/Debian conformance: [run 40067124952](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40067124952), in progress when checked.
+- Focused standard-library/database: [run 40067124848](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40067124848), in progress when checked.
+- Cargo lockfile evidence: [run 40067124879](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40067124879), in progress when checked.
+- Android AArch64 ELF build-and-execute on macOS ARM64: [run 40067124955](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40067124955), queued when checked.
+- Canonical private-repository CI remains unusable as source-level evidence because jobs fail before executable steps. The independent mirror remains the runnable verification path and must target the exact resulting PR head.
+
+### REMAINING
+1. This checkpoint edit creates a new PR head and therefore a new exact-SHA verification target; update the mirror selector and rerun every required workflow after this commit.
+2. E1 standard-library breadth, E2 final publisher-key release integration, E4 explicit root confinement/general quotas/full threat review, E5 full compatibility/tooling review, and E6 final forensic acceptance remain incomplete.
+3. Keep scores at **88/100 provisional implementation and 60/100 verified** until evidence supports any change. Do not award E3 verified points without actual Android ELF execution success on the final SHA.
+
+### GATE
+**NOT PASSED.** No merge, release tag, or PASS GREEN LOCKED claim until the final exact-SHA matrix and all mandatory E1–E6 acceptance criteria are complete.
