@@ -33,12 +33,12 @@ For each row, **implemented points** are provisional progress based on code actu
 | C5 | Additional real application vertical slices — **4** | Calculator, score tracker, module and mapping examples executed through the same compiler/runtime | 4/4 | 4/4 | VERIFIED — PASS GREEN LOCKED |
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 7/10 | 0/10 | IMPLEMENTED — PARTIAL; UTC parser integrated; full stdlib acceptance pending |
-| E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 5/8 | 0/8 | IMPLEMENTED — PARTIAL; EXTERNAL DEPENDENCY RESOLUTION PENDING |
+| E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 6/8 | 0/8 | IMPLEMENTED — PARTIAL; committed Cargo.lock and --locked verification added; One registry resolution and authenticated publisher provenance pending |
 | E3 | Conformance, compatibility and cross-platform suite — **8** | Exact-SHA Linux/Windows plus other declared targets where applicable | 8/8 | 0/8 | IMPLEMENTED — PARTIAL; Linux/Windows pass, Android ELF build/run test remains ignored |
 | E4 | Security, resource bounds, diagnostics and failure recovery — **6** | Threat review and tests for unsafe/invalid inputs and runtime failures | 4/6 | 0/6 | IMPLEMENTED — PARTIAL; SQLite budgets and Linux/Android descriptor-relative no-follow opens added; Windows/macOS race controls, root confinement, and full threat review pending |
 | E5 | Documentation, examples and developer tooling — **4** | Reviewed reference docs and tested user workflows | 1/4 | 0/4 | IMPLEMENTED — PARTIAL; FULL DOCS/TOOLING REVIEW PENDING |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED |
-|  | **TOTAL** |  | **85/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
+|  | **TOTAL** |  | **86/100** | **60/100** | **MILESTONE 100% IN PROGRESS — GATE NOT PASSED** |
 
 ## Baseline and evidence
 
@@ -266,5 +266,16 @@ The later ledger/checkpoint corrections are documentation-only and do not change
 - **Verification:** canonical source Actions on prior source SHA `6361461a81718594c78921abb3106b1fdf86e1c5` failed before any steps started; all inspected jobs returned empty step lists. This is a runner provisioning failure, not a source-test result. The independent mirror selector must be pinned to the final checkpoint SHA after this documentation update. No new code verification points are awarded yet.
 - **Score reconciliation:** E4 implementation increases from 3/6 to 4/6 because descriptor-relative no-follow opens are now connected to the Linux/Android file adapters and regression tests exist in source. **Implementation: 85/100 provisional. Verified: 60/100.** E1 0/10, E2 0/8, E3 0/8, E4 0/6, E5 0/4, E6 0/4 verified points remain unchanged under full milestone-100 acceptance.
 - **Remaining E1–E6:** full standard-library contract breadth; external dependency/registry resolution and authenticated package provenance; actual Android AArch64 ELF execution; Windows/macOS race-resistant filesystem handling and defined confinement root; broader resource quotas/threat review; release/compatibility/tooling acceptance; final exact-SHA forensic audit.
+- **GATE: NOT PASSED — milestone 100% remains in progress.**
+
+## 2026-10-24 continuation — committed Cargo lockfile and locked verification
+
+- **Code-bearing source SHA before this documentation update:** d9196cf97c4f42de8a8dbf8e1de93ced5b8db4dd.
+- **Lockfile generation evidence:** independent workflow [ONE Cargo Lockfile Bootstrap Evidence](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40052223860) successfully ran Cargo lockfile generation against canonical source SHA cd4aa9f9be450ecc43a0419d057867967d23e469. Cargo.lock SHA-256: 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21; 113 package entries.
+- Added the generated root Cargo.lock to the canonical repository and removed Cargo.lock from .gitignore. Updated canonical CI, Linux distro conformance, focused standard-library verification, and local verification scripts to invoke Cargo build/test/run/Clippy with --locked.
+- Added the lockfile policy to docs/verification/human-vnext-exact-sha-verification-contract.md. The policy explicitly distinguishes Rust workspace dependency locking from One-language registry resolution and publisher authentication.
+- **E2 remaining:** no One-language external dependency graph/registry resolver, version-conflict resolution, publisher trust store, digital signature verification, or authenticated provenance envelope. The lockfile change closes only Cargo workspace dependency determinism.
+- **Verification on the current lockfile-bearing source SHA:** NOT YET VERIFIED. The mirror must pin the final checkpoint SHA and confirm --locked succeeds on Ubuntu and Windows and the distro/stdlib jobs complete.
+- **Score reconciliation:** E2 implementation increases 5/8 → 6/8 because the Cargo lockfile is committed and the repository's verification commands now enforce it. Implementation subtotal: **86/100 provisional**. Verified subtotal remains **60/100**; no verification credit is assigned for the lockfile until exact-SHA checks pass.
 - **GATE: NOT PASSED — milestone 100% remains in progress.**
 
