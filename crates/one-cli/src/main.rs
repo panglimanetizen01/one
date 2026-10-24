@@ -3,8 +3,9 @@
 use std::{collections::HashSet, env, fs, path::{Path, PathBuf}, process::ExitCode};
 use one_core::{analyze, lower, parse, Capability, CapabilitySet, ExecutionPolicy, Interpreter, ScopeRule};
 use sha2::{Digest, Sha256};
+mod package_provenance;
 const VERSION: &str = "0.1.0";
-fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one jalankan-human-core <program.one> (frontend vNext ke IR kanonis)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
+fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one jalankan-human-core <program.one> (frontend vNext ke IR kanonis)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file>\n  one verify-package <file.onepkg> --trusted-publishers <trust-store>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &bundle.0 { eprintln!("{}: {}", diagnostic.code, diagnostic.message); if let Some(span) = &diagnostic.span { eprintln!("  baris {}, kolom {}", span.line, span.column); } for note in &diagnostic.notes { eprintln!("  catatan: {}", note); } for suggestion in &diagnostic.suggestions { eprintln!("  saran: {}", suggestion); } } }
 fn compile_source(source: &str) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let program = parse(source)?; let typed = analyze(&program)?; Ok((program, typed)) }
 fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("src").join("main.one"); if path.is_file() { Ok(path) } else { Err(format!("Proyek tidak memiliki '{}'.", path.display())) } }
@@ -82,6 +83,38 @@ fn run_conformance_fixtures(root: &Path) -> Result<usize, String> {
 }
 fn main() -> ExitCode {
  let mut args = env::args().skip(1); let Some(first) = args.next() else { usage(); return ExitCode::from(2); }; if first == "help" { if args.next().is_some() { usage(); return ExitCode::from(2); } usage(); return ExitCode::SUCCESS; } if first == "version" { if args.next().is_some() { usage(); return ExitCode::from(2); } println!("one {VERSION}"); return ExitCode::SUCCESS; }
+ if first == "sign-package" {
+  let Some(artifact) = args.next() else { eprintln!("Penggunaan: one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file>"); return ExitCode::from(2); };
+  let mut publisher: Option<String> = None;
+  let mut private_key: Option<PathBuf> = None;
+  while let Some(option) = args.next() {
+   match option.as_str() {
+    "--publisher" => { let Some(value) = args.next() else { eprintln!("ETOOL007: --publisher membutuhkan ID."); return ExitCode::from(2); }; publisher = Some(value); }
+    "--private-key" => { let Some(value) = args.next() else { eprintln!("ETOOL007: --private-key membutuhkan jalur."); return ExitCode::from(2); }; private_key = Some(PathBuf::from(value)); }
+    _ => { eprintln!("ETOOL007: opsi sign-package tidak dikenal '{}'.", option); return ExitCode::from(2); }
+   }
+  }
+  let (Some(publisher), Some(private_key)) = (publisher, private_key) else { eprintln!("ETOOL007: --publisher dan --private-key wajib diberikan."); return ExitCode::from(2); };
+  return match package_provenance::sign_artifact(Path::new(&artifact), &publisher, &private_key) {
+   Ok(sidecar) => { println!("Provenance paket ditandatangani: {}", sidecar.display()); ExitCode::SUCCESS }
+   Err(error) => { eprintln!("ETOOL007: {error}"); ExitCode::from(1) }
+  };
+ }
+ if first == "verify-package" {
+  let Some(artifact) = args.next() else { eprintln!("Penggunaan: one verify-package <file.onepkg> --trusted-publishers <trust-store>"); return ExitCode::from(2); };
+  let mut trust_store: Option<PathBuf> = None;
+  while let Some(option) = args.next() {
+   match option.as_str() {
+    "--trusted-publishers" => { let Some(value) = args.next() else { eprintln!("ETOOL008: --trusted-publishers membutuhkan jalur."); return ExitCode::from(2); }; trust_store = Some(PathBuf::from(value)); }
+    _ => { eprintln!("ETOOL008: opsi verify-package tidak dikenal '{}'.", option); return ExitCode::from(2); }
+   }
+  }
+  let Some(trust_store) = trust_store else { eprintln!("ETOOL008: --trusted-publishers wajib diberikan."); return ExitCode::from(2); };
+  return match package_provenance::verify_artifact(Path::new(&artifact), &trust_store) {
+   Ok(publisher) => { println!("Provenance paket terverifikasi; publisher: {publisher}"); ExitCode::SUCCESS }
+   Err(error) => { eprintln!("ETOOL008: {error}"); ExitCode::from(1) }
+  };
+ }
  if first == "jalankan-human-vnext" || first == "run-human-vnext" {
   let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-vnext <program.one> [--data <berkas>]"); return ExitCode::from(2); };
   let source_path = Path::new(&source_arg);
