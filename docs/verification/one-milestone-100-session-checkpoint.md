@@ -697,3 +697,6 @@ PR #80 remains open, draft and unmerged; branch `milestone/100-ecosystem-2026102
 - The CLI regression now packages the committed fixture using `one package` before signing and verifying it. An initial exact-SHA build caught a missing `artifact_bytes` binding; commit `435fefdabc2b90d52883e08ef6edd9dc82b9173f` corrected the regression.
 - Latest source SHA at this checkpoint update is the new branch head after this documentation commit. Re-read the canonical branch head and update the independent verification selector to that exact SHA before accepting any run. The final release claim remains prohibited until Android AArch64 execution, cross-platform and distro checks, the complete E1–E6 acceptance, and the final forensic DoD audit all pass on the final source revision.
 - **Gate: NOT PASSED. Verified score remains 60/100; no points are awarded from workflow/code presence alone.**
+
+
+- Added committed release fixture `examples/package-release` and documented it for the protected manual workflow. The next acceptance run must use the canonical branch head after this checkpoint update. The release environment has not been dispatched or approved; E2 remains unverified.
