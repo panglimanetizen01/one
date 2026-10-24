@@ -397,12 +397,18 @@ tampilkan hasil
         vec![""]
     );
 
-    for index_expression in ["0 dikurangi 1", "2"] {
+    for (setup, index_name) in [
+        ("negatif adalah 0 dikurangi 1\\n", "negatif"),
+        ("di luar adalah 2\\n", "di luar"),
+    ] {
         let source = format!(
-            "buat daftar nilai\ntambahkan \"satu\" ke nilai\nhasil adalah ambil indeks dengan nilai dan {index_expression}\ntampilkan hasil\n"
+            "buat daftar nilai\\ntambahkan \\"satu\\" ke nilai\\n{setup}hasil adalah ambil indeks dengan nilai dan {index_name}\\ntampilkan hasil\\n"
         );
         let error = run(&source).expect_err("negative and out-of-range indices must fail closed");
-        assert!(error.contains("R3022"), "unexpected diagnostic for index {index_expression}: {error}");
+        assert!(
+            error.contains("R3022"),
+            "unexpected diagnostic for index {index_name}: {error}"
+        );
     }
 
     let wrong_join_member = r#"buat daftar nilai
