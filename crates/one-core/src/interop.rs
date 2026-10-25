@@ -11,8 +11,8 @@
 //! tree cleanup requires a Job Object and is tracked separately.
 use std::io::Read;
 use std::process::{Child, Command, ExitStatus, Stdio};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -78,7 +78,10 @@ pub fn run_process_with_limits(
     }
 
     let mut command = Command::new(&spec.program);
-    command.args(&spec.args).stdout(Stdio::piped()).stderr(Stdio::piped());
+    command
+        .args(&spec.args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     if let Some(dir) = &spec.working_directory {
         command.current_dir(dir);
     }
@@ -129,7 +132,10 @@ pub fn run_process_with_limits(
                 terminate_child(&mut child);
                 let _ = stdout_reader.join();
                 let _ = stderr_reader.join();
-                return Err(format!("Gagal memeriksa proses '{}': {}", spec.program, error));
+                return Err(format!(
+                    "Gagal memeriksa proses '{}': {}",
+                    spec.program, error
+                ));
             }
         }
         if Instant::now() >= deadline {
@@ -171,8 +177,18 @@ pub fn run_process_with_limits(
         Some(status) => status,
         None => child
             .try_wait()
-            .map_err(|error| format!("Gagal mengambil status proses '{}': {}", spec.program, error))?
-            .ok_or_else(|| format!("Status proses '{}' tidak tersedia setelah dihentikan.", spec.program))?,
+            .map_err(|error| {
+                format!(
+                    "Gagal mengambil status proses '{}': {}",
+                    spec.program, error
+                )
+            })?
+            .ok_or_else(|| {
+                format!(
+                    "Status proses '{}' tidak tersedia setelah dihentikan.",
+                    spec.program
+                )
+            })?,
     };
 
     Ok(ProcessResult {
@@ -201,9 +217,11 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
                         exceeded.store(true, Ordering::Release);
                         break;
                     }
-                    let reserved = total.fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
-                        current.checked_add(count).filter(|next| *next <= total_limit)
-                    });
+                    let reserved = total.fetch_update(
+                        Ordering::AcqRel,
+                        Ordering::Acquire,
+                        |current| current.checked_add(count).filter(|next| *next <= total_limit),
+                    );
                     if reserved.is_err() {
                         exceeded.store(true, Ordering::Release);
                         break;
@@ -246,11 +264,20 @@ mod tests {
         #[cfg(windows)]
         let (program, args) = (
             "powershell".to_owned(),
-            vec!["-NoProfile".into(), "-NonInteractive".into(), "-Command".into(), script.into()],
+            vec![
+                "-NoProfile".into(),
+                "-NonInteractive".into(),
+                "-Command".into(),
+                script.into(),
+            ],
         );
         #[cfg(not(windows))]
         let (program, args) = ("sh".to_owned(), vec!["-c".into(), script.into()]);
-        ProcessSpec { program, args, working_directory: None }
+        ProcessSpec {
+            program,
+            args,
+            working_directory: None,
+        }
     }
 
     fn tight_limits() -> ProcessLimits {
@@ -264,8 +291,13 @@ mod tests {
 
     #[test]
     fn denied_process_capability_never_spawns() {
-        let process = ProcessSpec { program: "one-test-process-that-must-not-run".into(), args: vec![], working_directory: None };
-        let error = run_process(&process, &CapabilitySet::none()).expect_err("process must be denied");
+        let process = ProcessSpec {
+            program: "one-test-process-that-must-not-run".into(),
+            args: vec![],
+            working_directory: None,
+        };
+        let error =
+            run_process(&process, &CapabilitySet::none()).expect_err("process must be denied");
         assert_eq!(error, "Kemampuan proses belum diberikan kepada program.");
     }
 
@@ -276,7 +308,8 @@ mod tests {
         } else {
             spec("printf stdout; printf stderr >&2; exit 7")
         };
-        let result = run_process(&process, &allowed()).expect("process capability permits execution");
+        let result =
+            run_process(&process, &allowed()).expect("process capability permits execution");
         assert!(!result.success);
         assert_eq!(result.status_code, Some(7));
         assert!(result.stdout.contains("stdout"));
@@ -285,38 +318,54 @@ mod tests {
 
     #[test]
     fn process_timeout_is_enforced_and_child_is_reaped() {
-        let process = if cfg!(windows) { spec("Start-Sleep -Seconds 5") } else { spec("sleep 5") };
-        let limits = ProcessLimits { timeout: Duration::from_millis(100), ..ProcessLimits::default() };
-        let error = run_process_with_limits(&process, &allowed(), limits).expect_err("long process must time out");
+        let process = if cfg!(windows) {
+            spec("Start-Sleep -Seconds 5")
+        } else {
+            spec("sleep 5")
+        };
+        let limits = ProcessLimits {
+            timeout: Duration::from_millis(100),
+            ..ProcessLimits::default()
+        };
+        let error = run_process_with_limits(&process, &allowed(), limits)
+            .expect_err("long process must time out");
         assert!(error.contains("melewati batas waktu"), "{error}");
     }
 
     #[test]
     fn stdout_flood_is_bounded() {
         let process = if cfg!(windows) {
-            spec("while ($true) { [Console]::Out.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }")
+            spec(
+                "while ($true) { [Console]::Out.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }",
+            )
         } else {
             spec("yes x")
         };
-        let error = run_process_with_limits(&process, &allowed(), tight_limits()).expect_err("stdout flood must be stopped");
+        let error = run_process_with_limits(&process, &allowed(), tight_limits())
+            .expect_err("stdout flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
 
     #[test]
     fn stderr_flood_is_bounded() {
         let process = if cfg!(windows) {
-            spec("while ($true) { [Console]::Error.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }")
+            spec(
+                "while ($true) { [Console]::Error.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }",
+            )
         } else {
             spec("yes x >&2")
         };
-        let error = run_process_with_limits(&process, &allowed(), tight_limits()).expect_err("stderr flood must be stopped");
+        let error = run_process_with_limits(&process, &allowed(), tight_limits())
+            .expect_err("stderr flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
 
     #[test]
     fn aggregate_output_limit_is_enforced() {
         let process = if cfg!(windows) {
-            spec("1..1000 | ForEach-Object { [Console]::Out.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); [Console]::Error.Write('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy') }")
+            spec(
+                "1..1000 | ForEach-Object { [Console]::Out.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); [Console]::Error.Write('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy') }",
+            )
         } else {
             spec("i=0; while [ $i -lt 1000 ]; do printf 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; printf 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy' >&2; i=$((i+1)); done")
         };
