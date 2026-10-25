@@ -1,3 +1,5 @@
+use one_core::runtime::Value;
+use one_core::stdlib;
 use one_core::{analyze, lower, parse, parse_human_core, CapabilitySet, Interpreter};
 
 fn run(source: &str) -> Result<Vec<String>, String> {
@@ -539,4 +541,91 @@ tampilkan hasil
         run(source).expect("mapping built-ins must work through the default parser and canonical runtime"),
         vec!["2", r#"{"a":2,"b":3,"z":1}"#]
     );
+}
+
+
+#[test]
+fn public_rust_stdlib_helpers_have_reusable_typed_contracts() {
+    let list = Value::List(vec![Value::Text("a".into()), Value::Text("b".into())]);
+    let appended = stdlib::list_append(list.clone(), Value::Text("c".into()))
+        .expect("append accepts a list");
+    assert_eq!(
+        appended,
+        Value::List(vec![Value::Text("a".into()), Value::Text("b".into()), Value::Text("c".into())])
+    );
+    assert_eq!(
+        stdlib::list_append(Value::Text("not a list".into()), Value::Text("c".into())),
+        None,
+        "wrong receiver type must fail closed"
+    );
+
+    let removed = stdlib::list_remove(appended.clone(), &Value::Text("b".into()))
+        .expect("remove accepts a list");
+    assert_eq!(
+        removed,
+        Value::List(vec![Value::Text("a".into()), Value::Text("c".into())]),
+        "remove deletes only the first equal value"
+    );
+    assert_eq!(
+        stdlib::list_remove(appended.clone(), &Value::Text("missing".into())),
+        Some(appended.clone()),
+        "removing a missing value is a deterministic no-op"
+    );
+    assert_eq!(stdlib::list_remove(Value::Number(1), &Value::Number(1)), None);
+
+    assert_eq!(stdlib::text_length(&Value::Text("猫😀".into())), Some(Value::Number(2)));
+    assert_eq!(stdlib::text_length(&Value::Number(2)), None);
+    assert_eq!(stdlib::list_length(&appended), Some(Value::Number(3)));
+    assert_eq!(stdlib::list_length(&Value::Text("abc".into())), None);
+    assert_eq!(stdlib::list_get(&appended, &Value::Number(2)), Some(Value::Text("c".into())));
+    assert_eq!(stdlib::list_get(&appended, &Value::Number(-1)), None);
+    assert_eq!(stdlib::list_get(&appended, &Value::Number(i64::MAX)), None);
+
+    assert_eq!(stdlib::number_abs(&Value::Number(i64::MIN)), None);
+    assert_eq!(stdlib::number_divide(&Value::Number(i64::MIN), &Value::Number(-1)), None);
+    assert_eq!(stdlib::number_modulo(&Value::Number(i64::MIN), &Value::Number(-1)), None);
+    assert_eq!(stdlib::number_divide(&Value::Number(1), &Value::Number(0)), None);
+    assert_eq!(stdlib::number_modulo(&Value::Number(1), &Value::Number(0)), None);
+}
+
+#[test]
+fn public_rust_mapping_helpers_are_sorted_and_reject_wrong_types() {
+    let first = stdlib::map_from_entries([
+        ("z".to_owned(), Value::Number(1)),
+        ("a".to_owned(), Value::Number(2)),
+    ]);
+    let second = stdlib::map_from_entries([
+        ("a".to_owned(), Value::Number(2)),
+        ("z".to_owned(), Value::Number(1)),
+    ]);
+    assert_eq!(first, second, "mapping construction must not depend on insertion order");
+    assert_eq!(
+        stdlib::value_to_json(&first),
+        Some(Value::Text(r#"{"a":2,"z":1}"#.into()))
+    );
+    assert_eq!(
+        stdlib::map_get(&first, &Value::Text("a".into())),
+        Some(Value::Number(2))
+    );
+    assert_eq!(stdlib::map_get(&first, &Value::Number(1)), None);
+    assert_eq!(
+        stdlib::map_set(first.clone(), &Value::Text("a".into()), Value::Number(9)),
+        Some(stdlib::map_from_entries([
+            ("a".to_owned(), Value::Number(9)),
+            ("z".to_owned(), Value::Number(1)),
+        ]))
+    );
+    assert_eq!(stdlib::map_set(first, &Value::Number(1), Value::Number(9)), None);
+}
+
+#[test]
+fn public_rust_json_helpers_fail_closed_and_are_deterministic() {
+    let value = Value::Text(r#"{"z":1,"a":"猫😀"}"#.into());
+    let parsed = stdlib::json_to_value(&value).expect("valid JSON should parse");
+    let serialized = stdlib::value_to_json(&parsed).expect("parsed value should serialize");
+    assert_eq!(serialized, Value::Text(r#"{"a":"猫😀","z":1}"#.into()));
+    assert_eq!(stdlib::json_to_value(&Value::Number(1)), None);
+    assert_eq!(stdlib::json_to_value(&Value::Text(r#"{"x":1,"x":2}"#.into())), None);
+    assert_eq!(stdlib::json_to_value(&Value::Text("1e2".into())), None);
+    assert_eq!(stdlib::json_to_value(&Value::Text(r#""\\uD800""#.into())), None);
 }
