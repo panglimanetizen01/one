@@ -487,3 +487,13 @@ This entry supersedes earlier “Android runtime pending” notes for the code-b
 - No release gate is changed by these partial results. **Milestone 3 remains NOT PASSED**, verified total remains **60/100**, implementation subtotal remains **91/100 provisional**, and PR #80 remains unmerged with no release authorization.
 
 This ledger update is documentation-only after code-bearing SHA `5751aff3404f000545549908a00ea322cc96e277`; it creates a new branch head. Re-pin the independent lab to the resulting exact branch HEAD and rerun the required matrix before accepting any final result. Later results must be stored in the independent evidence index without silently reusing runs from the older SHA.
+
+## 2026-10-25 — Follow-up correction after exact-SHA Windows full-suite run
+
+The final-matrix attempt on source SHA `26d3d30be773cfc403daa002f7116c176ef31fc8` exposed two Windows-only stress-test failures in `stderr_flood_is_bounded` and `aggregate_output_limit_is_enforced`. The logs showed the test harness's 3-second deadline firing before the output flood reached the configured byte cap; the assertions correctly rejected the timeout error instead of accepting it as an output-limit PASS.
+
+Code fix commit `c339da876f6ceb18084e8551cc08d4edbabc0f27` increases only the timeout used by the stdout/stderr/aggregate output-flood regression tests to 15 seconds. The tests still require the explicit output-limit error (`batas output`); a timeout continues to fail. Production process timeout and output byte limits are unchanged. This is a CI robustness correction, not a reduction in the resource-bound assertion.
+
+The Android API 35 fallback workflow also exposed a harness defect: the AVD named `one-api35-arm64` was not created before emulator launch. The lab workflow now explicitly creates and verifies the API 35 `arm64-v8a` AVD before trying hardware acceleration and then the bounded `-accel off` fallback. The failed attempt is not runtime evidence.
+
+This follow-up advances the source branch again. Pin the independent lab to the final branch HEAD after the remaining documentation checkpoint updates and rerun the complete exact-SHA matrix. Do not treat any run from SHA `5751aff3404f000545549908a00ea322cc96e277` or `26d3d30be773cfc403daa002f7116c176ef31fc8` as final acceptance for the new HEAD. E3 remains unverified until real API 35 runtime output is captured; E4 remains unverified because root descriptor anchoring, mount boundaries, runtime-wide quotas, fallback-platform guarantees, and the full threat review remain open.
