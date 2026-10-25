@@ -76,19 +76,36 @@ jobs:
       - name: Build ONE CLI
         run: cargo --locked build --release -p one-cli
 
-      - name: Build final package artifact
+      - name: Build package twice and enforce deterministic bytes
         id: package
         shell: bash
         run: |
           set -euo pipefail
           target/release/one package "$project_root"
-          mapfile -t artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
-          if [[ "${#artifacts[@]}" -ne 1 ]]; then
-            echo "Expected exactly one final .onepkg artifact; found ${#artifacts[@]}" >&2
+          mapfile -t first_artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
+          if [[ "${#first_artifacts[@]}" -ne 1 ]]; then
+            echo "Expected exactly one first-pass .onepkg artifact; found ${#first_artifacts[@]}" >&2
             exit 1
           fi
-          echo "release_artifact=${artifacts[0]}" >> "$GITHUB_ENV"
-          echo "release_artifact=${artifacts[0]}" >> "$GITHUB_OUTPUT"
+          release_artifact="${first_artifacts[0]}"
+          first_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
+          rm -- "$release_artifact"
+
+          target/release/one package "$project_root"
+          mapfile -t second_artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
+          if [[ "${#second_artifacts[@]}" -ne 1 ]]; then
+            echo "Expected exactly one second-pass .onepkg artifact; found ${#second_artifacts[@]}" >&2
+            exit 1
+          fi
+          release_artifact="${second_artifacts[0]}"
+          second_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
+          if [[ "$first_digest" != "$second_digest" ]]; then
+            echo "Non-deterministic package bytes: $first_digest != $second_digest" >&2
+            exit 1
+          fi
+          echo "PASS: deterministic package SHA-256 $second_digest"
+          echo "release_artifact=$release_artifact" >> "$GITHUB_ENV"
+          echo "release_artifact=$release_artifact" >> "$GITHUB_OUTPUT"
 
       - name: Sign final artifact with source-bound Ed25519 V2 provenance
         shell: bash
@@ -101,12 +118,56 @@ jobs:
         run: |
           set -euo pipefail
           target/release/one verify-package "$release_artifact" --trusted-publishers "$RUNNER_TEMP/one-trusted-publishers.txt" --source-root "$project_root"
+          sidecar="$release_artifact.provenance"
+          test -s "$sidecar"
+          grep -Fx "source_revision=$(git rev-parse HEAD)" "$sidecar"
+          grep -Eq '^source_sha256=[0-9a-f]{64}
+      - name: Upload verified package, provenance, and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-package-release-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ steps.package.outputs.release_artifact }}
+            ${{ steps.package.outputs.release_artifact }}.provenance
+            ${{ runner.temp }}/one-release-sha256.txt
+ "$sidecar"
+          grep -Eq '^artifact_sha256=[0-9a-f]{64}
+      - name: Upload verified package, provenance, and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-package-release-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ steps.package.outputs.release_artifact }}
+            ${{ steps.package.outputs.release_artifact }}.provenance
+            ${{ runner.temp }}/one-release-sha256.txt
+ "$sidecar"
+          grep -Eq '^artifact_format=One(PackageV1|HumanCorePackageV1)
+      - name: Upload verified package, provenance, and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-package-release-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ steps.package.outputs.release_artifact }}
+            ${{ steps.package.outputs.release_artifact }}.provenance
+            ${{ runner.temp }}/one-release-sha256.txt
+ "$sidecar"
+          grep -Fx 'dependency_model=empty-v0.1' "$sidecar"
+          actual_artifact_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
+          signed_artifact_digest="$(sed -n 's/^artifact_sha256=//p' "$sidecar")"
+          test "$actual_artifact_digest" = "$signed_artifact_digest" || {
+            echo "Signed artifact digest does not match final package bytes" >&2
+            exit 1
+          }
 
-      - name: Produce artifact digests
+      - name: Produce and independently check artifact digests
         shell: bash
         run: |
           set -euo pipefail
           sha256sum "$release_artifact" "$release_artifact.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
+          (cd "$(dirname "$release_artifact")" && sha256sum --check <(sed "s#$(dirname "$release_artifact")/##" "$RUNNER_TEMP/one-release-sha256.txt"))
           cat "$RUNNER_TEMP/one-release-sha256.txt"
 
       - name: Upload verified package, provenance, and checksums
