@@ -491,6 +491,56 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    fn windows_job_object_immediate_descendant_spawn_stress() {
+        // Repeatedly race an immediate descendant spawn against process launch.
+        // A failure means a descendant outlived run_process and must be cleaned up
+        // so a failed test does not leave background PowerShell processes behind.
+        for iteration in 0..20 {
+            let process = spec(
+                "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
+            );
+            let result = run_process(&process, &allowed())
+                .expect("parent should exit successfully while descendant is contained");
+            let child_pid: u32 = result
+                .stdout
+                .trim()
+                .parse()
+                .expect("child PID should be printed");
+            let deadline = Instant::now() + Duration::from_secs(2);
+            loop {
+                let child_exists = std::process::Command::new("powershell.exe")
+                    .args([
+                        "-NoProfile",
+                        "-NonInteractive",
+                        "-Command",
+                        &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                    ])
+                    .status()
+                    .expect("PowerShell process query should run")
+                    .success();
+                if !child_exists {
+                    break;
+                }
+                if Instant::now() >= deadline {
+                    let _ = std::process::Command::new("powershell.exe")
+                        .args([
+                            "-NoProfile",
+                            "-NonInteractive",
+                            "-Command",
+                            &format!("Stop-Process -Id {child_pid} -Force -ErrorAction SilentlyContinue"),
+                        ])
+                        .status();
+                    panic!(
+                        "descendant process {child_pid} survived Job Object closure on iteration {iteration}"
+                    );
+                }
+                thread::sleep(Duration::from_millis(25));
+            }
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
     fn windows_job_object_terminates_descendant_after_parent_exits() {
         let process = spec(
             "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
