@@ -887,11 +887,18 @@ foreach ($arg in $args) {
             .expect("working directory should canonicalize")
             .to_string_lossy()
             .into_owned();
+        let expected_working_directory = canonical_working_directory
+            .strip_prefix(r"\\?\")
+            .unwrap_or(&canonical_working_directory);
         let lines: Vec<&str> = result.stdout.lines().collect();
         assert!(
             lines.first().is_some_and(|line| {
-                line.strip_prefix("cwd:")
-                    .is_some_and(|actual| actual.eq_ignore_ascii_case(&canonical_working_directory))
+                line.strip_prefix("cwd:").is_some_and(|actual| {
+                    actual
+                        .strip_prefix(r"\\?\")
+                        .unwrap_or(actual)
+                        .eq_ignore_ascii_case(expected_working_directory)
+                })
             }),
             "working directory mismatch: {}",
             result.stdout
