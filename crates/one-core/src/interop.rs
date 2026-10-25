@@ -634,13 +634,25 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
                         exceeded.store(true, Ordering::Release);
                         break;
                     }
-                    let reserved =
-                        total.fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
-                            current
-                                .checked_add(count)
-                                .filter(|next| *next <= total_limit)
-                        });
-                    if reserved.is_err() {
+                    let mut current = total.load(Ordering::Acquire);
+                    let reserved = loop {
+                        let Some(next) = current
+                            .checked_add(count)
+                            .filter(|next| *next <= total_limit)
+                        else {
+                            break false;
+                        };
+                        match total.compare_exchange_weak(
+                            current,
+                            next,
+                            Ordering::AcqRel,
+                            Ordering::Acquire,
+                        ) {
+                            Ok(_) => break true,
+                            Err(observed) => current = observed,
+                        }
+                    };
+                    if !reserved {
                         exceeded.store(true, Ordering::Release);
                         break;
                     }
@@ -817,6 +829,50 @@ mod tests {
             "\"C:\\Program Files\\tool.exe\" \"\" \"two words\" plain"
                 .encode_utf16().collect::<Vec<_>>()
         );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_job_object_terminates_descendant_on_timeout() {
+        let marker = std::env::temp_dir().join(format!(
+            "one-sec05-descendant-{}-{}.txt",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system clock should be after Unix epoch")
+                .as_nanos()
+        ));
+        let marker_literal = marker.to_string_lossy().replace('\'', "''");
+        let process = spec(&format!(
+            "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Set-Content -LiteralPath '{marker_literal}' -Value $child.Id; Start-Sleep -Seconds 30"
+        ));
+        let limits = ProcessLimits {
+            timeout: Duration::from_secs(2),
+            ..ProcessLimits::default()
+        };
+        let error = run_process_with_limits(&process, &allowed(), limits)
+            .expect_err("parent and descendant must be terminated on timeout");
+        assert!(error.contains("melewati batas waktu"), "{error}");
+
+        let pid_text = std::fs::read_to_string(&marker).expect("child PID marker should exist");
+        let _ = std::fs::remove_file(&marker);
+        let child_pid: u32 = pid_text.trim().parse().expect("child PID should be numeric");
+        let deadline = Instant::now() + Duration::from_secs(3);
+        loop {
+            let child_exists = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                ])
+                .status()
+                .expect("PowerShell process query should run")
+                .success();
+            if !child_exists { break; }
+            assert!(Instant::now() < deadline, "descendant process {child_pid} survived timeout");
+            std::thread::sleep(Duration::from_millis(50));
+        }
     }
 
     #[test]
