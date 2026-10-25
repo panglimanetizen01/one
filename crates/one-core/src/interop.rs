@@ -310,7 +310,8 @@ mod tests {
             // SAFETY: kill(pid, 0) only checks whether this process ID still exists.
             let result = unsafe { libc::kill(pid as libc::pid_t, 0) };
             assert_eq!(result, -1, "timed-out child must no longer exist");
-            assert_eq!(std::io::Error::last_os_error().kind(), std::io::ErrorKind::NotFound);
+            let error = std::io::Error::last_os_error();
+            assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
         }
         #[cfg(windows)]
         {
