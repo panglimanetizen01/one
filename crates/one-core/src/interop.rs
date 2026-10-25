@@ -1076,7 +1076,6 @@ foreach ($arg in $args) {
             total_output_bytes: 1024,
             stdout_bytes: 4096,
             stderr_bytes: 4096,
-            ..tight_limits()
         };
         let error = run_process_with_limits(&process, &allowed(), limits)
             .expect_err("aggregate flood must be stopped");
