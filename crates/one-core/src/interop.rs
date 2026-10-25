@@ -834,6 +834,85 @@ mod tests {
 
     #[cfg(windows)]
     #[test]
+    fn windows_process_preserves_arguments_unicode_and_working_directory() {
+        let suffix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock should be after Unix epoch")
+            .as_nanos();
+        let working_directory = std::env::temp_dir().join(format!(
+            "one process args 日本語 {} {suffix}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&working_directory).expect("temporary working directory should be created");
+        let script_path = working_directory.join("echo args 日本語.ps1");
+        std::fs::write(
+            &script_path,
+            r#"[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::WriteLine("cwd:" + (Get-Location).Path)
+foreach ($arg in $args) {
+    $encoded = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes([string]$arg))
+    [Console]::WriteLine("arg:" + $encoded)
+}
+"#,
+        )
+        .expect("PowerShell argument probe should be written");
+
+        let expected_arguments = [
+            "two words",
+            "",
+            "quote\"value",
+            "日本語",
+            "trailing\\",
+        ];
+        let process = ProcessSpec {
+            program: "powershell.exe".into(),
+            args: vec![
+                "-NoProfile".into(),
+                "-NonInteractive".into(),
+                "-File".into(),
+                script_path.to_string_lossy().into_owned(),
+                expected_arguments[0].into(),
+                expected_arguments[1].into(),
+                expected_arguments[2].into(),
+                expected_arguments[3].into(),
+                expected_arguments[4].into(),
+            ],
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
+        };
+        let result = run_process(&process, &allowed())
+            .expect("PowerShell should receive the exact argument vector");
+        assert!(result.success, "{}", result.stderr);
+
+        let canonical_working_directory = std::fs::canonicalize(&working_directory)
+            .expect("working directory should canonicalize")
+            .to_string_lossy()
+            .into_owned();
+        let lines: Vec<&str> = result.stdout.lines().collect();
+        assert!(
+            lines.first().is_some_and(|line| {
+                line.strip_prefix("cwd:")
+                    .is_some_and(|actual| actual.eq_ignore_ascii_case(&canonical_working_directory))
+            }),
+            "working directory mismatch: {}",
+            result.stdout
+        );
+        assert_eq!(
+            &lines[1..],
+            [
+                "arg:dHdvIHdvcmRz",
+                "arg:",
+                "arg:cXVvdGUidmFsdWU=",
+                "arg:5pel5pys6Kqe",
+                "arg:dHJhaWxpbmdc",
+            ],
+            "argument boundaries, empty argument, quotes, Unicode, and trailing backslash must survive CreateProcessW"
+        );
+        std::fs::remove_dir_all(&working_directory)
+            .expect("temporary working directory should be cleaned up");
+    }
+
+    #[cfg(windows)]
+    #[test]
     fn windows_job_object_terminates_descendant_on_timeout() {
         let marker = std::env::temp_dir().join(format!(
             "one-sec05-descendant-{}-{}.txt",
