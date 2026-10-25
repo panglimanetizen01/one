@@ -65,3 +65,10 @@ This is an evidence record for the code-bearing SHA, not acceptance of the full 
 - [Android Linux ARM64-host attempt](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40212771636) — failed before runtime because a compatible Android emulator package was unavailable. Neither Android attempt is a PASS.
 
 **Disposition:** E3 remains unverified because no API 35 ELF execution/output assertion was captured. E4 remains unverified because project-root descriptor anchoring, mount-boundary enforcement, runtime-wide quotas, fallback-platform guarantees, and the complete threat review remain open. The fixed-weight ledger remains **91/100 provisional implementation, 60/100 verified**; release gate remains **NOT PASSED**. PR #80 remains unmerged; no release is authorized.
+## 6. Exact-SHA follow-up — Windows output-flood stress tests and Android AVD setup
+
+The first final-SHA matrix attempt on `26d3d30be773cfc403daa002f7116c176ef31fc8` failed two Windows output-flood tests: `stderr_flood_is_bounded` and `aggregate_output_limit_is_enforced`. Logs showed the test's 3-second deadline fired before the process reached the byte cap. Commit `c339da876f6ceb18084e8551cc08d4edbabc0f27` changes only the test timeout for stdout/stderr/aggregate flood cases to 15 seconds; the assertion still requires an output-limit error and still fails if a timeout occurs. Production timeout and output limits are unchanged. A fresh exact-SHA Windows matrix is mandatory.
+
+The first software-acceleration fallback attempt also revealed that the lab workflow had not created the `one-api35-arm64` AVD. The workflow now explicitly creates and verifies the API 35 `arm64-v8a` AVD before attempting hardware acceleration and the bounded `-accel off` fallback. The failed launch is a harness failure, not runtime acceptance; only actual ELF execution and `ONE_NATIVE_BACKEND_OK` on API 35 count.
+
+This follow-up and the remaining checkpoint documentation create a new candidate branch HEAD. Pin the independent lab to that final exact SHA and rerun the matrix before acceptance. E3 and E4 remain unchecked, and the release gate remains NOT PASSED.
