@@ -39,8 +39,7 @@ use windows_sys::Win32::System::Pipes::CreatePipe;
 use windows_sys::Win32::System::Threading::{
     CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
     InitializeProcThreadAttributeList, UpdateProcThreadAttribute, WaitForSingleObject,
-    PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_LIST, STARTF_USESTDHANDLES, STARTUPINFOEXW,
-    EXTENDED_STARTUPINFO_PRESENT,
+    PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOEXW, EXTENDED_STARTUPINFO_PRESENT,
 };
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -271,7 +270,7 @@ impl Drop for OwnedWindowsHandle {
 #[cfg(windows)]
 struct WindowsAttributeList {
     _storage: Vec<usize>,
-    ptr: *mut PROC_THREAD_ATTRIBUTE_LIST,
+    ptr: *mut core::ffi::c_void,
 }
 
 #[cfg(windows)]
@@ -289,9 +288,9 @@ impl WindowsAttributeList {
             ));
         }
         let mut storage = vec![0usize; bytes.div_ceil(size_of::<usize>())];
-        let ptr = storage.as_mut_ptr().cast::<PROC_THREAD_ATTRIBUTE_LIST>();
+        let ptr = storage.as_mut_ptr().cast::<core::ffi::c_void>();
         // SAFETY: storage is sufficiently sized and aligned for the opaque list.
-        if unsafe { InitializeProcThreadAttributeList(ptr, attribute_count, 0, &mut bytes) } == 0 {
+        if unsafe { InitializeProcThreadAttributeList(ptr.cast(), attribute_count, 0, &mut bytes) } == 0 {
             return Err(format!(
                 "Gagal menginisialisasi process attribute list: {}",
                 std::io::Error::last_os_error()
@@ -305,7 +304,7 @@ impl WindowsAttributeList {
 impl Drop for WindowsAttributeList {
     fn drop(&mut self) {
         // SAFETY: this list was successfully initialized and its backing storage is alive.
-        unsafe { DeleteProcThreadAttributeList(self.ptr); }
+        unsafe { DeleteProcThreadAttributeList(self.ptr.cast()); }
     }
 }
 
@@ -435,7 +434,7 @@ fn run_process_windows_with_limits(
     // SAFETY: the attribute list is initialized and the handle array stays alive for the call.
     if unsafe {
         UpdateProcThreadAttribute(
-            attributes.ptr,
+            attributes.ptr.cast(),
             0,
             PROC_THREAD_ATTRIBUTE_HANDLE_LIST_VALUE,
             child_handles.as_ptr() as *mut core::ffi::c_void,
@@ -453,7 +452,7 @@ fn run_process_windows_with_limits(
     // SAFETY: the job handle pointer and attribute list are valid for CreateProcessW.
     if unsafe {
         UpdateProcThreadAttribute(
-            attributes.ptr,
+            attributes.ptr.cast(),
             0,
             PROC_THREAD_ATTRIBUTE_JOB_LIST_VALUE,
             &mut job_for_child as *mut HANDLE as *mut core::ffi::c_void,
@@ -474,7 +473,7 @@ fn run_process_windows_with_limits(
     startup.StartupInfo.hStdInput = stdin_read.raw();
     startup.StartupInfo.hStdOutput = stdout_write.raw();
     startup.StartupInfo.hStdError = stderr_write.raw();
-    startup.lpAttributeList = attributes.ptr;
+    startup.lpAttributeList = attributes.ptr.cast();
 
     let mut command_line = windows_command_line(&spec.program, &spec.args);
     let working_directory = spec.working_directory.as_ref().map(|directory| {
