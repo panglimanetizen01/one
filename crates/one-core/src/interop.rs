@@ -217,11 +217,12 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
                         exceeded.store(true, Ordering::Release);
                         break;
                     }
-                    let reserved = total.fetch_update(
-                        Ordering::AcqRel,
-                        Ordering::Acquire,
-                        |current| current.checked_add(count).filter(|next| *next <= total_limit),
-                    );
+                    let reserved =
+                        total.fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
+                            current
+                                .checked_add(count)
+                                .filter(|next| *next <= total_limit)
+                        });
                     if reserved.is_err() {
                         exceeded.store(true, Ordering::Release);
                         break;
@@ -367,10 +368,18 @@ mod tests {
                 "1..1000 | ForEach-Object { [Console]::Out.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'); [Console]::Error.Write('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy') }",
             )
         } else {
-            spec("i=0; while [ $i -lt 1000 ]; do printf 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; printf 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy' >&2; i=$((i+1)); done")
+            spec(
+                "i=0; while [ $i -lt 1000 ]; do printf 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; printf 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy' >&2; i=$((i+1)); done",
+            )
         };
-        let limits = ProcessLimits { total_output_bytes: 1024, stdout_bytes: 4096, stderr_bytes: 4096, ..tight_limits() };
-        let error = run_process_with_limits(&process, &allowed(), limits).expect_err("aggregate flood must be stopped");
+        let limits = ProcessLimits {
+            total_output_bytes: 1024,
+            stdout_bytes: 4096,
+            stderr_bytes: 4096,
+            ..tight_limits()
+        };
+        let error = run_process_with_limits(&process, &allowed(), limits)
+            .expect_err("aggregate flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
 }
