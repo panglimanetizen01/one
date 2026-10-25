@@ -300,7 +300,7 @@ mod tests {
         let process = spec(&format!("Set-Content -Path '{}' -Value $PID; Start-Sleep -Seconds 5", pid_file.display().to_string().replace('\'', "''")));
         #[cfg(not(windows))]
         let process = spec(&format!("echo {0}{0} > '{1}'; exec sleep 5", "$", path));
-        let limits = ProcessLimits { timeout: Duration::from_millis(100), ..ProcessLimits::default() };
+        let limits = ProcessLimits { timeout: Duration::from_secs(1), ..ProcessLimits::default() };
         let error = run_process_with_limits(&process, &allowed(), limits).expect_err("long process must time out");
         assert!(error.contains("melewati batas waktu"), "{error}");
         let pid_text = std::fs::read_to_string(&pid_file).expect("child pid must be recorded before timeout");
@@ -309,8 +309,8 @@ mod tests {
         {
             // SAFETY: kill(pid, 0) only checks whether this process ID still exists.
             let result = unsafe { libc::kill(pid as libc::pid_t, 0) };
-            assert_eq!(result, -1, "timed-out child must no longer exist");
             let error = std::io::Error::last_os_error();
+            assert_eq!(result, -1, "timed-out child must no longer exist");
             assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
         }
         #[cfg(windows)]
