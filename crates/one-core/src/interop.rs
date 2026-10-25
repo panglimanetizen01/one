@@ -68,6 +68,16 @@ fn quote_windows_argument(argument: &str) -> String {
 }
 
 #[cfg(windows)]
+fn windows_command_line(program: &str, args: &[String]) -> Vec<u16> {
+    let mut command_line = quote_windows_argument(program);
+    for argument in args {
+        command_line.push(' ');
+        command_line.push_str(&quote_windows_argument(argument));
+    }
+    command_line.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+#[cfg(windows)]
 struct WindowsJob {
     handle: Option<HANDLE>,
 }
@@ -419,6 +429,21 @@ mod tests {
         assert_eq!(quote_windows_argument("path with space\\\\"),
             "\"path with space\\\\\\\\\"");
         assert_eq!(quote_windows_argument("雪 space"), "\"雪 space\"");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_command_line_quotes_program_and_each_argument() {
+        let command = windows_command_line(
+            "C:\\Program Files\\tool.exe",
+            &["".into(), "two words".into(), "plain".into()],
+        );
+        let command = String::from_utf16(&command[..command.len() - 1])
+            .expect("command line should be valid UTF-16");
+        assert_eq!(
+            command,
+            "\"C:\\\\Program Files\\\\tool.exe\" \"\" \"two words\" plain"
+        );
     }
 
     #[test]
