@@ -33,6 +33,56 @@ use windows_sys::Win32::System::JobObjects::{
 use crate::capability::{Capability, CapabilitySet};
 
 #[cfg(windows)]
+fn quote_windows_argument(argument: &str) -> String {
+    // CreateProcessW receives one command-line string rather than an argv array.
+    // Follow the Windows CRT quoting rules: backslashes immediately before a
+    // quote are doubled and one extra backslash escapes the quote; trailing
+    // backslashes are doubled when the argument is quoted.
+    let needs_quotes = argument.is_empty()
+        || argument
+            .chars()
+            .any(|character| character.is_whitespace() || character == '"');
+    if !needs_quotes {
+        return argument.to_owned();
+    }
+
+    let mut quoted = String::with_capacity(argument.len() + 2);
+    quoted.push('"');
+    let mut backslashes = 0usize;
+    for character in argument.chars() {
+        match character {
+            '\\' => backslashes += 1,
+            '"' => {
+                quoted.push_str(&"\\".repeat(backslashes * 2 + 1));
+                quoted.push('"');
+                backslashes = 0;
+            }
+            _ => {
+                quoted.push_str(&"\\".repeat(backslashes));
+                backslashes = 0;
+                quoted.push(character);
+            }
+        }
+    }
+    quoted.push_str(&"\\".repeat(backslashes * 2));
+    quoted.push('"');
+    quoted
+}
+
+#[cfg(windows)]
+fn windows_command_line(program: &str, args: &[String]) -> Vec<u16> {
+    let mut command_line = quote_windows_argument(program);
+    for argument in args {
+        command_line.push(' ');
+        command_line.push_str(&quote_windows_argument(argument));
+    }
+    command_line
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect()
+}
+
+#[cfg(windows)]
 struct WindowsJob {
     handle: Option<HANDLE>,
 }
@@ -374,6 +424,35 @@ mod tests {
         }
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn windows_argument_quoting_preserves_empty_spaces_quotes_and_trailing_slashes() {
+        assert_eq!(quote_windows_argument(""), "\"\"");
+        assert_eq!(quote_windows_argument("plain"), "plain");
+        assert_eq!(quote_windows_argument("two words"), "\"two words\"");
+        assert_eq!(quote_windows_argument("a\\\"b"), "\"a\\\\\\\"b\"");
+        assert_eq!(
+            quote_windows_argument("path with space\\\\"),
+            "\"path with space\\\\\\\\\""
+        );
+        assert_eq!(quote_windows_argument("雪 space"), "\"雪 space\"");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_command_line_quotes_program_and_each_argument() {
+        let command = windows_command_line(
+            "C:\\Program Files\\tool.exe",
+            &["".into(), "two words".into(), "plain".into()],
+        );
+        let command = String::from_utf16(&command[..command.len() - 1])
+            .expect("command line should be valid UTF-16");
+        assert_eq!(
+            command,
+            "\"C:\\Program Files\\tool.exe\" \"\" \"two words\" plain"
+        );
+    }
+
     #[test]
     fn denied_process_capability_never_spawns() {
         let process = ProcessSpec {
@@ -415,6 +494,58 @@ mod tests {
         let error = run_process_with_limits(&process, &allowed(), limits)
             .expect_err("long process must time out");
         assert!(error.contains("melewati batas waktu"), "{error}");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_job_object_immediate_descendant_spawn_stress() {
+        // Repeatedly race an immediate descendant spawn against process launch.
+        // A failure means a descendant outlived run_process and must be cleaned up
+        // so a failed test does not leave background PowerShell processes behind.
+        for iteration in 0..20 {
+            let process = spec(
+                "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
+            );
+            let result = run_process(&process, &allowed())
+                .expect("parent should exit successfully while descendant is contained");
+            let child_pid: u32 = result
+                .stdout
+                .trim()
+                .parse()
+                .expect("child PID should be printed");
+            let deadline = Instant::now() + Duration::from_secs(2);
+            loop {
+                let child_exists = std::process::Command::new("powershell.exe")
+                    .args([
+                        "-NoProfile",
+                        "-NonInteractive",
+                        "-Command",
+                        &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                    ])
+                    .status()
+                    .expect("PowerShell process query should run")
+                    .success();
+                if !child_exists {
+                    break;
+                }
+                if Instant::now() >= deadline {
+                    let _ = std::process::Command::new("powershell.exe")
+                        .args([
+                            "-NoProfile",
+                            "-NonInteractive",
+                            "-Command",
+                            &format!(
+                                "Stop-Process -Id {child_pid} -Force -ErrorAction SilentlyContinue"
+                            ),
+                        ])
+                        .status();
+                    panic!(
+                        "descendant process {child_pid} survived Job Object closure on iteration {iteration}"
+                    );
+                }
+                thread::sleep(Duration::from_millis(25));
+            }
+        }
     }
 
     #[cfg(windows)]
@@ -502,4 +633,61 @@ mod tests {
             .expect_err("aggregate flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_timeout_closes_job_and_terminates_spawned_descendant() {
+        // The child records its descendant PID before sleeping. The runner's
+        // timeout path must close the Job Object so the descendant cannot live
+        // beyond the call. This is a regression test, not a substitute for the
+        // race-free-at-creation stress test.
+        let marker = std::env::temp_dir().join(format!(
+            "one-sec05-descendant-{}-{}.txt",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system clock should be after Unix epoch")
+                .as_nanos()
+        ));
+        let marker_text = marker.to_string_lossy().replace('\'', "''");
+        let process = spec(&format!(
+            "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Set-Content -LiteralPath '{marker_text}' -Value $child.Id; Start-Sleep -Seconds 30"
+        ));
+        let limits = ProcessLimits {
+            timeout: Duration::from_millis(500),
+            ..ProcessLimits::default()
+        };
+        let error = run_process_with_limits(&process, &allowed(), limits)
+            .expect_err("sleeping parent must time out");
+        assert!(error.contains("melewati batas waktu"), "{error}");
+
+        let child_pid: u32 = std::fs::read_to_string(&marker)
+            .expect("parent should record descendant PID before timeout")
+            .trim()
+            .parse()
+            .expect("recorded descendant PID should be numeric");
+        let _ = std::fs::remove_file(&marker);
+        let deadline = Instant::now() + Duration::from_secs(3);
+        loop {
+            let child_exists = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                ])
+                .status()
+                .expect("PowerShell process query should run")
+                .success();
+            if !child_exists {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "descendant process {child_pid} survived timeout cleanup"
+            );
+            thread::sleep(Duration::from_millis(50));
+        }
+    }
+
 }
