@@ -633,4 +633,58 @@ mod tests {
             .expect_err("aggregate flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_timeout_closes_job_and_terminates_spawned_descendant() {
+        // The child records its descendant PID before sleeping. The runner's
+        // timeout path must close the Job Object so the descendant cannot live
+        // beyond the call. This is a regression test, not a substitute for the
+        // race-free-at-creation stress test.
+        let marker = std::env::temp_dir().join(format!(
+            "one-sec05-descendant-{}-{}.txt",
+            std::process::id(),
+            Instant::now().elapsed().as_nanos()
+        ));
+        let marker_text = marker.to_string_lossy().replace('\'', "''");
+        let process = spec(&format!(
+            "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Set-Content -LiteralPath '{marker_text}' -Value $child.Id; Start-Sleep -Seconds 30"
+        ));
+        let limits = ProcessLimits {
+            timeout: Duration::from_millis(500),
+            ..ProcessLimits::default()
+        };
+        let error = run_process_with_limits(&process, &allowed(), limits)
+            .expect_err("sleeping parent must time out");
+        assert!(error.contains("melewati batas waktu"), "{error}");
+
+        let child_pid: u32 = std::fs::read_to_string(&marker)
+            .expect("parent should record descendant PID before timeout")
+            .trim()
+            .parse()
+            .expect("recorded descendant PID should be numeric");
+        let _ = std::fs::remove_file(&marker);
+        let deadline = Instant::now() + Duration::from_secs(3);
+        loop {
+            let child_exists = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                ])
+                .status()
+                .expect("PowerShell process query should run")
+                .success();
+            if !child_exists {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "descendant process {child_pid} survived timeout cleanup"
+            );
+            thread::sleep(Duration::from_millis(50));
+        }
+    }
+
 }
