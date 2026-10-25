@@ -299,7 +299,7 @@ mod tests {
         #[cfg(windows)]
         let process = spec(&format!("Set-Content -Path '{}' -Value $PID; Start-Sleep -Seconds 5", pid_file.display().to_string().replace('\'', "''")));
         #[cfg(not(windows))]
-        let process = spec(&format!("echo $ > '{}'; exec sleep 5", path));
+        let process = spec(&format!("echo {0}{0} > '{1}'; exec sleep 5", "$", path));
         let limits = ProcessLimits { timeout: Duration::from_millis(100), ..ProcessLimits::default() };
         let error = run_process_with_limits(&process, &allowed(), limits).expect_err("long process must time out");
         assert!(error.contains("melewati batas waktu"), "{error}");
