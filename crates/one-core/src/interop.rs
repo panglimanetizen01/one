@@ -10,7 +10,38 @@
 //! it does not claim to terminate arbitrary descendants. Strong Windows process
 //! tree cleanup requires a Job Object and is tracked separately.
 use std::io::Read;
+#[cfg(not(windows))]
 use std::process::{Child, Command, ExitStatus, Stdio};
+#[cfg(windows)]
+use std::fs::File;
+#[cfg(windows)]
+use std::mem::{size_of, zeroed};
+#[cfg(windows)]
+use std::os::windows::io::{FromRawHandle, RawHandle};
+#[cfg(windows)]
+use std::ptr::{null, null_mut};
+#[cfg(windows)]
+use windows_sys::Win32::Foundation::{
+    CloseHandle, SetHandleInformation, HANDLE, HANDLE_FLAG_INHERIT, INFINITE, WAIT_FAILED,
+    WAIT_OBJECT_0, WAIT_TIMEOUT,
+};
+#[cfg(windows)]
+use windows_sys::Win32::Security::SECURITY_ATTRIBUTES;
+#[cfg(windows)]
+use windows_sys::Win32::System::JobObjects::{
+    CreateJobObjectW, SetInformationJobObject, TerminateJobObject,
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    JobObjectExtendedLimitInformation,
+};
+#[cfg(windows)]
+use windows_sys::Win32::System::Pipes::CreatePipe;
+#[cfg(windows)]
+use windows_sys::Win32::System::Threading::{
+    CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
+    InitializeProcThreadAttributeList, UpdateProcThreadAttribute, WaitForSingleObject,
+    PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_LIST, STARTF_USESTDHANDLES, STARTUPINFOEXW,
+    EXTENDED_STARTUPINFO_PRESENT,
+};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
@@ -77,26 +108,418 @@ pub fn run_process_with_limits(
         return Err("Batas waktu proses harus lebih besar dari nol.".into());
     }
 
-    let mut command = Command::new(&spec.program);
-    command
-        .args(&spec.args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    if let Some(dir) = &spec.working_directory {
-        command.current_dir(dir);
-    }
-    #[cfg(unix)]
+    #[cfg(windows)]
     {
-        use std::os::unix::process::CommandExt;
-        command.process_group(0);
+        return run_process_windows_with_limits(spec, limits);
+    }
+    #[cfg(not(windows))]
+    {
+        let mut command = Command::new(&spec.program);
+        command
+            .args(&spec.args)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        if let Some(dir) = &spec.working_directory {
+            command.current_dir(dir);
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::process::CommandExt;
+            command.process_group(0);
+        }
+    
+        let mut child = command
+            .spawn()
+            .map_err(|error| format!("Gagal menjalankan proses '{}': {}", spec.program, error))?;
+        let stdout = child.stdout.take().expect("piped stdout must be available");
+        let stderr = child.stderr.take().expect("piped stderr must be available");
+    
+        let total = Arc::new(AtomicUsize::new(0));
+        let exceeded = Arc::new(AtomicBool::new(false));
+        let stdout_reader = spawn_bounded_reader(
+            stdout,
+            limits.stdout_bytes,
+            limits.total_output_bytes,
+            Arc::clone(&total),
+            Arc::clone(&exceeded),
+        );
+        let stderr_reader = spawn_bounded_reader(
+            stderr,
+            limits.stderr_bytes,
+            limits.total_output_bytes,
+            Arc::clone(&total),
+            Arc::clone(&exceeded),
+        );
+    
+        let deadline = Instant::now() + limits.timeout;
+        let mut status: Option<ExitStatus> = None;
+        let mut timed_out = false;
+        loop {
+            if exceeded.load(Ordering::Acquire) {
+                terminate_child(&mut child);
+                break;
+            }
+            match child.try_wait() {
+                Ok(Some(exit_status)) => {
+                    status = Some(exit_status);
+                    break;
+                }
+                Ok(None) => {}
+                Err(error) => {
+                    terminate_child(&mut child);
+                    let _ = stdout_reader.join();
+                    let _ = stderr_reader.join();
+                    return Err(format!(
+                        "Gagal memeriksa proses '{}': {}",
+                        spec.program, error
+                    ));
+                }
+            }
+            if Instant::now() >= deadline {
+                timed_out = true;
+                terminate_child(&mut child);
+                break;
+            }
+            thread::sleep(POLL_INTERVAL);
+        }
+    
+        // On Unix this also closes pipes inherited by descendants. On Windows,
+        // only the direct child is guaranteed to be terminated; reader joins may
+        // therefore be blocked by a descendant that inherited a pipe handle.
+        #[cfg(unix)]
+        if status.is_some() {
+            kill_process_group(child.id());
+        }
+    
+        let stdout = stdout_reader
+            .join()
+            .map_err(|_| "Pembaca stdout proses gagal.".to_owned())?;
+        let stderr = stderr_reader
+            .join()
+            .map_err(|_| "Pembaca stderr proses gagal.".to_owned())?;
+    
+        if timed_out {
+            return Err(format!(
+                "Proses '{}' melewati batas waktu {:?} dan dihentikan.",
+                spec.program, limits.timeout
+            ));
+        }
+        if exceeded.load(Ordering::Acquire) {
+            return Err(format!(
+                "Proses '{}' melewati batas output (stdout={} byte, stderr={} byte, total={} byte) dan dihentikan.",
+                spec.program, limits.stdout_bytes, limits.stderr_bytes, limits.total_output_bytes
+            ));
+        }
+        let status = match status {
+            Some(status) => status,
+            None => child
+                .try_wait()
+                .map_err(|error| {
+                    format!(
+                        "Gagal mengambil status proses '{}': {}",
+                        spec.program, error
+                    )
+                })?
+                .ok_or_else(|| {
+                    format!(
+                        "Status proses '{}' tidak tersedia setelah dihentikan.",
+                        spec.program
+                    )
+                })?,
+        };
+    
+        Ok(ProcessResult {
+            status_code: status.code(),
+            success: status.success(),
+            stdout: String::from_utf8_lossy(&stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&stderr).into_owned(),
+        })
+    }
+}
+
+
+#[cfg(windows)]
+const PROC_THREAD_ATTRIBUTE_HANDLE_LIST_VALUE: usize = 0x0002_0002;
+#[cfg(windows)]
+const PROC_THREAD_ATTRIBUTE_JOB_LIST_VALUE: usize = 0x0002_000D;
+
+#[cfg(windows)]
+struct OwnedWindowsHandle(HANDLE);
+
+#[cfg(windows)]
+impl OwnedWindowsHandle {
+    fn new(handle: HANDLE) -> Self { Self(handle) }
+    fn raw(&self) -> HANDLE { self.0 }
+    fn take(&mut self) -> HANDLE {
+        let handle = self.0;
+        self.0 = null_mut();
+        handle
+    }
+}
+
+#[cfg(windows)]
+impl Drop for OwnedWindowsHandle {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            // SAFETY: this wrapper uniquely owns this handle and closes it once.
+            unsafe { CloseHandle(self.0); }
+            self.0 = null_mut();
+        }
+    }
+}
+
+#[cfg(windows)]
+struct WindowsAttributeList {
+    _storage: Vec<usize>,
+    ptr: *mut PROC_THREAD_ATTRIBUTE_LIST,
+}
+
+#[cfg(windows)]
+impl WindowsAttributeList {
+    fn new(attribute_count: u32) -> Result<Self, String> {
+        let mut bytes = 0usize;
+        // SAFETY: the first call requests the required allocation size.
+        unsafe {
+            InitializeProcThreadAttributeList(null_mut(), attribute_count, 0, &mut bytes);
+        }
+        if bytes == 0 {
+            return Err(format!(
+                "Gagal menentukan ukuran process attribute list: {}",
+                std::io::Error::last_os_error()
+            ));
+        }
+        let mut storage = vec![0usize; bytes.div_ceil(size_of::<usize>())];
+        let ptr = storage.as_mut_ptr().cast::<PROC_THREAD_ATTRIBUTE_LIST>();
+        // SAFETY: storage is sufficiently sized and aligned for the opaque list.
+        if unsafe { InitializeProcThreadAttributeList(ptr, attribute_count, 0, &mut bytes) } == 0 {
+            return Err(format!(
+                "Gagal menginisialisasi process attribute list: {}",
+                std::io::Error::last_os_error()
+            ));
+        }
+        Ok(Self { _storage: storage, ptr })
+    }
+}
+
+#[cfg(windows)]
+impl Drop for WindowsAttributeList {
+    fn drop(&mut self) {
+        // SAFETY: this list was successfully initialized and its backing storage is alive.
+        unsafe { DeleteProcThreadAttributeList(self.ptr); }
+    }
+}
+
+#[cfg(windows)]
+fn quote_windows_argument(argument: &str) -> String {
+    if !argument.is_empty()
+        && !argument.chars().any(|character| character.is_whitespace() || character == '"')
+    {
+        return argument.to_owned();
+    }
+    let mut quoted = String::from("\"");
+    let mut backslashes = 0usize;
+    for character in argument.chars() {
+        match character {
+            '\\' => backslashes += 1,
+            '"' => {
+                quoted.push_str(&"\\".repeat(backslashes.saturating_mul(2).saturating_add(1)));
+                quoted.push('"');
+                backslashes = 0;
+            }
+            _ => {
+                quoted.push_str(&"\\".repeat(backslashes));
+                backslashes = 0;
+                quoted.push(character);
+            }
+        }
+    }
+    quoted.push_str(&"\\".repeat(backslashes.saturating_mul(2)));
+    quoted.push('"');
+    quoted
+}
+
+#[cfg(windows)]
+fn windows_command_line(program: &str, args: &[String]) -> Vec<u16> {
+    let mut command_line = quote_windows_argument(program);
+    for argument in args {
+        command_line.push(' ');
+        command_line.push_str(&quote_windows_argument(argument));
+    }
+    command_line.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+#[cfg(windows)]
+fn run_process_windows_with_limits(
+    spec: &ProcessSpec,
+    limits: ProcessLimits,
+) -> Result<ProcessResult, String> {
+    let mut security: SECURITY_ATTRIBUTES = unsafe { zeroed() };
+    security.nLength = size_of::<SECURITY_ATTRIBUTES>() as u32;
+    security.bInheritHandle = 1;
+
+    let mut stdin_read_raw: HANDLE = null_mut();
+    let mut stdin_write_raw: HANDLE = null_mut();
+    let mut stdout_read_raw: HANDLE = null_mut();
+    let mut stdout_write_raw: HANDLE = null_mut();
+    let mut stderr_read_raw: HANDLE = null_mut();
+    let mut stderr_write_raw: HANDLE = null_mut();
+
+    // SAFETY: output pointers are valid; SECURITY_ATTRIBUTES requests inheritable pipe handles.
+    let stdin_pipe_ok = unsafe {
+        CreatePipe(&mut stdin_read_raw, &mut stdin_write_raw, &security, 0)
+    };
+    let mut stdin_read = OwnedWindowsHandle::new(stdin_read_raw);
+    let mut stdin_write = OwnedWindowsHandle::new(stdin_write_raw);
+    if stdin_pipe_ok == 0 {
+        return Err(format!("Gagal membuat pipe stdin: {}", std::io::Error::last_os_error()));
     }
 
-    let mut child = command
-        .spawn()
-        .map_err(|error| format!("Gagal menjalankan proses '{}': {}", spec.program, error))?;
-    let stdout = child.stdout.take().expect("piped stdout must be available");
-    let stderr = child.stderr.take().expect("piped stderr must be available");
+    // SAFETY: output pointers are valid; SECURITY_ATTRIBUTES requests inheritable pipe handles.
+    let stdout_pipe_ok = unsafe {
+        CreatePipe(&mut stdout_read_raw, &mut stdout_write_raw, &security, 0)
+    };
+    let mut stdout_read = OwnedWindowsHandle::new(stdout_read_raw);
+    let mut stdout_write = OwnedWindowsHandle::new(stdout_write_raw);
+    if stdout_pipe_ok == 0 {
+        return Err(format!("Gagal membuat pipe stdout: {}", std::io::Error::last_os_error()));
+    }
 
+    // SAFETY: output pointers are valid; SECURITY_ATTRIBUTES requests inheritable pipe handles.
+    let stderr_pipe_ok = unsafe {
+        CreatePipe(&mut stderr_read_raw, &mut stderr_write_raw, &security, 0)
+    };
+    let mut stderr_read = OwnedWindowsHandle::new(stderr_read_raw);
+    let mut stderr_write = OwnedWindowsHandle::new(stderr_write_raw);
+    if stderr_pipe_ok == 0 {
+        return Err(format!("Gagal membuat pipe stderr: {}", std::io::Error::last_os_error()));
+    }
+
+    // Parent-side pipe ends must not be inherited by the child.
+    for handle in [stdin_write.raw(), stdout_read.raw(), stderr_read.raw()] {
+        // SAFETY: handle is valid and owned above.
+        if unsafe { SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0) } == 0 {
+            return Err(format!(
+                "Gagal membatasi pewarisan handle pipe: {}",
+                std::io::Error::last_os_error()
+            ));
+        }
+    }
+
+    // PROC_THREAD_ATTRIBUTE_JOB_LIST assigns the child before its first instruction,
+    // eliminating the vulnerable spawn-then-AssignProcessToJobObject interval.
+    // SAFETY: null attributes/name request a private unnamed job.
+    let job_raw = unsafe { CreateJobObjectW(null(), null()) };
+    if job_raw.is_null() {
+        return Err(format!("Gagal membuat Windows Job Object: {}", std::io::Error::last_os_error()));
+    }
+    let job = OwnedWindowsHandle::new(job_raw);
+    let mut job_limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { zeroed() };
+    job_limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    // SAFETY: job handle and correctly sized limits structure are valid.
+    if unsafe {
+        SetInformationJobObject(
+            job.raw(),
+            JobObjectExtendedLimitInformation,
+            &job_limits as *const _ as *const core::ffi::c_void,
+            size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+        )
+    } == 0 {
+        return Err(format!(
+            "Gagal mengonfigurasi Windows Job Object: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+
+    let attributes = WindowsAttributeList::new(2)?;
+    let child_handles = [stdin_read.raw(), stdout_write.raw(), stderr_write.raw()];
+    // SAFETY: the attribute list is initialized and the handle array stays alive for the call.
+    if unsafe {
+        UpdateProcThreadAttribute(
+            attributes.ptr,
+            0,
+            PROC_THREAD_ATTRIBUTE_HANDLE_LIST_VALUE,
+            child_handles.as_ptr() as *mut core::ffi::c_void,
+            size_of::<[HANDLE; 3]>(),
+            null_mut(),
+            null_mut(),
+        )
+    } == 0 {
+        return Err(format!(
+            "Gagal membatasi handle yang diwariskan: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    let mut job_for_child = job.raw();
+    // SAFETY: the job handle pointer and attribute list are valid for CreateProcessW.
+    if unsafe {
+        UpdateProcThreadAttribute(
+            attributes.ptr,
+            0,
+            PROC_THREAD_ATTRIBUTE_JOB_LIST_VALUE,
+            &mut job_for_child as *mut HANDLE as *mut core::ffi::c_void,
+            size_of::<HANDLE>(),
+            null_mut(),
+            null_mut(),
+        )
+    } == 0 {
+        return Err(format!(
+            "Gagal mengikat Windows Job Object saat pembuatan proses: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+
+    let mut startup: STARTUPINFOEXW = unsafe { zeroed() };
+    startup.StartupInfo.cb = size_of::<STARTUPINFOEXW>() as u32;
+    startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    startup.StartupInfo.hStdInput = stdin_read.raw();
+    startup.StartupInfo.hStdOutput = stdout_write.raw();
+    startup.StartupInfo.hStdError = stderr_write.raw();
+    startup.lpAttributeList = attributes.ptr;
+
+    let mut command_line = windows_command_line(&spec.program, &spec.args);
+    let working_directory = spec.working_directory.as_ref().map(|directory| {
+        directory.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>()
+    });
+    let current_directory = working_directory
+        .as_ref()
+        .map_or(null(), |directory| directory.as_ptr());
+
+    let mut process_info: PROCESS_INFORMATION = unsafe { zeroed() };
+    // SAFETY: command line is writable/NUL-terminated; startup attributes and stdio handles
+    // remain alive through CreateProcessW. Handle inheritance is restricted by HANDLE_LIST.
+    let created = unsafe {
+        CreateProcessW(
+            null(),
+            command_line.as_mut_ptr(),
+            null(),
+            null(),
+            1,
+            EXTENDED_STARTUPINFO_PRESENT,
+            null(),
+            current_directory,
+            &startup.StartupInfo,
+            &mut process_info,
+        )
+    };
+    if created == 0 {
+        return Err(format!(
+            "Gagal membuat proses '{}' dengan Job Object: {}",
+            spec.program,
+            std::io::Error::last_os_error()
+        ));
+    }
+
+    let process = OwnedWindowsHandle::new(process_info.hProcess);
+    let _thread = OwnedWindowsHandle::new(process_info.hThread);
+    // Close our copies of the child's pipe ends; stdin now reaches EOF.
+    drop(stdin_read);
+    drop(stdin_write);
+    drop(stdout_write);
+    drop(stderr_write);
+
+    // Transfer ownership of the read handles to File so the bounded readers close them.
+    let stdout = unsafe { File::from_raw_handle(stdout_read.take() as RawHandle) };
+    let stderr = unsafe { File::from_raw_handle(stderr_read.take() as RawHandle) };
     let total = Arc::new(AtomicUsize::new(0));
     let exceeded = Arc::new(AtomicBool::new(false));
     let stdout_reader = spawn_bounded_reader(
@@ -115,44 +538,46 @@ pub fn run_process_with_limits(
     );
 
     let deadline = Instant::now() + limits.timeout;
-    let mut status: Option<ExitStatus> = None;
+    let poll_ms = POLL_INTERVAL.as_millis().clamp(1, u32::MAX as u128) as u32;
     let mut timed_out = false;
     loop {
         if exceeded.load(Ordering::Acquire) {
-            terminate_child(&mut child);
+            // SAFETY: job handle owns the child and all descendants.
+            unsafe { TerminateJobObject(job.raw(), 1); }
             break;
         }
-        match child.try_wait() {
-            Ok(Some(exit_status)) => {
-                status = Some(exit_status);
-                break;
+        // SAFETY: process handle remains valid until this function returns.
+        match unsafe { WaitForSingleObject(process.raw(), poll_ms) } {
+            WAIT_OBJECT_0 => break,
+            WAIT_TIMEOUT => {
+                if Instant::now() >= deadline {
+                    timed_out = true;
+                    // SAFETY: job handle owns the child and all descendants.
+                    unsafe { TerminateJobObject(job.raw(), 1); }
+                    break;
+                }
             }
-            Ok(None) => {}
-            Err(error) => {
-                terminate_child(&mut child);
+            WAIT_FAILED => {
+                let error = std::io::Error::last_os_error();
+                // SAFETY: terminate the job and wait for the direct child before cleanup.
+                unsafe {
+                    TerminateJobObject(job.raw(), 1);
+                    WaitForSingleObject(process.raw(), INFINITE);
+                }
+                drop(job);
                 let _ = stdout_reader.join();
                 let _ = stderr_reader.join();
-                return Err(format!(
-                    "Gagal memeriksa proses '{}': {}",
-                    spec.program, error
-                ));
+                return Err(format!("Gagal menunggu proses '{}': {error}", spec.program));
             }
+            _ => {}
         }
-        if Instant::now() >= deadline {
-            timed_out = true;
-            terminate_child(&mut child);
-            break;
-        }
-        thread::sleep(POLL_INTERVAL);
     }
 
-    // On Unix this also closes pipes inherited by descendants. On Windows,
-    // only the direct child is guaranteed to be terminated; reader joins may
-    // therefore be blocked by a descendant that inherited a pipe handle.
-    #[cfg(unix)]
-    if status.is_some() {
-        kill_process_group(child.id());
-    }
+    // Reap the direct child after timeout/output-limit termination, then close the
+    // kill-on-close job before joining readers so descendants cannot retain pipe handles.
+    // SAFETY: process handle remains valid; waiting on an exited process returns immediately.
+    unsafe { WaitForSingleObject(process.raw(), INFINITE); }
+    drop(job);
 
     let stdout = stdout_reader
         .join()
@@ -173,27 +598,20 @@ pub fn run_process_with_limits(
             spec.program, limits.stdout_bytes, limits.stderr_bytes, limits.total_output_bytes
         ));
     }
-    let status = match status {
-        Some(status) => status,
-        None => child
-            .try_wait()
-            .map_err(|error| {
-                format!(
-                    "Gagal mengambil status proses '{}': {}",
-                    spec.program, error
-                )
-            })?
-            .ok_or_else(|| {
-                format!(
-                    "Status proses '{}' tidak tersedia setelah dihentikan.",
-                    spec.program
-                )
-            })?,
-    };
 
+    let mut exit_code = 0u32;
+    // SAFETY: process handle is valid and has signaled termination.
+    if unsafe { GetExitCodeProcess(process.raw(), &mut exit_code) } == 0 {
+        return Err(format!(
+            "Gagal mengambil status proses '{}': {}",
+            spec.program,
+            std::io::Error::last_os_error()
+        ));
+    }
+    let status_code = exit_code as i32;
     Ok(ProcessResult {
-        status_code: status.code(),
-        success: status.success(),
+        status_code: Some(status_code),
+        success: status_code == 0,
         stdout: String::from_utf8_lossy(&stdout).into_owned(),
         stderr: String::from_utf8_lossy(&stderr).into_owned(),
     })
@@ -331,6 +749,75 @@ mod tests {
         let error = run_process_with_limits(&process, &allowed(), limits)
             .expect_err("long process must time out");
         assert!(error.contains("melewati batas waktu"), "{error}");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_job_object_terminates_descendant_after_parent_exits() {
+        let process = spec(
+            "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
+        );
+        let result = run_process(&process, &allowed())
+            .expect("parent should exit successfully while descendant is contained");
+        let child_pid: u32 = result.stdout.trim().parse().expect("child PID should be printed");
+        let deadline = Instant::now() + Duration::from_secs(3);
+        loop {
+            let child_exists = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                ])
+                .status()
+                .expect("PowerShell process query should run")
+                .success();
+            if !child_exists { break; }
+            assert!(Instant::now() < deadline, "descendant process {child_pid} survived Job Object closure");
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_job_object_immediate_descendant_spawn_stress() {
+        for _ in 0..10 {
+            let process = spec(
+                "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
+            );
+            let result = run_process(&process, &allowed())
+                .expect("parent should exit while its descendant is contained");
+            let child_pid: u32 = result.stdout.trim().parse().expect("child PID should be printed");
+            let deadline = Instant::now() + Duration::from_secs(3);
+            loop {
+                let child_exists = std::process::Command::new("powershell.exe")
+                    .args([
+                        "-NoProfile",
+                        "-NonInteractive",
+                        "-Command",
+                        &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                    ])
+                    .status()
+                    .expect("PowerShell process query should run")
+                    .success();
+                if !child_exists { break; }
+                assert!(Instant::now() < deadline, "iteration left descendant {child_pid} alive");
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_command_line_quotes_paths_and_arguments() {
+        assert_eq!(
+            windows_command_line(
+                r"C:\Program Files\tool.exe",
+                &["".into(), "two words".into(), "plain".into()],
+            ).iter().copied().take_while(|unit| *unit != 0).collect::<Vec<_>>(),
+            "\"C:\\Program Files\\tool.exe\" \"\" \"two words\" plain"
+                .encode_utf16().collect::<Vec<_>>()
+        );
     }
 
     #[test]
