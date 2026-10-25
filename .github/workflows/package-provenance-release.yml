@@ -121,39 +121,9 @@ jobs:
           sidecar="$release_artifact.provenance"
           test -s "$sidecar"
           grep -Fx "source_revision=$(git rev-parse HEAD)" "$sidecar"
-          grep -Eq '^source_sha256=[0-9a-f]{64}
-      - name: Upload verified package, provenance, and checksums
-        uses: actions/upload-artifact@v4
-        with:
-          name: one-package-release-${{ github.run_id }}
-          if-no-files-found: error
-          path: |
-            ${{ steps.package.outputs.release_artifact }}
-            ${{ steps.package.outputs.release_artifact }}.provenance
-            ${{ runner.temp }}/one-release-sha256.txt
- "$sidecar"
-          grep -Eq '^artifact_sha256=[0-9a-f]{64}
-      - name: Upload verified package, provenance, and checksums
-        uses: actions/upload-artifact@v4
-        with:
-          name: one-package-release-${{ github.run_id }}
-          if-no-files-found: error
-          path: |
-            ${{ steps.package.outputs.release_artifact }}
-            ${{ steps.package.outputs.release_artifact }}.provenance
-            ${{ runner.temp }}/one-release-sha256.txt
- "$sidecar"
-          grep -Eq '^artifact_format=One(PackageV1|HumanCorePackageV1)
-      - name: Upload verified package, provenance, and checksums
-        uses: actions/upload-artifact@v4
-        with:
-          name: one-package-release-${{ github.run_id }}
-          if-no-files-found: error
-          path: |
-            ${{ steps.package.outputs.release_artifact }}
-            ${{ steps.package.outputs.release_artifact }}.provenance
-            ${{ runner.temp }}/one-release-sha256.txt
- "$sidecar"
+          grep -Eq '^source_sha256=[0-9a-f]{64}$' "$sidecar"
+          grep -Eq '^artifact_sha256=[0-9a-f]{64}$' "$sidecar"
+          grep -Eq '^artifact_format=One(PackageV1|HumanCorePackageV1)$' "$sidecar"
           grep -Fx 'dependency_model=empty-v0.1' "$sidecar"
           actual_artifact_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
           signed_artifact_digest="$(sed -n 's/^artifact_sha256=//p' "$sidecar")"
