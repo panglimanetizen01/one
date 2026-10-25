@@ -7,8 +7,7 @@
 //! and the whole group is killed on timeout/limit (and cleaned up after the
 //! leader exits, so descendants cannot keep inherited pipes open). On Windows,
 //! this implementation guarantees termination/reaping of the direct child;
-//! it does not claim to terminate arbitrary descendants. Strong Windows process
-//! tree cleanup requires a Job Object and is tracked separately.
+//! remaining descendants are terminated by a kill-on-close Windows Job Object.
 use std::io::Read;
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::Arc;
@@ -16,7 +15,79 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
+#[cfg(windows)]
+use std::mem::{size_of, zeroed};
+#[cfg(windows)]
+use std::os::windows::io::AsRawHandle;
+#[cfg(windows)]
+use std::ptr::null;
+#[cfg(windows)]
+use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
+#[cfg(windows)]
+use windows_sys::Win32::System::JobObjects::{
+    CreateJobObjectW, JobObjectExtendedLimitInformation, SetInformationJobObject,
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+};
+#[cfg(windows)]
+use windows_sys::Win32::System::Threading::AssignProcessToJobObject;
+
 use crate::capability::{Capability, CapabilitySet};
+
+#[cfg(windows)]
+struct WindowsJob {
+    handle: Option<HANDLE>,
+}
+
+#[cfg(windows)]
+impl WindowsJob {
+    fn assign(child: &Child) -> Result<Self, String> {
+        // SAFETY: null attributes/name request a private unnamed job object.
+        let handle = unsafe { CreateJobObjectW(null(), null()) };
+        if handle.is_null() {
+            return Err("Gagal membuat Windows Job Object untuk proses.".into());
+        }
+        // SAFETY: zero initialization followed by setting the documented limit flag.
+        let mut limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { zeroed() };
+        limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        // SAFETY: handle and structure are valid for this API call.
+        let configured = unsafe {
+            SetInformationJobObject(
+                handle,
+                JobObjectExtendedLimitInformation,
+                &limits as *const _ as *const core::ffi::c_void,
+                size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+            )
+        };
+        if configured == 0 {
+            // SAFETY: handle was created above and has not been closed.
+            unsafe { CloseHandle(handle) };
+            return Err("Gagal mengonfigurasi Windows Job Object.".into());
+        }
+        // SAFETY: Child owns this valid process handle; assignment does not transfer ownership.
+        let assigned = unsafe { AssignProcessToJobObject(handle, child.as_raw_handle() as HANDLE) };
+        if assigned == 0 {
+            // SAFETY: handle was created above and has not been closed.
+            unsafe { CloseHandle(handle) };
+            return Err("Gagal memasukkan proses ke Windows Job Object.".into());
+        }
+        Ok(Self { handle: Some(handle) })
+    }
+
+    fn close_now(&mut self) {
+        if let Some(handle) = self.handle.take() {
+            // Closing a kill-on-close job terminates any remaining assigned processes.
+            // SAFETY: this object uniquely owns the handle and closes it at most once.
+            unsafe { CloseHandle(handle) };
+        }
+    }
+}
+
+#[cfg(windows)]
+impl Drop for WindowsJob {
+    fn drop(&mut self) {
+        self.close_now();
+    }
+}
 
 pub const DEFAULT_PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 pub const DEFAULT_STDOUT_LIMIT: usize = 1024 * 1024;
@@ -94,6 +165,15 @@ pub fn run_process_with_limits(
     let mut child = command
         .spawn()
         .map_err(|error| format!("Gagal menjalankan proses '{}': {}", spec.program, error))?;
+    #[cfg(windows)]
+    let mut windows_job = match WindowsJob::assign(&child) {
+        Ok(job) => Some(job),
+        Err(error) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(error);
+        }
+    };
     let stdout = child.stdout.take().expect("piped stdout must be available");
     let stderr = child.stderr.take().expect("piped stderr must be available");
 
@@ -146,12 +226,15 @@ pub fn run_process_with_limits(
         thread::sleep(POLL_INTERVAL);
     }
 
-    // On Unix this also closes pipes inherited by descendants. On Windows,
-    // only the direct child is guaranteed to be terminated; reader joins may
-    // therefore be blocked by a descendant that inherited a pipe handle.
+    // Close process groups/jobs before joining readers so descendants cannot
+    // keep inherited pipe handles open after the direct child exits.
     #[cfg(unix)]
     if status.is_some() {
         kill_process_group(child.id());
+    }
+    #[cfg(windows)]
+    if let Some(job) = windows_job.as_mut() {
+        job.close_now();
     }
 
     let stdout = stdout_reader
