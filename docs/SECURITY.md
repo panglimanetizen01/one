@@ -91,3 +91,10 @@ one jalankan program.one --izinkan filesystem.read --root ./data --target ./data
 ```
 
 Without `--root`, the existing exact-target scope remains unchanged. This is an additional capability-policy boundary, not a general operating-system sandbox: callers must still use a trusted root, preserve adapter no-follow protections, and keep the host environment and mount configuration under control. It does not by itself provide a runtime-wide memory or open-resource quota.
+
+
+## Subprocess lifecycle and bounds
+
+The process adapter applies a per-invocation wall-clock timeout, separate stdout/stderr byte limits, and an aggregate captured-output limit. It drains stdout and stderr concurrently to avoid pipe deadlocks. On Unix, the child is launched in a new process group and timeout/output-limit cleanup terminates that group. On Windows, `CreateProcessW` uses `PROC_THREAD_ATTRIBUTE_JOB_LIST` so the child enters a kill-on-close Job Object before its first instruction; timeout/output-limit cleanup terminates the job and its descendants. Handles and pipe endpoints are owned and closed on success and failure paths.
+
+The regression suite covers Windows command-line quoting, empty and Unicode arguments, a Unicode/space-containing working directory, output overflow, timeout, immediate descendant-spawn stress, and descendant cleanup. These are bounded process-execution controls, not a general operating-system sandbox. They do not supply runtime-wide quotas across concurrent invocations or close the outstanding project-root/mount-boundary gaps described above.
