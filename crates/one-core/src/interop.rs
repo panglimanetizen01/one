@@ -33,6 +33,41 @@ use windows_sys::Win32::System::JobObjects::{
 use crate::capability::{Capability, CapabilitySet};
 
 #[cfg(windows)]
+fn quote_windows_argument(argument: &str) -> String {
+    // CreateProcessW receives one command-line string rather than an argv array.
+    // Follow the Windows CRT quoting rules: backslashes immediately before a
+    // quote are doubled and one extra backslash escapes the quote; trailing
+    // backslashes are doubled when the argument is quoted.
+    let needs_quotes = argument.is_empty()
+        || argument.chars().any(|character| character.is_whitespace() || character == '"');
+    if !needs_quotes {
+        return argument.to_owned();
+    }
+
+    let mut quoted = String::with_capacity(argument.len() + 2);
+    quoted.push('"');
+    let mut backslashes = 0usize;
+    for character in argument.chars() {
+        match character {
+            '\\' => backslashes += 1,
+            '"' => {
+                quoted.push_str(&"\\".repeat(backslashes * 2 + 1));
+                quoted.push('"');
+                backslashes = 0;
+            }
+            _ => {
+                quoted.push_str(&"\\".repeat(backslashes));
+                backslashes = 0;
+                quoted.push(character);
+            }
+        }
+    }
+    quoted.push_str(&"\\".repeat(backslashes * 2));
+    quoted.push('"');
+    quoted
+}
+
+#[cfg(windows)]
 struct WindowsJob {
     handle: Option<HANDLE>,
 }
@@ -372,6 +407,18 @@ mod tests {
             stderr_bytes: 4096,
             total_output_bytes: 6144,
         }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_argument_quoting_preserves_empty_spaces_quotes_and_trailing_slashes() {
+        assert_eq!(quote_windows_argument(""), "\"\"");
+        assert_eq!(quote_windows_argument("plain"), "plain");
+        assert_eq!(quote_windows_argument("two words"), "\"two words\"");
+        assert_eq!(quote_windows_argument("a\\\"b"), "\"a\\\\\\\"b\"");
+        assert_eq!(quote_windows_argument("path with space\\\\"),
+            "\"path with space\\\\\\\\\"");
+        assert_eq!(quote_windows_argument("雪 space"), "\"雪 space\"");
     }
 
     #[test]
