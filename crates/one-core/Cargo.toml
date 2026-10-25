@@ -25,3 +25,4 @@ bytes = { version = "1", optional = true }
 http = { version = "1", optional = true }
 rusqlite = { version = "0.40.2", features = ["bundled", "hooks", "limits"] }
 libc = "0.2"
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading"], target = "cfg(windows)" }
