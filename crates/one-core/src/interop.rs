@@ -1033,7 +1033,11 @@ foreach ($arg in $args) {
         } else {
             spec("yes x")
         };
-        let error = run_process_with_limits(&process, &allowed(), tight_limits())
+        let mut limits = tight_limits();
+        // Output-flood tests must reach the output cap even on slow/contended Windows CI.
+        // The assertion below still requires an output-limit error, never a timeout result.
+        limits.timeout = Duration::from_secs(15);
+        let error = run_process_with_limits(&process, &allowed(), limits)
             .expect_err("stdout flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
@@ -1047,7 +1051,11 @@ foreach ($arg in $args) {
         } else {
             spec("yes x >&2")
         };
-        let error = run_process_with_limits(&process, &allowed(), tight_limits())
+        let mut limits = tight_limits();
+        // Output-flood tests must reach the output cap even on slow/contended Windows CI.
+        // The assertion below still requires an output-limit error, never a timeout result.
+        limits.timeout = Duration::from_secs(15);
+        let error = run_process_with_limits(&process, &allowed(), limits)
             .expect_err("stderr flood must be stopped");
         assert!(error.contains("batas output"), "{error}");
     }
@@ -1064,6 +1072,7 @@ foreach ($arg in $args) {
             )
         };
         let limits = ProcessLimits {
+            timeout: Duration::from_secs(15),
             total_output_bytes: 1024,
             stdout_bytes: 4096,
             stderr_bytes: 4096,
