@@ -162,12 +162,17 @@ jobs:
             exit 1
           }
 
-      - name: Produce and independently check artifact digests
+      - name: Produce and independently check portable artifact digests
         shell: bash
         run: |
           set -euo pipefail
-          sha256sum "$release_artifact" "$release_artifact.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
-          (cd "$(dirname "$release_artifact")" && sha256sum --check <(sed "s#$(dirname "$release_artifact")/##" "$RUNNER_TEMP/one-release-sha256.txt"))
+          artifact_dir="$(dirname "$release_artifact")"
+          artifact_name="$(basename "$release_artifact")"
+          (
+            cd "$artifact_dir"
+            sha256sum "$artifact_name" "$artifact_name.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
+            sha256sum --check "$RUNNER_TEMP/one-release-sha256.txt"
+          )
           cat "$RUNNER_TEMP/one-release-sha256.txt"
 
       - name: Upload verified package, provenance, and checksums
