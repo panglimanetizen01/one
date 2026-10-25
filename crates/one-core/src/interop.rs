@@ -39,7 +39,9 @@ fn quote_windows_argument(argument: &str) -> String {
     // quote are doubled and one extra backslash escapes the quote; trailing
     // backslashes are doubled when the argument is quoted.
     let needs_quotes = argument.is_empty()
-        || argument.chars().any(|character| character.is_whitespace() || character == '"');
+        || argument
+            .chars()
+            .any(|character| character.is_whitespace() || character == '"');
     if !needs_quotes {
         return argument.to_owned();
     }
@@ -74,7 +76,10 @@ fn windows_command_line(program: &str, args: &[String]) -> Vec<u16> {
         command_line.push(' ');
         command_line.push_str(&quote_windows_argument(argument));
     }
-    command_line.encode_utf16().chain(std::iter::once(0)).collect()
+    command_line
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect()
 }
 
 #[cfg(windows)]
@@ -426,8 +431,10 @@ mod tests {
         assert_eq!(quote_windows_argument("plain"), "plain");
         assert_eq!(quote_windows_argument("two words"), "\"two words\"");
         assert_eq!(quote_windows_argument("a\\\"b"), "\"a\\\\\\\"b\"");
-        assert_eq!(quote_windows_argument("path with space\\\\"),
-            "\"path with space\\\\\\\\\"");
+        assert_eq!(
+            quote_windows_argument("path with space\\\\"),
+            "\"path with space\\\\\\\\\""
+        );
         assert_eq!(quote_windows_argument("雪 space"), "\"雪 space\"");
     }
 
@@ -527,7 +534,9 @@ mod tests {
                             "-NoProfile",
                             "-NonInteractive",
                             "-Command",
-                            &format!("Stop-Process -Id {child_pid} -Force -ErrorAction SilentlyContinue"),
+                            &format!(
+                                "Stop-Process -Id {child_pid} -Force -ErrorAction SilentlyContinue"
+                            ),
                         ])
                         .status();
                     panic!(
