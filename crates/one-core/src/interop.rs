@@ -8,42 +8,41 @@
 //! leader exits, so descendants cannot keep inherited pipes open). On Windows,
 //! the child is assigned to a kill-on-close Job Object during `CreateProcessW`,
 //! so timeout and output-limit cleanup also terminates descendants.
-use std::io::Read;
-#[cfg(not(windows))]
-use std::process::{Child, Command, ExitStatus, Stdio};
 #[cfg(windows)]
 use std::fs::File;
+use std::io::Read;
 #[cfg(windows)]
 use std::mem::{size_of, zeroed};
 #[cfg(windows)]
 use std::os::windows::io::{FromRawHandle, RawHandle};
+#[cfg(not(windows))]
+use std::process::{Child, Command, ExitStatus, Stdio};
 #[cfg(windows)]
 use std::ptr::{null, null_mut};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::thread;
+use std::time::{Duration, Instant};
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::{
-    CloseHandle, SetHandleInformation, HANDLE, HANDLE_FLAG_INHERIT, WAIT_FAILED, WAIT_OBJECT_0,
+    CloseHandle, HANDLE, HANDLE_FLAG_INHERIT, SetHandleInformation, WAIT_FAILED, WAIT_OBJECT_0,
     WAIT_TIMEOUT,
 };
 #[cfg(windows)]
 use windows_sys::Win32::Security::SECURITY_ATTRIBUTES;
 #[cfg(windows)]
 use windows_sys::Win32::System::JobObjects::{
-    CreateJobObjectW, SetInformationJobObject, TerminateJobObject,
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
-    JobObjectExtendedLimitInformation,
+    CreateJobObjectW, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    JobObjectExtendedLimitInformation, SetInformationJobObject, TerminateJobObject,
 };
 #[cfg(windows)]
 use windows_sys::Win32::System::Pipes::CreatePipe;
 #[cfg(windows)]
 use windows_sys::Win32::System::Threading::{
-    CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess, InitializeProcThreadAttributeList,
-    UpdateProcThreadAttribute, WaitForSingleObject, PROCESS_INFORMATION, STARTF_USESTDHANDLES,
-    STARTUPINFOEXW, EXTENDED_STARTUPINFO_PRESENT, INFINITE,
+    CreateProcessW, DeleteProcThreadAttributeList, EXTENDED_STARTUPINFO_PRESENT,
+    GetExitCodeProcess, INFINITE, InitializeProcThreadAttributeList, PROCESS_INFORMATION,
+    STARTF_USESTDHANDLES, STARTUPINFOEXW, UpdateProcThreadAttribute, WaitForSingleObject,
 };
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::thread;
-use std::time::{Duration, Instant};
 
 use crate::capability::{Capability, CapabilitySet};
 
@@ -125,13 +124,13 @@ pub fn run_process_with_limits(
             use std::os::unix::process::CommandExt;
             command.process_group(0);
         }
-    
+
         let mut child = command
             .spawn()
             .map_err(|error| format!("Gagal menjalankan proses '{}': {}", spec.program, error))?;
         let stdout = child.stdout.take().expect("piped stdout must be available");
         let stderr = child.stderr.take().expect("piped stderr must be available");
-    
+
         let total = Arc::new(AtomicUsize::new(0));
         let exceeded = Arc::new(AtomicBool::new(false));
         let stdout_reader = spawn_bounded_reader(
@@ -148,7 +147,7 @@ pub fn run_process_with_limits(
             Arc::clone(&total),
             Arc::clone(&exceeded),
         );
-    
+
         let deadline = Instant::now() + limits.timeout;
         let mut status: Option<ExitStatus> = None;
         let mut timed_out = false;
@@ -180,7 +179,7 @@ pub fn run_process_with_limits(
             }
             thread::sleep(POLL_INTERVAL);
         }
-    
+
         // On Unix this also closes pipes inherited by descendants. On Windows,
         // only the direct child is guaranteed to be terminated; reader joins may
         // therefore be blocked by a descendant that inherited a pipe handle.
@@ -188,14 +187,14 @@ pub fn run_process_with_limits(
         if status.is_some() {
             kill_process_group(child.id());
         }
-    
+
         let stdout = stdout_reader
             .join()
             .map_err(|_| "Pembaca stdout proses gagal.".to_owned())?;
         let stderr = stderr_reader
             .join()
             .map_err(|_| "Pembaca stderr proses gagal.".to_owned())?;
-    
+
         if timed_out {
             return Err(format!(
                 "Proses '{}' melewati batas waktu {:?} dan dihentikan.",
@@ -225,7 +224,7 @@ pub fn run_process_with_limits(
                     )
                 })?,
         };
-    
+
         Ok(ProcessResult {
             status_code: status.code(),
             success: status.success(),
@@ -234,7 +233,6 @@ pub fn run_process_with_limits(
         })
     }
 }
-
 
 #[cfg(windows)]
 const PROC_THREAD_ATTRIBUTE_HANDLE_LIST_VALUE: usize = 0x0002_0002;
@@ -246,8 +244,12 @@ struct OwnedWindowsHandle(HANDLE);
 
 #[cfg(windows)]
 impl OwnedWindowsHandle {
-    fn new(handle: HANDLE) -> Self { Self(handle) }
-    fn raw(&self) -> HANDLE { self.0 }
+    fn new(handle: HANDLE) -> Self {
+        Self(handle)
+    }
+    fn raw(&self) -> HANDLE {
+        self.0
+    }
     fn take(&mut self) -> HANDLE {
         let handle = self.0;
         self.0 = null_mut();
@@ -260,7 +262,9 @@ impl Drop for OwnedWindowsHandle {
     fn drop(&mut self) {
         if !self.0.is_null() {
             // SAFETY: this wrapper uniquely owns this handle and closes it once.
-            unsafe { CloseHandle(self.0); }
+            unsafe {
+                CloseHandle(self.0);
+            }
             self.0 = null_mut();
         }
     }
@@ -289,13 +293,18 @@ impl WindowsAttributeList {
         let mut storage = vec![0usize; bytes.div_ceil(size_of::<usize>())];
         let ptr = storage.as_mut_ptr().cast::<core::ffi::c_void>();
         // SAFETY: storage is sufficiently sized and aligned for the opaque list.
-        if unsafe { InitializeProcThreadAttributeList(ptr.cast(), attribute_count, 0, &mut bytes) } == 0 {
+        if unsafe { InitializeProcThreadAttributeList(ptr.cast(), attribute_count, 0, &mut bytes) }
+            == 0
+        {
             return Err(format!(
                 "Gagal menginisialisasi process attribute list: {}",
                 std::io::Error::last_os_error()
             ));
         }
-        Ok(Self { _storage: storage, ptr })
+        Ok(Self {
+            _storage: storage,
+            ptr,
+        })
     }
 }
 
@@ -303,14 +312,18 @@ impl WindowsAttributeList {
 impl Drop for WindowsAttributeList {
     fn drop(&mut self) {
         // SAFETY: this list was successfully initialized and its backing storage is alive.
-        unsafe { DeleteProcThreadAttributeList(self.ptr.cast()); }
+        unsafe {
+            DeleteProcThreadAttributeList(self.ptr.cast());
+        }
     }
 }
 
 #[cfg(windows)]
 fn quote_windows_argument(argument: &str) -> String {
     if !argument.is_empty()
-        && !argument.chars().any(|character| character.is_whitespace() || character == '"')
+        && !argument
+            .chars()
+            .any(|character| character.is_whitespace() || character == '"')
     {
         return argument.to_owned();
     }
@@ -343,7 +356,10 @@ fn windows_command_line(program: &str, args: &[String]) -> Vec<u16> {
         command_line.push(' ');
         command_line.push_str(&quote_windows_argument(argument));
     }
-    command_line.encode_utf16().chain(std::iter::once(0)).collect()
+    command_line
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect()
 }
 
 #[cfg(windows)]
@@ -363,33 +379,39 @@ fn run_process_windows_with_limits(
     let mut stderr_write_raw: HANDLE = null_mut();
 
     // SAFETY: output pointers are valid; SECURITY_ATTRIBUTES requests inheritable pipe handles.
-    let stdin_pipe_ok = unsafe {
-        CreatePipe(&mut stdin_read_raw, &mut stdin_write_raw, &security, 0)
-    };
+    let stdin_pipe_ok =
+        unsafe { CreatePipe(&mut stdin_read_raw, &mut stdin_write_raw, &security, 0) };
     let stdin_read = OwnedWindowsHandle::new(stdin_read_raw);
     let stdin_write = OwnedWindowsHandle::new(stdin_write_raw);
     if stdin_pipe_ok == 0 {
-        return Err(format!("Gagal membuat pipe stdin: {}", std::io::Error::last_os_error()));
+        return Err(format!(
+            "Gagal membuat pipe stdin: {}",
+            std::io::Error::last_os_error()
+        ));
     }
 
     // SAFETY: output pointers are valid; SECURITY_ATTRIBUTES requests inheritable pipe handles.
-    let stdout_pipe_ok = unsafe {
-        CreatePipe(&mut stdout_read_raw, &mut stdout_write_raw, &security, 0)
-    };
+    let stdout_pipe_ok =
+        unsafe { CreatePipe(&mut stdout_read_raw, &mut stdout_write_raw, &security, 0) };
     let mut stdout_read = OwnedWindowsHandle::new(stdout_read_raw);
     let stdout_write = OwnedWindowsHandle::new(stdout_write_raw);
     if stdout_pipe_ok == 0 {
-        return Err(format!("Gagal membuat pipe stdout: {}", std::io::Error::last_os_error()));
+        return Err(format!(
+            "Gagal membuat pipe stdout: {}",
+            std::io::Error::last_os_error()
+        ));
     }
 
     // SAFETY: output pointers are valid; SECURITY_ATTRIBUTES requests inheritable pipe handles.
-    let stderr_pipe_ok = unsafe {
-        CreatePipe(&mut stderr_read_raw, &mut stderr_write_raw, &security, 0)
-    };
+    let stderr_pipe_ok =
+        unsafe { CreatePipe(&mut stderr_read_raw, &mut stderr_write_raw, &security, 0) };
     let mut stderr_read = OwnedWindowsHandle::new(stderr_read_raw);
     let stderr_write = OwnedWindowsHandle::new(stderr_write_raw);
     if stderr_pipe_ok == 0 {
-        return Err(format!("Gagal membuat pipe stderr: {}", std::io::Error::last_os_error()));
+        return Err(format!(
+            "Gagal membuat pipe stderr: {}",
+            std::io::Error::last_os_error()
+        ));
     }
 
     // Parent-side pipe ends must not be inherited by the child.
@@ -408,7 +430,10 @@ fn run_process_windows_with_limits(
     // SAFETY: null attributes/name request a private unnamed job.
     let job_raw = unsafe { CreateJobObjectW(null(), null()) };
     if job_raw.is_null() {
-        return Err(format!("Gagal membuat Windows Job Object: {}", std::io::Error::last_os_error()));
+        return Err(format!(
+            "Gagal membuat Windows Job Object: {}",
+            std::io::Error::last_os_error()
+        ));
     }
     let job = OwnedWindowsHandle::new(job_raw);
     let mut job_limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { zeroed() };
@@ -421,7 +446,8 @@ fn run_process_windows_with_limits(
             &job_limits as *const _ as *const core::ffi::c_void,
             size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
         )
-    } == 0 {
+    } == 0
+    {
         return Err(format!(
             "Gagal mengonfigurasi Windows Job Object: {}",
             std::io::Error::last_os_error()
@@ -441,7 +467,8 @@ fn run_process_windows_with_limits(
             null_mut(),
             null_mut(),
         )
-    } == 0 {
+    } == 0
+    {
         return Err(format!(
             "Gagal membatasi handle yang diwariskan: {}",
             std::io::Error::last_os_error()
@@ -459,7 +486,8 @@ fn run_process_windows_with_limits(
             null_mut(),
             null_mut(),
         )
-    } == 0 {
+    } == 0
+    {
         return Err(format!(
             "Gagal mengikat Windows Job Object saat pembuatan proses: {}",
             std::io::Error::last_os_error()
@@ -476,7 +504,10 @@ fn run_process_windows_with_limits(
 
     let mut command_line = windows_command_line(&spec.program, &spec.args);
     let working_directory = spec.working_directory.as_ref().map(|directory| {
-        directory.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>()
+        directory
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect::<Vec<u16>>()
     });
     let current_directory = working_directory
         .as_ref()
@@ -541,7 +572,9 @@ fn run_process_windows_with_limits(
     loop {
         if exceeded.load(Ordering::Acquire) {
             // SAFETY: job handle owns the child and all descendants.
-            unsafe { TerminateJobObject(job.raw(), 1); }
+            unsafe {
+                TerminateJobObject(job.raw(), 1);
+            }
             break;
         }
         // SAFETY: process handle remains valid until this function returns.
@@ -551,7 +584,9 @@ fn run_process_windows_with_limits(
                 if Instant::now() >= deadline {
                     timed_out = true;
                     // SAFETY: job handle owns the child and all descendants.
-                    unsafe { TerminateJobObject(job.raw(), 1); }
+                    unsafe {
+                        TerminateJobObject(job.raw(), 1);
+                    }
                     break;
                 }
             }
@@ -574,7 +609,9 @@ fn run_process_windows_with_limits(
     // Reap the direct child after timeout/output-limit termination, then close the
     // kill-on-close job before joining readers so descendants cannot retain pipe handles.
     // SAFETY: process handle remains valid; waiting on an exited process returns immediately.
-    unsafe { WaitForSingleObject(process.raw(), INFINITE); }
+    unsafe {
+        WaitForSingleObject(process.raw(), INFINITE);
+    }
     drop(job);
 
     let stdout = stdout_reader
@@ -770,7 +807,11 @@ mod tests {
         );
         let result = run_process(&process, &allowed())
             .expect("parent should exit successfully while descendant is contained");
-        let child_pid: u32 = result.stdout.trim().parse().expect("child PID should be printed");
+        let child_pid: u32 = result
+            .stdout
+            .trim()
+            .parse()
+            .expect("child PID should be printed");
         let deadline = Instant::now() + Duration::from_secs(3);
         loop {
             let child_exists = std::process::Command::new("powershell.exe")
@@ -783,8 +824,13 @@ mod tests {
                 .status()
                 .expect("PowerShell process query should run")
                 .success();
-            if !child_exists { break; }
-            assert!(Instant::now() < deadline, "descendant process {child_pid} survived Job Object closure");
+            if !child_exists {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "descendant process {child_pid} survived Job Object closure"
+            );
             std::thread::sleep(Duration::from_millis(50));
         }
     }
@@ -798,7 +844,11 @@ mod tests {
             );
             let result = run_process(&process, &allowed())
                 .expect("parent should exit while its descendant is contained");
-            let child_pid: u32 = result.stdout.trim().parse().expect("child PID should be printed");
+            let child_pid: u32 = result
+                .stdout
+                .trim()
+                .parse()
+                .expect("child PID should be printed");
             let deadline = Instant::now() + Duration::from_secs(3);
             loop {
                 let child_exists = std::process::Command::new("powershell.exe")
@@ -811,8 +861,13 @@ mod tests {
                     .status()
                     .expect("PowerShell process query should run")
                     .success();
-                if !child_exists { break; }
-                assert!(Instant::now() < deadline, "iteration left descendant {child_pid} alive");
+                if !child_exists {
+                    break;
+                }
+                assert!(
+                    Instant::now() < deadline,
+                    "iteration left descendant {child_pid} alive"
+                );
                 std::thread::sleep(Duration::from_millis(20));
             }
         }
@@ -825,9 +880,14 @@ mod tests {
             windows_command_line(
                 r"C:\Program Files\tool.exe",
                 &["".into(), "two words".into(), "plain".into()],
-            ).iter().copied().take_while(|unit| *unit != 0).collect::<Vec<_>>(),
+            )
+            .iter()
+            .copied()
+            .take_while(|unit| *unit != 0)
+            .collect::<Vec<_>>(),
             "\"C:\\Program Files\\tool.exe\" \"\" \"two words\" plain"
-                .encode_utf16().collect::<Vec<_>>()
+                .encode_utf16()
+                .collect::<Vec<_>>()
         );
     }
 
@@ -842,7 +902,8 @@ mod tests {
             "one process args 日本語 {} {suffix}",
             std::process::id()
         ));
-        std::fs::create_dir_all(&working_directory).expect("temporary working directory should be created");
+        std::fs::create_dir_all(&working_directory)
+            .expect("temporary working directory should be created");
         let script_path = working_directory.join("echo args 日本語.ps1");
         std::fs::write(
             &script_path,
@@ -856,13 +917,7 @@ foreach ($arg in $args) {
         )
         .expect("PowerShell argument probe should be written");
 
-        let expected_arguments = [
-            "two words",
-            "",
-            "quote\"value",
-            "日本語",
-            "trailing\\",
-        ];
+        let expected_arguments = ["two words", "", "quote\"value", "日本語", "trailing\\"];
         let process = ProcessSpec {
             program: "powershell.exe".into(),
             args: vec![
@@ -942,7 +997,10 @@ foreach ($arg in $args) {
 
         let pid_text = std::fs::read_to_string(&marker).expect("child PID marker should exist");
         let _ = std::fs::remove_file(&marker);
-        let child_pid: u32 = pid_text.trim().parse().expect("child PID should be numeric");
+        let child_pid: u32 = pid_text
+            .trim()
+            .parse()
+            .expect("child PID should be numeric");
         let deadline = Instant::now() + Duration::from_secs(3);
         loop {
             let child_exists = std::process::Command::new("powershell.exe")
@@ -955,8 +1013,13 @@ foreach ($arg in $args) {
                 .status()
                 .expect("PowerShell process query should run")
                 .success();
-            if !child_exists { break; }
-            assert!(Instant::now() < deadline, "descendant process {child_pid} survived timeout");
+            if !child_exists {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "descendant process {child_pid} survived timeout"
+            );
             std::thread::sleep(Duration::from_millis(50));
         }
     }
