@@ -6,9 +6,8 @@
 //! reaps the direct child. On Unix, the child is placed in a new process group
 //! and the whole group is killed on timeout/limit (and cleaned up after the
 //! leader exits, so descendants cannot keep inherited pipes open). On Windows,
-//! this implementation guarantees termination/reaping of the direct child;
-//! it does not claim to terminate arbitrary descendants. Strong Windows process
-//! tree cleanup requires a Job Object and is tracked separately.
+//! the child is assigned to a kill-on-close Job Object during `CreateProcessW`,
+//! so timeout and output-limit cleanup also terminates descendants.
 use std::io::Read;
 #[cfg(not(windows))]
 use std::process::{Child, Command, ExitStatus, Stdio};
