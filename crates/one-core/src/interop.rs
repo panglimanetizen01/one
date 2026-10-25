@@ -25,8 +25,8 @@ use std::ptr::null;
 use windows_sys::Win32::Foundation::{CloseHandle, HANDLE};
 #[cfg(windows)]
 use windows_sys::Win32::System::JobObjects::{
-    CreateJobObjectW, JobObjectExtendedLimitInformation, SetInformationJobObject,
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+    CreateJobObjectW, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+    JobObjectExtendedLimitInformation, SetInformationJobObject,
 };
 #[cfg(windows)]
 use windows_sys::Win32::System::Threading::AssignProcessToJobObject;
@@ -70,7 +70,9 @@ impl WindowsJob {
             unsafe { CloseHandle(handle) };
             return Err("Gagal memasukkan proses ke Windows Job Object.".into());
         }
-        Ok(Self { handle: Some(handle) })
+        Ok(Self {
+            handle: Some(handle),
+        })
     }
 
     fn close_now(&mut self) {
