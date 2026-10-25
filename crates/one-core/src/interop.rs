@@ -644,7 +644,10 @@ mod tests {
         let marker = std::env::temp_dir().join(format!(
             "one-sec05-descendant-{}-{}.txt",
             std::process::id(),
-            Instant::now().elapsed().as_nanos()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system clock should be after Unix epoch")
+                .as_nanos()
         ));
         let marker_text = marker.to_string_lossy().replace('\'', "''");
         let process = spec(&format!(
