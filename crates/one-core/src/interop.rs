@@ -22,8 +22,8 @@ use std::os::windows::io::{FromRawHandle, RawHandle};
 use std::ptr::{null, null_mut};
 #[cfg(windows)]
 use windows_sys::Win32::Foundation::{
-    CloseHandle, SetHandleInformation, HANDLE, HANDLE_FLAG_INHERIT, INFINITE, WAIT_FAILED,
-    WAIT_OBJECT_0, WAIT_TIMEOUT,
+    CloseHandle, SetHandleInformation, HANDLE, HANDLE_FLAG_INHERIT, WAIT_FAILED, WAIT_OBJECT_0,
+    WAIT_TIMEOUT,
 };
 #[cfg(windows)]
 use windows_sys::Win32::Security::SECURITY_ATTRIBUTES;
@@ -37,9 +37,9 @@ use windows_sys::Win32::System::JobObjects::{
 use windows_sys::Win32::System::Pipes::CreatePipe;
 #[cfg(windows)]
 use windows_sys::Win32::System::Threading::{
-    CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
-    InitializeProcThreadAttributeList, UpdateProcThreadAttribute, WaitForSingleObject,
-    PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOEXW, EXTENDED_STARTUPINFO_PRESENT,
+    CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess, InitializeProcThreadAttributeList,
+    UpdateProcThreadAttribute, WaitForSingleObject, PROCESS_INFORMATION, STARTF_USESTDHANDLES,
+    STARTUPINFOEXW, EXTENDED_STARTUPINFO_PRESENT, INFINITE,
 };
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -666,6 +666,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     })
 }
 
+#[cfg(not(windows))]
 fn terminate_child(child: &mut Child) {
     #[cfg(unix)]
     kill_process_group(child.id());
