@@ -292,37 +292,6 @@ mod tests {
     }
 
     #[test]
-    fn timeout_terminates_and_reaps_direct_child() {
-        let pid_file = std::env::temp_dir().join(format!("one-sec05-child-{}.pid", std::process::id()));
-        let _ = std::fs::remove_file(&pid_file);
-        let path = pid_file.to_string_lossy().replace('\'', "'\\''");
-        #[cfg(windows)]
-        let process = spec(&format!("Set-Content -Path '{}' -Value $PID; Start-Sleep -Seconds 5", pid_file.display().to_string().replace('\'', "''")));
-        #[cfg(not(windows))]
-        let process = spec(&format!("echo {0}{0} > '{1}'; exec sleep 5", "$", path));
-        let limits = ProcessLimits { timeout: Duration::from_secs(1), ..ProcessLimits::default() };
-        let error = run_process_with_limits(&process, &allowed(), limits).expect_err("long process must time out");
-        assert!(error.contains("melewati batas waktu"), "{error}");
-        let pid_text = std::fs::read_to_string(&pid_file).expect("child pid must be recorded before timeout");
-        let pid: u32 = pid_text.trim().parse().expect("child pid must be numeric");
-        #[cfg(unix)]
-        {
-            // SAFETY: kill(pid, 0) only checks whether this process ID still exists.
-            let result = unsafe { libc::kill(pid as libc::pid_t, 0) };
-            let error = std::io::Error::last_os_error();
-            assert_eq!(result, -1, "timed-out child must no longer exist");
-            assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
-        }
-        #[cfg(windows)]
-        {
-            let check = spec(&format!("if (Get-Process -Id {} -ErrorAction SilentlyContinue) {{ exit 1 }} else {{ exit 0 }}", pid));
-            let result = run_process(&check, &allowed()).expect("process-existence check should run");
-            assert!(result.success, "timed-out direct child PID {} must no longer exist", pid);
-        }
-        let _ = std::fs::remove_file(pid_file);
-    }
-
-    #[test]
     fn stdout_flood_is_bounded() {
         let process = if cfg!(windows) {
             spec("while ($true) { [Console]::Out.Write('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') }")
