@@ -442,7 +442,7 @@ mod tests {
             .expect("command line should be valid UTF-16");
         assert_eq!(
             command,
-            "\"C:\\\\Program Files\\\\tool.exe\" \"\" \"two words\" plain"
+            "\"C:\\Program Files\\tool.exe\" \"\" \"two words\" plain"
         );
     }
 
