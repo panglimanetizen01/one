@@ -627,5 +627,5 @@ fn public_rust_json_helpers_fail_closed_and_are_deterministic() {
     assert_eq!(stdlib::json_to_value(&Value::Number(1)), None);
     assert_eq!(stdlib::json_to_value(&Value::Text(r#"{"x":1,"x":2}"#.into())), None);
     assert_eq!(stdlib::json_to_value(&Value::Text("1e2".into())), None);
-    assert_eq!(stdlib::json_to_value(&Value::Text(r#""\\uD800""#.into())), None);
+    assert_eq!(stdlib::json_to_value(&Value::Text(r#""\uD800""#.into())), None);
 }
