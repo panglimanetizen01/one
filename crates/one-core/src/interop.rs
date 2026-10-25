@@ -417,6 +417,42 @@ mod tests {
         assert!(error.contains("melewati batas waktu"), "{error}");
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn windows_job_object_terminates_descendant_after_parent_exits() {
+        let process = spec(
+            "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
+        );
+        let result = run_process(&process, &allowed())
+            .expect("parent should exit successfully while descendant is contained");
+        let child_pid: u32 = result
+            .stdout
+            .trim()
+            .parse()
+            .expect("child PID should be printed");
+        let deadline = Instant::now() + Duration::from_secs(3);
+        loop {
+            let child_exists = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &format!("if (Get-Process -Id {child_pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"),
+                ])
+                .status()
+                .expect("PowerShell process query should run")
+                .success();
+            if !child_exists {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "descendant process {child_pid} survived Job Object closure"
+            );
+            std::thread::sleep(Duration::from_millis(50));
+        }
+    }
+
     #[test]
     fn stdout_flood_is_bounded() {
         let process = if cfg!(windows) {
