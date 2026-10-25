@@ -109,7 +109,7 @@ pub fn run_process_with_limits(
 
     #[cfg(windows)]
     {
-        return run_process_windows_with_limits(spec, limits);
+        run_process_windows_with_limits(spec, limits)
     }
     #[cfg(not(windows))]
     {
@@ -367,8 +367,8 @@ fn run_process_windows_with_limits(
     let stdin_pipe_ok = unsafe {
         CreatePipe(&mut stdin_read_raw, &mut stdin_write_raw, &security, 0)
     };
-    let mut stdin_read = OwnedWindowsHandle::new(stdin_read_raw);
-    let mut stdin_write = OwnedWindowsHandle::new(stdin_write_raw);
+    let stdin_read = OwnedWindowsHandle::new(stdin_read_raw);
+    let stdin_write = OwnedWindowsHandle::new(stdin_write_raw);
     if stdin_pipe_ok == 0 {
         return Err(format!("Gagal membuat pipe stdin: {}", std::io::Error::last_os_error()));
     }
@@ -378,7 +378,7 @@ fn run_process_windows_with_limits(
         CreatePipe(&mut stdout_read_raw, &mut stdout_write_raw, &security, 0)
     };
     let mut stdout_read = OwnedWindowsHandle::new(stdout_read_raw);
-    let mut stdout_write = OwnedWindowsHandle::new(stdout_write_raw);
+    let stdout_write = OwnedWindowsHandle::new(stdout_write_raw);
     if stdout_pipe_ok == 0 {
         return Err(format!("Gagal membuat pipe stdout: {}", std::io::Error::last_os_error()));
     }
@@ -388,7 +388,7 @@ fn run_process_windows_with_limits(
         CreatePipe(&mut stderr_read_raw, &mut stderr_write_raw, &security, 0)
     };
     let mut stderr_read = OwnedWindowsHandle::new(stderr_read_raw);
-    let mut stderr_write = OwnedWindowsHandle::new(stderr_write_raw);
+    let stderr_write = OwnedWindowsHandle::new(stderr_write_raw);
     if stderr_pipe_ok == 0 {
         return Err(format!("Gagal membuat pipe stderr: {}", std::io::Error::last_os_error()));
     }
