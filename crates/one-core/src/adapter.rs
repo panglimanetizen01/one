@@ -295,9 +295,27 @@ fn resolve_project_filesystem_target(target: &str) -> Result<(std::path::PathBuf
     let root = std::env::current_dir().map_err(|_| AdapterError::BackendFailure)?;
     let root = std::fs::canonicalize(root).map_err(|_| AdapterError::BackendFailure)?;
     let relative = if supplied.is_absolute() {
-        supplied.strip_prefix(&root).map_err(|_| AdapterError::InvalidArguments)?
+        #[cfg(windows)]
+        {
+            let absolute = windows_lexical_absolute(supplied)
+                .map_err(|_| AdapterError::BackendFailure)?;
+            let root_normalized = windows_normalized_path(&root.to_string_lossy());
+            let target_normalized = windows_normalized_path(&absolute.to_string_lossy());
+            let root_prefix = format!("{root_normalized}\\");
+            if !target_normalized.starts_with(&root_prefix) {
+                return Err(AdapterError::InvalidArguments);
+            }
+            std::path::PathBuf::from(&target_normalized[root_prefix.len()..])
+        }
+        #[cfg(not(windows))]
+        {
+            supplied
+                .strip_prefix(&root)
+                .map_err(|_| AdapterError::InvalidArguments)?
+                .to_path_buf()
+        }
     } else {
-        supplied
+        supplied.to_path_buf()
     };
     if relative.as_os_str().is_empty()
         || relative.is_absolute()
@@ -306,7 +324,7 @@ fn resolve_project_filesystem_target(target: &str) -> Result<(std::path::PathBuf
         return Err(AdapterError::InvalidArguments);
     }
     validate_filesystem_target(&relative.to_string_lossy())?;
-    Ok((root, relative.to_path_buf()))
+    Ok((root, relative))
 }
 
 #[cfg(unix)]
