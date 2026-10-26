@@ -985,3 +985,22 @@ On source commit `e51244958228ab4257aa63ee2411e25c673a9316`:
 
 - The final-source Linux distro run [40261657177](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40261657177) failed strict Clippy due to one unused local variable in the new Unix parent-swap race test. The binding was removed; the test sequence/assertions and production behavior are unchanged.
 - This is a new source revision after the matrix was started. Resolve the new branch HEAD, update lab `CANONICAL_COMMIT.txt`, and rerun Linux 24.04, Debian 12, Windows, SEC-05, E4 adversarial/resource, artifact integrity, and Android API 35 runtime on that exact SHA. Previous results are not final-SHA evidence.
+
+
+## Prompt 3 continuation — E3/E4 audit reconciliation, 2026-10-26
+
+Scope remains locked to E3 + E4. PR #80 is still open/draft/unmerged, base `main`; no merge, release, or main-branch modification is authorized. At the beginning of this audit, PR #80 head SHA and lab `CANONICAL_COMMIT.txt` both matched `73bd504ac81a14737b321817b94c7bc2fbb17a15`.
+
+Exact-source code-bearing SHA results recorded:
+- Linux Ubuntu 24.04 + Debian 12: [run 40272900538](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900538), both jobs passed.
+- Ubuntu + Windows Server 2025: [run 40272900560](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900560), both jobs passed.
+- Linux/Windows artifact manifest and executable-format verification: [run 40272900570](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900570), passed; binary SHA-256 values and artifact digests are recorded in the completion ledger.
+- SQLite/standard-library resource suite: [run 40272900585](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900585), 247 passed.
+- Focused E4 adversarial filesystem/resource suite: [run 40272900540](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900540), both Unix and Windows jobs passed for their stated coverage. Resource guard [run 40272900536](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900536) passed.
+- Android API 35 AArch64 cross-build/contract: [run 40272900641](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900641) passed build/contract only, not runtime.
+- Android API 35 `arm64-v8a` runtime remains OPEN. The latest attempt at this checkpoint update is [run 40275435454](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40275435454); require guest API 35 + ABI `arm64-v8a`, execution of the actual ELF, exact output `ONE_NATIVE_BACKEND_OK`, exit code 0, and retained logs/checksums before credit.
+- SEC-05 Linux rerun [40275249195](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40275249195) exposed a missing GNU x86_64 linker package in the harness; Windows passed. The lab now installs `binutils-x86-64-linux-gnu`, and [run 40275580929](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40275580929) is the exact-source rerun in progress.
+
+The ledger and Definition of Done now record this evidence and explicitly retain E3 0/8 and E4 0/6 verified. This checkpoint update advances the source branch again. Resolve the resulting branch HEAD, set the lab pin to exactly that SHA, rerun the mandatory Linux/Windows/E4/SEC-05/artifact/Android matrix, and then update the independent evidence index with the resulting run IDs. Do not reuse the pre-documentation SHA as final-SHA evidence.
+
+Residual limits remain: no complete OS sandbox claim; non-Linux Unix mount identity is best-effort `st_dev`; arbitrary heap/caller-retained output memory is not fully accounted; and the full threat review remains open. The global fixed-weight gate remains **NOT PASSED**. No weights or scores change.
