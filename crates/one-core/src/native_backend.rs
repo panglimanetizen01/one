@@ -55,7 +55,7 @@ impl NativeAndroidAarch64Backend {
             "clang-android-aarch64",
             self.id(),
             ToolchainTarget::new(
-                "aarch64-linux-android24",
+                "aarch64-linux-android35",
                 TargetArchitecture::Aarch64,
                 TargetEnvironment::Linux,
             ),
@@ -106,7 +106,7 @@ impl NativeAndroidAarch64Backend {
             .or_else(|| std::env::var_os("ONE_CLANG"))
             .unwrap_or_else(|| "clang".into());
         let status = Command::new(&compiler)
-            .arg("--target=aarch64-linux-android24")
+            .arg(format!("--target={}", toolchain.target().triple()))
             .arg(&source_path)
             .arg("-o")
             .arg(&output)
@@ -873,3 +873,15 @@ mod artifact_validation_tests {
         let _ = fs::remove_file(path);
     }
 }
+
+#[cfg(test)]
+mod android_backend_target_tests {
+    use super::*;
+
+    #[test]
+    fn native_android_aarch64_backend_targets_api_35() {
+        let backend = NativeAndroidAarch64Backend::new();
+        assert_eq!(backend.toolchain().target().triple(), "aarch64-linux-android35");
+    }
+}
+
