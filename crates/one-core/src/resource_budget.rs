@@ -29,14 +29,13 @@ impl ResourcePermit {
     }
 
     pub(crate) fn database() -> Option<Self> {
-        if !reserve(&ACTIVE_RESOURCE_OPERATIONS, MAX_ACTIVE_RESOURCE_OPERATIONS) {
-            return None;
-        }
-        if !reserve(&ACTIVE_DATABASE_QUERIES, MAX_ACTIVE_DATABASE_QUERIES) {
-            ACTIVE_RESOURCE_OPERATIONS.fetch_sub(1, Ordering::Release);
-            return None;
-        }
-        Some(Self { kind: ResourceKind::Database })
+        reserve_database(
+            &ACTIVE_RESOURCE_OPERATIONS,
+            &ACTIVE_DATABASE_QUERIES,
+            MAX_ACTIVE_RESOURCE_OPERATIONS,
+            MAX_ACTIVE_DATABASE_QUERIES,
+        )
+        .then_some(Self { kind: ResourceKind::Database })
     }
 }
 
@@ -67,6 +66,22 @@ fn reserve(counter: &AtomicUsize, limit: usize) -> bool {
     }
 }
 
+fn reserve_database(
+    active_operations: &AtomicUsize,
+    active_database_queries: &AtomicUsize,
+    operation_limit: usize,
+    database_limit: usize,
+) -> bool {
+    if !reserve(active_operations, operation_limit) {
+        return false;
+    }
+    if !reserve(active_database_queries, database_limit) {
+        active_operations.fetch_sub(1, Ordering::Release);
+        return false;
+    }
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -87,5 +102,34 @@ mod tests {
     fn configured_database_quota_is_stricter_than_global_operation_quota() {
         assert!(MAX_ACTIVE_DATABASE_QUERIES > 0);
         assert!(MAX_ACTIVE_DATABASE_QUERIES < MAX_ACTIVE_RESOURCE_OPERATIONS);
+    }
+
+    #[test]
+    fn database_quota_denial_releases_global_reservation_without_exceeding_limits() {
+        let active_operations = AtomicUsize::new(0);
+        let active_database_queries = AtomicUsize::new(0);
+
+        assert!(reserve_database(&active_operations, &active_database_queries, 2, 1));
+        assert_eq!(active_operations.load(Ordering::Acquire), 1);
+        assert_eq!(active_database_queries.load(Ordering::Acquire), 1);
+
+        assert!(!reserve_database(&active_operations, &active_database_queries, 2, 1));
+        assert_eq!(active_operations.load(Ordering::Acquire), 1);
+        assert_eq!(active_database_queries.load(Ordering::Acquire), 1);
+
+        active_database_queries.fetch_sub(1, Ordering::Release);
+        active_operations.fetch_sub(1, Ordering::Release);
+        assert!(reserve_database(&active_operations, &active_database_queries, 2, 1));
+    }
+
+    #[test]
+    fn global_operation_quota_denies_process_or_database_admission_when_full() {
+        let active_operations = AtomicUsize::new(2);
+        let active_database_queries = AtomicUsize::new(0);
+
+        assert!(!reserve(&active_operations, 2));
+        assert!(!reserve_database(&active_operations, &active_database_queries, 2, 1));
+        assert_eq!(active_operations.load(Ordering::Acquire), 2);
+        assert_eq!(active_database_queries.load(Ordering::Acquire), 0);
     }
 }
