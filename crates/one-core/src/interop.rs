@@ -105,6 +105,10 @@ pub fn run_process_with_limits(
         return Err("Batas waktu proses harus lebih besar dari nol.".into());
     }
 
+    let _resource_permit = crate::resource_budget::ResourcePermit::process().ok_or_else(|| {
+        "Batas resource runtime terlampaui: terlalu banyak operasi resource aktif.".to_owned()
+    })?;
+
     #[cfg(windows)]
     {
         run_process_windows_with_limits(spec, limits)
