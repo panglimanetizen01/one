@@ -172,6 +172,9 @@ impl ToolAdapter for SqliteAdapter {
             _ => return Err(AdapterError::InvalidArguments),
         };
 
+        let _resource_permit = crate::resource_budget::ResourcePermit::database()
+            .ok_or(AdapterError::ResourceLimitExceeded)?;
+
         // DatabaseQuery is a read-only effect. Keep in-memory queries available for
         // deterministic tests, but never create or open a file-backed database writable.
         if path != ":memory:" {
