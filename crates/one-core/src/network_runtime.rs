@@ -341,6 +341,70 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
     }
 
     #[test]
+    fn network_connections_hold_global_resource_permits_until_closed() {
+        let listeners: Vec<_> = (0..9)
+            .map(|_| TcpListener::bind("127.0.0.1:0").expect("bind loopback listener"))
+            .collect();
+        let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect);
+        let mut runtime = RealNetworkRuntime::new();
+        let mut ids = Vec::new();
+
+        for listener in listeners.iter().take(crate::resource_budget::MAX_ACTIVE_RESOURCE_OPERATIONS) {
+            let address = listener.local_addr().expect("listener address");
+            let result = runtime.execute(
+                NetworkOperation::Connect {
+                    target: NetworkTarget::Service { host: address.ip().to_string(), port: address.port() },
+                    constraints: crate::network::NetworkConstraints {
+                        address_kind: Some(NetworkAddressKind::Ipv4),
+                        transport: NetworkTransport::Reliable,
+                        security: Some(crate::network::NetworkSecurity::Insecure),
+                        timeout_ms: 1_000,
+                        protocol: Some(NetworkProtocolFamily::Tcp),
+                    },
+                },
+                &capabilities,
+            ).expect("connection within the global resource cap should succeed");
+            let id = match result {
+                NetworkRuntimeResult::Connected { id, .. } => id,
+                _ => panic!("connect must return a connection id"),
+            };
+            ids.push(id);
+        }
+
+        let ninth_address = listeners[8].local_addr().expect("ninth listener address");
+        let denied = runtime.execute(
+            NetworkOperation::Connect {
+                target: NetworkTarget::Service { host: ninth_address.ip().to_string(), port: ninth_address.port() },
+                constraints: crate::network::NetworkConstraints {
+                    address_kind: Some(NetworkAddressKind::Ipv4),
+                    transport: NetworkTransport::Reliable,
+                    security: Some(crate::network::NetworkSecurity::Insecure),
+                    timeout_ms: 1_000,
+                    protocol: Some(NetworkProtocolFamily::Tcp),
+                },
+            },
+            &capabilities,
+        ).expect_err("ninth active connection must exceed the process-wide cap");
+        assert!(matches!(denied, NetworkRuntimeError::InvalidOperation(message) if message.contains("global")));
+
+        assert!(runtime.close(ids[0]), "closing a connection releases its resource permit");
+        let reopened = runtime.execute(
+            NetworkOperation::Connect {
+                target: NetworkTarget::Service { host: ninth_address.ip().to_string(), port: ninth_address.port() },
+                constraints: crate::network::NetworkConstraints {
+                    address_kind: Some(NetworkAddressKind::Ipv4),
+                    transport: NetworkTransport::Reliable,
+                    security: Some(crate::network::NetworkSecurity::Insecure),
+                    timeout_ms: 1_000,
+                    protocol: Some(NetworkProtocolFamily::Tcp),
+                },
+            },
+            &capabilities,
+        ).expect("closing one connection must restore admission");
+        assert!(matches!(reopened, NetworkRuntimeResult::Connected { .. }));
+    }
+
+    #[test]
     fn network_runtime_rejects_oversized_send_payload_before_connection_lookup() {
         let mut runtime = RealNetworkRuntime::new();
         let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect);
