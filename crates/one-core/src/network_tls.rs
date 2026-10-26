@@ -8,6 +8,7 @@ use rustls::pki_types::ServerName;
 use rustls::{ClientConfig, ClientConnection, RootCertStore, StreamOwned};
 use webpki_roots::TLS_SERVER_ROOTS;
 use crate::capability::{Capability, CapabilitySet};
+use crate::resource_budget::ResourcePermit;
 use crate::network_runtime::{HttpRequest, HttpResponse, NetworkRuntimeError, parse_http_response};
 fn client_config_with_roots(roots: RootCertStore) -> Result<Arc<ClientConfig>, NetworkRuntimeError> { Ok(Arc::new(ClientConfig::builder().with_root_certificates(roots).with_no_client_auth())) }
 fn client_config() -> Result<Arc<ClientConfig>, NetworkRuntimeError> { client_config_with_roots(RootCertStore::from_iter(TLS_SERVER_ROOTS.iter().cloned())) }
@@ -15,6 +16,9 @@ fn execute_https11_with_config(request: HttpRequest, capabilities: &CapabilitySe
     if !capabilities.permits(Capability::NetworkConnect) {
         return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into()));
     }
+    let _resource_permit = ResourcePermit::operation().ok_or_else(|| {
+        NetworkRuntimeError::InvalidOperation("Jumlah operasi jaringan aktif melampaui batas global.".into())
+    })?;
     let (host, port) = crate::network_runtime::parse_http_authority_with_default(&request.authority, 443)?;
     let address = (host.as_str(), port).to_socket_addrs()
         .map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?
