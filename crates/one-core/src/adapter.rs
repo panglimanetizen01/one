@@ -94,7 +94,7 @@ fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Res
     Ok(directory)
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, test))]
 fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
@@ -157,7 +157,7 @@ fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     std::fs::File::open(path)
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, test))]
 fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
