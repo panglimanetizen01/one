@@ -11,6 +11,7 @@ on:
       - "tools/check_contract.py"
       - "tools/milestone1-e1-lab.sh"
       - "docs/spec/one-v0.1-stdlib.md"
+      - "docs/verification/**"
       - ".github/workflows/milestone-1-e1-lab.yml"
   pull_request:
     branches: [ main ]
@@ -20,6 +21,8 @@ on:
       - "Cargo.lock"
       - "tools/check_contract.py"
       - "tools/milestone1-e1-lab.sh"
+      - "docs/spec/one-v0.1-stdlib.md"
+      - "docs/verification/**"
       - ".github/workflows/milestone-1-e1-lab.yml"
 
 permissions:
