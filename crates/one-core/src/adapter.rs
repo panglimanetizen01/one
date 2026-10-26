@@ -345,7 +345,6 @@ fn resolve_project_filesystem_target(target: &str) -> Result<(std::path::PathBuf
 fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
-    use std::os::unix::fs::MetadataExt;
     let parent = relative.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
     let name = relative.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
     let directory = open_directory_relative_to_root(root, parent)?;
@@ -362,7 +361,6 @@ fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<
 fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
-    use std::os::unix::fs::MetadataExt;
     let parent = relative.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
     let name = relative.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
     let directory = open_directory_relative_to_root(root, parent)?;
