@@ -1,0 +1,56 @@
+# ONE E4 Threat Review — 2026-10-26
+
+## Scope and review target
+
+This is a scoped threat review of the filesystem adapters, capability-denial path, SQLite resource limits, and bounded subprocess execution used by ONE v0.1. The code reviewed for this checkpoint is candidate source SHA `2a7670c5166efee54426196f28a8152cbfe758b3`. This document is a review artifact, not a claim that ONE is a complete sandbox. The final candidate SHA must be revalidated after this document is committed.
+
+## Assets and security objectives
+
+- Prevent filesystem read/write requests from escaping the process working-directory project root.
+- Reject parent traversal, symlink/reparse traversal, non-regular files, and cross-mount targets where the platform-specific implementation can identify the boundary.
+- Avoid destructive side effects before validating the opened target and its mount identity.
+- Deny capability-prohibited operations before invoking an adapter or causing external side effects.
+- Bound active resource operations, SQLite query work, subprocess wall-clock duration, captured stdout/stderr, and aggregate interpreter output.
+- Ensure subprocess descendants do not outlive timeout/output-limit cleanup on supported Unix and Windows implementations.
+- Preserve diagnosable failure behavior without exposing secret values or silently accepting partial verification.
+
+## Threat model
+
+Attacker-controlled inputs include requested filesystem paths, symlink/reparse-point layouts, concurrent directory renames, SQLite queries, process arguments, child-process output, and requests lacking required capabilities. The attacker may race filesystem path resolution or attempt to consume resources with long-running processes, inherited pipes, large output, or repeated operations.
+
+The review assumes the OS kernel and runner are functioning correctly and that the process's current working directory is the intended project root. It does not assume that string canonicalization alone prevents TOCTOU races. It does not claim protection against a compromised kernel, privileged host administrator, malicious compiler/toolchain, or all resource consumption inside the process heap.
+
+## Controls observed in source
+
+- Project filesystem requests are resolved against the canonical current working directory; absolute targets outside that root and parent-directory traversal are rejected.
+- Unix filesystem access walks parent components using descriptor-relative `openat` with `O_NOFOLLOW`; the final component is opened without following symlinks. Linux mount identity checks reject a crossed mount boundary before a write truncates the target.
+- Windows file access checks the final opened handle/path, rejects reparse points, validates the parent before creation, and checks the target remains under the project root.
+- Unsupported non-Unix/non-Windows filesystem adapters fail closed.
+- Capability denial is checked before adapter invocation.
+- A shared resource budget caps active operations and SQLite queries; SQLite query limits and the interpreter output cap are enforced.
+- Subprocess execution bounds wall-clock time and stdout/stderr/aggregate capture. Unix process-group cleanup and Windows Job Object association at process creation are used to terminate descendants on timeout/output-limit failure.
+
+## Exact-SHA test evidence to retain
+
+The independent lab currently has scoped runs on the candidate pin `2a7670c5166efee54426196f28a8152cbfe758b3`:
+
+- [E4 adversarial filesystem/resource-bound run 40321345484](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40321345484) — Unix no-follow/mount-boundary/race tests and Windows reparse/handle/absolute-path regressions completed successfully.
+- [E4 subprocess resource-guard run 40321345794](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40321345794) — scoped resource-guard audit passed.
+- [Cross-platform run 40321345494](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40321345494) — scoped Linux/Windows verification passed.
+- [Fixed-weight gate 40324100070](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40324100070) — **NOT PASSED** overall. A passing E4 workflow is not a substitute for the full E4 row's acceptance.
+
+These run links are historical evidence for the source SHA explicitly checked out by their jobs. If any code-bearing candidate change is made, the relevant tests must be rerun against the new frozen SHA before acceptance.
+
+## Residual risks and explicit limitations
+
+1. Linux `STATX_MNT_ID` can distinguish bind mounts that share a device ID, but this depends on kernel/filesystem support and the implementation's successful identity query.
+2. On other Unix platforms, `st_dev` is only a best-effort mount identity and may not distinguish bind-mount-like boundaries.
+3. Windows handle/path validation and reparse-point rejection reduce escape risk but are not a proof of every possible filesystem-provider race or malicious kernel behavior.
+4. Resource quotas cover the named operations and captured output. They do not establish a universal cap on all transient allocations, caller-retained buffers, compiler/runtime heap use, or every external tool's resource consumption.
+5. Subprocess containment is platform-specific. The tests establish only the adversarial cases they execute; they do not prove all possible descendant-process, inherited-handle, or kernel scheduling races.
+6. This review does not claim a complete sandbox, OS-level isolation, privilege separation, or resistance to a compromised host.
+7. Android API 35 AArch64 runtime acceptance and the protected package-provenance release gate are separate acceptance requirements and remain open until their own exact-SHA evidence passes.
+
+## Disposition
+
+The reviewed controls and listed regression coverage support recording that a scoped threat review now exists. They do **not** by themselves grant E4 verified points or close the overall milestone. Keep E4 verified at 0/6 until the fixed-weight gate's full E4 acceptance criteria and final-SHA evidence are accepted. Record any new findings or code changes in a subsequent dated review rather than rewriting historical run results.
