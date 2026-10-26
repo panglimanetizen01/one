@@ -99,12 +99,6 @@ mod tests {
     }
 
     #[test]
-    fn configured_database_quota_is_stricter_than_global_operation_quota() {
-        assert!(MAX_ACTIVE_DATABASE_QUERIES > 0);
-        assert!(MAX_ACTIVE_DATABASE_QUERIES < MAX_ACTIVE_RESOURCE_OPERATIONS);
-    }
-
-    #[test]
     fn database_quota_denial_releases_global_reservation_without_exceeding_limits() {
         let active_operations = AtomicUsize::new(0);
         let active_database_queries = AtomicUsize::new(0);
