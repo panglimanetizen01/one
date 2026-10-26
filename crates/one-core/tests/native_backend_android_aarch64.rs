@@ -52,7 +52,7 @@ fn backend_menolak_ir_yang_belum_didukung_dan_tidak_fallback_ke_interpreter() {
 #[test]
 fn spesifikasi_toolchain_android_aarch64_memakai_executable() {
     let toolchain = NativeAndroidAarch64Backend::new().toolchain();
-    assert_eq!(toolchain.target().triple(), "aarch64-linux-android24");
+    assert_eq!(toolchain.target().triple(), "aarch64-linux-android35");
     assert_eq!(toolchain.artifact(), &ArtifactFormat::Executable);
     assert_eq!(toolchain.capability(), ToolchainCapability::BuildAndExecute);
 }
