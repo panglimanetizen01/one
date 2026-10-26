@@ -80,3 +80,8 @@ The previous final-matrix attempt exposed a Windows path-prefix bug: absolute pa
 A shared resource-admission budget now caps active subprocess/SQLite operations at 8 total and SQLite queries at 4 concurrent. Interpreter output is capped at 16 MiB per `execute`/event dispatch. New regression tests exercise quota rollback/recovery, Linux `/proc` mount-boundary denial, and a concurrent directory/symlink swap that must never read outside-root bytes. These changes do not establish a complete heap quota or operating-system sandbox.
 
 The final documentation commit must be followed by an exact-SHA rerun of Linux 24.04, Debian 12, Windows Server 2025, SEC-05, E4 adversarial/resource tests, artifact integrity, and Android API 35 `arm64-v8a` runtime execution. Until the exact source SHA and every mandatory result are recorded in the independent evidence index, E3/E4 remain unchecked and the release gate remains **NOT PASSED**.
+
+
+## 8. Strict Clippy follow-up — 2026-10-26
+
+The Linux distro job [40261657177](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40261657177) failed because the new parent-swap race test declared an unused local path. The unused binding is removed without changing the test's race sequence or assertions. Because this changes the candidate source SHA, the full required exact-SHA matrix must be rerun; no evidence from the preceding SHA is promoted to final acceptance.

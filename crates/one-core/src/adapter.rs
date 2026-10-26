@@ -686,7 +686,6 @@ mod filesystem_nofollow_tests {
         let outside = test_root("toctou-outside");
         let directory = root.join("a");
         let alternate = root.join("b");
-        let temporary = root.join("swap");
         let _ = std::fs::remove_dir_all(&root);
         let _ = std::fs::remove_dir_all(&outside);
         std::fs::create_dir_all(&directory).expect("create in-root directory");

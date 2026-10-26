@@ -979,3 +979,9 @@ On source commit `e51244958228ab4257aa63ee2411e25c673a9316`:
 - Cross-build/contract runs [40261107880](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40261107880) and [40261107989](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40261107989) passed on the older SHA; they are build-only. Android runtime attempts on that SHA include boot failures and/or runs still in progress; no final runtime PASS is claimed.
 - After this commit, resolve the new source branch HEAD and update lab `CANONICAL_COMMIT.txt` to exactly that SHA. Rerun Ubuntu 24.04, Debian 12, Windows Server 2025, SEC-05, E4 adversarial/resource guard, artifact integrity, Android AArch64 ELF/header checks, and Android API 35 `arm64-v8a` runtime. Update only the independent lab evidence index with final run IDs/logs after the run results are available; avoid another source-doc commit merely to paste run IDs.
 - Ledger weights and scores remain fixed: implementation `91/100` provisional, verified `64/100`; E3 `0/8` verified, E4 `0/6` verified; release gate **NOT PASSED**. No merge of PR #80/#83, no `main` changes, no release, and no work outside E3/E4.
+
+
+### Strict Clippy follow-up — 2026-10-26
+
+- The final-source Linux distro run [40261657177](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40261657177) failed strict Clippy due to one unused local variable in the new Unix parent-swap race test. The binding was removed; the test sequence/assertions and production behavior are unchanged.
+- This is a new source revision after the matrix was started. Resolve the new branch HEAD, update lab `CANONICAL_COMMIT.txt`, and rerun Linux 24.04, Debian 12, Windows, SEC-05, E4 adversarial/resource, artifact integrity, and Android API 35 runtime on that exact SHA. Previous results are not final-SHA evidence.
