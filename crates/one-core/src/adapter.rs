@@ -84,6 +84,7 @@ fn filesystem_mount_identity(file: &std::fs::File) -> std::io::Result<u64> {
     Ok(file.metadata()?.dev())
 }
 
+#[cfg(unix)]
 fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
