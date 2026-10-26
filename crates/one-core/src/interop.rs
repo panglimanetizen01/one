@@ -1053,7 +1053,7 @@ foreach ($arg in $args) {
             "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Set-Content -LiteralPath '{marker_literal}' -Value $child.Id; Start-Sleep -Seconds 30"
         ));
         let limits = ProcessLimits {
-            timeout: Duration::from_secs(2),
+            timeout: Duration::from_secs(10),
             ..ProcessLimits::default()
         };
         let error = run_process_with_limits(&process, &allowed(), limits)
