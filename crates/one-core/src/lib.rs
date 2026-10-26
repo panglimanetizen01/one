@@ -33,6 +33,7 @@ pub mod parser;
 pub mod persistence;
 pub mod platform;
 pub mod runtime;
+mod resource_budget;
 pub mod semantic;
 pub mod stdlib;
 pub mod target;
