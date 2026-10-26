@@ -176,7 +176,7 @@ impl TargetDefinition {
 const TARGET_DEFINITIONS: &[TargetDefinition] = &[
     TargetDefinition::new(
         "android-aarch64",
-        "aarch64-linux-android24",
+        "aarch64-linux-android35",
         TargetArchitecture::Aarch64,
         TargetEnvironment::Linux,
     ),
@@ -741,4 +741,12 @@ mod tests {
             ToolchainValidationError::UnsupportedOperation { .. }
         ));
     }
+    #[test]
+    fn android_aarch64_target_definition_requires_api_35() {
+        let definition = target_definition("android-aarch64").expect("Android target definition");
+        assert_eq!(definition.triple(), "aarch64-linux-android35");
+        assert_eq!(definition.architecture(), &TargetArchitecture::Aarch64);
+        assert_eq!(definition.environment(), TargetEnvironment::Linux);
+    }
+
 }
