@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
 use crate::network_runtime::{HttpResponse, NetworkRuntimeError, parse_http_authority, resolve_target};
+use crate::resource_budget::ResourcePermit;
 
 const MAX_BODY: usize = 16 * 1024 * 1024;
 
@@ -28,6 +29,11 @@ pub fn execute_http2(
         ));
     }
 
+    // Share the process-wide budget with filesystem, DNS, SQLite, subprocess, and TCP work.
+    // Hold the permit through resolution and the complete HTTP/2 request lifecycle.
+    let _resource_permit = ResourcePermit::operation().ok_or_else(|| {
+        NetworkRuntimeError::InvalidOperation("Jumlah operasi jaringan aktif melampaui batas global.".into())
+    })?;
     let (host, port) = parse_http_authority(authority)?;
     let address = resolve_target(&host, port, None)?;
     let authority = authority.to_owned();
