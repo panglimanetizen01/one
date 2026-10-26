@@ -137,12 +137,15 @@ pub fn run_process_with_limits(
 
         let total = Arc::new(AtomicUsize::new(0));
         let exceeded = Arc::new(AtomicBool::new(false));
+        let stdout_read_failed = Arc::new(AtomicBool::new(false));
+        let stderr_read_failed = Arc::new(AtomicBool::new(false));
         let stdout_reader = spawn_bounded_reader(
             stdout,
             limits.stdout_bytes,
             limits.total_output_bytes,
             Arc::clone(&total),
             Arc::clone(&exceeded),
+            Arc::clone(&stdout_read_failed),
         );
         let stderr_reader = spawn_bounded_reader(
             stderr,
@@ -150,12 +153,17 @@ pub fn run_process_with_limits(
             limits.total_output_bytes,
             Arc::clone(&total),
             Arc::clone(&exceeded),
+            Arc::clone(&stderr_read_failed),
         );
 
         let deadline = Instant::now() + limits.timeout;
         let mut status: Option<ExitStatus> = None;
         let mut timed_out = false;
         loop {
+            if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+                terminate_child(&mut child);
+                break;
+            }
             if exceeded.load(Ordering::Acquire) {
                 terminate_child(&mut child);
                 break;
@@ -204,6 +212,9 @@ pub fn run_process_with_limits(
                 "Proses '{}' melewati batas waktu {:?} dan dihentikan.",
                 spec.program, limits.timeout
             ));
+        }
+        if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+            return Err("Gagal membaca stdout/stderr proses setelah proses dihentikan.".to_owned());
         }
         if exceeded.load(Ordering::Acquire) {
             return Err(format!(
@@ -555,12 +566,15 @@ fn run_process_windows_with_limits(
     let stderr = unsafe { File::from_raw_handle(stderr_read.take() as RawHandle) };
     let total = Arc::new(AtomicUsize::new(0));
     let exceeded = Arc::new(AtomicBool::new(false));
+    let stdout_read_failed = Arc::new(AtomicBool::new(false));
+    let stderr_read_failed = Arc::new(AtomicBool::new(false));
     let stdout_reader = spawn_bounded_reader(
         stdout,
         limits.stdout_bytes,
         limits.total_output_bytes,
         Arc::clone(&total),
         Arc::clone(&exceeded),
+        Arc::clone(&stdout_read_failed),
     );
     let stderr_reader = spawn_bounded_reader(
         stderr,
@@ -568,12 +582,18 @@ fn run_process_windows_with_limits(
         limits.total_output_bytes,
         Arc::clone(&total),
         Arc::clone(&exceeded),
+        Arc::clone(&stderr_read_failed),
     );
 
     let deadline = Instant::now() + limits.timeout;
     let poll_ms = POLL_INTERVAL.as_millis().clamp(1, u32::MAX as u128) as u32;
     let mut timed_out = false;
     loop {
+        if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+            // SAFETY: job handle owns the child and all descendants.
+            unsafe { TerminateJobObject(job.raw(), 1); }
+            break;
+        }
         if exceeded.load(Ordering::Acquire) {
             // SAFETY: job handle owns the child and all descendants.
             unsafe {
@@ -631,6 +651,9 @@ fn run_process_windows_with_limits(
             spec.program, limits.timeout
         ));
     }
+    if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+        return Err("Gagal membaca stdout/stderr proses setelah proses dihentikan.".to_owned());
+    }
     if exceeded.load(Ordering::Acquire) {
         return Err(format!(
             "Proses '{}' melewati batas output (stdout={} byte, stderr={} byte, total={} byte) dan dihentikan.",
@@ -662,6 +685,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     total_limit: usize,
     total: Arc<AtomicUsize>,
     exceeded: Arc<AtomicBool>,
+    read_failed: Arc<AtomicBool>,
 ) -> thread::JoinHandle<Vec<u8>> {
     thread::spawn(move || {
         let mut captured = Vec::with_capacity(stream_limit.min(8192));
@@ -699,7 +723,10 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
                     captured.extend_from_slice(&buffer[..count]);
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
-                Err(_) => break,
+                Err(_) => {
+                    read_failed.store(true, Ordering::Release);
+                    break;
+                },
             }
         }
         captured
@@ -758,6 +785,28 @@ mod tests {
             stderr_bytes: 4096,
             total_output_bytes: 6144,
         }
+    }
+
+    #[test]
+    fn bounded_reader_marks_non_interrupted_read_failure() {
+        struct FailingReader;
+        impl Read for FailingReader {
+            fn read(&mut self, _buffer: &mut [u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, "synthetic pipe failure"))
+            }
+        }
+
+        let failed = Arc::new(AtomicBool::new(false));
+        let reader = spawn_bounded_reader(
+            FailingReader,
+            16,
+            16,
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(AtomicBool::new(false)),
+            Arc::clone(&failed),
+        );
+        assert!(reader.join().expect("reader thread must join").is_empty());
+        assert!(failed.load(Ordering::Acquire), "read errors must not be mistaken for EOF");
     }
 
     #[test]
