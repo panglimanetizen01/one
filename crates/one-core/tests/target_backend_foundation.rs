@@ -192,7 +192,7 @@ fn target_registry_mendefinisikan_target_native_one_tanpa_mengikat_compiler_host
     let windows = one_core::target_definition("windows-x86_64")
         .expect("target Windows x86_64 harus terdaftar");
 
-    assert_eq!(android.triple(), "aarch64-linux-android24");
+    assert_eq!(android.triple(), "aarch64-linux-android35");
     assert_eq!(linux_aarch64.triple(), "aarch64-unknown-linux-gnu");
     assert_eq!(linux_x86_64.triple(), "x86_64-unknown-linux-gnu");
     assert_eq!(windows.triple(), "x86_64-pc-windows-gnu");
