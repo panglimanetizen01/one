@@ -160,7 +160,9 @@ pub fn run_process_with_limits(
         let mut status: Option<ExitStatus> = None;
         let mut timed_out = false;
         loop {
-            if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+            if stdout_read_failed.load(Ordering::Acquire)
+                || stderr_read_failed.load(Ordering::Acquire)
+            {
                 terminate_child(&mut child);
                 break;
             }
@@ -213,7 +215,8 @@ pub fn run_process_with_limits(
                 spec.program, limits.timeout
             ));
         }
-        if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+        if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire)
+        {
             return Err("Gagal membaca stdout/stderr proses setelah proses dihentikan.".to_owned());
         }
         if exceeded.load(Ordering::Acquire) {
@@ -589,9 +592,12 @@ fn run_process_windows_with_limits(
     let poll_ms = POLL_INTERVAL.as_millis().clamp(1, u32::MAX as u128) as u32;
     let mut timed_out = false;
     loop {
-        if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+        if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire)
+        {
             // SAFETY: job handle owns the child and all descendants.
-            unsafe { TerminateJobObject(job.raw(), 1); }
+            unsafe {
+                TerminateJobObject(job.raw(), 1);
+            }
             break;
         }
         if exceeded.load(Ordering::Acquire) {
@@ -651,7 +657,8 @@ fn run_process_windows_with_limits(
             spec.program, limits.timeout
         ));
     }
-    if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
+    if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire)
+    {
         return Err("Gagal membaca stdout/stderr proses setelah proses dihentikan.".to_owned());
     }
     if exceeded.load(Ordering::Acquire) {
@@ -726,7 +733,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
                 Err(_) => {
                     read_failed.store(true, Ordering::Release);
                     break;
-                },
+                }
             }
         }
         captured
@@ -792,7 +799,10 @@ mod tests {
         struct FailingReader;
         impl Read for FailingReader {
             fn read(&mut self, _buffer: &mut [u8]) -> std::io::Result<usize> {
-                Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, "synthetic pipe failure"))
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "synthetic pipe failure",
+                ))
             }
         }
 
@@ -806,7 +816,10 @@ mod tests {
             Arc::clone(&failed),
         );
         assert!(reader.join().expect("reader thread must join").is_empty());
-        assert!(failed.load(Ordering::Acquire), "read errors must not be mistaken for EOF");
+        assert!(
+            failed.load(Ordering::Acquire),
+            "read errors must not be mistaken for EOF"
+        );
     }
 
     #[test]
