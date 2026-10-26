@@ -3,6 +3,7 @@ use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
+use crate::resource_budget::ResourcePermit;
 
 const MAX_MAIL_LINE: usize = 64 * 1024;
 const MAX_IMAP_BODY: usize = 16 * 1024 * 1024;
@@ -12,6 +13,7 @@ const MAX_MAIL_RESPONSE_LINES: usize = 100_000;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MailProtocolError {
     CapabilityDenied,
+    ResourceLimitExceeded,
     InvalidResponse,
     Io(String),
     Timeout,
@@ -26,13 +28,14 @@ fn io_error(error: std::io::Error) -> MailProtocolError {
     if matches!(error.kind(), std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock) { MailProtocolError::Timeout } else { MailProtocolError::Io(error.to_string()) }
 }
 
-fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet) -> Result<TcpStream, MailProtocolError> {
+fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet) -> Result<(TcpStream, ResourcePermit), MailProtocolError> {
     permit(caps)?;
+    let resource_permit = ResourcePermit::operation().ok_or(MailProtocolError::ResourceLimitExceeded)?;
     let address = address.to_socket_addrs().map_err(io_error)?.next().ok_or_else(|| MailProtocolError::Io("no address resolved".into()))?;
     let stream = TcpStream::connect_timeout(&address, timeout).map_err(io_error)?;
     stream.set_read_timeout(Some(timeout)).map_err(io_error)?;
     stream.set_write_timeout(Some(timeout)).map_err(io_error)?;
-    Ok(stream)
+    Ok((stream, resource_permit))
 }
 
 fn validate_command_field(value: &str) -> Result<(), MailProtocolError> {
@@ -88,14 +91,14 @@ fn require_ok(line: &str, prefix: &str) -> Result<(), MailProtocolError> {
     if line.starts_with(prefix) { Ok(()) } else { Err(MailProtocolError::Server(line.trim_end().to_string())) }
 }
 
-pub struct Pop3Client { stream: TcpStream }
+pub struct Pop3Client { stream: TcpStream, _resource_permit: ResourcePermit }
 
 impl Pop3Client {
     pub fn connect(address: &str, timeout: Duration, caps: &CapabilitySet) -> Result<Self, MailProtocolError> {
-        let mut stream = connect(address, timeout, caps)?;
+        let (mut stream, resource_permit) = connect(address, timeout, caps)?;
         let greeting = read_line(&mut stream)?;
         require_ok(&greeting, "+OK")?;
-        Ok(Self { stream })
+        Ok(Self { stream, _resource_permit: resource_permit })
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
@@ -128,14 +131,14 @@ impl Pop3Client {
     }
 }
 
-pub struct ImapClient { stream: TcpStream, next_tag: u32 }
+pub struct ImapClient { stream: TcpStream, next_tag: u32, _resource_permit: ResourcePermit }
 
 impl ImapClient {
     pub fn connect(address: &str, timeout: Duration, caps: &CapabilitySet) -> Result<Self, MailProtocolError> {
-        let mut stream = connect(address, timeout, caps)?;
+        let (mut stream, resource_permit) = connect(address, timeout, caps)?;
         let greeting = read_line(&mut stream)?;
         if !greeting.starts_with("* OK") { return Err(MailProtocolError::Server(greeting.trim_end().to_string())); }
-        Ok(Self { stream, next_tag: 1 })
+        Ok(Self { stream, next_tag: 1, _resource_permit: resource_permit })
     }
 
     fn tag(&mut self) -> Result<String, MailProtocolError> {
