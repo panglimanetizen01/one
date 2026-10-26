@@ -63,6 +63,27 @@ fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
 }
 
 #[cfg(unix)]
+#[cfg(target_os = "linux")]
+fn filesystem_mount_identity(file: &std::fs::File) -> std::io::Result<u64> {
+    use std::os::fd::AsRawFd;
+    let mut info: libc::statx = unsafe { std::mem::zeroed() };
+    // STATX_MNT_ID (0x1000) identifies a mount even when a bind mount shares st_dev.
+    let result = unsafe { libc::statx(file.as_raw_fd(), c"".as_ptr(), 0x1000, 0x1000, &mut info) };
+    if result != 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if info.stx_mask & 0x1000 == 0 {
+        return Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "kernel did not provide STATX_MNT_ID"));
+    }
+    Ok(info.stx_mnt_id)
+}
+
+#[cfg(all(unix, not(target_os = "linux")))]
+fn filesystem_mount_identity(file: &std::fs::File) -> std::io::Result<u64> {
+    use std::os::unix::fs::MetadataExt;
+    Ok(file.metadata()?.dev())
+}
+
 fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
@@ -70,6 +91,7 @@ fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Res
 
     let mut directory = open_directory_nofollow(root)?;
     let root_device = directory.metadata()?.dev();
+    let root_mount = filesystem_mount_identity(&directory)?;
     for component in relative.components() {
         match component {
             Component::CurDir => continue,
@@ -82,7 +104,7 @@ fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Res
                 };
                 if next_fd < 0 { return Err(std::io::Error::last_os_error()); }
                 let next = unsafe { std::fs::File::from_raw_fd(next_fd) };
-                if next.metadata()?.dev() != root_device {
+                if next.metadata()?.dev() != root_device || filesystem_mount_identity(&next)? != root_mount {
                     return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed"));
                 }
                 directory = next;
@@ -299,7 +321,9 @@ fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<
     if fd < 0 { return Err(std::io::Error::last_os_error()); }
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
-    if file.metadata()?.dev() != directory.metadata()?.dev() { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
+    if file.metadata()?.dev() != directory.metadata()?.dev()
+        || filesystem_mount_identity(&file)? != filesystem_mount_identity(&directory)?
+    { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
     Ok(file)
 }
 
@@ -316,7 +340,9 @@ fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result
     if fd < 0 { return Err(std::io::Error::last_os_error()); }
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
-    if file.metadata()?.dev() != directory.metadata()?.dev() { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
+    if file.metadata()?.dev() != directory.metadata()?.dev()
+        || filesystem_mount_identity(&file)? != filesystem_mount_identity(&directory)?
+    { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
     Ok(file)
 }
 
