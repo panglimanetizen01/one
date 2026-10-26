@@ -7,6 +7,7 @@ use rustls::RootCertStore;
 use webpki_roots::TLS_SERVER_ROOTS;
 use crate::capability::{Capability, CapabilitySet};
 use crate::network_runtime::NetworkRuntimeError;
+use crate::resource_budget::ResourcePermit;
 
 const MAX_QUIC_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
 
@@ -15,6 +16,10 @@ pub fn execute_quic(host: &str, address: SocketAddr, payload: &[u8], capabilitie
     if payload.len() > MAX_QUIC_PAYLOAD_BYTES {
         return Err(NetworkRuntimeError::InvalidOperation("Payload QUIC melebihi batas 16 MiB.".into()));
     }
+    // The permit covers endpoint creation, connection setup, and bounded response collection.
+    let _resource_permit = ResourcePermit::operation().ok_or_else(|| {
+        NetworkRuntimeError::InvalidOperation("Jumlah operasi jaringan aktif melampaui batas global.".into())
+    })?;
     let host = host.to_owned(); let payload = payload.to_vec(); let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
     runtime.block_on(async move {
         let mut roots = RootCertStore::empty(); roots.extend(TLS_SERVER_ROOTS.iter().cloned()); let client_config = ClientConfig::with_root_certificates(Arc::new(roots)).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?;
