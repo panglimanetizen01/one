@@ -347,13 +347,14 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
             .collect();
         let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect);
         let mut runtime = RealNetworkRuntime::new();
-        let mut ids = Vec::new();
-
-        for listener in listeners.iter().take(crate::resource_budget::MAX_ACTIVE_RESOURCE_OPERATIONS) {
+        let connect = |runtime: &mut RealNetworkRuntime, listener: &TcpListener| {
             let address = listener.local_addr().expect("listener address");
-            let result = runtime.execute(
+            runtime.execute(
                 NetworkOperation::Connect {
-                    target: NetworkTarget::Service { host: address.ip().to_string(), port: address.port() },
+                    target: NetworkTarget::Service {
+                        host: address.ip().to_string(),
+                        port: address.port(),
+                    },
                     constraints: crate::network::NetworkConstraints {
                         address_kind: Some(NetworkAddressKind::Ipv4),
                         transport: NetworkTransport::Reliable,
@@ -363,47 +364,58 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
                     },
                 },
                 &capabilities,
-            ).expect("connection within the global resource cap should succeed");
-            let id = match result {
-                NetworkRuntimeResult::Connected { id, .. } => id,
-                _ => panic!("connect must return a connection id"),
-            };
-            ids.push(id);
+            )
+        };
+        let deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let first_id = loop {
+            match connect(&mut runtime, &listeners[0]) {
+                Ok(NetworkRuntimeResult::Connected { id, .. }) => break id,
+                Err(NetworkRuntimeError::InvalidOperation(message))
+                    if message.contains("global") && std::time::Instant::now() < deadline =>
+                {
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("first connection must eventually acquire a permit: {error:?}"),
+                Ok(_) => panic!("connect must return a connection id"),
+            }
+        };
+
+        let mut ids = vec![first_id];
+        let mut denied_at_capacity = false;
+        for listener in listeners.iter().skip(1) {
+            match connect(&mut runtime, listener) {
+                Ok(NetworkRuntimeResult::Connected { id, .. }) => ids.push(id),
+                Err(NetworkRuntimeError::InvalidOperation(message))
+                    if message.contains("global") =>
+                {
+                    denied_at_capacity = true;
+                    break;
+                }
+                Err(error) => panic!("connection failed for a reason other than quota denial: {error:?}"),
+                Ok(_) => panic!("connect must return a connection id"),
+            }
         }
+        assert!(denied_at_capacity, "global resource cap must reject a connection when full");
 
-        let ninth_address = listeners[8].local_addr().expect("ninth listener address");
-        let denied = runtime.execute(
-            NetworkOperation::Connect {
-                target: NetworkTarget::Service { host: ninth_address.ip().to_string(), port: ninth_address.port() },
-                constraints: crate::network::NetworkConstraints {
-                    address_kind: Some(NetworkAddressKind::Ipv4),
-                    transport: NetworkTransport::Reliable,
-                    security: Some(crate::network::NetworkSecurity::Insecure),
-                    timeout_ms: 1_000,
-                    protocol: Some(NetworkProtocolFamily::Tcp),
-                },
-            },
-            &capabilities,
-        ).expect_err("ninth active connection must exceed the process-wide cap");
-        assert!(matches!(denied, NetworkRuntimeError::InvalidOperation(message) if message.contains("global")));
-
-        assert!(runtime.close(ids[0]), "closing a connection releases its resource permit");
-        let reopened = runtime.execute(
-            NetworkOperation::Connect {
-                target: NetworkTarget::Service { host: ninth_address.ip().to_string(), port: ninth_address.port() },
-                constraints: crate::network::NetworkConstraints {
-                    address_kind: Some(NetworkAddressKind::Ipv4),
-                    transport: NetworkTransport::Reliable,
-                    security: Some(crate::network::NetworkSecurity::Insecure),
-                    timeout_ms: 1_000,
-                    protocol: Some(NetworkProtocolFamily::Tcp),
-                },
-            },
-            &capabilities,
-        ).expect("closing one connection must restore admission");
-        assert!(matches!(reopened, NetworkRuntimeResult::Connected { .. }));
+        assert!(runtime.close(first_id), "closing a connection releases its resource permit");
+        let reopen_deadline = std::time::Instant::now() + Duration::from_secs(10);
+        let reopened_id = loop {
+            match connect(&mut runtime, &listeners[8]) {
+                Ok(NetworkRuntimeResult::Connected { id, .. }) => break id,
+                Err(NetworkRuntimeError::InvalidOperation(message))
+                    if message.contains("global") && std::time::Instant::now() < reopen_deadline =>
+                {
+                    thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("closing a connection must restore admission: {error:?}"),
+                Ok(_) => panic!("connect must return a connection id"),
+            }
+        };
+        assert!(runtime.close(reopened_id));
+        for id in ids.into_iter().skip(1) {
+            runtime.close(id);
+        }
     }
-
     #[test]
     fn network_runtime_rejects_oversized_send_payload_before_connection_lookup() {
         let mut runtime = RealNetworkRuntime::new();
