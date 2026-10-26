@@ -85,6 +85,20 @@ fn filesystem_mount_identity(file: &std::fs::File) -> std::io::Result<u64> {
 }
 
 #[cfg(unix)]
+fn ensure_same_filesystem_mount(file: &std::fs::File, directory: &std::fs::File) -> std::io::Result<()> {
+    use std::os::unix::fs::MetadataExt;
+    if file.metadata()?.dev() != directory.metadata()?.dev()
+        || filesystem_mount_identity(file)? != filesystem_mount_identity(directory)?
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "filesystem mount boundary crossed",
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
 fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
@@ -340,9 +354,7 @@ fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<
     if fd < 0 { return Err(std::io::Error::last_os_error()); }
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
-    if file.metadata()?.dev() != directory.metadata()?.dev()
-        || filesystem_mount_identity(&file)? != filesystem_mount_identity(&directory)?
-    { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
+    ensure_same_filesystem_mount(&file, &directory)?;
     Ok(file)
 }
 
@@ -355,13 +367,14 @@ fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result
     let name = relative.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
     let directory = open_directory_relative_to_root(root, parent)?;
     let name = std::ffi::CString::new(name.as_bytes()).map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
-    let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), libc::O_WRONLY | libc::O_CREAT | libc::O_TRUNC | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0o666) };
+    // Do not use O_TRUNC here: the final component may itself be a mountpoint.
+    // Validate the opened handle's mount identity before causing any write side effect.
+    let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), libc::O_WRONLY | libc::O_CREAT | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0o666) };
     if fd < 0 { return Err(std::io::Error::last_os_error()); }
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
-    if file.metadata()?.dev() != directory.metadata()?.dev()
-        || filesystem_mount_identity(&file)? != filesystem_mount_identity(&directory)?
-    { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
+    ensure_same_filesystem_mount(&file, &directory)?;
+    file.set_len(0)?;
     Ok(file)
 }
 
@@ -674,6 +687,22 @@ mod filesystem_nofollow_tests {
     #[test]
     fn descriptor_relative_walk_rejects_proc_mount_boundary() {
         assert!(open_directory_relative_to_root(Path::new("/"), Path::new("proc")).is_err());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn final_component_mount_boundary_denial_does_not_truncate_file() {
+        use std::fs::OpenOptions;
+        let path = Path::new("/dev/shm").join(format!("one-final-mount-boundary-{}", std::process::id()));
+        std::fs::write(&path, b"preserve-me").expect("/dev/shm test fixture should be writable");
+        let directory = std::fs::File::open(".").expect("project directory should be openable");
+        let file = OpenOptions::new().read(true).write(true).open(&path)
+            .expect("tmpfs fixture should be openable");
+        let result = ensure_same_filesystem_mount(&file, &directory)
+            .and_then(|()| file.set_len(0));
+        assert!(result.is_err(), "a file on another mount must be rejected before truncation");
+        assert_eq!(std::fs::read(&path).expect("fixture should remain readable"), b"preserve-me");
+        let _ = std::fs::remove_file(path);
     }
 
     #[test]
