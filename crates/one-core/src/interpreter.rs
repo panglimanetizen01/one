@@ -17,13 +17,14 @@ use crate::stdlib;
 #[derive(Debug, Clone, PartialEq, Eq)] pub struct ExecutionResult { pub output: Vec<String> }
 #[derive(Debug, Clone, PartialEq, Eq)] pub struct NetworkExecutionResult { pub description: String, pub performed_external_io: bool }
 #[derive(Debug, Clone, PartialEq, Eq)] pub struct RuntimeError { pub code: &'static str, pub message: String }
-pub struct Interpreter { pub capabilities: CapabilitySet, pub max_steps: usize, pub max_call_depth: usize, functions: HashMap<String, (Vec<String>, IrExpr, Vec<IrStatement>)>, events: HashMap<String, Vec<IrStatement>>, environment: Option<Environment>, steps: usize, call_depth: usize, orchestrator: Option<Orchestrator> }
+const MAX_RUNTIME_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+pub struct Interpreter { pub capabilities: CapabilitySet, pub max_steps: usize, pub max_call_depth: usize, output_bytes: usize, functions: HashMap<String, (Vec<String>, IrExpr, Vec<IrStatement>)>, events: HashMap<String, Vec<IrStatement>>, environment: Option<Environment>, steps: usize, call_depth: usize, orchestrator: Option<Orchestrator> }
 impl Interpreter {
- pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, max_call_depth: 128, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, call_depth: 0, orchestrator: None } }
- pub fn with_orchestration_policy(policy: ExecutionPolicy) -> Self { let mut orchestrator = Orchestrator::new(policy); orchestrator.register(Box::new(DnsResolveAdapter::new())); orchestrator.register(Box::new(FileReadAdapter::new())); orchestrator.register(Box::new(FileWriteAdapter::new())); orchestrator.register(Box::new(ProcessAdapter::new())); orchestrator.register(Box::new(SqliteAdapter::new())); orchestrator.register(Box::new(HttpGetAdapter::new())); Self { capabilities: CapabilitySet::none(), max_steps: 100_000, max_call_depth: 128, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, call_depth: 0, orchestrator: Some(orchestrator) } }
+ pub fn new(capabilities: CapabilitySet) -> Self { Self { capabilities, max_steps: 100_000, max_call_depth: 128, output_bytes: 0, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, call_depth: 0, orchestrator: None } }
+ pub fn with_orchestration_policy(policy: ExecutionPolicy) -> Self { let mut orchestrator = Orchestrator::new(policy); orchestrator.register(Box::new(DnsResolveAdapter::new())); orchestrator.register(Box::new(FileReadAdapter::new())); orchestrator.register(Box::new(FileWriteAdapter::new())); orchestrator.register(Box::new(ProcessAdapter::new())); orchestrator.register(Box::new(SqliteAdapter::new())); orchestrator.register(Box::new(HttpGetAdapter::new())); Self { capabilities: CapabilitySet::none(), max_steps: 100_000, max_call_depth: 128, output_bytes: 0, functions: HashMap::new(), events: HashMap::new(), environment: None, steps: 0, call_depth: 0, orchestrator: Some(orchestrator) } }
  pub fn execute_network(&mut self, operation: &IrNetworkOperation) -> Result<NetworkExecutionResult, RuntimeError> { let semantic = operation.operation(); if let Err(bundle) = semantic.validate() { let diagnostic = &bundle.0[0]; return Err(RuntimeError { code: diagnostic.code, message: diagnostic.message.clone() }); } for capability in semantic.required_capabilities() { if !self.capabilities.permits(capability) { return Err(RuntimeError { code: "N3101", message: format!("Kemampuan jaringan {:?} belum diberikan kepada program.", capability) }); } } Ok(NetworkExecutionResult { description: "network operation delegated to reference backend".into(), performed_external_io: false }) }
- pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> { self.functions.clear(); self.events.clear(); self.environment = None; self.steps = 0; self.register_definitions(&program.statements); let mut env = Environment::new(); let mut output = Vec::new(); self.exec_block(&program.statements, &mut env, &mut output)?; self.environment = Some(env); Ok(ExecutionResult { output }) }
- pub fn dispatch_event(&mut self, trigger: &str) -> Result<ExecutionResult, RuntimeError> { let body = self.events.get(trigger).cloned().ok_or_else(|| RuntimeError { code: "R3001", message: format!("Event '{}' belum terdaftar.", trigger) })?; let mut env = self.environment.take().ok_or_else(|| RuntimeError { code: "R3021", message: "Program belum dijalankan; jalankan program sebelum memicu event.".into() })?; let mut output = Vec::new(); self.steps = 0; let result = self.exec_block(&body, &mut env, &mut output); self.environment = Some(env); result.map(|()| ExecutionResult { output }) }
+ pub fn execute(&mut self, program: &IrProgram) -> Result<ExecutionResult, RuntimeError> { self.functions.clear(); self.events.clear(); self.environment = None; self.steps = 0; self.output_bytes = 0; self.register_definitions(&program.statements); let mut env = Environment::new(); let mut output = Vec::new(); self.exec_block(&program.statements, &mut env, &mut output)?; self.environment = Some(env); Ok(ExecutionResult { output }) }
+ pub fn dispatch_event(&mut self, trigger: &str) -> Result<ExecutionResult, RuntimeError> { let body = self.events.get(trigger).cloned().ok_or_else(|| RuntimeError { code: "R3001", message: format!("Event '{}' belum terdaftar.", trigger) })?; let mut env = self.environment.take().ok_or_else(|| RuntimeError { code: "R3021", message: "Program belum dijalankan; jalankan program sebelum memicu event.".into() })?; let mut output = Vec::new(); self.steps = 0; self.output_bytes = 0; let result = self.exec_block(&body, &mut env, &mut output); self.environment = Some(env); result.map(|()| ExecutionResult { output }) }
  fn register_definitions(&mut self, statements: &[IrStatement]) { for statement in statements { match statement { IrStatement::Function { name, params, result, body } => { self.functions.insert(name.clone(), (params.clone(), result.clone(), body.clone())); }, IrStatement::Event { trigger, body } => { self.events.insert(trigger.join(" "), body.clone()); }, _ => {} } } }
  fn tick(&mut self) -> Result<(), RuntimeError> { self.steps += 1; if self.steps > self.max_steps { Err(RuntimeError { code: "R3002", message: "Program melebihi batas langkah eksekusi yang aman.".into() }) } else { Ok(()) } }
  fn exec_block(&mut self, statements: &[IrStatement], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { for statement in statements { self.tick()?; self.exec_statement(statement, env, output)?; } Ok(()) }
@@ -43,11 +44,11 @@ impl Interpreter {
    for argument in arguments { adapter_request = adapter_request.with_argument(argument); }
    let (adapter_id, result) = orchestrator.execute_request_with_audit_for_adapter(&adapter_request, PlatformKind::Any, Some(&AdapterId::new(adapter)), &mut audit).map_err(Self::orchestration_error)?;
    let normalized = normalize_result(adapter_id, result, *expectation).map_err(|error| RuntimeError { code: "N3206", message: format!("Hasil orchestration tidak dapat dinormalisasi: {:?}", error) })?;
-   match normalized.value() { NormalizedValue::Text(value) => output.extend(value.lines().map(ToOwned::to_owned)), NormalizedValue::Bytes(value) => match std::str::from_utf8(value) { Ok(text) => output.extend(text.lines().map(ToOwned::to_owned)), Err(_) => return Err(RuntimeError { code: "N3207", message: "Hasil orchestration berupa bytes yang bukan UTF-8.".into() }) } }
+   match normalized.value() { NormalizedValue::Text(value) => { for line in value.lines() { self.push_output(output, line.to_owned())?; } }, NormalizedValue::Bytes(value) => match std::str::from_utf8(value) { Ok(text) => { for line in text.lines() { self.push_output(output, line.to_owned())?; } }, Err(_) => return Err(RuntimeError { code: "N3207", message: "Hasil orchestration berupa bytes yang bukan UTF-8.".into() }) } }
   }
  } Ok(()) }
  fn orchestration_error(error: OrchestrationError) -> RuntimeError { match error { OrchestrationError::InvalidRequest(error) => RuntimeError { code: "N3208", message: format!("Permintaan orchestration tidak valid: {:?}.", error) }, OrchestrationError::PolicyDenied(decision) => RuntimeError { code: "N3209", message: format!("Permintaan orchestration ditolak policy: {:?}.", decision) }, OrchestrationError::ApprovalRequired => RuntimeError { code: "N3210", message: "Permintaan orchestration membutuhkan persetujuan.".into() }, OrchestrationError::NoCompatibleAdapter => RuntimeError { code: "N3211", message: "Tidak ada adapter orchestration yang kompatibel.".into() }, OrchestrationError::Adapter(error) => RuntimeError { code: "N3212", message: format!("Adapter orchestration gagal: {:?}.", error) } } }
- fn exec_action(&mut self, name: &str, args: &[IrExpr], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { match name { "tampilkan" => { if args.len() != 1 { return Err(RuntimeError { code: "R3006", message: "'tampilkan' membutuhkan tepat satu nilai.".into() }); } output.push(self.eval(&args[0], env)?.display()); }, "sapa" => { if args.len() != 1 { return Err(RuntimeError { code: "R3007", message: "'sapa' membutuhkan satu nama.".into() }); } output.push(format!("Halo, {}!", self.eval(&args[0], env)?.display())); }, "buat daftar" => { if args.len() != 1 { return Err(RuntimeError { code: "R3008", message: "'buat daftar' membutuhkan nama daftar.".into() }); } if let IrExpr::Identifier(name) = &args[0] { env.define(name.clone(), Value::List(Vec::new())); } else { return Err(RuntimeError { code: "R3009", message: "Nama daftar harus berupa identifier.".into() }); } }, "buat pemetaan" => {
+ fn exec_action(&mut self, name: &str, args: &[IrExpr], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { match name { "tampilkan" => { if args.len() != 1 { return Err(RuntimeError { code: "R3006", message: "'tampilkan' membutuhkan tepat satu nilai.".into() }); } let value = self.eval(&args[0], env)?.display(); self.push_output(output, value)?; }, "sapa" => { if args.len() != 1 { return Err(RuntimeError { code: "R3007", message: "'sapa' membutuhkan satu nama.".into() }); } let value = format!("Halo, {}!", self.eval(&args[0], env)?.display()); self.push_output(output, value)?; }, "buat daftar" => { if args.len() != 1 { return Err(RuntimeError { code: "R3008", message: "'buat daftar' membutuhkan nama daftar.".into() }); } if let IrExpr::Identifier(name) = &args[0] { env.define(name.clone(), Value::List(Vec::new())); } else { return Err(RuntimeError { code: "R3009", message: "Nama daftar harus berupa identifier.".into() }); } }, "buat pemetaan" => {
     if args.len() != 1 { return Err(RuntimeError { code: "R3030", message: "'buat pemetaan' membutuhkan nama pemetaan.".into() }); }
     if let IrExpr::Identifier(map_name) = &args[0] {
         env.define(map_name.clone(), Value::Map(BTreeMap::new()));
@@ -83,7 +84,7 @@ impl Interpreter {
     };
     let map = env.get(map_name).ok_or_else(|| RuntimeError { code: "R3040", message: format!("Pemetaan '{}' belum dibuat.", map_name) })?;
     match map {
-        Value::Map(values) => output.push(values.get(&key).ok_or_else(|| RuntimeError { code: "R3041", message: format!("Kunci '{}' tidak ditemukan dalam pemetaan '{}'.", key, map_name) })?.display()),
+        Value::Map(values) => { let value = values.get(&key).ok_or_else(|| RuntimeError { code: "R3041", message: format!("Kunci '{}' tidak ditemukan dalam pemetaan '{}'.", key, map_name) })?.display(); self.push_output(output, value)?; },
         _ => return Err(RuntimeError { code: "R3042", message: format!("'{}' bukan pemetaan.", map_name) }),
     }
 }, "hapus kunci dari pemetaan" => {
@@ -105,6 +106,21 @@ impl Interpreter {
     }
     let _ = env.assign(map_name, map);
 }, "tambahkan" | "hapus" => { if args.len() != 2 { return Err(RuntimeError { code: "R3010", message: format!("'{}' membutuhkan nilai dan nama daftar.", name) }); } let item = match &args[0] { IrExpr::Identifier(word) => env.get(word).unwrap_or_else(|| Value::Text(word.clone())), _ => self.eval(&args[0], env)? }; let list_name = match &args[1] { IrExpr::Identifier(value) => value, _ => return Err(RuntimeError { code: "R3011", message: "Nama daftar harus berupa identifier.".into() }) }; let mut list = env.get(list_name).ok_or_else(|| RuntimeError { code: "R3012", message: format!("Saya belum menemukan daftar '{}'.", list_name) })?; match &mut list { Value::List(values) if name == "tambahkan" => values.push(item), Value::List(values) => { if let Some(index) = values.iter().position(|v| v == &item) { values.remove(index); } }, _ => return Err(RuntimeError { code: "R3013", message: format!("'{}' bukan daftar.", list_name) }) } let _ = env.assign(list_name, list); }, "gunakan proses" => { if !self.capabilities.permits(Capability::Process) { return Err(RuntimeError { code: "R3014", message: "Kemampuan proses belum diberikan kepada program.".into() }); } }, _ => return Err(RuntimeError { code: "R3015", message: format!("Aksi '{}' belum memiliki implementasi standard library.", name) }) } Ok(()) }
+ fn push_output(&mut self, output: &mut Vec<String>, value: String) -> Result<(), RuntimeError> {
+    let next = self.output_bytes.checked_add(value.len()).ok_or_else(|| RuntimeError {
+        code: "R3050",
+        message: "Program melewati batas output runtime sebesar 16 MiB.".into(),
+    })?;
+    if next > MAX_RUNTIME_OUTPUT_BYTES {
+        return Err(RuntimeError {
+            code: "R3050",
+            message: "Program melewati batas output runtime sebesar 16 MiB.".into(),
+        });
+    }
+    self.output_bytes = next;
+    output.push(value);
+    Ok(())
+ }
  fn eval(&mut self, expr: &IrExpr, env: &Environment) -> Result<Value, RuntimeError> { match expr { IrExpr::Text(v) => Ok(Value::Text(v.clone())), IrExpr::Number(v) => Ok(Value::Number(*v)), IrExpr::Boolean(v) => Ok(Value::Boolean(*v)), IrExpr::Nothing => Ok(Value::Nothing), IrExpr::Identifier(name) => env.get(name).ok_or_else(|| RuntimeError { code: "R3016", message: format!("Saya belum menemukan '{}'.", name) }), IrExpr::Binary { left, op, right } => { let left_value = self.eval(left, env)?; let right_value = self.eval(right, env)?; self.eval_binary(*op, left_value, right_value) }, IrExpr::Call { name, args } => self.call_function(name, args, env) } }
  fn eval_binary(&self, op: BinaryOp, left: Value, right: Value) -> Result<Value, RuntimeError> { match (op, left, right) { (BinaryOp::Add, Value::Number(a), Value::Number(b)) => a.checked_add(b).map(Value::Number).ok_or_else(|| RuntimeError { code: "R3023", message: "Hasil operasi angka berada di luar rentang integer.".into() }), (BinaryOp::Subtract, Value::Number(a), Value::Number(b)) => a.checked_sub(b).map(Value::Number).ok_or_else(|| RuntimeError { code: "R3023", message: "Hasil operasi angka berada di luar rentang integer.".into() }), (BinaryOp::Multiply, Value::Number(a), Value::Number(b)) => a.checked_mul(b).map(Value::Number).ok_or_else(|| RuntimeError { code: "R3023", message: "Hasil operasi angka berada di luar rentang integer.".into() }), (BinaryOp::Divide, Value::Number(a), Value::Number(b)) if b != 0 => a.checked_div(b).map(Value::Number).ok_or_else(|| RuntimeError { code: "R3023", message: "Hasil operasi angka berada di luar rentang integer.".into() }), (BinaryOp::Divide, _, Value::Number(0)) => Err(RuntimeError { code: "R3017", message: "Pembagian dengan nol tidak diperbolehkan.".into() }), (BinaryOp::Equal, a, b) => Ok(Value::Boolean(a == b)), (BinaryOp::Greater, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a > b)), (BinaryOp::Less, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a < b)), (BinaryOp::AtMost, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a <= b)), (BinaryOp::AtLeast, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a >= b)), (BinaryOp::Add, Value::Text(a), Value::Text(b)) => Ok(Value::Text(format!("{}{}", a, b))), _ => Err(RuntimeError { code: "R3018", message: "Operasi tidak cocok dengan tipe nilai.".into() }) } }
  fn call_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Environment) -> Result<Value, RuntimeError> {
@@ -196,4 +212,36 @@ fn call_user_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Envir
     self.exec_block(&body, &mut env, &mut ignored_output)?;
     self.eval(&result, &env)
 }
+}
+
+
+#[cfg(test)]
+mod resource_bound_tests {
+    use super::*;
+
+    #[test]
+    fn runtime_output_budget_rejects_aggregate_output_over_limit() {
+        let mut interpreter = Interpreter::new(CapabilitySet::none());
+        let mut output = Vec::new();
+        interpreter.push_output(&mut output, "x".repeat(MAX_RUNTIME_OUTPUT_BYTES - 1))
+            .expect("output just below the budget should be accepted");
+        let error = interpreter.push_output(&mut output, "xx".into())
+            .expect_err("aggregate output over the budget must be rejected");
+        assert_eq!(error.code, "R3050");
+        assert_eq!(output.len(), 1);
+        assert_eq!(interpreter.output_bytes, MAX_RUNTIME_OUTPUT_BYTES - 1);
+    }
+
+    #[test]
+    fn runtime_output_budget_accepts_exact_limit_and_resets_for_next_execution() {
+        let mut interpreter = Interpreter::new(CapabilitySet::none());
+        let mut output = Vec::new();
+        interpreter.push_output(&mut output, "x".repeat(MAX_RUNTIME_OUTPUT_BYTES))
+            .expect("exact output budget should be accepted");
+        assert_eq!(interpreter.output_bytes, MAX_RUNTIME_OUTPUT_BYTES);
+        interpreter.output_bytes = 0;
+        let mut next_output = Vec::new();
+        interpreter.push_output(&mut next_output, "next".into())
+            .expect("new execution should start with a fresh output budget");
+    }
 }
