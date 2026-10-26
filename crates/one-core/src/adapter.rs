@@ -298,7 +298,7 @@ fn resolve_project_filesystem_target(target: &str) -> Result<(std::path::PathBuf
 
 #[cfg(unix)]
 fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
-    use std::os::fd::AsRawFd;
+    use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
     use std::os::unix::fs::MetadataExt;
     let parent = relative.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
@@ -315,7 +315,7 @@ fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<
 
 #[cfg(unix)]
 fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
-    use std::os::fd::AsRawFd;
+    use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
     use std::os::unix::fs::MetadataExt;
     let parent = relative.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
