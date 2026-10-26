@@ -63,6 +63,38 @@ fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
 }
 
 #[cfg(unix)]
+fn open_directory_relative_to_root(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::MetadataExt;
+
+    let mut directory = open_directory_nofollow(root)?;
+    let root_device = directory.metadata()?.dev();
+    for component in relative.components() {
+        match component {
+            Component::CurDir => continue,
+            Component::Normal(name) => {
+                let name = std::ffi::CString::new(name.as_bytes())
+                    .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+                let next_fd = unsafe {
+                    libc::openat(directory.as_raw_fd(), name.as_ptr(),
+                        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW)
+                };
+                if next_fd < 0 { return Err(std::io::Error::last_os_error()); }
+                let next = unsafe { std::fs::File::from_raw_fd(next_fd) };
+                if next.metadata()?.dev() != root_device {
+                    return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed"));
+                }
+                directory = next;
+            }
+            Component::ParentDir | Component::RootDir | Component::Prefix(_) =>
+                return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "path escapes project root")),
+        }
+    }
+    Ok(directory)
+}
+
+#[cfg(unix)]
 fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
@@ -239,6 +271,101 @@ fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
     std::fs::OpenOptions::new().write(true).create(true).truncate(true).open(path)
 }
 
+fn resolve_project_filesystem_target(target: &str) -> Result<(std::path::PathBuf, std::path::PathBuf), AdapterError> {
+    if target.is_empty() || target.contains('\0') {
+        return Err(AdapterError::InvalidArguments);
+    }
+    let supplied = Path::new(target);
+    if supplied.components().any(|component| matches!(component, Component::ParentDir)) {
+        return Err(AdapterError::InvalidArguments);
+    }
+    let root = std::env::current_dir().map_err(|_| AdapterError::BackendFailure)?;
+    let root = std::fs::canonicalize(root).map_err(|_| AdapterError::BackendFailure)?;
+    let relative = if supplied.is_absolute() {
+        supplied.strip_prefix(&root).map_err(|_| AdapterError::InvalidArguments)?
+    } else {
+        supplied
+    };
+    if relative.as_os_str().is_empty()
+        || relative.is_absolute()
+        || relative.components().any(|component| !matches!(component, Component::Normal(_) | Component::CurDir))
+    {
+        return Err(AdapterError::InvalidArguments);
+    }
+    validate_filesystem_target(&relative.to_string_lossy())?;
+    Ok((root, relative.to_path_buf()))
+}
+
+#[cfg(unix)]
+fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::AsRawFd;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::MetadataExt;
+    let parent = relative.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
+    let name = relative.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
+    let directory = open_directory_relative_to_root(root, parent)?;
+    let name = std::ffi::CString::new(name.as_bytes()).map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+    let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK) };
+    if fd < 0 { return Err(std::io::Error::last_os_error()); }
+    let file = unsafe { std::fs::File::from_raw_fd(fd) };
+    if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
+    if file.metadata()?.dev() != directory.metadata()?.dev() { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
+    Ok(file)
+}
+
+#[cfg(unix)]
+fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::AsRawFd;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::MetadataExt;
+    let parent = relative.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
+    let name = relative.file_name().ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "file name is required"))?;
+    let directory = open_directory_relative_to_root(root, parent)?;
+    let name = std::ffi::CString::new(name.as_bytes()).map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+    let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), libc::O_WRONLY | libc::O_CREAT | libc::O_TRUNC | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0o666) };
+    if fd < 0 { return Err(std::io::Error::last_os_error()); }
+    let file = unsafe { std::fs::File::from_raw_fd(fd) };
+    if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
+    if file.metadata()?.dev() != directory.metadata()?.dev() { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "filesystem mount boundary crossed")); }
+    Ok(file)
+}
+
+#[cfg(windows)]
+fn windows_validate_project_root(file: &std::fs::File, root: &Path) -> std::io::Result<()> {
+    let actual = windows_normalized_path(&windows_final_path(file)?);
+    let root = windows_normalized_path(&root.to_string_lossy());
+    if actual != root && !actual.starts_with(&format!("{root}\\"))
+        { return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "opened handle escapes project root")); }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
+    let file = open_read_target(&root.join(relative))?;
+    windows_validate_project_root(&file, root)?;
+    Ok(file)
+}
+
+#[cfg(windows)]
+fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result<std::fs::File> {
+    let file = open_write_target(&root.join(relative))?;
+    if let Err(error) = windows_validate_project_root(&file, root) {
+        windows_delete_opened_file(&file);
+        return Err(error);
+    }
+    Ok(file)
+}
+
+#[cfg(not(any(unix, windows)))]
+fn open_read_target_in_project(_root: &Path, _relative: &Path) -> std::io::Result<std::fs::File> {
+    Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "filesystem adapter fails closed on this platform"))
+}
+
+#[cfg(not(any(unix, windows)))]
+fn open_write_target_in_project(_root: &Path, _relative: &Path) -> std::io::Result<std::fs::File> {
+    Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "filesystem adapter fails closed on this platform"))
+}
+
 #[cfg(windows)]
 fn windows_lexical_absolute(path: &Path) -> std::io::Result<std::path::PathBuf> {
     let absolute = if path.is_absolute() {
@@ -388,12 +515,12 @@ pub trait ToolAdapter { fn metadata(&self) -> &AdapterMetadata; fn invoke(&self,
 pub struct FileReadAdapter { metadata: AdapterMetadata }
 impl FileReadAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.read"), AdapterStatus::Implemented, vec![Capability::FilesystemRead], vec![PlatformKind::Any]) } } }
 impl Default for FileReadAdapter { fn default() -> Self { Self::new() } }
-impl ToolAdapter for FileReadAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); } let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; validate_filesystem_target(path)?; (|| { let file = open_read_target(Path::new(path)).map_err(|_| AdapterError::BackendFailure)?; if file.metadata().map_err(|_| AdapterError::BackendFailure)?.len() > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } let mut output = Vec::new(); file.take(MAX_FILE_BYTES + 1).read_to_end(&mut output).map_err(|_| AdapterError::BackendFailure)?; if output.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } Ok(AdapterResult { success: true, output }) })() } }
+impl ToolAdapter for FileReadAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); } let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; let (root, relative) = resolve_project_filesystem_target(path)?; (|| { let file = open_read_target_in_project(&root, &relative).map_err(|_| AdapterError::BackendFailure)?; if file.metadata().map_err(|_| AdapterError::BackendFailure)?.len() > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } let mut output = Vec::new(); file.take(MAX_FILE_BYTES + 1).read_to_end(&mut output).map_err(|_| AdapterError::BackendFailure)?; if output.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::BackendFailure); } Ok(AdapterResult { success: true, output }) })() } }
 
 pub struct FileWriteAdapter { metadata: AdapterMetadata }
 impl FileWriteAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.write"), AdapterStatus::Implemented, vec![Capability::FilesystemWrite], vec![PlatformKind::Any]) } } }
 impl Default for FileWriteAdapter { fn default() -> Self { Self::new() } }
-impl ToolAdapter for FileWriteAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; let content = match request.arguments() { [AdapterArgument::Text(value)] => value.as_bytes().to_vec(), _ => return Err(AdapterError::InvalidArguments) }; let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; validate_filesystem_target(path)?; if content.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::InvalidArguments); } open_write_target(Path::new(path)).and_then(|mut file| file.write_all(&content)).map(|()| AdapterResult { success: true, output: content }).map_err(|_| AdapterError::BackendFailure) } }
+impl ToolAdapter for FileWriteAdapter { fn metadata(&self) -> &AdapterMetadata { &self.metadata } fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> { self.metadata.validate_request(request.capability())?; let content = match request.arguments() { [AdapterArgument::Text(value)] => value.as_bytes().to_vec(), _ => return Err(AdapterError::InvalidArguments) }; let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) }; let (root, relative) = resolve_project_filesystem_target(path)?; if content.len() as u64 > MAX_FILE_BYTES { return Err(AdapterError::InvalidArguments); } open_write_target_in_project(&root, &relative).and_then(|mut file| file.write_all(&content)).map(|()| AdapterResult { success: true, output: content }).map_err(|_| AdapterError::BackendFailure) } }
 
 pub struct ProcessAdapter { metadata: AdapterMetadata }
 impl ProcessAdapter { pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("process.execute"), AdapterStatus::Implemented, vec![Capability::Process], vec![PlatformKind::Any]) } } }
@@ -429,6 +556,30 @@ fn parse_http_target(target: &str) -> Result<(String, String), AdapterError> {
 
 #[cfg(test)]
 mod tests { use super::*; use crate::capability::Capability; use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, EffectClass, ExecutionScope, SemanticCapabilityId}; fn request() -> CapabilityRequest { CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect) } fn metadata() -> AdapterMetadata { AdapterMetadata::new(AdapterId::new("network.native"), AdapterStatus::Implemented, vec![Capability::NetworkConnect], vec![PlatformKind::Linux, PlatformKind::Windows]) } #[test] fn adapter_identity_and_capability_metadata_are_stable() { let metadata = metadata(); assert_eq!(metadata.id().as_str(), "network.native"); assert!(metadata.declares(Capability::NetworkConnect)); assert!(!metadata.declares(Capability::NetworkAdmin)); } #[test] fn adapter_platform_compatibility_is_explicit() { let metadata = metadata(); assert!(metadata.available_on(PlatformKind::Linux)); assert!(metadata.available_on(PlatformKind::Windows)); assert!(!metadata.available_on(PlatformKind::Android)); } #[test] fn adapter_request_requires_declared_capability() { let metadata = metadata(); assert!(metadata.validate_request(&request()).is_ok()); let undeclared = CapabilityRequest::new(SemanticCapabilityId::NetworkAdmin, Capability::NetworkAdmin, ExecutionScope::target("server.example"), EffectClass::Admin); assert_eq!(metadata.validate_request(&undeclared), Err(AdapterError::UndeclaredCapability)); } #[test] fn adapter_request_contains_typed_arguments_not_command_text() { let request = AdapterRequest::new(request()).with_argument(AdapterArgument::Text("server.example".into())); assert_eq!(request.arguments(), &[AdapterArgument::Text("server.example".into())]); } #[test] fn adapter_errors_distinguish_backend_resolution_failure_from_platform_unavailability() { assert_ne!(AdapterError::ResolutionFailed, AdapterError::UnsupportedPlatform); } #[test] fn filesystem_read_adapter_succeeds_for_existing_file() { let adapter = FileReadAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target("Cargo.toml"), EffectClass::Read); let result = adapter.invoke(&AdapterRequest::new(request)).expect("existing file should be readable"); assert!(result.success); assert!(!result.output.is_empty()); } #[test] fn filesystem_read_adapter_classifies_missing_backend_as_backend_failure() { let adapter = FileReadAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target("this-file-must-not-exist.one"), EffectClass::Read); assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::BackendFailure)); } 
+
+#[test]
+fn filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects() {
+    let outside = std::env::temp_dir().join(format!("one-project-root-outside-{}.txt", std::process::id()));
+    let _ = std::fs::remove_file(&outside);
+    std::fs::write(&outside, "outside-secret").expect("create outside fixture");
+    let read = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target(outside.display().to_string()), EffectClass::Read);
+    assert_eq!(FileReadAdapter::new().invoke(&AdapterRequest::new(read)), Err(AdapterError::InvalidArguments));
+    let write = CapabilityRequest::new(SemanticCapabilityId::FilesystemWrite, Capability::FilesystemWrite, ExecutionScope::target(outside.display().to_string()), EffectClass::Write);
+    assert_eq!(FileWriteAdapter::new().invoke(&AdapterRequest::new(write).with_argument(AdapterArgument::Text("changed".into()))), Err(AdapterError::InvalidArguments));
+    assert_eq!(std::fs::read_to_string(&outside).expect("outside file remains"), "outside-secret");
+    let _ = std::fs::remove_file(outside);
+}
+
+#[test]
+fn filesystem_adapter_reads_absolute_target_inside_project_root() {
+    let root = std::env::current_dir().expect("project cwd");
+    let path = root.join(format!("one-project-root-inside-{}.txt", std::process::id()));
+    std::fs::write(&path, "inside").expect("create in-root fixture");
+    let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target(path.display().to_string()), EffectClass::Read);
+    let result = FileReadAdapter::new().invoke(&AdapterRequest::new(request)).expect("in-root file should be readable");
+    assert_eq!(result.output, b"inside");
+    let _ = std::fs::remove_file(path);
+}
 
 #[test] fn filesystem_adapters_reject_parent_directory_traversal() { assert_eq!(validate_filesystem_target("../Cargo.toml"), Err(AdapterError::InvalidArguments)); }
 #[cfg(unix)] #[test] fn filesystem_adapters_reject_symlink_targets() { use std::os::unix::fs::symlink; let base = std::env::temp_dir().join("one-filesystem-symlink-target-test"); let target = base.with_extension("target"); let link = base.with_extension("link"); std::fs::write(&target, "secret").expect("target should be created"); symlink(&target, &link).expect("symlink should be created"); assert_eq!(validate_filesystem_target(&link.display().to_string()), Err(AdapterError::InvalidArguments)); let _ = std::fs::remove_file(link); let _ = std::fs::remove_file(target); }
