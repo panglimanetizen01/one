@@ -26,12 +26,12 @@ pub(crate) struct ResourcePermit {
 impl ResourcePermit {
     pub(crate) fn operation() -> Option<Self> {
         reserve(&ACTIVE_RESOURCE_OPERATIONS, MAX_ACTIVE_RESOURCE_OPERATIONS)
-            .then_some(Self { kind: ResourceKind::Operation })
+            .then(|| Self { kind: ResourceKind::Operation })
     }
 
     pub(crate) fn process() -> Option<Self> {
         reserve(&ACTIVE_RESOURCE_OPERATIONS, MAX_ACTIVE_RESOURCE_OPERATIONS)
-            .then_some(Self { kind: ResourceKind::Process })
+            .then(|| Self { kind: ResourceKind::Process })
     }
 
     pub(crate) fn database() -> Option<Self> {
@@ -41,7 +41,7 @@ impl ResourcePermit {
             MAX_ACTIVE_RESOURCE_OPERATIONS,
             MAX_ACTIVE_DATABASE_QUERIES,
         )
-        .then_some(Self { kind: ResourceKind::Database })
+        .then(|| Self { kind: ResourceKind::Database })
     }
 }
 
