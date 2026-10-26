@@ -581,7 +581,6 @@ impl ToolAdapter for HttpGetAdapter {
     fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> {
         self.metadata.validate_request(request.capability())?;
         if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); }
-        let _resource_permit = crate::resource_budget::ResourcePermit::operation().ok_or(AdapterError::ResourceLimitExceeded)?;
         let target = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) };
         let (authority, path) = parse_http_target(target)?;
         let mut runtime = RealNetworkRuntime::new();
