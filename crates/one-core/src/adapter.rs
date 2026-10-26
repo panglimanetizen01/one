@@ -670,6 +670,59 @@ mod filesystem_nofollow_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn descriptor_relative_walk_rejects_proc_mount_boundary() {
+        assert!(open_directory_relative_to_root(Path::new("/"), Path::new("proc")).is_err());
+    }
+
+    #[test]
+    fn descriptor_relative_read_race_never_follows_swapped_parent_symlink() {
+        use std::io::Read;
+        use std::sync::{Arc, Barrier};
+        use std::thread;
+
+        let root = test_root("toctou-root");
+        let outside = test_root("toctou-outside");
+        let directory = root.join("a");
+        let alternate = root.join("b");
+        let temporary = root.join("swap");
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_dir_all(&outside);
+        std::fs::create_dir_all(&directory).expect("create in-root directory");
+        std::fs::create_dir_all(&outside).expect("create outside directory");
+        std::fs::write(directory.join("secret.txt"), b"inside").expect("create in-root file");
+        std::fs::write(outside.join("secret.txt"), b"outside").expect("create outside file");
+        symlink(&outside, &alternate).expect("create alternate symlink");
+
+        let start = Arc::new(Barrier::new(2));
+        let attacker_root = root.clone();
+        let attacker_start = Arc::clone(&start);
+        let attacker = thread::spawn(move || {
+            let a = attacker_root.join("a");
+            let b = attacker_root.join("b");
+            let swap = attacker_root.join("swap");
+            attacker_start.wait();
+            for _ in 0..2_000 {
+                std::fs::rename(&a, &swap).expect("move real directory aside");
+                std::fs::rename(&b, &a).expect("swap symlink into target name");
+                std::fs::rename(&swap, &b).expect("restore real directory under alternate name");
+            }
+        });
+
+        start.wait();
+        for _ in 0..2_000 {
+            if let Ok(mut file) = open_read_target_in_project(&root, Path::new("a/secret.txt")) {
+                let mut bytes = Vec::new();
+                file.read_to_end(&mut bytes).expect("read opened in-root file");
+                assert_eq!(bytes, b"inside", "a parent-component race must never read outside-root bytes");
+            }
+        }
+        attacker.join().expect("attacker thread completes");
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_dir_all(&outside);
+    }
+
 }
 
 #[cfg(all(test, windows))]
