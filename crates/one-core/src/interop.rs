@@ -657,8 +657,7 @@ fn run_process_windows_with_limits(
             spec.program, limits.timeout
         ));
     }
-    if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire)
-    {
+    if stdout_read_failed.load(Ordering::Acquire) || stderr_read_failed.load(Ordering::Acquire) {
         return Err("Gagal membaca stdout/stderr proses setelah proses dihentikan.".to_owned());
     }
     if exceeded.load(Ordering::Acquire) {
