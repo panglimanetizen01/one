@@ -1,4 +1,4 @@
-//! Process-wide resource admission budget shared by subprocess and SQLite adapters.
+//! Process-wide resource admission budget shared by subprocess, filesystem, DNS/HTTP, and SQLite adapters.
 //!
 //! The global operation cap bounds the number of simultaneously active resource-heavy
 //! operations across all interpreter instances. Database queries have a stricter nested cap
@@ -16,6 +16,7 @@ static ACTIVE_DATABASE_QUERIES: AtomicUsize = AtomicUsize::new(0);
 enum ResourceKind {
     Process,
     Database,
+    Operation,
 }
 
 pub(crate) struct ResourcePermit {
@@ -23,6 +24,11 @@ pub(crate) struct ResourcePermit {
 }
 
 impl ResourcePermit {
+    pub(crate) fn operation() -> Option<Self> {
+        reserve(&ACTIVE_RESOURCE_OPERATIONS, MAX_ACTIVE_RESOURCE_OPERATIONS)
+            .then_some(Self { kind: ResourceKind::Operation })
+    }
+
     pub(crate) fn process() -> Option<Self> {
         reserve(&ACTIVE_RESOURCE_OPERATIONS, MAX_ACTIVE_RESOURCE_OPERATIONS)
             .then_some(Self { kind: ResourceKind::Process })
@@ -117,12 +123,14 @@ mod tests {
     }
 
     #[test]
-    fn global_operation_quota_denies_process_or_database_admission_when_full() {
+    fn global_operation_quota_denies_process_database_and_adapter_admission_when_full() {
         let active_operations = AtomicUsize::new(2);
         let active_database_queries = AtomicUsize::new(0);
 
         assert!(!reserve(&active_operations, 2));
         assert!(!reserve_database(&active_operations, &active_database_queries, 2, 1));
+        // Filesystem/DNS/HTTP adapters use the same global operation counter.
+        assert!(!reserve(&active_operations, 2));
         assert_eq!(active_operations.load(Ordering::Acquire), 2);
         assert_eq!(active_database_queries.load(Ordering::Acquire), 0);
     }
