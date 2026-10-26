@@ -85,3 +85,20 @@ The final documentation commit must be followed by an exact-SHA rerun of Linux 2
 ## 8. Strict Clippy follow-up — 2026-10-26
 
 The Linux distro job [40261657177](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40261657177) failed because the new parent-swap race test declared an unused local path. The unused binding is removed without changing the test's race sequence or assertions. Because this changes the candidate source SHA, the full required exact-SHA matrix must be rerun; no evidence from the preceding SHA is promoted to final acceptance.
+
+
+## 9. E3/E4 exact-source reconciliation — 2026-10-26
+
+The PR #80 head and independent lab pin agreed on code-bearing SHA `73bd504ac81a14737b321817b94c7bc2fbb17a15` at the start of this audit. The independent lab recorded these exact-source results:
+
+- Linux distribution matrix [40272900538](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900538): Ubuntu 24.04 and Debian 12 passed.
+- Cross-platform suite [40272900560](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900560): Ubuntu and Windows Server 2025 passed.
+- Candidate artifact integrity [40272900570](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900570): source metadata and bundle manifests verified; Linux binary SHA-256 `04cdcb64ea05782118004a916a039b49f560cb3111e28636b46922bc78da5fc4`, Windows binary SHA-256 `1e2c5e6826261918b33bc7842a835c0694a4d0e7e1bdf6268bb95a3a3a3118d6`.
+- Focused SQLite/stdlib resource suite [40272900585](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900585): 247 passed.
+- E4 adversarial filesystem/resource jobs [40272900540](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900540) and subprocess resource guard [40272900536](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900536) completed successfully for their focused scopes.
+- Android API 35 cross-build/contract [40272900641](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40272900641) is build-only. Android runtime remains OPEN; [40275435454](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40275435454) is the latest boot/ELF attempt at the time of this update and has not yet provided a verified runtime result.
+- SEC-05 run [40275249195](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40275249195) failed on Linux because the harness lacked the GNU x86_64 linker required by its test fixture; Windows passed. The harness now installs `binutils-x86-64-linux-gnu`; rerun [40275580929](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40275580929) is in progress.
+
+The filesystem implementation on this candidate includes Unix descriptor-relative/no-follow traversal, Linux mount identity checks, Windows opened-handle root validation and reparse-point rejection, fail-closed fallback behavior on unsupported platforms, and shared active-operation admission (8 global operations, 4 concurrent SQLite queries). These implementation facts and focused tests do **not** equal full E4 acceptance: cross-platform mount semantics and heap/caller-retained result memory remain residual limits, and the full threat review is still open.
+
+**Current disposition:** keep all E3/E4 acceptance boxes unchecked and the release gate **NOT PASSED**. This DoD update advances the source branch SHA; the independent lab must be re-pinned to the resulting final HEAD and the required matrix rerun before any result is called final-SHA evidence. No score/weight change, merge, or release is authorized.
