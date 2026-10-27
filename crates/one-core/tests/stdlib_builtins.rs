@@ -549,9 +549,9 @@ fn list_mutation_builtins_execute_through_the_canonical_pipeline() {
     let source = r#"buat daftar data
 tambahkan "a" ke data
 tambahkan "b" ke data
-ditambah adalah tambah elemen daftar dengan data dan "c"
-dihapus adalah hapus elemen daftar dengan ditambah dan "a"
-tampilkan dihapus
+hasil adalah tambah elemen daftar dengan data dan "c"
+akhir adalah hapus elemen daftar dengan hasil dan "a"
+tampilkan akhir
 "#;
     assert_eq!(
         run(source).expect("list mutation built-ins should execute through parse, analysis, IR, and runtime"),
