@@ -692,7 +692,7 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
     let text = Value::Text("  Café,猫  ".into());
     assert_eq!(
         stdlib::text_contains(&text, &Value::Text("猫".into())),
-        Some(Value::Bool(true))
+        Some(Value::Boolean(true))
     );
     assert_eq!(
         stdlib::text_contains(&text, &Value::Number(1)),
@@ -701,11 +701,11 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
     );
     assert_eq!(
         stdlib::text_starts_with(&text, &Value::Text("  Ca".into())),
-        Some(Value::Bool(true))
+        Some(Value::Boolean(true))
     );
     assert_eq!(
         stdlib::text_ends_with(&text, &Value::Text("  ".into())),
-        Some(Value::Bool(true))
+        Some(Value::Boolean(true))
     );
     assert_eq!(
         stdlib::text_trim(&text),
