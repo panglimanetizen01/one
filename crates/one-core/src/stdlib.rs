@@ -626,6 +626,29 @@ mod tests {
     use super::*;
 
     #[test]
+    fn display_value_formats_all_runtime_value_shapes() {
+        assert_eq!(display_value(&Value::Text("kucing".into())), "kucing");
+        assert_eq!(display_value(&Value::Number(-42)), "-42");
+        assert_eq!(display_value(&Value::Boolean(true)), "benar");
+        assert_eq!(display_value(&Value::Boolean(false)), "salah");
+        assert_eq!(display_value(&Value::Nothing), "tidak ada");
+        assert_eq!(
+            display_value(&Value::List(vec![
+                Value::Text("apel".into()),
+                Value::Number(2),
+                Value::Boolean(false),
+                Value::Nothing,
+            ])),
+            "[apel, 2, salah, tidak ada]"
+        );
+        let map = map_from_entries([
+            ("b".into(), Value::Number(2)),
+            ("a".into(), Value::Text("x".into())),
+        ]);
+        assert_eq!(display_value(&map), "{a: x, b: 2}");
+    }
+
+    #[test]
     fn unix_seconds_format_as_valid_bounded_gregorian_utc_timestamps() {
         assert_eq!(
             unix_seconds_to_utc_text(&Value::Number(0)),
