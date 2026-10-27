@@ -650,3 +650,33 @@ fn public_rust_json_helpers_fail_closed_and_are_deterministic() {
     assert_eq!(stdlib::json_to_value(&Value::Text("1e2".into())), None);
     assert_eq!(stdlib::json_to_value(&Value::Text(r#""\uD800""#.into())), None);
 }
+
+
+#[test]
+fn public_rust_map_remove_is_deterministic_and_rejects_wrong_types() {
+    let original = stdlib::map_from_entries([
+        ("a".to_owned(), Value::Number(1)),
+        ("b".to_owned(), Value::Number(2)),
+    ]);
+
+    assert_eq!(
+        stdlib::map_remove(original.clone(), &Value::Text("a".into())),
+        Some(stdlib::map_from_entries([("b".to_owned(), Value::Number(2))])),
+        "removing an existing text key returns the mapping without that entry"
+    );
+    assert_eq!(
+        stdlib::map_remove(original.clone(), &Value::Text("missing".into())),
+        Some(original.clone()),
+        "removing a missing key is a deterministic no-op"
+    );
+    assert_eq!(
+        stdlib::map_remove(Value::List(vec![]), &Value::Text("a".into())),
+        None,
+        "non-map receivers fail closed"
+    );
+    assert_eq!(
+        stdlib::map_remove(original, &Value::Number(1)),
+        None,
+        "non-text keys fail closed"
+    );
+}
