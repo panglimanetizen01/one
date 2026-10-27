@@ -775,9 +775,16 @@ mod tests {
         assert_eq!(text_uppercase(&Value::Text("ß".into())), Some(Value::Text("SS".into())));
         let list = Value::List(vec![Value::Text("a".into()), Value::Text("b".into())]);
         assert_eq!(list_join_text(&list, &Value::Text(" | ".into())), Some(Value::Text("a | b".into())));
-        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Number(2), Value::Number(3)])), Some(Value::Number(5)));
-        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Number(i64::MAX), Value::Number(1)])), None);
+        assert_eq!(list_join_text(&Value::List(vec![]), &Value::Text(",".into())), Some(Value::Text(String::new())));
         assert_eq!(list_join_text(&Value::List(vec![Value::Number(1)]), &Value::Text(",".into())), None);
+        assert_eq!(list_join_text(&list, &Value::Number(1)), None);
+        assert_eq!(list_join_text(&Value::Text("not a list".into()), &Value::Text(",".into())), None);
+
+        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Number(2), Value::Number(3)])), Some(Value::Number(5)));
+        assert_eq!(list_sum_numbers(&Value::List(vec![])), Some(Value::Number(0)));
+        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Number(i64::MAX), Value::Number(1)])), None);
+        assert_eq!(list_sum_numbers(&Value::List(vec![Value::Text("3".into())])), None);
+        assert_eq!(list_sum_numbers(&Value::Number(3)), None);
     }
 
     #[test]
