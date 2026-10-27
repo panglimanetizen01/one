@@ -85,6 +85,18 @@ pub fn text_to_integer(value: &Value) -> Option<Value> {
     }
 }
 
+/// Remove a text-keyed mapping entry, returning the updated mapping.
+/// A missing key is a deterministic no-op; non-map values and non-text keys fail.
+pub fn map_remove(mut value: Value, key: &Value) -> Option<Value> {
+    match (&mut value, key) {
+        (Value::Map(values), Value::Text(key)) => {
+            values.remove(key);
+            Some(value)
+        }
+        _ => None,
+    }
+}
+
 /// Return a list's element count.
 pub fn list_length(value: &Value) -> Option<Value> {
     match value {
@@ -752,6 +764,25 @@ mod tests {
         assert_eq!(list_get(&list, &Value::Number(-1)), None);
         assert_eq!(list_get(&list, &Value::Number(2)), None);
         assert_eq!(list_get(&list, &Value::Text("0".into())), None);
+    }
+
+    #[test]
+    fn map_remove_deletes_only_the_requested_key_and_missing_keys_are_noops() {
+        let original = map_from_entries([
+            ("b".into(), Value::Number(2)),
+            ("a".into(), Value::Text("x".into())),
+        ]);
+
+        let removed = map_remove(original.clone(), &Value::Text("a".into())).unwrap();
+        assert_eq!(
+            removed,
+            map_from_entries([("b".into(), Value::Number(2))])
+        );
+
+        let missing = map_remove(original.clone(), &Value::Text("missing".into())).unwrap();
+        assert_eq!(missing, original);
+        assert_eq!(map_remove(Value::Number(1), &Value::Text("a".into())), None);
+        assert_eq!(map_remove(original, &Value::Number(1)), None);
     }
 
     #[test]
