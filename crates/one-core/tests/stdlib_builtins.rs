@@ -691,6 +691,12 @@ fn public_rust_map_remove_is_deterministic_and_rejects_wrong_types() {
 fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() {
     let text = Value::Text("  Café,猫  ".into());
     assert_eq!(
+        stdlib::text_length(&Value::Text("Café,猫😀".into())),
+        Some(Value::Number(7)),
+        "text length counts Unicode scalar values, not UTF-8 bytes"
+    );
+    assert_eq!(stdlib::text_length(&Value::Number(1)), None);
+    assert_eq!(
         stdlib::text_contains(&text, &Value::Text("猫".into())),
         Some(Value::Boolean(true))
     );
@@ -779,7 +785,13 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
     assert_eq!(stdlib::text_split(&Value::Number(1), &Value::Text(",".into())), None);
     assert_eq!(stdlib::text_to_integer(&Value::Number(1)), None);
 
+    assert_eq!(stdlib::list_length(&Value::List(vec![])), Some(Value::Number(0)));
+    assert_eq!(stdlib::list_length(&Value::Text("not a list".into())), None);
     let words = Value::List(vec![Value::Text("one".into()), Value::Text("two".into())]);
+    assert_eq!(stdlib::list_get(&words, &Value::Number(0)), Some(Value::Text("one".into())));
+    assert_eq!(stdlib::list_get(&words, &Value::Number(-1)), None);
+    assert_eq!(stdlib::list_get(&words, &Value::Number(2)), None);
+    assert_eq!(stdlib::list_get(&words, &Value::Text("0".into())), None);
     assert_eq!(
         stdlib::list_join_text(&words, &Value::Text("|".into())),
         Some(Value::Text("one|two".into()))
@@ -821,6 +833,27 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
     );
     assert_eq!(stdlib::number_min(&Value::Text("2".into()), &Value::Number(4)), None);
     assert_eq!(stdlib::number_max(&Value::Number(2), &Value::Text("4".into())), None);
+    assert_eq!(stdlib::number_abs(&Value::Number(-9)), Some(Value::Number(9)));
+    assert_eq!(stdlib::number_abs(&Value::Number(i64::MIN)), None);
+    assert_eq!(
+        stdlib::number_divide(&Value::Number(-7), &Value::Number(3)),
+        Some(Value::Number(-2)),
+        "integer division truncates toward zero"
+    );
+    assert_eq!(stdlib::number_divide(&Value::Number(1), &Value::Number(0)), None);
+    assert_eq!(
+        stdlib::number_divide(&Value::Number(i64::MIN), &Value::Number(-1)),
+        None
+    );
+    assert_eq!(
+        stdlib::number_modulo(&Value::Number(-7), &Value::Number(3)),
+        Some(Value::Number(-1))
+    );
+    assert_eq!(stdlib::number_modulo(&Value::Number(1), &Value::Number(0)), None);
+    assert_eq!(
+        stdlib::number_modulo(&Value::Number(i64::MIN), &Value::Number(-1)),
+        None
+    );
 
     assert_eq!(
         stdlib::unix_seconds_to_utc_text(&Value::Number(0)),
