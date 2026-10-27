@@ -907,8 +907,29 @@ mod tests {
             let process = spec(
                 "$child = Start-Process -FilePath powershell.exe -ArgumentList @('-NoProfile','-NonInteractive','-Command','Start-Sleep -Seconds 30') -PassThru; Write-Output $child.Id; exit 0",
             );
-            let result = run_process(&process, &allowed())
-                .expect("parent should exit while its descendant is contained");
+            // The process-wide resource budget is shared with filesystem, DNS/HTTP,
+            // and database work. A transient full budget must not make this sequential
+            // containment stress test fail before the child is spawned. Retry only the
+            // explicit admission-denied result; any process/containment error still fails.
+            let result = {
+                let deadline = Instant::now() + Duration::from_secs(5);
+                loop {
+                    match run_process(&process, &allowed()) {
+                        Ok(result) => break result,
+                        Err(error)
+                            if error.contains("Batas resource runtime terlampaui")
+                                && Instant::now() < deadline =>
+                        {
+                            std::thread::sleep(Duration::from_millis(25));
+                        }
+                        Err(error) => {
+                            panic!(
+                                "parent should exit while its descendant is contained;                                  resource admission/process failed: {error}"
+                            );
+                        }
+                    }
+                }
+            };
             let child_pid: u32 = result
                 .stdout
                 .trim()
