@@ -50,6 +50,10 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: User documentation consistency
+        run: python tools/check_user_docs.py
+      - name: User documentation checker regression tests
+        run: python tools/check_user_docs_test.py
       - name: Build
         run: cargo build --workspace --all-targets
       - name: Clippy
