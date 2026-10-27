@@ -629,6 +629,11 @@ fn public_rust_mapping_helpers_are_sorted_and_reject_wrong_types() {
         Some(Value::Number(2))
     );
     assert_eq!(stdlib::map_get(&first, &Value::Number(1)), None);
+    assert_eq!(stdlib::map_get(&first, &Value::Text("missing".into())), None);
+    assert_eq!(
+        stdlib::map_set(Value::List(vec![]), &Value::Text("a".into()), Value::Number(1)),
+        None
+    );
     assert_eq!(
         stdlib::map_set(first.clone(), &Value::Text("a".into()), Value::Number(9)),
         Some(stdlib::map_from_entries([
@@ -763,6 +768,16 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
     );
     assert_eq!(stdlib::text_lowercase(&Value::Number(1)), None);
     assert_eq!(stdlib::text_uppercase(&Value::Number(1)), None);
+    assert_eq!(stdlib::text_contains(&Value::Number(1), &Value::Text("1".into())), None);
+    assert_eq!(stdlib::text_starts_with(&text, &Value::Number(1)), None);
+    assert_eq!(stdlib::text_ends_with(&text, &Value::Number(1)), None);
+    assert_eq!(stdlib::text_trim(&Value::Number(1)), None);
+    assert_eq!(
+        stdlib::text_replace(&text, &Value::Number(1), &Value::Text("x".into())),
+        None
+    );
+    assert_eq!(stdlib::text_split(&Value::Number(1), &Value::Text(",".into())), None);
+    assert_eq!(stdlib::text_to_integer(&Value::Number(1)), None);
 
     let words = Value::List(vec![Value::Text("one".into()), Value::Text("two".into())]);
     assert_eq!(
@@ -776,6 +791,13 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
         ),
         None,
         "join rejects a non-text member"
+    );
+    assert_eq!(stdlib::list_join_text(&words, &Value::Number(1)), None);
+    assert_eq!(stdlib::list_join_text(&Value::Text("not a list".into()), &Value::Text("|".into())), None);
+    assert_eq!(
+        stdlib::list_sum_numbers(&Value::List(vec![Value::Number(1), Value::Text("2".into())])),
+        None,
+        "sum rejects non-integer members"
     );
     assert_eq!(
         stdlib::list_sum_numbers(&Value::List(vec![
@@ -815,6 +837,11 @@ fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() 
     );
     assert_eq!(stdlib::unix_seconds_to_utc_text(&Value::Text("0".into())), None);
     assert_eq!(stdlib::utc_text_to_unix_seconds(&Value::Number(0)), None);
+    assert_eq!(stdlib::unix_seconds_to_utc_text(&Value::Number(i64::MAX)), None);
+    assert_eq!(
+        stdlib::utc_text_to_unix_seconds(&Value::Text("2023-02-29T00:00:00Z".into())),
+        None
+    );
 
     let display_a = stdlib::display_value(&words);
     let display_b = stdlib::display_value(&words);
