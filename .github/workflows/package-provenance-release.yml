@@ -5,6 +5,11 @@ on:
     branches: [ milestone/100-ecosystem-20261023 ]
     paths:
       - ".github/workflows/package-provenance-release.yml"
+      - "crates/one-cli/**"
+      - "crates/one-core/**"
+      - "examples/package-release/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
   workflow_dispatch:
     inputs:
       project_path:
