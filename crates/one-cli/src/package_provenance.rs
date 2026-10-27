@@ -16,6 +16,7 @@ const MAX_PACKAGE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_PRIVATE_KEY_BYTES: usize = 256;
 const MAX_SIDECAR_BYTES: usize = 16 * 1024;
 const MAX_TRUST_STORE_BYTES: usize = 1024 * 1024;
+const MAX_SOURCE_DIRECTORY_DEPTH: usize = 64;
 
 fn read_bounded(path: &Path, limit: usize, label: &str) -> Result<Vec<u8>, String> {
     let file = File::open(path).map_err(|error| format!("cannot open {label}: {error}"))?;
@@ -175,7 +176,13 @@ fn collect_source_files(
     directory: &Path,
     files: &mut Vec<(String, PathBuf)>,
     total_bytes: &mut u64,
+    depth: usize,
 ) -> Result<(), String> {
+    if depth > MAX_SOURCE_DIRECTORY_DEPTH {
+        return Err(format!(
+            "source tree exceeds maximum directory depth of {MAX_SOURCE_DIRECTORY_DEPTH}"
+        ));
+    }
     let mut entries = fs::read_dir(directory)
         .map_err(|error| format!("cannot read source directory {}: {error}", directory.display()))?
         .map(|entry| entry.map(|entry| entry.path()).map_err(|error| error.to_string()))
@@ -188,7 +195,7 @@ fn collect_source_files(
             return Err(format!("source provenance refuses symlinks: {}", path.display()));
         }
         if metadata.is_dir() {
-            collect_source_files(root, &path, files, total_bytes)?;
+            collect_source_files(root, &path, files, total_bytes, depth + 1)?;
             continue;
         }
         if !metadata.is_file() {
@@ -258,7 +265,7 @@ fn source_snapshot(root: &Path) -> Result<(String, String), String> {
 
     let mut files = vec![("one.toml".to_owned(), manifest.clone())];
     let mut total_bytes = manifest_metadata.len();
-    collect_source_files(&root, &source_directory, &mut files, &mut total_bytes)?;
+    collect_source_files(&root, &source_directory, &mut files, &mut total_bytes, 0)?;
     files.sort_by(|left, right| left.0.cmp(&right.0));
     for (relative, _) in &files {
         if !tracked.contains(relative) {
@@ -676,6 +683,31 @@ mod tests {
         assert!(output.status.success());
         assert!(verify_build_provenance(&artifact, &trust_file, &source_root).unwrap_err().contains("source tree digest"));
 
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn source_snapshot_rejects_excessive_directory_depth_before_recursive_descent() {
+        let root = std::env::temp_dir().join(format!(
+            "one-package-source-depth-{}",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let source = root.join("src");
+        fs::create_dir_all(&source).unwrap();
+        let mut nested = source.clone();
+        for _ in 0..=MAX_SOURCE_DIRECTORY_DEPTH {
+            nested.push("d");
+            fs::create_dir(&nested).unwrap();
+        }
+
+        let mut files = Vec::new();
+        let mut total_bytes = 0;
+        let error = collect_source_files(&root, &source, &mut files, &mut total_bytes, 0)
+            .expect_err("excessive source nesting must fail closed");
+        assert!(
+            error.contains("maximum directory depth"),
+            "unexpected source depth error: {error}"
+        );
         let _ = fs::remove_dir_all(root);
     }
 
