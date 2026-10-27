@@ -65,4 +65,4 @@ jobs:
       - name: Offline verification (Windows)
         shell: pwsh
         if: runner.os == 'Windows'
-        run: .\\tools\\verify_offline.ps1
+        run: .\tools\verify_offline.ps1
