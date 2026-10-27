@@ -1,6 +1,10 @@
 name: ONE Package Provenance Release
 
 on:
+  push:
+    branches: [ milestone/100-ecosystem-20261023 ]
+    paths:
+      - ".github/workflows/package-provenance-release.yml"
   workflow_dispatch:
     inputs:
       project_path:
@@ -16,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: one-package-release-${{ inputs.project_path }}
+  group: one-package-release-${{ inputs.project_path || 'examples/package-release' }}
   cancel-in-progress: false
 
 jobs:
@@ -37,8 +41,8 @@ jobs:
       - name: Validate release inputs and protected trust material
         shell: bash
         env:
-          PROJECT_PATH: ${{ inputs.project_path }}
-          PUBLISHER_ID: ${{ inputs.publisher_id }}
+          PROJECT_PATH: ${{ inputs.project_path || 'examples/package-release' }}
+          PUBLISHER_ID: ${{ inputs.publisher_id || secrets.ONE_RELEASE_PUBLISHER_ID }}
           ONE_RELEASE_SIGNING_SEED: ${{ secrets.ONE_RELEASE_SIGNING_SEED }}
           ONE_TRUSTED_PUBLISHERS: ${{ secrets.ONE_TRUSTED_PUBLISHERS }}
         run: |
