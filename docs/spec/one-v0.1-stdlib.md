@@ -32,6 +32,8 @@ The following calls use the existing deterministic expression-call syntax and ca
 | `waktu utc dari unix` | 1 | Text | Format integer Unix epoch seconds as strict Gregorian UTC `YYYY-MM-DDTHH:MM:SSZ`; years 0000–9999 are supported |
 | `unix dari waktu utc` | 1 | Number | Parse strict Gregorian UTC `YYYY-MM-DDTHH:MM:SSZ`; invalid dates/times, offsets, fractional seconds, leap seconds, and non-canonical forms are rejected |
 | `panjang daftar` | 1 | Number | List element count |
+| `tambah elemen daftar` | 2 | List | Return a new list with the value appended; non-list receivers fail closed with `E2043` or `R3022` when statically unknown |
+| `hapus elemen daftar` | 2 | List | Return a list with only the first equal value removed; a missing value is a deterministic no-op; non-list receivers fail closed with `E2043` or `R3022` when statically unknown |
 | `gabung teks` | 2 | Text | Join a list containing only text values with a literal separator |
 | `jumlah daftar angka` | 1 | Number | Checked sum of integer values; overflow and non-integer items are errors |
 | `ambil indeks` | 2 | Any | Read a list element using a zero-based integer index |

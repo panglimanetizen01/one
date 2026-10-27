@@ -545,6 +545,27 @@ tampilkan hasil
 
 
 #[test]
+fn list_mutation_builtins_execute_through_the_canonical_pipeline() {
+    let source = r#"buat daftar data
+tambahkan "a" ke data
+tambahkan "b" ke data
+ditambah adalah tambah elemen daftar dengan data dan "c"
+dihapus adalah hapus elemen daftar dengan ditambah dan "a"
+tampilkan dihapus
+"#;
+    assert_eq!(
+        run(source).expect("list mutation built-ins should execute through parse, analysis, IR, and runtime"),
+        vec![r#"["b", "c"]"#]
+    );
+
+    let wrong_receiver = r#"hasil adalah tambah elemen daftar dengan "bukan daftar" dan "x"
+tampilkan hasil
+"#;
+    let error = run(wrong_receiver).expect_err("known non-list receiver must fail closed");
+    assert!(error.contains("E2043"), "unexpected diagnostic: {error}");
+}
+
+#[test]
 fn public_rust_stdlib_helpers_have_reusable_typed_contracts() {
     let list = Value::List(vec![Value::Text("a".into()), Value::Text("b".into())]);
     let appended = stdlib::list_append(list.clone(), Value::Text("c".into()))
