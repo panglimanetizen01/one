@@ -555,7 +555,7 @@ tampilkan akhir
 "#;
     assert_eq!(
         run(source).expect("list mutation built-ins should execute through parse, analysis, IR, and runtime"),
-        vec![r#"["b", "c"]"#]
+        vec!["[b, c]"]
     );
 
     let wrong_receiver = r#"hasil adalah tambah elemen daftar dengan "bukan daftar" dan "x"
