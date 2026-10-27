@@ -680,3 +680,144 @@ fn public_rust_map_remove_is_deterministic_and_rejects_wrong_types() {
         "non-text keys fail closed"
     );
 }
+
+
+#[test]
+fn public_rust_stdlib_text_collection_numeric_and_utc_helpers_are_fully_typed() {
+    let text = Value::Text("  Café,猫  ".into());
+    assert_eq!(
+        stdlib::text_contains(&text, &Value::Text("猫".into())),
+        Some(Value::Bool(true))
+    );
+    assert_eq!(
+        stdlib::text_contains(&text, &Value::Number(1)),
+        None,
+        "contains rejects a non-text needle"
+    );
+    assert_eq!(
+        stdlib::text_starts_with(&text, &Value::Text("  Ca".into())),
+        Some(Value::Bool(true))
+    );
+    assert_eq!(
+        stdlib::text_ends_with(&text, &Value::Text("  ".into())),
+        Some(Value::Bool(true))
+    );
+    assert_eq!(
+        stdlib::text_trim(&text),
+        Some(Value::Text("Café,猫".into()))
+    );
+    assert_eq!(
+        stdlib::text_replace(
+            &Value::Text("abab".into()),
+            &Value::Text("ab".into()),
+            &Value::Text("x".into())
+        ),
+        Some(Value::Text("xx".into()))
+    );
+    assert_eq!(
+        stdlib::text_replace(
+            &Value::Text("abab".into()),
+            &Value::Text("".into()),
+            &Value::Text("x".into())
+        ),
+        None,
+        "replace rejects an empty needle"
+    );
+    assert_eq!(
+        stdlib::text_split(
+            &Value::Text("a,,b".into()),
+            &Value::Text(",".into())
+        ),
+        Some(Value::List(vec![
+            Value::Text("a".into()),
+            Value::Text("".into()),
+            Value::Text("b".into())
+        ]))
+    );
+    assert_eq!(
+        stdlib::text_split(&Value::Text("a,b".into()), &Value::Text("".into())),
+        None,
+        "split rejects an empty separator"
+    );
+    assert_eq!(
+        stdlib::text_to_integer(&Value::Text("-9223372036854775808".into())),
+        Some(Value::Number(i64::MIN))
+    );
+    assert_eq!(
+        stdlib::text_to_integer(&Value::Text("9223372036854775808".into())),
+        None,
+        "decimal overflow fails closed"
+    );
+    assert_eq!(
+        stdlib::text_to_integer(&Value::Text(" 1".into())),
+        None,
+        "non-canonical decimal whitespace is rejected"
+    );
+    assert_eq!(
+        stdlib::text_lowercase(&Value::Text("AbC".into())),
+        Some(Value::Text("abc".into()))
+    );
+    assert_eq!(
+        stdlib::text_uppercase(&Value::Text("AbC".into())),
+        Some(Value::Text("ABC".into()))
+    );
+    assert_eq!(stdlib::text_lowercase(&Value::Number(1)), None);
+    assert_eq!(stdlib::text_uppercase(&Value::Number(1)), None);
+
+    let words = Value::List(vec![Value::Text("one".into()), Value::Text("two".into())]);
+    assert_eq!(
+        stdlib::list_join_text(&words, &Value::Text("|".into())),
+        Some(Value::Text("one|two".into()))
+    );
+    assert_eq!(
+        stdlib::list_join_text(
+            &Value::List(vec![Value::Text("one".into()), Value::Number(2)]),
+            &Value::Text("|".into())
+        ),
+        None,
+        "join rejects a non-text member"
+    );
+    assert_eq!(
+        stdlib::list_sum_numbers(&Value::List(vec![
+            Value::Number(i64::MAX),
+            Value::Number(1)
+        ])),
+        None,
+        "sum overflow fails closed"
+    );
+    assert_eq!(
+        stdlib::list_sum_numbers(&Value::List(vec![Value::Number(1), Value::Number(2)])),
+        Some(Value::Number(3))
+    );
+    assert_eq!(
+        stdlib::number_min(&Value::Number(-2), &Value::Number(4)),
+        Some(Value::Number(-2))
+    );
+    assert_eq!(
+        stdlib::number_max(&Value::Number(-2), &Value::Number(4)),
+        Some(Value::Number(4))
+    );
+    assert_eq!(stdlib::number_min(&Value::Text("2".into()), &Value::Number(4)), None);
+    assert_eq!(stdlib::number_max(&Value::Number(2), &Value::Text("4".into())), None);
+
+    assert_eq!(
+        stdlib::unix_seconds_to_utc_text(&Value::Number(0)),
+        Some(Value::Text("1970-01-01T00:00:00Z".into()))
+    );
+    assert_eq!(
+        stdlib::utc_text_to_unix_seconds(&Value::Text("1970-01-01T00:00:00Z".into())),
+        Some(Value::Number(0))
+    );
+    assert_eq!(
+        stdlib::utc_text_to_unix_seconds(&Value::Text("1970-01-01T00:00:00+00:00".into())),
+        None,
+        "UTC parser rejects non-canonical offsets"
+    );
+    assert_eq!(stdlib::unix_seconds_to_utc_text(&Value::Text("0".into())), None);
+    assert_eq!(stdlib::utc_text_to_unix_seconds(&Value::Number(0)), None);
+
+    let display_a = stdlib::display_value(&words);
+    let display_b = stdlib::display_value(&words);
+    assert_eq!(display_a, display_b, "display output is deterministic");
+    assert!(!display_a.is_empty());
+}
