@@ -181,6 +181,108 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
                 markers.add("sensitive-path-or-label")
         return markers
 
+    def trusted_github_api_client(call):
+        """Recognize only the collector's narrow authenticated api.github.com client pattern."""
+        if _ast_name(call.func) not in {"urlopen", "urllib.request.urlopen"}:
+            return False
+        if len(call.args) != 1 or not isinstance(call.args[0], ast.Name):
+            return False
+        api_root_ok = any(
+            isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "API_ROOT" for target in node.targets)
+            and isinstance(node.value, ast.Constant)
+            and node.value.value == "https://api.github.com"
+            for node in tree.body
+        )
+        if not api_root_ok:
+            return False
+        external_urls = {
+            node.value for node in ast.walk(tree)
+            if isinstance(node, ast.Constant) and isinstance(node.value, str)
+            and re.match(r"(?i)^https?://", node.value)
+        }
+        if external_urls != {"https://api.github.com"}:
+            return False
+
+        parents = {}
+        for parent_node in ast.walk(tree):
+            for child in ast.iter_child_nodes(parent_node):
+                parents[child] = parent_node
+
+        def enclosing_function(node):
+            while node in parents:
+                node = parents[node]
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    return node
+            return None
+
+        request_fn = next((node for node in tree.body
+                           if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                           and node.name == "_request_json"), None)
+        collector_fn = next((node for node in tree.body
+                             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                             and node.name == "collect_ci_health"), None)
+        if request_fn is None or collector_fn is None or enclosing_function(call) is not request_fn:
+            return False
+
+        request_name = call.args[0].id
+        request_assignment_ok = False
+        for node in ast.walk(request_fn):
+            if not isinstance(node, ast.Assign):
+                continue
+            if not any(isinstance(target, ast.Name) and target.id == request_name for target in node.targets):
+                continue
+            value = node.value
+            if not isinstance(value, ast.Call) or _ast_name(value.func) not in {"Request", "urllib.request.Request"}:
+                continue
+            if not value.args or not isinstance(value.args[0], ast.Name) or value.args[0].id != "url":
+                continue
+            headers = next((keyword.value for keyword in value.keywords if keyword.arg == "headers"), None)
+            if not isinstance(headers, ast.Dict):
+                continue
+            for key, header_value in zip(headers.keys, headers.values):
+                if not (isinstance(key, ast.Constant) and isinstance(key.value, str)
+                        and key.value.lower() == "authorization" and isinstance(header_value, ast.JoinedStr)):
+                    continue
+                if any(isinstance(child, ast.Name) and child.id == "token" for child in ast.walk(header_value)):
+                    request_assignment_ok = True
+        if not request_assignment_ok:
+            return False
+
+        defaults = {}
+        if collector_fn.args.defaults:
+            first_default = len(collector_fn.args.args) - len(collector_fn.args.defaults)
+            defaults = {arg.arg: default for arg, default in
+                        zip(collector_fn.args.args[first_default:], collector_fn.args.defaults)}
+        request_json_default = defaults.get("request_json")
+        if not (isinstance(request_json_default, ast.Name) and request_json_default.id == "_request_json"):
+            return False
+
+        base_ok = any(
+            isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "base" for target in node.targets)
+            and isinstance(node.value, ast.JoinedStr)
+            and any(isinstance(child, ast.Name) and child.id == "API_ROOT" for child in ast.walk(node.value))
+            for node in ast.walk(collector_fn)
+        )
+        if not base_ok:
+            return False
+        request_calls = [
+            node for node in ast.walk(collector_fn)
+            if isinstance(node, ast.Call) and _ast_name(node.func) == "request_json"
+        ]
+        if not request_calls or not all(
+            node.args and isinstance(node.args[0], ast.JoinedStr)
+            and any(isinstance(child, ast.Name) and child.id == "base" for child in ast.walk(node.args[0]))
+            for node in request_calls
+        ):
+            return False
+        other_sinks = [
+            node for node in calls
+            if _ast_name(node.func) in egress_calls and node is not call
+        ]
+        return not other_sinks
+
     assignments = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
@@ -237,6 +339,8 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
             continue
         markers = source_markers(call, tainted_names)
         if not markers:
+            continue
+        if trusted_github_api_client(call):
             continue
         findings.append(_finding("security-code", "sensitive-data-egress", rel, getattr(call, "lineno", None),
             "high", "medium",

