@@ -47,7 +47,7 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
 
-The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Language examples must be checked against the One grammar, implementation status, and conformance tests.
+The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Normative contract checks detect disappearance of high-value invariants but are deliberately not a substitute for parser tests or human contract review. Language examples must be checked against the One grammar, implementation status, and conformance tests.
 
 ## Finding contract
 
@@ -95,7 +95,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Basic CLI documentation vocabulary check.
 - [ ] Add a full YAML parser/validator with an explicit pinned dependency.
 - [ ] Validate One snippets against the normative parser or one periksa without executing them.
-- [ ] Add contract-specific checks for package metadata, diagnostics, grammar, and capability boundaries.
+- [x] Add contract-specific checks for package/build artifacts, diagnostics identity/determinism, grammar ambiguity rejection, exact CLI recognition, and capability-boundary invariants.
 - [ ] Add workflow overlap analysis with evidence that distinguishes duplication from intentional parallel testing.
 
 ### C — Correlation and triage
