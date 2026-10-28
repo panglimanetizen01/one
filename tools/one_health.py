@@ -143,6 +143,24 @@ def _scan_json(rel, text, findings):
                         "Metadata artefak tidak menyediakan digest untuk pemeriksaan integritas independen.",
                         f"run_id={run_id}; name={name!r}",
                         "Jika API/retensi mendukungnya, simpan digest dan verifikasi isi artefak terunduh; keberadaan artefak saja bukan bukti integritas."))
+        correlations = parsed.get("correlations")
+        if isinstance(correlations, list):
+            for correlation in correlations:
+                if not isinstance(correlation, dict):
+                    continue
+                rule = correlation.get("rule_id")
+                if rule == "failed-run-without-job-metadata":
+                    findings.append(_finding("ci-evidence", rule, rel, None, "medium", "high",
+                        "Run Actions gagal tanpa metadata job yang dapat ditinjau; penyebab belum diketahui.",
+                        f"run_id={correlation.get('run_id')!r}; evidence={correlation.get('evidence')!r}",
+                        str(correlation.get("next_step") or "Periksa detail run dan ketersediaan runner; jangan menyimpulkan source test gagal."),
+                        status="blocked"))
+                elif rule == "no-artifacts-observed":
+                    findings.append(_finding("artifact-integrity", rule, rel, None, "info", "medium",
+                        "Tidak ada artefak yang teramati pada run Actions yang selesai.",
+                        f"run_id={correlation.get('run_id')!r}; evidence={correlation.get('evidence')!r}",
+                        str(correlation.get("next_step") or "Bandingkan dengan kontrak artefak workflow; ketiadaan saja bukan kegagalan."),
+                        status="triaged"))
         jobs = parsed.get("jobs")
         if isinstance(jobs, list):
             for job in jobs:
