@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only integrity scanner for the One repository; Python standard library only."""
 from __future__ import annotations
-import argparse, ast, hashlib, json, os, platform, re, subprocess, sys
+import argparse, ast, difflib, hashlib, json, os, platform, re, subprocess, sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -399,11 +399,21 @@ def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool,
         requested.add(rel)
     for path, rel in _files(root):
         if path.is_symlink() or path.suffix.lower() != ".md": continue
-        if apply and rel not in requested: continue
+        if requested and rel not in requested: continue
         try: data = path.read_bytes()
         except OSError: continue
         if data and not data.endswith(b"\n"): candidates.append((path, rel))
-    if not apply: return [f"PROPOSED: add final newline: {rel}" for _, rel in candidates]
+    if not apply:
+        preview = []
+        for path, rel in candidates:
+            before = path.read_text(encoding="utf-8").splitlines(keepends=True)
+            after = before[:]
+            if after:
+                after[-1] = after[-1].rstrip("\r\n") + "\n"
+            preview.append(f"PROPOSED: add final newline: {rel}")
+            preview.extend(line.rstrip("\n") for line in difflib.unified_diff(
+                before, after, fromfile=f"a/{rel}", tofile=f"b/{rel}"))
+        return preview
     if not requested: raise RuntimeError("safe fix refused: specify each exact --repair-path to modify")
     existing = {rel for _, rel in candidates}
     missing = sorted(requested - existing)
