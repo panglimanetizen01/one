@@ -105,7 +105,7 @@ SECRET_PATTERNS = [
     ("slack-token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b"), "high", "high"),
     ("generic-hardcoded-secret", re.compile(r"""(?i)\b(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd|secret[_-]?key)\b\s*[:=]\s*["']([^"'\\\s]{16,})["']"""), "high", "medium"),
 ]
-PLACEHOLDER_SECRET = re.compile(r"(?i)(?:example|sample|placeholder|changeme|change_me|your[_-]?|dummy|redacted|<[^>]+>|\\$\\{[^}]+\\}|\\$[A-Z][A-Z0-9_]*|process\\.env|os\\.environ|secrets\\.)")
+PLACEHOLDER_SECRET = re.compile(r"(?i)(?:example|sample|placeholder|changeme|change_me|your[_-]?|dummy|redacted|<[^>]+>|\$\{[^}]+\}|\$[A-Z][A-Z0-9_]*|process\.env|os\.environ|secrets\.)")
 
 def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
     """Conservative, read-only security heuristics. Never include matched secret bytes in reports."""
@@ -139,13 +139,13 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                         "Tinjau aliran data, validasi input, batas kepercayaan, dan apakah API yang lebih aman dapat digunakan."))
         if rel.startswith(".github/workflows/"):
             workflow_rules = [
-                ("pipe-to-shell", re.compile(r"\b(?:curl|wget)\b[^\\n|]*\\|\\s*(?:sudo\\s+)?(?:ba)?sh\b"), "high", "medium",
+                ("pipe-to-shell", re.compile(r"\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh\b"), "high", "medium",
                  "Workflow mengalirkan konten jaringan langsung ke shell."),
-                ("write-all-permissions", re.compile(r"(?m)^\\s*permissions\\s*:\\s*write-all\\s*$"), "high", "high",
+                ("write-all-permissions", re.compile(r"(?m)^\s*permissions\s*:\s*write-all\s*$"), "high", "high",
                  "Workflow meminta seluruh permission token ditulis; terapkan least privilege."),
-                ("pull-request-target", re.compile(r"(?m)^\\s*pull_request_target\\s*:"), "high", "medium",
+                ("pull-request-target", re.compile(r"(?m)^\s*pull_request_target\s*:"), "high", "medium",
                  "Workflow memakai pull_request_target; tinjau checkout/eksekusi kode kontribusi tak tepercaya."),
-                ("mutable-action-ref", re.compile(r"\\buses:\\s*[^\\s#]+@(main|master|latest)\\b"), "medium", "high",
+                ("mutable-action-ref", re.compile(r"\buses:\s*[^\s#]+@(main|master|latest)\b"), "medium", "high",
                  "Action pihak ketiga dirujuk ke tag/branch mutable, bukan commit SHA."),
             ]
             for rule, pattern, severity, confidence, summary in workflow_rules:
