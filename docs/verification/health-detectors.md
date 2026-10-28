@@ -31,8 +31,8 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `ci-evidence` | Exact-SHA Actions run/job/step/artifact metadata plus surfaced findings for failed runs without job metadata, failed jobs without visible steps, and failed steps needing log review | Does not download or interpret live logs; API outages remain blocked/partial, not source failures |
 | `artifact-integrity` | Expired CI artifacts, repeated artifact names within one run, missing artifact digests, and no-artifact observations in completed runs | Does not download artifact contents or prove their bytes match a digest; missing digest is informational, not a pass |
 | `security-secrets` | Known high-signal token/private-key patterns and likely hardcoded credentials | Heuristic coverage only; secret values are redacted from reports; unknown formats, encoded secrets, and false positives remain possible |
-| `security-code` | Suspicious Python dynamic execution and `subprocess` shell usage | Static pattern hints, not proof of exploitability; data flow and runtime context require review |
-| `security-workflow` | Network-to-shell pipelines, broad write permissions, `pull_request_target`, and mutable third-party action refs | Targeted line-level checks, not a full workflow security audit or YAML semantic analysis |
+| `security-code` | Suspicious Python dynamic execution and shell usage; AST correlation for decoder/deserializer → `eval`/`exec`/`compile`, network-fetch plus execution, and credential/environment indicators plus network egress | Static correlation is not full taint analysis; legitimate installers/clients may need review; code is never executed |
+| `security-workflow` | Network-to-shell pipelines, broad write permissions, `pull_request_target`, and obviously mutable refs such as `main`/`master`/`latest` | Targeted checks only; not a full workflow security audit or YAML semantic analysis |\n| `security-supply-chain` | Non-commit-pinned GitHub Actions and Git dependency refs that name mutable branches | Tags can be intentionally used but are mutable; pinning does not independently establish upstream trust or provenance |\n| `security-prompt-injection` | Agent-instruction surfaces that co-locate an instruction-override attempt with a request to reveal/send secrets | Only recognized agent-instruction paths/names and correlated phrases are checked; semantic obfuscation, encoded content, and other agent file conventions may evade detection; ordinary documentation is intentionally not treated as an agent prompt |
 | `one-source-contract` | Expected accept/reject results for normative v0.1 fixtures via `one periksa` | Runs only when explicitly enabled and CLI is built; never executes source |
 
 ## Report schema compatibility
@@ -90,3 +90,14 @@ Repairs are never authorized to change normative grammar, accepted/rejected fixt
 ## Detector quality and repair outcome measurement
 
 Use [the health quality ledger guide](health-quality-ledger.md) and `tools/health_quality.py` to record reviewed true positives, false positives, confirmed misses, and verified repair outcomes. The tool reports observed sample shares and verified repair success rate; it does not infer correctness from missing data. A detector change should include positive/negative fixtures and a regression case for any confirmed incident. These metrics are operational quality evidence only and never modify the fixed-weight completion ledger or release gates.
+
+
+## Security scanner regression contract (A–E)
+
+- **A — Integrity:** exact checkout SHA, symlink/path boundaries, text readability, syntax, Markdown links, and CI/artifact metadata are separate findings. Missing metadata is blocked/unknown, never a pass.
+- **B — Static security:** secret redaction, AST-correlated obfuscated execution, download-plus-execution, credential/environment-to-network egress, agent prompt-injection correlation, and workflow/dependency pinning use deterministic fixtures. The scanner does not execute repository code.
+- **C — Correlation and triage:** multi-signal findings describe which indicators co-occur; they are leads for review, not proof of data flow, compromise, or root cause. Keep evidence values redacted.
+- **D — Guarded repair:** repairs remain allowlisted, exact-path, clean-working-tree, approved-branch-only operations. Security findings never trigger automatic edits or credential rotation.
+- **E — Quality corpus:** every detector change needs positive and negative regression cases. Human adjudication remains separate from synthetic fixtures; observed sample metrics are not statistically representative accuracy claims.
+
+Known boundary: this remains a static repository scanner, not an OS sandbox, full taint engine, malware detonation service, complete YAML parser, dependency vulnerability database, or proof of secret non-exposure. Review findings safely and preserve the NOT-PASSED gate until exact-SHA execution evidence is available.
