@@ -31,34 +31,84 @@ pub(crate) fn validate_filesystem_target(target: &str) -> Result<(), AdapterErro
 #[cfg(unix)]
 fn open_directory_nofollow(path: &Path) -> std::io::Result<std::fs::File> {
     use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
 
-    let root = if path.is_absolute() { c"/".as_ptr() } else { c".".as_ptr() };
-    // SAFETY: root is a static NUL-terminated path and open returns a new owned fd.
-    let root_fd = unsafe { libc::open(root.cast(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC) };
-    if root_fd < 0 { return Err(std::io::Error::last_os_error()); }
-    // SAFETY: root_fd was freshly returned by open and is now owned by File.
+    const DIRECTORY_FLAGS: libc::c_int =
+        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW;
+
+    if path.components().any(|component| matches!(component, Component::ParentDir | Component::Prefix(_))) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "parent path components and unsupported prefixes are forbidden",
+        ));
+    }
+
+    // Anchor traversal at the process working directory instead of opening "/".
+    // Android app sandboxes may deny opening the filesystem root even when the
+    // project and temporary directories themselves are accessible. For absolute
+    // paths, walk up from "." to the lexical common ancestor, then descend using
+    // openat/O_NOFOLLOW for every named component.
+    let cwd = std::env::current_dir()?;
+    let cwd_components: Vec<_> = cwd.components()
+        .filter_map(|component| match component {
+            Component::Normal(name) => Some(name),
+            _ => None,
+        })
+        .collect();
+    let path_components: Vec<_> = path.components()
+        .filter_map(|component| match component {
+            Component::Normal(name) => Some(name),
+            _ => None,
+        })
+        .collect();
+
+    let root_fd = unsafe { libc::open(c".".as_ptr(), DIRECTORY_FLAGS) };
+    if root_fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
     let mut directory = unsafe { std::fs::File::from_raw_fd(root_fd) };
 
-    for component in path.components() {
-        match component {
-            Component::RootDir | Component::CurDir => continue,
-            Component::ParentDir => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "parent path components are forbidden")),
-            Component::Normal(name) => {
-                use std::os::unix::ffi::OsStrExt;
-                let name = std::ffi::CString::new(name.as_bytes())
-                    .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
-                // SAFETY: directory is a valid open directory fd and name is NUL terminated.
-                let next_fd = unsafe {
-                    libc::openat(directory.as_raw_fd(), name.as_ptr(),
-                        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW)
-                };
-                if next_fd < 0 { return Err(std::io::Error::last_os_error()); }
-                // SAFETY: next_fd is a fresh owned fd from openat.
-                directory = unsafe { std::fs::File::from_raw_fd(next_fd) };
+    if path.is_absolute() {
+        let common = cwd_components.iter().zip(path_components.iter())
+            .take_while(|(left, right)| left == right)
+            .count();
+
+        for _ in common..cwd_components.len() {
+            let next_fd = unsafe { libc::openat(directory.as_raw_fd(), c"..".as_ptr(), DIRECTORY_FLAGS) };
+            if next_fd < 0 {
+                return Err(std::io::Error::last_os_error());
             }
-            _ => return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "unsupported path prefix")),
+            directory = unsafe { std::fs::File::from_raw_fd(next_fd) };
+        }
+
+        for name in &path_components[common..] {
+            let name = std::ffi::CString::new(name.as_bytes())
+                .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+            let next_fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), DIRECTORY_FLAGS) };
+            if next_fd < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            directory = unsafe { std::fs::File::from_raw_fd(next_fd) };
+        }
+    } else {
+        for component in path.components() {
+            match component {
+                Component::RootDir | Component::CurDir => continue,
+                Component::ParentDir => unreachable!("parent components were rejected above"),
+                Component::Normal(name) => {
+                    let name = std::ffi::CString::new(name.as_bytes())
+                        .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in path"))?;
+                    let next_fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), DIRECTORY_FLAGS) };
+                    if next_fd < 0 {
+                        return Err(std::io::Error::last_os_error());
+                    }
+                    directory = unsafe { std::fs::File::from_raw_fd(next_fd) };
+                }
+                Component::Prefix(_) => unreachable!("prefix components were rejected above"),
+            }
         }
     }
+
     Ok(directory)
 }
 
