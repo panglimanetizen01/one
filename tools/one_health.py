@@ -77,6 +77,14 @@ def _scan_json(rel, text, findings):
             "Berkas JSON tidak dapat diparse.", exc.msg, "Perbaiki sintaks JSON lalu jalankan pemindai kembali."))
         return
     if isinstance(parsed, dict):
+        collector_status = parsed.get("collector_status")
+        if collector_status in {"blocked", "partial"}:
+            errors = parsed.get("collection_errors", [])
+            findings.append(_finding("ci-evidence", f"live-ci-metadata-{collector_status}", rel, None, "info", "high",
+                "Metadata CI langsung tidak lengkap; status ini bukan bukti kegagalan source.",
+                f"collector_status={collector_status}; errors={errors!r}",
+                "Periksa izin Actions API, token read-only, rate limit, dan log collector; pertahankan status bukti sebagai blocked/partial.",
+                status="blocked"))
         source_sha = parsed.get("source_sha") or parsed.get("candidate_sha")
         checked_sha = parsed.get("checked_out_sha") or parsed.get("checkout_sha")
         if isinstance(source_sha, str) and isinstance(checked_sha, str) and source_sha != checked_sha:
