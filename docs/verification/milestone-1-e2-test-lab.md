@@ -4,7 +4,7 @@
 
 ## Hosted lab
 
-Workflow: [ONE Milestone 1 — E2 Package and Provenance Test Lab](../../actions/workflows/milestone-1-e2-lab.yml)
+Workflow: [ONE Milestone 1 — E2 Package and Provenance Test Lab](../../.github/workflows/milestone-1-e2-lab.yml)
 
 - Runs on relevant package/CLI/runtime changes on `milestone/100-ecosystem-20261023`, on pull requests targeting `main`, and by manual dispatch.
 - Prints the exact checked-out source SHA and Rust/Cargo versions.
