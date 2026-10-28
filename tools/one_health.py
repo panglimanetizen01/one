@@ -108,7 +108,49 @@ def _scan_workflows(root, workflows, findings):
                     "Workflow menjalankan berkas skrip yang tidak ditemukan.", command.group(1),
                     "Sinkronkan path workflow dengan skrip yang benar-benar ada."))
 
-def scan_repository(root: Path, expected_sha: str | None = None) -> dict:
+def _check_one_source(root: Path, findings: list[dict]) -> None:
+    """Validate normative v0.1 fixtures without executing them."""
+    candidates = [root / "target" / "debug" / "one", root / "target" / "debug" / "one.exe"]
+    binary = next((path for path in candidates if path.is_file()), None)
+    if binary is None:
+        findings.append(_finding("one-source-contract", "one-cli-unavailable", ".", None, "info", "high",
+            "Pemeriksaan grammar One belum berjalan karena binary CLI tidak ditemukan.",
+            "target/debug/one dan target/debug/one.exe tidak ada.",
+            "Bangun CLI dengan cargo build --locked -p one-cli lalu jalankan pemindai dengan --check-one-source.",
+            status="blocked"))
+        return
+    fixtures = []
+    valid_dir = root / "tests" / "conformance" / "valid"
+    invalid_dir = root / "tests" / "conformance" / "invalid"
+    if valid_dir.is_dir(): fixtures.extend((path, True) for path in sorted(valid_dir.glob("*.one")))
+    if invalid_dir.is_dir(): fixtures.extend((path, False) for path in sorted(invalid_dir.glob("*.one")))
+    grammar_examples = root / "tests" / "spec" / "grammar_examples.one"
+    if grammar_examples.is_file(): fixtures.append((grammar_examples, True))
+    for path, should_pass in fixtures:
+        rel = path.relative_to(root).as_posix()
+        try:
+            result = subprocess.run([str(binary), "periksa", str(path)], cwd=root, capture_output=True,
+                                    text=True, timeout=30, check=False)
+        except subprocess.TimeoutExpired:
+            findings.append(_finding("one-source-contract", "one-source-check-timeout", rel, None, "high", "high",
+                "Pemeriksaan source One melewati batas waktu.", "one periksa tidak selesai dalam 30 detik.",
+                "Reproduksi pada fixture tersebut dan periksa regresi parser/CLI."))
+            continue
+        except OSError as exc:
+            findings.append(_finding("one-source-contract", "one-source-check-unavailable", rel, None, "high", "high",
+                "CLI One tidak dapat dijalankan untuk memeriksa source.", str(exc),
+                "Periksa hasil build dan izin eksekusi binary."))
+            continue
+        passed = result.returncode == 0
+        if passed != should_pass:
+            expected = "accepted" if should_pass else "rejected"
+            actual = "accepted" if passed else "rejected"
+            detail = (result.stderr or result.stdout or "CLI tidak menghasilkan diagnostic text").strip()[:1000]
+            findings.append(_finding("one-source-contract", "fixture-acceptance-mismatch", rel, None, "high", "high",
+                "Hasil parser berbeda dari status fixture conformance.", f"expected={expected}; actual={actual}; {detail}",
+                "Tinjau grammar normatif dan implementasi parser; jangan ubah status fixture tanpa alasan kontraktual."))
+
+def scan_repository(root: Path, expected_sha: str | None = None, check_one_source: bool = False) -> dict:
     root = root.resolve()
     findings, workflows = [], []
     files = list(_files(root))
@@ -160,6 +202,8 @@ def scan_repository(root: Path, expected_sha: str | None = None) -> dict:
         elif suffix == ".md": _scan_markdown(path, rel, root, text, findings)
         if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}: workflows.append((rel, text))
     _scan_workflows(root, workflows, findings)
+    if check_one_source:
+        _check_one_source(root, findings)
     cli_contract = root / "docs/spec/one-v0.1-cli-contract.md"
     cli_guide = root / "docs/panduan-pengguna/perintah-cli.md"
     if cli_contract.is_file() and cli_guide.is_file():
@@ -265,12 +309,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--markdown-out", type=Path)
     parser.add_argument("--baseline", type=Path, help="compare findings with a previous JSON report")
+    parser.add_argument("--check-one-source", action="store_true",
+                        help="run one periksa on normative v0.1 conformance fixtures; never executes programs")
     parser.add_argument("--propose-safe-fixes", action="store_true")
     parser.add_argument("--apply-safe-fixes", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
-    report = scan_repository(root, args.expected_sha)
+    report = scan_repository(root, args.expected_sha, check_one_source=args.check_one_source)
     if args.baseline:
         try:
             baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
