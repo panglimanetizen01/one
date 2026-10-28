@@ -161,7 +161,8 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
         "aiohttp.ClientSession.post", "aiohttp.ClientSession.put",
     }
     sensitive_names = {"password", "passwd", "secret", "token", "credential", "credentials", "api_key", "private_key"}
-    sensitive_text = re.compile(r"(?i)(?:/\.ssh(?:/|$)|/\.aws(?:/|$)|\.env\b|id_rsa|credentials|private[_ -]?key|api[_ -]?key|password|secret|token)")
+    sensitive_text = re.compile(r"(?i)(?:/\.ssh(?:/|$)|/\.aws(?:/|$)|\.env\b|id_rsa|credentials|private[_ -]?key|api[_ -]?key)")
+    sensitive_env_name = re.compile(r"(?i)^[A-Z][A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|CREDENTIAL|API_KEY)[A-Z0-9_]*$")
 
     def source_markers(node, tainted_names):
         markers = set()
@@ -174,7 +175,9 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
                 markers.add("environment-or-prompt-source")
             elif isinstance(child, ast.Name) and (child.id.lower() in sensitive_names or child.id in tainted_names):
                 markers.add("credential-like-identifier")
-            elif isinstance(child, ast.Constant) and isinstance(child.value, str) and sensitive_text.search(child.value):
+            elif isinstance(child, ast.Constant) and isinstance(child.value, str) and (
+                sensitive_text.search(child.value) or (child.value.isupper() and sensitive_env_name.fullmatch(child.value))
+            ):
                 markers.add("sensitive-path-or-label")
         return markers
 
