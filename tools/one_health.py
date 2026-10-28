@@ -112,7 +112,7 @@ def _scan_workflows(root, workflows, findings):
     command_owners = {}
     for rel, text in workflows:
         for line in text.splitlines():
-            command_match = re.match(r"^\s*run:\s*(\S.*)$", line)
+            command_match = re.match(r"^\s*(?:-\s*)?run:\s*(\S.*)$", line)
             if command_match:
                 command = command_match.group(1).strip()
                 if command not in {"|", ">", "|-", ">-"} and not command.startswith("#"):
@@ -309,7 +309,7 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
         else:
             item["status"] = "resolved"
             item["change_status"] = "resolved"
-            item["resolution_basis"] = "Not reproduced by the current completed detector; review the evidence before closure."
+            item["resolution_basis"] = "Not reproduced by the current completed detector; review detector coverage and evidence before closure."
             resolved.append(item)
             counts["resolved"] += 1
     report["resolved_findings"] = sorted(resolved, key=lambda f: f.get("finding_id", ""))
