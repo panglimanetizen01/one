@@ -630,6 +630,25 @@ jobs:
         self.assertEqual("reopened", item["change_status"])
 
 
+    def test_malformed_baseline_fails_closed_without_crashing(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_text(json.dumps({
+            "schema_version": "one-health-report/1",
+            "findings": [{"severity": "high"}],
+        }), encoding="utf-8")
+        result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, result)
+
+    def test_baseline_rejects_duplicate_finding_ids(self):
+        baseline_path = self.root / "baseline.json"
+        item = {"finding_id": "OH-duplicate", "severity": "high", "status": "open"}
+        baseline_path.write_text(json.dumps({
+            "schema_version": "one-health-report/1",
+            "findings": [item, item],
+        }), encoding="utf-8")
+        result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, result)
+
     def test_severity_gate_defaults_block_critical_and_high_only(self):
         self.assertTrue(_severity_gate_fails({"findings": [{"severity": "critical"}]}))
         self.assertTrue(_severity_gate_fails({"findings": [{"severity": "high"}]}))
