@@ -334,6 +334,8 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                     json_evidence_detectors.add("evidence-freshness")
                 if isinstance(parsed_json.get("jobs"), list) or "collector_status" in parsed_json:
                     json_evidence_detectors.add("ci-evidence")
+                if isinstance(parsed_json.get("artifacts"), list):
+                    json_evidence_detectors.add("artifact-integrity")
         elif suffix == ".md": _scan_markdown(path, rel, root, text, findings)
         if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}: workflows.append((rel, text))
     _scan_workflows(root, workflows, findings)
