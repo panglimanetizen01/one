@@ -1004,3 +1004,16 @@ Exact-source code-bearing SHA results recorded:
 The ledger and Definition of Done now record this evidence and explicitly retain E3 0/8 and E4 0/6 verified. This checkpoint update advances the source branch again. Resolve the resulting branch HEAD, set the lab pin to exactly that SHA, rerun the mandatory Linux/Windows/E4/SEC-05/artifact/Android matrix, and then update the independent evidence index with the resulting run IDs. Do not reuse the pre-documentation SHA as final-SHA evidence.
 
 Residual limits remain: no complete OS sandbox claim; non-Linux Unix mount identity is best-effort `st_dev`; arbitrary heap/caller-retained output memory is not fully accounted; and the full threat review remains open. The global fixed-weight gate remains **NOT PASSED**. No weights or scores change.
+
+
+## 2026-10-28 cross-repository audit reconciliation — current acceptance status
+
+A cross-audit found that the completion ledger carried E3, E4, and E5 verified points from older source SHAs even though the Definition of Done explicitly prohibits carrying acceptance forward without exact-SHA revalidation. This contradicted the latest checkpoint notes that E3 runtime acceptance and the complete E4 threat review remained open. The historical run records are preserved, but they are no longer credited as current-candidate verification.
+
+- Implementation subtotal: **92/100 provisional**.
+- Verified completion corrected from **78/100 to 60/100**; this is an evidence-accounting correction, not a code regression or a change to fixed weights.
+- E1 **0/10**, E2 **0/8**, E3 **0/8**, E4 **0/6**, E5 **0/4**, E6 **0/4** verified for the final candidate until their full acceptance criteria are satisfied.
+- The Definition of Done now leaves E3/E4/E5 and current-candidate cross-platform/artifact evidence unchecked until fresh exact-SHA acceptance is recorded.
+- This reconciliation itself advances the source branch. Read the resulting branch HEAD, update the independent verifier pin and PR #80 metadata, then rerun the mandatory exact-SHA matrix. No evidence from a prior source SHA may be promoted to the resulting HEAD.
+
+**Gate: NOT PASSED.** No merge, release, or PASS GREEN LOCKED claim is authorized.
