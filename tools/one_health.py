@@ -342,7 +342,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     if workflows:
         detectors_run.extend(["workflow-integrity", "workflow-overlap"])
     detectors_run.extend(sorted(json_evidence_detectors))
-    if all((root / p).is_file() for p in ["docs/spec/one-v0.1-grammar.md", "docs/spec/one-v0.1-cli-contract.md", "docs/spec/one-v0.1-diagnostics.md", "docs/spec/one-v0.1-package-build.md", "docs/spec/one-v0.1-platform-abstraction.md"]):
+    if (root / "docs").is_dir():
         detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
