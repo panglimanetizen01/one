@@ -658,6 +658,36 @@ jobs:
         result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
         self.assertEqual(2, result)
 
+    def test_scope_workflow_keeps_only_workflow_findings(self):
+        from one_health import _apply_scope
+        report = {"findings": [
+            {"detector_id": "workflow-integrity", "severity": "high"},
+            {"detector_id": "markdown-links", "severity": "low"},
+        ], "severity_counts": {}, "finding_count": 2, "detector_coverage": {}}
+        result = _apply_scope(report, "workflow")
+        self.assertEqual(1, result["finding_count"])
+        self.assertEqual("workflow-integrity", result["findings"][0]["detector_id"])
+        self.assertEqual("workflow", result["scan_scope"])
+
+    def test_scope_sha_includes_revision_and_evidence_detectors(self):
+        from one_health import _apply_scope
+        report = {"findings": [
+            {"detector_id": "revision-integrity", "severity": "high"},
+            {"detector_id": "ci-evidence", "severity": "medium"},
+            {"detector_id": "markdown-links", "severity": "low"},
+        ], "severity_counts": {}, "finding_count": 3, "detector_coverage": {}}
+        result = _apply_scope(report, "sha")
+        self.assertEqual({"revision-integrity", "ci-evidence"},
+                         {item["detector_id"] for item in result["findings"]})
+        self.assertEqual(1, result["severity_counts"]["high"])
+        self.assertEqual(1, result["severity_counts"]["medium"])
+
+    def test_scope_all_preserves_all_findings(self):
+        from one_health import _apply_scope
+        report = {"findings": [{"detector_id": "markdown-links", "severity": "low"}],
+                  "severity_counts": {"low": 1}, "finding_count": 1, "detector_coverage": {}}
+        self.assertEqual(1, _apply_scope(report, "all")["finding_count"])
+
     def test_severity_gate_defaults_block_critical_and_high_only(self):
         self.assertTrue(_severity_gate_fails({"findings": [{"severity": "critical"}]}))
         self.assertTrue(_severity_gate_fails({"findings": [{"severity": "high"}]}))
