@@ -81,6 +81,24 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual("blocked", report["collector_status"])
         self.assertTrue(any("GITHUB_TOKEN" in item for item in report["collection_errors"]))
 
+    def test_partial_collection_still_correlates_metadata_already_received(self):
+        def fake_request(url, token):
+            if "/actions/runs?" in url:
+                return {"workflow_runs": [{"id": 50, "name": "failed", "status": "completed",
+                    "conclusion": "failure", "head_sha": SHA}]}
+            if url.endswith("/runs/50/jobs?per_page=100"):
+                return {"jobs": [{"id": 51, "name": "startup", "conclusion": "failure",
+                    "runner_id": 0, "steps": []}]}
+            if url.endswith("/runs/50/artifacts?per_page=100"):
+                raise OSError("artifact API unavailable")
+            raise AssertionError(url)
+
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        self.assertEqual("partial", report["collector_status"])
+        self.assertTrue(any(item["rule_id"] == "failed-job-without-visible-steps" for item in report["correlations"]))
+        self.assertTrue(any("artifact API unavailable" in item for item in report["collection_errors"]))
+
     def test_api_error_is_recorded_as_blocked_not_source_failure(self):
         def fail_request(*args):
             raise OSError("API unavailable")
