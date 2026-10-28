@@ -360,8 +360,8 @@ class OneHealthScannerTests(unittest.TestCase):
         fake_npm = "npm_" + ("C" * 36)
         fake_pypi = "pypi-" + ("D" * 55)
         self.write("provider-keys.txt",
-                   f"GOOGLE_KEY={fake_google}\\nSTRIPE_KEY={fake_stripe}\\n"
-                   f"NPM_TOKEN={fake_npm}\\nPYPI_TOKEN={fake_pypi}\\n")
+                   f"GOOGLE_KEY={fake_google}\nSTRIPE_KEY={fake_stripe}\n"
+                   f"NPM_TOKEN={fake_npm}\nPYPI_TOKEN={fake_pypi}\n")
         report = scan_repository(self.root)
         rules = {f["rule_id"] for f in report["findings"]}
         self.assertTrue({"google-api-key", "stripe-live-secret", "npm-access-token", "pypi-access-token"}.issubset(rules))
@@ -407,13 +407,13 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_security_ast_does_not_join_unrelated_sources_and_sinks(self):
         self.write("unrelated.py",
-                   "import os\\nimport requests\\n"
-                   "local_env = os.environ.get('PATH')\\n"
-                   "requests.post('https://example.invalid/collect', data='hello')\\n")
+                   "import os\nimport requests\n"
+                   "local_env = os.environ.get('PATH')\n"
+                   "requests.post('https://example.invalid/collect', data='hello')\n")
         self.write("unrelated_fetch.py",
-                   "import requests\\nimport subprocess\\n"
-                   "response = requests.get('https://example.invalid/status')\\n"
-                   "subprocess.run(['echo', 'safe'], check=True)\\n")
+                   "import requests\nimport subprocess\n"
+                   "response = requests.get('https://example.invalid/status')\n"
+                   "subprocess.run(['echo', 'safe'], check=True)\n")
         report = scan_repository(self.root)
         self.assertFalse(any(
             f["path"] == "unrelated.py" and f["rule_id"] == "sensitive-data-egress"
