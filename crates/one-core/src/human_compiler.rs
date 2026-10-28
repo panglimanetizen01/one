@@ -21,6 +21,79 @@ fn read_source_bounded(file: std::fs::File, limit: u64, label: &str) -> Result<S
 }
 
 #[cfg(unix)]
+fn open_absolute_directory_nofollow(path: &std::path::Path) -> std::io::Result<std::fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+    use std::path::Component;
+
+    if !path.is_absolute()
+        || path.components().any(|component| matches!(component, Component::ParentDir | Component::Prefix(_)))
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "project root must be an absolute path without parent components",
+        ));
+    }
+
+    let cwd = std::env::current_dir()?;
+    let cwd_components: Vec<_> = cwd.components()
+        .filter_map(|component| match component {
+            Component::Normal(name) => Some(name),
+            _ => None,
+        })
+        .collect();
+    let target_components: Vec<_> = path.components()
+        .filter_map(|component| match component {
+            Component::Normal(name) => Some(name),
+            _ => None,
+        })
+        .collect();
+    let common = cwd_components.iter().zip(target_components.iter())
+        .take_while(|(left, right)| left == right)
+        .count();
+
+    let root_fd = unsafe {
+        libc::open(c".".as_ptr(), libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW)
+    };
+    if root_fd < 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    let mut directory = unsafe { std::fs::File::from_raw_fd(root_fd) };
+
+    for _ in common..cwd_components.len() {
+        let fd = unsafe {
+            libc::openat(
+                directory.as_raw_fd(),
+                c"..".as_ptr(),
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+            )
+        };
+        if fd < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        directory = unsafe { std::fs::File::from_raw_fd(fd) };
+    }
+
+    for component in &target_components[common..] {
+        let name = CString::new(component.as_bytes())
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::InvalidInput, "NUL in project root"))?;
+        let fd = unsafe {
+            libc::openat(
+                directory.as_raw_fd(),
+                name.as_ptr(),
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+            )
+        };
+        if fd < 0 {
+            return Err(std::io::Error::last_os_error());
+        }
+        directory = unsafe { std::fs::File::from_raw_fd(fd) };
+    }
+
+    Ok(directory)
+}
+
+#[cfg(unix)]
 fn read_confined_module(
     root_dir: &std::path::Path,
     current_file: &std::path::Path,
@@ -32,29 +105,8 @@ fn read_confined_module(
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
 
-    let mut current = File::open("/")
-        .map_err(|error| format!("Tidak dapat membuka akar filesystem: {error}"))?;
-    for component in root_dir.components() {
-        let name = match component {
-            std::path::Component::RootDir => continue,
-            std::path::Component::Normal(value) => value,
-            _ => return Err("Direktori proyek harus berupa jalur absolut kanonis.".to_owned()),
-        };
-        let name = CString::new(name.as_bytes())
-            .map_err(|_| "Direktori proyek memiliki byte NUL.".to_owned())?;
-        let fd = unsafe {
-            libc::openat(
-                current.as_raw_fd(),
-                name.as_ptr(),
-                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
-            )
-        };
-        if fd < 0 {
-            return Err(format!("Tidak dapat membuka komponen direktori proyek tanpa mengikuti symlink: {}", std::io::Error::last_os_error()));
-        }
-        // SAFETY: fd is a newly opened descriptor and ownership moves into File.
-        current = unsafe { File::from_raw_fd(fd) };
-    }
+    let mut current = open_absolute_directory_nofollow(root_dir)
+        .map_err(|error| format!("Tidak dapat membuka direktori proyek tanpa mengikuti symlink: {error}"))?;
 
     let base = current_file
         .parent()
