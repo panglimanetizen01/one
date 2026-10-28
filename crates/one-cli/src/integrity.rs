@@ -64,7 +64,7 @@ fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&
     out.push(finding("security-patterns","workflow-write-all-permissions","medium",rp.clone(),i+1,"Workflow memberi seluruh izin token melalui write-all.","permissions: write-all","Batasi permissions ke izin minimum yang diperlukan."));
    } else if (lower.contains("password")||lower.contains("api_key")||lower.contains("api-key")||lower.contains("access_token")||lower.contains("client_secret")||lower.contains("private_key")) && (line.contains("=")||line.contains(":")) {
     let key=line.split_once('=').map(|x|x.0.trim()).or_else(||line.split_once(':').map(|x|x.0.trim())).unwrap_or("");
-    let key=key.trim_matches(|c:char|c=='"'||c=='\\'');
+    let key=key.trim_matches('"');
     let key_valid=!key.is_empty()&&key.chars().all(|c|c.is_ascii_alphanumeric()||c=='_'||c=='-');
     let value=line.split_once('=').map(|x|x.1.trim()).or_else(||line.split_once(':').map(|x|x.1.trim())).unwrap_or("");
     let cleaned=value.trim_matches(|c:char|c.is_whitespace()||c=='"'||c==','||c==';');
