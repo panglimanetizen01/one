@@ -82,6 +82,12 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertTrue(any("docs/without-newline.md" in item for item in proposals))
         self.assertEqual(before, path.read_bytes())
 
+    def test_optional_one_source_check_reports_blocked_when_cli_is_missing(self):
+        report = scan_repository(self.root, check_one_source=True)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "one-cli-unavailable")
+        self.assertEqual("blocked", finding["status"])
+        self.assertEqual("info", finding["severity"])
+
     def test_json_report_schema_and_counts_are_present(self):
         self.write("README.md", "Healthy.\n")
         report = scan_repository(self.root)
