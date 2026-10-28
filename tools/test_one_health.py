@@ -289,6 +289,9 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertIn("syntax", report["detectors_run"])
         self.assertIn("contract-drift", report["detectors_run"])
+        self.assertEqual("not-applicable-no-artifact-evidence", report["detector_coverage"]["status_by_detector"]["artifact-integrity"])
+        self.assertGreaterEqual(report["detector_coverage"]["ran_count"], 5)
+        self.assertIn("syntax", report["detector_coverage"]["finding_counts_by_detector"] if any(f["detector_id"] == "syntax" for f in report["findings"]) else report["detectors_run"])
         self.assertTrue(any("YAML" in item for item in report["limitations"]))
 
     def test_normative_contract_drift_is_reported(self):
