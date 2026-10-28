@@ -932,7 +932,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     for item in ordered:
         detector = item["detector_id"]
         findings_by_detector[detector] = findings_by_detector.get(detector, 0) + 1
-    suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
+    suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()} | ({".env"} if any(not path.is_symlink() and path.name.lower().startswith(".env") for path, _ in files) else set())
     agent_instruction_surfaces = any(_is_agent_instruction_surface(rel) for path, rel in files if not path.is_symlink())
     dependency_surfaces = bool(workflows or any(_is_dependency_surface(rel) for path, rel in files if not path.is_symlink()))
     detectors_run = ["path-integrity"]
@@ -979,7 +979,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.2", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.3", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
