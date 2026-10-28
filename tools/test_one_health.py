@@ -51,6 +51,17 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertIn("a.yml", finding["evidence"])
         self.assertIn("b.yml", finding["evidence"])
 
+    def test_markdown_link_escaping_repository_root_is_high_severity(self):
+        self.write("README.md", "[escape](../../outside.md)\n")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "path-escape")
+        self.assertEqual("high", finding["severity"])
+
+    def test_missing_workflow_script_is_reported(self):
+        self.write(".github/workflows/ci.yml", "name: CI\njobs:\n  test:\n    steps:\n      - run: python tools/missing.py\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(f["rule_id"] == "missing-command-file" for f in report["findings"]))
+
     def test_invalid_python_is_reported(self):
         self.write("tools/bad.py", "def missing(:\n    pass\n")
         report = scan_repository(self.root)
@@ -113,6 +124,22 @@ class OneHealthScannerTests(unittest.TestCase):
         finding = next(f for f in report["findings"] if f["rule_id"] == "one-cli-unavailable")
         self.assertEqual("blocked", finding["status"])
         self.assertEqual("info", finding["severity"])
+
+    def test_empty_normative_fixture_set_is_blocked_not_passed(self):
+        binary = self.root / "target" / "debug" / "one.exe"
+        binary.parent.mkdir(parents=True, exist_ok=True)
+        binary.write_bytes(b"placeholder")
+        report = scan_repository(self.root, check_one_source=True)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "no-normative-fixtures-found")
+        self.assertEqual("blocked", finding["status"])
+
+    def test_safe_fix_apply_refuses_non_isolated_checkout(self):
+        path = self.write("docs/without-newline.md", "# heading")
+        before = path.read_bytes()
+        report = scan_repository(self.root)
+        with self.assertRaisesRegex(RuntimeError, "branch must start with"):
+            _safe_fix_missing_markdown_newline(self.root, report, apply=True)
+        self.assertEqual(before, path.read_bytes())
 
     def test_json_report_schema_and_counts_are_present(self):
         self.write("README.md", "Healthy.\n")
