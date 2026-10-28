@@ -179,7 +179,7 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
         elif isinstance(node, ast.Name) and node.id.lower() in sensitive_names:
             source_markers.add("credential-like-identifier")
         elif isinstance(node, ast.Constant) and isinstance(node.value, str):
-            if re.search(r"(?i)(?:/\\.ssh(?:/|$)|/\\.aws(?:/|$)|\\.env\\b|id_rsa|credentials|private[_ -]?key|api[_ -]?key|password|secret|token)", node.value):
+            if re.search(r"(?i)(?:/\.ssh(?:/|$)|/\.aws(?:/|$)|\.env\b|id_rsa|credentials|private[_ -]?key|api[_ -]?key|password|secret|token)", node.value):
                 source_markers.add("sensitive-path-or-label")
     if source_markers and call_names.intersection(egress_calls):
         sink = sorted(call_names.intersection(egress_calls))[0]
@@ -207,20 +207,20 @@ AGENT_SURFACE_NAMES = {
     ".cursorrules", ".windsurfrules",
 }
 PROMPT_OVERRIDE = re.compile(
-    r"(?i)\\b(?:ignore|disregard|override|forget)\\s+(?:all\\s+)?(?:the\\s+)?"
-    r"(?:previous|prior|above|system|developer)\\s+(?:instructions?|rules?|polic(?:y|ies))\\b|"
-    r"\\b(?:ignore|disregard)\\s+(?:all\\s+)?(?:safety|security)\\s+(?:rules|checks|policies)\\b"
+    r"(?i)\b(?:ignore|disregard|override|forget)\s+(?:all\s+)?(?:the\s+)?"
+    r"(?:previous|prior|above|system|developer)\s+(?:instructions?|rules?|polic(?:y|ies))\b|"
+    r"\b(?:ignore|disregard)\s+(?:all\s+)?(?:safety|security)\s+(?:rules|checks|policies)\b"
 )
 PROMPT_SECRET_ACTION = re.compile(
-    r"(?i)\\b(?:reveal|print|dump|exfiltrate|upload|send|transmit|expose)\\b.{0,100}"
-    r"\\b(?:secret|token|password|credential|private key|environment variable|system prompt|api key)\\b|"
-    r"\\b(?:secret|token|password|credential|private key|environment variable|system prompt|api key)\\b.{0,100}"
-    r"\\b(?:upload|send|exfiltrate|reveal|dump|print|transmit|expose)\\b"
+    r"(?i)\b(?:reveal|print|dump|exfiltrate|upload|send|transmit|expose)\b.{0,100}"
+    r"\b(?:secret|token|password|credential|private key|environment variable|system prompt|api key)\b|"
+    r"\b(?:secret|token|password|credential|private key|environment variable|system prompt|api key)\b.{0,100}"
+    r"\b(?:upload|send|exfiltrate|reveal|dump|print|transmit|expose)\b"
 )
 
 
 def _is_agent_instruction_surface(rel: str) -> bool:
-    normalized = "/" + rel.replace("\\\\", "/").lower().strip("/") + "/"
+    normalized = "/" + rel.replace("\\", "/").lower().strip("/") + "/"
     basename = Path(rel).name.lower()
     return (
         basename in AGENT_SURFACE_NAMES
@@ -249,11 +249,11 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Cabut/rotasi kredensial jika nyata, hapus dari working tree, pindahkan ke secret manager/environment, dan bersihkan riwayat Git sesuai prosedur insiden. Jangan tempelkan nilai rahasia ke laporan."))
         if suffix == ".py":
             risky_patterns = [
-                ("dynamic-eval-of-input", re.compile(r"\\b(?:eval|exec)\\s*\\(\\s*(?:input|sys\\.stdin\\.read|base64\\.b64decode)\\s*\\("), "high", "medium",
+                ("dynamic-eval-of-input", re.compile(r"\b(?:eval|exec)\s*\(\s*(?:input|sys\.stdin\.read|base64\.b64decode)\s*\("), "high", "medium",
                  "Eksekusi kode dinamis menerima input atau payload terdekode."),
-                ("subprocess-shell-true", re.compile(r"\\bsubprocess\\.(?:run|Popen|call|check_call|check_output)\\s*\\([\\s\\S]{0,500}?shell\\s*=\\s*True"), "medium", "medium",
+                ("subprocess-shell-true", re.compile(r"\bsubprocess\.(?:run|Popen|call|check_call|check_output)\s*\([\s\S]{0,500}?shell\s*=\s*True"), "medium", "medium",
                  "Pemanggilan subprocess mengaktifkan shell; tinjau apakah input dapat dikendalikan pihak luar."),
-                ("dynamic-code-execution", re.compile(r"\\b(?:eval|exec)\\s*\\("), "medium", "low",
+                ("dynamic-code-execution", re.compile(r"\b(?:eval|exec)\s*\("), "medium", "low",
                  "Ditemukan eksekusi kode dinamis; konteks menentukan apakah ini berbahaya."),
             ]
             for rule, pattern, severity, confidence, summary in risky_patterns:
@@ -263,13 +263,13 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                         "Tinjau aliran data, validasi input, batas kepercayaan, dan apakah API yang lebih aman dapat digunakan."))
         if rel.startswith(".github/workflows/"):
             workflow_rules = [
-                ("pipe-to-shell", re.compile(r"\\b(?:curl|wget)\\b[^\\n|]*\\|\\s*(?:sudo\\s+)?(?:ba)?sh\\b"), "high", "medium",
+                ("pipe-to-shell", re.compile(r"\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh\b"), "high", "medium",
                  "Workflow mengalirkan konten jaringan langsung ke shell."),
-                ("write-all-permissions", re.compile(r"(?m)^\\s*permissions\\s*:\\s*write-all\\s*$"), "high", "high",
+                ("write-all-permissions", re.compile(r"(?m)^\s*permissions\s*:\s*write-all\s*$"), "high", "high",
                  "Workflow meminta seluruh permission token ditulis; terapkan least privilege."),
-                ("pull-request-target", re.compile(r"(?m)^\\s*pull_request_target\\s*:"), "high", "medium",
+                ("pull-request-target", re.compile(r"(?m)^\s*pull_request_target\s*:"), "high", "medium",
                  "Workflow memakai pull_request_target; tinjau checkout/eksekusi kode kontribusi tak tepercaya."),
-                ("mutable-action-ref", re.compile(r"\\buses:\\s*[^\\s#]+@(main|master|latest)\\b"), "medium", "high",
+                ("mutable-action-ref", re.compile(r"\buses:\s*[^\s#]+@(main|master|latest)\b"), "medium", "high",
                  "Action pihak ketiga dirujuk ke tag/branch mutable, bukan commit SHA."),
             ]
             for rule, pattern, severity, confidence, summary in workflow_rules:
@@ -285,7 +285,7 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
         override = PROMPT_OVERRIDE.search(text)
         exfil = PROMPT_SECRET_ACTION.search(text)
         if override and exfil:
-            line = text.count("\\n", 0, override.start()) + 1
+            line = text.count("\n", 0, override.start()) + 1
             findings.append(_finding("security-prompt-injection", "agent-instruction-secret-exfiltration", rel, line,
                 "high", "medium",
                 "Berkas instruksi agen menggabungkan upaya override instruksi dengan perintah membuka atau mengirim rahasia.",
@@ -293,13 +293,13 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Perlakukan isi sebagai data tak tepercaya; hapus instruksi berbahaya dan jangan berikan akses secret/tool sebelum ditinjau."))
 
     if rel.startswith(".github/workflows/"):
-        for match in re.finditer(r"(?m)^\\s*uses:\\s*([^\\s#]+)@([^\\s#]+)", text):
+        for match in re.finditer(r"(?m)^\s*uses:\s*([^\s#]+)@([^\s#]+)", text):
             action, ref = match.group(1), match.group(2)
             if action.startswith("./") or re.fullmatch(r"[0-9a-fA-F]{40}", ref):
                 continue
             if ref.lower() in {"main", "master", "latest"}:
                 continue
-            line = text.count("\\n", 0, match.start()) + 1
+            line = text.count("\n", 0, match.start()) + 1
             findings.append(_finding("security-supply-chain", "action-not-pinned-to-commit", rel, line,
                 "medium", "high",
                 "GitHub Action memakai tag/ref mutable alih-alih full commit SHA immutable.",
@@ -307,8 +307,8 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Verifikasi repository dan provenance upstream, lalu pin ke full commit SHA tepercaya; lakukan update pin secara terkontrol."))
 
     if suffix in {".toml", ".txt", ".json", ".yml", ".yaml", ".sh", ".ps1"}:
-        for match in re.finditer(r"(?i)(?:git\\+https?://[^\\s'\\\"]+|github:[^\\s'\\\"]+)@?(?:#)?(main|master|develop|latest)\\b", text):
-            line = text.count("\\n", 0, match.start()) + 1
+        for match in re.finditer(r"(?i)(?:git\+https?://[^\s'\\"]+|github:[^\s'\\"]+)@?(?:#)?(main|master|develop|latest)\b", text):
+            line = text.count("\n", 0, match.start()) + 1
             findings.append(_finding("security-supply-chain", "mutable-git-dependency-ref", rel, line,
                 "medium", "medium",
                 "Dependency Git menunjuk ke nama branch mutable, bukan revisi immutable.",
@@ -317,11 +317,11 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
 
     if suffix in {".sh", ".ps1"}:
         remote_exec = re.search(
-            r"(?is)(?:curl|wget|Invoke-WebRequest|iwr)\\b.{0,300}(?:\\|\\s*(?:ba)?sh\\b|\\|\\s*iex\\b|Invoke-Expression)",
+            r"(?is)(?:curl|wget|Invoke-WebRequest|iwr)\b.{0,300}(?:\|\s*(?:ba)?sh\b|\|\s*iex\b|Invoke-Expression)",
             text,
         )
         if remote_exec:
-            line = text.count("\\n", 0, remote_exec.start()) + 1
+            line = text.count("\n", 0, remote_exec.start()) + 1
             findings.append(_finding("security-code", "download-and-execute", rel, line, "high", "medium",
                 "Skrip menggabungkan pengunduhan konten jaringan dan eksekusi shell langsung.",
                 "Matched download-to-interpreter pattern; URL/payload omitted.",
