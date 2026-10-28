@@ -11,9 +11,11 @@ This checklist is an acceptance control, not a claim that the release is complet
 
 ## Active exact-SHA reconciliation — 2026-10-28
 
-The source candidate observed before this documentation reconciliation was `65d09e3f9ed8639ff0d22a948ada06c3def36c22`; the live PR #80 head is authoritative after these commits. The independent verifier pin observed at recovery was stale (`c5ba60b16e0356753ffbd10d448b47dce64f01bb`). Six latest canonical source workflow runs reported failure with empty/null job steps; logs were unavailable (`BlobNotFound`). This does not prove source tests failed or passed. E3/E4/E5 evidence below is historical until re-run against the current exact SHA.
+The live PR #80 head is authoritative; the verifier pin/index must match that exact final candidate. The repository-health scanner now includes JavaScript/TypeScript source files and heuristic rules for obfuscated dynamic execution, network-plus-execution correlation, sensitive-source/network-sink correlation, and Node shell-oriented child-process calls. Three positive/negative regression fixtures were added. Isolated detector snippets were exercised, but no full scanner unit suite or self-scan result is accepted yet.
 
-Current checkbox count after reconciliation: **3 checked, 10 unchecked**. Final exact-SHA score remains **UNKNOWN / NOT RECONCILED**; gate **NOT PASSED**. Do not merge or release.
+Latest canonical source workflow runs for the scanner candidate returned failed job summaries with null steps/log URLs and no artifacts; log retrieval returned `BlobNotFound`. This is a blocked execution/evidence path, not proof that source tests failed or passed. Root cause remains unknown. The canonical repository-health workflow includes unit tests and a direct scan of the checked-out ONE repository; it must produce inspected steps, exit codes, and report artifacts before acceptance.
+
+Current checkbox count: **3 checked, 10 unchecked**. Final exact-SHA score remains **UNKNOWN / NOT RECONCILED**; gate **NOT PASSED**. Do not merge or release.
 
 ## 1. Immutable evidence rules
 
