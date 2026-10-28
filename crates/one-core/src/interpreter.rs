@@ -128,13 +128,13 @@ impl Interpreter {
         "panjang teks" | "teks memuat" | "pangkas teks" | "ganti teks" |
         "pisah teks" | "ubah teks ke angka" | "panjang daftar" | "tambah elemen daftar" | "hapus elemen daftar" | "ambil indeks" |
         "nilai mutlak" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" |
-        "nilai pemetaan" | "atur pemetaan" | "ubah nilai ke json" |
+        "nilai pemetaan" | "atur pemetaan" | "hapus kunci pemetaan" | "ubah nilai ke json" |
         "teks diawali" | "teks diakhiri" | "huruf kecil" | "huruf besar" | "gabung teks" | "jumlah daftar angka" | "nilai dari json" | "waktu utc dari unix" | "unix dari waktu utc"
     );
     if builtin {
         let expected_arity = match name {
             "panjang teks" | "pangkas teks" | "ubah teks ke angka" | "panjang daftar" | "nilai mutlak" | "ubah nilai ke json" | "huruf kecil" | "huruf besar" | "jumlah daftar angka" | "nilai dari json" | "waktu utc dari unix" | "unix dari waktu utc" => 1,
-            "teks memuat" | "pisah teks" | "tambah elemen daftar" | "hapus elemen daftar" | "ambil indeks" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" | "nilai pemetaan" | "teks diawali" | "teks diakhiri" | "gabung teks" => 2,
+            "teks memuat" | "pisah teks" | "tambah elemen daftar" | "hapus elemen daftar" | "ambil indeks" | "bagi bulat" | "angka sisa bagi" | "angka minimum" | "angka maksimum" | "nilai pemetaan" | "hapus kunci pemetaan" | "teks diawali" | "teks diakhiri" | "gabung teks" => 2,
             "atur pemetaan" => 3,
             "ganti teks" => 3,
             _ => 0,
