@@ -77,6 +77,13 @@ Repairs are never authorized to change normative grammar, accepted/rejected fixt
 - 2026-10-28 — Added scanner/runtime environment metadata, branch-scoped cached baseline comparison, and weekly scheduled repository-health scans. Independent scanner tests, CLI build, normative fixture validation, and cross-platform verification passed on source SHA `65d09e3f9ed8639ff0d22a948ada06c3def36c22`; subsequent source changes require a fresh exact-SHA run.
 
 
+## Schema compatibility
+
+- The scanner report uses schema version one-health-report/1. The detector_coverage object is an additive field; consumers should tolerate unknown fields and must not treat a missing field as a successful check.
+- The CI collector uses one-ci-health-evidence/1. The correlations array is additive metadata; unknown or absent correlations are not evidence that a run is healthy.
+- The reviewed quality ledger uses its own one-health-quality/1 schema and is never merged into the fixed-weight acceptance ledger.
+- Any incompatible field rename, type change, or semantic change requires a schema version change, updated fixtures, and a migration note. Keep existing fields stable within a schema version.
+
 ## Detector quality and repair outcome measurement
 
 Use [the health quality ledger guide](health-quality-ledger.md) and `tools/health_quality.py` to record reviewed true positives, false positives, confirmed misses, and verified repair outcomes. The tool reports observed sample shares and verified repair success rate; it does not infer correctness from missing data. A detector change should include positive/negative fixtures and a regression case for any confirmed incident. These metrics are operational quality evidence only and never modify the fixed-weight completion ledger or release gates.
