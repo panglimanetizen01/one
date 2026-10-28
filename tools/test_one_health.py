@@ -128,6 +128,7 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         proposals = _safe_fix_missing_markdown_newline(self.root, report, apply=False)
         self.assertTrue(any("docs/without-newline.md" in item for item in proposals))
+        self.assertTrue(any(line.startswith("@@") for line in proposals))
         self.assertEqual(before, path.read_bytes())
 
     def test_optional_one_source_check_reports_blocked_when_cli_is_missing(self):
