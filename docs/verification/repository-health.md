@@ -117,3 +117,27 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 ## Definition of done
 
 This scanner is not yet a complete autonomous repair system. It becomes production-ready only after the remaining checklist items are implemented, tests run on the exact commit, findings are reviewed, and CI artifacts are retrievable. The current workflow tests the scanner on Ubuntu and Windows and uploads its reports; this does not substitute for the existing One language, conformance, E1/E2/E6, or protected production provenance gates.
+
+
+## One source fixture validation
+
+The CI workflow builds the CLI once and calls the non-executing validation command for the normative v0.1 accepted and rejected conformance fixtures:
+
+~~~sh
+cargo build --locked -p one-cli
+python tools/one_health.py --check-one-source --json-out one-health-report.json
+~~~
+
+This invokes only `one periksa`; it never invokes `one jalankan`. The experimental `tests/human-vnext` fixtures and `examples/human-vnext` programs are deliberately excluded because they have a separate, explicitly experimental grammar contract. A fixture whose actual parser acceptance differs from its expected valid/invalid class is reported as a high-severity contract mismatch.
+
+## Historical comparison and triage priority
+
+Use a prior JSON report as an explicit baseline:
+
+~~~sh
+python tools/one_health.py --baseline previous-report.json --json-out current-report.json --markdown-out current-report.md
+~~~
+
+Current findings are labeled `new`, `recurring`, or `reopened`; findings absent from the current completed scan are listed separately as `resolved` with a review caveat. The tool does not silently edit the fixed-weight One acceptance ledger. A triage priority score is provided alongside its inputs (impact, confidence, recurrence, and acceptance-blocker factor) so maintainers can review why a finding was ranked. It is an operational triage aid, not an acceptance score or proof of resolution.
+
+Baseline comparison is currently opt-in and file-based; persistent cross-run history and automatic GitHub job/log ingestion remain future work.
