@@ -203,6 +203,53 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
                 "Hasil parser berbeda dari status fixture conformance.", f"expected={expected}; actual={actual}; {detail}",
                 "Tinjau grammar normatif dan implementasi parser; jangan ubah status fixture tanpa alasan kontraktual."))
 
+def _scan_contract_documents(root: Path, findings: list[dict]) -> None:
+    """Check high-value normative invariants without rewriting or executing One source."""
+    contracts = {
+        "docs/spec/one-v0.1-grammar.md": [
+            ("no-generic-action-production", "There is **no generic action production**", "high"),
+            ("ambiguous-parse-rejection", "parsing fails with `EAMBxxx`", "high"),
+        ],
+        "docs/spec/one-v0.1-cli-contract.md": [
+            ("bounded-cli-recognition", "Command recognition is exact and bounded.", "medium"),
+            ("explicit-capability-grant", "the capability must be explicitly granted", "high"),
+            ("package-artifact-contract", "`.onepkg`", "medium"),
+            ("ir-artifact-contract", "`.oneir`", "medium"),
+        ],
+        "docs/spec/one-v0.1-diagnostics.md": [
+            ("stable-diagnostic-identity", "stable error code, severity, human-readable message, and source span", "high"),
+            ("deterministic-diagnostics", "Diagnostics must be deterministic", "medium"),
+            ("ambiguous-source-rejected", "reject the source instead of selecting an interpretation", "high"),
+        ],
+        "docs/spec/one-v0.1-package-build.md": [
+            ("deterministic-ir-package", "`.oneir`", "medium"),
+            ("deterministic-package-artifact", "`.onepkg`", "medium"),
+            ("no-implicit-dependency-resolution", "no external dependency graph or package registry", "medium"),
+        ],
+        "docs/spec/one-v0.1-platform-abstraction.md": [
+            ("adapter-cannot-expand-capability", "An adapter must not expand a capability", "high"),
+        ],
+    }
+    for relative, requirements in contracts.items():
+        path = root / relative
+        if not path.is_file():
+            findings.append(_finding("contract-drift", "normative-contract-missing", relative, None, "high", "high",
+                "Dokumen kontrak normatif yang dibutuhkan pemeriksa tidak ditemukan.", relative,
+                "Pulihkan dokumen kontrak; jangan menganggap pemeriksaan kontrak yang tidak berjalan sebagai PASS.", status="blocked"))
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            findings.append(_finding("contract-drift", "normative-contract-unreadable", relative, None, "high", "high",
+                "Dokumen kontrak normatif tidak dapat dibaca.", repr(exc),
+                "Periksa encoding dan izin file; status kontrak tetap blocked.", status="blocked"))
+            continue
+        for rule, required, severity in requirements:
+            if required not in text:
+                findings.append(_finding("contract-drift", rule, relative, None, severity, "medium",
+                    "Invarian penting kontrak One tidak ditemukan pada dokumen normatif.",
+                    f"required_text={required!r}",
+                    "Tinjau perubahan dokumen terhadap kontrak normatif dan implementasi; jangan menambahkan frasa hanya untuk membuat pemindai hijau."))
 def scan_repository(root: Path, expected_sha: str | None = None, check_one_source: bool = False) -> dict:
     root = root.resolve()
     findings, workflows = [], []
@@ -222,6 +269,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 "Checkout Git tidak sama dengan SHA yang diwajibkan.", f"expected={expected_sha}; actual={actual_sha}",
                 "Periksa checkout dan ulangi semua bukti pada SHA yang tepat."))
     docs_root = root / "docs" / "panduan-pengguna"
+    _scan_contract_documents(root, findings)
     for path, rel in files:
         suffix = path.suffix.lower()
         if path.is_symlink():
@@ -294,7 +342,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     if workflows:
         detectors_run.extend(["workflow-integrity", "workflow-overlap"])
     detectors_run.extend(sorted(json_evidence_detectors))
-    if cli_contract.is_file() and cli_guide.is_file():
+    if all((root / p).is_file() for p in ["docs/spec/one-v0.1-grammar.md", "docs/spec/one-v0.1-cli-contract.md", "docs/spec/one-v0.1-diagnostics.md", "docs/spec/one-v0.1-package-build.md", "docs/spec/one-v0.1-platform-abstraction.md"]):
         detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
