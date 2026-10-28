@@ -1159,6 +1159,19 @@ def main(argv: list[str] | None = None) -> int:
         if not isinstance(baseline, dict) or baseline.get("schema_version") != SCHEMA_VERSION or not isinstance(baseline.get("findings"), list):
             print("BASELINE UNAVAILABLE: unsupported schema or missing findings list", file=sys.stderr)
             return 2
+        valid_severities = {"critical", "high", "medium", "low", "info"}
+        baseline_ids = []
+        for item in baseline["findings"]:
+            if (not isinstance(item, dict)
+                    or not isinstance(item.get("finding_id"), str) or not item["finding_id"]
+                    or item.get("severity") not in valid_severities
+                    or not isinstance(item.get("status", "open"), str)):
+                print("BASELINE UNAVAILABLE: malformed finding entry", file=sys.stderr)
+                return 2
+            baseline_ids.append(item["finding_id"])
+        if len(baseline_ids) != len(set(baseline_ids)):
+            print("BASELINE UNAVAILABLE: duplicate finding_id entries", file=sys.stderr)
+            return 2
         report = apply_baseline(report, baseline)
     report["enforcement_policy"] = {
         "fail_on": args.fail_on,
