@@ -7,7 +7,7 @@ from urllib.parse import unquote, urlsplit
 
 SCHEMA_VERSION = "one-health-report/1"
 SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
-TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs"}
+TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 JAVASCRIPT_SUFFIXES = {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 FENCE_RE = re.compile(r"^( {0,3})(\x60{3,}|~{3,})(.*)$")
