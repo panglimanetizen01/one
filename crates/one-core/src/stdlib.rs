@@ -19,7 +19,9 @@ mod tests {
         assert_eq!(display_value(&Value::Text("halo".into())), "halo");
         assert_eq!(display_value(&Value::Number(42)), "42");
         assert_eq!(display_value(&Value::Boolean(true)), "benar");
+        assert_eq!(display_value(&Value::Boolean(false)), "salah");
         assert_eq!(display_value(&Value::List(vec![Value::Number(1), Value::Text("x".into())])), "[1, x]");
+        assert_eq!(display_value(&Value::List(vec![])), "[]");
         assert_eq!(display_value(&Value::Nothing), "tidak ada");
     }
 
@@ -32,6 +34,14 @@ mod tests {
         assert_eq!(
             result,
             Some(Value::List(vec![Value::Number(1), Value::Number(2), Value::Number(3)]))
+        );
+    }
+
+    #[test]
+    fn list_append_supports_an_empty_list() {
+        assert_eq!(
+            list_append(Value::List(vec![]), Value::Text("awal".into())),
+            Some(Value::List(vec![Value::Text("awal".into())]))
         );
     }
 
@@ -58,6 +68,14 @@ mod tests {
         assert_eq!(
             list_remove(input.clone(), &Value::Number(2)),
             Some(input)
+        );
+    }
+
+    #[test]
+    fn list_remove_supports_an_empty_list() {
+        assert_eq!(
+            list_remove(Value::List(vec![]), &Value::Number(1)),
+            Some(Value::List(vec![]))
         );
     }
 
