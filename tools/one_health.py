@@ -1039,7 +1039,7 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
 
 def render_markdown(report: dict) -> str:
     lines = ["# One Repository Health Report", "", f"- Schema: {report['schema_version']}",
-        f"- Repository: {report['repository']}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
+        f"- Repository: {report['repository']}", f"- Scope: {report.get('scan_scope', 'all')}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
         f"- Branch: {report['branch'] or 'UNKNOWN'}", f"- Findings: **{report['finding_count']}**", "",
         "| Severity | Count |", "|---|---:|"]
     lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
@@ -1152,6 +1152,12 @@ def _apply_scope(report: dict, scope: str) -> dict:
     coverage = report.get("detector_coverage", {})
     coverage["scope"] = scope
     coverage["scope_detectors"] = sorted(selected)
+    coverage["finding_counts_by_detector"] = {
+        detector: sum(1 for item in report["findings"] if item.get("detector_id") == detector)
+        for detector in sorted(selected)
+    }
+    coverage["ran_count"] = len(selected)
+    coverage["not_requested_count"] = max(0, len(coverage.get("status_by_detector", {})) - len(selected))
     return report
 
 
