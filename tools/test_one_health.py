@@ -130,6 +130,32 @@ class OneHealthScannerTests(unittest.TestCase):
         finding = next(f for f in report["findings"] if f["rule_id"] == "duplicate-artifact-name")
         self.assertEqual("medium", finding["severity"])
 
+    def test_failed_run_without_job_metadata_correlation_is_visible_in_scan(self):
+        self.write("ci-health-evidence.json", json.dumps({
+            "collector_status": "complete",
+            "runs": [{"id": 40, "conclusion": "failure"}],
+            "jobs": [],
+            "correlations": [{
+                "rule_id": "failed-run-without-job-metadata",
+                "run_id": 40,
+                "classification": "blocked-unknown",
+                "evidence": "Run failed but no job metadata was returned.",
+                "next_step": "Inspect runner status without attributing failure to source."
+            }, {
+                "rule_id": "no-artifacts-observed",
+                "run_id": 40,
+                "classification": "informational-review",
+                "evidence": "No artifacts returned.",
+                "next_step": "Compare with workflow contract; absence alone is not a failure."
+            }]
+        }))
+        report = scan_repository(self.root)
+        rules = {f["rule_id"]: f for f in report["findings"]}
+        self.assertEqual("blocked", rules["failed-run-without-job-metadata"]["status"])
+        self.assertEqual("medium", rules["failed-run-without-job-metadata"]["severity"])
+        self.assertEqual("triaged", rules["no-artifacts-observed"]["status"])
+        self.assertEqual("info", rules["no-artifacts-observed"]["severity"])
+
     def test_failed_ci_job_without_steps_is_blocked_not_misclassified(self):
         self.write("run.json", json.dumps({"jobs": [{"name": "One CI", "conclusion": "failure", "steps": [], "runner_id": 0}]}))
         report = scan_repository(self.root)
