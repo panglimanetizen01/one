@@ -8,6 +8,7 @@ from urllib.parse import unquote, urlsplit
 SCHEMA_VERSION = "one-health-report/1"
 SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs"}
+JAVASCRIPT_SUFFIXES = {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 FENCE_RE = re.compile(r"^( {0,3})(\x60{3,}|~{3,})(.*)$")
 SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -231,6 +232,63 @@ def _is_agent_instruction_surface(rel: str) -> bool:
     )
 
 
+def _scan_javascript_security(rel: str, text: str, findings: list[dict]) -> None:
+    """Targeted JavaScript/TypeScript heuristics; findings are leads, not proof of exploitability."""
+    obfuscated = re.search(
+        r"\b(?:eval|Function)\s*\(\s*(?:Buffer\.from|atob|decodeURIComponent)\s*\(",
+        text,
+    )
+    if obfuscated:
+        line = text.count("\n", 0, obfuscated.start()) + 1
+        findings.append(_finding("security-javascript", "node-obfuscated-execution", rel, line,
+            "high", "medium",
+            "JavaScript mengirim data yang didekode langsung ke primitive eksekusi dinamis.",
+            "Static correlation: eval/Function + Buffer.from/atob/decodeURIComponent; payload omitted.",
+            "Jangan jalankan payload. Telusuri sumber data, hilangkan eksekusi dinamis jika tidak diperlukan, dan verifikasi asal payload."))
+
+    network = re.search(r"\b(?:fetch|axios\.(?:get|request)|https?\.get|request)\s*\(", text)
+    dynamic = re.search(r"\b(?:eval|Function)\s*\(", text)
+    child_import = re.search(
+        r"(?:require\s*\(\s*['\"](?:node:)?child_process['\"]\s*\)|"
+        r"(?:from\s+|import\s*\(\s*)['\"](?:node:)?child_process['\"])",
+        text,
+    )
+    child_exec = re.search(r"\b(?:exec|execSync)\s*\(", text)
+    if network and (dynamic or (child_import and child_exec)):
+        line = text.count("\n", 0, (dynamic or child_exec).start()) + 1
+        findings.append(_finding("security-javascript", "node-downloaded-code-execution", rel, line,
+            "high", "medium",
+            "Satu berkas menggabungkan akses jaringan dengan eksekusi kode dinamis atau primitive child-process shell.",
+            "Static correlation: network-access + dynamic/process execution; data flow is not proven.",
+            "Tinjau asal konten dan aliran data tanpa menjalankan berkas. Verifikasi digest/provenance dan gunakan API tanpa shell bila memungkinkan."))
+
+    sensitive_source = re.search(
+        r"(?i)(?:process\s*\.\s*env(?:\s*(?:\.\s*[A-Z_][A-Z0-9_]*|\[\s*['\"][^'\"]+['\"]\s*\]))?|"
+        r"(?:\.ssh(?:/|\\)|\.aws(?:/|\\)|\.env\b|private[_ -]?key|credential|password|secret|token|api[_ -]?key))",
+        text,
+    )
+    egress = re.search(
+        r"\b(?:fetch|axios\.(?:post|put|request)|https?\.request|navigator\.sendBeacon|"
+        r"new\s+WebSocket)\s*\(",
+        text,
+    )
+    if sensitive_source and egress:
+        line = text.count("\n", 0, egress.start()) + 1
+        findings.append(_finding("security-javascript", "node-sensitive-data-egress", rel, line,
+            "high", "medium",
+            "Indikator environment/kredensial berkorelasi dengan API pengiriman jaringan dalam berkas JavaScript/TypeScript.",
+            "Static source/sink correlation; values and destination omitted; data flow is not proven.",
+            "Periksa tujuan dan data yang dikirim, rotasi kredensial bila benar terpapar, dan jangan mengeksekusi berkas untuk menguji temuan."))
+
+    if child_import and child_exec:
+        line = text.count("\n", 0, child_exec.start()) + 1
+        findings.append(_finding("security-javascript", "node-child-process-shell-execution", rel, line,
+            "medium", "medium",
+            "Berkas mengimpor child_process dan memanggil exec/execSync yang menggunakan shell.",
+            "Static import/call correlation; input control and runtime context are not proven.",
+            "Utamakan execFile/spawn dengan argumen terpisah dan shell disabled; validasi seluruh argumen dari sumber eksternal."))
+
+
 def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
     """Read-only security heuristics. Never include matched secret bytes in reports."""
     suffix = Path(rel).suffix.lower()
@@ -280,6 +338,8 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
 
     if suffix == ".py":
         _scan_python_security(rel, text, findings)
+    elif suffix in JAVASCRIPT_SUFFIXES:
+        _scan_javascript_security(rel, text, findings)
 
     if _is_agent_instruction_surface(rel):
         override = PROMPT_OVERRIDE.search(text)
@@ -648,7 +708,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     if workflows:
         detectors_run.extend(["workflow-integrity", "workflow-overlap"])
     detectors_run.extend(sorted(json_evidence_detectors))
-    detectors_run.extend(["security-secrets", "security-code", "security-workflow", "security-prompt-injection", "security-supply-chain"])
+    detectors_run.extend(["security-secrets", "security-code", "security-javascript", "security-workflow", "security-prompt-injection", "security-supply-chain"])
     detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
@@ -657,6 +717,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "path-integrity": "ran",
         "security-secrets": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
         "security-code": "ran" if ".py" in suffixes else "not-applicable-no-python-files",
+        "security-javascript": "ran" if suffixes.intersection(JAVASCRIPT_SUFFIXES) else "not-applicable-no-javascript-typescript-files",
         "security-workflow": "ran" if workflows else "not-applicable-no-workflows",
         "security-prompt-injection": "ran" if agent_instruction_surfaces else "not-applicable-no-agent-instruction-surfaces",
         "security-supply-chain": "ran" if dependency_surfaces else "not-applicable-no-workflows-or-dependency-files",
@@ -679,7 +740,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.0", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.1", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
