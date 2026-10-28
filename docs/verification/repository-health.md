@@ -15,6 +15,7 @@ Requires Python 3.11 or newer and a checkout of the repository.
 python tools/one_health.py
 python -m unittest discover -s tools -p "test_one_health.py" -v
 python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+python -m unittest discover -s tools -p "test_health_quality.py" -v
 ~~~
 
 Create machine-readable and human-readable reports outside the tracked source tree when possible:
@@ -141,6 +142,17 @@ python tools/one_health.py --check-one-source --json-out one-health-report.json
 ~~~
 
 This invokes only `one periksa`; it never invokes `one jalankan`. The experimental `tests/human-vnext` fixtures and `examples/human-vnext` programs are deliberately excluded because they have a separate, explicitly experimental grammar contract. A fixture whose actual parser acceptance differs from its expected valid/invalid class is reported as a high-severity contract mismatch.
+
+## Detector quality and repair outcomes
+
+Use the manual quality ledger when reviewers confirm a finding was correct, a false positive, or a missed issue, or when a guarded repair has been verified:
+
+~~~sh
+cp docs/verification/health-quality-ledger.example.json /tmp/health-quality.json
+python tools/health_quality.py /tmp/health-quality.json --json-out /tmp/health-quality-report.json --markdown-out /tmp/health-quality-report.md
+~~~
+
+The ledger requires review evidence and unique IDs. It reports observed false-positive/miss shares and the success rate of verified terminal repairs. These metrics describe only manually reviewed samples and are not statistically representative accuracy guarantees. See [the quality ledger guide](health-quality-ledger.md).
 
 ## Historical comparison and triage priority
 
