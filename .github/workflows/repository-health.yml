@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: one-repository-health-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
@@ -38,8 +39,16 @@ jobs:
       - name: Scanner regression tests
         run: python -m unittest discover -s tools -p "test_one_health.py" -v
 
+      - name: CI metadata collector regression tests
+        run: python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+
       - name: Build One CLI for source-only grammar checks
         run: cargo build --locked -p one-cli
+
+      - name: Collect exact-SHA CI run, job, step, and artifact metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/collect_ci_health.py --output ci-health-evidence.json
 
       - name: Restore prior health report for triage comparison
         uses: actions/cache/restore@v4
@@ -74,6 +83,7 @@ jobs:
           path: |
             one-health-report.json
             one-health-report.md
+            ci-health-evidence.json
           if-no-files-found: warn
           retention-days: 14
 
