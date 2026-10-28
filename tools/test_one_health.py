@@ -24,6 +24,35 @@ class OneHealthScannerTests(unittest.TestCase):
         path.write_text(content, encoding="utf-8")
         return path
 
+    def test_workflow_flags_untrusted_event_expression_in_run_script(self):
+        self.write(".github/workflows/injection.yml", """name: unsafe
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: use title
+        run: |
+          echo "${{ github.event.pull_request.title }}"
+""")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "untrusted-event-expression-in-run")
+        self.assertEqual(".github/workflows/injection.yml", finding["path"])
+        self.assertEqual("high", finding["severity"])
+        self.assertEqual("high", finding["confidence"])
+
+    def test_workflow_does_not_flag_event_expression_in_env_as_run_injection(self):
+        self.write(".github/workflows/safe.yml", """name: safer
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$TITLE"
+""")
+        report = scan_repository(self.root)
+        self.assertFalse(any(f["rule_id"] == "untrusted-event-expression-in-run" for f in report["findings"]))
+
     def test_clean_markdown_link_has_no_broken_link_finding(self):
         self.write("README.md", "[target](docs/target.md)\n")
         report = scan_repository(self.root)
