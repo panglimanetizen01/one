@@ -129,7 +129,7 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
     for path, should_pass in fixtures:
         rel = path.relative_to(root).as_posix()
         try:
-            result = subprocess.run([str(binary), "periksa", str(path)], cwd=root, capture_output=True,
+            result = subprocess.run([str(binary), "periksa", path.relative_to(root).as_posix()], cwd=root, capture_output=True,
                                     text=True, timeout=30, check=False)
         except subprocess.TimeoutExpired:
             findings.append(_finding("one-source-contract", "one-source-check-timeout", rel, None, "high", "high",
