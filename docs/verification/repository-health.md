@@ -14,6 +14,7 @@ Requires Python 3.11 or newer and a checkout of the repository.
 ~~~sh
 python tools/one_health.py
 python -m unittest discover -s tools -p "test_one_health.py" -v
+python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
 ~~~
 
 Create machine-readable and human-readable reports outside the tracked source tree when possible:
@@ -43,13 +44,10 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
 | Workflow overlap | exact repeated single-line run commands across workflow files | Low-confidence review hint; repetition may be intentional |
 | Evidence freshness | source SHA versus checked-out SHA in structured JSON evidence | Only for records that declare both values |
-| Live CI metadata | Exact-SHA GitHub Actions runs, jobs, steps, and artifact metadata | Requires Actions read permission and a token; collection outage is blocked/partial, not a source failure; logs are link-only |
-| Normative One contract drift | Required invariants in grammar, CLI, diagnostics, package/build, and platform contract docs | Text-presence check only; parser/conformance tests and human review remain authoritative |
-| CI failure classification | failed jobs with absent steps, and failed steps needing log review in saved JSON run metadata | Does not claim root cause from metadata alone |
+| Live CI metadata and correlations | exact-SHA Actions runs/jobs/steps/artifacts; failed runs without jobs, failed jobs without visible steps, failed steps needing log review, and absent artifacts | Requires Actions read permission; logs are link-only; absence is not proof of a source failure or missing required artifact |
+| Normative One contract drift | required grammar, CLI, diagnostics, package/build, and platform invariants | Text-presence checks only; conformance tests and human review remain authoritative |
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
-| Normative One contract drift | required grammar, CLI, diagnostics, package/build, and platform invariants | Text-presence checks only; conformance tests and human review remain authoritative |
-| Live CI metadata | exact-SHA GitHub Actions runs, jobs, steps, and artifact metadata | Requires Actions read permission and token; logs are link-only; collection outages remain blocked/partial |
 | Artifact integrity hints | expired artifacts, duplicate names per run, missing digest metadata | Does not download/rehash artifact bytes; missing digest is a limitation, not a clean integrity result |
 
 The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Normative contract checks detect disappearance of high-value invariants but are deliberately not a substitute for parser tests or human contract review. Language examples must be checked against the One grammar, implementation status, and conformance tests.
