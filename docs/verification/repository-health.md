@@ -50,6 +50,7 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
 | Normative One contract drift | required grammar, CLI, diagnostics, package/build, and platform invariants | Text-presence checks only; conformance tests and human review remain authoritative |
 | Live CI metadata | exact-SHA GitHub Actions runs, jobs, steps, and artifact metadata | Requires Actions read permission and token; logs are link-only; collection outages remain blocked/partial |
+| Artifact integrity hints | expired artifacts, duplicate names per run, missing digest metadata | Does not download/rehash artifact bytes; missing digest is a limitation, not a clean integrity result |
 
 The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Normative contract checks detect disappearance of high-value invariants but are deliberately not a substitute for parser tests or human contract review. Language examples must be checked against the One grammar, implementation status, and conformance tests.
 
