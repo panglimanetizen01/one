@@ -83,7 +83,7 @@ fn run_conformance_fixtures(root: &Path) -> Result<usize, String> {
  Ok(count)
 }
 fn main() -> ExitCode {
- let mut args = env::args().skip(1); let Some(first) = args.next() else { usage(); return ExitCode::from(2); }; if first == "pindai" || first == "integrity" { if first == "integrity" && args.next_if_eq("scan").is_none() { eprintln!("Penggunaan: one integrity scan [--scope <cakupan>] [--root <direktori>] [--expected-sha <SHA>]"); return ExitCode::from(2); } return ExitCode::from(integrity::run(args)); } if first == "help" { if args.next().is_some() { usage(); return ExitCode::from(2); } usage(); return ExitCode::SUCCESS; } if first == "version" { if args.next().is_some() { usage(); return ExitCode::from(2); } println!("one {VERSION}"); return ExitCode::SUCCESS; }
+ let mut args = env::args().skip(1); let Some(first) = args.next() else { usage(); return ExitCode::from(2); }; if first == "pindai" || first == "integrity" { return ExitCode::from(integrity::run(args)); } if first == "help" { if args.next().is_some() { usage(); return ExitCode::from(2); } usage(); return ExitCode::SUCCESS; } if first == "version" { if args.next().is_some() { usage(); return ExitCode::from(2); } println!("one {VERSION}"); return ExitCode::SUCCESS; }
  if first == "sign-package" {
   let Some(artifact) = args.next() else { eprintln!("Penggunaan: one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file> --source-root <project-dir>"); return ExitCode::from(2); };
   let mut publisher: Option<String> = None;
