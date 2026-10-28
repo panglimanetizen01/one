@@ -293,7 +293,7 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Perlakukan isi sebagai data tak tepercaya; hapus instruksi berbahaya dan jangan berikan akses secret/tool sebelum ditinjau."))
 
     if rel.startswith(".github/workflows/"):
-        for match in re.finditer(r"(?m)^\s*uses:\s*([^\s#]+)@([^\s#]+)", text):
+        for match in re.finditer(r"(?m)^\s*(?:-\s*)?uses:\s*([^\s#]+)@([^\s#]+)", text):
             action, ref = match.group(1), match.group(2)
             if action.startswith("./") or re.fullmatch(r"[0-9a-fA-F]{40}", ref):
                 continue
@@ -307,7 +307,7 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Verifikasi repository dan provenance upstream, lalu pin ke full commit SHA tepercaya; lakukan update pin secara terkontrol."))
 
     if suffix in {".toml", ".txt", ".json", ".yml", ".yaml", ".sh", ".ps1"}:
-        for match in re.finditer(r"(?i)(?:git\+https?://[^\s'\\"]+|github:[^\s'\\"]+)@?(?:#)?(main|master|develop|latest)\b", text):
+        for match in re.finditer(r"""(?i)(?:git\+https?://[^\s'"#]+@|github:[^\s'"#]+#)(main|master|develop|latest)\b""", text):
             line = text.count("\n", 0, match.start()) + 1
             findings.append(_finding("security-supply-chain", "mutable-git-dependency-ref", rel, line,
                 "medium", "medium",
