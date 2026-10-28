@@ -1120,6 +1120,15 @@ def main(argv: list[str] | None = None) -> int:
             print("BASELINE UNAVAILABLE: unsupported schema or missing findings list", file=sys.stderr)
             return 2
         report = apply_baseline(report, baseline)
+    report["enforcement_policy"] = {
+        "fail_on": args.fail_on,
+        "blocking_finding_count": sum(
+            1 for item in report.get("findings", [])
+            if {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}[item["severity"]]
+            >= {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}[args.fail_on]
+        ),
+        "mode": "block" if _severity_gate_fails(report, args.fail_on) else "pass",
+    }
     if args.propose_safe_fixes or args.apply_safe_fixes:
         try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes, args.repair_path)
         except RuntimeError as exc:
