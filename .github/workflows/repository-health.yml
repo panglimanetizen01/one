@@ -42,6 +42,9 @@ jobs:
       - name: CI metadata collector regression tests
         run: python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
 
+      - name: Detector quality ledger regression tests
+        run: python -m unittest discover -s tools -p "test_health_quality.py" -v
+
       - name: Build One CLI for source-only grammar checks
         run: cargo build --locked -p one-cli
 
