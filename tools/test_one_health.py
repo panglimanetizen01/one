@@ -77,6 +77,17 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "invalid-json" for f in report["findings"]))
 
+    def test_live_ci_collection_outage_is_blocked_not_a_source_failure(self):
+        self.write("ci-health-evidence.json", json.dumps({
+            "schema_version": "one-ci-health-evidence/1", "collector_status": "blocked",
+            "collection_errors": ["Actions API unavailable"], "jobs": []
+        }))
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "live-ci-metadata-blocked")
+        self.assertEqual("blocked", finding["status"])
+        self.assertEqual("info", finding["severity"])
+        self.assertIn("bukan bukti kegagalan source", finding["summary"])
+
     def test_failed_ci_job_without_steps_is_blocked_not_misclassified(self):
         self.write("run.json", json.dumps({"jobs": [{"name": "One CI", "conclusion": "failure", "steps": [], "runner_id": 0}]}))
         report = scan_repository(self.root)
