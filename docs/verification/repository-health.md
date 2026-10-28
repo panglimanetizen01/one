@@ -41,6 +41,7 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | Markdown | relative links, links escaping repository root, unclosed fenced code blocks | Does not yet validate every Markdown dialect or heading anchor |
 | Paths | symlinks resolving outside the repository | Does not follow symlink targets |
 | Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
+| Workflow overlap | exact repeated single-line run commands across workflow files | Low-confidence review hint; repetition may be intentional |
 | Evidence freshness | source SHA versus checked-out SHA in structured JSON evidence | Only for records that declare both values |
 | CI failure classification | failed jobs with absent steps, and failed steps needing log review in saved JSON run metadata | Does not claim root cause from metadata alone |
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
@@ -90,6 +91,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 ### B — Static integrity and contracts
 - [x] Python, TOML, JSON, Markdown-link, and fence checks.
 - [x] Workflow local-action/script path checks.
+- [x] Flag exact repeated one-line workflow commands as low-confidence overlap hints.
 - [x] Basic CLI documentation vocabulary check.
 - [ ] Add a full YAML parser/validator with an explicit pinned dependency.
 - [ ] Validate One snippets against the normative parser or one periksa without executing them.
