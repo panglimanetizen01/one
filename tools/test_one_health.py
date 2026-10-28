@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline
+from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, _severity_gate_fails, main
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -23,6 +23,42 @@ class OneHealthScannerTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
         return path
+
+    def test_workflow_flags_untrusted_event_expression_in_run_script(self):
+        self.write(".github/workflows/injection.yml", """name: unsafe
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: use title
+        run: |
+          echo "${{ github.event.pull_request.title }}"
+""")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "untrusted-event-expression-in-run")
+        self.assertEqual(".github/workflows/injection.yml", finding["path"])
+        self.assertEqual("high", finding["severity"])
+        self.assertEqual("high", finding["confidence"])
+
+    def test_workflow_does_not_flag_event_expression_in_env_as_run_injection(self):
+        self.write(".github/workflows/safe.yml", """name: safer
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$TITLE"
+""")
+        report = scan_repository(self.root)
+        self.assertFalse(any(f["rule_id"] == "untrusted-event-expression-in-run" for f in report["findings"]))
+
+    def test_dotenv_file_is_scanned_for_hardcoded_secret(self):
+        secret = "ghp_" + "abcdefghijklmnopqrstuvwxyz1234567890"
+        self.write(".env", f"API_TOKEN={secret}\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(f["detector_id"] == "security-secrets" and f["path"] == ".env"
+                            for f in report["findings"]))
 
     def test_clean_markdown_link_has_no_broken_link_finding(self):
         self.write("README.md", "[target](docs/target.md)\n")
@@ -592,6 +628,92 @@ class OneHealthScannerTests(unittest.TestCase):
         compared = apply_baseline(current, baseline)
         item = next(f for f in compared["findings"] if f["finding_id"] == finding["finding_id"])
         self.assertEqual("reopened", item["change_status"])
+
+
+    def test_malformed_baseline_fails_closed_without_crashing(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_text(json.dumps({
+            "schema_version": "one-health-report/1",
+            "findings": [{"severity": "high"}],
+        }), encoding="utf-8")
+        result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, result)
+
+    def test_baseline_rejects_non_string_severity_without_crashing(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_text(json.dumps({
+            "schema_version": "one-health-report/1",
+            "findings": [{"finding_id": "OH-invalid", "severity": ["high"], "status": "open"}],
+        }), encoding="utf-8")
+        result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, result)
+
+    def test_baseline_rejects_duplicate_finding_ids(self):
+        baseline_path = self.root / "baseline.json"
+        item = {"finding_id": "OH-duplicate", "severity": "high", "status": "open"}
+        baseline_path.write_text(json.dumps({
+            "schema_version": "one-health-report/1",
+            "findings": [item, item],
+        }), encoding="utf-8")
+        result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, result)
+
+    def test_scope_workflow_keeps_only_workflow_findings(self):
+        from one_health import _apply_scope
+        report = {"findings": [
+            {"detector_id": "workflow-integrity", "severity": "high"},
+            {"detector_id": "markdown-links", "severity": "low"},
+        ], "severity_counts": {}, "finding_count": 2, "detector_coverage": {}}
+        result = _apply_scope(report, "workflow")
+        self.assertEqual(1, result["finding_count"])
+        self.assertEqual("workflow-integrity", result["findings"][0]["detector_id"])
+        self.assertEqual("workflow", result["scan_scope"])
+
+    def test_scope_sha_includes_revision_and_evidence_detectors(self):
+        from one_health import _apply_scope
+        report = {"findings": [
+            {"detector_id": "revision-integrity", "severity": "high"},
+            {"detector_id": "ci-evidence", "severity": "medium"},
+            {"detector_id": "markdown-links", "severity": "low"},
+        ], "severity_counts": {}, "finding_count": 3, "detector_coverage": {}}
+        result = _apply_scope(report, "sha")
+        self.assertEqual({"revision-integrity", "ci-evidence"},
+                         {item["detector_id"] for item in result["findings"]})
+        self.assertEqual(1, result["severity_counts"]["high"])
+        self.assertEqual(1, result["severity_counts"]["medium"])
+
+    def test_scope_all_preserves_all_findings(self):
+        from one_health import _apply_scope
+        report = {"findings": [{"detector_id": "markdown-links", "severity": "low"}],
+                  "severity_counts": {"low": 1}, "finding_count": 1, "detector_coverage": {}}
+        self.assertEqual(1, _apply_scope(report, "all")["finding_count"])
+
+    def test_severity_gate_defaults_block_critical_and_high_only(self):
+        self.assertTrue(_severity_gate_fails({"findings": [{"severity": "critical"}]}))
+        self.assertTrue(_severity_gate_fails({"findings": [{"severity": "high"}]}))
+        self.assertFalse(_severity_gate_fails({"findings": [{"severity": "medium"}]}))
+        self.assertFalse(_severity_gate_fails({"findings": [{"severity": "info"}]}))
+        self.assertFalse(_severity_gate_fails({"findings": []}))
+
+    def test_severity_gate_can_be_strictened_without_changing_default(self):
+        report = {"findings": [{"severity": "medium"}]}
+        self.assertFalse(_severity_gate_fails(report))
+        self.assertTrue(_severity_gate_fails(report, "medium"))
+        self.assertTrue(_severity_gate_fails(report, "info"))
+
+    def test_severity_gate_rejects_unknown_threshold(self):
+        with self.assertRaisesRegex(ValueError, "unsupported severity threshold"):
+            _severity_gate_fails({"findings": []}, "urgent")
+
+
+    def test_json_report_records_enforcement_decision(self):
+        report_path = self.root / "report.json"
+        result = main(["--root", str(self.root), "--json-out", str(report_path), "--fail-on", "info", "--quiet"])
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        self.assertEqual("info", report["enforcement_policy"]["fail_on"])
+        self.assertGreater(report["enforcement_policy"]["blocking_finding_count"], 0)
+        self.assertEqual("block", report["enforcement_policy"]["mode"])
+        self.assertEqual(1, result)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ from urllib.parse import unquote, urlsplit
 
 SCHEMA_VERSION = "one-health-report/1"
 SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
-TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
+TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".env", ".ini", ".cfg", ".conf", ".properties", ".xml", ".tf", ".hcl", ".sql", ".dockerfile"}
 JAVASCRIPT_SUFFIXES = {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 FENCE_RE = re.compile(r"^( {0,3})(\x60{3,}|~{3,})(.*)$")
@@ -468,6 +468,45 @@ def _scan_javascript_security(rel: str, text: str, findings: list[dict]) -> None
             "Utamakan execFile/spawn dengan argumen terpisah dan shell disabled; validasi seluruh argumen dari sumber eksternal."))
 
 
+def _scan_workflow_expression_injection(rel: str, text: str, findings: list[dict]) -> None:
+    """Flag untrusted GitHub event fields interpolated directly into workflow run scripts."""
+    if not rel.startswith(".github/workflows/"):
+        return
+    untrusted = re.compile(
+        r"\$\{\{\s*github\.event\.(?:pull_request\.(?:title|body|head\.ref)|"
+        r"issue\.(?:title|body)|comment\.body|review\.body|"
+        r"(?:head_commit|commits\[0\])\.message)\s*\}\}",
+        re.IGNORECASE,
+    )
+    lines = text.splitlines()
+    in_run = False
+    run_indent = -1
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" \t"))
+        if not stripped or stripped.startswith("#"):
+            continue
+        if re.match(r"run\s*:", stripped):
+            in_run = True
+            run_indent = indent
+            if untrusted.search(stripped.split(":", 1)[1]):
+                findings.append(_finding("security-workflow", "untrusted-event-expression-in-run", rel, index + 1,
+                    "high", "high",
+                    "Workflow menyisipkan field event yang dikendalikan pengguna langsung ke skrip run.",
+                    "Untrusted GitHub event expression appears in a run command; matched expression omitted.",
+                    "Pindahkan nilai ke environment variable lalu validasi dan gunakan sebagai data; jangan interpolasikan langsung ke sintaks shell."))
+            continue
+        if in_run and indent <= run_indent:
+            in_run = False
+        if in_run and untrusted.search(line):
+            findings.append(_finding("security-workflow", "untrusted-event-expression-in-run", rel, index + 1,
+                "high", "high",
+                "Workflow menyisipkan field event yang dikendalikan pengguna langsung ke skrip run.",
+                "Untrusted GitHub event expression appears inside a multiline run script; matched expression omitted.",
+                "Pindahkan nilai ke environment variable lalu validasi dan gunakan sebagai data; jangan interpolasikan langsung ke sintaks shell."))
+            break
+
+
 def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
     """Read-only security heuristics. Never include matched secret bytes in reports."""
     suffix = Path(rel).suffix.lower()
@@ -516,6 +555,7 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                         "Tinjau kebutuhan permission, pin action ke full commit SHA tepercaya, dan jangan menjalankan kode PR tak tepercaya dengan secret/write token."))
 
     if rel.startswith(".github/workflows/"):
+        _scan_workflow_expression_injection(rel, text, findings)
         # Whole-document fallback for the workflow-wide permission key.
         permission_match = re.search(
             r"(?im)^[ \t]*permissions[ \t]*:[ \t]*write-all(?:[ \t]+#.*)?[ \t]*$",
@@ -832,7 +872,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 findings.append(_finding("path-integrity", "symlink-escapes-repository", rel, None, "high", "high",
                     "Symlink mengarah keluar dari root repositori.", str(path.readlink()), "Tinjau symlink; jangan ikuti target di luar repositori."))
             continue
-        if suffix not in TEXT_SUFFIXES: continue
+        if suffix not in TEXT_SUFFIXES and not path.name.lower().startswith(".env"): continue
         try:
             # Decode bytes explicitly and strictly so invalid UTF-8 cannot be normalized by a wrapper.
             text = path.read_bytes().decode("utf-8", errors="strict")
@@ -892,7 +932,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     for item in ordered:
         detector = item["detector_id"]
         findings_by_detector[detector] = findings_by_detector.get(detector, 0) + 1
-    suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
+    suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()} | ({".env"} if any(not path.is_symlink() and path.name.lower().startswith(".env") for path, _ in files) else set())
     agent_instruction_surfaces = any(_is_agent_instruction_surface(rel) for path, rel in files if not path.is_symlink())
     dependency_surfaces = bool(workflows or any(_is_dependency_surface(rel) for path, rel in files if not path.is_symlink()))
     detectors_run = ["path-integrity"]
@@ -939,7 +979,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.2", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.2.0", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
@@ -999,7 +1039,7 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
 
 def render_markdown(report: dict) -> str:
     lines = ["# One Repository Health Report", "", f"- Schema: {report['schema_version']}",
-        f"- Repository: {report['repository']}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
+        f"- Repository: {report['repository']}", f"- Scope: {report.get('scan_scope', 'all')}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
         f"- Branch: {report['branch'] or 'UNKNOWN'}", f"- Findings: **{report['finding_count']}**", "",
         "| Severity | Count |", "|---|---:|"]
     lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
@@ -1082,9 +1122,58 @@ def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool,
         changed.append(f"APPLIED: add final newline: {rel}")
     return changed
 
+SCOPE_DETECTORS = {
+    "all": None,
+    "sha": {"revision-integrity", "evidence-freshness", "ci-evidence", "artifact-integrity"},
+    "workflow": {"workflow-integrity", "workflow-overlap", "security-workflow", "ci-evidence"},
+    "structure": {"path-integrity", "file-integrity", "syntax", "contract-drift"},
+    "documentation": {"markdown-links", "markdown-structure", "file-integrity", "path-integrity"},
+    "artifacts": {"artifact-integrity", "ci-evidence", "evidence-freshness", "revision-integrity"},
+    "contracts": {"one-source-contract", "contract-drift", "syntax", "file-integrity"},
+    "markdown": {"markdown-links", "markdown-structure"},
+    "readme": {"markdown-links", "markdown-structure", "file-integrity"},
+}
+
+
+def _apply_scope(report: dict, scope: str) -> dict:
+    """Restrict displayed findings to a named review surface after the full read-only scan."""
+    selected = SCOPE_DETECTORS[scope]
+    report["scan_scope"] = scope
+    report["scan_scope_detectors"] = sorted(selected) if selected is not None else ["all detectors"]
+    if selected is None:
+        return report
+    report["findings"] = [item for item in report.get("findings", [])
+                          if item.get("detector_id") in selected]
+    report["finding_count"] = len(report["findings"])
+    report["severity_counts"] = {
+        level: sum(1 for item in report["findings"] if item.get("severity") == level)
+        for level in ("critical", "high", "medium", "low", "info")
+    }
+    coverage = report.get("detector_coverage", {})
+    coverage["scope"] = scope
+    coverage["scope_detectors"] = sorted(selected)
+    coverage["finding_counts_by_detector"] = {
+        detector: sum(1 for item in report["findings"] if item.get("detector_id") == detector)
+        for detector in sorted(selected)
+    }
+    coverage["ran_count"] = len(selected)
+    coverage["not_requested_count"] = max(0, len(coverage.get("status_by_detector", {})) - len(selected))
+    return report
+
+
+def _severity_gate_fails(report: dict, threshold: str = "high") -> bool:
+    """Return whether findings meet the configured release-blocking severity."""
+    rank = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}
+    if threshold not in rank:
+        raise ValueError(f"unsupported severity threshold: {threshold}")
+    return any(rank.get(item.get("severity"), 0) >= rank[threshold]
+               for item in report.get("findings", []))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--scope", choices=tuple(SCOPE_DETECTORS), default="all", help="review surface: all, sha, workflow, structure, documentation, artifacts, contracts, markdown, readme")
     parser.add_argument("--expected-sha", default=os.environ.get("GITHUB_SHA"))
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--markdown-out", type=Path)
@@ -1094,10 +1183,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--propose-safe-fixes", action="store_true")
     parser.add_argument("--apply-safe-fixes", action="store_true")
     parser.add_argument("--repair-path", action="append", default=[], help="exact repository-relative Markdown path to repair; repeat for multiple files")
+    parser.add_argument("--fail-on", choices=("critical", "high", "medium", "low", "info"),
+                        default="high",
+                        help="exit nonzero when any finding reaches this severity (default: high)")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
     report = scan_repository(root, args.expected_sha, check_one_source=args.check_one_source)
+    report = _apply_scope(report, args.scope)
     if args.baseline:
         try:
             baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
@@ -1107,7 +1200,30 @@ def main(argv: list[str] | None = None) -> int:
         if not isinstance(baseline, dict) or baseline.get("schema_version") != SCHEMA_VERSION or not isinstance(baseline.get("findings"), list):
             print("BASELINE UNAVAILABLE: unsupported schema or missing findings list", file=sys.stderr)
             return 2
+        valid_severities = {"critical", "high", "medium", "low", "info"}
+        baseline_ids = []
+        for item in baseline["findings"]:
+            if (not isinstance(item, dict)
+                    or not isinstance(item.get("finding_id"), str) or not item["finding_id"]
+                    or not isinstance(item.get("severity"), str)
+                    or item.get("severity") not in valid_severities
+                    or not isinstance(item.get("status", "open"), str)):
+                print("BASELINE UNAVAILABLE: malformed finding entry", file=sys.stderr)
+                return 2
+            baseline_ids.append(item["finding_id"])
+        if len(baseline_ids) != len(set(baseline_ids)):
+            print("BASELINE UNAVAILABLE: duplicate finding_id entries", file=sys.stderr)
+            return 2
         report = apply_baseline(report, baseline)
+    report["enforcement_policy"] = {
+        "fail_on": args.fail_on,
+        "blocking_finding_count": sum(
+            1 for item in report.get("findings", [])
+            if {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}[item["severity"]]
+            >= {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}[args.fail_on]
+        ),
+        "mode": "block" if _severity_gate_fails(report, args.fail_on) else "pass",
+    }
     if args.propose_safe_fixes or args.apply_safe_fixes:
         try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes, args.repair_path)
         except RuntimeError as exc:
@@ -1121,7 +1237,7 @@ def main(argv: list[str] | None = None) -> int:
         args.markdown_out.parent.mkdir(parents=True, exist_ok=True)
         args.markdown_out.write_text(render_markdown(report), encoding="utf-8")
     if not args.quiet: print(render_markdown(report))
-    return 1 if any(f["severity"] in {"critical", "high"} for f in report["findings"]) else 0
+    return 1 if _severity_gate_fails(report, args.fail_on) else 0
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -2,6 +2,23 @@
 
 **One** is a human-oriented, deterministic, general-purpose programming language designed to let ordinary users build software from small scripts to large projects.
 
+## Automatic repository health scan
+
+Run the read-only scanner from the repository root:
+
+```bash
+python tools/one_health.py
+python tools/one_health.py --scope sha --expected-sha <FULL_COMMIT_SHA>
+python tools/one_health.py --scope workflow
+python tools/one_health.py --scope structure
+python tools/one_health.py --scope documentation
+python tools/one_health.py --scope artifacts
+python tools/one_health.py --scope contracts
+python tools/one_health.py --scope markdown
+python tools/one_health.py --scope readme
+```
+
+Use --json-out health-report.json and --markdown-out health-report.md to save evidence. A scope narrows the displayed findings after the scanner runs its repository checks; it is not proof that omitted detector categories passed. Default enforcement blocks high and critical findings. Exit code 2 means the scan/evidence input could not be processed; exit code 1 means the severity gate found a blocker; exit code 0 means no finding crossed the configured threshold, not that the repository is bug-free. The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.
 ## Project context — read this first when starting a new session
 
 The repository is the persistent source of accepted One project context. A new development session must read these contracts before making changes:
