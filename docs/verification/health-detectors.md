@@ -28,7 +28,8 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `workflow-overlap` | Identical single-line `run:` commands in multiple workflow files | Low-confidence review hint; intentional duplication is common |
 | `evidence-freshness` | Declared source SHA versus checkout SHA in JSON evidence | Only applies when both fields are present |
 | `contract-drift` | Required core CLI vocabulary plus high-value invariants in normative grammar, CLI, diagnostics, package/build, and platform contracts | Text presence does not prove implementation; a contract refactor may require updating detector fixtures |
-| `ci-evidence` | Exact-SHA Actions run/job/step/artifact metadata plus saved-JSON classification for failed jobs with absent steps and failed steps needing log review | Does not download or interpret live logs; API outages remain blocked/partial, not source failures |
+| `ci-evidence` | Exact-SHA Actions run/job/step metadata plus saved-JSON classification for failed jobs with absent steps and failed steps needing log review | Does not download or interpret live logs; API outages remain blocked/partial, not source failures |
+| `artifact-integrity` | Expired CI artifacts, repeated artifact names within one run, and unavailable artifact digests in saved collector evidence | Does not download artifact contents or prove their bytes match a digest; missing digest is informational, not a pass |
 | `one-source-contract` | Expected accept/reject results for normative v0.1 fixtures via `one periksa` | Runs only when explicitly enabled and CLI is built; never executes source |
 
 ## Report schema compatibility
