@@ -141,6 +141,25 @@ class OneHealthScannerTests(unittest.TestCase):
             _safe_fix_missing_markdown_newline(self.root, report, apply=True)
         self.assertEqual(before, path.read_bytes())
 
+    def test_report_records_scanner_and_runtime_environment(self):
+        report = scan_repository(self.root)
+        self.assertEqual("0.1.0", report["scanner_version"])
+        self.assertTrue(report["environment"]["python"])
+        self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD"})
+        self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
+
+    def test_report_exposes_detector_coverage_and_limitations(self):
+        report = scan_repository(self.root)
+        self.assertIn("syntax", report["detectors_run"])
+        self.assertIn("contract-drift", report["detectors_run"])
+        self.assertTrue(any("YAML" in item for item in report["limitations"]))
+
+    def test_cli_contract_command_missing_from_user_guide_is_reported(self):
+        self.write("docs/spec/one-v0.1-cli-contract.md", "# CLI contract\n")
+        self.write("docs/panduan-pengguna/perintah-cli.md", "one help\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(f["rule_id"] == "missing-core-cli-command" for f in report["findings"]))
+
     def test_json_report_schema_and_counts_are_present(self):
         self.write("README.md", "Healthy.\n")
         report = scan_repository(self.root)
