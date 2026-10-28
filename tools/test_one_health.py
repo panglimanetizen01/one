@@ -338,6 +338,9 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("recurring", item["change_status"])
         self.assertGreater(item["priority_score"], 0)
         self.assertIn("acceptance_blocker_factor", item["priority_inputs"])
+        markdown = render_markdown(compared)
+        self.assertLess(markdown.index("| critical |"), markdown.index("## Change history"))
+        self.assertIn("| Detector | Status | Findings |", markdown)
 
     def test_baseline_keeps_findings_not_checked_when_detector_input_is_absent(self):
         current = scan_repository(self.root)
