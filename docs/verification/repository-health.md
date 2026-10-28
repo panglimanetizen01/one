@@ -54,7 +54,7 @@ The scanner does not interpret free-form Indonesian as executable source. It doe
 
 ## Finding contract
 
-Every finding includes a stable ID, detector/rule IDs, status, severity, confidence, path/line, evidence, and a recommended next action. The report schema is one-health-report/1.
+Every finding includes a stable ID, detector/rule IDs, status, severity, confidence, path/line, evidence, and a recommended next action. The report schema is one-health-report/1. JSON and Markdown reports also expose detector status (ran, not applicable due to absent input, or not requested) and finding counts by detector. These counts are descriptive coverage metrics, not an accuracy or repair-success rate; confirmed false-positive, false-negative, and repair outcome tracking remains future work.
 
 - **critical / high:** fail the scan because revision identity or a severe structural/syntax condition cannot be trusted.
 - **medium:** actionable integrity issue; requires triage.
