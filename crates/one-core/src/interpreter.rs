@@ -164,6 +164,7 @@ impl Interpreter {
             "angka maksimum" => stdlib::number_max(&values[0], &values[1]),
             "nilai pemetaan" => stdlib::map_get(&values[0], &values[1]),
             "atur pemetaan" => stdlib::map_set(values[0].clone(), &values[1], values[2].clone()),
+            "hapus kunci pemetaan" => stdlib::map_remove(values[0].clone(), &values[1]),
             "ubah nilai ke json" => stdlib::value_to_json(&values[0]),
             "nilai dari json" => stdlib::json_to_value(&values[0]),
             "waktu utc dari unix" => stdlib::unix_seconds_to_utc_text(&values[0]),

@@ -545,6 +545,37 @@ tampilkan hasil
 
 
 #[test]
+fn mapping_remove_builtin_returns_a_new_map_and_missing_key_is_a_noop() {
+    let source = r#"data adalah nilai dari json dengan "{\"z\":1,\"a\":2}"
+baru adalah hapus kunci pemetaan dengan data dan "a"
+asli adalah ubah nilai ke json dengan data
+hasil adalah ubah nilai ke json dengan baru
+sama adalah hapus kunci pemetaan dengan baru dan "hilang"
+jsonsama adalah ubah nilai ke json dengan sama
+tampilkan asli
+tampilkan hasil
+tampilkan jsonsama
+"#;
+    assert_eq!(
+        run(source).expect("mapping removal should execute through the canonical parser/runtime"),
+        vec![r#"{"a":2,"z":1}"#, r#"{"z":1}"#, r#"{"z":1}"#]
+    );
+
+    let wrong_map = r#"hasil adalah hapus kunci pemetaan dengan "bukan pemetaan" dan "a"
+tampilkan hasil
+"#;
+    let error = run(wrong_map).expect_err("known non-map receiver must fail closed");
+    assert!(error.contains("E2043"), "unexpected receiver diagnostic: {error}");
+
+    let wrong_key = r#"data adalah nilai dari json dengan "{\"a\":1}"
+hasil adalah hapus kunci pemetaan dengan data dan 1
+tampilkan hasil
+"#;
+    let error = run(wrong_key).expect_err("known non-text key must fail closed");
+    assert!(error.contains("E2043"), "unexpected key diagnostic: {error}");
+}
+
+#[test]
 fn list_mutation_builtins_execute_through_the_canonical_pipeline() {
     let source = r#"buat daftar data
 tambahkan "a" ke data
