@@ -124,7 +124,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_baseline_marks_disappeared_findings_as_reviewable_resolutions(self):
         current = scan_repository(self.root)
-        old = {"finding_id": "OH-previous", "status": "open", "summary": "Old issue"}
+        old = {"finding_id": "OH-previous", "detector_id": "markdown-links", "status": "open", "summary": "Old issue"}
         compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
         self.assertEqual("resolved", compared["resolved_findings"][0]["change_status"])
         self.assertIn("review detector coverage", compared["resolved_findings"][0]["resolution_basis"])
