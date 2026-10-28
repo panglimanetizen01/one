@@ -175,6 +175,7 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
 
     def test_report_exposes_detector_coverage_and_limitations(self):
+        self.write("tools/example.py", "value = 1\n")
         report = scan_repository(self.root)
         self.assertIn("syntax", report["detectors_run"])
         self.assertIn("contract-drift", report["detectors_run"])
@@ -192,7 +193,8 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertGreaterEqual(len(missing), 5)
         self.assertTrue(all(f["status"] == "blocked" for f in missing))
 
-    def test_cli_contract_command_missing_from_user_guide_is_reported(self):        self.write("docs/spec/one-v0.1-cli-contract.md", "# CLI contract\n")
+    def test_cli_contract_command_missing_from_user_guide_is_reported(self):
+        self.write("docs/spec/one-v0.1-cli-contract.md", "# CLI contract\n")
         self.write("docs/panduan-pengguna/perintah-cli.md", "one help\n")
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "missing-core-cli-command" for f in report["findings"]))
