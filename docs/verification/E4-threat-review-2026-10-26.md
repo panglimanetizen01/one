@@ -54,3 +54,29 @@ These run links are historical evidence for the source SHA explicitly checked ou
 ## Disposition
 
 The reviewed controls and listed regression coverage support recording that a scoped threat review now exists. They do **not** by themselves grant E4 verified points or close the overall milestone. Keep E4 verified at 0/6 until the fixed-weight gate's full E4 acceptance criteria and final-SHA evidence are accepted. Record any new findings or code changes in a subsequent dated review rather than rewriting historical run results.
+
+
+## Candidate reconciliation addendum — 2026-10-28
+
+This addendum supersedes the historical target SHA for purposes of identifying the current candidate, but it does not rewrite or re-date the historical runs above. The candidate under review at the time of this addendum is `1a84d522a2953044c250ebe43c22989d6ec07dfc`.
+
+### Current candidate-scoped evidence
+
+The independent verifier checked out that exact source SHA for these scoped workflows:
+
+- [E4 adversarial filesystem/resource regression, run 40634065806](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40634065806) — passed the workflow's focused adversarial regression scope.
+- [SEC-05 subprocess timeout/output regression, run 40634065919](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40634065919) — passed its focused timeout/output regression scope.
+- [Subprocess resource guard, run 40634065925](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40634065925) — passed its focused resource-guard scope.
+- [Cross-platform verification, run 40634065845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40634065845) — passed the configured Linux/Windows verification matrix.
+- [Linux distribution verification, run 40634065997](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40634065997) — passed the configured Linux distribution matrix.
+
+These results supersede older run links only for the same explicitly scoped tests; they do not constitute a complete E4 acceptance suite. The gate run [40638256965](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40638256965) still rejects the milestone, and E4 remains 0/6 verified.
+
+### Remaining E4 acceptance work
+
+1. Re-run the required security matrix after the final candidate SHA is frozen, so every accepted run checks out the same SHA.
+2. Reconcile each threat claim against the implementation and test assertions, including path traversal, symlink/reparse handling, mount-boundary detection, TOCTOU races, capability denial before side effects, SQLite/query limits, shared operation quotas, subprocess descendants, timeout/output bounds, and recovery after quota release.
+3. Explicitly record platform-specific gaps and the limits of test coverage; do not describe these controls as a complete sandbox or universal heap limit.
+4. Have the fixed-weight acceptance gate consume the current-SHA evidence and review artifact before any E4 points are credited.
+
+**Disposition:** the threat review is updated with current-candidate evidence pointers, but E4 remains open pending final-SHA revalidation and full row acceptance. No release or merge is authorized by this review.
