@@ -109,7 +109,14 @@ def _scan_json(rel, text, findings):
 
 def _scan_workflows(root, workflows, findings):
     names = {}
+    command_owners = {}
     for rel, text in workflows:
+        for line in text.splitlines():
+            command_match = re.match(r"^\s*run:\s*(\S.*)$", line)
+            if command_match:
+                command = command_match.group(1).strip()
+                if command not in {"|", ">", "|-", ">-"} and not command.startswith("#"):
+                    command_owners.setdefault(command, []).append(rel)
         match = re.search(r"(?m)^name:\s*(.+?)\s*$", text)
         if match:
             name = match.group(1).strip().strip("'\"")
@@ -129,6 +136,15 @@ def _scan_workflows(root, workflows, findings):
                 findings.append(_finding("workflow-integrity", "missing-command-file", rel, number, "high", "high",
                     "Workflow menjalankan berkas skrip yang tidak ditemukan.", command.group(1),
                     "Sinkronkan path workflow dengan skrip yang benar-benar ada."))
+    for command, owners in command_owners.items():
+        distinct = sorted(set(owners))
+        if len(distinct) > 1:
+            command_key = hashlib.sha256(command.encode("utf-8")).hexdigest()[:8]
+            for rel in distinct:
+                findings.append(_finding("workflow-overlap", f"repeated-run-command-{command_key}", rel, None, "info", "low",
+                    "Perintah identik muncul di beberapa workflow; periksa apakah cakupannya sengaja tumpang tindih.",
+                    f"command={command!r}; workflows={distinct!r}",
+                    "Pertahankan jika tujuan/lingkungan pengujiannya berbeda; jika redundan, konsolidasikan tanpa mengurangi cakupan."))
 
 def _check_one_source(root: Path, findings: list[dict]) -> None:
     """Validate normative v0.1 fixtures without executing them."""
