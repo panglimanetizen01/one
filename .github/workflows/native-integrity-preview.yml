@@ -11,10 +11,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: native-integrity-preview
-  cancel-in-progress: true
-
 jobs:
   native-integrity:
     runs-on: ubuntu-latest
