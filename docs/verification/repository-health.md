@@ -70,10 +70,10 @@ python tools/one_health.py --propose-safe-fixes --quiet
 Applying it is deliberately constrained:
 
 ~~~sh
-python tools/one_health.py --apply-safe-fixes --quiet
+python tools/one_health.py --apply-safe-fixes --repair-path docs/berkas-yang-dipilih.md --quiet
 ~~~
 
-The apply mode refuses to run unless the checkout is on a dedicated branch whose name starts with health/ or diagnostic/, the working tree is clean, and any supplied expected SHA matches HEAD. It does not fix broken links, rewrite One source, modify contracts, change workflow permissions, update acceptance weights, merge, publish, or release. Those actions require explicit review and their own verification.
+The apply mode requires an explicit exact `--repair-path` for every file to change, rejects absolute/traversal paths and non-Markdown targets, and refuses to run unless the checkout is on a dedicated branch whose name starts with health/ or diagnostic/, the working tree is clean, and any supplied expected SHA matches HEAD. It does not fix broken links, rewrite One source, modify contracts, change workflow permissions, update acceptance weights, merge, publish, or release. Those actions require explicit review and their own verification.
 
 After any repair, inspect the diff, rerun scanner tests and the scan, then run the required language and cross-platform tests for the resulting SHA. A result for the previous SHA does not validate a changed commit.
 
@@ -108,8 +108,9 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 
 ### D — Guarded repair
 - [x] Dry-run proposal and one narrow allowlisted Markdown repair.
-- [x] Isolated-branch and clean-tree guard for the repair mode.
-- [ ] Add patch previews and per-repair regression fixtures.
+- [x] Exact-path allowlist, repository-relative path validation, and isolated-branch/clean-tree guards.
+- [x] Regression fixtures prove the repair refuses missing path authorization, traversal, non-Markdown targets, and non-isolated branches.
+- [ ] Add a human-readable unified-diff preview before applying the repair.
 - [ ] Add reviewed allowlist entries only when a repair is deterministic and reversible.
 - [ ] Keep workflow, contract, security, provenance, and release changes human-reviewed.
 
