@@ -42,6 +42,8 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | Paths | symlinks resolving outside the repository | Does not follow symlink targets |
 | Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
 | Evidence freshness | source SHA versus checked-out SHA in structured JSON evidence | Only for records that declare both values |
+| CI failure classification | failed jobs with absent steps, and failed steps needing log review in saved JSON run metadata | Does not claim root cause from metadata alone |
+| One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
 
 The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Language examples must be checked against the One grammar, implementation status, and conformance tests.
@@ -80,6 +82,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Deterministic report schema and stable finding IDs.
 - [x] Optional exact-SHA checkout check.
 - [x] JSON/Markdown output and source/checkout SHA mismatch detector.
+- [x] Saved CI metadata classification: no visible steps remains blocked/unknown, failed steps require log review.
 - [x] Fixture tests for core failure classes.
 - [ ] Collect workflow run/job/step/log/artifact metadata directly from GitHub APIs.
 - [ ] Record tool versions and environment metadata in report.
@@ -95,6 +98,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 
 ### C — Correlation and triage
 - [x] Stable IDs, severity, confidence, evidence, and next-step fields.
+- [x] File-based baseline comparison with new/recurring/reopened/resolved/not-checked states and separate triage-priority inputs.
 - [ ] Persist historical findings and track new, recurring, resolved, and reopened states.
 - [ ] Correlate CI job-start failures, unavailable logs, and artifact absence without guessing a root cause.
 - [ ] Version and expose priority inputs separately from the fixed acceptance ledger.
