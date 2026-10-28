@@ -41,6 +41,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 ## Report schema compatibility
 
 - Current schema: `one-health-report/1`; scanner version is reported separately.
+- Scanner implementation version `0.1.2` includes JavaScript/TypeScript source traversal and plural-aware prompt-injection secret-action correlation; the report schema remains version 1 because field types and finding identity semantics are unchanged.
 - Adding optional fields without changing existing field meaning is backward-compatible within schema version 1.
 - Removing fields, changing field types, changing finding identity semantics, or changing baseline comparison meanings requires a new schema version and migration notes.
 - Baselines with unknown schema versions are rejected closed; never silently compare incompatible reports.
