@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline
+from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, _severity_gate_fails
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -592,6 +592,24 @@ class OneHealthScannerTests(unittest.TestCase):
         compared = apply_baseline(current, baseline)
         item = next(f for f in compared["findings"] if f["finding_id"] == finding["finding_id"])
         self.assertEqual("reopened", item["change_status"])
+
+
+    def test_severity_gate_defaults_block_critical_and_high_only(self):
+        self.assertTrue(_severity_gate_fails({"findings": [{"severity": "critical"}]}))
+        self.assertTrue(_severity_gate_fails({"findings": [{"severity": "high"}]}))
+        self.assertFalse(_severity_gate_fails({"findings": [{"severity": "medium"}]}))
+        self.assertFalse(_severity_gate_fails({"findings": [{"severity": "info"}]}))
+        self.assertFalse(_severity_gate_fails({"findings": []}))
+
+    def test_severity_gate_can_be_strictened_without_changing_default(self):
+        report = {"findings": [{"severity": "medium"}]}
+        self.assertFalse(_severity_gate_fails(report))
+        self.assertTrue(_severity_gate_fails(report, "medium"))
+        self.assertTrue(_severity_gate_fails(report, "info"))
+
+    def test_severity_gate_rejects_unknown_threshold(self):
+        with self.assertRaisesRegex(ValueError, "unsupported severity threshold"):
+            _severity_gate_fails({"findings": []}, "urgent")
 
 
 if __name__ == "__main__":
