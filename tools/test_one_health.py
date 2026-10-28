@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from one_health import scan_repository, _safe_fix_missing_markdown_newline
+from one_health import scan_repository, apply_baseline, _safe_fix_missing_markdown_newline
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -88,6 +88,34 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("one-health-report/1", report["schema_version"])
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
+
+    def test_baseline_marks_existing_findings_recurring_and_prioritizes_them(self):
+        self.write("README.md", "[missing](absent.md)\n")
+        current = scan_repository(self.root)
+        finding = current["findings"][0]
+        baseline = {"schema_version": current["schema_version"], "findings": [dict(finding, status="open")]}
+        compared = apply_baseline(current, baseline)
+        item = next(f for f in compared["findings"] if f["finding_id"] == finding["finding_id"])
+        self.assertEqual("recurring", item["change_status"])
+        self.assertGreater(item["priority_score"], 0)
+        self.assertIn("acceptance_blocker_factor", item["priority_inputs"])
+
+    def test_baseline_marks_disappeared_findings_as_reviewable_resolutions(self):
+        current = scan_repository(self.root)
+        old = {"finding_id": "OH-previous", "status": "open", "summary": "Old issue"}
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        self.assertEqual("resolved", compared["resolved_findings"][0]["change_status"])
+        self.assertIn("review detector coverage", compared["resolved_findings"][0]["resolution_basis"])
+
+    def test_baseline_reopens_previously_resolved_finding(self):
+        self.write("README.md", "[missing](absent.md)\n")
+        current = scan_repository(self.root)
+        finding = current["findings"][0]
+        baseline = {"schema_version": current["schema_version"],
+                    "findings": [dict(finding, status="resolved", change_status="resolved")]}
+        compared = apply_baseline(current, baseline)
+        item = next(f for f in compared["findings"] if f["finding_id"] == finding["finding_id"])
+        self.assertEqual("reopened", item["change_status"])
 
 
 if __name__ == "__main__":
