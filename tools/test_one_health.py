@@ -53,6 +53,12 @@ jobs:
         report = scan_repository(self.root)
         self.assertFalse(any(f["rule_id"] == "untrusted-event-expression-in-run" for f in report["findings"]))
 
+    def test_dotenv_file_is_scanned_for_hardcoded_secret(self):
+        self.write(".env", "API_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz1234567890\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(f["detector_id"] == "security-secrets" and f["path"] == ".env"
+                            for f in report["findings"]))
+
     def test_clean_markdown_link_has_no_broken_link_finding(self):
         self.write("README.md", "[target](docs/target.md)\n")
         report = scan_repository(self.root)
