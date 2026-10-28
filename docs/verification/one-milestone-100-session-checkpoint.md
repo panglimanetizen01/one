@@ -7,7 +7,13 @@
 **PR:** https://github.com/panglimanetizen01/one/pull/80 (open, draft, unmerged)
 **Base:** `main` (PR only; no direct changes to main)
 
-## Current checkpoint — 2026-10-28
+## Active recovery state — 2026-10-28
+
+PR #80 remains open, draft, and unmerged. At recovery, the PR named source candidate `65d09e3f9ed8639ff0d22a948ada06c3def36c22`, while verifier pin `c5ba60b16e0356753ffbd10d448b47dce64f01bb` was stale. The source documentation updates advance the candidate; read PR #80's live head and synchronize the verifier pin to the resulting exact SHA.
+
+Six latest canonical source workflows were inspected (Repository Health `40699615876`, One CI `40699615548`, E1 `40699615687`, E2 `40699616047`, Linux distro `40699615916`, focused stdlib `40699615984`). Jobs had null/empty steps and the log endpoint returned `BlobNotFound`; classify as unresolved job-start/evidence-access failures, not source test failures or passes. E3/E4/E5 evidence from earlier SHAs is historical for current-candidate acceptance. The ledger now records E3 0/8, E4 0/6, E5 0/4 verified; implementation 92/100 provisional; 60/100 carried-forward F/C ledger arithmetic only. **Final score UNKNOWN / NOT RECONCILED. Gate NOT PASSED.** No merge or release.
+
+## Superseded checkpoint — before forensic reconciliation (2026-10-28)
 
 - PR #80 remains draft, open, and unmerged. No merge or production release is authorized.
 - Canonical weights remain fixed at 100. The latest ledger acceptance records **92/100 implementation** and **78/100 provisional verified** after scoped E4 acceptance on candidate `28d1384588662cc93f405dc9dd5f3012183d249f`, alongside provisional E3/E5 evidence. This checkpoint/ledger update advances the source SHA; re-pin and rerun the exact-SHA matrix before final gate acceptance.
