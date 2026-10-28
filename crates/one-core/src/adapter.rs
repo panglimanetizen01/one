@@ -587,7 +587,7 @@ fn windows_delete_opened_file(file: &std::fs::File) {
 
 use crate::capability::{Capability, CapabilitySet};
 use crate::interop::{run_process, ProcessSpec};
-use crate::network_runtime::{execute_http11, HttpRequest, RealNetworkRuntime};
+use crate::network_runtime::{execute_http11, parse_http_authority, HttpRequest, RealNetworkRuntime};
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -641,15 +641,54 @@ impl ToolAdapter for HttpGetAdapter {
 }
 fn parse_http_target(target: &str) -> Result<(String, String), AdapterError> {
     let rest = target.strip_prefix("http://").ok_or(AdapterError::InvalidArguments)?;
-    if rest.contains('#') || rest.contains('\r') || rest.contains('\n') || rest.contains('@') { return Err(AdapterError::InvalidArguments); }
-    let authority_end = rest.find('/').unwrap_or(rest.len());
+    if rest.contains('#') || rest.contains('\r') || rest.contains('\n') || rest.contains('@') {
+        return Err(AdapterError::InvalidArguments);
+    }
+    let authority_end = rest.find(['/', '?']).unwrap_or(rest.len());
     let authority = &rest[..authority_end];
-    if authority.is_empty() { return Err(AdapterError::InvalidArguments); }
-    if let Some((host, port)) = authority.rsplit_once(':') && (host.is_empty() || port.is_empty() || port.parse::<u16>().is_err()) { return Err(AdapterError::InvalidArguments); }
-    let path = if authority_end == rest.len() { "/" } else { &rest[authority_end..] };
-    Ok((authority.to_owned(), path.to_owned()))
+    if authority.is_empty() {
+        return Err(AdapterError::InvalidArguments);
+    }
+    parse_http_authority(authority).map_err(|_| AdapterError::InvalidArguments)?;
+    let suffix = &rest[authority_end..];
+    let path = if suffix.is_empty() {
+        "/".to_owned()
+    } else if suffix.starts_with('?') {
+        format!("/{suffix}")
+    } else {
+        suffix.to_owned()
+    };
+    Ok((authority.to_owned(), path))
 }
 
+#[cfg(test)]
+mod http_target_parser_regression_tests {
+    use super::{parse_http_target, AdapterError};
+
+    #[test]
+    fn accepts_bracketed_ipv6_and_query_only_targets() {
+        assert_eq!(parse_http_target("http://[::1]/path"), Ok(("[::1]".into(), "/path".into())));
+        assert_eq!(parse_http_target("http://[::1]:8080/path"), Ok(("[::1]:8080".into(), "/path".into())));
+        assert_eq!(parse_http_target("http://example.com?x=1"), Ok(("example.com".into(), "/?x=1".into())));
+        assert_eq!(parse_http_target("http://example.com/path?x=1"), Ok(("example.com".into(), "/path?x=1".into())));
+    }
+
+    #[test]
+    fn rejects_malformed_authorities_and_invalid_url_components() {
+        for target in [
+            "https://example.com/",
+            "http://",
+            "http://[not-ipv6]/",
+            "http://::1/",
+            "http://example.com:bad/",
+            "http://example.com:65536/",
+            "http://user@example.com/",
+            "http://example.com/#fragment",
+        ] {
+            assert_eq!(parse_http_target(target), Err(AdapterError::InvalidArguments), "target: {target}");
+        }
+    }
+}
 #[cfg(test)]
 mod tests { use super::*; use crate::capability::Capability; use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, EffectClass, ExecutionScope, SemanticCapabilityId}; fn request() -> CapabilityRequest { CapabilityRequest::new(SemanticCapabilityId::NetworkConnect, Capability::NetworkConnect, ExecutionScope::target("server.example"), EffectClass::Connect) } fn metadata() -> AdapterMetadata { AdapterMetadata::new(AdapterId::new("network.native"), AdapterStatus::Implemented, vec![Capability::NetworkConnect], vec![PlatformKind::Linux, PlatformKind::Windows]) } #[test] fn adapter_identity_and_capability_metadata_are_stable() { let metadata = metadata(); assert_eq!(metadata.id().as_str(), "network.native"); assert!(metadata.declares(Capability::NetworkConnect)); assert!(!metadata.declares(Capability::NetworkAdmin)); } #[test] fn adapter_platform_compatibility_is_explicit() { let metadata = metadata(); assert!(metadata.available_on(PlatformKind::Linux)); assert!(metadata.available_on(PlatformKind::Windows)); assert!(!metadata.available_on(PlatformKind::Android)); } #[test] fn adapter_request_requires_declared_capability() { let metadata = metadata(); assert!(metadata.validate_request(&request()).is_ok()); let undeclared = CapabilityRequest::new(SemanticCapabilityId::NetworkAdmin, Capability::NetworkAdmin, ExecutionScope::target("server.example"), EffectClass::Admin); assert_eq!(metadata.validate_request(&undeclared), Err(AdapterError::UndeclaredCapability)); } #[test] fn adapter_request_contains_typed_arguments_not_command_text() { let request = AdapterRequest::new(request()).with_argument(AdapterArgument::Text("server.example".into())); assert_eq!(request.arguments(), &[AdapterArgument::Text("server.example".into())]); } #[test] fn adapter_errors_distinguish_backend_resolution_failure_from_platform_unavailability() { assert_ne!(AdapterError::ResolutionFailed, AdapterError::UnsupportedPlatform); } #[cfg(any(unix, windows))] #[test] fn filesystem_read_adapter_succeeds_for_existing_file() { let adapter = FileReadAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target("Cargo.toml"), EffectClass::Read); let result = adapter.invoke(&AdapterRequest::new(request)).expect("existing file should be readable"); assert!(result.success); assert!(!result.output.is_empty()); } #[test] fn filesystem_read_adapter_classifies_missing_backend_as_backend_failure() { let adapter = FileReadAdapter::new(); let request = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target("this-file-must-not-exist.one"), EffectClass::Read); assert_eq!(adapter.invoke(&AdapterRequest::new(request)), Err(AdapterError::BackendFailure)); } 
 
