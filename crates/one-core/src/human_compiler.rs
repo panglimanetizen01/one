@@ -22,6 +22,7 @@ fn read_source_bounded(file: std::fs::File, limit: u64, label: &str) -> Result<S
 
 #[cfg(unix)]
 fn open_absolute_directory_nofollow(path: &std::path::Path) -> std::io::Result<std::fs::File> {
+    use std::ffi::CString;
     use std::os::fd::{AsRawFd, FromRawFd};
     use std::os::unix::ffi::OsStrExt;
     use std::path::Component;
