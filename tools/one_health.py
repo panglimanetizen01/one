@@ -7,7 +7,7 @@ from urllib.parse import unquote, urlsplit
 
 SCHEMA_VERSION = "one-health-report/1"
 SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
-TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
+TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".env", ".ini", ".cfg", ".conf", ".properties", ".xml", ".tf", ".hcl", ".sql", ".dockerfile"}
 JAVASCRIPT_SUFFIXES = {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 FENCE_RE = re.compile(r"^( {0,3})(\x60{3,}|~{3,})(.*)$")
@@ -468,6 +468,45 @@ def _scan_javascript_security(rel: str, text: str, findings: list[dict]) -> None
             "Utamakan execFile/spawn dengan argumen terpisah dan shell disabled; validasi seluruh argumen dari sumber eksternal."))
 
 
+def _scan_workflow_expression_injection(rel: str, text: str, findings: list[dict]) -> None:
+    """Flag untrusted GitHub event fields interpolated directly into workflow run scripts."""
+    if not rel.startswith(".github/workflows/"):
+        return
+    untrusted = re.compile(
+        r"\$\{\{\s*github\.event\.(?:pull_request\.(?:title|body|head\.ref)|"
+        r"issue\.(?:title|body)|comment\.body|review\.body|"
+        r"(?:head_commit|commits\[0\])\.message)\s*\}\}",
+        re.IGNORECASE,
+    )
+    lines = text.splitlines()
+    in_run = False
+    run_indent = -1
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" \t"))
+        if not stripped or stripped.startswith("#"):
+            continue
+        if re.match(r"run\s*:", stripped):
+            in_run = True
+            run_indent = indent
+            if untrusted.search(stripped.split(":", 1)[1]):
+                findings.append(_finding("security-workflow", "untrusted-event-expression-in-run", rel, index + 1,
+                    "high", "high",
+                    "Workflow menyisipkan field event yang dikendalikan pengguna langsung ke skrip run.",
+                    "Untrusted GitHub event expression appears in a run command; matched expression omitted.",
+                    "Pindahkan nilai ke environment variable lalu validasi dan gunakan sebagai data; jangan interpolasikan langsung ke sintaks shell."))
+            continue
+        if in_run and indent <= run_indent:
+            in_run = False
+        if in_run and untrusted.search(line):
+            findings.append(_finding("security-workflow", "untrusted-event-expression-in-run", rel, index + 1,
+                "high", "high",
+                "Workflow menyisipkan field event yang dikendalikan pengguna langsung ke skrip run.",
+                "Untrusted GitHub event expression appears inside a multiline run script; matched expression omitted.",
+                "Pindahkan nilai ke environment variable lalu validasi dan gunakan sebagai data; jangan interpolasikan langsung ke sintaks shell."))
+            break
+
+
 def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
     """Read-only security heuristics. Never include matched secret bytes in reports."""
     suffix = Path(rel).suffix.lower()
@@ -516,6 +555,7 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                         "Tinjau kebutuhan permission, pin action ke full commit SHA tepercaya, dan jangan menjalankan kode PR tak tepercaya dengan secret/write token."))
 
     if rel.startswith(".github/workflows/"):
+        _scan_workflow_expression_injection(rel, text, findings)
         # Whole-document fallback for the workflow-wide permission key.
         permission_match = re.search(
             r"(?im)^[ \t]*permissions[ \t]*:[ \t]*write-all(?:[ \t]+#.*)?[ \t]*$",
