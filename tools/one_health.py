@@ -92,6 +92,29 @@ def _scan_json(rel, text, findings):
                 "SHA sumber bukti berbeda dari SHA yang benar-benar diperiksa.",
                 f"source_sha={source_sha}; checked_out_sha={checked_sha}",
                 "Tandai bukti sebagai tidak cocok dan jalankan ulang pemeriksaan pada SHA yang dimaksud."))
+        artifacts = parsed.get("artifacts")
+        if isinstance(artifacts, list):
+            seen_artifacts = {}
+            for artifact in artifacts:
+                if not isinstance(artifact, dict):
+                    continue
+                name = str(artifact.get("name") or "unnamed-artifact")
+                run_id = str(artifact.get("run_id") or "unknown-run")
+                artifact_key = (run_id, name)
+                if artifact_key in seen_artifacts:
+                    findings.append(_finding("artifact-integrity", "duplicate-artifact-name", rel, None, "medium", "medium",
+                        "Nama artefak berulang pada run Actions yang sama.", f"run_id={run_id}; name={name!r}",
+                        "Tinjau apakah upload artifact saling menimpa atau nama perlu dibuat unik."))
+                seen_artifacts[artifact_key] = True
+                if artifact.get("expired") is True:
+                    findings.append(_finding("artifact-integrity", "expired-ci-artifact", rel, None, "medium", "high",
+                        "Artefak CI sudah kedaluwarsa dan mungkin tidak dapat diunduh.", f"run_id={run_id}; name={name!r}; created_at={artifact.get('created_at')!r}",
+                        "Jalankan ulang workflow yang menghasilkan bukti atau unggah ulang artefak dengan retensi yang sesuai."))
+                if not artifact.get("digest"):
+                    findings.append(_finding("artifact-integrity", "artifact-digest-unavailable", rel, None, "info", "medium",
+                        "Metadata artefak tidak menyediakan digest untuk pemeriksaan integritas independen.",
+                        f"run_id={run_id}; name={name!r}",
+                        "Jika API/retensi mendukungnya, simpan digest dan verifikasi isi artefak terunduh; keberadaan artefak saja bukan bukti integritas."))
         jobs = parsed.get("jobs")
         if isinstance(jobs, list):
             for job in jobs:
