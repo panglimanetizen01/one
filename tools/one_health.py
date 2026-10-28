@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only integrity scanner for the One repository; Python standard library only."""
 from __future__ import annotations
-import argparse, ast, hashlib, json, os, re, subprocess, sys
+import argparse, ast, hashlib, json, os, platform, re, subprocess, sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -266,8 +266,12 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                      "file-integrity", "workflow-integrity", "workflow-overlap", "evidence-freshness", "ci-evidence", "contract-drift"]
     if check_one_source:
         detectors_run.append("one-source-contract")
-    return {"schema_version": SCHEMA_VERSION, "repository": root.name, "head_sha": actual_sha, "branch": branch,
-            "expected_sha": expected_sha, "finding_count": len(ordered), "severity_counts": counts, "findings": ordered,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.0", "repository": root.name,
+            "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
+            "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
+                "platform": platform.system(), "platform_release": platform.release()},
+            "working_tree": {"state": "clean" if _git(root, "status", "--porcelain") == "" else "dirty_or_unavailable"},
+            "finding_count": len(ordered), "severity_counts": counts, "findings": ordered,
             "detectors_run": detectors_run,
             "limitations": ["YAML workflow files receive targeted structural/reference checks, not full YAML schema validation.",
                 "The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.",
