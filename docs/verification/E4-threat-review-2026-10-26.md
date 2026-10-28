@@ -56,9 +56,9 @@ These run links are historical evidence for the source SHA explicitly checked ou
 The reviewed controls and listed regression coverage support recording that a scoped threat review now exists. They do **not** by themselves grant E4 verified points or close the overall milestone. Keep E4 verified at 0/6 until the fixed-weight gate's full E4 acceptance criteria and final-SHA evidence are accepted. Record any new findings or code changes in a subsequent dated review rather than rewriting historical run results.
 
 
-## Candidate reconciliation addendum — 2026-10-28
+## Historical candidate reconciliation addendum — 2026-10-28 (superseded by the exact-SHA addendum below)
 
-This addendum supersedes the historical target SHA for purposes of identifying the current candidate, but it does not rewrite or re-date the historical runs above. The candidate under review at the time of this addendum is `1a84d522a2953044c250ebe43c22989d6ec07dfc`.
+This addendum supersedes the historical target SHA for purposes of identifying the current candidate, but it does not rewrite or re-date the historical runs above. Historical candidate SHA at the time of this addendum: `1a84d522a2953044c250ebe43c22989d6ec07dfc`. The links and disposition in this section are retained as historical evidence only.
 
 ### Current candidate-scoped evidence
 
@@ -80,3 +80,17 @@ These results supersede older run links only for the same explicitly scoped test
 4. Have the fixed-weight acceptance gate consume the current-SHA evidence and review artifact before any E4 points are credited.
 
 **Disposition:** the threat review is updated with current-candidate evidence pointers, but E4 remains open pending final-SHA revalidation and full row acceptance. No release or merge is authorized by this review.
+
+
+## Exact-SHA E4 reconciliation — 2026-10-28
+
+**Current source candidate at review time:** `6d492006f9fa873fbd7d8ad61fa5833df707b1f6`.
+
+The independent verifier checked out this exact source SHA for the current scoped E4 evidence:
+
+- [E4 adversarial filesystem/resource regression, run 40664235672](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40664235672) — PASS for its executed adversarial filesystem and resource-bound tests.
+- [SEC-05 subprocess timeout/output regression, run 40664235569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40664235569) — PASS for its bounded timeout/output scope.
+- [Subprocess resource guard, run 40664235630](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40664235630) — PASS for its scoped resource-guard assertions.
+- [Cross-platform Linux/Windows verification, run 40664235567](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40664235567) — PASS for its configured matrix.
+
+These exact-SHA results replace the older candidate as current scoped evidence; they do not retroactively change historical runs. The threat model still has explicit limits: non-Linux Unix mount identity is best-effort, Windows path/reparse defenses are not a proof against every filesystem-provider race, and named operation/output quotas are not a universal heap limit. E4 remains **0/6 verified** until the complete E4 row and final frozen-SHA acceptance are satisfied. Canonical source-repository CI continues to fail before executable steps and is classified as infrastructure-blocked, not PASS. No merge or production release is authorized.
