@@ -1,8 +1,13 @@
-use std::{fs, process::Command, time::{SystemTime, UNIX_EPOCH}};
+use std::{fs, process::Command, sync::atomic::{AtomicU64, Ordering}};
+
+fn unique_temp_path(prefix: &str) -> std::path::PathBuf {
+    static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+    let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+    std::env::temp_dir().join(format!("{prefix}-{}-{id}", std::process::id()))
+}
 
 fn fixture(source: &str) -> std::path::PathBuf {
-    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    let path = std::env::temp_dir().join(format!("one-human-core-{id}.one"));
+    let path = unique_temp_path("one-human-core").with_extension("one");
     fs::write(&path, source).unwrap();
     path
 }
@@ -53,10 +58,7 @@ fn human_frontend_requires_explicit_program_declaration() {
 
 #[test]
 fn human_frontend_resolves_relative_modules_and_executes_shared_functions() {
-    let root = std::env::temp_dir().join(format!(
-        "one-human-modules-{}",
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
-    ));
+    let root = unique_temp_path("one-human-modules");
     fs::create_dir_all(&root).unwrap();
     let module = root.join("matematika.one");
     let program = root.join("main.one");
@@ -81,10 +83,7 @@ fn human_frontend_resolves_relative_modules_and_executes_shared_functions() {
 
 #[test]
 fn human_frontend_rejects_module_path_traversal() {
-    let root = std::env::temp_dir().join(format!(
-        "one-human-module-traversal-{}",
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
-    ));
+    let root = unique_temp_path("one-human-module-traversal");
     fs::create_dir_all(&root).unwrap();
     let program = root.join("main.one");
     fs::write(&program, concat!(
@@ -103,10 +102,7 @@ fn human_frontend_rejects_module_path_traversal() {
 fn human_frontend_rejects_final_and_parent_symlinks_for_module_imports() {
     use std::os::unix::fs::symlink;
 
-    let root = std::env::temp_dir().join(format!(
-        "one-human-module-symlink-{}",
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
-    ));
+    let root = unique_temp_path("one-human-module-symlink");
     let outside = root.with_extension("outside");
     fs::create_dir_all(&root).unwrap();
     fs::create_dir_all(&outside).unwrap();
@@ -187,10 +183,7 @@ fn human_frontend_executes_bounded_while_loop_and_assignment() {
 
 #[test]
 fn human_frontend_rejects_duplicate_module_imports() {
-    let root = std::env::temp_dir().join(format!(
-        "one-human-module-duplicate-{}",
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
-    ));
+    let root = unique_temp_path("one-human-module-duplicate");
     fs::create_dir_all(&root).unwrap();
     fs::write(root.join("shared.one"), "Buat modul shared\n").unwrap();
     let program = root.join("main.one");
@@ -208,10 +201,7 @@ fn human_frontend_rejects_duplicate_module_imports() {
 
 #[test]
 fn human_frontend_rejects_import_cycles() {
-    let root = std::env::temp_dir().join(format!(
-        "one-human-module-cycle-{}",
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
-    ));
+    let root = unique_temp_path("one-human-module-cycle");
     fs::create_dir_all(&root).unwrap();
     let program = root.join("main.one");
     fs::write(&program, "Buat program siklus\nGunakan modul \"modul.one\"\ntampilkan \"x\"\n").unwrap();
