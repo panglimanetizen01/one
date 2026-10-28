@@ -36,6 +36,21 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual(1, finding["line"])
         self.assertEqual("high", finding["confidence"])
 
+    def test_missing_internal_markdown_heading_anchor_is_reported(self):
+        self.write("guide.md", "# Current Heading\n")
+        self.write("README.md", "[section](guide.md#removed-heading)\n")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "broken-heading-anchor")
+        self.assertEqual("README.md", finding["path"])
+        self.assertEqual(1, finding["line"])
+        self.assertEqual("medium", finding["severity"])
+
+    def test_valid_internal_heading_and_explicit_html_anchors_are_accepted(self):
+        self.write("guide.md", "# Current Heading\n## Repeat\n## Repeat\n<div id=\"custom-target\"></div>\n")
+        self.write("README.md", "[one](guide.md#current-heading) [two](guide.md#repeat-1) [three](guide.md#custom-target)\n")
+        report = scan_repository(self.root)
+        self.assertFalse(any(f["rule_id"] == "broken-heading-anchor" for f in report["findings"]))
+
     def test_unclosed_markdown_fence_is_reported(self):
         fence = chr(96) * 3
         self.write("guide.md", "Example:\n" + fence + "one\nnama adalah 1\n")
