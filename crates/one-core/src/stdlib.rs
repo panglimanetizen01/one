@@ -14,8 +14,6 @@ pub fn list_remove(mut list: Value, value: &Value) -> Option<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::runtime::Value;
-
     #[test]
     fn display_value_uses_runtime_display_for_each_value_kind() {
         assert_eq!(display_value(&Value::Text("halo".into())), "halo");
