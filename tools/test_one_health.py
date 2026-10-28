@@ -95,6 +95,30 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertIn("duplicate-workflow-name", rules)
         self.assertIn("missing-local-action", rules)
 
+    def test_valid_toml_and_json_are_not_reported_as_syntax_errors(self):
+        self.write("pyproject.toml", 'name = "example"\nversion = "0.1.0"\n')
+        self.write("settings.json", '{"enabled": true}\n')
+        report = scan_repository(self.root)
+        rules = {f["rule_id"] for f in report["findings"]}
+        self.assertNotIn("invalid-toml", rules)
+        self.assertNotIn("invalid-json", rules)
+        self.assertIn("syntax", report["detectors_run"])
+
+    def test_valid_artifact_digest_and_matching_sha_are_not_flagged(self):
+        sha = "a" * 40
+        self.write("ci-health-evidence.json", json.dumps({
+            "collector_status": "complete",
+            "source_sha": sha,
+            "checked_out_sha": sha,
+            "artifacts": [{"run_id": 1, "name": "report", "expired": False, "digest": "sha256:abc"}]
+        }))
+        report = scan_repository(self.root)
+        rules = {f["rule_id"] for f in report["findings"]}
+        self.assertNotIn("source-checkout-sha-mismatch", rules)
+        self.assertNotIn("expired-ci-artifact", rules)
+        self.assertNotIn("artifact-digest-unavailable", rules)
+        self.assertEqual("ran", report["detector_coverage"]["status_by_detector"]["artifact-integrity"])
+
     def test_invalid_python_is_reported(self):
         self.write("tools/bad.py", "def missing(:\n    pass\n")
         report = scan_repository(self.root)
