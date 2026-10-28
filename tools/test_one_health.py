@@ -133,12 +133,26 @@ class OneHealthScannerTests(unittest.TestCase):
         finding = next(f for f in report["findings"] if f["rule_id"] == "no-normative-fixtures-found")
         self.assertEqual("blocked", finding["status"])
 
+    def test_safe_fix_apply_requires_an_explicit_path(self):
+        path = self.write("docs/without-newline.md", "# heading")
+        report = scan_repository(self.root)
+        with self.assertRaisesRegex(RuntimeError, "specify each exact"):
+            _safe_fix_missing_markdown_newline(self.root, report, apply=True)
+        self.assertEqual(b"# heading", path.read_bytes())
+
+    def test_safe_fix_rejects_path_traversal_and_non_markdown(self):
+        report = scan_repository(self.root)
+        with self.assertRaisesRegex(RuntimeError, "cannot traverse"):
+            _safe_fix_missing_markdown_newline(self.root, report, apply=True, repair_paths=["../outside.md"])
+        with self.assertRaisesRegex(RuntimeError, "only Markdown"):
+            _safe_fix_missing_markdown_newline(self.root, report, apply=True, repair_paths=["tools/one_health.py"])
+
     def test_safe_fix_apply_refuses_non_isolated_checkout(self):
         path = self.write("docs/without-newline.md", "# heading")
         before = path.read_bytes()
         report = scan_repository(self.root)
         with self.assertRaisesRegex(RuntimeError, "branch must start with"):
-            _safe_fix_missing_markdown_newline(self.root, report, apply=True)
+            _safe_fix_missing_markdown_newline(self.root, report, apply=True, repair_paths=["docs/without-newline.md"])
         self.assertEqual(before, path.read_bytes())
 
     def test_report_records_scanner_and_runtime_environment(self):
