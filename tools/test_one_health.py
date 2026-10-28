@@ -89,6 +89,32 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("info", finding["severity"])
         self.assertIn("bukan bukti kegagalan source", finding["summary"])
 
+    def test_expired_ci_artifact_is_reported_and_missing_digest_is_not_integrity_pass(self):
+        self.write("ci-health-evidence.json", json.dumps({
+            "collector_status": "complete",
+            "artifacts": [
+                {"run_id": 12, "name": "old-report", "expired": True, "created_at": "2026-01-01"},
+                {"run_id": 13, "name": "digest-missing", "expired": False}
+            ]
+        }))
+        report = scan_repository(self.root)
+        rules = {f["rule_id"]: f for f in report["findings"]}
+        self.assertEqual("expired-ci-artifact", rules["expired-ci-artifact"]["rule_id"])
+        self.assertEqual("medium", rules["expired-ci-artifact"]["severity"])
+        self.assertEqual("artifact-digest-unavailable", rules["artifact-digest-unavailable"]["rule_id"])
+        self.assertEqual("info", rules["artifact-digest-unavailable"]["severity"])
+
+    def test_duplicate_artifact_names_in_same_run_are_review_hints(self):
+        self.write("ci-health-evidence.json", json.dumps({
+            "artifacts": [
+                {"run_id": 12, "name": "report"},
+                {"run_id": 12, "name": "report"}
+            ]
+        }))
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "duplicate-artifact-name")
+        self.assertEqual("medium", finding["severity"])
+
     def test_failed_ci_job_without_steps_is_blocked_not_misclassified(self):
         self.write("run.json", json.dumps({"jobs": [{"name": "One CI", "conclusion": "failure", "steps": [], "runner_id": 0}]}))
         report = scan_repository(self.root)
