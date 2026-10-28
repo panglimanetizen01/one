@@ -111,3 +111,20 @@ One source
 ```
 
 This pattern is the preferred template for future real-world capabilities.
+
+
+## 18. Repository integrity engine
+
+Repository integrity checks are a first-party toolchain capability, separate from ONE source-language semantics. The target architecture is:
+
+```text
+ONE CLI / tooling interface
+ -> Integrity Engine API
+ -> deterministic detector registry and scope selection
+ -> normalized findings + coverage metadata
+ -> terminal diagnostics / JSON or Markdown report
+```
+
+The engine must make the selected scope, executed detectors, skipped detectors, finding counts, and evidence revision explicit. “Not requested” is not “passed.” It must not autonomously edit source, merge changes, or release artifacts. Any future repair operation requires a separate allowlist, preview, scope, and approval contract.
+
+The current Python scanner remains an independent developer/CI reference while native implementation and parity are built. The first-party command must not require Python at runtime. Implementation should reuse the existing ONE toolchain architecture; the current implementation language is Rust, so “native” does not imply that ONE is already self-hosting. Cross-platform support and default-command status require exact-revision executable evidence.
