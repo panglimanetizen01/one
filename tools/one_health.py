@@ -84,6 +84,28 @@ def _scan_json(rel, text, findings):
                 "SHA sumber bukti berbeda dari SHA yang benar-benar diperiksa.",
                 f"source_sha={source_sha}; checked_out_sha={checked_sha}",
                 "Tandai bukti sebagai tidak cocok dan jalankan ulang pemeriksaan pada SHA yang dimaksud."))
+        jobs = parsed.get("jobs")
+        if isinstance(jobs, list):
+            for job in jobs:
+                if not isinstance(job, dict) or job.get("conclusion") != "failure":
+                    continue
+                steps = job.get("steps")
+                name = str(job.get("name") or job.get("id") or "unknown-job")
+                if not isinstance(steps, list) or not steps:
+                    findings.append(_finding("ci-evidence", "failed-job-without-visible-steps", rel, None, "medium", "high",
+                        "Job CI gagal tetapi metadata tidak menunjukkan langkah yang dijalankan; penyebab belum diketahui.",
+                        f"job={name}; conclusion=failure; steps={steps!r}; runner_id={job.get('runner_id')!r}; logs_url={job.get('logs_url')!r}",
+                        "Ambil logs/annotations atau minta admin memeriksa runner; jangan menyimpulkan source test gagal tanpa output perintah.",
+                        status="blocked"))
+                    continue
+                failed_steps = [step for step in steps if isinstance(step, dict) and step.get("conclusion") == "failure"]
+                if failed_steps:
+                    step_names = [str(step.get("name") or step.get("number") or "unnamed-step") for step in failed_steps]
+                    findings.append(_finding("ci-evidence", "failed-step-needs-log-review", rel, None, "medium", "high",
+                        "Job memiliki langkah gagal; akar masalah belum dapat dipastikan dari metadata saja.",
+                        f"job={name}; failed_steps={step_names!r}",
+                        "Baca log langkah yang gagal sebelum mengklasifikasikan penyebab atau menyetujui perbaikan.",
+                        status="triaged"))
 
 def _scan_workflows(root, workflows, findings):
     names = {}
