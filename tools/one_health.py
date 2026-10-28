@@ -353,14 +353,29 @@ def render_markdown(report: dict) -> str:
     lines.extend(f"- {item}" for item in report["limitations"])
     return "\n".join(lines) + "\n"
 
-def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool) -> list[str]:
+def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool,
+                                      repair_paths: list[str] | None = None) -> list[str]:
     candidates = []
+    requested = set()
+    for raw in repair_paths or []:
+        candidate = Path(raw)
+        if candidate.is_absolute() or ".." in candidate.parts or candidate.as_posix().startswith("./"):
+            raise RuntimeError(f"safe fix refused: repair path must be repository-relative and cannot traverse: {raw}")
+        rel = candidate.as_posix()
+        if candidate.suffix.lower() != ".md":
+            raise RuntimeError(f"safe fix refused: only Markdown newline repair is allowlisted: {raw}")
+        requested.add(rel)
     for path, rel in _files(root):
         if path.is_symlink() or path.suffix.lower() != ".md": continue
+        if apply and rel not in requested: continue
         try: data = path.read_bytes()
         except OSError: continue
         if data and not data.endswith(b"\n"): candidates.append((path, rel))
     if not apply: return [f"PROPOSED: add final newline: {rel}" for _, rel in candidates]
+    if not requested: raise RuntimeError("safe fix refused: specify each exact --repair-path to modify")
+    existing = {rel for _, rel in candidates}
+    missing = sorted(requested - existing)
+    if missing: raise RuntimeError(f"safe fix refused: paths are absent, symlinks, not eligible, or already compliant: {missing}")
     branch = _git(root, "branch", "--show-current")
     dirty = _git(root, "status", "--porcelain")
     if not branch or not (branch.startswith("health/") or branch.startswith("diagnostic/")):
@@ -385,6 +400,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="run one periksa on normative v0.1 conformance fixtures; never executes programs")
     parser.add_argument("--propose-safe-fixes", action="store_true")
     parser.add_argument("--apply-safe-fixes", action="store_true")
+    parser.add_argument("--repair-path", action="append", default=[], help="exact repository-relative Markdown path to repair; repeat for multiple files")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
@@ -400,7 +416,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         report = apply_baseline(report, baseline)
     if args.propose_safe_fixes or args.apply_safe_fixes:
-        try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes)
+        try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes, args.repair_path)
         except RuntimeError as exc:
             print(f"SAFE FIX REFUSED: {exc}", file=sys.stderr)
             return 2
