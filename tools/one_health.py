@@ -268,8 +268,8 @@ PROMPT_OVERRIDE = re.compile(
 )
 PROMPT_SECRET_ACTION = re.compile(
     r"(?i)\b(?:reveal|print|dump|exfiltrate|upload|send|transmit|expose)\b.{0,100}"
-    r"\b(?:secret|token|password|credential|private key|environment variable|system prompt|api key)\b|"
-    r"\b(?:secret|token|password|credential|private key|environment variable|system prompt|api key)\b.{0,100}"
+    r"\b(?:secrets?|tokens?|passwords?|credentials?|private keys?|environment variables?|system prompts?|api keys?)\b|"
+    r"\b(?:secrets?|tokens?|passwords?|credentials?|private keys?|environment variables?|system prompts?|api keys?)\b.{0,100}"
     r"\b(?:upload|send|exfiltrate|reveal|dump|print|transmit|expose)\b"
 )
 
@@ -794,7 +794,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.1", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.2", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
