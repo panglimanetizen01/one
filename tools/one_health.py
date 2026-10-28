@@ -1164,6 +1164,7 @@ def main(argv: list[str] | None = None) -> int:
         for item in baseline["findings"]:
             if (not isinstance(item, dict)
                     or not isinstance(item.get("finding_id"), str) or not item["finding_id"]
+                    or not isinstance(item.get("severity"), str)
                     or item.get("severity") not in valid_severities
                     or not isinstance(item.get("status", "open"), str)):
                 print("BASELINE UNAVAILABLE: malformed finding entry", file=sys.stderr)
