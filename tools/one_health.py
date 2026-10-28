@@ -509,6 +509,16 @@ def render_markdown(report: dict) -> str:
         lines.extend(["", "## Change history", "", "| Change | Count |", "|---|---:|"])
         lines.extend(f"| {name} | {count} |" for name, count in report["change_counts"].items())
     lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
+    coverage = report.get("detector_coverage", {})
+    if coverage:
+        lines.extend(["", "## Detector coverage", "",
+            f"- Detectors run: {coverage.get('ran_count', 0)}",
+            f"- Not applicable (input absent): {coverage.get('not_applicable_count', 0)}",
+            f"- Not requested: {coverage.get('not_requested_count', 0)}", "",
+            "| Detector | Status | Findings |", "|---|---|---:|"])
+        for detector, status in sorted(coverage.get("status_by_detector", {}).items()):
+            count = coverage.get("finding_counts_by_detector", {}).get(detector, 0)
+            lines.append(f"| {detector} | {status} | {count} |")
     lines.extend(["", "## Findings", ""])
     if not report["findings"]: lines.append("Tidak ditemukan anomali oleh pemeriksaan yang tersedia.")
     for item in report["findings"]:
