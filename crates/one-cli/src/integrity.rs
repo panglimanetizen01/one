@@ -63,10 +63,13 @@ fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&
    } else if workflow_write_all {
     out.push(finding("security-patterns","workflow-write-all-permissions","medium",rp.clone(),i+1,"Workflow memberi seluruh izin token melalui write-all.","permissions: write-all","Batasi permissions ke izin minimum yang diperlukan."));
    } else if (lower.contains("password")||lower.contains("api_key")||lower.contains("api-key")||lower.contains("access_token")||lower.contains("client_secret")||lower.contains("private_key")) && (line.contains("=")||line.contains(":")) {
+    let key=line.split_once('=').map(|x|x.0.trim()).or_else(||line.split_once(':').map(|x|x.0.trim())).unwrap_or("");
+    let key=key.trim_matches(|c:char|c=='"'||c=='\\'');
+    let key_valid=!key.is_empty()&&key.chars().all(|c|c.is_ascii_alphanumeric()||c=='_'||c=='-');
     let value=line.split_once('=').map(|x|x.1.trim()).or_else(||line.split_once(':').map(|x|x.1.trim())).unwrap_or("");
     let cleaned=value.trim_matches(|c:char|c.is_whitespace()||c=='"'||c==','||c==';');
     let placeholder=["your_","example","placeholder","changeme","replace_me","<","${","env(","os.environ","process.env","secrets.","null","none","xxxx"];
-    if cleaned.len()>=16 && !placeholder.iter().any(|x|cleaned.to_ascii_lowercase().contains(x)) && cleaned.bytes().any(|b|b.is_ascii_alphanumeric()) {
+    if key_valid && cleaned.len()>=16 && !placeholder.iter().any(|x|cleaned.to_ascii_lowercase().contains(x)) && cleaned.bytes().any(|b|b.is_ascii_alphanumeric()) {
      out.push(finding("security-patterns","possible-hardcoded-secret","high",rp.clone(),i+1,"Kemungkinan rahasia hardcoded; nilai sengaja tidak ditampilkan.","[REDACTED: kemungkinan kredensial]","Validasi temuan secara lokal, rotasi jika valid, dan pindahkan ke secret store."));
     }
    }
