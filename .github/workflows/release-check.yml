@@ -32,6 +32,22 @@ jobs:
         shell: pwsh
         if: runner.os == 'Windows'
         run: python tools/check_contract.py
+      - name: User documentation consistency
+        shell: bash
+        if: runner.os != 'Windows'
+        run: python3 tools/check_user_docs.py
+      - name: User documentation consistency (Windows)
+        shell: pwsh
+        if: runner.os == 'Windows'
+        run: python tools/check_user_docs.py
+      - name: User documentation checker regression tests
+        shell: bash
+        if: runner.os != 'Windows'
+        run: python3 tools/check_user_docs_test.py
+      - name: User documentation checker regression tests (Windows)
+        shell: pwsh
+        if: runner.os == 'Windows'
+        run: python tools/check_user_docs_test.py
       - name: Build
         run: cargo --locked build --workspace --all-targets
       - name: Clippy
