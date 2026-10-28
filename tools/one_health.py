@@ -104,6 +104,10 @@ SECRET_PATTERNS = [
     ("github-token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,})\b"), "critical", "high"),
     ("aws-access-key-id", re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "high", "high"),
     ("slack-token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b"), "high", "high"),
+    ("google-api-key", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b"), "high", "high"),
+    ("stripe-live-secret", re.compile(r"\bsk_live_[0-9A-Za-z]{20,}\b"), "critical", "high"),
+    ("npm-access-token", re.compile(r"\bnpm_[A-Za-z0-9]{30,}\b"), "high", "high"),
+    ("pypi-access-token", re.compile(r"\bpypi-[A-Za-z0-9_-]{50,}\b"), "high", "high"),
     ("generic-hardcoded-secret", re.compile(r"""(?i)\b(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd|secret[_-]?key)\b\s*[:=]\s*["']([^"'\\\s]{16,})["']"""), "high", "medium"),
 ]
 PLACEHOLDER_SECRET = re.compile(r"(?i)(?:example|sample|placeholder|changeme|change_me|your[_-]?|dummy|redacted|<[^>]+>|\$\{[^}]+\}|\$[A-Z][A-Z0-9_]*|process\.env|os\.environ|secrets\.)")
