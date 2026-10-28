@@ -42,7 +42,31 @@ class CollectorTests(unittest.TestCase):
         self.assertEqual([], report["jobs"][0]["steps"])
         self.assertEqual("failure", report["jobs"][1]["steps"][0]["conclusion"])
         self.assertEqual("report", report["artifacts"][0]["name"])
+        rules = [item["rule_id"] for item in report["correlations"]]
+        self.assertIn("failed-job-without-visible-steps", rules)
+        self.assertIn("failed-step-needs-log-review", rules)
         self.assertTrue(all("token" not in call for call in calls))
+
+    def test_failed_run_without_jobs_and_missing_artifacts_are_cautious_correlations(self):
+        def fake_request(url, token):
+            if "/actions/runs?" in url:
+                return {"workflow_runs": [
+                    {"id": 40, "name": "Runner startup failure", "status": "completed",
+                     "conclusion": "failure", "head_sha": SHA}
+                ]}
+            if url.endswith("/runs/40/jobs?per_page=100"):
+                return {"jobs": []}
+            if url.endswith("/runs/40/artifacts?per_page=100"):
+                return {"artifacts": []}
+            raise AssertionError(url)
+
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        rules = {item["rule_id"]: item for item in report["correlations"]}
+        self.assertEqual("blocked-unknown", rules["failed-run-without-job-metadata"]["classification"])
+        self.assertEqual("informational-review", rules["no-artifacts-observed"]["classification"])
+        self.assertIn("not attribute", rules["failed-run-without-job-metadata"]["next_step"])
+        self.assertIn("absence alone is not a failure", rules["no-artifacts-observed"]["next_step"])
 
     def test_checkout_sha_mismatch_blocks_collection(self):
         report = collect_ci_health("owner/repo", SHA, "token", Path("/definitely/not/a/git/checkout"))
