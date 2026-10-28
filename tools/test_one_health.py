@@ -78,6 +78,22 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "missing-command-file" for f in report["findings"]))
 
+    def test_invalid_utf8_text_file_is_reported(self):
+        path = self.root / "docs" / "broken.md"
+        path.write_bytes(b"# title\n\\xff")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "unreadable-text-file")
+        self.assertEqual("docs/broken.md", finding["path"])
+        self.assertEqual("medium", finding["severity"])
+
+    def test_duplicate_workflow_names_and_missing_local_actions_are_reported(self):
+        self.write(".github/workflows/a.yml", "name: Shared CI\njobs:\n  test:\n    steps:\n      - uses: ./missing-action\n")
+        self.write(".github/workflows/b.yml", "name: Shared CI\njobs:\n  test:\n    steps:\n      - run: echo ok\n")
+        report = scan_repository(self.root)
+        rules = {f["rule_id"] for f in report["findings"]}
+        self.assertIn("duplicate-workflow-name", rules)
+        self.assertIn("missing-local-action", rules)
+
     def test_invalid_python_is_reported(self):
         self.write("tools/bad.py", "def missing(:\n    pass\n")
         report = scan_repository(self.root)
