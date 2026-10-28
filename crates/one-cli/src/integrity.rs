@@ -52,8 +52,9 @@ fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&
    let private_key=trimmed.starts_with("-----BEGIN ") && trimmed.ends_with("PRIVATE KEY-----");
    let token_prefix=["ghp_","github_pat_","gho_","ghu_","ghs_","ghr_","sk_live_","sk_test_","xoxb-","xoxp-","akia"];
    let known_token=token_prefix.iter().any(|prefix|lower.find(prefix).map(|at| lower[at+prefix.len()..].chars().take_while(|c|c.is_ascii_alphanumeric()).count()>=20).unwrap_or(false));
-   let pipe_shell=(lower.contains("curl ")||lower.contains("wget ")) && (lower.contains("| sh")||lower.contains("|bash")||lower.contains("| bash")||lower.contains("|sh"));
-   let encoded_powershell=lower.contains("-encodedcommand")||lower.contains(" -enc ");
+   let script_like=matches!(ext,"sh"|"ps1"|"bat"|"cmd"|"yml"|"yaml");
+   let pipe_shell=script_like && (lower.contains("curl ")||lower.contains("wget ")) && (lower.contains("| sh")||lower.contains("|bash")||lower.contains("| bash")||lower.contains("|sh"));
+   let encoded_powershell=matches!(ext,"ps1"|"bat"|"cmd"|"yml"|"yaml") && (lower.contains("-encodedcommand")||lower.contains(" -enc "));
    let workflow_write_all=rp.starts_with(".github/workflows/") && lower.contains("permissions: write-all");
    if private_key || known_token {
     out.push(finding("security-patterns",if private_key{"embedded-private-key"}else{"known-token-pattern"},"high",rp.clone(),i+1,"Kemungkinan kredensial rahasia tertanam; nilai disamarkan.","[REDACTED: nilai rahasia tidak ditampilkan]","Cabut/rotasi kredensial yang valid, hapus dari riwayat Git, dan gunakan secret store."));
