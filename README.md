@@ -37,6 +37,7 @@ The repository-health scanner is **developer tooling**, not part of One's source
 
 - Scanner and tests: `tools/one_health.py`, `tools/test_one_health.py`
 - Exact-SHA GitHub Actions evidence collector: `tools/collect_ci_health.py`, `tools/test_collect_ci_health.py`
+- Reviewed detector/repair quality metrics: `tools/health_quality.py`, `tools/test_health_quality.py`, with the [quality ledger guide](docs/verification/health-quality-ledger.md)
 - Usage and detector limitations: [repository health guide](docs/verification/repository-health.md) and [detector governance](docs/verification/health-detectors.md)
 
 Run the read-only checks with Python 3.11+:
@@ -47,7 +48,7 @@ python -m unittest discover -s tools -p "test_one_health.py" -v
 python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
 ```
 
-The current implementation covers repository paths and text integrity, Python/TOML/JSON syntax, Markdown links, heading anchors and fences, targeted workflow references and overlap hints, normative One contract drift, baseline triage, and exact-SHA Actions run/job/step/artifact metadata with cautious failure correlations. JSON and Markdown reports expose detector execution status and findings per detector; these are coverage indicators, not accuracy or repair-success guarantees. Its safe-repair allowlist currently only adds a missing final newline to an explicitly selected Markdown file after a preview and guarded branch/clean-tree checks. It does not autonomously edit One source, approve findings, merge pull requests, or release production artifacts. Full YAML validation, live log interpretation/root-cause analysis, broader repair classes, and detector-quality feedback remain evolving work; see the guide before treating a scan as complete.
+The current implementation covers repository paths and text integrity, Python/TOML/JSON syntax, Markdown links, heading anchors and fences, targeted workflow references and overlap hints, normative One contract drift, baseline triage, and exact-SHA Actions run/job/step/artifact metadata with cautious failure correlations. JSON and Markdown reports expose detector execution status and findings per detector; these are coverage indicators, not accuracy or repair-success guarantees. Its safe-repair allowlist currently only adds a missing final newline to an explicitly selected Markdown file after a preview and guarded branch/clean-tree checks. It does not autonomously edit One source, approve findings, merge pull requests, or release production artifacts. Full YAML validation, live log interpretation/root-cause analysis, broader repair classes, and manual detector-quality adjudication remain evolving work. Use the quality ledger to record reviewed false positives/misses and verified repair outcomes; empty or unreviewed records are not counted as success.
 
 ## v0.1 implementation
 
