@@ -49,7 +49,7 @@ def _markdown_anchors(text: str) -> set[str]:
             count = duplicate_counts.get(slug, 0)
             duplicate_counts[slug] = count + 1
             anchors.add(slug if count == 0 else f"{slug}-{count}")
-        for explicit in re.finditer(r"""\\b(?:id|name)\\s*=\\s*["']([^"']+)["']""", line, re.IGNORECASE):
+        for explicit in re.finditer(r"""\b(?:id|name)\s*=\s*["']([^"']+)["']""", line, re.IGNORECASE):
             anchors.add(explicit.group(1))
     return anchors
 
