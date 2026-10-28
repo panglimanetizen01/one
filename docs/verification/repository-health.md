@@ -180,10 +180,10 @@ Baseline comparison is currently opt-in and file-based; persistent cross-run his
 The Rust-based ONE CLI now has an initial read-only scanner preview, invoked without Python:
 
 ~~~sh
-cargo run -p one-cli -- pindai --scope all --root .
-cargo run -p one-cli -- pindai --scope sha --root . --expected-sha <40-character-git-sha>
-cargo run -p one-cli -- pindai --scope workflow --root .
-cargo run -p one-cli -- pindai --scope markdown --root .
+cargo run -p one-cli --bin one -- pindai --scope all --root .
+cargo run -p one-cli --bin one -- pindai --scope sha --root . --expected-sha <40-character-git-sha>
+cargo run -p one-cli --bin one -- pindai --scope workflow --root .
+cargo run -p one-cli --bin one -- pindai --scope markdown --root .
 ~~~
 
 This is an **initial implementation, not parity with tools/one_health.py**. It currently checks a narrow subset: expected Git HEAD identity, required foundation paths, UTF-8 readability for selected text extensions, basic relative Markdown links and fenced-code closure, workflow names/local-action paths, core CLI vocabulary in README, and the presence of Cargo.lock. It reports which detector scopes ran and which were not requested. Critical/high findings return a non-zero exit status.
