@@ -1017,3 +1017,12 @@ A cross-audit found that the completion ledger carried E3, E4, and E5 verified p
 - This reconciliation itself advances the source branch. Read the resulting branch HEAD, update the independent verifier pin and PR #80 metadata, then rerun the mandatory exact-SHA matrix. No evidence from a prior source SHA may be promoted to the resulting HEAD.
 
 **Gate: NOT PASSED.** No merge, release, or PASS GREEN LOCKED claim is authorized.
+
+
+## 2026-10-28 exact-SHA matrix update — recorded candidate 938ad378c4f0fece2cb806151c03bbc8a86b5b2c
+
+The current candidate's independent exact-SHA matrix completed the Android runtime requirement successfully. The native ARM64 Linux host run verified Android API level 35, guest ABI `arm64-v8a`, an AArch64 ELF, exit code 0, and output `ONE_NATIVE_BACKEND_OK` ([run 40628912894](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40628912894)). Cross-platform Linux/Windows verification and the documentation checker/tests passed ([run 40628913019](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40628913019)); candidate artifact integrity passed ([run 40628912883](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40628912883)); E4 adversarial, SEC-05, and resource-guard regression runs also passed. The community fallback remains an additional, non-required attempt.
+
+- E3 receives 8/8 verified points and E5 receives 4/4 on the recorded candidate above; verified subtotal is now **72/100** and implementation subtotal remains **92/100 provisional**.
+- E4 remains **0/6** because the full threat review and the explicit root/mount/quota/fallback guarantees remain open. E1 remains 0/10 due incomplete standard-library scope; E2 remains 0/8 because protected production release acceptance has not run; E6 remains 0/4.
+- The ledger/DoD reconciliation itself advances the source SHA. The exact-SHA matrix must rerun on the resulting pin; the overall gate remains **NOT PASSED** until current-candidate evidence and the remaining acceptance criteria pass. No merge or release is authorized.
