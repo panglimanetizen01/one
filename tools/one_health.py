@@ -98,6 +98,62 @@ def _scan_markdown(path, rel, root, text, findings):
             "Blok kode Markdown tidak memiliki penutup yang cocok.", f"Fence dibuka pada baris {active[2]}.",
             "Tambahkan fence penutup yang sesuai atau perbaiki batas blok kode."))
 
+SECRET_PATTERNS = [
+    ("private-key-material", re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"), "critical", "high"),
+    ("github-token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]{30,}|github_pat_[A-Za-z0-9_]{30,})\b"), "critical", "high"),
+    ("aws-access-key-id", re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "high", "high"),
+    ("slack-token", re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b"), "high", "high"),
+    ("generic-hardcoded-secret", re.compile(r"""(?i)\b(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd|secret[_-]?key)\b\s*[:=]\s*["']([^"'\\\s]{16,})["']"""), "high", "medium"),
+]
+PLACEHOLDER_SECRET = re.compile(r"(?i)(?:example|sample|placeholder|changeme|change_me|your[_-]?|dummy|redacted|<[^>]+>|\\$\\{[^}]+\\}|\\$[A-Z][A-Z0-9_]*|process\\.env|os\\.environ|secrets\\.)")
+
+def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
+    """Conservative, read-only security heuristics. Never include matched secret bytes in reports."""
+    suffix = Path(rel).suffix.lower()
+    for number, line in enumerate(text.splitlines(), 1):
+        for rule, pattern, severity, confidence in SECRET_PATTERNS:
+            match = pattern.search(line)
+            if not match:
+                continue
+            matched = match.group(1) if rule == "generic-hardcoded-secret" and match.lastindex else match.group(0)
+            if rule == "generic-hardcoded-secret" and PLACEHOLDER_SECRET.search(matched):
+                continue
+            fingerprint = hashlib.sha256(matched.encode("utf-8")).hexdigest()[:10]
+            findings.append(_finding("security-secrets", rule, rel, number, severity, confidence,
+                "Kemungkinan kredensial atau materi private key tertanam di berkas; nilai rahasia sengaja tidak ditampilkan.",
+                f"pattern={rule}; fingerprint_sha256_prefix={fingerprint}; matched_value_redacted=true",
+                "Cabut/rotasi kredensial jika nyata, hapus dari working tree, pindahkan ke secret manager/environment, dan bersihkan riwayat Git sesuai prosedur insiden. Jangan tempelkan nilai rahasia ke laporan."))
+        if suffix == ".py":
+            risky_patterns = [
+                ("dynamic-eval-of-input", re.compile(r"\b(?:eval|exec)\s*\(\s*(?:input|sys\.stdin\.read|base64\.b64decode)\s*\("), "high", "medium",
+                 "Eksekusi kode dinamis menerima input atau payload terdekode."),
+                ("subprocess-shell-true", re.compile(r"\bsubprocess\.(?:run|Popen|call|check_call|check_output)\s*\([\s\S]{0,500}?shell\s*=\s*True"), "medium", "medium",
+                 "Pemanggilan subprocess mengaktifkan shell; tinjau apakah input dapat dikendalikan pihak luar."),
+                ("dynamic-code-execution", re.compile(r"\b(?:eval|exec)\s*\("), "medium", "low",
+                 "Ditemukan eksekusi kode dinamis; konteks menentukan apakah ini berbahaya."),
+            ]
+            for rule, pattern, severity, confidence, summary in risky_patterns:
+                if pattern.search(line):
+                    findings.append(_finding("security-code", rule, rel, number, severity, confidence, summary,
+                        "Hanya pola statis teramati; tidak menyatakan kode telah dieksploitasi.",
+                        "Tinjau aliran data, validasi input, batas kepercayaan, dan apakah API yang lebih aman dapat digunakan."))
+        if rel.startswith(".github/workflows/"):
+            workflow_rules = [
+                ("pipe-to-shell", re.compile(r"\b(?:curl|wget)\b[^\\n|]*\\|\\s*(?:sudo\\s+)?(?:ba)?sh\b"), "high", "medium",
+                 "Workflow mengalirkan konten jaringan langsung ke shell."),
+                ("write-all-permissions", re.compile(r"(?m)^\\s*permissions\\s*:\\s*write-all\\s*$"), "high", "high",
+                 "Workflow meminta seluruh permission token ditulis; terapkan least privilege."),
+                ("pull-request-target", re.compile(r"(?m)^\\s*pull_request_target\\s*:"), "high", "medium",
+                 "Workflow memakai pull_request_target; tinjau checkout/eksekusi kode kontribusi tak tepercaya."),
+                ("mutable-action-ref", re.compile(r"\\buses:\\s*[^\\s#]+@(main|master|latest)\\b"), "medium", "high",
+                 "Action pihak ketiga dirujuk ke tag/branch mutable, bukan commit SHA."),
+            ]
+            for rule, pattern, severity, confidence, summary in workflow_rules:
+                if pattern.search(line):
+                    findings.append(_finding("security-workflow", rule, rel, number, severity, confidence, summary,
+                        "Pola workflow terdeteksi; bukan bukti kompromi.",
+                        "Tinjau kebutuhan permission, pin action ke full commit SHA tepercaya, dan jangan menjalankan kode PR tak tepercaya dengan secret/write token."))
+
 def _scan_json(rel, text, findings):
     try: parsed = json.loads(text)
     except json.JSONDecodeError as exc:
@@ -353,6 +409,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
             findings.append(_finding("file-integrity", "unreadable-text-file", rel, None, "medium", "high",
                 "Berkas teks tidak dapat dibaca sebagai UTF-8.", str(exc), "Periksa encoding, izin, atau apakah berkas seharusnya berupa teks."))
             continue
+        _scan_security(rel, text, findings)
         if suffix == ".py":
             try: ast.parse(text, filename=rel)
             except SyntaxError as exc:
@@ -417,12 +474,16 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     if workflows:
         detectors_run.extend(["workflow-integrity", "workflow-overlap"])
     detectors_run.extend(sorted(json_evidence_detectors))
+    detectors_run.extend(["security-secrets", "security-code", "security-workflow"])
     detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
     detectors_run = sorted(set(detectors_run))
     detector_status = {
         "path-integrity": "ran",
+        "security-secrets": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
+        "security-code": "ran" if ".py" in suffixes else "not-applicable-no-python-files",
+        "security-workflow": "ran" if workflows else "not-applicable-no-workflows",
         "revision-integrity": "ran" if expected_sha is not None else "not-requested",
         "syntax": "ran" if suffixes.intersection({".py", ".toml", ".json"}) else "not-applicable-no-parseable-files",
         "markdown-links": "ran" if ".md" in suffixes else "not-applicable-no-markdown",
