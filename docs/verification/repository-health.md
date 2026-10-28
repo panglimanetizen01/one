@@ -50,6 +50,11 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
 | Artifact integrity hints | expired artifacts, duplicate names per run, missing digest metadata | Does not download/rehash artifact bytes; missing digest is a limitation, not a clean integrity result |
+| Secret exposure | known provider token formats, private-key headers, and likely hardcoded credential assignments | Secret values are redacted; unknown/encoded secret formats can be missed and examples can produce false positives |
+| Suspicious code | Python dynamic `eval`/`exec` and `subprocess` with `shell=True` | Heuristic only; static patterns do not prove exploitability or detect every malicious behavior |
+| Workflow attack surface | network-to-shell pipelines, `write-all`, `pull_request_target`, and mutable action refs | Targeted static checks, not a full YAML/schema, dependency, or runtime security audit |
+
+Security scanning is defensive and read-only: findings indicate patterns that deserve review, not proof that an attacker is present or that compromise occurred. It deliberately redacts matched credential values. No static scanner can guarantee detection of every hidden, obfuscated, generated, encoded, or novel malicious payload; combine this with pinned dependencies, least-privilege CI, secret scanning at hosting-provider level, code review, dependency/advisory monitoring, artifact signing/provenance, and runtime monitoring. Do not use this scanner as the sole security control.
 
 The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Normative contract checks detect disappearance of high-value invariants but are deliberately not a substitute for parser tests or human contract review. Language examples must be checked against the One grammar, implementation status, and conformance tests.
 
