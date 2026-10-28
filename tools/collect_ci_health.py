@@ -138,57 +138,58 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
                     })
         result["collector_status"] = "complete" if not result["collection_errors"] else "partial"
 
-        # Correlate only observable metadata. These classifications are triage hints,
-        # never a root-cause claim and never evidence that a source test failed.
-        jobs_by_run = {}
-        artifacts_by_run = {}
-        for job in result["jobs"]:
-            jobs_by_run.setdefault(job["run_id"], []).append(job)
-        for artifact in result["artifacts"]:
-            artifacts_by_run.setdefault(artifact["run_id"], []).append(artifact)
-        for run in result["runs"]:
-            run_id = run["id"]
-            run_jobs = jobs_by_run.get(run_id, [])
-            run_artifacts = artifacts_by_run.get(run_id, [])
-            failed_jobs = [job for job in run_jobs if job.get("conclusion") == "failure"]
-            if run.get("conclusion") == "failure" and not run_jobs:
-                result["correlations"].append({
-                    "rule_id": "failed-run-without-job-metadata",
-                    "run_id": run_id, "run_name": run.get("name"),
-                    "classification": "blocked-unknown",
-                    "evidence": "Run failed but no job metadata was returned.",
-                    "next_step": "Inspect the run page and Actions service/runner status; do not attribute the failure to source code.",
-                })
-            for job in failed_jobs:
-                steps = job.get("steps") or []
-                failed_steps = [step for step in steps if step.get("conclusion") == "failure"]
-                if not steps or job.get("runner_id") in (None, 0):
-                    result["correlations"].append({
-                        "rule_id": "failed-job-without-visible-steps",
-                        "run_id": run_id, "job_id": job.get("id"), "job_name": job.get("name"),
-                        "classification": "blocked-unknown",
-                        "evidence": f"runner_id={job.get('runner_id')!r}; visible_steps={len(steps)}",
-                        "next_step": "Review job logs/annotations or runner availability; no source-test failure is established.",
-                    })
-                if failed_steps:
-                    result["correlations"].append({
-                        "rule_id": "failed-step-needs-log-review",
-                        "run_id": run_id, "job_id": job.get("id"), "job_name": job.get("name"),
-                        "classification": "needs-log-review",
-                        "evidence": [step.get("name") for step in failed_steps],
-                        "next_step": "Inspect the failed step logs before classifying the cause.",
-                    })
-            if run.get("status") == "completed" and not run_artifacts:
-                result["correlations"].append({
-                    "rule_id": "no-artifacts-observed",
-                    "run_id": run_id, "run_name": run.get("name"),
-                    "classification": "informational-review",
-                    "evidence": "The Actions artifacts endpoint returned no artifacts for this run.",
-                    "next_step": "Compare with the workflow's declared artifact contract; absence alone is not a failure.",
-                })
     except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
         result["collection_errors"].append(f"{type(exc).__name__}: {exc}")
         result["collector_status"] = "partial" if result["runs"] or result["jobs"] else "blocked"
+    # Correlate only observable metadata. These classifications are triage hints,
+    # never a root-cause claim and never evidence that a source test failed.
+    jobs_by_run = {}
+    artifacts_by_run = {}
+    for job in result["jobs"]:
+        jobs_by_run.setdefault(job["run_id"], []).append(job)
+    for artifact in result["artifacts"]:
+        artifacts_by_run.setdefault(artifact["run_id"], []).append(artifact)
+    for run in result["runs"]:
+        run_id = run["id"]
+        run_jobs = jobs_by_run.get(run_id, [])
+        run_artifacts = artifacts_by_run.get(run_id, [])
+        failed_jobs = [job for job in run_jobs if job.get("conclusion") == "failure"]
+        if run.get("conclusion") == "failure" and not run_jobs:
+            result["correlations"].append({
+                "rule_id": "failed-run-without-job-metadata",
+                "run_id": run_id, "run_name": run.get("name"),
+                "classification": "blocked-unknown",
+                "evidence": "Run failed but no job metadata was returned.",
+                "next_step": "Inspect the run page and Actions service/runner status; do not attribute the failure to source code.",
+            })
+        for job in failed_jobs:
+            steps = job.get("steps") or []
+            failed_steps = [step for step in steps if step.get("conclusion") == "failure"]
+            if not steps or job.get("runner_id") in (None, 0):
+                result["correlations"].append({
+                    "rule_id": "failed-job-without-visible-steps",
+                    "run_id": run_id, "job_id": job.get("id"), "job_name": job.get("name"),
+                    "classification": "blocked-unknown",
+                    "evidence": f"runner_id={job.get('runner_id')!r}; visible_steps={len(steps)}",
+                    "next_step": "Review job logs/annotations or runner availability; no source-test failure is established.",
+                })
+            if failed_steps:
+                result["correlations"].append({
+                    "rule_id": "failed-step-needs-log-review",
+                    "run_id": run_id, "job_id": job.get("id"), "job_name": job.get("name"),
+                    "classification": "needs-log-review",
+                    "evidence": [step.get("name") for step in failed_steps],
+                    "next_step": "Inspect the failed step logs before classifying the cause.",
+                })
+        if run.get("status") == "completed" and not run_artifacts:
+            result["correlations"].append({
+                "rule_id": "no-artifacts-observed",
+                "run_id": run_id, "run_name": run.get("name"),
+                "classification": "informational-review",
+                "evidence": "The Actions artifacts endpoint returned no artifacts for this run.",
+                "next_step": "Compare with the workflow's declared artifact contract; absence alone is not a failure.",
+            })
+
     return result
 
 
