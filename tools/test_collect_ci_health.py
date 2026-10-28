@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from collect_ci_health import collect_ci_health
 
@@ -33,7 +34,8 @@ class CollectorTests(unittest.TestCase):
                                        "digest": "sha256:abc", "created_at": "2026-01-01"}]}
             raise AssertionError(url)
 
-        report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
         self.assertEqual("complete", report["collector_status"])
         self.assertEqual([10], [run["id"] for run in report["runs"]])
         self.assertEqual(2, len(report["jobs"]))
@@ -59,7 +61,8 @@ class CollectorTests(unittest.TestCase):
         def fail_request(*args):
             raise OSError("API unavailable")
 
-        report = collect_ci_health("owner/repo", SHA, "token", Path("."), fail_request)
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fail_request)
         self.assertEqual("blocked", report["collector_status"])
         self.assertIn("API unavailable", report["collection_errors"][0])
 
