@@ -20,7 +20,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 |---|---|---|
 | `revision-integrity` | Expected SHA shape and checked-out HEAD | Does not establish who authorized the revision |
 | `syntax` | Python AST, TOML, JSON parsing | Does not validate all language/tool semantics |
-| `markdown-links` | Broken relative links and links escaping repository root | Markdown extensions, reference-style links, and generated routes are not fully parsed |
+| `markdown-links` | Broken relative paths, links escaping repository root, and stale same-page/cross-file Markdown heading or explicit HTML anchors | Markdown extensions, reference-style links, and generated routes are not fully parsed; heading slugging is a conservative approximation |
 | `markdown-structure` | Fenced-code closure | Not a complete CommonMark validator |
 | `path-integrity` | Symlinks resolving outside repository | Does not validate every runtime path or filesystem race |
 | `file-integrity` | UTF-8 readability of scanned text files | Does not prove binary/artifact integrity |
