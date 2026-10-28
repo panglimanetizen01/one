@@ -203,6 +203,13 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertGreater(item["priority_score"], 0)
         self.assertIn("acceptance_blocker_factor", item["priority_inputs"])
 
+    def test_baseline_keeps_findings_not_checked_when_detector_input_is_absent(self):
+        current = scan_repository(self.root)
+        old = {"finding_id": "OH-ci-old", "detector_id": "ci-evidence", "status": "open", "summary": "Old CI issue"}
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
+        self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
+
     def test_baseline_marks_disappeared_findings_as_reviewable_resolutions(self):
         current = scan_repository(self.root)
         old = {"finding_id": "OH-previous", "detector_id": "markdown-links", "status": "open", "summary": "Old issue"}
