@@ -43,6 +43,8 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
 | Workflow overlap | exact repeated single-line run commands across workflow files | Low-confidence review hint; repetition may be intentional |
 | Evidence freshness | source SHA versus checked-out SHA in structured JSON evidence | Only for records that declare both values |
+| Live CI metadata | Exact-SHA GitHub Actions runs, jobs, steps, and artifact metadata | Requires Actions read permission and a token; collection outage is blocked/partial, not a source failure; logs are link-only |
+| Normative One contract drift | Required invariants in grammar, CLI, diagnostics, package/build, and platform contract docs | Text-presence check only; parser/conformance tests and human review remain authoritative |
 | CI failure classification | failed jobs with absent steps, and failed steps needing log review in saved JSON run metadata | Does not claim root cause from metadata alone |
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
