@@ -286,6 +286,27 @@ def _is_agent_instruction_surface(rel: str) -> bool:
     )
 
 
+DEPENDENCY_MANIFEST_NAMES = {
+    "requirements.txt", "requirements-dev.txt", "requirements-test.txt",
+    "pyproject.toml", "poetry.lock", "pdm.lock", "uv.lock", "pipfile", "pipfile.lock",
+    "cargo.toml", "cargo.lock", "package.json", "package-lock.json", "npm-shrinkwrap.json",
+    "pnpm-lock.yaml", "yarn.lock", "bun.lock", "bun.lockb", "go.mod", "go.sum",
+    "composer.json", "composer.lock", "gemfile", "gemfile.lock", "pom.xml",
+    "build.gradle", "build.gradle.kts", "gradle.lockfile",
+}
+
+
+def _is_dependency_surface(rel: str) -> bool:
+    """Recognize manifests/lockfiles, not arbitrary JSON/TOML/text files, for coverage accounting."""
+    path = Path(rel)
+    name = path.name.lower()
+    return (
+        name in DEPENDENCY_MANIFEST_NAMES
+        or (name.startswith("requirements") and name.endswith(".txt"))
+        or (name.startswith("package") and name.endswith(".json"))
+    )
+
+
 def _scan_javascript_security(rel: str, text: str, findings: list[dict]) -> None:
     """Targeted JavaScript/TypeScript heuristics; findings are leads, not proof of exploitability."""
     obfuscated = re.search(
@@ -749,7 +770,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         findings_by_detector[detector] = findings_by_detector.get(detector, 0) + 1
     suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
     agent_instruction_surfaces = any(_is_agent_instruction_surface(rel) for path, rel in files if not path.is_symlink())
-    dependency_surfaces = bool(workflows or suffixes.intersection({".toml", ".txt", ".json"}))
+    dependency_surfaces = bool(workflows or any(_is_dependency_surface(rel) for path, rel in files if not path.is_symlink()))
     detectors_run = ["path-integrity"]
     if expected_sha is not None:
         detectors_run.append("revision-integrity")
