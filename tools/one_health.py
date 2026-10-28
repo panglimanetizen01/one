@@ -207,6 +207,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     root = root.resolve()
     findings, workflows = [], []
     files = list(_files(root))
+    json_evidence_detectors = set()
     actual_sha, branch = _git(root, "rev-parse", "HEAD"), _git(root, "branch", "--show-current")
     if expected_sha is not None:
         if not SHA_RE.fullmatch(expected_sha):
@@ -251,7 +252,17 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
             except Exception as exc:
                 findings.append(_finding("syntax", "invalid-toml", rel, getattr(exc, "lineno", None), "high", "high",
                     "Berkas TOML tidak dapat diparse.", str(exc), "Perbaiki sintaks TOML dan validasi ulang."))
-        elif suffix == ".json": _scan_json(rel, text, findings)
+        elif suffix == ".json":
+            _scan_json(rel, text, findings)
+            try:
+                parsed_json = json.loads(text)
+            except json.JSONDecodeError:
+                parsed_json = None
+            if isinstance(parsed_json, dict):
+                if (parsed_json.get("source_sha") or parsed_json.get("candidate_sha")) and (parsed_json.get("checked_out_sha") or parsed_json.get("checkout_sha")):
+                    json_evidence_detectors.add("evidence-freshness")
+                if isinstance(parsed_json.get("jobs"), list) or "collector_status" in parsed_json:
+                    json_evidence_detectors.add("ci-evidence")
         elif suffix == ".md": _scan_markdown(path, rel, root, text, findings)
         if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}: workflows.append((rel, text))
     _scan_workflows(root, workflows, findings)
@@ -270,8 +281,21 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     ordered = sorted(unique.values(), key=lambda f: ({"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(f["severity"], 5),
                                                       f["path"], f["line"] or 0, f["finding_id"]))
     counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
-    detectors_run = ["revision-integrity", "syntax", "markdown-links", "markdown-structure", "path-integrity",
-                     "file-integrity", "workflow-integrity", "workflow-overlap", "evidence-freshness", "ci-evidence", "contract-drift"]
+    suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
+    detectors_run = ["path-integrity"]
+    if expected_sha is not None:
+        detectors_run.append("revision-integrity")
+    if suffixes.intersection({".py", ".toml", ".json"}):
+        detectors_run.append("syntax")
+    if ".md" in suffixes:
+        detectors_run.extend(["markdown-links", "markdown-structure"])
+    if suffixes.intersection(TEXT_SUFFIXES):
+        detectors_run.append("file-integrity")
+    if workflows:
+        detectors_run.extend(["workflow-integrity", "workflow-overlap"])
+    detectors_run.extend(sorted(json_evidence_detectors))
+    if cli_contract.is_file() and cli_guide.is_file():
+        detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
     return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.0", "repository": root.name,
