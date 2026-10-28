@@ -173,11 +173,52 @@ def scan_repository(root: Path, expected_sha: str | None = None) -> dict:
     ordered = sorted(unique.values(), key=lambda f: ({"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(f["severity"], 5),
                                                       f["path"], f["line"] or 0, f["finding_id"]))
     counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
+    detectors_run = ["revision-integrity", "syntax", "markdown-links", "markdown-structure", "path-integrity",
+                     "file-integrity", "workflow-integrity", "evidence-freshness", "contract-drift"]
     return {"schema_version": SCHEMA_VERSION, "repository": root.name, "head_sha": actual_sha, "branch": branch,
             "expected_sha": expected_sha, "finding_count": len(ordered), "severity_counts": counts, "findings": ordered,
+            "detectors_run": detectors_run,
             "limitations": ["YAML workflow files receive targeted structural/reference checks, not full YAML schema validation.",
                 "The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.",
                 "A finding is a lead for review; no inference is promoted to a root cause without supporting evidence."]}
+
+def apply_baseline(report: dict, baseline: dict) -> dict:
+    """Compare findings without changing the fixed-weight acceptance ledger."""
+    previous = {item.get("finding_id"): item for item in baseline.get("findings", []) if item.get("finding_id")}
+    current_ids = {item["finding_id"] for item in report["findings"]}
+    counts = {"new": 0, "recurring": 0, "reopened": 0, "resolved": 0}
+    for item in report["findings"]:
+        old = previous.get(item["finding_id"])
+        if old is None:
+            item["change_status"] = "new"
+        elif old.get("status") == "resolved" or old.get("change_status") == "resolved":
+            item["change_status"] = "reopened"
+        else:
+            item["change_status"] = "recurring"
+        counts[item["change_status"]] += 1
+        impact = {"critical": 5.0, "high": 4.0, "medium": 3.0, "low": 2.0, "info": 1.0}.get(item["severity"], 1.0)
+        confidence = {"high": 1.0, "medium": 0.7, "low": 0.4}.get(item["confidence"], 0.4)
+        recurrence = 1.5 if old is not None and item["change_status"] == "recurring" else 1.0
+        blocker = 1.5 if item["detector_id"] in {"revision-integrity", "syntax"} else 1.0
+        item["priority_score"] = round(impact * confidence * recurrence * blocker, 2)
+        item["priority_inputs"] = {"impact": impact, "confidence": confidence, "recurrence_factor": recurrence,
+                                   "acceptance_blocker_factor": blocker}
+    resolved = []
+    for finding_id, old in previous.items():
+        if finding_id in current_ids or old.get("status") == "resolved" or old.get("change_status") == "resolved":
+            continue
+        item = dict(old)
+        item["status"] = "resolved"
+        item["change_status"] = "resolved"
+        item["resolution_basis"] = "Not reproduced by the current completed scan; review detector coverage before closure."
+        resolved.append(item)
+        counts["resolved"] += 1
+    report["resolved_findings"] = sorted(resolved, key=lambda f: f.get("finding_id", ""))
+    report["change_counts"] = counts
+    report["active_finding_count"] = report["finding_count"]
+    report["resolved_finding_count"] = len(resolved)
+    report["baseline_schema_version"] = baseline.get("schema_version")
+    return report
 
 def render_markdown(report: dict) -> str:
     lines = ["# One Repository Health Report", "", f"- Schema: {report['schema_version']}",
@@ -223,12 +264,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-sha", default=os.environ.get("GITHUB_SHA"))
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--markdown-out", type=Path)
+    parser.add_argument("--baseline", type=Path, help="compare findings with a previous JSON report")
     parser.add_argument("--propose-safe-fixes", action="store_true")
     parser.add_argument("--apply-safe-fixes", action="store_true")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
     report = scan_repository(root, args.expected_sha)
+    if args.baseline:
+        try:
+            baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"BASELINE UNAVAILABLE: {exc}", file=sys.stderr)
+            return 2
+        report = apply_baseline(report, baseline)
     if args.propose_safe_fixes or args.apply_safe_fixes:
         try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes)
         except RuntimeError as exc:
