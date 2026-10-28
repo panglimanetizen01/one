@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from one_health import scan_repository, apply_baseline, _safe_fix_missing_markdown_newline
+from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -293,6 +293,9 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertGreaterEqual(report["detector_coverage"]["ran_count"], 5)
         self.assertEqual("ran", report["detector_coverage"]["status_by_detector"]["syntax"])
         self.assertTrue(any("YAML" in item for item in report["limitations"]))
+        markdown = render_markdown(report)
+        self.assertIn("## Detector coverage", markdown)
+        self.assertIn("| artifact-integrity | not-applicable-no-artifact-evidence | 0 |", markdown)
 
     def test_normative_contract_drift_is_reported(self):
         self.write("docs/spec/one-v0.1-grammar.md", "Grammar without explicit ambiguity rule\n")
