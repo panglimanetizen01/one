@@ -187,7 +187,7 @@ The Rust-based ONE CLI includes an initial read-only integrity scanner that does
 
 ~~~sh
 cargo run -p one-cli --bin one -- pindai --scope all --root .
-cargo run -p one-cli --bin one -- pindai --scope security --root .
+cargo run -p one-cli --bin one -- pindai keamanan --root .
 cargo run -p one-cli --bin one -- pindai --scope sha --root . --expected-sha <40-character-git-sha>
 ~~~
 
