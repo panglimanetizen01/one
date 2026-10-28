@@ -2,7 +2,7 @@ name: One Repository Health
 
 on:
   push:
-    branches: [main]
+    branches: [main, "milestone/**", "health/**", "diagnostic/**"]
   pull_request:
     branches: [main]
   workflow_dispatch:
