@@ -180,8 +180,19 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertIn("contract-drift", report["detectors_run"])
         self.assertTrue(any("YAML" in item for item in report["limitations"]))
 
-    def test_cli_contract_command_missing_from_user_guide_is_reported(self):
-        self.write("docs/spec/one-v0.1-cli-contract.md", "# CLI contract\n")
+    def test_normative_contract_drift_is_reported(self):
+        self.write("docs/spec/one-v0.1-grammar.md", "Grammar without explicit ambiguity rule\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(f["rule_id"] == "no-generic-action-production" for f in report["findings"]))
+        self.assertTrue(any(f["rule_id"] == "ambiguous-parse-rejection" for f in report["findings"]))
+
+    def test_contract_documents_missing_are_blocked_not_passed(self):
+        report = scan_repository(self.root)
+        missing = [f for f in report["findings"] if f["rule_id"] == "normative-contract-missing"]
+        self.assertGreaterEqual(len(missing), 5)
+        self.assertTrue(all(f["status"] == "blocked" for f in missing))
+
+    def test_cli_contract_command_missing_from_user_guide_is_reported(self):        self.write("docs/spec/one-v0.1-cli-contract.md", "# CLI contract\n")
         self.write("docs/panduan-pengguna/perintah-cli.md", "one help\n")
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "missing-core-cli-command" for f in report["findings"]))
