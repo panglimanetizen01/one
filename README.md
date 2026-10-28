@@ -31,6 +31,24 @@ This repository contract exists so project intent does not depend on a previous 
 - Cross-distro, cross-terminal, cross-editor, and cross-environment portability as architectural goals
 - Deep interoperability with existing languages and technologies
 
+## Repository health and guarded repair tooling
+
+The repository-health scanner is **developer tooling**, not part of One's source-language grammar or CLI. It must not change how ordinary users write One programs.
+
+- Scanner and tests: `tools/one_health.py`, `tools/test_one_health.py`
+- Exact-SHA GitHub Actions evidence collector: `tools/collect_ci_health.py`, `tools/test_collect_ci_health.py`
+- Usage and detector limitations: [repository health guide](docs/verification/repository-health.md) and [detector governance](docs/verification/health-detectors.md)
+
+Run the read-only checks with Python 3.11+:
+
+```sh
+python tools/one_health.py
+python -m unittest discover -s tools -p "test_one_health.py" -v
+python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+```
+
+The current implementation covers repository paths and text integrity, Python/TOML/JSON syntax, Markdown links/fences, targeted workflow references and overlap hints, normative One contract drift, baseline triage, and exact-SHA Actions run/job/step/artifact metadata. Its safe-repair allowlist currently only adds a missing final newline to an explicitly selected Markdown file after a preview and guarded branch/clean-tree checks. It does not autonomously edit One source, approve findings, merge pull requests, or release production artifacts. Full YAML validation, live log interpretation/root-cause analysis, broader repair classes, and detector-quality feedback remain evolving work; see the guide before treating a scan as complete.
+
 ## v0.1 implementation
 
 ```text
