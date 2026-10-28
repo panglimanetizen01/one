@@ -47,7 +47,7 @@ python -m unittest discover -s tools -p "test_one_health.py" -v
 python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
 ```
 
-The current implementation covers repository paths and text integrity, Python/TOML/JSON syntax, Markdown links/fences, targeted workflow references and overlap hints, normative One contract drift, baseline triage, and exact-SHA Actions run/job/step/artifact metadata. Its safe-repair allowlist currently only adds a missing final newline to an explicitly selected Markdown file after a preview and guarded branch/clean-tree checks. It does not autonomously edit One source, approve findings, merge pull requests, or release production artifacts. Full YAML validation, live log interpretation/root-cause analysis, broader repair classes, and detector-quality feedback remain evolving work; see the guide before treating a scan as complete.
+The current implementation covers repository paths and text integrity, Python/TOML/JSON syntax, Markdown links, heading anchors and fences, targeted workflow references and overlap hints, normative One contract drift, baseline triage, and exact-SHA Actions run/job/step/artifact metadata with cautious failure correlations. Its safe-repair allowlist currently only adds a missing final newline to an explicitly selected Markdown file after a preview and guarded branch/clean-tree checks. It does not autonomously edit One source, approve findings, merge pull requests, or release production artifacts. Full YAML validation, live log interpretation/root-cause analysis, broader repair classes, and detector-quality feedback remain evolving work; see the guide before treating a scan as complete.
 
 ## v0.1 implementation
 
