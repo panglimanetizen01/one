@@ -979,7 +979,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.3", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.2.0", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
@@ -1122,6 +1122,39 @@ def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool,
         changed.append(f"APPLIED: add final newline: {rel}")
     return changed
 
+SCOPE_DETECTORS = {
+    "all": None,
+    "sha": {"revision-integrity", "evidence-freshness", "ci-evidence", "artifact-integrity"},
+    "workflow": {"workflow-integrity", "workflow-overlap", "security-workflow", "ci-evidence"},
+    "structure": {"path-integrity", "file-integrity", "syntax", "contract-drift"},
+    "documentation": {"markdown-links", "markdown-structure", "file-integrity", "path-integrity"},
+    "artifacts": {"artifact-integrity", "ci-evidence", "evidence-freshness", "revision-integrity"},
+    "contracts": {"one-source-contract", "contract-drift", "syntax", "file-integrity"},
+    "markdown": {"markdown-links", "markdown-structure"},
+    "readme": {"markdown-links", "markdown-structure", "file-integrity"},
+}
+
+
+def _apply_scope(report: dict, scope: str) -> dict:
+    """Restrict displayed findings to a named review surface after the full read-only scan."""
+    selected = SCOPE_DETECTORS[scope]
+    report["scan_scope"] = scope
+    report["scan_scope_detectors"] = sorted(selected) if selected is not None else ["all detectors"]
+    if selected is None:
+        return report
+    report["findings"] = [item for item in report.get("findings", [])
+                          if item.get("detector_id") in selected]
+    report["finding_count"] = len(report["findings"])
+    report["severity_counts"] = {
+        level: sum(1 for item in report["findings"] if item.get("severity") == level)
+        for level in ("critical", "high", "medium", "low", "info")
+    }
+    coverage = report.get("detector_coverage", {})
+    coverage["scope"] = scope
+    coverage["scope_detectors"] = sorted(selected)
+    return report
+
+
 def _severity_gate_fails(report: dict, threshold: str = "high") -> bool:
     """Return whether findings meet the configured release-blocking severity."""
     rank = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}
@@ -1134,6 +1167,7 @@ def _severity_gate_fails(report: dict, threshold: str = "high") -> bool:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--scope", choices=tuple(SCOPE_DETECTORS), default="all", help="review surface: all, sha, workflow, structure, documentation, artifacts, contracts, markdown, readme")
     parser.add_argument("--expected-sha", default=os.environ.get("GITHUB_SHA"))
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--markdown-out", type=Path)
@@ -1150,6 +1184,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = args.root.resolve()
     report = scan_repository(root, args.expected_sha, check_one_source=args.check_one_source)
+    report = _apply_scope(report, args.scope)
     if args.baseline:
         try:
             baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
