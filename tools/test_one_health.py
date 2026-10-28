@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, _severity_gate_fails
+from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, _severity_gate_fails, main
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -610,6 +610,16 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_severity_gate_rejects_unknown_threshold(self):
         with self.assertRaisesRegex(ValueError, "unsupported severity threshold"):
             _severity_gate_fails({"findings": []}, "urgent")
+
+
+    def test_json_report_records_enforcement_decision(self):
+        report_path = self.root / "report.json"
+        result = main(["--root", str(self.root), "--json-out", str(report_path), "--fail-on", "info", "--quiet"])
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        self.assertEqual("info", report["enforcement_policy"]["fail_on"])
+        self.assertGreater(report["enforcement_policy"]["blocking_finding_count"], 0)
+        self.assertEqual("block", report["enforcement_policy"]["mode"])
+        self.assertEqual(1, result)
 
 
 if __name__ == "__main__":
