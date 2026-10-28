@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""Read-only integrity scanner for the One repository; Python standard library only."""
+from __future__ import annotations
+import argparse, ast, hashlib, json, os, re, subprocess, sys
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+
+SCHEMA_VERSION = "one-health-report/1"
+SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
+TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs"}
+LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+FENCE_RE = re.compile(r"^( {0,3})(\x60{3,}|~{3,})(.*)$")
+SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
+CORE_COMMANDS = ("one buat", "one periksa", "one jalankan", "one test", "one bangun", "one package", "one lihat struktur", "one version", "one help")
+
+def _git(root: Path, *args: str) -> str | None:
+    try:
+        result = subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return result.stdout.strip()
+
+def _finding(detector, rule, path, line, severity, confidence, summary, evidence, recommendation, status="open"):
+    stable = hashlib.sha256(f"{detector}\0{rule}\0{path}".encode("utf-8")).hexdigest()[:12]
+    return {"finding_id": f"OH-{stable}", "detector_id": detector, "rule_id": rule, "status": status,
+            "severity": severity, "confidence": confidence, "path": path, "line": line,
+            "summary": summary, "evidence": evidence, "recommendation": recommendation}
+
+def _files(root: Path):
+    for current, dirs, names in os.walk(root, followlinks=False):
+        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
+        for name in sorted(names):
+            path = Path(current) / name
+            try: rel = path.relative_to(root).as_posix()
+            except ValueError: continue
+            if path.is_file() or path.is_symlink(): yield path, rel
+
+def _markdown_links(path, rel, root, text, findings):
+    for match in LINK_RE.finditer(text):
+        raw = match.group(1).strip()
+        target = raw[1:raw.index(">")] if raw.startswith("<") and ">" in raw else (raw.split()[0] if raw else "")
+        if not target: continue
+        parsed = urlsplit(target)
+        if parsed.scheme or parsed.netloc or target.startswith("//"): continue
+        target_path = unquote(parsed.path)
+        if not target_path: continue
+        line = text.count("\n", 0, match.start()) + 1
+        resolved = (path.parent / target_path).resolve()
+        try: resolved.relative_to(root.resolve())
+        except ValueError:
+            findings.append(_finding("markdown-links", "path-escape", rel, line, "high", "high",
+                "Tautan Markdown keluar dari root repositori.", target, "Ubah tautan agar tetap berada di dalam repositori."))
+            continue
+        if not resolved.exists():
+            findings.append(_finding("markdown-links", "broken-relative-link", rel, line, "medium", "high",
+                "Tautan relatif menunjuk ke jalur yang tidak ditemukan.", target,
+                "Perbaiki target atau hapus tautan jika memang sudah usang."))
+
+def _scan_markdown(path, rel, root, text, findings):
+    _markdown_links(path, rel, root, text, findings)
+    active = None
+    for number, line in enumerate(text.splitlines(), 1):
+        match = FENCE_RE.match(line)
+        if not match: continue
+        marker = match.group(2)
+        if active is None: active = (marker[0], len(marker), number)
+        elif marker[0] == active[0] and len(marker) >= active[1] and not match.group(3).strip(): active = None
+    if active:
+        findings.append(_finding("markdown-structure", "unclosed-code-fence", rel, active[2], "medium", "high",
+            "Blok kode Markdown tidak memiliki penutup yang cocok.", f"Fence dibuka pada baris {active[2]}.",
+            "Tambahkan fence penutup yang sesuai atau perbaiki batas blok kode."))
+
+def _scan_json(rel, text, findings):
+    try: parsed = json.loads(text)
+    except json.JSONDecodeError as exc:
+        findings.append(_finding("syntax", "invalid-json", rel, exc.lineno, "high", "high",
+            "Berkas JSON tidak dapat diparse.", exc.msg, "Perbaiki sintaks JSON lalu jalankan pemindai kembali."))
+        return
+    if isinstance(parsed, dict):
+        source_sha = parsed.get("source_sha") or parsed.get("candidate_sha")
+        checked_sha = parsed.get("checked_out_sha") or parsed.get("checkout_sha")
+        if isinstance(source_sha, str) and isinstance(checked_sha, str) and source_sha != checked_sha:
+            findings.append(_finding("evidence-freshness", "source-checkout-sha-mismatch", rel, None, "high", "high",
+                "SHA sumber bukti berbeda dari SHA yang benar-benar diperiksa.",
+                f"source_sha={source_sha}; checked_out_sha={checked_sha}",
+                "Tandai bukti sebagai tidak cocok dan jalankan ulang pemeriksaan pada SHA yang dimaksud."))
+
+def _scan_workflows(root, workflows, findings):
+    names = {}
+    for rel, text in workflows:
+        match = re.search(r"(?m)^name:\s*(.+?)\s*$", text)
+        if match:
+            name = match.group(1).strip().strip("'\"")
+            if name in names:
+                findings.append(_finding("workflow-integrity", "duplicate-workflow-name", rel, 1, "low", "medium",
+                    "Dua workflow memakai nama yang sama.", f"{name!r} juga digunakan oleh {names[name]}.",
+                    "Gunakan nama yang membedakan tujuan workflow agar bukti CI mudah ditelusuri."))
+            else: names[name] = rel
+        for number, line in enumerate(text.splitlines(), 1):
+            local = re.search(r"\buses:\s*[\"']?(\./[^\"'\s]+)", line)
+            if local and not (root / local.group(1)).exists():
+                findings.append(_finding("workflow-integrity", "missing-local-action", rel, number, "high", "high",
+                    "Workflow merujuk ke local action yang tidak ditemukan.", local.group(1),
+                    "Pulihkan action yang hilang atau perbaiki path workflow."))
+            command = re.search(r"\b(?:python(?:3)?|bash|sh)\s+((?:tools|scripts)/[A-Za-z0-9_./-]+\.(?:py|sh))", line)
+            if command and not (root / command.group(1)).is_file():
+                findings.append(_finding("workflow-integrity", "missing-command-file", rel, number, "high", "high",
+                    "Workflow menjalankan berkas skrip yang tidak ditemukan.", command.group(1),
+                    "Sinkronkan path workflow dengan skrip yang benar-benar ada."))
+
+def scan_repository(root: Path, expected_sha: str | None = None) -> dict:
+    root = root.resolve()
+    findings, workflows = [], []
+    files = list(_files(root))
+    actual_sha, branch = _git(root, "rev-parse", "HEAD"), _git(root, "branch", "--show-current")
+    if expected_sha is not None:
+        if not SHA_RE.fullmatch(expected_sha):
+            findings.append(_finding("revision-integrity", "invalid-expected-sha", ".", None, "high", "high",
+                "SHA pembanding tidak berbentuk 40 karakter heksadesimal.", expected_sha, "Berikan SHA commit Git yang lengkap."))
+        elif actual_sha is None:
+            findings.append(_finding("revision-integrity", "git-head-unavailable", ".", None, "high", "high",
+                "SHA HEAD tidak dapat dibaca; kesesuaian revisi tidak dapat dibuktikan.",
+                "Perintah git rev-parse HEAD gagal atau root bukan checkout Git.", "Jalankan pemindai di checkout Git yang valid."))
+        elif actual_sha.lower() != expected_sha.lower():
+            findings.append(_finding("revision-integrity", "checkout-sha-mismatch", ".", None, "critical", "high",
+                "Checkout Git tidak sama dengan SHA yang diwajibkan.", f"expected={expected_sha}; actual={actual_sha}",
+                "Periksa checkout dan ulangi semua bukti pada SHA yang tepat."))
+    docs_root = root / "docs" / "panduan-pengguna"
+    for path, rel in files:
+        suffix = path.suffix.lower()
+        if path.is_symlink():
+            try: path.resolve().relative_to(root)
+            except ValueError:
+                findings.append(_finding("path-integrity", "symlink-escapes-repository", rel, None, "high", "high",
+                    "Symlink mengarah keluar dari root repositori.", str(path.readlink()), "Tinjau symlink; jangan ikuti target di luar repositori."))
+            continue
+        if suffix not in TEXT_SUFFIXES: continue
+        try: text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            findings.append(_finding("file-integrity", "unreadable-text-file", rel, None, "medium", "high",
+                "Berkas teks tidak dapat dibaca sebagai UTF-8.", str(exc), "Periksa encoding, izin, atau apakah berkas seharusnya berupa teks."))
+            continue
+        if suffix == ".py":
+            try: ast.parse(text, filename=rel)
+            except SyntaxError as exc:
+                findings.append(_finding("syntax", "invalid-python", rel, exc.lineno, "high", "high",
+                    "Berkas Python memiliki kesalahan sintaks.", exc.msg, "Perbaiki sintaks dan tambahkan tes regresi bila perlu."))
+        elif suffix == ".toml":
+            try:
+                import tomllib
+                tomllib.loads(text)
+            except ImportError:
+                findings.append(_finding("syntax", "toml-parser-unavailable", rel, None, "info", "low",
+                    "Runtime Python tidak menyediakan tomllib; TOML belum diperiksa.", "Python 3.11+ diperlukan untuk parser TOML bawaan.",
+                    "Jalankan pada Python 3.11 atau lebih baru.", status="blocked"))
+            except Exception as exc:
+                findings.append(_finding("syntax", "invalid-toml", rel, getattr(exc, "lineno", None), "high", "high",
+                    "Berkas TOML tidak dapat diparse.", str(exc), "Perbaiki sintaks TOML dan validasi ulang."))
+        elif suffix == ".json": _scan_json(rel, text, findings)
+        elif suffix == ".md": _scan_markdown(path, rel, root, text, findings)
+        if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}: workflows.append((rel, text))
+    _scan_workflows(root, workflows, findings)
+    cli_contract = root / "docs/spec/one-v0.1-cli-contract.md"
+    cli_guide = root / "docs/panduan-pengguna/perintah-cli.md"
+    if cli_contract.is_file() and cli_guide.is_file():
+        guide = cli_guide.read_text(encoding="utf-8")
+        for command in CORE_COMMANDS:
+            if command not in guide:
+                findings.append(_finding("contract-drift", "missing-core-cli-command", "docs/panduan-pengguna/perintah-cli.md",
+                    None, "medium", "high", "Panduan CLI tidak mencantumkan perintah inti yang ada di kontrak.",
+                    command, "Perbarui panduan berdasarkan kontrak CLI dan bukti implementasi."))
+    unique = {item["finding_id"]: item for item in findings}
+    ordered = sorted(unique.values(), key=lambda f: ({"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(f["severity"], 5),
+                                                      f["path"], f["line"] or 0, f["finding_id"]))
+    counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
+    return {"schema_version": SCHEMA_VERSION, "repository": root.name, "head_sha": actual_sha, "branch": branch,
+            "expected_sha": expected_sha, "finding_count": len(ordered), "severity_counts": counts, "findings": ordered,
+            "limitations": ["YAML workflow files receive targeted structural/reference checks, not full YAML schema validation.",
+                "The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.",
+                "A finding is a lead for review; no inference is promoted to a root cause without supporting evidence."]}
+
+def render_markdown(report: dict) -> str:
+    lines = ["# One Repository Health Report", "", f"- Schema: {report['schema_version']}",
+        f"- Repository: {report['repository']}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
+        f"- Branch: {report['branch'] or 'UNKNOWN'}", f"- Findings: **{report['finding_count']}**", "",
+        "| Severity | Count |", "|---|---:|"]
+    lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
+    lines.extend(["", "## Findings", ""])
+    if not report["findings"]: lines.append("Tidak ditemukan anomali oleh pemeriksaan yang tersedia.")
+    for item in report["findings"]:
+        location = item["path"] + (f":{item['line']}" if item["line"] else "")
+        lines.extend([f"### {item['finding_id']} — {item['summary']}", f"- Status: {item['status']}",
+            f"- Severity/confidence: {item['severity']} / {item['confidence']}", f"- Lokasi: {location}",
+            f"- Bukti: {item['evidence']}", f"- Tindak lanjut: {item['recommendation']}", ""])
+    lines.extend(["## Batas pemeriksaan", ""])
+    lines.extend(f"- {item}" for item in report["limitations"])
+    return "\n".join(lines) + "\n"
+
+def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool) -> list[str]:
+    candidates = []
+    for path, rel in _files(root):
+        if path.is_symlink() or path.suffix.lower() != ".md": continue
+        try: data = path.read_bytes()
+        except OSError: continue
+        if data and not data.endswith(b"\n"): candidates.append((path, rel))
+    if not apply: return [f"PROPOSED: add final newline: {rel}" for _, rel in candidates]
+    branch = _git(root, "branch", "--show-current")
+    dirty = _git(root, "status", "--porcelain")
+    if not branch or not (branch.startswith("health/") or branch.startswith("diagnostic/")):
+        raise RuntimeError("safe fix refused: branch must start with health/ or diagnostic/")
+    if dirty: raise RuntimeError("safe fix refused: working tree must be clean before applying repairs")
+    if report.get("expected_sha") and report.get("head_sha") != report["expected_sha"]:
+        raise RuntimeError("safe fix refused: expected SHA does not match HEAD")
+    changed = []
+    for path, rel in candidates:
+        path.write_bytes(path.read_bytes() + b"\n")
+        changed.append(f"APPLIED: add final newline: {rel}")
+    return changed
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path("."))
+    parser.add_argument("--expected-sha", default=os.environ.get("GITHUB_SHA"))
+    parser.add_argument("--json-out", type=Path)
+    parser.add_argument("--markdown-out", type=Path)
+    parser.add_argument("--propose-safe-fixes", action="store_true")
+    parser.add_argument("--apply-safe-fixes", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
+    args = parser.parse_args(argv)
+    root = args.root.resolve()
+    report = scan_repository(root, args.expected_sha)
+    if args.propose_safe_fixes or args.apply_safe_fixes:
+        try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes)
+        except RuntimeError as exc:
+            print(f"SAFE FIX REFUSED: {exc}", file=sys.stderr)
+            return 2
+        print("\n".join(proposals) if proposals else "No allowlisted Markdown newline repairs needed.")
+    if args.json_out:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.markdown_out:
+        args.markdown_out.parent.mkdir(parents=True, exist_ok=True)
+        args.markdown_out.write_text(render_markdown(report), encoding="utf-8")
+    if not args.quiet: print(render_markdown(report))
+    return 1 if any(f["severity"] in {"critical", "high"} for f in report["findings"]) else 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())
