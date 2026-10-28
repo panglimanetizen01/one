@@ -67,7 +67,7 @@ jobs:
         run: |
           args=(--check-one-source --expected-sha "$GITHUB_SHA" --json-out one-health-report.json --markdown-out one-health-report.md --quiet)
           if [[ -f health-baseline/one-health-report.json ]]; then args+=(--baseline health-baseline/one-health-report.json); fi
-          python tools/one_health.py "${args[@]}"
+          python tools/one_health.py --fail-on high "${args[@]}"
 
       - name: Scan repository and validate normative One fixtures (Windows)
         if: runner.os == 'Windows'
@@ -75,7 +75,7 @@ jobs:
         run: |
           $args = @("--check-one-source", "--expected-sha", "$env:GITHUB_SHA", "--json-out", "one-health-report.json", "--markdown-out", "one-health-report.md", "--quiet")
           if (Test-Path "health-baseline/one-health-report.json") { $args += @("--baseline", "health-baseline/one-health-report.json") }
-          python tools/one_health.py @args
+          python tools/one_health.py --fail-on high @args
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload diagnostic report
