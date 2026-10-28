@@ -639,6 +639,15 @@ jobs:
         result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
         self.assertEqual(2, result)
 
+    def test_baseline_rejects_non_string_severity_without_crashing(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_text(json.dumps({
+            "schema_version": "one-health-report/1",
+            "findings": [{"finding_id": "OH-invalid", "severity": ["high"], "status": "open"}],
+        }), encoding="utf-8")
+        result = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, result)
+
     def test_baseline_rejects_duplicate_finding_ids(self):
         baseline_path = self.root / "baseline.json"
         item = {"finding_id": "OH-duplicate", "severity": "high", "status": "open"}
