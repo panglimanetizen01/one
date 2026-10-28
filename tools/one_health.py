@@ -634,6 +634,8 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         detector = item["detector_id"]
         findings_by_detector[detector] = findings_by_detector.get(detector, 0) + 1
     suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
+    agent_instruction_surfaces = any(_is_agent_instruction_surface(rel) for path, rel in files if not path.is_symlink())
+    dependency_surfaces = bool(workflows or suffixes.intersection({".toml", ".txt", ".json"}))
     detectors_run = ["path-integrity"]
     if expected_sha is not None:
         detectors_run.append("revision-integrity")
@@ -656,8 +658,8 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "security-secrets": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
         "security-code": "ran" if ".py" in suffixes else "not-applicable-no-python-files",
         "security-workflow": "ran" if workflows else "not-applicable-no-workflows",
-        "security-prompt-injection": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
-        "security-supply-chain": "ran" if workflows or suffixes.intersection({".toml", ".txt", ".json"}) else "not-applicable-no-workflows-or-dependency-files",
+        "security-prompt-injection": "ran" if agent_instruction_surfaces else "not-applicable-no-agent-instruction-surfaces",
+        "security-supply-chain": "ran" if dependency_surfaces else "not-applicable-no-workflows-or-dependency-files",
         "revision-integrity": "ran" if expected_sha is not None else "not-requested",
         "syntax": "ran" if suffixes.intersection({".py", ".toml", ".json"}) else "not-applicable-no-parseable-files",
         "markdown-links": "ran" if ".md" in suffixes else "not-applicable-no-markdown",
