@@ -83,3 +83,15 @@ The source-level interpreter maps invalid built-in arguments to stable diagnosti
 The focused suite `cargo --locked test -p one-core --test stdlib_builtins` exercises source-level calls through parse → semantic analysis → IR → interpreter. `cargo --locked test -p one-core --lib` covers library unit tests. The full workspace test, warnings-denied Clippy, and `tools/check_contract.py` complete the E1 lab. The tests cover valid/invalid types, empty text/lists, Unicode scalar behavior, i64 boundaries and overflow, negative/out-of-range indices, deterministic map/JSON order, duplicate/malformed JSON and invalid surrogates, JSON nesting, UTC leap days/year boundaries/noncanonical forms, and stable repeated diagnostics. Direct Rust API tests additionally cover reusable list/map operations, Unicode scalar-value length, wrong-type rejection across text/list/numeric/UTC helpers, checked absolute value/division/remainder boundaries, integer truncation toward zero, list index boundaries, empty-list behavior, overflow, deterministic display/map/JSON output, and strict UTC parsing/formatting. Source-level mapping removal is tested for immutable return values, missing-key no-op behavior, deterministic JSON output, and invalid receiver/key types. These direct-helper tests complement—but do not replace—the parse → semantic analysis → IR → interpreter integration matrix.
 
 A workflow start is not acceptance evidence: the E1 row earns its fixed 10 points only when the complete required suite succeeds on the same recorded candidate SHA and the ledger/checkpoint are synchronized.
+
+
+## Direct helper compatibility guard
+
+The direct `list_append` and `list_remove` helpers have deliberately narrow semantics:
+
+- `list_append(list, value)` appends one value and returns the resulting list when the input is a list; it returns `None` for a non-list input.
+- `list_remove(list, value)` removes only the first equal value when one exists. A missing value is a deterministic no-op that returns the unchanged list; a non-list input returns `None`.
+- These helpers do not define user-facing diagnostics for `None`; callers own that behavior. Do not infer a diagnostic code or message from the helper signatures.
+- Changing return semantics, equality behavior, duplicate handling, or diagnostic mapping requires an explicit contract update and regression tests. Do not add public standard-library operations solely because these helpers exist.
+
+These compatibility tests supplement the source-level built-in and interpreter integration coverage; they do not independently establish full E1 acceptance.

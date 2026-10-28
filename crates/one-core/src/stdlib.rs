@@ -1051,4 +1051,36 @@ mod tests {
         );
     }
 
+
+    #[test]
+    fn list_append_returns_none_for_non_list_input() {
+        assert_eq!(list_append(Value::Number(1), Value::Number(2)), None);
+    }
+
+    #[test]
+    fn list_remove_removes_only_the_first_equal_value() {
+        let result = list_remove(
+            Value::List(vec![Value::Number(1), Value::Number(2), Value::Number(2), Value::Number(3)]),
+            &Value::Number(2),
+        );
+        assert_eq!(
+            result,
+            Some(Value::List(vec![Value::Number(1), Value::Number(2), Value::Number(3)]))
+        );
+    }
+
+    #[test]
+    fn list_remove_preserves_list_when_value_is_absent() {
+        let input = Value::List(vec![Value::Number(1), Value::Number(3)]);
+        assert_eq!(
+            list_remove(input.clone(), &Value::Number(2)),
+            Some(input)
+        );
+    }
+
+    #[test]
+    fn list_remove_returns_none_for_non_list_input() {
+        assert_eq!(list_remove(Value::Number(1), &Value::Number(1)), None);
+    }
+
 }
