@@ -1,5 +1,6 @@
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -193,6 +194,31 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         finding = next(f for f in report["findings"] if f["rule_id"] == "source-checkout-sha-mismatch")
         self.assertEqual("high", finding["severity"])
+
+    def test_checkout_sha_mismatch_is_critical(self):
+        subprocess.run(["git", "init", str(self.root)], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(self.root), "config", "user.name", "Health Tests"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "config", "user.email", "health-tests@example.invalid"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "commit", "--allow-empty", "-m", "fixture"], check=True, capture_output=True)
+        report = scan_repository(self.root, expected_sha="0" * 40)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "checkout-sha-mismatch")
+        self.assertEqual("critical", finding["severity"])
+
+    def test_symlink_escape_is_reported_when_platform_allows_symlinks(self):
+        outside = Path(self.tmp.name).parent / (Path(self.tmp.name).name + "-outside.md")
+        outside.write_text("outside\n", encoding="utf-8")
+        link = self.root / "docs" / "outside-link.md"
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            outside.unlink(missing_ok=True)
+            self.skipTest("platform does not permit symlink creation for this user")
+        try:
+            report = scan_repository(self.root)
+            self.assertTrue(any(f["rule_id"] == "symlink-escapes-repository" for f in report["findings"]))
+        finally:
+            link.unlink(missing_ok=True)
+            outside.unlink(missing_ok=True)
 
     def test_invalid_expected_sha_is_reported_not_passed(self):
         report = scan_repository(self.root, expected_sha="not-a-commit")
