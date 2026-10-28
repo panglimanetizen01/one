@@ -179,3 +179,15 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 ## Verification boundary
 
 The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+
+
+### Native integrity scanner preview
+
+The Rust-based ONE CLI includes an initial read-only integrity scanner that does not require Python at runtime:
+
+~~~sh
+cargo run -p one-cli -- pindai --scope all --root .
+cargo run -p one-cli -- pindai --scope sha --root . --expected-sha <40-character-git-sha>
+~~~
+
+This is a preview, not a replacement for tools/one_health.py: detector coverage is narrower, report export and parity are not implemented, and the Python scanner remains the reference developer/CI tool until equivalent coverage and exact-SHA cross-platform evidence exist. See the repository health guide and ADR-0018 in docs/DECISIONS.md.
