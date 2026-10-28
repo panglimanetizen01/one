@@ -505,10 +505,10 @@ def render_markdown(report: dict) -> str:
         f"- Repository: {report['repository']}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
         f"- Branch: {report['branch'] or 'UNKNOWN'}", f"- Findings: **{report['finding_count']}**", "",
         "| Severity | Count |", "|---|---:|"]
+    lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
     if report.get("change_counts"):
         lines.extend(["", "## Change history", "", "| Change | Count |", "|---|---:|"])
         lines.extend(f"| {name} | {count} |" for name, count in report["change_counts"].items())
-    lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
     coverage = report.get("detector_coverage", {})
     if coverage:
         lines.extend(["", "## Detector coverage", "",
