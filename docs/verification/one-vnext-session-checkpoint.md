@@ -7,7 +7,13 @@
 **Working branch:** `milestone/100-ecosystem-20261023`  
 **Base branch:** `main` — unchanged; no merge performed.
 
-## Current exact-SHA checkpoint — 2026-10-28
+## Active recovery state — 2026-10-28
+
+PR #80 is open/draft/unmerged. At recovery, source candidate `65d09e3f9ed8639ff0d22a948ada06c3def36c22` was named in the PR body; the independent verifier pin was stale at `c5ba60b16e0356753ffbd10d448b47dce64f01bb`. Source documentation reconciliation advances the candidate, so always read the live PR head and matching verifier pin before using evidence.
+
+Latest canonical source runs inspected: Repository Health `40699615876`, One CI `40699615548`, E1 lab `40699615687`, E2 lab `40699616047`, Linux distro `40699615916`, focused stdlib `40699615984`. Each failed with null/empty steps; logs were unavailable. Classify as **unresolved infrastructure/evidence failure**, not a source-test result. E3/E4/E5 prior-SHA evidence is historical; current verified completion score is **UNKNOWN / NOT RECONCILED**. The fixed-weight ledger's carried-forward F/C arithmetic is 60/100 and implementation subtotal is 92/100 provisional; neither is final acceptance. Gate **NOT PASSED**. No merge or production release.
+
+## Superseded checkpoint — before forensic reconciliation (2026-10-28)
 
 PR #80 remains draft/open/unmerged. The source ledger now records **92/100 implementation and 72/100 provisional verified** because E3 platform/runtime and E5 docs/tooling evidence passed on the pre-reconciliation candidate. The ledger update advances the source SHA, so the live independent gate must reconfirm the exact-SHA matrix before those points are final. E1 (10), E2 (8), E4 (6), and E6 (4) remain incomplete; E2 production release was not dispatched because no release authorization exists. The current gate is **NOT PASSED**. Read the exact source SHA from PR #80 and `CANONICAL_COMMIT.txt`; all older checkpoint SHAs below are historical.
 
