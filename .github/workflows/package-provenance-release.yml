@@ -1,15 +1,7 @@
 name: ONE Package Provenance Release
 
 on:
-  push:
-    branches: [ milestone/100-ecosystem-20261023 ]
-    paths:
-      - ".github/workflows/package-provenance-release.yml"
-      - "crates/one-cli/**"
-      - "crates/one-core/**"
-      - "examples/package-release/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
+  # Production signing/publishing is an explicit protected action, never an automatic side effect of a candidate commit.
   workflow_dispatch:
     inputs:
       project_path:
