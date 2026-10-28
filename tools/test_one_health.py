@@ -1,4 +1,5 @@
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -186,6 +187,12 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "no-generic-action-production" for f in report["findings"]))
         self.assertTrue(any(f["rule_id"] == "ambiguous-parse-rejection" for f in report["findings"]))
+
+    def test_contract_detector_is_reported_even_when_docs_directory_is_missing(self):
+        shutil.rmtree(self.root / "docs")
+        report = scan_repository(self.root)
+        self.assertIn("contract-drift", report["detectors_run"])
+        self.assertTrue(any(f["rule_id"] == "normative-contract-missing" for f in report["findings"]))
 
     def test_contract_documents_missing_are_blocked_not_passed(self):
         report = scan_repository(self.root)
