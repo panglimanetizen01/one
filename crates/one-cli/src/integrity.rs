@@ -49,9 +49,9 @@ fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&
   for (i,line) in t.lines().enumerate(){
    let lower=line.to_ascii_lowercase();
    let trimmed=line.trim();
-   let private_key=trimmed.contains("-----BEGIN ") && trimmed.contains("PRIVATE KEY-----");
+   let private_key=trimmed.starts_with("-----BEGIN ") && trimmed.ends_with("PRIVATE KEY-----");
    let token_prefix=["ghp_","github_pat_","gho_","ghu_","ghs_","ghr_","sk_live_","sk_test_","xoxb-","xoxp-","akia"];
-   let known_token=token_prefix.iter().any(|prefix|lower.contains(prefix));
+   let known_token=token_prefix.iter().any(|prefix|lower.find(prefix).map(|at| lower[at+prefix.len()..].chars().take_while(|c|c.is_ascii_alphanumeric()).count()>=20).unwrap_or(false));
    let pipe_shell=(lower.contains("curl ")||lower.contains("wget ")) && (lower.contains("| sh")||lower.contains("|bash")||lower.contains("| bash")||lower.contains("|sh"));
    let encoded_powershell=lower.contains("-encodedcommand")||lower.contains(" -enc ");
    let workflow_write_all=rp.starts_with(".github/workflows/") && lower.contains("permissions: write-all");
