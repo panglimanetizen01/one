@@ -108,7 +108,8 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Branch-scoped cached baseline comparison with new/recurring/reopened/resolved/not-checked states and separate triage-priority inputs.
 - [x] Detector coverage only counts when relevant input was actually present; absent CI evidence remains not-checked.
 - [x] Persist a prior JSON report in a branch-scoped Actions cache and compare it on later runs; classify new, recurring, resolved, reopened, and not-checked findings.
-- [ ] Correlate CI job-start failures, unavailable logs, and artifact absence directly from GitHub APIs without guessing a root cause.
+- [x] Correlate failed runs with absent job metadata, failed jobs with no visible steps/runner, failed steps needing log review, and artifact absence from exact-SHA GitHub API metadata without guessing a root cause.
+- [ ] Retrieve and securely retain failed-step logs where permissions and retention allow; currently the collector stores links and metadata only.
 - [ ] Version and expose priority inputs separately from the fixed acceptance ledger.
 - [ ] Measure false positives and detector coverage.
 
