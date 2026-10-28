@@ -164,6 +164,13 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
     if invalid_dir.is_dir(): fixtures.extend((path, False) for path in sorted(invalid_dir.glob("*.one")))
     grammar_examples = root / "tests" / "spec" / "grammar_examples.one"
     if grammar_examples.is_file(): fixtures.append((grammar_examples, True))
+    if not fixtures:
+        findings.append(_finding("one-source-contract", "no-normative-fixtures-found", ".", None, "info", "high",
+            "Pemeriksaan grammar One diblokir karena tidak ada fixture v0.1 yang ditemukan.",
+            "Direktori conformance valid/invalid dan tests/spec/grammar_examples.one tidak tersedia.",
+            "Pulihkan fixture normatif; jangan menganggap pemindaian tanpa fixture sebagai PASS.",
+            status="blocked"))
+        return
     for path, should_pass in fixtures:
         rel = path.relative_to(root).as_posix()
         try:
@@ -256,7 +263,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                                                       f["path"], f["line"] or 0, f["finding_id"]))
     counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
     detectors_run = ["revision-integrity", "syntax", "markdown-links", "markdown-structure", "path-integrity",
-                     "file-integrity", "workflow-integrity", "evidence-freshness", "ci-evidence", "contract-drift"]
+                     "file-integrity", "workflow-integrity", "workflow-overlap", "evidence-freshness", "ci-evidence", "contract-drift"]
     if check_one_source:
         detectors_run.append("one-source-contract")
     return {"schema_version": SCHEMA_VERSION, "repository": root.name, "head_sha": actual_sha, "branch": branch,
@@ -383,6 +390,9 @@ def main(argv: list[str] | None = None) -> int:
             baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             print(f"BASELINE UNAVAILABLE: {exc}", file=sys.stderr)
+            return 2
+        if not isinstance(baseline, dict) or baseline.get("schema_version") != SCHEMA_VERSION or not isinstance(baseline.get("findings"), list):
+            print("BASELINE UNAVAILABLE: unsupported schema or missing findings list", file=sys.stderr)
             return 2
         report = apply_baseline(report, baseline)
     if args.propose_safe_fixes or args.apply_safe_fixes:
