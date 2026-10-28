@@ -240,7 +240,9 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                                                       f["path"], f["line"] or 0, f["finding_id"]))
     counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
     detectors_run = ["revision-integrity", "syntax", "markdown-links", "markdown-structure", "path-integrity",
-                     "file-integrity", "workflow-integrity", "evidence-freshness", "contract-drift"]
+                     "file-integrity", "workflow-integrity", "evidence-freshness", "ci-evidence", "contract-drift"]
+    if check_one_source:
+        detectors_run.append("one-source-contract")
     return {"schema_version": SCHEMA_VERSION, "repository": root.name, "head_sha": actual_sha, "branch": branch,
             "expected_sha": expected_sha, "finding_count": len(ordered), "severity_counts": counts, "findings": ordered,
             "detectors_run": detectors_run,
@@ -252,7 +254,7 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
     """Compare findings without changing the fixed-weight acceptance ledger."""
     previous = {item.get("finding_id"): item for item in baseline.get("findings", []) if item.get("finding_id")}
     current_ids = {item["finding_id"] for item in report["findings"]}
-    counts = {"new": 0, "recurring": 0, "reopened": 0, "resolved": 0}
+    counts = {"new": 0, "recurring": 0, "reopened": 0, "resolved": 0, "not_checked": 0}
     for item in report["findings"]:
         old = previous.get(item["finding_id"])
         if old is None:
@@ -269,17 +271,26 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
         item["priority_score"] = round(impact * confidence * recurrence * blocker, 2)
         item["priority_inputs"] = {"impact": impact, "confidence": confidence, "recurrence_factor": recurrence,
                                    "acceptance_blocker_factor": blocker}
-    resolved = []
+    resolved, not_checked = [], []
+    current_detectors = set(report.get("detectors_run", []))
     for finding_id, old in previous.items():
         if finding_id in current_ids or old.get("status") == "resolved" or old.get("change_status") == "resolved":
             continue
         item = dict(old)
-        item["status"] = "resolved"
-        item["change_status"] = "resolved"
-        item["resolution_basis"] = "Not reproduced by the current completed scan; review detector coverage before closure."
-        resolved.append(item)
-        counts["resolved"] += 1
+        if item.get("detector_id") not in current_detectors:
+            item["status"] = "blocked"
+            item["change_status"] = "not_checked"
+            item["resolution_basis"] = "The current scan did not run this detector; absence is not evidence of resolution."
+            not_checked.append(item)
+            counts["not_checked"] += 1
+        else:
+            item["status"] = "resolved"
+            item["change_status"] = "resolved"
+            item["resolution_basis"] = "Not reproduced by the current completed detector; review the evidence before closure."
+            resolved.append(item)
+            counts["resolved"] += 1
     report["resolved_findings"] = sorted(resolved, key=lambda f: f.get("finding_id", ""))
+    report["not_checked_findings"] = sorted(not_checked, key=lambda f: f.get("finding_id", ""))
     report["change_counts"] = counts
     report["active_finding_count"] = report["finding_count"]
     report["resolved_finding_count"] = len(resolved)
@@ -291,14 +302,26 @@ def render_markdown(report: dict) -> str:
         f"- Repository: {report['repository']}", f"- HEAD: {report['head_sha'] or 'UNKNOWN'}",
         f"- Branch: {report['branch'] or 'UNKNOWN'}", f"- Findings: **{report['finding_count']}**", "",
         "| Severity | Count |", "|---|---:|"]
+    if report.get("change_counts"):
+        lines.extend(["", "## Change history", "", "| Change | Count |", "|---|---:|"])
+        lines.extend(f"| {name} | {count} |" for name, count in report["change_counts"].items())
     lines.extend(f"| {level} | {count} |" for level, count in report["severity_counts"].items())
     lines.extend(["", "## Findings", ""])
     if not report["findings"]: lines.append("Tidak ditemukan anomali oleh pemeriksaan yang tersedia.")
     for item in report["findings"]:
         location = item["path"] + (f":{item['line']}" if item["line"] else "")
         lines.extend([f"### {item['finding_id']} — {item['summary']}", f"- Status: {item['status']}",
-            f"- Severity/confidence: {item['severity']} / {item['confidence']}", f"- Lokasi: {location}",
-            f"- Bukti: {item['evidence']}", f"- Tindak lanjut: {item['recommendation']}", ""])
+            f"- Change status: {item.get('change_status', 'uncompared')}",
+            f"- Severity/confidence: {item['severity']} / {item['confidence']}",
+            f"- Priority score: {item.get('priority_score', 'not calculated')}",
+            f"- Lokasi: {location}", f"- Bukti: {item['evidence']}",
+            f"- Tindak lanjut: {item['recommendation']}", ""])
+    if report.get("resolved_findings"):
+        lines.extend(["## Resolved since baseline (review before closure)", ""])
+        lines.extend(f"- {item['finding_id']} — {item['summary']}: {item.get('resolution_basis', '')}" for item in report["resolved_findings"])
+    if report.get("not_checked_findings"):
+        lines.extend(["", "## Not checked in this run", ""])
+        lines.extend(f"- {item['finding_id']} — {item['summary']}: {item.get('resolution_basis', '')}" for item in report["not_checked_findings"])
     lines.extend(["## Batas pemeriksaan", ""])
     lines.extend(f"- {item}" for item in report["limitations"])
     return "\n".join(lines) + "\n"
