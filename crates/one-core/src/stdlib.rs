@@ -767,6 +767,37 @@ mod tests {
     }
 
     #[test]
+    fn list_remove_deletes_only_the_first_equal_value_and_preserves_the_input_copy() {
+        let original = Value::List(vec![
+            Value::Text("x".into()),
+            Value::Number(7),
+            Value::Text("x".into()),
+        ]);
+        let updated = list_remove(original.clone(), &Value::Text("x".into()))
+            .expect("list receiver should be accepted");
+
+        assert_eq!(
+            updated,
+            Value::List(vec![Value::Number(7), Value::Text("x".into())]),
+            "only the first matching element is removed"
+        );
+        assert_eq!(
+            original,
+            Value::List(vec![
+                Value::Text("x".into()),
+                Value::Number(7),
+                Value::Text("x".into()),
+            ]),
+            "the input list value remains unchanged"
+        );
+        assert_eq!(
+            list_remove(Value::Number(7), &Value::Text("x".into())),
+            None,
+            "non-list receivers fail closed"
+        );
+    }
+
+    #[test]
     fn map_remove_deletes_only_the_requested_key_and_missing_keys_are_noops() {
         let original = map_from_entries([
             ("b".into(), Value::Number(2)),
