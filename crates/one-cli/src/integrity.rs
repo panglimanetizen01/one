@@ -12,27 +12,27 @@ fn selected(scope: &str) -> Option<Vec<&'static str>> { Some(match scope {
 })}
 fn finding(d: &'static str,r: &'static str,s: &'static str,p: String,l: usize,m: &str,e: &str,f: &str)->Finding { Finding{detector:d,rule:r,severity:s,path:p,line:l,summary:m.into(),evidence:e.into(),fix:f.into()} }
 fn rel(root:&Path,path:&Path)->String { path.strip_prefix(root).unwrap_or(path).to_string_lossy().replace('\\',"/") }
-fn files(root:&Path)->Result<Vec<PathBuf>,String>{
- let mut stack=vec![root.to_path_buf()]; let mut out=Vec::new();
- while let Some(dir)=stack.pop(){ for entry in fs::read_dir(&dir).map_err(|e|format!("{}: {e}",dir.display()))? {
-  let entry=entry.map_err(|e|e.to_string())?; let path=entry.path();
+fn files(root:&Path)->Result<(Vec<PathBuf>,Vec<PathBuf>),String>{
+ let mut stack=vec![root.to_path_buf()];let mut out=Vec::new();let mut symlinks=Vec::new();
+ while let Some(dir)=stack.pop(){for entry in fs::read_dir(&dir).map_err(|e|format!("{}: {e}",dir.display()))?{
+  let entry=entry.map_err(|e|e.to_string())?;let path=entry.path();
   if matches!(entry.file_name().to_str(),Some(".git"|"target"|".venv"|"venv"|"node_modules"|"__pycache__")){continue;}
   let meta=fs::symlink_metadata(&path).map_err(|e|format!("{}: {e}",path.display()))?;
-  if meta.file_type().is_symlink(){continue;} if meta.is_dir(){stack.push(path);}else if meta.is_file(){out.push(path);}
- }} out.sort(); Ok(out)
+  if meta.file_type().is_symlink(){symlinks.push(path);continue;}if meta.is_dir(){stack.push(path);}else if meta.is_file(){out.push(path);}
+ }}out.sort();symlinks.sort();Ok((out,symlinks))
 }
 fn head_sha(root:&Path)->Option<String>{let o=Command::new("git").arg("-C").arg(root).args(["rev-parse","--verify","HEAD"]).output().ok()?;if !o.status.success(){return None;}let s=String::from_utf8(o.stdout).ok()?.trim().to_owned();(s.len()==40&&s.bytes().all(|b|b.is_ascii_hexdigit())).then_some(s)}
 fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&'static str>,Option<String>),String>{
  let run=selected(scope).ok_or_else(||format!("scope tidak dikenal: {scope}"))?;
  let skipped=DETECTORS.iter().copied().filter(|d|!run.contains(d)).collect::<Vec<_>>();
- let root=fs::canonicalize(root).map_err(|e|format!("root tidak valid: {e}"))?; let all=files(&root)?;let head=head_sha(&root);let mut out=Vec::new();
+ let root=fs::canonicalize(root).map_err(|e|format!("root tidak valid: {e}"))?; let (all,symlinks)=files(&root)?;let head=head_sha(&root);let mut out=Vec::new();
  if run.contains(&"revision-integrity"){match(expected,head.as_deref()){
   (Some(w),Some(a)) if w.eq_ignore_ascii_case(a)=>{},
   (Some(w),Some(a))=>out.push(finding("revision-integrity","expected-sha-mismatch","critical",".".into(),0,"HEAD tidak cocok dengan SHA target.",&format!("expected={w}; actual={a}"),"Periksa checkout dan ulangi pada commit yang benar.")),
   (Some(w),None)=>out.push(finding("revision-integrity","head-unavailable","high",".".into(),0,"HEAD tidak dapat diverifikasi melalui Git.",w,"Jalankan dari checkout Git yang valid.")),
   (None,_)=>out.push(finding("revision-integrity","expected-sha-not-supplied","info",".".into(),0,"SHA target tidak diberikan.",head.as_deref().unwrap_or("HEAD unavailable"),"Gunakan --expected-sha untuk audit exact-SHA.")),
  }}
- if run.contains(&"path-integrity"){for p in ["Cargo.toml","README.md","AGENTS.md","docs/ONE_CONSTITUTION.md","crates/one-core/src/lib.rs"]{if !root.join(p).is_file(){out.push(finding("path-integrity","required-path-missing","high",p.into(),0,"Jalur fondasi wajib tidak ditemukan.",p,"Pulihkan file atau tinjau kontrak fondasi."));}}}
+ if run.contains(&"path-integrity"){for p in &symlinks{let target=fs::canonicalize(p);match target{Ok(resolved) if !resolved.starts_with(&root)=>out.push(finding("path-integrity","symlink-escapes-root","high",rel(&root,p),0,"Symlink mengarah ke luar root repositori.",&resolved.to_string_lossy(),"Hapus atau perbaiki symlink agar target tetap di dalam root.")),Err(_)=>out.push(finding("path-integrity","symlink-target-unresolved","medium",rel(&root,p),0,"Target symlink tidak dapat diresolusi.",&fs::read_link(p).map(|v|v.to_string_lossy().into_owned()).unwrap_or_else(|_|"read_link gagal".into()),"Periksa dan perbaiki target symlink.")),_=>out.push(finding("path-integrity","symlink-not-followed","info",rel(&root,p),0,"Symlink internal tidak diikuti saat pemindaian.",&fs::read_link(p).map(|v|v.to_string_lossy().into_owned()).unwrap_or_else(|_|"read_link gagal".into()),"Tinjau target jika relevan."))}}for p in ["Cargo.toml","README.md","AGENTS.md","docs/ONE_CONSTITUTION.md","crates/one-core/src/lib.rs"]{if !root.join(p).is_file(){out.push(finding("path-integrity","required-path-missing","high",p.into(),0,"Jalur fondasi wajib tidak ditemukan.",p,"Pulihkan file atau tinjau kontrak fondasi."));}}}
  if run.contains(&"file-integrity"){for p in &all{if matches!(p.extension().and_then(|v|v.to_str()),Some("md"|"toml"|"json"|"yml"|"yaml"|"one"|"rs"))&&fs::read_to_string(p).is_err(){out.push(finding("file-integrity","text-not-utf8","medium",rel(&root,p),0,"File teks tidak dapat dibaca sebagai UTF-8.","read_to_string gagal","Periksa encoding dan pulihkan UTF-8 valid."));}}}
  if run.contains(&"markdown-links")||run.contains(&"markdown-structure"){for p in &all{if p.extension().and_then(|v|v.to_str())!=Some("md"){continue;}let Ok(text)=fs::read_to_string(p)else{continue};let rp=rel(&root,p);
   if run.contains(&"markdown-structure"){let mut open:Option<(u8,usize)>=None;for(i,line)in text.lines().enumerate(){let t=line.trim_start();let b=t.as_bytes();let marker=if b.starts_with(&[96,96,96]){Some(96)}else if t.starts_with("~~~"){Some(126)}else{None};if let Some(m)=marker{let n=b.iter().take_while(|v|**v==m).count();if n>=3{if let Some((old,_))=open{if old==m&&b.iter().all(|v|*v==m||v.is_ascii_whitespace()){open=None;}}else{open=Some((m,i+1));}}}}if let Some((m,l))=open{out.push(finding("markdown-structure","unclosed-code-fence","medium",rp.clone(),l,"Markdown code fence tidak ditutup.",m.to_string().as_str(),"Tambahkan fence penutup yang cocok."));}}
@@ -55,4 +55,16 @@ pub(crate) fn run(args:impl IntoIterator<Item=String>)->i32{
  match scan(&root,&scope,expected.as_deref()){Ok((findings,skipped,head))=>{println!("ONE Integrity Engine (native preview)\nroot: {}\nscope: {}\nHEAD: {}\ndetectors_run: {}\ndetectors_not_requested: {}\nfindings: {}",root.display(),scope,head.as_deref().unwrap_or("UNAVAILABLE"),selected(&scope).unwrap_or_default().join(", "),skipped.join(", "),findings.len());for f in &findings{println!("[{}] {} {}:{} [{}] {}\n  evidence: {}\n  recommendation: {}",f.severity.to_uppercase(),f.detector,f.path,f.line,f.rule,f.summary,f.evidence,f.fix);}if findings.is_empty(){println!("Tidak ada temuan pada detector yang dijalankan; detector yang tidak diminta bukan berarti lulus.");}if findings.iter().any(|f|f.severity=="critical"||f.severity=="high"){1}else{0}},Err(e)=>{eprintln!("ONE-INTEGRITY: {e}");2}}
 }
 #[cfg(test)]mod tests{use super::*;#[test]fn scopes_are_explicit_and_fail_closed(){assert_eq!(selected("sha").unwrap(),vec!["revision-integrity"]);assert!(selected("markdown").unwrap().contains(&"markdown-links"));assert!(selected("unknown").is_none());}
-#[test]fn finds_broken_markdown_link_and_unclosed_fence(){let root=std::env::temp_dir().join(format!("one-integrity-test-{}",std::process::id()));let _=fs::remove_dir_all(&root);fs::create_dir_all(&root).unwrap();fs::write(root.join("test.md"),"[broken](missing.md)\n~~~rs\ncode\n").unwrap();let(f,s,_)=scan(&root,"markdown",None).unwrap();assert!(f.iter().any(|x|x.rule=="broken-relative-link"));assert!(f.iter().any(|x|x.rule=="unclosed-code-fence"));assert!(s.contains(&"revision-integrity"));fs::remove_dir_all(root).unwrap();}}
+#[test]fn finds_broken_markdown_link_and_unclosed_fence(){let root=std::env::temp_dir().join(format!("one-integrity-test-{}",std::process::id()));let _=fs::remove_dir_all(&root);fs::create_dir_all(&root).unwrap();fs::write(root.join("test.md"),"[broken](missing.md)\n~~~rs\ncode\n").unwrap();let(f,s,_)=scan(&root,"markdown",None).unwrap();assert!(f.iter().any(|x|x.rule=="broken-relative-link"));assert!(f.iter().any(|x|x.rule=="unclosed-code-fence"));assert!(s.contains(&"revision-integrity"));fs::remove_dir_all(root).unwrap();}
+#[cfg(unix)]
+#[test]
+fn reports_symlink_escape_without_traversing_target(){
+ use std::os::unix::fs::symlink;
+ let root=std::env::temp_dir().join(format!("one-integrity-link-{}",std::process::id()));
+ let outside=std::env::temp_dir().join(format!("one-integrity-outside-{}",std::process::id()));
+ let _=fs::remove_dir_all(&root);let _=fs::remove_dir_all(&outside);fs::create_dir_all(&root).unwrap();fs::create_dir_all(&outside).unwrap();fs::write(outside.join("private.txt"),"not scanned").unwrap();symlink(&outside,root.join("external")).unwrap();
+ let (findings,_,_)=scan(&root,"structure",None).unwrap();
+ assert!(findings.iter().any(|f|f.rule=="symlink-escapes-root"));
+ fs::remove_dir_all(root).unwrap();fs::remove_dir_all(outside).unwrap();
+}
+}
