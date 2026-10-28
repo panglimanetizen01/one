@@ -86,7 +86,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Saved CI metadata classification: no visible steps remains blocked/unknown, failed steps require log review.
 - [x] Fixture tests for core failure classes.
 - [ ] Collect workflow run/job/step/log/artifact metadata directly from GitHub APIs.
-- [ ] Record tool versions and environment metadata in report.
+- [x] Record scanner/runtime environment metadata and working-tree state in report.
 
 ### B — Static integrity and contracts
 - [x] Python, TOML, JSON, Markdown-link, and fence checks.
@@ -101,8 +101,8 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 ### C — Correlation and triage
 - [x] Stable IDs, severity, confidence, evidence, and next-step fields.
 - [x] File-based baseline comparison with new/recurring/reopened/resolved/not-checked states and separate triage-priority inputs.
-- [ ] Persist historical findings and track new, recurring, resolved, and reopened states.
-- [ ] Correlate CI job-start failures, unavailable logs, and artifact absence without guessing a root cause.
+- [x] Persist a prior JSON report in a branch-scoped Actions cache and compare it on later runs; classify new, recurring, resolved, reopened, and not-checked findings.
+- [ ] Correlate CI job-start failures, unavailable logs, and artifact absence directly from GitHub APIs without guessing a root cause.
 - [ ] Version and expose priority inputs separately from the fixed acceptance ledger.
 - [ ] Measure false positives and detector coverage.
 
@@ -116,13 +116,13 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 ### E — Continuous evolution
 - [x] Version the report schema.
 - [ ] Add a fixture for every shipped detector and regression-test every confirmed incident.
-- [ ] Add detector changelog, migration policy, suppression expiry, and compatibility guarantees.
-- [ ] Track recurrence, repair success rate, and blind spots.
-- [ ] Add scheduled health runs only after the event-driven workflow and evidence model are reliable.
+- [x] Add a weekly scheduled scan after the event-driven workflow passed the independent Linux/Windows scanner, build, and normative fixture checks.
+- [x] Record schema compatibility and detector/suppression governance in `docs/verification/health-detectors.md`.
+- [ ] Track repair success rate and blind spots quantitatively.
 
 ## Definition of done
 
-This scanner is not yet a complete autonomous repair system. It becomes production-ready only after the remaining checklist items are implemented, tests run on the exact commit, findings are reviewed, and CI artifacts are retrievable. The current workflow tests the scanner on Ubuntu and Windows and uploads its reports; this does not substitute for the existing One language, conformance, E1/E2/E6, or protected production provenance gates.
+This scanner is not yet a complete autonomous repair system. It becomes production-ready only after the remaining checklist items are implemented, tests run on the exact commit, findings are reviewed, and CI artifacts are retrievable. The current workflow tests the scanner on Ubuntu and Windows, compares with a branch-scoped cached baseline, runs weekly, and uploads its reports; this does not substitute for the existing One language, conformance, E1/E2/E6, or protected production provenance gates.
 
 
 ## One source fixture validation
