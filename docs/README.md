@@ -72,6 +72,8 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Verification and release
 
+- `verification/repository-health.md` — repository health scanner, detector boundaries, guarded repair mode, and A–E development roadmap.
+
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
 - `verification/one-completion-ledger.md` — fixed weighted vNext completion method, milestone gates, and evidence status.
@@ -104,6 +106,8 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
+- `../tools/one_health.py` — read-only repository health scanner with stable findings and guarded Markdown repair.
+- `../tools/test_one_health.py` — scanner regression fixtures.
 - `../tools/verify-human-vnext.sh` — clean, exact-GitHub-SHA human-vNext local verification script.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
