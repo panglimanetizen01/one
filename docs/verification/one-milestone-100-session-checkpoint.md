@@ -1,5 +1,13 @@
 # ONE Final Milestone Session Checkpoint
 
+## Active scanner A–E handoff — 2026-10-28
+
+The current implementation work is on the milestone PR branch. The live PR #80 head and independent verifier pin are authoritative for the exact source SHA; this documentation update is not a substitute for reading those refs. The scanner now includes repository integrity, Python AST correlation for obfuscated execution / downloaded-code execution / sensitive-data egress, JavaScript/TypeScript static heuristics, agent-instruction prompt-injection correlation, and supply-chain checks for mutable Action/dependency refs. Regression tests include positive and negative fixtures; **no executable result is yet available for the latest candidate**.
+
+The source candidate immediately before this documentation synchronization was `29e20838825fe074f6821b663158fdcafc433478`. Canonical workflows on the prior scanner candidate `ae4b8c9cee65b24700f4a0827309fc3b3142e7cb` were created for repository health `40725202584`, One CI `40725202524`, E1 `40725202471`, focused stdlib `40725202455`, E2 `40725202439`, and Linux distro `40725202433`. The repository-health jobs were cancelled with no steps, and other jobs returned empty/null steps and no log URLs; artifacts were unavailable. This is unresolved execution/evidence infrastructure, not a source-test failure or pass. Do not repeat identical jobs without a changed condition or transient-failure diagnosis.
+
+Acceptance remains: implementation 92/100 provisional; E3 0/8, E4 0/6, E5 0/4 verified; final score UNKNOWN / NOT RECONCILED; DoD 3 checked / 10 unchecked; gate NOT PASSED. No merge, release, protected E2 dispatch, or security-control bypass is authorized.
+
 **Updated:** 2026-10-28
 **Active target:** Milestone 100% — ecosystem and release quality
 **Repository:** https://github.com/panglimanetizen01/one
@@ -7,7 +15,7 @@
 **PR:** https://github.com/panglimanetizen01/one/pull/80 (open, draft, unmerged)
 **Base:** `main` (PR only; no direct changes to main)
 
-## Active recovery state — 2026-10-28
+## Historical recovery state — 2026-10-28 (superseded by active scanner handoff below)
 
 PR #80 remains open, draft, and unmerged. The live PR head is authoritative and must be read after each source/documentation commit; the independent verifier pin and index must then be synchronized to the final candidate.
 

@@ -1,12 +1,20 @@
 # ONE Completion Ledger — Human Instruction vNext Roadmap
 
+## Active scanner A–E handoff — 2026-10-28
+
+The current implementation work is on the milestone PR branch. The live PR #80 head and independent verifier pin are authoritative for the exact source SHA; this documentation update is not a substitute for reading those refs. The scanner now includes repository integrity, Python AST correlation for obfuscated execution / downloaded-code execution / sensitive-data egress, JavaScript/TypeScript static heuristics, agent-instruction prompt-injection correlation, and supply-chain checks for mutable Action/dependency refs. Regression tests include positive and negative fixtures; **no executable result is yet available for the latest candidate**.
+
+The source candidate immediately before this documentation synchronization was `29e20838825fe074f6821b663158fdcafc433478`. Canonical workflows on the prior scanner candidate `ae4b8c9cee65b24700f4a0827309fc3b3142e7cb` were created for repository health `40725202584`, One CI `40725202524`, E1 `40725202471`, focused stdlib `40725202455`, E2 `40725202439`, and Linux distro `40725202433`. The repository-health jobs were cancelled with no steps, and other jobs returned empty/null steps and no log URLs; artifacts were unavailable. This is unresolved execution/evidence infrastructure, not a source-test failure or pass. Do not repeat identical jobs without a changed condition or transient-failure diagnosis.
+
+Acceptance remains: implementation 92/100 provisional; E3 0/8, E4 0/6, E5 0/4 verified; final score UNKNOWN / NOT RECONCILED; DoD 3 checked / 10 unchecked; gate NOT PASSED. No merge, release, protected E2 dispatch, or security-control bypass is authorized.
+
 **Ledger version:** 1  
 **Created:** 2026-10-22  
 **Branch:** `spec/human-instruction-grammar-vnext-20261022`  
 **Scope:** Human-instruction vNext foundation, its first runnable reference application, and subsequent language/runtime ecosystem work.  
 **Rule:** Weights are fixed in this ledger. Do not change them to make a milestone pass. Add a versioned ledger change only after explicit review of the roadmap.
 
-## Active exact-SHA reconciliation — 2026-10-28
+## Historical exact-SHA reconciliation — 2026-10-28 (superseded by active scanner handoff below)
 
 The live PR #80 head is the sole current source candidate; source SHA changes after each accepted source or documentation commit, so the independent verifier pin and evidence index must be synchronized to the final live head. The current scanner delta adds JavaScript/TypeScript text coverage and a `security-javascript` detector for decoded dynamic execution, network-plus-execution correlation, environment/credential-to-egress correlation, and Node `child_process.exec/execSync` use. Three positive/negative regression tests were added. Detector behavior has been exercised against isolated positive/negative snippets in this session, but the full repository test suite and self-scan have **not** produced an executable hosted result.
 

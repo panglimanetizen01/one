@@ -17,3 +17,8 @@ python tools/one_health.py --json-out /tmp/one-health-report.json --markdown-out
 ~~~
 
 The scanner checks repository paths, Markdown links/fences, source/contract drift, selected Python and JavaScript/TypeScript security patterns, GitHub Actions references/permissions, CI evidence freshness, and artifact metadata. Its JavaScript/TypeScript rules are heuristic static indicators, not a parser, taint engine, malware verdict, or OS sandbox. Review findings before acting; do not execute suspicious repository content to validate a finding. The canonical `.github/workflows/repository-health.yml` workflow runs the regression corpus and scans the checked-out ONE repository. Acceptance still requires exact checkout SHA, executable steps/logs, exit codes, and expected artifacts; zero-step failures are blocked evidence, not PASS.
+
+
+## Repository health and security scanner
+
+The A–E detector contract and limitations are documented in [health-detectors.md](health-detectors.md). The scanner is read-only by default, never executes repository code, and must be validated with `python -m unittest discover -s tools -p "test_one_health.py" -v` plus CI metadata and quality-ledger regression tests. A blocked workflow with missing steps/logs is missing evidence, not a pass or a source-test failure.
