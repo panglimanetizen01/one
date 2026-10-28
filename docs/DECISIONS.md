@@ -112,7 +112,7 @@ See [ADR-0017](decisions/ADR-0017-human-vnext-core-runtime.md) for the canonical
 
 ## ADR-0018 — Native repository integrity engine; Python scanner remains an adapter
 
-**Status:** Accepted architectural direction; implementation pending.
+**Status:** Accepted architectural direction; initial Rust CLI preview implemented, parity and acceptance pending.
 
 ONE's repository-integrity capability is a first-party toolchain responsibility, but `tools/one_health.py` is not itself part of the ONE language runtime or source-language semantics. Keep it as an independent developer/CI reference scanner during migration; do not make Python a runtime prerequisite for using ONE or for the eventual first-party integrity command.
 
@@ -129,3 +129,6 @@ Migration is evidence-gated:
 “Native” here means first-party and free of a Python runtime dependency, not that the current compiler is already self-hosted in the ONE language. Rust is an implementation technology of the present toolchain and may be replaced only through a separately verified migration. JSON/Markdown may remain report interchange formats; their use does not make them the language or semantic authority of ONE.
 
 This decision does not authorize merging the scanner-hardening PR, bypassing repository protections, or treating existing verification evidence as current for a changed SHA.
+
+
+Implementation status note (2026-10-29): the initial read-only Rust CLI preview is exposed as `one pindai` and has focused unit tests in `crates/one-cli/src/integrity.rs`. Its detector coverage is intentionally narrow and has not yet been executed on CI in this revision. The Python scanner remains the developer/CI reference; the native preview is not yet a default gate or parity replacement.
