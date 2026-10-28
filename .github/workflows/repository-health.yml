@@ -36,8 +36,11 @@ jobs:
       - name: Scanner regression tests
         run: python -m unittest discover -s tools -p "test_one_health.py" -v
 
-      - name: Scan repository integrity
-        run: python tools/one_health.py --json-out one-health-report.json --markdown-out one-health-report.md --quiet
+      - name: Build One CLI for source-only grammar checks
+        run: cargo build --locked -p one-cli
+
+      - name: Scan repository and validate normative One fixtures
+        run: python tools/one_health.py --check-one-source --json-out one-health-report.json --markdown-out one-health-report.md --quiet
 
       - name: Upload diagnostic report
         if: always()
