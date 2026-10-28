@@ -48,6 +48,8 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | CI failure classification | failed jobs with absent steps, and failed steps needing log review in saved JSON run metadata | Does not claim root cause from metadata alone |
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
+| Normative One contract drift | required grammar, CLI, diagnostics, package/build, and platform invariants | Text-presence checks only; conformance tests and human review remain authoritative |
+| Live CI metadata | exact-SHA GitHub Actions runs, jobs, steps, and artifact metadata | Requires Actions read permission and token; logs are link-only; collection outages remain blocked/partial |
 
 The scanner does not interpret free-form Indonesian as executable source. It does not claim that an example is valid One code simply because it is in Markdown. Normative contract checks detect disappearance of high-value invariants but are deliberately not a substitute for parser tests or human contract review. Language examples must be checked against the One grammar, implementation status, and conformance tests.
 
