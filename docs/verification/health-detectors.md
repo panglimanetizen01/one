@@ -30,6 +30,9 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `contract-drift` | Required core CLI vocabulary plus high-value invariants in normative grammar, CLI, diagnostics, package/build, and platform contracts | Text presence does not prove implementation; a contract refactor may require updating detector fixtures |
 | `ci-evidence` | Exact-SHA Actions run/job/step/artifact metadata plus surfaced findings for failed runs without job metadata, failed jobs without visible steps, and failed steps needing log review | Does not download or interpret live logs; API outages remain blocked/partial, not source failures |
 | `artifact-integrity` | Expired CI artifacts, repeated artifact names within one run, missing artifact digests, and no-artifact observations in completed runs | Does not download artifact contents or prove their bytes match a digest; missing digest is informational, not a pass |
+| `security-secrets` | Known high-signal token/private-key patterns and likely hardcoded credentials | Heuristic coverage only; secret values are redacted from reports; unknown formats, encoded secrets, and false positives remain possible |
+| `security-code` | Suspicious Python dynamic execution and `subprocess` shell usage | Static pattern hints, not proof of exploitability; data flow and runtime context require review |
+| `security-workflow` | Network-to-shell pipelines, broad write permissions, `pull_request_target`, and mutable third-party action refs | Targeted line-level checks, not a full workflow security audit or YAML semantic analysis |
 | `one-source-contract` | Expected accept/reject results for normative v0.1 fixtures via `one periksa` | Runs only when explicitly enabled and CLI is built; never executes source |
 
 ## Report schema compatibility
