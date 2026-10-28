@@ -411,6 +411,24 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                         "Pola workflow terdeteksi; bukan bukti kompromi.",
                         "Tinjau kebutuhan permission, pin action ke full commit SHA tepercaya, dan jangan menjalankan kode PR tak tepercaya dengan secret/write token."))
 
+    if rel.startswith(".github/workflows/"):
+        # Whole-document fallback for the workflow-wide permission key.
+        permission_match = re.search(
+            r"(?im)^[ \t]*permissions[ \t]*:[ \t]*write-all(?:[ \t]+#.*)?[ \t]*$",
+            text,
+        )
+        if permission_match and not any(
+            item["detector_id"] == "security-workflow"
+            and item["rule_id"] == "write-all-permissions"
+            and item["path"] == rel
+            for item in findings
+        ):
+            line = text.count("\n", 0, permission_match.start()) + 1
+            findings.append(_finding("security-workflow", "write-all-permissions", rel, line, "high", "high",
+                "Workflow meminta seluruh permission token ditulis; terapkan least privilege.",
+                "Whole-document fallback matched permissions: write-all; no workflow execution performed.",
+                "Tinjau kebutuhan permission dan terapkan least privilege; jangan memberi write token ke kode kontribusi tak tepercaya."))
+
     if suffix == ".py":
         _scan_python_security(rel, text, findings)
     elif suffix in JAVASCRIPT_SUFFIXES:
@@ -711,7 +729,9 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                     "Symlink mengarah keluar dari root repositori.", str(path.readlink()), "Tinjau symlink; jangan ikuti target di luar repositori."))
             continue
         if suffix not in TEXT_SUFFIXES: continue
-        try: text = path.read_text(encoding="utf-8")
+        try:
+            # Decode bytes explicitly and strictly so invalid UTF-8 cannot be normalized by a wrapper.
+            text = path.read_bytes().decode("utf-8", errors="strict")
         except (OSError, UnicodeError) as exc:
             findings.append(_finding("file-integrity", "unreadable-text-file", rel, None, "medium", "high",
                 "Berkas teks tidak dapat dibaca sebagai UTF-8.", str(exc), "Periksa encoding, izin, atau apakah berkas seharusnya berupa teks."))
