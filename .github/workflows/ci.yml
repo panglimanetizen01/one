@@ -58,11 +58,15 @@ jobs:
         run: python tools/check_user_docs.py
       - name: User documentation checker tests
         run: python tools/check_user_docs_test.py
+      - name: Repository health scanner regression tests
+        run: python -m unittest discover -s tools -p "test_one_health.py" -v
       - name: Exact-SHA verifier shell syntax
         shell: bash
         run: bash -n tools/verify-human-vnext.sh
       - name: Build
         run: cargo --locked build --workspace --all-targets
+      - name: Repository health scan and One source contract checks
+        run: python tools/one_health.py --check-one-source --json-out one-health-report.json --markdown-out one-health-report.md --quiet
       - name: Clippy
         shell: bash
         run: cargo --locked clippy --workspace --all-targets -- -D warnings
