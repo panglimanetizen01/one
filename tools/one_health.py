@@ -872,7 +872,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 findings.append(_finding("path-integrity", "symlink-escapes-repository", rel, None, "high", "high",
                     "Symlink mengarah keluar dari root repositori.", str(path.readlink()), "Tinjau symlink; jangan ikuti target di luar repositori."))
             continue
-        if suffix not in TEXT_SUFFIXES: continue
+        if suffix not in TEXT_SUFFIXES and not path.name.lower().startswith(".env"): continue
         try:
             # Decode bytes explicitly and strictly so invalid UTF-8 cannot be normalized by a wrapper.
             text = path.read_bytes().decode("utf-8", errors="strict")
