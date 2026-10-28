@@ -129,6 +129,14 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("resolved", compared["resolved_findings"][0]["change_status"])
         self.assertIn("review detector coverage", compared["resolved_findings"][0]["resolution_basis"])
 
+    def test_baseline_does_not_resolve_findings_from_detectors_not_run(self):
+        current = scan_repository(self.root, check_one_source=False)
+        old = {"finding_id": "OH-old-one-source", "detector_id": "one-source-contract",
+               "status": "open", "summary": "One source check was blocked"}
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
+        self.assertEqual(1, compared["change_counts"]["not_checked"])
+
     def test_baseline_reopens_previously_resolved_finding(self):
         self.write("README.md", "[missing](absent.md)\n")
         current = scan_repository(self.root)
