@@ -118,35 +118,28 @@ def _ast_name(node) -> str:
 
 
 def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
-    """AST correlation for obfuscated execution, remote execution, and sensitive-data egress."""
+    """Conservative AST correlation for obfuscated execution and sensitive-data egress."""
     try:
         tree = ast.parse(text, filename=rel)
     except SyntaxError:
         return
 
     calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
-    call_names = {_ast_name(node.func) for node in calls}
     decoders = {
-        "base64.b64decode", "binascii.a2b_base64", "bytes.fromhex",
-        "codecs.decode", "marshal.loads", "zlib.decompress",
-        "lzma.decompress", "gzip.decompress",
+        "base64.b64decode", "binascii.a2b_base64", "binascii.unhexlify", "bytes.fromhex",
+        "codecs.decode", "marshal.loads", "zlib.decompress", "lzma.decompress", "gzip.decompress",
     }
     dynamic = {"eval", "exec", "compile"}
-    obfuscated = False
-    dynamic_line = None
     for call in calls:
-        name = _ast_name(call.func)
-        if name in dynamic and call.args:
-            nested = { _ast_name(child.func) for child in ast.walk(call.args[0]) if isinstance(child, ast.Call) }
-            if nested.intersection(decoders):
-                obfuscated = True
-                dynamic_line = getattr(call, "lineno", None)
-                break
-    if obfuscated:
-        findings.append(_finding("security-code", "obfuscated-execution", rel, dynamic_line, "high", "high",
-            "Kode yang didekode atau dibongkar secara dinamis langsung diteruskan ke eval/exec/compile.",
-            "AST correlation: decoder-or-deserializer -> dynamic-code-execution; payload bytes omitted.",
-            "Jangan jalankan payload. Telusuri asal data, hapus jalur eksekusi yang tidak perlu, dan tambahkan fixture regresi."))
+        if _ast_name(call.func) not in dynamic or not call.args:
+            continue
+        nested = {_ast_name(child.func) for child in ast.walk(call.args[0]) if isinstance(child, ast.Call)}
+        if nested.intersection(decoders):
+            findings.append(_finding("security-code", "obfuscated-execution", rel, getattr(call, "lineno", None),
+                "high", "high", "Kode yang didekode atau dibongkar secara dinamis langsung diteruskan ke eval/exec/compile.",
+                "AST correlation: decoder-or-deserializer -> dynamic-code-execution; payload bytes omitted.",
+                "Jangan jalankan payload. Telusuri asal data, hapus jalur eksekusi yang tidak perlu, dan tambahkan fixture regresi."))
+            break
 
     fetch_calls = {
         "requests.get", "httpx.get", "urllib.request.urlopen", "urlopen",
@@ -156,39 +149,94 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
         "os.system", "os.popen", "subprocess.run", "subprocess.Popen",
         "subprocess.call", "subprocess.check_call", "subprocess.check_output",
     })
-    if call_names.intersection(fetch_calls) and call_names.intersection(execute_calls):
-        line = min(getattr(node, "lineno", 1) for node in calls
-                   if _ast_name(node.func) in execute_calls)
-        findings.append(_finding("security-code", "downloaded-code-execution", rel, line, "high", "medium",
-            "Satu berkas menggabungkan pengambilan data jaringan dan primitive eksekusi kode/proses.",
-            "AST correlation: network-fetch + dynamic/process-execution; data flow is not proven.",
-            "Tinjau asal payload dan aliran data. Jangan mengeksekusi konten jaringan; gunakan artefak terverifikasi dan digest."))
-
     egress_calls = {
-        "requests.post", "requests.put", "requests.request", "httpx.post", "httpx.put",
-        "httpx.request", "urllib.request.urlopen", "urlopen",
-        "http.client.HTTPConnection.request", "socket.socket.send", "socket.socket.sendall",
-        "smtplib.SMTP.sendmail", "aiohttp.ClientSession.post", "aiohttp.ClientSession.put",
+        "requests.post", "requests.put", "requests.patch", "requests.request",
+        "httpx.post", "httpx.put", "httpx.patch", "httpx.request",
+        "urllib.request.urlopen", "urlopen", "http.client.HTTPConnection.request",
+        "socket.socket.send", "socket.socket.sendall", "smtplib.SMTP.sendmail",
+        "aiohttp.ClientSession.post", "aiohttp.ClientSession.put",
     }
-    source_markers = set()
     sensitive_names = {"password", "passwd", "secret", "token", "credential", "credentials", "api_key", "private_key"}
+    sensitive_text = re.compile(r"(?i)(?:/\.ssh(?:/|$)|/\.aws(?:/|$)|\.env\b|id_rsa|credentials|private[_ -]?key|api[_ -]?key|password|secret|token)")
+
+    def source_markers(node, tainted_names):
+        markers = set()
+        for child in ast.walk(node):
+            if isinstance(child, ast.Attribute):
+                name = _ast_name(child)
+                if name in {"os.environ", "os.getenv", "os.environ.get", "getenv", "environ", "Path.home", "pathlib.Path.home"}:
+                    markers.add("environment-or-home-directory")
+            elif isinstance(child, ast.Call) and _ast_name(child.func).endswith((".getenv", ".getpass")):
+                markers.add("environment-or-prompt-source")
+            elif isinstance(child, ast.Name) and (child.id.lower() in sensitive_names or child.id in tainted_names):
+                markers.add("credential-like-identifier")
+            elif isinstance(child, ast.Constant) and isinstance(child.value, str) and sensitive_text.search(child.value):
+                markers.add("sensitive-path-or-label")
+        return markers
+
+    assignments = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Attribute):
-            name = _ast_name(node)
-            if name in {"os.environ", "os.getenv", "os.environ.get", "getenv", "environ", "Path.home", "pathlib.Path.home"}:
-                source_markers.add("environment-or-home-directory")
-        elif isinstance(node, ast.Name) and node.id.lower() in sensitive_names:
-            source_markers.add("credential-like-identifier")
-        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
-            if re.search(r"(?i)(?:/\.ssh(?:/|$)|/\.aws(?:/|$)|\.env\b|id_rsa|credentials|private[_ -]?key|api[_ -]?key|password|secret|token)", node.value):
-                source_markers.add("sensitive-path-or-label")
-    if source_markers and call_names.intersection(egress_calls):
-        sink = sorted(call_names.intersection(egress_calls))[0]
-        line = min(getattr(node, "lineno", 1) for node in calls if _ast_name(node.func) in egress_calls)
-        findings.append(_finding("security-code", "sensitive-data-egress", rel, line, "high", "medium",
-            "Referensi environment/credential atau jalur sensitif berkorelasi dengan API pengiriman jaringan dalam satu berkas.",
-            f"source_indicators={','.join(sorted(source_markers))}; sink_api={sink}; values_redacted=true",
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+            value = node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            targets = [node.target]
+            value = node.value
+        else:
+            continue
+        names = [target.id for target in targets if isinstance(target, ast.Name)]
+        if names:
+            assignments.append((names, value))
+
+    # Track only simple local assignments. This deliberately avoids claiming general taint analysis.
+    tainted_names, remote_names = set(), set()
+    for _ in range(4):
+        changed = False
+        for names, value in assignments:
+            value_nodes = list(ast.walk(value))
+            value_calls = {_ast_name(node.func) for node in value_nodes if isinstance(node, ast.Call)}
+            value_names = {node.id for node in value_nodes if isinstance(node, ast.Name)}
+            if source_markers(value, tainted_names) or value_names.intersection(tainted_names):
+                for name in names:
+                    if name not in tainted_names:
+                        tainted_names.add(name)
+                        changed = True
+            if value_calls.intersection(fetch_calls) or value_names.intersection(remote_names):
+                for name in names:
+                    if name not in remote_names:
+                        remote_names.add(name)
+                        changed = True
+        if not changed:
+            break
+
+    for call in calls:
+        name = _ast_name(call.func)
+        descendants = list(ast.walk(call))
+        nested_calls = {_ast_name(child.func) for child in descendants if isinstance(child, ast.Call)}
+        nested_names = {child.id for child in descendants if isinstance(child, ast.Name)}
+        if name in execute_calls and (
+            nested_calls.intersection(fetch_calls) or nested_names.intersection(remote_names)
+        ):
+            findings.append(_finding("security-code", "downloaded-code-execution", rel, getattr(call, "lineno", None),
+                "high", "medium", "Data yang diturunkan dari pemanggilan jaringan berkorelasi dengan primitive eksekusi kode/proses.",
+                "AST local-assignment/source-sink correlation; network data and payload omitted.",
+                "Tinjau asal payload dan aliran data. Jangan mengeksekusi konten jaringan; gunakan artefak terverifikasi dan digest."))
+            break
+
+    # Correlate sensitive sources with the actual network-sink expression, not merely the same file.
+    for call in calls:
+        name = _ast_name(call.func)
+        if name not in egress_calls:
+            continue
+        markers = source_markers(call, tainted_names)
+        if not markers:
+            continue
+        findings.append(_finding("security-code", "sensitive-data-egress", rel, getattr(call, "lineno", None),
+            "high", "medium",
+            "Referensi environment/credential atau jalur sensitif terdapat pada ekspresi API pengiriman jaringan.",
+            f"source_indicators={','.join(sorted(markers))}; sink_api={name}; values_redacted=true",
             "Periksa tujuan jaringan dan data yang dikirim. Cabut kredensial jika terpapar; jangan jalankan berkas untuk menguji temuan."))
+        break
 
     for call in calls:
         if _ast_name(call.func) not in {"subprocess.run", "subprocess.Popen", "subprocess.call",
@@ -201,7 +249,6 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
                 "AST menemukan subprocess dengan shell=True, termasuk pemanggilan multiline.",
                 "AST keyword shell=True; exploitability depends on argument control.",
                 "Utamakan argumen berbentuk daftar dan shell=False; validasi batas kepercayaan untuk semua argumen."))
-
 
 AGENT_SURFACE_NAMES = {
     "agents.md", "claude.md", "gemini.md", "copilot-instructions.md",
