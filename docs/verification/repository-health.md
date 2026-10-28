@@ -50,9 +50,12 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
 | Artifact integrity hints | expired artifacts, duplicate names per run, missing digest metadata | Does not download/rehash artifact bytes; missing digest is a limitation, not a clean integrity result |
-| Secret exposure | known provider token formats, private-key headers, and likely hardcoded credential assignments | Secret values are redacted; unknown/encoded secret formats can be missed and examples can produce false positives |
-| Suspicious code | Python dynamic `eval`/`exec` and `subprocess` with `shell=True` | Heuristic only; static patterns do not prove exploitability or detect every malicious behavior |
-| Workflow attack surface | network-to-shell pipelines, `write-all`, `pull_request_target`, and mutable action refs | Targeted static checks, not a full YAML/schema, dependency, or runtime security audit |
+| Secret exposure | Known provider token formats, private-key headers, and likely hardcoded credential assignments | Values are redacted; encoded/unknown formats can be missed; examples can produce false positives |
+| Python execution and egress correlation | AST correlation for decoder/deserializer → dynamic execution, network-fetch plus execution, credential/environment indicators plus network egress, and AST `shell=True` | Static correlation only; not full taint analysis or proof that data reaches a sink |
+| Agent prompt injection | Agent-instruction surfaces that combine an instruction override with a request to reveal/send secrets | Path/name and phrase heuristics; semantic, encoded, and novel attacks can evade detection; normal docs are not treated as agent instructions |
+| Workflow attack surface | Network-to-shell pipelines, `write-all`, `pull_request_target`, and obvious mutable action refs | Targeted checks, not full YAML/schema validation or runtime workflow analysis |
+| Supply-chain pinning | GitHub Actions refs not pinned to a full commit SHA and Git dependencies using mutable branch names | Tags can be mutable; immutable pins do not prove publisher trust, review, or provenance |
+| JavaScript/TypeScript and Node heuristics | Dynamic evaluation, encoded payload plus execution, network-plus-execution, sensitive-source/egress indicators, and child-process APIs | Token/pattern heuristics, not a complete JS/TS parser, taint engine, dependency audit, or malware verdict |
 
 Security scanning is defensive and read-only: findings indicate patterns that deserve review, not proof that an attacker is present or that compromise occurred. It deliberately redacts matched credential values. No static scanner can guarantee detection of every hidden, obfuscated, generated, encoded, or novel malicious payload; combine this with pinned dependencies, least-privilege CI, secret scanning at hosting-provider level, code review, dependency/advisory monitoring, artifact signing/provenance, and runtime monitoring. Do not use this scanner as the sole security control.
 
@@ -60,7 +63,7 @@ The scanner does not interpret free-form Indonesian as executable source. It doe
 
 ## Finding contract
 
-Every finding includes a stable ID, detector/rule IDs, status, severity, confidence, path/line, evidence, and a recommended next action. The report schema is one-health-report/1. JSON and Markdown reports also expose detector status (ran, not applicable due to absent input, or not requested) and finding counts by detector. These counts are descriptive coverage metrics, not an accuracy or repair-success rate; confirmed false-positive, false-negative, and repair outcome tracking remains future work.
+Every finding includes a stable ID, detector/rule IDs, status, severity, confidence, path/line, evidence, and a recommended next action. The report schema is one-health-report/1. JSON and Markdown reports also expose detector status (ran, not applicable due to absent input, or not requested) and finding counts by detector. The source defines a human-adjudicated quality ledger for observed false-positive/miss shares and verified repair outcomes; those sample metrics are not representative accuracy estimates and remain unavailable without adjudicated records. Synthetic regression fixtures establish behavior on their explicit inputs only.
 
 - **critical / high:** fail the scan because revision identity or a severe structural/syntax condition cannot be trusted.
 - **medium:** actionable integrity issue; requires triage.
