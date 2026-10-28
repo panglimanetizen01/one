@@ -10,9 +10,9 @@
 ## Current checkpoint — 2026-10-28
 
 - PR #80 remains draft, open, and unmerged. No merge or production release is authorized.
-- Canonical weights remain fixed at 100. Current ledger records **92/100 implementation** and **72/100 provisional verified** after exact-SHA E3/E5 evidence passed on the pre-reconciliation candidate; the latest ledger-only source update requires the live exact-SHA matrix to pass again before final acceptance.
+- Canonical weights remain fixed at 100. The latest ledger acceptance records **92/100 implementation** and **78/100 provisional verified** after scoped E4 acceptance on candidate `28d1384588662cc93f405dc9dd5f3012183d249f`, alongside provisional E3/E5 evidence. This checkpoint/ledger update advances the source SHA; re-pin and rerun the exact-SHA matrix before final gate acceptance.
 - E3 evidence on the pre-reconciliation candidate includes Linux/Windows cross-platform checks, Linux distro, artifact integrity, and actual Android API 35 arm64-v8a ELF execution on native ARM64 with exit code 0 and `ONE_NATIVE_BACKEND_OK`. E5 contract/docs/tooling checks passed on Ubuntu and Windows.
-- E1 remains partial (0/10 verified); E2 remains 0/8 because no protected production release run exists for the exact source SHA and no release authorization is granted; E4 remains 0/6 pending a current complete threat review; E6 remains 0/4. Gate: **NOT PASSED**.
+- E1 remains partial (0/10 verified); E2 remains 0/8 because no protected production release run exists for the exact source SHA and no release authorization is granted; E4 is provisionally 6/6 accepted within the documented Linux/Windows/Android boundary, pending revalidation on the new SHA; E6 remains 0/4. Gate: **NOT PASSED**.
 - Canonical repository workflows that failed with runner ID 0 and no steps are infrastructure/job-start failures. Independent exact-SHA mirror results are evidence only for their recorded source SHA.
 - Always read the current source SHA from PR #80 and the independent selector; do not reuse any older SHA or duplicate completed discovery/tests.
 

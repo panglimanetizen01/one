@@ -94,3 +94,20 @@ The independent verifier checked out this exact source SHA for the current scope
 - [Cross-platform Linux/Windows verification, run 40664235567](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40664235567) — PASS for its configured matrix.
 
 These exact-SHA results replace the older candidate as current scoped evidence; they do not retroactively change historical runs. The threat model still has explicit limits: non-Linux Unix mount identity is best-effort, Windows path/reparse defenses are not a proof against every filesystem-provider race, and named operation/output quotas are not a universal heap limit. E4 remains **0/6 verified** until the complete E4 row and final frozen-SHA acceptance are satisfied. Canonical source-repository CI continues to fail before executable steps and is classified as infrastructure-blocked, not PASS. No merge or production release is authorized.
+
+
+## Scoped E4 acceptance record — candidate `28d1384588662cc93f405dc9dd5f3012183d249f`
+
+The E4 acceptance review is complete for the current declared support boundary, with residuals explicitly retained rather than overstated.
+
+**Evidence on the exact candidate SHA `28d1384588662cc93f405dc9dd5f3012183d249f`:**
+- [E4 adversarial filesystem/resource-bound regression 40669813282](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813282) — PASS on Linux and Windows scoped adversarial tests.
+- [SEC-05 subprocess timeout/output regression 40669813337](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813337) — PASS; Linux and Windows suites completed, including timeout/output bounds and process containment checks.
+- [Subprocess resource guard 40669813307](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813307) — PASS for static guard and resource-enforcement checks.
+- [Cross-platform Linux/Windows verification 40669813367](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813367) — PASS, including workspace regression suites on both OSes.
+
+**Acceptance boundary:** Linux and Windows are first-class targets; Android/Linux is the declared integration target. The independent exact-SHA matrix also separately passed Android API 35 `arm64-v8a` ELF runtime execution on candidate SHA `28d1384588662cc93f405dc9dd5f3012183d249f` ([run 40669813305](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813305), exit code 0, output `ONE_NATIVE_BACKEND_OK`). macOS and additional Unix-like systems remain planned expansion, not current first-class acceptance targets.
+
+**Residual risk statements retained:** no claim of a universal sandbox, protection against a compromised kernel/administrator, universal heap cap, complete Windows filesystem-provider race proof, or strict bind-mount identity on non-Linux Unix. The tested current target controls cover root anchoring, Linux mount identity, Unix no-follow behavior, Windows handle/reparse confinement, capability denial before side effects, bounded subprocess execution/output, shared active-operation/SQLite budgets, output cap, and recovery assertions.
+
+**Disposition:** E4 is accepted provisionally as 6/6 for this candidate scope. This acceptance record itself is a source-document change, so the candidate SHA advances; the independent verifier must pin the resulting SHA and rerun the relevant matrix. Overall release gate remains NOT PASSED while E1, E2, E6 and final-freeze conditions remain open. No merge or production release is authorized.
