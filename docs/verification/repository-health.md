@@ -64,7 +64,7 @@ The report is evidence about the checks that actually ran, not a root-cause decl
 The only automated repair currently allowlisted is adding a final newline to a Markdown file. First inspect the proposal:
 
 ~~~sh
-python tools/one_health.py --propose-safe-fixes --quiet
+python tools/one_health.py --propose-safe-fixes --repair-path docs/berkas-yang-dipilih.md --quiet
 ~~~
 
 Applying it is deliberately constrained:
@@ -83,9 +83,9 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Deterministic report schema and stable finding IDs.
 - [x] Optional exact-SHA checkout check.
 - [x] JSON/Markdown output and source/checkout SHA mismatch detector.
-- [x] Saved CI metadata classification: no visible steps remains blocked/unknown, failed steps require log review.
+- [x] Saved and live-collected CI metadata classification: no visible steps remains blocked/unknown, failed steps require log review; API outages remain blocked/partial.
 - [x] Fixture tests for core failure classes.
-- [ ] Collect workflow run/job/step/log/artifact metadata directly from GitHub APIs.
+- [x] Collect exact-SHA workflow run/job/step/artifact metadata directly from GitHub APIs; logs remain link-only and are not automatically interpreted.
 - [x] Record scanner/runtime environment metadata and working-tree state in report.
 
 ### B — Static integrity and contracts
@@ -100,7 +100,8 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 
 ### C — Correlation and triage
 - [x] Stable IDs, severity, confidence, evidence, and next-step fields.
-- [x] File-based baseline comparison with new/recurring/reopened/resolved/not-checked states and separate triage-priority inputs.
+- [x] Branch-scoped cached baseline comparison with new/recurring/reopened/resolved/not-checked states and separate triage-priority inputs.
+- [x] Detector coverage only counts when relevant input was actually present; absent CI evidence remains not-checked.
 - [x] Persist a prior JSON report in a branch-scoped Actions cache and compare it on later runs; classify new, recurring, resolved, reopened, and not-checked findings.
 - [ ] Correlate CI job-start failures, unavailable logs, and artifact absence directly from GitHub APIs without guessing a root cause.
 - [ ] Version and expose priority inputs separately from the fixed acceptance ledger.
@@ -110,7 +111,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Dry-run proposal and one narrow allowlisted Markdown repair.
 - [x] Exact-path allowlist, repository-relative path validation, and isolated-branch/clean-tree guards.
 - [x] Regression fixtures prove the repair refuses missing path authorization, traversal, non-Markdown targets, and non-isolated branches.
-- [ ] Add a human-readable unified-diff preview before applying the repair.
+- [x] Dry-run output includes a unified-diff preview for each selected repair.
 - [ ] Add reviewed allowlist entries only when a repair is deterministic and reversible.
 - [ ] Keep workflow, contract, security, provenance, and release changes human-reviewed.
 
