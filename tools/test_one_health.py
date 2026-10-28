@@ -466,10 +466,19 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual(1, len(findings))
         self.assertIn("action=actions/checkout; ref=v4", findings[0]["evidence"])
 
+    def test_supply_chain_coverage_ignores_unrelated_json_files(self):
+        self.write("config.json", '{"display_name": "ordinary config"}\n')
+        report = scan_repository(self.root)
+        self.assertEqual(
+            "not-applicable-no-workflows-or-dependency-files",
+            report["detector_coverage"]["status_by_detector"]["security-supply-chain"],
+        )
+
     def test_mutable_git_dependency_ref_is_detected(self):
         self.write("requirements.txt", "demo @ git+https://example.invalid/team/demo.git@main\n")
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "mutable-git-dependency-ref" for f in report["findings"]))
+        self.assertEqual("ran", report["detector_coverage"]["status_by_detector"]["security-supply-chain"])
 
     def test_javascript_security_detects_obfuscated_execution_and_sensitive_egress(self):
         code = (
