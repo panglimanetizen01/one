@@ -342,8 +342,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     if workflows:
         detectors_run.extend(["workflow-integrity", "workflow-overlap"])
     detectors_run.extend(sorted(json_evidence_detectors))
-    if (root / "docs").is_dir():
-        detectors_run.append("contract-drift")
+    detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
     return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.0", "repository": root.name,
