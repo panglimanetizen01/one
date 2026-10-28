@@ -4,7 +4,7 @@
 
 ## Hosted lab
 
-Workflow: [ONE Milestone 1 — E1 Standard Library Test Lab](../../actions/workflows/milestone-1-e1-lab.yml)
+Workflow: [ONE Milestone 1 — E1 Standard Library Test Lab](../../.github/workflows/milestone-1-e1-lab.yml)
 
 - Run automatically on relevant changes to `milestone/100-ecosystem-20261023`.
 - Can also be started with GitHub Actions → workflow → **Run workflow**.
