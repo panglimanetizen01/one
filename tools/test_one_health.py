@@ -41,6 +41,16 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "unclosed-code-fence" for f in report["findings"]))
 
+    def test_repeated_workflow_command_is_a_review_hint_not_a_failure(self):
+        self.write(".github/workflows/a.yml", "name: A\njobs:\n  test:\n    steps:\n      - run: cargo test --locked\n")
+        self.write(".github/workflows/b.yml", "name: B\njobs:\n  test:\n    steps:\n      - run: cargo test --locked\n")
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["detector_id"] == "workflow-overlap")
+        self.assertEqual("info", finding["severity"])
+        self.assertEqual("low", finding["confidence"])
+        self.assertIn("a.yml", finding["evidence"])
+        self.assertIn("b.yml", finding["evidence"])
+
     def test_invalid_python_is_reported(self):
         self.write("tools/bad.py", "def missing(:\n    pass\n")
         report = scan_repository(self.root)
