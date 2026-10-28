@@ -128,3 +128,8 @@ ONE CLI / tooling interface
 The engine must make the selected scope, executed detectors, skipped detectors, finding counts, and evidence revision explicit. “Not requested” is not “passed.” It must not autonomously edit source, merge changes, or release artifacts. Any future repair operation requires a separate allowlist, preview, scope, and approval contract.
 
 The current Python scanner remains an independent developer/CI reference while native implementation and parity are built. The first-party command must not require Python at runtime. Implementation should reuse the existing ONE toolchain architecture; the current implementation language is Rust, so “native” does not imply that ONE is already self-hosting. Cross-platform support and default-command status require exact-revision executable evidence.
+
+
+### Current implementation status
+
+The first read-only Rust CLI preview is implemented at `crates/one-cli/src/integrity.rs` and is exposed as `one pindai`. It currently covers a subset of the target detectors only; it does not yet emit JSON/Markdown reports or provide full security, YAML, artifact-byte, CI-log, or baseline checks. The Python scanner remains the reference developer/CI tool until parity and exact-SHA cross-platform evidence are accepted. This preview is not yet a release or CI gate.
