@@ -1,5 +1,8 @@
 # One v0.1 Evidence Matrix
 
+> Historical v0.1 baseline snapshot. Exact SHAs, run IDs, and status claims in this document apply only to the explicitly listed older revisions; they are not the active Milestone 100 acceptance record. Use [the completion ledger](one-completion-ledger.md), [Definition of Done](DEFINITION_OF_DONE.md), PR #80, and the independent current-source pin for current acceptance.
+
+
 This matrix ties each release claim to a canonical artifact. A claim is not considered verified merely because an implementation file exists.
 
 | Requirement | Canonical artifact | Evidence required | Current state |

@@ -1,11 +1,15 @@
 # ONE vNext Session Checkpoint
 
-**Updated:** 2026-10-24  
+**Updated:** 2026-10-28  
 **Active target:** Milestone 100% — ecosystem and release quality  
 **Repository:** [panglimanetizen01/one](https://github.com/panglimanetizen01/one)  
 **Active PR:** [#80](https://github.com/panglimanetizen01/one/pull/80)  
 **Working branch:** `milestone/100-ecosystem-20261023`  
 **Base branch:** `main` — unchanged; no merge performed.
+
+## Current exact-SHA checkpoint — 2026-10-28
+
+PR #80 remains draft/open/unmerged. The source ledger now records **92/100 implementation and 72/100 provisional verified** because E3 platform/runtime and E5 docs/tooling evidence passed on the pre-reconciliation candidate. The ledger update advances the source SHA, so the live independent gate must reconfirm the exact-SHA matrix before those points are final. E1 (10), E2 (8), E4 (6), and E6 (4) remain incomplete; E2 production release was not dispatched because no release authorization exists. The current gate is **NOT PASSED**. Read the exact source SHA from PR #80 and `CANONICAL_COMMIT.txt`; all older checkpoint SHAs below are historical.
 
 ## Completion ledger (fixed weights; no reweighting)
 
