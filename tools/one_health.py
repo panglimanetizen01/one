@@ -1082,6 +1082,15 @@ def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool,
         changed.append(f"APPLIED: add final newline: {rel}")
     return changed
 
+def _severity_gate_fails(report: dict, threshold: str = "high") -> bool:
+    """Return whether findings meet the configured release-blocking severity."""
+    rank = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}
+    if threshold not in rank:
+        raise ValueError(f"unsupported severity threshold: {threshold}")
+    return any(rank.get(item.get("severity"), 0) >= rank[threshold]
+               for item in report.get("findings", []))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
@@ -1094,6 +1103,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--propose-safe-fixes", action="store_true")
     parser.add_argument("--apply-safe-fixes", action="store_true")
     parser.add_argument("--repair-path", action="append", default=[], help="exact repository-relative Markdown path to repair; repeat for multiple files")
+    parser.add_argument("--fail-on", choices=("critical", "high", "medium", "low", "info"),
+                        default="high",
+                        help="exit nonzero when any finding reaches this severity (default: high)")
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args(argv)
     root = args.root.resolve()
@@ -1121,7 +1133,7 @@ def main(argv: list[str] | None = None) -> int:
         args.markdown_out.parent.mkdir(parents=True, exist_ok=True)
         args.markdown_out.write_text(render_markdown(report), encoding="utf-8")
     if not args.quiet: print(render_markdown(report))
-    return 1 if any(f["severity"] in {"critical", "high"} for f in report["findings"]) else 0
+    return 1 if _severity_gate_fails(report, args.fail_on) else 0
 
 if __name__ == "__main__":
     raise SystemExit(main())
