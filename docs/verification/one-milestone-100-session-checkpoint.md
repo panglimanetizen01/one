@@ -9,9 +9,13 @@
 
 ## Active recovery state — 2026-10-28
 
-PR #80 remains open, draft, and unmerged. At recovery, the PR named source candidate `65d09e3f9ed8639ff0d22a948ada06c3def36c22`, while verifier pin `c5ba60b16e0356753ffbd10d448b47dce64f01bb` was stale. The source documentation updates advance the candidate; read PR #80's live head and synchronize the verifier pin to the resulting exact SHA.
+PR #80 remains open, draft, and unmerged. The live PR head is authoritative and must be read after each source/documentation commit; the independent verifier pin and index must then be synchronized to the final candidate.
 
-Six latest canonical source workflows were inspected (Repository Health `40699615876`, One CI `40699615548`, E1 `40699615687`, E2 `40699616047`, Linux distro `40699615916`, focused stdlib `40699615984`). Jobs had null/empty steps and the log endpoint returned `BlobNotFound`; classify as unresolved job-start/evidence-access failures, not source test failures or passes. E3/E4/E5 evidence from earlier SHAs is historical for current-candidate acceptance. The ledger now records E3 0/8, E4 0/6, E5 0/4 verified; implementation 92/100 provisional; 60/100 carried-forward F/C ledger arithmetic only. **Final score UNKNOWN / NOT RECONCILED. Gate NOT PASSED.** No merge or release.
+**Scanner delta implemented:** JavaScript/TypeScript source suffixes are now scanned, with `security-javascript` rules for decoded dynamic execution, network-plus-execution correlation, sensitive-source/network-sink correlation, and Node `child_process.exec/execSync`. Three positive/negative regression fixtures were added; detector docs and verification README were updated. Isolated positive/negative detector snippets were exercised, but the full unit suite and actual repository self-scan have not produced executable hosted evidence.
+
+Canonical source workflow runs for the scanner candidate repeatedly failed before any executable step: returned job objects had null steps/log URLs and no artifacts, and a job-log fetch returned `BlobNotFound`. This is an unresolved execution/evidence-access blocker, not source-test failure or pass; no root cause is known. The repository-health workflow is configured to run scanner/collector/quality tests and scan ONE itself, but current-SHA output still must be obtained and inspected.
+
+Ledger acceptance remains: 92/100 implementation provisional; carried-forward foundation/core arithmetic 60/100 only; E1 0/10, E2 0/8, E3 0/8, E4 0/6, E5 0/4, E6 0/4 verified for current acceptance. DoD 3 checked / 10 unchecked. **Final score UNKNOWN / NOT RECONCILED. Gate NOT PASSED.** No merge, release, protected E2 dispatch, secret change, trust-store change, or protection bypass.
 
 ## Superseded checkpoint — before forensic reconciliation (2026-10-28)
 
