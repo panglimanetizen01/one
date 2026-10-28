@@ -56,6 +56,22 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertTrue(any(f["rule_id"] == "invalid-json" for f in report["findings"]))
 
+    def test_failed_ci_job_without_steps_is_blocked_not_misclassified(self):
+        self.write("run.json", json.dumps({"jobs": [{"name": "One CI", "conclusion": "failure", "steps": [], "runner_id": 0}]}))
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "failed-job-without-visible-steps")
+        self.assertEqual("blocked", finding["status"])
+        self.assertIn("penyebab belum diketahui", finding["summary"])
+        self.assertIn("runner_id=0", finding["evidence"])
+
+    def test_failed_ci_step_requires_log_review(self):
+        self.write("run.json", json.dumps({"jobs": [{"name": "One CI", "conclusion": "failure",
+            "steps": [{"name": "Tests", "conclusion": "failure"}]}]}))
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "failed-step-needs-log-review")
+        self.assertEqual("triaged", finding["status"])
+        self.assertIn("Tests", finding["evidence"])
+
     def test_evidence_source_and_checkout_sha_mismatch_is_reported(self):
         self.write("evidence.json", json.dumps({"source_sha": "a" * 40, "checked_out_sha": "b" * 40}))
         report = scan_repository(self.root)
