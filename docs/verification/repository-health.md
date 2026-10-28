@@ -98,7 +98,7 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Flag exact repeated one-line workflow commands as low-confidence overlap hints.
 - [x] Basic CLI documentation vocabulary check.
 - [ ] Add a full YAML parser/validator with an explicit pinned dependency.
-- [ ] Validate One snippets against the normative parser or one periksa without executing them.
+- [x] Validate normative One v0.1 valid/invalid conformance fixtures with one periksa without executing programs; free-form Markdown prose is not treated as executable code.
 - [x] Add contract-specific checks for package/build artifacts, diagnostics identity/determinism, grammar ambiguity rejection, exact CLI recognition, and capability-boundary invariants.
 - [ ] Add workflow overlap analysis with evidence that distinguishes duplication from intentional parallel testing.
 
@@ -109,8 +109,8 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Persist a prior JSON report in a branch-scoped Actions cache and compare it on later runs; classify new, recurring, resolved, reopened, and not-checked findings.
 - [x] Correlate failed runs with absent job metadata, failed jobs with no visible steps/runner, failed steps needing log review, and artifact absence from exact-SHA GitHub API metadata without guessing a root cause.
 - [ ] Retrieve and securely retain failed-step logs where permissions and retention allow; currently the collector stores links and metadata only.
-- [ ] Version and expose priority inputs separately from the fixed acceptance ledger.
-- [ ] Measure false positives and detector coverage.
+- [x] Expose triage priority inputs separately from the fixed acceptance ledger; these scores never award acceptance points.
+- [x] Report detector execution coverage and finding counts; support manually reviewed false-positive/miss adjudication in the quality ledger (rates remain unavailable until reviews are entered).
 
 ### D — Guarded repair
 - [x] Dry-run proposal and one narrow allowlisted Markdown repair.
@@ -118,14 +118,14 @@ After any repair, inspect the diff, rerun scanner tests and the scan, then run t
 - [x] Regression fixtures prove the repair refuses missing path authorization, traversal, non-Markdown targets, and non-isolated branches.
 - [x] Dry-run output includes a unified-diff preview for each selected repair.
 - [ ] Add reviewed allowlist entries only when a repair is deterministic and reversible.
-- [ ] Keep workflow, contract, security, provenance, and release changes human-reviewed.
+- [x] Keep workflow, contract, security, provenance, and release changes outside the automated repair allowlist; such changes require human review.
 
 ### E — Continuous evolution
 - [x] Version the report schema.
-- [ ] Add a fixture for every shipped detector and regression-test every confirmed incident.
+- [x] Add positive/negative fixtures across each shipped detector family and regression-test the confirmed scanner/collector incidents covered by the current test suite; new incidents must add a fixture before the detector change is accepted.
 - [x] Add a weekly scheduled scan after the event-driven workflow passed the independent Linux/Windows scanner, build, and normative fixture checks.
 - [x] Record schema compatibility and detector/suppression governance in `docs/verification/health-detectors.md`.
-- [ ] Track repair success rate and blind spots quantitatively.
+- [x] Add the manual quality-ledger tool to calculate observed false-positive/miss shares and verified repair success rate; metrics remain sample-based and unreported until adjudications/repair outcomes are recorded.
 
 ## Definition of done
 
