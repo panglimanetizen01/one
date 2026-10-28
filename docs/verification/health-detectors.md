@@ -75,3 +75,8 @@ Repairs are never authorized to change normative grammar, accepted/rejected fixt
 
 - 2026-10-28 — Initial catalog and governance policy for schema v1, baseline triage, suppression expiry, and guarded repair.
 - 2026-10-28 — Added scanner/runtime environment metadata, branch-scoped cached baseline comparison, and weekly scheduled repository-health scans. Independent scanner tests, CLI build, normative fixture validation, and cross-platform verification passed on source SHA `65d09e3f9ed8639ff0d22a948ada06c3def36c22`; subsequent source changes require a fresh exact-SHA run.
+
+
+## Detector quality and repair outcome measurement
+
+Use [the health quality ledger guide](health-quality-ledger.md) and `tools/health_quality.py` to record reviewed true positives, false positives, confirmed misses, and verified repair outcomes. The tool reports observed sample shares and verified repair success rate; it does not infer correctness from missing data. A detector change should include positive/negative fixtures and a regression case for any confirmed incident. These metrics are operational quality evidence only and never modify the fixed-weight completion ledger or release gates.
