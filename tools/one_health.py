@@ -400,6 +400,10 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     ordered = sorted(unique.values(), key=lambda f: ({"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(f["severity"], 5),
                                                       f["path"], f["line"] or 0, f["finding_id"]))
     counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
+    findings_by_detector = {}
+    for item in ordered:
+        detector = item["detector_id"]
+        findings_by_detector[detector] = findings_by_detector.get(detector, 0) + 1
     suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
     detectors_run = ["path-integrity"]
     if expected_sha is not None:
@@ -416,13 +420,35 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     detectors_run.append("contract-drift")
     if check_one_source:
         detectors_run.append("one-source-contract")
+    detectors_run = sorted(set(detectors_run))
+    detector_status = {
+        "path-integrity": "ran",
+        "revision-integrity": "ran" if expected_sha is not None else "not-requested",
+        "syntax": "ran" if suffixes.intersection({".py", ".toml", ".json"}) else "not-applicable-no-parseable-files",
+        "markdown-links": "ran" if ".md" in suffixes else "not-applicable-no-markdown",
+        "markdown-structure": "ran" if ".md" in suffixes else "not-applicable-no-markdown",
+        "file-integrity": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
+        "workflow-integrity": "ran" if workflows else "not-applicable-no-workflows",
+        "workflow-overlap": "ran" if workflows else "not-applicable-no-workflows",
+        "ci-evidence": "ran" if "ci-evidence" in detectors_run else "not-applicable-no-ci-evidence",
+        "artifact-integrity": "ran" if "artifact-integrity" in detectors_run else "not-applicable-no-artifact-evidence",
+        "contract-drift": "ran",
+        "one-source-contract": "ran" if check_one_source else "not-requested",
+    }
+    detector_coverage = {
+        "status_by_detector": detector_status,
+        "ran_count": sum(1 for status in detector_status.values() if status == "ran"),
+        "not_applicable_count": sum(1 for status in detector_status.values() if status.startswith("not-applicable")),
+        "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
+        "finding_counts_by_detector": findings_by_detector,
+    }
     return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.0", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
             "working_tree": {"state": "clean" if _git(root, "status", "--porcelain") == "" else "dirty_or_unavailable"},
             "finding_count": len(ordered), "severity_counts": counts, "findings": ordered,
-            "detectors_run": detectors_run,
+            "detectors_run": detectors_run, "detector_coverage": detector_coverage,
             "limitations": ["YAML workflow files receive targeted structural/reference checks, not full YAML schema validation.",
                 "The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.",
                 "A finding is a lead for review; no inference is promoted to a root cause without supporting evidence."]}
