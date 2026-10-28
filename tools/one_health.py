@@ -35,6 +35,24 @@ def _files(root: Path):
             except ValueError: continue
             if path.is_file() or path.is_symlink(): yield path, rel
 
+def _markdown_anchors(text: str) -> set[str]:
+    """Return a conservative set of CommonMark-style heading and explicit HTML anchors."""
+    anchors = set()
+    duplicate_counts = {}
+    for line in text.splitlines():
+        heading = re.match(r"^ {0,3}#{1,6}\s+(.+?)\s*#*\s*$", line)
+        if heading:
+            title = re.sub(r"!\[([^\]]+)\]\([^)]*\)", r"\1", heading.group(1))
+            title = re.sub(r"[\x60*_~]", "", title).lower()
+            slug = re.sub(r"[^\w\- ]", "", title, flags=re.UNICODE).strip()
+            slug = re.sub(r"\s+", "-", slug)
+            count = duplicate_counts.get(slug, 0)
+            duplicate_counts[slug] = count + 1
+            anchors.add(slug if count == 0 else f"{slug}-{count}")
+        for explicit in re.finditer(r"""\\b(?:id|name)\\s*=\\s*["']([^"']+)["']""", line, re.IGNORECASE):
+            anchors.add(explicit.group(1))
+    return anchors
+
 def _markdown_links(path, rel, root, text, findings):
     for match in LINK_RE.finditer(text):
         raw = match.group(1).strip()
@@ -43,9 +61,8 @@ def _markdown_links(path, rel, root, text, findings):
         parsed = urlsplit(target)
         if parsed.scheme or parsed.netloc or target.startswith("//"): continue
         target_path = unquote(parsed.path)
-        if not target_path: continue
         line = text.count("\n", 0, match.start()) + 1
-        resolved = (path.parent / target_path).resolve()
+        resolved = (path.parent / target_path).resolve() if target_path else path.resolve()
         try: resolved.relative_to(root.resolve())
         except ValueError:
             findings.append(_finding("markdown-links", "path-escape", rel, line, "high", "high",
@@ -55,6 +72,17 @@ def _markdown_links(path, rel, root, text, findings):
             findings.append(_finding("markdown-links", "broken-relative-link", rel, line, "medium", "high",
                 "Tautan relatif menunjuk ke jalur yang tidak ditemukan.", target,
                 "Perbaiki target atau hapus tautan jika memang sudah usang."))
+            continue
+        fragment = unquote(parsed.fragment)
+        if fragment and resolved.is_file() and (resolved.suffix.lower() == ".md" or resolved == path.resolve()):
+            try:
+                target_text = resolved.read_text(encoding="utf-8")
+            except (OSError, UnicodeError):
+                continue
+            if fragment not in _markdown_anchors(target_text):
+                findings.append(_finding("markdown-links", "broken-heading-anchor", rel, line, "medium", "medium",
+                    "Tautan Markdown menuju heading atau anchor yang tidak ditemukan.", target,
+                    "Perbarui fragmen tautan agar cocok dengan heading/ID aktual, atau perbaiki heading target."))
 
 def _scan_markdown(path, rel, root, text, findings):
     _markdown_links(path, rel, root, text, findings)
