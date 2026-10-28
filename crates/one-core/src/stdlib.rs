@@ -658,6 +658,43 @@ mod tests {
             ("a".into(), Value::Text("x".into())),
         ]);
         assert_eq!(display_value(&map), "{a: x, b: 2}");
+        assert_eq!(display_value(&Value::List(vec![])), "[]");
+    }
+
+    #[test]
+    fn list_append_preserves_order_and_appends_one_value() {
+        assert_eq!(
+            list_append(
+                Value::List(vec![Value::Number(1), Value::Number(2)]),
+                Value::Number(3),
+            ),
+            Some(Value::List(vec![
+                Value::Number(1),
+                Value::Number(2),
+                Value::Number(3),
+            ]))
+        );
+    }
+
+    #[test]
+    fn list_append_supports_empty_lists_and_rejects_non_lists() {
+        assert_eq!(
+            list_append(Value::List(vec![]), Value::Text("awal".into())),
+            Some(Value::List(vec![Value::Text("awal".into())]))
+        );
+        assert_eq!(list_append(Value::Number(1), Value::Number(2)), None);
+    }
+
+    #[test]
+    fn list_remove_preserves_empty_and_missing_value_lists() {
+        let empty = Value::List(vec![]);
+        assert_eq!(list_remove(empty.clone(), &Value::Number(1)), Some(empty));
+
+        let original = Value::List(vec![Value::Number(1), Value::Number(3)]);
+        assert_eq!(
+            list_remove(original.clone(), &Value::Number(2)),
+            Some(original)
+        );
     }
 
     #[test]
