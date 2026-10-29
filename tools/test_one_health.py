@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, main
@@ -641,3 +642,47 @@ class OneHealthScannerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_filesystem_read_error_is_reported_not_crashing(self):
+        path = self.root / "docs" / "unreadable.md"
+        path.write_text("# cannot read\\n", encoding="utf-8")
+        original_read_bytes = Path.read_bytes
+
+        def guarded_read_bytes(candidate):
+            if candidate == path:
+                raise PermissionError("synthetic permission denial")
+            return original_read_bytes(candidate)
+
+        with patch.object(Path, "read_bytes", autospec=True, side_effect=guarded_read_bytes):
+            report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "unreadable-text-file")
+        self.assertEqual("docs/unreadable.md", finding["path"])
+        self.assertIn("synthetic permission denial", finding["evidence"])
+
+    def test_baseline_rejects_missing_or_blank_identity_fields(self):
+        invalid_records = [
+            {"detector_id": "syntax"},
+            {"finding_id": "OH-123"},
+            {"finding_id": " ", "detector_id": "syntax"},
+            {"finding_id": "OH-123", "detector_id": ""},
+        ]
+        for record in invalid_records:
+            with self.subTest(record=record):
+                with self.assertRaises(ValueError):
+                    apply_baseline(
+                        {"findings": [], "finding_count": 0},
+                        {"schema_version": "one-health-report/1", "findings": [record]},
+                    )
+
+    def test_malformed_baseline_cli_returns_exit_two(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_text(
+            json.dumps({"schema_version": "one-health-report/1", "findings": [{}]}),
+            encoding="utf-8",
+        )
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            exit_code = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, exit_code)
+        self.assertIn("BASELINE UNAVAILABLE", stderr.getvalue())
