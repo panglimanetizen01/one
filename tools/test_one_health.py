@@ -632,8 +632,8 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual(0, compared["change_counts"]["resolved"])
 
     def test_baseline_can_resolve_prompt_and_supply_chain_after_applicable_scan(self):
-        self.write(".github/instructions/agent.md", "Use safe, concise instructions.\\n")
-        self.write("pyproject.toml", 'name = "example"\\nversion = "0.1.0"\\n')
+        self.write(".github/instructions/agent.md", "Use safe, concise instructions.\n")
+        self.write("pyproject.toml", 'name = "example"\nversion = "0.1.0"\n')
         current = scan_repository(self.root)
         statuses = current["detector_coverage"]["status_by_detector"]
         self.assertEqual("ran", statuses["security-prompt-injection"])
