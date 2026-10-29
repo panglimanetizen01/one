@@ -1,6 +1,6 @@
 # Local CI with Python
 
-The Python runner at `tools/ci_local.py` provides one command to run the repository's portable CI checks on the current machine. It is useful when hosted GitHub Actions cannot allocate a runner or when a contributor wants a local result without a paid CI service.
+The Python runner at `tools/ci_local.py` runs the repository's portable CI checks on the current machine. It is useful for repeatable local verification and produces a machine-readable JSON report for review or archiving.
 
 ## Requirements
 
@@ -16,6 +16,16 @@ From the repository root:
 python tools/ci_local.py
 ```
 
+By default, the runner writes `ci-local-report.json` in the repository root. The report includes host and Python versions, start/end timestamps, per-step commands, status, elapsed seconds, errors/exit codes, a summary, and an explicit evidence boundary.
+
+To choose a different report path and per-command timeout:
+
+```sh
+python tools/ci_local.py --report artifacts/local-ci.json --timeout 3600
+```
+
+The timeout applies separately to each command (default: 1800 seconds). Use `--timeout 0` to disable command timeouts.
+
 To require Cargo's offline mode:
 
 ```sh
@@ -26,7 +36,7 @@ Offline mode intentionally fails if required dependencies are not cached. It doe
 
 ## Checks performed
 
-The runner checks toolchain availability, then executes:
+The runner checks `rustc --version` and `cargo --version`, then executes:
 
 1. `tools/check_contract.py`
 2. `cargo build --workspace --all-targets`
@@ -39,7 +49,7 @@ The runner checks toolchain availability, then executes:
 9. HTTP GET vertical-slice tests
 10. HTTP GET CLI integration tests
 
-It prints every command, each step result, elapsed time, and a final summary. The process exits with code 0 only when all configured checks pass. A missing tool or failed command is not reported as a pass.
+It prints every command, each step result, elapsed time, and a final summary. The process exits with code 0 only when all configured checks pass. Missing tools, failed commands, and timed-out commands are not reported as passes. A non-zero exit is also returned if the requested report cannot be written.
 
 ## Evidence boundary
 
