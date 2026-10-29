@@ -329,7 +329,7 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertEqual("0.1.2", report["scanner_version"])
         self.assertTrue(report["environment"]["python"])
-        self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD"})
+        self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD", "Android"})
         self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
 
     def test_report_exposes_detector_coverage_and_limitations(self):
