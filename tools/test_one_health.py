@@ -1,11 +1,14 @@
 import json
+import io
+from contextlib import redirect_stderr
 import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
-from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline
+from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, main
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -244,6 +247,27 @@ class OneHealthScannerTests(unittest.TestCase):
             link.unlink(missing_ok=True)
             outside.unlink(missing_ok=True)
 
+    def test_directory_symlink_escape_is_reported_without_scanning_target(self):
+        outside = Path(self.tmp.name).parent / (Path(self.tmp.name).name + "-outside-dir")
+        outside.mkdir()
+        secret = "ghp_" + ("Z" * 36)
+        (outside / "outside.py").write_text("TOKEN = " + repr(secret) + "\n", encoding="utf-8")
+        link = self.root / "docs" / "outside-dir"
+        try:
+            link.symlink_to(outside, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            shutil.rmtree(outside, ignore_errors=True)
+            self.skipTest("platform does not permit directory symlink creation for this user")
+        try:
+            report = scan_repository(self.root)
+            escaping = [f for f in report["findings"] if f["rule_id"] == "symlink-escapes-repository"]
+            self.assertTrue(any(f["path"] == "docs/outside-dir" for f in escaping))
+            self.assertFalse(any(f["path"].startswith("docs/outside-dir/") for f in report["findings"]))
+            self.assertNotIn(secret, json.dumps(report))
+        finally:
+            link.unlink(missing_ok=True)
+            shutil.rmtree(outside, ignore_errors=True)
+
     def test_invalid_expected_sha_is_reported_not_passed(self):
         report = scan_repository(self.root, expected_sha="not-a-commit")
         self.assertTrue(any(f["rule_id"] == "invalid-expected-sha" for f in report["findings"]))
@@ -305,7 +329,7 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertEqual("0.1.2", report["scanner_version"])
         self.assertTrue(report["environment"]["python"])
-        self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD"})
+        self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD", "Android"})
         self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
 
     def test_report_exposes_detector_coverage_and_limitations(self):
@@ -352,6 +376,8 @@ class OneHealthScannerTests(unittest.TestCase):
         finding = next(f for f in report["findings"] if f["rule_id"] == "github-token")
         self.assertEqual("critical", finding["severity"])
         self.assertNotIn(fake_secret, json.dumps(finding))
+        self.assertNotIn(fake_secret, json.dumps(report))
+        self.assertNotIn(fake_secret, render_markdown(report))
         self.assertIn("matched_value_redacted=true", finding["evidence"])
 
     def test_security_detector_covers_additional_provider_token_formats(self):
@@ -373,7 +399,7 @@ class OneHealthScannerTests(unittest.TestCase):
                 self.assertNotIn(fake_pypi, json.dumps(finding))
 
     def test_security_detector_ignores_environment_references_and_placeholders(self):
-        self.write("config.py", "api_key = \"\${API_KEY}\"\npassword = \"your_password_here\"\n")
+        self.write("config.py", "api_key = \"${API_KEY}\"\npassword = \"your_password_here\"\n")
         report = scan_repository(self.root)
         self.assertFalse(any(f["detector_id"] == "security-secrets" for f in report["findings"]))
 
@@ -547,6 +573,28 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
 
+    def test_invalid_utf8_baseline_fails_closed_with_exit_two(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_bytes(bytes([255]))
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            exit_code = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, exit_code)
+        self.assertIn("BASELINE UNAVAILABLE:", stderr.getvalue())
+
+    def test_baseline_rejects_duplicate_finding_ids(self):
+        report = scan_repository(self.root)
+        duplicate = {"finding_id": "OH-duplicate", "detector_id": "markdown-links", "status": "open"}
+        baseline = {"schema_version": "one-health-report/1", "findings": [duplicate, dict(duplicate)]}
+        with self.assertRaisesRegex(ValueError, "duplicate baseline finding_id"):
+            apply_baseline(report, baseline)
+
+    def test_baseline_rejects_non_object_finding_records(self):
+        report = scan_repository(self.root)
+        baseline = {"schema_version": "one-health-report/1", "findings": ["not-an-object"]}
+        with self.assertRaisesRegex(ValueError, "must be an object"):
+            apply_baseline(report, baseline)
+
     def test_baseline_marks_existing_findings_recurring_and_prioritizes_them(self):
         self.write("README.md", "[missing](absent.md)\n")
         current = scan_repository(self.root)
@@ -567,6 +615,50 @@ class OneHealthScannerTests(unittest.TestCase):
         compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
+
+    def test_baseline_requires_explicit_detector_coverage_to_resolve(self):
+        current = scan_repository(self.root)
+        current.pop("detector_coverage", None)
+        old_findings = [
+            {"finding_id": "OH-prior-prompt", "detector_id": "security-prompt-injection",
+             "status": "open", "summary": "Prior prompt-injection finding"},
+        ]
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": old_findings})
+        self.assertEqual(1, compared["change_counts"]["not_checked"])
+        self.assertEqual(0, compared["change_counts"]["resolved"])
+        self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
+
+    def test_baseline_does_not_resolve_prompt_or_supply_chain_without_input_surfaces(self):
+        current = scan_repository(self.root)
+        old_findings = [
+            {"finding_id": "OH-prior-prompt", "detector_id": "security-prompt-injection",
+             "status": "open", "summary": "Prior prompt-injection finding"},
+            {"finding_id": "OH-prior-supply-chain", "detector_id": "security-supply-chain",
+             "status": "open", "summary": "Prior supply-chain finding"},
+        ]
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": old_findings})
+        not_checked = {item["detector_id"]: item for item in compared["not_checked_findings"]}
+        self.assertEqual({"security-prompt-injection", "security-supply-chain"}, set(not_checked))
+        self.assertTrue(all(item["status"] == "blocked" for item in not_checked.values()))
+        self.assertEqual(2, compared["change_counts"]["not_checked"])
+        self.assertEqual(0, compared["change_counts"]["resolved"])
+
+    def test_baseline_can_resolve_prompt_and_supply_chain_after_applicable_scan(self):
+        self.write(".github/instructions/agent.md", "Use safe, concise instructions.\n")
+        self.write("pyproject.toml", 'name = "example"\nversion = "0.1.0"\n')
+        current = scan_repository(self.root)
+        statuses = current["detector_coverage"]["status_by_detector"]
+        self.assertEqual("ran", statuses["security-prompt-injection"])
+        self.assertEqual("ran", statuses["security-supply-chain"])
+        old_findings = [
+            {"finding_id": "OH-prior-prompt", "detector_id": "security-prompt-injection",
+             "status": "open", "summary": "Prior prompt-injection finding"},
+            {"finding_id": "OH-prior-supply-chain", "detector_id": "security-supply-chain",
+             "status": "open", "summary": "Prior supply-chain finding"},
+        ]
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": old_findings})
+        self.assertEqual(2, compared["change_counts"]["resolved"])
+        self.assertEqual(0, compared["change_counts"]["not_checked"])
 
     def test_baseline_marks_disappeared_findings_as_reviewable_resolutions(self):
         current = scan_repository(self.root)
@@ -593,6 +685,77 @@ class OneHealthScannerTests(unittest.TestCase):
         item = next(f for f in compared["findings"] if f["finding_id"] == finding["finding_id"])
         self.assertEqual("reopened", item["change_status"])
 
+
+    def test_filesystem_read_error_is_reported_not_crashing(self):
+        path = self.root / "docs" / "unreadable.md"
+        path.write_text("# cannot read\n", encoding="utf-8")
+        original_read_bytes = Path.read_bytes
+
+        def guarded_read_bytes(candidate):
+            if getattr(candidate, "name", None) == "unreadable.md":
+                raise PermissionError("synthetic permission denial")
+            return original_read_bytes(candidate)
+
+        with patch.object(Path, "read_bytes", autospec=True, side_effect=guarded_read_bytes):
+            report = scan_repository(self.root)
+        finding = next(f for f in report["findings"] if f["rule_id"] == "unreadable-text-file")
+        self.assertEqual("docs/unreadable.md", finding["path"])
+        self.assertIn("synthetic permission denial", finding["evidence"])
+
+    def test_baseline_rejects_missing_or_blank_identity_fields(self):
+        invalid_records = [
+            {"detector_id": "syntax"},
+            {"finding_id": "OH-123"},
+            {"finding_id": " ", "detector_id": "syntax"},
+            {"finding_id": "OH-123", "detector_id": ""},
+        ]
+        for record in invalid_records:
+            with self.subTest(record=record):
+                with self.assertRaises(ValueError):
+                    apply_baseline(
+                        {"findings": [], "finding_count": 0},
+                        {"schema_version": "one-health-report/1", "findings": [record]},
+                    )
+
+    def test_malformed_baseline_cli_returns_exit_two(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_text(
+            json.dumps({"schema_version": "one-health-report/1", "findings": [{}]}),
+            encoding="utf-8",
+        )
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            exit_code = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, exit_code)
+        self.assertIn("BASELINE UNAVAILABLE", stderr.getvalue())
+
+
+    def test_cli_exit_code_zero_when_no_high_or_critical_findings(self):
+        report = {"findings": [{"severity": "medium"}]}
+        with patch("one_health.scan_repository", return_value=report):
+            self.assertEqual(0, main(["--root", str(self.root), "--quiet"]))
+
+    def test_cli_exit_code_one_for_high_or_critical_findings(self):
+        for severity in ("high", "critical"):
+            with self.subTest(severity=severity):
+                report = {"findings": [{"severity": severity}]}
+                with patch("one_health.scan_repository", return_value=report):
+                    self.assertEqual(1, main(["--root", str(self.root), "--quiet"]))
+
+    def test_cli_writes_json_and_markdown_reports(self):
+        report = scan_repository(self.root)
+        json_path = self.root / "out" / "health.json"
+        markdown_path = self.root / "out" / "health.md"
+        with patch("one_health.scan_repository", return_value=report):
+            main([
+                "--root", str(self.root),
+                "--json-out", str(json_path),
+                "--markdown-out", str(markdown_path),
+                "--quiet",
+            ])
+        serialized = json.loads(json_path.read_text(encoding="utf-8"))
+        self.assertEqual("one-health-report/1", serialized["schema_version"])
+        self.assertIn("## Detector coverage", markdown_path.read_text(encoding="utf-8"))
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,7 +22,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `syntax` | Python AST, TOML, JSON parsing | Does not validate all language/tool semantics |
 | `markdown-links` | Broken relative paths, links escaping repository root, and stale same-page/cross-file Markdown heading or explicit HTML anchors | Markdown extensions, reference-style links, and generated routes are not fully parsed; heading slugging is a conservative approximation |
 | `markdown-structure` | Fenced-code closure | Not a complete CommonMark validator |
-| `path-integrity` | Symlinks resolving outside repository | Does not validate every runtime path or filesystem race |
+| `path-integrity` | File and directory symlinks resolving outside repository; directory symlinks are surfaced but never traversed | Does not validate every runtime path or filesystem race; behavior depends on platform permissions and filesystem semantics |
 | `file-integrity` | UTF-8 readability of scanned text files | Does not prove binary/artifact integrity |
 | `workflow-integrity` | Duplicate workflow names, missing local actions and targeted script paths | Not a full GitHub Actions YAML/schema validator |
 | `workflow-overlap` | Identical single-line `run:` commands in multiple workflow files | Low-confidence review hint; intentional duplication is common |
@@ -44,7 +44,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 - Scanner implementation version `0.1.2` includes JavaScript/TypeScript source traversal and plural-aware prompt-injection secret-action correlation; the report schema remains version 1 because field types and finding identity semantics are unchanged.
 - Adding optional fields without changing existing field meaning is backward-compatible within schema version 1.
 - Removing fields, changing field types, changing finding identity semantics, or changing baseline comparison meanings requires a new schema version and migration notes.
-- Baselines with unknown schema versions are rejected closed; never silently compare incompatible reports.
+- Baselines with unknown schema versions, malformed finding records, missing/blank IDs, or duplicate finding IDs are rejected closed. Unreadable and invalid-UTF-8 baseline files return CLI exit code 2; never silently compare ambiguous or incompatible reports.
 - Consumers must tolerate additional fields and must not interpret absence of a detector from `detectors_run` as a clean result.
 
 ## Suppression policy
@@ -109,3 +109,28 @@ Known boundary: this remains a static repository scanner, not an OS sandbox, ful
 
 
 - 2026-10-28 — Exact-SHA regression evidence for source `8db21148436d313ebe148f8248267a75f7266ea0`: independent verifier run [40730508735](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40730508735) completed on Ubuntu and Windows. Each OS ran 59 scanner tests, 6 CI collector tests, 5 quality tests, built the ONE CLI, and self-scanned the checked-out ONE repository. Both reports matched `head_sha` and `expected_sha`; each reported 0 critical, 0 high, 11 medium, 27 informational findings, with 2 JSON artifacts ([Ubuntu](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40730508735), [Windows](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40730508735)). This is verified execution evidence for that SHA only. Any subsequent source commit makes it historical and requires revalidation before final-head acceptance.
+
+## Python–Rust parity matrix (migration snapshot)
+
+Reference revisions for this comparison: Python `tools/one_health.py` at PR #91 head `22b1c389491d132769eb4cd1e0abaa4bd42b753c`; native Rust `crates/one-cli/src/integrity.rs` at PR #89 head `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`. This is a scope comparison, not a claim of semantic parity.
+
+| Capability | Python reference scanner | Native Rust scanner | Parity status / required follow-up |
+|---|---|---|---|
+| Exact expected SHA / checkout HEAD | Yes; JSON/CI evidence also checks SHA freshness | Yes; `--expected-sha` check | Partial: align JSON evidence schema and rule IDs |
+| File and directory symlink escapes | Yes; surfaces directory symlinks and does not traverse them | Yes; enumerates symlinks without following them | Partial: rule IDs differ (`symlink-escapes-repository` vs `symlink-escapes-root`); align output contract and regression fixtures |
+| Unreadable / invalid UTF-8 text | Emits a finding for unreadable scanned text | Emits `text-not-utf8` for selected extensions; directory enumeration errors abort scan | Gap: match per-file error handling and document fatal root/enumeration errors |
+| Markdown links and anchors | Relative paths, root escapes, heading/HTML anchors and stale cross-file fragments (heuristic) | Broken relative-link checks only; skips external and fragment-only links | Gap: root-escape and anchor checks absent; parser coverage differs |
+| Markdown structure | Unclosed fenced-code detection | Unclosed fenced-code detection | Partial: confirm equivalent fence edge cases with shared fixtures |
+| Workflow integrity | Duplicate names, missing local actions/script paths, overlap hints and metadata checks | Missing workflow name and targeted missing local actions | Gap: add duplicate-name, script-path and overlap checks or explicitly scope out |
+| Secret redaction | Known provider patterns, heuristic hardcoded secrets; redacts evidence in JSON/Markdown | Private-key/token prefixes and line-level secret heuristics; redacts finding evidence | Partial: provider-pattern coverage differs; add shared positive/negative fixtures and assert whole-report redaction |
+| Python AST / JS/TS correlation | Python AST and local source/sink heuristics; JS/TS regex heuristics | No equivalent AST/source-sink correlation in current Rust implementation | Gap: implement equivalent rules or explicitly document Rust as narrower |
+| Prompt injection / agent exfiltration | Dedicated prompt-injection and secret-exfiltration correlation | Not present in current Rust security detector | Gap: add tests and detector or declare unsupported scope |
+| Supply-chain / dependency and workflow security | Dependency/workflow pinning and related correlation checks | Basic download-and-execute and `write-all` checks | Gap: narrower coverage; do not claim parity |
+| CI run/job/step/artifact evidence | Dedicated collector/correlation, baseline triage and artifact freshness/digest observations | No equivalent live CI metadata collection in scanner module | Gap: remains Python-only unless a separate native contract is added |
+| Baseline / finding lifecycle | Validated baseline; new/recurring/reopened/resolved classification | Not present in current Rust scanner module | Gap: Python-only feature; specify whether this remains intentionally out of scope |
+| JSON and Markdown reports / CLI exit contract | Structured report, Markdown rendering, severity-based exit codes | Native CLI integration exists; report contract requires separate verification | Pending: compare schema, redaction, ordering, exit codes and error behavior with shared fixtures |
+| Safe repair | Guarded, allowlisted Markdown newline repair only | Read-only scanner | Intentional divergence: Rust must remain read-only unless a separately reviewed repair contract is approved |
+
+### Acceptance gate
+
+Do not describe the scanners as parity-equivalent yet. For each shared capability, run the same positive and negative fixture corpus against both implementations and compare normalized `rule_id`, path, severity, confidence, redacted evidence, exit code and JSON schema. Mark Python-only capabilities explicitly rather than silently treating missing Rust findings as passes. Python regression suites, normative self-scan and Linux Rust build/Clippy/workspace tests passed on the exact revisions listed above in the independent verifier. Windows Rust native tests and Android AArch64 artifact/runtime checks remain pending; do not call native validation complete until those checks finish.
