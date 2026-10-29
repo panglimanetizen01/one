@@ -10,6 +10,8 @@ fn selected(scope: &str) -> Option<Vec<&'static str>> { Some(match scope {
     "artifacts" => vec!["artifact-integrity","revision-integrity"], "contracts" => vec!["contract-drift","file-integrity"],
     "markdown" => vec!["markdown-links","markdown-structure"], "readme" => vec!["markdown-links","markdown-structure","file-integrity"], _ => return None,
 })}
+// The constructor mirrors the Finding fields one-to-one; keep this localized exception rather than suppressing Clippy crate-wide.
+#[allow(clippy::too_many_arguments)]
 fn finding(d: &'static str,r: &'static str,s: &'static str,p: String,l: usize,m: &str,e: &str,f: &str)->Finding { Finding{detector:d,rule:r,severity:s,path:p,line:l,summary:m.into(),evidence:e.into(),fix:f.into()} }
 fn rel(root:&Path,path:&Path)->String { path.strip_prefix(root).unwrap_or(path).to_string_lossy().replace('\\',"/") }
 fn files(root:&Path)->Result<(Vec<PathBuf>,Vec<PathBuf>),String>{
@@ -22,7 +24,8 @@ fn files(root:&Path)->Result<(Vec<PathBuf>,Vec<PathBuf>),String>{
  }}out.sort();symlinks.sort();Ok((out,symlinks))
 }
 fn head_sha(root:&Path)->Option<String>{let o=Command::new("git").arg("-C").arg(root).args(["rev-parse","--verify","HEAD"]).output().ok()?;if !o.status.success(){return None;}let s=String::from_utf8(o.stdout).ok()?.trim().to_owned();(s.len()==40&&s.bytes().all(|b|b.is_ascii_hexdigit())).then_some(s)}
-fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&'static str>,Option<String>),String>{
+type ScanResult = Result<(Vec<Finding>, Vec<&'static str>, Option<String>), String>;
+fn scan(root:&Path,scope:&str,expected:Option<&str>)->ScanResult{
  let run=selected(scope).ok_or_else(||format!("scope tidak dikenal: {scope}"))?;
  let skipped=DETECTORS.iter().copied().filter(|d|!run.contains(d)).collect::<Vec<_>>();
  let root=fs::canonicalize(root).map_err(|e|format!("root tidak valid: {e}"))?; let (all,symlinks)=files(&root)?;let head=head_sha(&root);let mut out=Vec::new();
