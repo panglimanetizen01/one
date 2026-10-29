@@ -963,9 +963,33 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 "The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.",
                 "A finding is a lead for review; no inference is promoted to a root cause without supporting evidence."]}
 
+def _validate_baseline(baseline: object) -> dict:
+    """Reject malformed or ambiguous baselines before they influence triage."""
+    if not isinstance(baseline, dict) or baseline.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("unsupported baseline schema")
+    findings = baseline.get("findings")
+    if not isinstance(findings, list):
+        raise ValueError("baseline findings must be an array")
+    seen_ids = set()
+    for index, item in enumerate(findings):
+        if not isinstance(item, dict):
+            raise ValueError(f"baseline findings[{index}] must be an object")
+        finding_id = item.get("finding_id")
+        detector_id = item.get("detector_id")
+        if not isinstance(finding_id, str) or not finding_id.strip():
+            raise ValueError(f"baseline findings[{index}].finding_id must be a non-empty string")
+        if not isinstance(detector_id, str) or not detector_id.strip():
+            raise ValueError(f"baseline findings[{index}].detector_id must be a non-empty string")
+        if finding_id in seen_ids:
+            raise ValueError(f"duplicate baseline finding_id: {finding_id}")
+        seen_ids.add(finding_id)
+    return baseline
+
+
 def apply_baseline(report: dict, baseline: dict) -> dict:
     """Compare findings without changing the fixed-weight acceptance ledger."""
-    previous = {item.get("finding_id"): item for item in baseline.get("findings", []) if item.get("finding_id")}
+    baseline = _validate_baseline(baseline)
+    previous = {item["finding_id"]: item for item in baseline["findings"]}
     current_ids = {item["finding_id"] for item in report["findings"]}
     counts = {"new": 0, "recurring": 0, "reopened": 0, "resolved": 0, "not_checked": 0}
     for item in report["findings"]:
@@ -1117,10 +1141,11 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, json.JSONDecodeError) as exc:
             print(f"BASELINE UNAVAILABLE: {exc}", file=sys.stderr)
             return 2
-        if not isinstance(baseline, dict) or baseline.get("schema_version") != SCHEMA_VERSION or not isinstance(baseline.get("findings"), list):
-            print("BASELINE UNAVAILABLE: unsupported schema or missing findings list", file=sys.stderr)
+        try:
+            report = apply_baseline(report, baseline)
+        except ValueError as exc:
+            print(f"BASELINE UNAVAILABLE: {exc}", file=sys.stderr)
             return 2
-        report = apply_baseline(report, baseline)
     if args.propose_safe_fixes or args.apply_safe_fixes:
         try: proposals = _safe_fix_missing_markdown_newline(root, report, args.apply_safe_fixes, args.repair_path)
         except RuntimeError as exc:
