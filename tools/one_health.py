@@ -1022,9 +1022,10 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
         # entries are intentionally marked not-applicable when their input
         # surfaces do not exist. A missing finding can only be resolved when
         # the detector actually ran against applicable input.
-        detector_ran = detector_id in current_detectors and (
-            detector_status == "ran" if detector_status is not None else True
-        )
+        # Fail closed: only explicit positive coverage proves that the
+        # detector actually ran against applicable input. Missing/old reports
+        # must never turn an absent finding into an implicit resolution.
+        detector_ran = detector_id in current_detectors and detector_status == "ran"
         if not detector_ran:
             item["status"] = "blocked"
             item["change_status"] = "not_checked"
