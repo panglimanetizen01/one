@@ -112,7 +112,7 @@ Known boundary: this remains a static repository scanner, not an OS sandbox, ful
 
 ## Python–Rust parity matrix (migration snapshot)
 
-Reference revisions for this comparison: Python `tools/one_health.py` at `d67f19d8ad5996f1676fb624b094639df183571e`; native Rust `crates/one-cli/src/integrity.rs` at PR #89 head `4a3f64f24fcd065aa8100d5fe32fbc1c3f68ebb0`. This is a scope comparison, not a claim of semantic parity.
+Reference revisions for this comparison: Python `tools/one_health.py` at PR #91 head `22b1c389491d132769eb4cd1e0abaa4bd42b753c`; native Rust `crates/one-cli/src/integrity.rs` at PR #89 head `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`. This is a scope comparison, not a claim of semantic parity.
 
 | Capability | Python reference scanner | Native Rust scanner | Parity status / required follow-up |
 |---|---|---|---|
@@ -133,4 +133,4 @@ Reference revisions for this comparison: Python `tools/one_health.py` at `d67f19
 
 ### Acceptance gate
 
-Do not describe the scanners as parity-equivalent yet. For each shared capability, run the same positive and negative fixture corpus against both implementations and compare normalized `rule_id`, path, severity, confidence, redacted evidence, exit code and JSON schema. Mark Python-only capabilities explicitly rather than silently treating missing Rust findings as passes. Current Python suite evidence is exact-SHA only; native Rust build/lint/test validation remains subject to the independent verifier's final result.
+Do not describe the scanners as parity-equivalent yet. For each shared capability, run the same positive and negative fixture corpus against both implementations and compare normalized `rule_id`, path, severity, confidence, redacted evidence, exit code and JSON schema. Mark Python-only capabilities explicitly rather than silently treating missing Rust findings as passes. Python regression suites, normative self-scan and Linux Rust build/Clippy/workspace tests passed on the exact revisions listed above in the independent verifier. Windows Rust native tests and Android AArch64 artifact/runtime checks remain pending; do not call native validation complete until those checks finish.
