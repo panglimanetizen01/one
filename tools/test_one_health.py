@@ -248,7 +248,7 @@ class OneHealthScannerTests(unittest.TestCase):
         outside = Path(self.tmp.name).parent / (Path(self.tmp.name).name + "-outside-dir")
         outside.mkdir()
         secret = "ghp_" + ("Z" * 36)
-        (outside / "outside.py").write_text("TOKEN = " + repr(secret) + "\\n", encoding="utf-8")
+        (outside / "outside.py").write_text("TOKEN = " + repr(secret) + "\n", encoding="utf-8")
         link = self.root / "docs" / "outside-dir"
         try:
             link.symlink_to(outside, target_is_directory=True)
