@@ -89,6 +89,8 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
+- `LOCAL_CI.md` — how to run the Python local CI runner and interpret host/platform limits.
+- `../tools/ci_local.py` — Python orchestrator for the portable contract, build, lint, and test checks from the hosted CI workflow.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 - `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
