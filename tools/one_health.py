@@ -1138,7 +1138,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.baseline:
         try:
             baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             print(f"BASELINE UNAVAILABLE: {exc}", file=sys.stderr)
             return 2
         try:
