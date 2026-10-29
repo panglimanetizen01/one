@@ -642,10 +642,6 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("reopened", item["change_status"])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
     def test_filesystem_read_error_is_reported_not_crashing(self):
         path = self.root / "docs" / "unreadable.md"
         path.write_text("# cannot read\\n", encoding="utf-8")
@@ -716,3 +712,6 @@ if __name__ == "__main__":
         serialized = json.loads(json_path.read_text(encoding="utf-8"))
         self.assertEqual("one-health-report/1", serialized["schema_version"])
         self.assertIn("## Detector coverage", markdown_path.read_text(encoding="utf-8"))
+
+if __name__ == "__main__":
+    unittest.main()
