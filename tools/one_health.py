@@ -29,7 +29,20 @@ def _finding(detector, rule, path, line, severity, confidence, summary, evidence
 
 def _files(root: Path):
     for current, dirs, names in os.walk(root, followlinks=False):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
+        # os.walk with followlinks=False does not put directory symlinks in
+        # names and will not descend into them. Inspect and yield them
+        # explicitly before pruning traversal, otherwise escaping directory
+        # symlinks evade the path-integrity detector entirely.
+        for name in sorted(dirs[:]):
+            path = Path(current) / name
+            if path.is_symlink():
+                dirs.remove(name)
+                try: rel = path.relative_to(root).as_posix()
+                except ValueError: continue
+                yield path, rel
+            elif name in SKIP_DIRS:
+                dirs.remove(name)
+        dirs[:] = sorted(dirs)
         for name in sorted(names):
             path = Path(current) / name
             try: rel = path.relative_to(root).as_posix()
