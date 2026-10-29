@@ -376,6 +376,8 @@ class OneHealthScannerTests(unittest.TestCase):
         finding = next(f for f in report["findings"] if f["rule_id"] == "github-token")
         self.assertEqual("critical", finding["severity"])
         self.assertNotIn(fake_secret, json.dumps(finding))
+        self.assertNotIn(fake_secret, json.dumps(report))
+        self.assertNotIn(fake_secret, render_markdown(report))
         self.assertIn("matched_value_redacted=true", finding["evidence"])
 
     def test_security_detector_covers_additional_provider_token_formats(self):
