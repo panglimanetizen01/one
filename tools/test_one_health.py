@@ -399,7 +399,7 @@ class OneHealthScannerTests(unittest.TestCase):
                 self.assertNotIn(fake_pypi, json.dumps(finding))
 
     def test_security_detector_ignores_environment_references_and_placeholders(self):
-        self.write("config.py", "api_key = \"\${API_KEY}\"\npassword = \"your_password_here\"\n")
+        self.write("config.py", "api_key = \"${API_KEY}\"\npassword = \"your_password_here\"\n")
         report = scan_repository(self.root)
         self.assertFalse(any(f["detector_id"] == "security-secrets" for f in report["findings"]))
 
