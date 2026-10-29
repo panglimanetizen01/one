@@ -616,6 +616,38 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
 
+    def test_baseline_does_not_resolve_prompt_or_supply_chain_without_input_surfaces(self):
+        current = scan_repository(self.root)
+        old_findings = [
+            {"finding_id": "OH-prior-prompt", "detector_id": "security-prompt-injection",
+             "status": "open", "summary": "Prior prompt-injection finding"},
+            {"finding_id": "OH-prior-supply-chain", "detector_id": "security-supply-chain",
+             "status": "open", "summary": "Prior supply-chain finding"},
+        ]
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": old_findings})
+        not_checked = {item["detector_id"]: item for item in compared["not_checked_findings"]}
+        self.assertEqual({"security-prompt-injection", "security-supply-chain"}, set(not_checked))
+        self.assertTrue(all(item["status"] == "blocked" for item in not_checked.values()))
+        self.assertEqual(2, compared["change_counts"]["not_checked"])
+        self.assertEqual(0, compared["change_counts"]["resolved"])
+
+    def test_baseline_can_resolve_prompt_and_supply_chain_after_applicable_scan(self):
+        self.write(".github/instructions/agent.md", "Use safe, concise instructions.\\n")
+        self.write("pyproject.toml", 'name = "example"\\nversion = "0.1.0"\\n')
+        current = scan_repository(self.root)
+        statuses = current["detector_coverage"]["status_by_detector"]
+        self.assertEqual("ran", statuses["security-prompt-injection"])
+        self.assertEqual("ran", statuses["security-supply-chain"])
+        old_findings = [
+            {"finding_id": "OH-prior-prompt", "detector_id": "security-prompt-injection",
+             "status": "open", "summary": "Prior prompt-injection finding"},
+            {"finding_id": "OH-prior-supply-chain", "detector_id": "security-supply-chain",
+             "status": "open", "summary": "Prior supply-chain finding"},
+        ]
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": old_findings})
+        self.assertEqual(2, compared["change_counts"]["resolved"])
+        self.assertEqual(0, compared["change_counts"]["not_checked"])
+
     def test_baseline_marks_disappeared_findings_as_reviewable_resolutions(self):
         current = scan_repository(self.root)
         old = {"finding_id": "OH-previous", "detector_id": "markdown-links", "status": "open", "summary": "Old issue"}
