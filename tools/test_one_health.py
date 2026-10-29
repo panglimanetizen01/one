@@ -686,3 +686,31 @@ if __name__ == "__main__":
             exit_code = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
         self.assertEqual(2, exit_code)
         self.assertIn("BASELINE UNAVAILABLE", stderr.getvalue())
+
+
+    def test_cli_exit_code_zero_when_no_high_or_critical_findings(self):
+        report = {"findings": [{"severity": "medium"}]}
+        with patch("one_health.scan_repository", return_value=report):
+            self.assertEqual(0, main(["--root", str(self.root), "--quiet"]))
+
+    def test_cli_exit_code_one_for_high_or_critical_findings(self):
+        for severity in ("high", "critical"):
+            with self.subTest(severity=severity):
+                report = {"findings": [{"severity": severity}]}
+                with patch("one_health.scan_repository", return_value=report):
+                    self.assertEqual(1, main(["--root", str(self.root), "--quiet"]))
+
+    def test_cli_writes_json_and_markdown_reports(self):
+        report = scan_repository(self.root)
+        json_path = self.root / "out" / "health.json"
+        markdown_path = self.root / "out" / "health.md"
+        with patch("one_health.scan_repository", return_value=report):
+            main([
+                "--root", str(self.root),
+                "--json-out", str(json_path),
+                "--markdown-out", str(markdown_path),
+                "--quiet",
+            ])
+        serialized = json.loads(json_path.read_text(encoding="utf-8"))
+        self.assertEqual("one-health-report/1", serialized["schema_version"])
+        self.assertIn("## Detector coverage", markdown_path.read_text(encoding="utf-8"))
