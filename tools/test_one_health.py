@@ -1,11 +1,13 @@
 import json
+import io
+from contextlib import redirect_stderr
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline
+from one_health import scan_repository, apply_baseline, render_markdown, _safe_fix_missing_markdown_newline, main
 
 
 class OneHealthScannerTests(unittest.TestCase):
@@ -567,6 +569,15 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("one-health-report/1", report["schema_version"])
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
+
+    def test_invalid_utf8_baseline_fails_closed_with_exit_two(self):
+        baseline_path = self.root / "baseline.json"
+        baseline_path.write_bytes(b"\\xff")
+        stderr = io.StringIO()
+        with redirect_stderr(stderr):
+            exit_code = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
+        self.assertEqual(2, exit_code)
+        self.assertIn("BASELINE UNAVAILABLE:", stderr.getvalue())
 
     def test_baseline_rejects_duplicate_finding_ids(self):
         report = scan_repository(self.root)
