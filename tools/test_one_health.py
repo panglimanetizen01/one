@@ -616,6 +616,18 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
 
+    def test_baseline_requires_explicit_detector_coverage_to_resolve(self):
+        current = scan_repository(self.root)
+        current.pop("detector_coverage", None)
+        old_findings = [
+            {"finding_id": "OH-prior-prompt", "detector_id": "security-prompt-injection",
+             "status": "open", "summary": "Prior prompt-injection finding"},
+        ]
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": old_findings})
+        self.assertEqual(1, compared["change_counts"]["not_checked"])
+        self.assertEqual(0, compared["change_counts"]["resolved"])
+        self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
+
     def test_baseline_does_not_resolve_prompt_or_supply_chain_without_input_surfaces(self):
         current = scan_repository(self.root)
         old_findings = [
