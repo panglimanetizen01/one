@@ -244,6 +244,27 @@ class OneHealthScannerTests(unittest.TestCase):
             link.unlink(missing_ok=True)
             outside.unlink(missing_ok=True)
 
+    def test_directory_symlink_escape_is_reported_without_scanning_target(self):
+        outside = Path(self.tmp.name).parent / (Path(self.tmp.name).name + "-outside-dir")
+        outside.mkdir()
+        secret = "ghp_" + ("Z" * 36)
+        (outside / "outside.py").write_text("TOKEN = " + repr(secret) + "\\n", encoding="utf-8")
+        link = self.root / "docs" / "outside-dir"
+        try:
+            link.symlink_to(outside, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            shutil.rmtree(outside, ignore_errors=True)
+            self.skipTest("platform does not permit directory symlink creation for this user")
+        try:
+            report = scan_repository(self.root)
+            escaping = [f for f in report["findings"] if f["rule_id"] == "symlink-escapes-repository"]
+            self.assertTrue(any(f["path"] == "docs/outside-dir" for f in escaping))
+            self.assertFalse(any(f["path"].startswith("docs/outside-dir/") for f in report["findings"]))
+            self.assertNotIn(secret, json.dumps(report))
+        finally:
+            link.unlink(missing_ok=True)
+            shutil.rmtree(outside, ignore_errors=True)
+
     def test_invalid_expected_sha_is_reported_not_passed(self):
         report = scan_repository(self.root, expected_sha="not-a-commit")
         self.assertTrue(any(f["rule_id"] == "invalid-expected-sha" for f in report["findings"]))
