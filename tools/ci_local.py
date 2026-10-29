@@ -136,7 +136,7 @@ def main() -> int:
         ("Rust compiler", ("rustc", "--version")),
         ("Cargo", ("cargo", "--version")),
     ):
-        step = run_step(name, command, env, timeout_seconds) if timeout_seconds else run_step(name, command, env, 10**9)
+        step = run_step(name, command, env, timeout_seconds)
         steps.append(step)
         if step["status"] != "PASS":
             exit_code = 2
@@ -150,7 +150,7 @@ def main() -> int:
             return exit_code
 
     for name, command in CHECKS:
-        steps.append(run_step(name, command, env, timeout_seconds or 10**9))
+        steps.append(run_step(name, command, env, timeout_seconds))
 
     passed = sum(step["status"] == "PASS" for step in steps)
     failed = len(steps) - passed
