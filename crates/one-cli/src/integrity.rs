@@ -79,7 +79,7 @@ fn scan(root:&Path,scope:&str,expected:Option<&str>)->Result<(Vec<Finding>,Vec<&
  if run.contains(&"artifact-integrity")&&!root.join("Cargo.lock").is_file(){out.push(finding("artifact-integrity","cargo-lock-missing","medium","Cargo.lock".into(),0,"Cargo.lock tidak ditemukan.","lockfile hilang","Tambahkan lockfile yang sesuai toolchain."));}
  out.sort_by(|a,b|(&a.path,a.line,a.detector,a.rule).cmp(&(&b.path,b.line,b.detector,b.rule)));Ok((out,skipped,head))
 }
-pub(crate) fn run(args:impl IntoIterator<Item=String>)->i32{
+pub(crate) fn run(args:impl IntoIterator<Item=String>)->u8{
  let mut args=args.into_iter();let mut scope="all".to_owned();let mut root=PathBuf::from(".");let mut expected=None;
  while let Some(a)=args.next(){match a.as_str(){
  "--scope"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --scope membutuhkan nilai");return 2;};scope=v;},
