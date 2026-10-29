@@ -1010,14 +1010,25 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
                                    "acceptance_blocker_factor": blocker}
     resolved, not_checked = [], []
     current_detectors = set(report.get("detectors_run", []))
+    coverage = report.get("detector_coverage", {})
+    status_by_detector = coverage.get("status_by_detector", {}) if isinstance(coverage, dict) else {}
     for finding_id, old in previous.items():
         if finding_id in current_ids or old.get("status") == "resolved" or old.get("change_status") == "resolved":
             continue
         item = dict(old)
-        if item.get("detector_id") not in current_detectors:
+        detector_id = item.get("detector_id")
+        detector_status = status_by_detector.get(detector_id)
+        # detectors_run records the scanner's declared detector set, but some
+        # entries are intentionally marked not-applicable when their input
+        # surfaces do not exist. A missing finding can only be resolved when
+        # the detector actually ran against applicable input.
+        detector_ran = detector_id in current_detectors and (
+            detector_status == "ran" if detector_status is not None else True
+        )
+        if not detector_ran:
             item["status"] = "blocked"
             item["change_status"] = "not_checked"
-            item["resolution_basis"] = "The current scan did not run this detector; absence is not evidence of resolution."
+            item["resolution_basis"] = "The current scan did not run this detector against applicable input; absence is not evidence of resolution."
             not_checked.append(item)
             counts["not_checked"] += 1
         else:
