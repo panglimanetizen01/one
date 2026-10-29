@@ -644,11 +644,11 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_filesystem_read_error_is_reported_not_crashing(self):
         path = self.root / "docs" / "unreadable.md"
-        path.write_text("# cannot read\\n", encoding="utf-8")
+        path.write_text("# cannot read\n", encoding="utf-8")
         original_read_bytes = Path.read_bytes
 
         def guarded_read_bytes(candidate):
-            if candidate == path:
+            if getattr(candidate, "name", None) == "unreadable.md":
                 raise PermissionError("synthetic permission denial")
             return original_read_bytes(candidate)
 
