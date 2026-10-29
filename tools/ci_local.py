@@ -47,7 +47,7 @@ def run_step(
     name: str,
     command: Sequence[str],
     env: dict[str, str],
-    timeout_seconds: float,
+    timeout_seconds: float | None,
 ) -> dict[str, Any]:
     print(f"\n{'=' * 72}\nSTEP: {name}\nCOMMAND: {' '.join(command)}\n{'=' * 72}", flush=True)
     started = time.monotonic()
