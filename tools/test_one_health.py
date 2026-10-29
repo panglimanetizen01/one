@@ -568,6 +568,19 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
 
+    def test_baseline_rejects_duplicate_finding_ids(self):
+        report = scan_repository(self.root)
+        duplicate = {"finding_id": "OH-duplicate", "detector_id": "markdown-links", "status": "open"}
+        baseline = {"schema_version": "one-health-report/1", "findings": [duplicate, dict(duplicate)]}
+        with self.assertRaisesRegex(ValueError, "duplicate baseline finding_id"):
+            apply_baseline(report, baseline)
+
+    def test_baseline_rejects_non_object_finding_records(self):
+        report = scan_repository(self.root)
+        baseline = {"schema_version": "one-health-report/1", "findings": ["not-an-object"]}
+        with self.assertRaisesRegex(ValueError, r"findings\\[0\\] must be an object"):
+            apply_baseline(report, baseline)
+
     def test_baseline_marks_existing_findings_recurring_and_prioritizes_them(self):
         self.write("README.md", "[missing](absent.md)\n")
         current = scan_repository(self.root)
