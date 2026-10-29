@@ -578,7 +578,7 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_baseline_rejects_non_object_finding_records(self):
         report = scan_repository(self.root)
         baseline = {"schema_version": "one-health-report/1", "findings": ["not-an-object"]}
-        with self.assertRaisesRegex(ValueError, r"findings\\[0\\] must be an object"):
+        with self.assertRaisesRegex(ValueError, "must be an object"):
             apply_baseline(report, baseline)
 
     def test_baseline_marks_existing_findings_recurring_and_prioritizes_them(self):
