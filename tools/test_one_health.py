@@ -572,7 +572,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_invalid_utf8_baseline_fails_closed_with_exit_two(self):
         baseline_path = self.root / "baseline.json"
-        baseline_path.write_bytes(b"\\xff")
+        baseline_path.write_bytes(bytes([255]))
         stderr = io.StringIO()
         with redirect_stderr(stderr):
             exit_code = main(["--root", str(self.root), "--baseline", str(baseline_path), "--quiet"])
