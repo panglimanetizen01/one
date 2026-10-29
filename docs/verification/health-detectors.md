@@ -22,7 +22,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `syntax` | Python AST, TOML, JSON parsing | Does not validate all language/tool semantics |
 | `markdown-links` | Broken relative paths, links escaping repository root, and stale same-page/cross-file Markdown heading or explicit HTML anchors | Markdown extensions, reference-style links, and generated routes are not fully parsed; heading slugging is a conservative approximation |
 | `markdown-structure` | Fenced-code closure | Not a complete CommonMark validator |
-| `path-integrity` | Symlinks resolving outside repository | Does not validate every runtime path or filesystem race |
+| `path-integrity` | File and directory symlinks resolving outside repository; directory symlinks are surfaced but never traversed | Does not validate every runtime path or filesystem race; behavior depends on platform permissions and filesystem semantics |
 | `file-integrity` | UTF-8 readability of scanned text files | Does not prove binary/artifact integrity |
 | `workflow-integrity` | Duplicate workflow names, missing local actions and targeted script paths | Not a full GitHub Actions YAML/schema validator |
 | `workflow-overlap` | Identical single-line `run:` commands in multiple workflow files | Low-confidence review hint; intentional duplication is common |
@@ -44,7 +44,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 - Scanner implementation version `0.1.2` includes JavaScript/TypeScript source traversal and plural-aware prompt-injection secret-action correlation; the report schema remains version 1 because field types and finding identity semantics are unchanged.
 - Adding optional fields without changing existing field meaning is backward-compatible within schema version 1.
 - Removing fields, changing field types, changing finding identity semantics, or changing baseline comparison meanings requires a new schema version and migration notes.
-- Baselines with unknown schema versions are rejected closed; never silently compare incompatible reports.
+- Baselines with unknown schema versions, malformed finding records, missing/blank IDs, or duplicate finding IDs are rejected closed. Unreadable and invalid-UTF-8 baseline files return CLI exit code 2; never silently compare ambiguous or incompatible reports.
 - Consumers must tolerate additional fields and must not interpret absence of a detector from `detectors_run` as a clean result.
 
 ## Suppression policy
