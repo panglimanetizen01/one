@@ -32,6 +32,8 @@ class CollectorTests(unittest.TestCase):
             if url.endswith("/runs/10/artifacts?per_page=100"):
                 return {"artifacts": [{"name": "report", "size_in_bytes": 42, "expired": False,
                                        "digest": "sha256:abc", "created_at": "2026-01-01"}]}
+            if "/commits/" in url and "/check-runs?" in url:
+                return {"check_runs": []}
             raise AssertionError(url)
 
         with patch("collect_ci_health._git_head", return_value=SHA):
@@ -58,6 +60,8 @@ class CollectorTests(unittest.TestCase):
                 return {"jobs": []}
             if url.endswith("/runs/40/artifacts?per_page=100"):
                 return {"artifacts": []}
+            if "/commits/" in url and "/check-runs?" in url:
+                return {"check_runs": []}
             raise AssertionError(url)
 
         with patch("collect_ci_health._git_head", return_value=SHA):
@@ -91,6 +95,8 @@ class CollectorTests(unittest.TestCase):
                     "runner_id": 0, "steps": []}]}
             if url.endswith("/runs/50/artifacts?per_page=100"):
                 raise OSError("artifact API unavailable")
+            if "/commits/" in url and "/check-runs?" in url:
+                return {"check_runs": []}
             raise AssertionError(url)
 
         with patch("collect_ci_health._git_head", return_value=SHA):
@@ -127,6 +133,8 @@ class CollectorTests(unittest.TestCase):
                     "start_line": 1, "end_line": 1, "title": "Billing blocked",
                     "message": "Billing disabled; token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
                 }]
+            if "/commits/" in url and "/check-runs?" in url:
+                return {"check_runs": []}
             raise AssertionError(url)
 
         with patch("collect_ci_health._git_head", return_value=SHA):
@@ -147,6 +155,8 @@ class CollectorTests(unittest.TestCase):
                 return {"workflow_runs": []}
             if f"/commits/{SHA}/check-runs?" in url:
                 raise OSError("check-run API unavailable")
+            if "/commits/" in url and "/check-runs?" in url:
+                return {"check_runs": []}
             raise AssertionError(url)
 
         with patch("collect_ci_health._git_head", return_value=SHA):

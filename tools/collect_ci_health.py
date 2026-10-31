@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Collect exact-SHA GitHub Actions run, job, step, and artifact metadata."""
+"""Collect exact-SHA GitHub Actions, Check Run, annotation, and artifact metadata."""
 from __future__ import annotations
 
 import argparse
