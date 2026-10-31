@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -13,10 +14,38 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 API_ROOT = "https://api.github.com"
+
+_BILLING_BLOCK_RE = re.compile(
+    r"\b(?:billing.{0,60}(?:disabled|suspended|blocked)|"
+    r"spending.{0,30}limit.{0,25}(?:reached|exceeded|hit)|"
+    r"(?:reached|exceeded|hit).{0,25}spending.{0,20}limit)\b",
+    re.IGNORECASE,
+)
+_SECRET_REPLACEMENTS = (
+    (re.compile(r"(?i)(authorization\s*:\s*bearer\s+)[^\s,;]+"), r"\1[REDACTED]"),
+    (re.compile(r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16})\b"), "[REDACTED]"),
+    (re.compile(r"(?i)\b(password|token|secret|api[_-]?key)\s*[:=]\s*([^\s,;]+)"), r"\1=[REDACTED]"),
+)
+
+
+def _safe_annotation_text(value: object, limit: int = 500) -> str:
+    text = str(value or "")
+    for pattern, replacement in _SECRET_REPLACEMENTS:
+        text = pattern.sub(replacement, text)
+    text = re.sub(
+        r"-----BEGIN [^-]{0,80}PRIVATE KEY-----.*?-----END [^-]{0,80}PRIVATE KEY-----",
+        "[REDACTED PRIVATE KEY]", text, flags=re.IGNORECASE | re.DOTALL,
+    )
+    return text[:limit]
+
+
+def _billing_blocked(*values: object) -> bool:
+    return any(_BILLING_BLOCK_RE.search(str(value or "")) for value in values)
+
 SCHEMA_VERSION = "one-ci-health-evidence/1"
 
 
-def _request_json(url: str, token: str) -> dict:
+def _request_json(url: str, token: str) -> object:
     request = Request(url, headers={
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
@@ -50,12 +79,15 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
         "runs": [],
         "jobs": [],
         "artifacts": [],
+        "check_runs": [],
+        "annotations": [],
         "correlations": [],
         "collection_errors": [],
         "limitations": [
             "GitHub API metadata only; logs are not downloaded or interpreted.",
             "Artifact presence is recorded, not treated as proof of artifact correctness.",
             "Only runs whose head_sha exactly matches source_sha are included.",
+            "Check Run annotations are limited to the first 100 per check run and high-signal secret patterns are redacted.",
         ],
     }
     if not repo or "/" not in repo or not source_sha or len(source_sha) != 40:
@@ -136,6 +168,79 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
                         "created_at": artifact.get("created_at"),
                         "url": artifact.get("url"),
                     })
+        # Check Runs expose annotations that can explain a job-start block even
+        # when Actions reports failed jobs with no runner or visible steps.
+        try:
+            check_response = request_json(
+                f"{base}/commits/{source_sha}/check-runs?per_page=100", token
+            )
+            check_runs = check_response.get("check_runs", []) if isinstance(check_response, dict) else None
+            if not isinstance(check_runs, list):
+                result["collection_errors"].append("check-runs response was not a list")
+            else:
+                for check_run in check_runs:
+                    if not isinstance(check_run, dict):
+                        continue
+                    head_sha = check_run.get("head_sha")
+                    if head_sha not in (None, source_sha):
+                        continue
+                    check_run_id = check_run.get("id")
+                    output = check_run.get("output") if isinstance(check_run.get("output"), dict) else {}
+                    output_title = _safe_annotation_text(output.get("title"), 300)
+                    output_summary = _safe_annotation_text(output.get("summary"), 1000)
+                    result["check_runs"].append({
+                        "id": check_run_id,
+                        "name": _safe_annotation_text(check_run.get("name"), 200),
+                        "status": check_run.get("status"),
+                        "conclusion": check_run.get("conclusion"),
+                        "head_sha": head_sha,
+                        "html_url": check_run.get("html_url"),
+                        "output_title": output_title,
+                        "output_summary": output_summary,
+                    })
+                    raw_billing_evidence = [output.get("title"), output.get("summary"), output.get("text")]
+                    if isinstance(check_run_id, int):
+                        annotations_url = f"{base}/check-runs/{check_run_id}/annotations?per_page=100"
+                        try:
+                            annotations = request_json(annotations_url, token)
+                            if not isinstance(annotations, list):
+                                result["collection_errors"].append(
+                                    f"check run {check_run_id}: annotations response was not a list"
+                                )
+                            else:
+                                for annotation in annotations:
+                                    if not isinstance(annotation, dict):
+                                        continue
+                                    result["annotations"].append({
+                                        "check_run_id": check_run_id,
+                                        "check_run_name": _safe_annotation_text(check_run.get("name"), 200),
+                                        "annotation_level": annotation.get("annotation_level"),
+                                        "path": _safe_annotation_text(annotation.get("path"), 300),
+                                        "start_line": annotation.get("start_line"),
+                                        "end_line": annotation.get("end_line"),
+                                        "title": _safe_annotation_text(annotation.get("title"), 300),
+                                        "message": _safe_annotation_text(annotation.get("message"), 500),
+                                    })
+                                    raw_billing_evidence.extend([
+                                        annotation.get("title"), annotation.get("message"),
+                                        annotation.get("raw_details"),
+                                    ])
+                        except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
+                            result["collection_errors"].append(
+                                f"check run {check_run_id}: annotations {type(exc).__name__}: {exc}"
+                            )
+                    if _billing_blocked(*raw_billing_evidence):
+                        result["correlations"].append({
+                            "rule_id": "billing-spending-limit-blocked",
+                            "check_run_id": check_run_id,
+                            "check_run_name": _safe_annotation_text(check_run.get("name"), 200),
+                            "classification": "billing-blocked",
+                            "evidence": "Check Run output or annotation matched an explicit billing/spending-limit denial pattern.",
+                            "next_step": "Periksa status billing dan spending limit GitHub Actions pada akun/repository; jangan klasifikasikan job yang tidak mulai sebagai kegagalan source code.",
+                        })
+        except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
+            result["collection_errors"].append(f"check-runs {type(exc).__name__}: {exc}")
+
         result["collector_status"] = "complete" if not result["collection_errors"] else "partial"
 
     except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
@@ -189,6 +294,21 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
                 "evidence": "The Actions artifacts endpoint returned no artifacts for this run.",
                 "next_step": "Compare with the workflow's declared artifact contract; absence alone is not a failure.",
             })
+
+    # A specific billing/spending-limit denial is stronger than a generic
+    # runner-start failure, but remains an account/CI blocker rather than a code failure.
+    if not any(item.get("rule_id") == "billing-spending-limit-blocked" for item in result["correlations"]):
+        for check_run in result["check_runs"]:
+            if _billing_blocked(check_run.get("output_title"), check_run.get("output_summary")):
+                result["correlations"].append({
+                    "rule_id": "billing-spending-limit-blocked",
+                    "check_run_id": check_run.get("id"),
+                    "check_run_name": check_run.get("name"),
+                    "classification": "billing-blocked",
+                    "evidence": "Check Run output matched an explicit billing/spending-limit denial pattern.",
+                    "next_step": "Periksa status billing dan spending limit GitHub Actions pada akun/repository; jangan klasifikasikan job yang tidak mulai sebagai kegagalan source code.",
+                })
+                break
 
     return result
 

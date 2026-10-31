@@ -109,5 +109,52 @@ class CollectorTests(unittest.TestCase):
         self.assertIn("API unavailable", report["collection_errors"][0])
 
 
+    def test_collects_check_run_annotations_redacts_secrets_and_detects_billing_block(self):
+        def fake_request(url, token):
+            if "/actions/runs?" in url:
+                return {"workflow_runs": []}
+            if f"/commits/{SHA}/check-runs?" in url:
+                return {"check_runs": [{
+                    "id": 77, "name": "CI startup", "status": "completed",
+                    "conclusion": "failure", "head_sha": SHA,
+                    "html_url": "https://example.invalid/check/77",
+                    "output": {"title": "Actions job was not started", "summary":
+                        "The spending limit has been reached for this account."}
+                }]}
+            if url.endswith("/check-runs/77/annotations?per_page=100"):
+                return [{
+                    "annotation_level": "failure", "path": ".github/workflows/ci.yml",
+                    "start_line": 1, "end_line": 1, "title": "Billing blocked",
+                    "message": "Billing disabled; token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                }]
+            raise AssertionError(url)
+
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        self.assertEqual("complete", report["collector_status"])
+        self.assertEqual(77, report["check_runs"][0]["id"])
+        self.assertEqual(1, len(report["annotations"]))
+        self.assertNotIn("ghp_", report["annotations"][0]["message"])
+        billing = [item for item in report["correlations"]
+                   if item["rule_id"] == "billing-spending-limit-blocked"]
+        self.assertEqual(1, len(billing))
+        self.assertEqual("billing-blocked", billing[0]["classification"])
+        self.assertIn("jangan", billing[0]["next_step"])
+
+    def test_check_run_api_outage_is_partial_not_source_failure(self):
+        def fake_request(url, token):
+            if "/actions/runs?" in url:
+                return {"workflow_runs": []}
+            if f"/commits/{SHA}/check-runs?" in url:
+                raise OSError("check-run API unavailable")
+            raise AssertionError(url)
+
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        self.assertEqual("partial", report["collector_status"])
+        self.assertTrue(any("check-run API unavailable" in item
+                            for item in report["collection_errors"]))
+
+
 if __name__ == "__main__":
     unittest.main()

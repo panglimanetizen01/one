@@ -197,6 +197,27 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertEqual("triaged", rules["no-artifacts-observed"]["status"])
         self.assertEqual("info", rules["no-artifacts-observed"]["severity"])
 
+    def test_billing_blocked_ci_correlation_is_visible_and_not_source_failure(self):
+        self.write("ci-health-evidence.json", json.dumps({
+            "schema_version": "one-ci-health-evidence/1",
+            "collector_status": "complete",
+            "correlations": [{
+                "rule_id": "billing-spending-limit-blocked",
+                "check_run_id": 77,
+                "check_run_name": "CI startup",
+                "classification": "billing-blocked",
+                "evidence": "Explicit billing/spending-limit denial observed.",
+                "next_step": "Check account billing; do not attribute this to source code."
+            }]
+        }))
+        report = scan_repository(self.root)
+        finding = next(f for f in report["findings"]
+                       if f["rule_id"] == "billing-spending-limit-blocked")
+        self.assertEqual("blocked", finding["status"])
+        self.assertEqual("info", finding["severity"])
+        self.assertEqual("high", finding["confidence"])
+        self.assertIn("bukan kegagalan source code", finding["summary"])
+
     def test_failed_ci_job_without_steps_is_blocked_not_misclassified(self):
         self.write("run.json", json.dumps({"jobs": [{"name": "One CI", "conclusion": "failure", "steps": [], "runner_id": 0}]}))
         report = scan_repository(self.root)

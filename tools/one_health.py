@@ -637,6 +637,12 @@ def _scan_json(rel, text, findings):
                         f"run_id={correlation.get('run_id')!r}; evidence={correlation.get('evidence')!r}",
                         str(correlation.get("next_step") or "Periksa detail run dan ketersediaan runner; jangan menyimpulkan source test gagal."),
                         status="blocked"))
+                elif rule == "billing-spending-limit-blocked":
+                    findings.append(_finding("ci-evidence", rule, rel, None, "info", "high",
+                        "Workflow diblokir oleh billing atau spending limit GitHub Actions; ini bukan kegagalan source code.",
+                        f"check_run_id={correlation.get('check_run_id')!r}; check_run={correlation.get('check_run_name')!r}; classification=billing-blocked",
+                        str(correlation.get("next_step") or "Periksa status billing/spending limit GitHub Actions dan ulangi pemeriksaan setelah akses dipulihkan."),
+                        status="blocked"))
                 elif rule == "no-artifacts-observed":
                     findings.append(_finding("artifact-integrity", rule, rel, None, "info", "medium",
                         "Tidak ada artefak yang teramati pada run Actions yang selesai.",
