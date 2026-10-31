@@ -156,5 +156,24 @@ class CollectorTests(unittest.TestCase):
                             for item in report["collection_errors"]))
 
 
+    def test_check_runs_for_other_or_unknown_sha_are_excluded(self):
+        def fake_request(url, token):
+            if "/actions/runs?" in url:
+                return {"workflow_runs": []}
+            if f"/commits/{SHA}/check-runs?" in url:
+                return {"check_runs": [
+                    {"id": 78, "name": "Other SHA", "head_sha": "b" * 40,
+                     "output": {"summary": "Billing disabled"}},
+                    {"id": 79, "name": "Missing SHA", "output": {"summary": "Billing disabled"}}
+                ]}
+            raise AssertionError("annotations must not be requested for untrusted check runs")
+
+        with patch("collect_ci_health._git_head", return_value=SHA):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        self.assertEqual([], report["check_runs"])
+        self.assertFalse(any(item["rule_id"] == "billing-spending-limit-blocked"
+                             for item in report["correlations"]))
+
+
 if __name__ == "__main__":
     unittest.main()

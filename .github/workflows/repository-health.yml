@@ -12,6 +12,7 @@ on:
 permissions:
   contents: read
   actions: read
+  checks: read
 
 concurrency:
   group: one-repository-health-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
@@ -48,7 +49,7 @@ jobs:
       - name: Build One CLI for source-only grammar checks
         run: cargo build --locked -p one-cli
 
-      - name: Collect exact-SHA CI run, job, step, and artifact metadata
+      - name: Collect exact-SHA CI run, job, step, artifact, Check Run, and annotation metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python tools/collect_ci_health.py --output ci-health-evidence.json

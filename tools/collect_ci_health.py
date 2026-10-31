@@ -87,7 +87,7 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
             "GitHub API metadata only; logs are not downloaded or interpreted.",
             "Artifact presence is recorded, not treated as proof of artifact correctness.",
             "Only runs whose head_sha exactly matches source_sha are included.",
-            "Check Run annotations are limited to the first 100 per check run and high-signal secret patterns are redacted.",
+            "Check Run and annotation collections are limited to the first 100 results; high-signal secret patterns are redacted.",
         ],
     }
     if not repo or "/" not in repo or not source_sha or len(source_sha) != 40:
@@ -182,7 +182,7 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
                     if not isinstance(check_run, dict):
                         continue
                     head_sha = check_run.get("head_sha")
-                    if head_sha not in (None, source_sha):
+                    if head_sha != source_sha:
                         continue
                     check_run_id = check_run.get("id")
                     output = check_run.get("output") if isinstance(check_run.get("output"), dict) else {}
