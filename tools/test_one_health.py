@@ -459,8 +459,8 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_python_security_ignores_code_patterns_inside_strings_and_comments(self):
         self.write(
             "fixtures.py",
-            "snippet = \"eval(user_input)\\nsubprocess.run(command, shell=True)\"\\n"
-            "# eval(user_input); subprocess.run(command, shell=True)\\n",
+            'snippet = "eval(user_input)\\nsubprocess.run(command, shell=True)"' + chr(10)
+            + "# eval(user_input); subprocess.run(command, shell=True)" + chr(10),
         )
         report = scan_repository(self.root)
         self.assertFalse(any(
@@ -470,7 +470,7 @@ class OneHealthScannerTests(unittest.TestCase):
         ))
 
     def test_python_security_detects_dynamic_eval_from_ast(self):
-        self.write("unsafe_eval.py", "result = eval(user_input)\\n")
+        self.write("unsafe_eval.py", "result = eval(user_input)" + chr(10))
         report = scan_repository(self.root)
         self.assertTrue(any(
             finding["path"] == "unsafe_eval.py" and finding["rule_id"] == "dynamic-code-execution"
