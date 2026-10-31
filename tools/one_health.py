@@ -134,16 +134,27 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
         "codecs.decode", "marshal.loads", "zlib.decompress", "lzma.decompress", "gzip.decompress",
     }
     dynamic = {"eval", "exec", "compile"}
+    obfuscated_calls = set()
     for call in calls:
         if _ast_name(call.func) not in dynamic or not call.args:
             continue
         nested = {_ast_name(child.func) for child in ast.walk(call.args[0]) if isinstance(child, ast.Call)}
         if nested.intersection(decoders):
+            obfuscated_calls.add(id(call))
             findings.append(_finding("security-code", "obfuscated-execution", rel, getattr(call, "lineno", None),
                 "high", "high", "Kode yang didekode atau dibongkar secara dinamis langsung diteruskan ke eval/exec/compile.",
                 "AST correlation: decoder-or-deserializer -> dynamic-code-execution; payload bytes omitted.",
                 "Jangan jalankan payload. Telusuri asal data, hapus jalur eksekusi yang tidak perlu, dan tambahkan fixture regresi."))
             break
+
+    for call in calls:
+        if _ast_name(call.func) not in {"eval", "exec"} or id(call) in obfuscated_calls:
+            continue
+        findings.append(_finding("security-code", "dynamic-code-execution", rel, getattr(call, "lineno", None),
+            "medium", "low", "AST menemukan pemanggilan eval/exec; konteks dan aliran data menentukan risikonya.",
+            "AST call node; string literal dan komentar tidak diperlakukan sebagai pemanggilan kode.",
+            "Tinjau asal kode, aliran data, batas kepercayaan, dan apakah eksekusi dinamis dapat dihindari."))
+        break
 
     fetch_calls = {
         "requests.get", "httpx.get", "urllib.request.urlopen", "urlopen",
@@ -484,20 +495,6 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Kemungkinan kredensial atau materi private key tertanam di berkas; nilai rahasia sengaja tidak ditampilkan.",
                 f"pattern={rule}; fingerprint_sha256_prefix={fingerprint}; matched_value_redacted=true",
                 "Cabut/rotasi kredensial jika nyata, hapus dari working tree, pindahkan ke secret manager/environment, dan bersihkan riwayat Git sesuai prosedur insiden. Jangan tempelkan nilai rahasia ke laporan."))
-        if suffix == ".py":
-            risky_patterns = [
-                ("dynamic-eval-of-input", re.compile(r"\b(?:eval|exec)\s*\(\s*(?:input|sys\.stdin\.read|base64\.b64decode)\s*\("), "high", "medium",
-                 "Eksekusi kode dinamis menerima input atau payload terdekode."),
-                ("subprocess-shell-true", re.compile(r"\bsubprocess\.(?:run|Popen|call|check_call|check_output)\s*\([\s\S]{0,500}?shell\s*=\s*True"), "medium", "medium",
-                 "Pemanggilan subprocess mengaktifkan shell; tinjau apakah input dapat dikendalikan pihak luar."),
-                ("dynamic-code-execution", re.compile(r"\b(?:eval|exec)\s*\("), "medium", "low",
-                 "Ditemukan eksekusi kode dinamis; konteks menentukan apakah ini berbahaya."),
-            ]
-            for rule, pattern, severity, confidence, summary in risky_patterns:
-                if pattern.search(line):
-                    findings.append(_finding("security-code", rule, rel, number, severity, confidence, summary,
-                        "Hanya pola statis teramati; tidak menyatakan kode telah dieksploitasi.",
-                        "Tinjau aliran data, validasi input, batas kepercayaan, dan apakah API yang lebih aman dapat digunakan."))
         if rel.startswith(".github/workflows/"):
             workflow_rules = [
                 ("pipe-to-shell", re.compile(r"\b(?:curl|wget)\b[^\n|]*\|\s*(?:sudo\s+)?(?:ba)?sh\b"), "high", "medium",
@@ -939,7 +936,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.2", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.3", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},

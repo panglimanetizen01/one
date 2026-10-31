@@ -456,6 +456,27 @@ class OneHealthScannerTests(unittest.TestCase):
             for f in report["findings"]
         ))
 
+    def test_python_security_ignores_code_patterns_inside_strings_and_comments(self):
+        self.write(
+            "fixtures.py",
+            "snippet = \"eval(user_input)\\nsubprocess.run(command, shell=True)\"\\n"
+            "# eval(user_input); subprocess.run(command, shell=True)\\n",
+        )
+        report = scan_repository(self.root)
+        self.assertFalse(any(
+            finding["path"] == "fixtures.py"
+            and finding["rule_id"] in {"dynamic-code-execution", "subprocess-shell-true", "subprocess-shell-true-ast"}
+            for finding in report["findings"]
+        ))
+
+    def test_python_security_detects_dynamic_eval_from_ast(self):
+        self.write("unsafe_eval.py", "result = eval(user_input)\\n")
+        report = scan_repository(self.root)
+        self.assertTrue(any(
+            finding["path"] == "unsafe_eval.py" and finding["rule_id"] == "dynamic-code-execution"
+            for finding in report["findings"]
+        ))
+
     def test_security_ast_detects_multiline_shell_true(self):
         self.write("shell.py",
                    "import subprocess\n"
@@ -544,6 +565,7 @@ class OneHealthScannerTests(unittest.TestCase):
         self.write("README.md", "Healthy.\n")
         report = scan_repository(self.root)
         self.assertEqual("one-health-report/1", report["schema_version"])
+        self.assertEqual("0.1.3", report["scanner_version"])
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
 
