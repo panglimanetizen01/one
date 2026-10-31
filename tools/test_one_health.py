@@ -406,7 +406,7 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         rules = {f["rule_id"] for f in report["findings"]}
         self.assertIn("dynamic-code-execution", rules)
-        self.assertIn("subprocess-shell-true", rules)
+        self.assertIn("subprocess-shell-true-ast", rules)
         self.assertIn("write-all-permissions", rules)
         self.assertIn("mutable-action-ref", rules)
         self.assertIn("pipe-to-shell", rules)
