@@ -131,7 +131,7 @@ class CollectorTests(unittest.TestCase):
                 return [{
                     "annotation_level": "failure", "path": ".github/workflows/ci.yml",
                     "start_line": 1, "end_line": 1, "title": "Billing blocked",
-                    "message": "Billing disabled; token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                    "message": "Billing disabled; token=" + "ghp_" + ("A" * 36)
                 }]
             if "/commits/" in url and "/check-runs?" in url:
                 return {"check_runs": []}
