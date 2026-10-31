@@ -31,11 +31,11 @@ jobs:
     name: UTC and deterministic stdlib regression tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
         with:
           toolchain: 1.99.0
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
       - name: UTC formatter unit and calendar-boundary tests
         run: cargo --locked test -p one-core --lib unix_seconds_format_as_valid_bounded_gregorian_utc_timestamps
       - name: Source-level UTC formatter integration tests

@@ -28,7 +28,7 @@ jobs:
     environment: one-release
     steps:
       - name: Checkout exact release source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
 
@@ -147,7 +147,7 @@ jobs:
           cat "$RUNNER_TEMP/one-release-sha256.txt"
 
       - name: Upload verified package, provenance, and checksums
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: one-package-release-${{ github.run_id }}
           if-no-files-found: error
