@@ -2,11 +2,17 @@
 
 ## Current continuation — 2026-10-31
 
-- PR #80 current source SHA: `297b169cb4cbb753b6a041f20a3f7eb22d5562d0`, branch `milestone/100-ecosystem-20261023`, open/draft/unmerged.
-- Check Run collector and regression delta is present in `tools/collect_ci_health.py` and `tools/test_collect_ci_health.py`; test execution on this SHA is not verified.
-- All six current-source workflow runs (41216960639, 41216960646, 41216960648, 41216960653, 41216960663, 41216960701) failed before steps; 11 job step endpoints returned empty arrays. Root cause UNKNOWN; do not infer source failure or pass.
-- Current A–E scanner acceptance remains unverified at this SHA; use exact-SHA independent execution and preserve historical run boundaries.
-- No-repeat guard: do not rerun the 132-file inventory or count earlier scanner runs as current-head evidence.
+Parent candidate before this documentation reconciliation: `8ddcfb8c752aee78e94b47d03402ab1f5fd3ea92`. This docs-only commit advances the source SHA; use the live PR #80 head and matching verifier pin for the exact current SHA.
+
+- PR #80 remains open/draft/unmerged on `milestone/100-ecosystem-20261023`; base main remains `d35db95153f6ddd79885494c72f5aee16c899751`.
+- Collector delta: exact-SHA Check Runs/annotations, billing/spending-limit classification, heuristic secret redaction, strict Check Run SHA validation, and read-only `checks: read` permission. Scanner/collector test inventory is 62/9 methods; execution remains unverified.
+- Parent-source canonical runs 41217339585, 41217339577, 41217339600, 41217339578, 41217339580, and 41217339576 all failed before runner assignment: runner_id 0, no steps, no artifacts. Root cause UNKNOWN; not source-test failure or PASS.
+- DoD 3 checked / 10 unchecked; implementation 92/100 provisional; E1–E6 verified points 0; final score UNKNOWN / NOT RECONCILED; gate NOT PASSED.
+- No-repeat guard: no 132-file inventory repeat and no identical zero-step retries. No merge, release, protected E2 dispatch, or direct main edit.
+
+
+
+## Active scanner A–E handoff
 
 
 ## Active scanner A–E handoff — 2026-10-28
