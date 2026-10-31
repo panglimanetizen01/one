@@ -1,5 +1,14 @@
 # ONE vNext Session Checkpoint
 
+## Current continuation — 2026-10-31
+
+- PR #80 current source SHA: `297b169cb4cbb753b6a041f20a3f7eb22d5562d0`, branch `milestone/100-ecosystem-20261023`, open/draft/unmerged.
+- Check Run collector and regression delta is present in `tools/collect_ci_health.py` and `tools/test_collect_ci_health.py`; test execution on this SHA is not verified.
+- All six current-source workflow runs (41216960639, 41216960646, 41216960648, 41216960653, 41216960663, 41216960701) failed before steps; 11 job step endpoints returned empty arrays. Root cause UNKNOWN; do not infer source failure or pass.
+- Current A–E scanner acceptance remains unverified at this SHA; use exact-SHA independent execution and preserve historical run boundaries.
+- No-repeat guard: do not rerun the 132-file inventory or count earlier scanner runs as current-head evidence.
+
+
 ## Active scanner A–E handoff — 2026-10-28
 
 The scanner delta is implemented on the milestone PR branch; this block preserves the current execution boundary. The candidate immediately before this documentation synchronization was `d024ebbefdbf6139ddbeaec433f379f421ef88f9`. The live PR #80 head and independent verifier pin are authoritative for the resulting exact source SHA; this document commit itself advances the candidate.
