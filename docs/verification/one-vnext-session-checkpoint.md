@@ -2,12 +2,12 @@
 
 ## Current continuation — 2026-10-31
 
-Parent candidate before this documentation reconciliation: `8ddcfb8c752aee78e94b47d03402ab1f5fd3ea92`. This docs-only commit advances the source SHA; use the live PR #80 head and matching verifier pin for the exact current SHA.
+Parent candidate before this documentation reconciliation: `669fdd2e069181dd4db9268804db7e77dd3c6f78`. This docs-only commit advances the source SHA; use the live PR #80 head and matching verifier pin for the exact current SHA.
 
 - PR #80 remains open/draft/unmerged on `milestone/100-ecosystem-20261023`; base main remains `d35db95153f6ddd79885494c72f5aee16c899751`.
 - Collector delta: exact-SHA Check Runs/annotations, billing/spending-limit classification, heuristic secret redaction, strict Check Run SHA validation, and read-only `checks: read` permission. Scanner/collector test inventory is 62/9 methods; execution remains unverified.
 - Parent-source canonical runs 41217339585, 41217339577, 41217339600, 41217339578, 41217339580, and 41217339576 all failed before runner assignment: runner_id 0, no steps, no artifacts. Root cause UNKNOWN; not source-test failure or PASS.
-- DoD 3 checked / 10 unchecked; implementation 92/100 provisional; E1–E6 verified points 0; final score UNKNOWN / NOT RECONCILED; gate NOT PASSED.
+- DoD 3 checked / 10 unchecked; last ledger gate on parent ea515 reported 92/100 implementation and 60/100 verified from F/C rows, while E1–E6 remain 0 verified; latest exact-SHA gate remains pending and final 100% gate NOT PASSED.
 - No-repeat guard: no 132-file inventory repeat and no identical zero-step retries. No merge, release, protected E2 dispatch, or direct main edit.
 
 
