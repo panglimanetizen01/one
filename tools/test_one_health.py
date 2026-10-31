@@ -368,7 +368,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_security_detector_flags_secret_without_disclosing_value(self):
         fake_secret = "ghp_" + ("A" * 36)
-        self.write("config.py", "api_key = \"${API_KEY}\"\npassword = \"your_password_here\"\n")
+        self.write("config.py", "TOKEN = " + repr(fake_secret) + "\n")
         report = scan_repository(self.root)
         finding = next(f for f in report["findings"] if f["rule_id"] == "github-token")
         self.assertEqual("critical", finding["severity"])
