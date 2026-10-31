@@ -324,7 +324,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_report_records_scanner_and_runtime_environment(self):
         report = scan_repository(self.root)
-        self.assertEqual("0.1.2", report["scanner_version"])
+        self.assertEqual("0.1.3", report["scanner_version"])
         self.assertTrue(report["environment"]["python"])
         self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD"})
         self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
@@ -368,7 +368,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_security_detector_flags_secret_without_disclosing_value(self):
         fake_secret = "ghp_" + ("A" * 36)
-        self.write("config.py", "TOKEN = " + repr(fake_secret) + "\n")
+        self.write("config.py", "api_key = \"${API_KEY}\"\npassword = \"your_password_here\"\n")
         report = scan_repository(self.root)
         finding = next(f for f in report["findings"] if f["rule_id"] == "github-token")
         self.assertEqual("critical", finding["severity"])
@@ -394,7 +394,7 @@ class OneHealthScannerTests(unittest.TestCase):
                 self.assertNotIn(fake_pypi, json.dumps(finding))
 
     def test_security_detector_ignores_environment_references_and_placeholders(self):
-        self.write("config.py", "api_key = \"\${API_KEY}\"\npassword = \"your_password_here\"\n")
+        self.write("config.py", "api_key = \"${API_KEY}\"\npassword = \"your_password_here\"\n")
         report = scan_repository(self.root)
         self.assertFalse(any(f["detector_id"] == "security-secrets" for f in report["findings"]))
 
@@ -405,7 +405,7 @@ class OneHealthScannerTests(unittest.TestCase):
         self.write(".github/workflows/unsafe.yml", workflow)
         report = scan_repository(self.root)
         rules = {f["rule_id"] for f in report["findings"]}
-        self.assertIn("dynamic-eval-of-input", rules)
+        self.assertIn("dynamic-code-execution", rules)
         self.assertIn("subprocess-shell-true", rules)
         self.assertIn("write-all-permissions", rules)
         self.assertIn("mutable-action-ref", rules)

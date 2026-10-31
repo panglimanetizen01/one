@@ -200,9 +200,10 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
                     })
                     raw_billing_evidence = [output.get("title"), output.get("summary"), output.get("text")]
                     if isinstance(check_run_id, int):
-                        annotations_url = f"{base}/check-runs/{check_run_id}/annotations?per_page=100"
                         try:
-                            annotations = request_json(annotations_url, token)
+                            annotations = request_json(
+                                f"{base}/check-runs/{check_run_id}/annotations?per_page=100", token
+                            )
                             if not isinstance(annotations, list):
                                 result["collection_errors"].append(
                                     f"check run {check_run_id}: annotations response was not a list"
