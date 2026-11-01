@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env, ffi::OsStr, fmt, path::PathBuf, process::Command};
+use std::{collections::BTreeMap, env, ffi::OsStr, fmt, path::PathBuf, process::Command, sync::atomic::{AtomicU64, Ordering}};
 
 use crate::{
     ir::{IrExpr, IrProgram, IrStatement},
@@ -40,6 +40,59 @@ impl fmt::Display for NativeBackendError {
     }
 }
 impl std::error::Error for NativeBackendError {}
+
+static NEXT_TEMP_SOURCE_ID: AtomicU64 = AtomicU64::new(0);
+
+struct TemporaryCSource {
+    path: PathBuf,
+}
+
+impl TemporaryCSource {
+    fn create(source: &str) -> Result<Self, NativeBackendError> {
+        let directory = env::temp_dir();
+        for _ in 0..64 {
+            let sequence = NEXT_TEMP_SOURCE_ID.fetch_add(1, Ordering::Relaxed);
+            let path = directory.join(format!("one-native-{}-{sequence}.c", std::process::id()));
+            let mut options = std::fs::OpenOptions::new();
+            options.write(true).create_new(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::OpenOptionsExt;
+                options.mode(0o600);
+            }
+            match options.open(&path) {
+                Ok(mut file) => {
+                    if let Err(error) = std::io::Write::write_all(&mut file, source.as_bytes()) {
+                        drop(file);
+                        let _ = std::fs::remove_file(&path);
+                        return Err(NativeBackendError::new(
+                            "NATIVE-CODEGEN-WRITE",
+                            format!("tidak dapat menulis source C sementara '{}': {error}", path.display()),
+                        ));
+                    }
+                    return Ok(Self { path });
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => {
+                    return Err(NativeBackendError::new(
+                        "NATIVE-CODEGEN-WRITE",
+                        format!("tidak dapat membuat source C sementara '{}': {error}", path.display()),
+                    ));
+                }
+            }
+        }
+        Err(NativeBackendError::new(
+            "NATIVE-CODEGEN-WRITE",
+            "tidak dapat memperoleh nama source C sementara yang unik",
+        ))
+    }
+}
+
+impl Drop for TemporaryCSource {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
+}
 
 pub struct NativeAndroidAarch64Backend;
 impl NativeAndroidAarch64Backend {
@@ -92,16 +145,9 @@ impl NativeAndroidAarch64Backend {
                 NativeBackendError::new("NATIVE-TOOLCHAIN-INVALID", error.to_string())
             })?;
         let source = self.codegen(program)?;
-        let source_path = output.with_extension("c");
-        std::fs::write(&source_path, source).map_err(|error| {
-            NativeBackendError::new(
-                "NATIVE-CODEGEN-WRITE",
-                format!(
-                    "tidak dapat menulis source C '{}': {error}",
-                    source_path.display()
-                ),
-            )
-        })?;
+        let source_file = TemporaryCSource::create(&source)?;
+        let source_path = source_file.path.clone();
+        
         let compiler = std::env::var_os("ONE_ANDROID_CLANG")
             .or_else(|| std::env::var_os("ONE_CLANG"))
             .unwrap_or_else(|| "clang".into());
@@ -129,7 +175,6 @@ impl NativeAndroidAarch64Backend {
                 format!("artifact native tidak terbentuk: {}", output.display()),
             ));
         }
-        let _ = std::fs::remove_file(&source_path);
         Ok(NativeArtifact {
             path: output,
             format: ArtifactFormat::Executable,
@@ -366,17 +411,10 @@ macro_rules! native_backend {
                     })?;
 
                 let source = self.codegen(program)?;
-                let source_path = output.with_extension("c");
+                let source_file = TemporaryCSource::create(&source)?;
+        let source_path = source_file.path.clone();
 
-                std::fs::write(&source_path, source).map_err(|error| {
-                    NativeBackendError::new(
-                        "NATIVE-CODEGEN-WRITE",
-                        format!(
-                            "tidak dapat menulis source C '{}': {error}",
-                            source_path.display()
-                        ),
-                    )
-                })?;
+                
 
                 let compiler_override = if self.id() == "native-windows-x86_64" {
                     "ONE_WINDOWS_CLANG"
@@ -422,8 +460,7 @@ macro_rules! native_backend {
 
                 validate_native_artifact(&output, $arch, $env)?;
 
-                let _ = std::fs::remove_file(&source_path);
-
+        
                 Ok(NativeArtifact {
                     path: output,
                     format: ArtifactFormat::Executable,
@@ -882,6 +919,25 @@ mod android_backend_target_tests {
     fn native_android_aarch64_backend_targets_api_35() {
         let backend = NativeAndroidAarch64Backend::new();
         assert_eq!(backend.toolchain().target().triple(), "aarch64-linux-android35");
+    }
+}
+
+
+
+#[cfg(test)]
+mod temporary_source_tests {
+    use super::*;
+
+    #[test]
+    fn temporary_c_source_is_exclusive_and_removed_on_drop() {
+        let source = TemporaryCSource::create("int main(void) { return 0; }\n").unwrap();
+        let path = source.path.clone();
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "int main(void) { return 0; }\n"
+        );
+        drop(source);
+        assert!(!path.exists());
     }
 }
 
