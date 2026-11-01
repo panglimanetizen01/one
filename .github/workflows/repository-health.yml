@@ -58,9 +58,9 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: health-baseline
-          key: one-health-baseline-${{ github.ref_name }}-${{ github.run_id }}
+          key: one-health-baseline-v2-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
-            one-health-baseline-${{ github.ref_name }}-
+            one-health-baseline-v2-${{ github.ref_name }}-
 
       - name: Scan repository and validate normative One fixtures (Linux)
         if: runner.os == 'Linux'
@@ -100,4 +100,4 @@ jobs:
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: health-baseline
-          key: one-health-baseline-${{ github.ref_name }}-${{ github.run_id }}
+          key: one-health-baseline-v2-${{ github.ref_name }}-${{ github.run_id }}
