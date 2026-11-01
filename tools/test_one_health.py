@@ -684,3 +684,26 @@ if __name__ == "__main__":
         compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
+
+
+    def test_check_one_source_refuses_symlinked_cli_binary(self):
+        binary_dir = self.root / "target" / "debug"
+        binary_dir.mkdir(parents=True)
+        outside = Path(self.tmp.name).parent / (Path(self.tmp.name).name + "-fake-one")
+        marker = self.root / "cli-executed.marker"
+        outside.write_text("#!/bin/sh\\ntouch '" + str(marker) + "'\\n", encoding="utf-8")
+        outside.chmod(0o755)
+        binary = binary_dir / "one"
+        try:
+            binary.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            outside.unlink(missing_ok=True)
+            self.skipTest("platform does not permit symlink creation for this user")
+        try:
+            report = scan_repository(self.root, check_one_source=True)
+            blocked = [finding for finding in report["findings"] if finding["rule_id"] == "one-cli-binary-not-confined"]
+            self.assertTrue(blocked, "symlinked CLI binary must be blocked")
+            self.assertFalse(marker.exists(), "scanner must not execute a symlinked CLI binary")
+        finally:
+            binary.unlink(missing_ok=True)
+            outside.unlink(missing_ok=True)
