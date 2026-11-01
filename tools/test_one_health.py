@@ -585,7 +585,7 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_json_report_schema_and_counts_are_present(self):
         self.write("README.md", "Healthy.\n")
         report = scan_repository(self.root)
-        self.assertEqual("one-health-report/1", report["schema_version"])
+        self.assertEqual("one-health-report/2", report["schema_version"])
         self.assertEqual("0.1.3", report["scanner_version"])
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
@@ -607,14 +607,14 @@ class OneHealthScannerTests(unittest.TestCase):
     def test_baseline_keeps_findings_not_checked_when_detector_input_is_absent(self):
         current = scan_repository(self.root)
         old = {"finding_id": "OH-ci-old", "detector_id": "ci-evidence", "status": "open", "summary": "Old CI issue"}
-        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        compared = apply_baseline(current, {"schema_version": "one-health-report/2", "findings": [old]})
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
 
     def test_baseline_marks_disappeared_findings_as_reviewable_resolutions(self):
         current = scan_repository(self.root)
         old = {"finding_id": "OH-previous", "detector_id": "markdown-links", "status": "open", "summary": "Old issue"}
-        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        compared = apply_baseline(current, {"schema_version": "one-health-report/2", "findings": [old]})
         self.assertEqual("resolved", compared["resolved_findings"][0]["change_status"])
         self.assertIn("review detector coverage", compared["resolved_findings"][0]["resolution_basis"])
 
@@ -622,7 +622,7 @@ class OneHealthScannerTests(unittest.TestCase):
         current = scan_repository(self.root, check_one_source=False)
         old = {"finding_id": "OH-old-one-source", "detector_id": "one-source-contract",
                "status": "open", "summary": "One source check was blocked"}
-        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        compared = apply_baseline(current, {"schema_version": "one-health-report/2", "findings": [old]})
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual(1, compared["change_counts"]["not_checked"])
 
@@ -665,7 +665,7 @@ if __name__ == "__main__":
     def test_baseline_rejects_duplicate_finding_ids(self):
         report = scan_repository(self.root)
         duplicate = {"finding_id": "OH-duplicate", "detector_id": "markdown-links", "status": "open"}
-        baseline = {"schema_version": "one-health-report/1", "findings": [duplicate, dict(duplicate)]}
+        baseline = {"schema_version": "one-health-report/2", "findings": [duplicate, dict(duplicate)]}
         with self.assertRaisesRegex(ValueError, "duplicate baseline finding_id"):
             apply_baseline(report, baseline)
 
@@ -674,14 +674,14 @@ if __name__ == "__main__":
         with self.assertRaisesRegex(ValueError, "unsupported baseline schema"):
             apply_baseline(report, {"schema_version": "one-health-report/0", "findings": []})
         with self.assertRaisesRegex(ValueError, "baseline findings must be an array"):
-            apply_baseline(report, {"schema_version": "one-health-report/1", "findings": {}})
+            apply_baseline(report, {"schema_version": "one-health-report/2", "findings": {}})
         with self.assertRaisesRegex(ValueError, "must be a non-empty string"):
-            apply_baseline(report, {"schema_version": "one-health-report/1", "findings": [{"finding_id": "", "detector_id": "x"}]})
+            apply_baseline(report, {"schema_version": "one-health-report/2", "findings": [{"finding_id": "", "detector_id": "x"}]})
 
     def test_baseline_does_not_resolve_non_applicable_javascript_detector(self):
         current = scan_repository(self.root)
         old = {"finding_id": "OH-old-js", "detector_id": "security-javascript", "status": "open", "summary": "Old JS issue"}
-        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        compared = apply_baseline(current, {"schema_version": "one-health-report/2", "findings": [old]})
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
 
@@ -705,7 +705,7 @@ if __name__ == "__main__":
             self.assertTrue(blocked, "symlinked CLI binary must be blocked")
             self.assertEqual("blocked", report["detector_coverage"]["status_by_detector"]["one-source-contract"])
             self.assertFalse(marker.exists(), "scanner must not execute a symlinked CLI binary")
-            baseline = {"schema_version": "one-health-report/1", "findings": [
+            baseline = {"schema_version": "one-health-report/2", "findings": [
                 {"finding_id": "OH-old-one-source", "detector_id": "one-source-contract", "status": "open"}
             ]}
             compared = apply_baseline(report, baseline)
@@ -723,5 +723,27 @@ if __name__ == "__main__":
             current["detector_coverage"]["status_by_detector"]["security-code"],
         )
         old = {"finding_id": "OH-old-python", "detector_id": "security-code", "status": "open"}
-        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        compared = apply_baseline(current, {"schema_version": "one-health-report/2", "findings": [old]})
         self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
+
+
+    def test_multiple_identical_findings_in_one_file_keep_distinct_stable_ids(self):
+        self.write("README.md", "[first](missing.md)\\n[second](missing.md)\\n")
+        first = scan_repository(self.root)
+        second = scan_repository(self.root)
+        findings = [
+            item for item in first["findings"]
+            if item["detector_id"] == "markdown-links"
+            and item["rule_id"] == "broken-relative-link"
+            and item["path"] == "README.md"
+        ]
+        self.assertEqual(2, len(findings))
+        self.assertEqual(2, len({item["finding_id"] for item in findings}))
+        self.assertTrue(findings[1]["finding_id"].endswith("-2"))
+        repeated_ids = {
+            item["finding_id"] for item in second["findings"]
+            if item["detector_id"] == "markdown-links"
+            and item["rule_id"] == "broken-relative-link"
+            and item["path"] == "README.md"
+        }
+        self.assertEqual({item["finding_id"] for item in findings}, repeated_ids)
