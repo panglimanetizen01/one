@@ -136,3 +136,8 @@ The candidate now routes CLI build, package, and module-lock output through the 
 - reject unsafe artifact filename components before constructing output paths.
 
 Regression tests cover Unix symlinked `target`, Windows target junctions, hard-linked package artifact targets, and build output through a symlinked `target`. These are code and test additions only; they are **not verification evidence** until the new exact candidate SHA completes Linux/Windows tests, Clippy, and the dedicated E4 adversarial regression workflow.
+
+
+## Human-core imported-module hard-link correction — 2026-11-01
+
+The same hard-link alias applies to build-time human-core module loading: descriptor-relative no-follow traversal rejects symlinks, but an in-root hard link can still reference an inode with a name outside the project. The Unix and Windows module readers now reuse the opened-handle single-link check before reading source bytes. A regression creates an outside source file, hard-links it into the project, and requires the module reader to reject it. This addition is not verification evidence until the exact candidate SHA passes the compiler, Linux/Windows, and E4 regression suites.
