@@ -16,7 +16,9 @@ CORE_COMMANDS = ("one buat", "one periksa", "one jalankan", "one test", "one ban
 
 def _git(root: Path, *args: str) -> str | None:
     try:
-        result = subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True, text=True, timeout=5)
+        env = os.environ.copy()
+        env["GIT_PAGER"] = "cat"
+        result = subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True, text=True, timeout=5, env=env)
     except (OSError, subprocess.SubprocessError):
         return None
     return result.stdout.strip()
