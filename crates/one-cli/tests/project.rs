@@ -341,3 +341,21 @@ fn project_test_rejects_symlinked_conformance_fixture() {
 
     assert!(!output.status.success(), "project test must reject a symlinked conformance fixture");
 }
+
+
+#[test]
+fn build_supports_spaces_in_source_file_names() {
+    let root = temp_dir();
+    let source = root.join("program saya.one");
+    fs::write(&source, "tampilkan \"aman\"\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["build", source.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let artifact_exists = root.join("target/program saya.oneir").is_file();
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(output.status.success(), "safe filenames with spaces must remain supported: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(artifact_exists, "build artifact should preserve the safe source filename");
+}
