@@ -145,6 +145,8 @@ fn read_confined_module(
             if !metadata.is_file() {
                 return Err("Modul harus berupa berkas reguler.".to_owned());
             }
+            crate::adapter::ensure_single_link(&opened)
+                .map_err(|error| format!("Modul tidak boleh berupa hard link di luar akar proyek: {error}"))?;
             return read_source_bounded(opened, MAX_HUMAN_SOURCE_BYTES, "modul");
         }
         current = opened;
@@ -177,6 +179,8 @@ fn read_confined_module(
     if !metadata.is_file() || metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
         return Err("Modul harus berupa berkas reguler dan bukan reparse point.".to_owned());
     }
+    crate::adapter::ensure_single_link(&file)
+        .map_err(|error| format!("Modul tidak boleh berupa hard link di luar akar proyek: {error}"))?;
 
     #[link(name = "kernel32")]
     unsafe extern "system" {
@@ -508,6 +512,36 @@ mod tests {
         assert!(error.contains("tanpa mengikuti symlink"), "unexpected error: {error}");
 
         std::fs::remove_dir_all(base).unwrap();
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn confined_module_reader_rejects_hard_link_to_file_outside_project() {
+        let base = std::env::temp_dir().join(format!(
+            "one-module-hardlink-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let root = base.join("project");
+        let main = root.join("main.one");
+        let outside = base.join("outside.one");
+        let linked = root.join("linked.one");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(&main, "Buat program utama\\n").unwrap();
+        std::fs::write(&outside, "Buat modul luar\\ntampilkan \\\"outside\\\"\\n").unwrap();
+        std::fs::hard_link(&outside, &linked).unwrap();
+
+        let error = read_confined_module(
+            &root,
+            &main,
+            std::path::Path::new("linked.one"),
+            &linked,
+        )
+        .unwrap_err();
+        let outside_contents = std::fs::read_to_string(&outside).unwrap();
+        let _ = std::fs::remove_dir_all(&base);
+
+        assert!(error.contains("hard link"), "unexpected error: {error}");
+        assert!(outside_contents.starts_with("Buat modul luar"));
     }
 
     #[test]
