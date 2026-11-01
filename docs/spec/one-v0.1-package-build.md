@@ -55,7 +55,7 @@ This is a separate experimental artifact format. It does not change the existing
 
 ## 10B. Build/package artifact output confinement
 
-The CLI writes `.oneir`, `.onepkg`, and module-lock artifacts only through a root-confined filesystem writer. The `target` directory must be a real directory beneath the project root; symlink/reparse-point directory redirection is rejected. Existing artifact targets must be regular files with exactly one hard link; symlink/reparse-point and hard-linked final targets are rejected before truncation. A failed confinement check must not modify or create an artifact outside the project root.
+The CLI reads the package manifest, main source, conformance fixtures, and module-lock data through a root-confined no-follow reader; these inputs must be regular single-link files beneath the selected project root. The CLI writes `.oneir`, `.onepkg`, and module-lock artifacts only through a root-confined filesystem writer. The `target` directory must be a real directory beneath the project root; symlink/reparse-point directory redirection is rejected. Existing artifact targets must be regular files with exactly one hard link; symlink/reparse-point and hard-linked final targets are rejected before truncation. A failed confinement check must not modify or create an artifact outside the project root.
 
 ## 11. Acceptance criteria
 
