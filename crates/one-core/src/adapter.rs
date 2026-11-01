@@ -18,14 +18,48 @@ fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
 
 #[cfg(windows)]
 fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
-    use std::os::windows::fs::MetadataExt;
-    let links = file.metadata()?.number_of_links().ok_or_else(|| {
-        std::io::Error::new(
-            std::io::ErrorKind::Unsupported,
-            "the filesystem did not report the target hard-link count",
-        )
-    })?;
-    if links != 1 {
+    use std::os::windows::io::AsRawHandle;
+
+    #[repr(C)]
+    struct FileTime {
+        low: u32,
+        high: u32,
+    }
+
+    #[repr(C)]
+    struct ByHandleFileInformation {
+        file_attributes: u32,
+        creation_time: FileTime,
+        last_access_time: FileTime,
+        last_write_time: FileTime,
+        volume_serial_number: u32,
+        file_size_high: u32,
+        file_size_low: u32,
+        number_of_links: u32,
+        file_index_high: u32,
+        file_index_low: u32,
+    }
+
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetFileInformationByHandle(
+            file: *mut std::ffi::c_void,
+            information: *mut ByHandleFileInformation,
+        ) -> i32;
+    }
+
+    let mut information = std::mem::MaybeUninit::<ByHandleFileInformation>::uninit();
+    // SAFETY: the file handle is live and the output pointer targets a correctly sized
+    // BY_HANDLE_FILE_INFORMATION structure.
+    let succeeded = unsafe {
+        GetFileInformationByHandle(file.as_raw_handle(), information.as_mut_ptr())
+    };
+    if succeeded == 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    // SAFETY: GetFileInformationByHandle initialized the structure on success.
+    let information = unsafe { information.assume_init() };
+    if information.number_of_links != 1 {
         return Err(std::io::Error::new(
             std::io::ErrorKind::PermissionDenied,
             "hard-linked filesystem targets are outside the project confinement contract",
