@@ -92,7 +92,7 @@ One Source
  -> Native Artifact
 ```
 
-The last code-bearing canonical `main` revision independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out that source revision and passed on Ubuntu and Windows Server 2025. The subsequent evidence-documentation sync changes documentation only, not source or tests. Coverage included:
+The last production-implementation revision of canonical `main` independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out that source revision and passed on Ubuntu and Windows Server 2025. The subsequent evidence-sync commits changed documentation and added test-only standard-library regression coverage in `crates/one-core/src/stdlib.rs`; they did not change production implementation. Those added tests were not part of run `39554661451` and must not be represented as having run at SHA `77a89a6…`. Coverage included:
 
 - contract artifacts and specification/implementation checks;
 - build, AST contract regression tests, Clippy, and workspace tests;
