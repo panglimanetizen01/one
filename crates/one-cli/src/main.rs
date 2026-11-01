@@ -10,7 +10,7 @@ fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &b
 fn compile_source(source: &str) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let program = parse(source)?; let typed = analyze(&program)?; Ok((program, typed)) }
 fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("src").join("main.one"); if path.is_file() { Ok(path) } else { Err(format!("Proyek tidak memiliki '{}'.", path.display())) } }
 fn write_project_artifact(root: &Path, filename: &str, contents: &[u8]) -> Result<PathBuf, String> {
-    if !is_safe_manifest_component(filename) {
+    if !is_safe_artifact_filename(filename) {
         return Err(format!("Nama artefak '{}' tidak aman.", filename));
     }
     let target = root.join("target");
@@ -36,6 +36,32 @@ fn is_safe_manifest_component(value: &str) -> bool {
             byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'+')
         })
 }
+
+fn is_safe_artifact_filename(value: &str) -> bool {
+    if value.is_empty()
+        || value == "."
+        || value == ".."
+        || value.starts_with('.')
+        || value.ends_with('.')
+        || value.ends_with(' ')
+        || value.chars().any(|character| {
+            character.is_control() || "/\\:*?\"<>|".contains(character)
+        })
+    {
+        return false;
+    }
+    let device_name = value
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches(' ')
+        .to_ascii_uppercase();
+    !matches!(device_name.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        && !(device_name.len() == 4
+            && (device_name.starts_with("COM") || device_name.starts_with("LPT"))
+            && matches!(device_name.as_bytes()[3], b'1'..=b'9'))
+}
+
 
 fn project_metadata(root: &Path) -> Result<(String, String), String> {
     let manifest = root.join("one.toml");
@@ -270,7 +296,7 @@ fn main() -> ExitCode {
    let project_root = parent.parent().unwrap_or_else(|| Path::new("."));
    if let Err(message) = verify_existing_module_lock(project_root, &parent, &compiled.modules) { eprintln!("ETOOL006: {message}"); return ExitCode::from(1); }
    let stem = path.file_stem().and_then(|value| value.to_str()).unwrap_or("program");
-   let Some(filename) = is_safe_manifest_component(stem).then(|| format!("{stem}.oneir")) else { eprintln!("ETOOL009: nama artefak build tidak aman."); return ExitCode::from(2); };
+   let Some(filename) = is_safe_artifact_filename(stem).then(|| format!("{stem}.oneir")) else { eprintln!("ETOOL009: nama artefak build tidak aman."); return ExitCode::from(2); };
    let artifact_bytes = compiled.ir.canonical_text();
    let output = match write_project_artifact(&parent, &filename, artifact_bytes.as_bytes()) { Ok(value) => value, Err(message) => { eprintln!("Gagal menulis artefak build: {}", message); return ExitCode::from(2); } };
    println!("Build human-core berhasil: {}", output.display());
