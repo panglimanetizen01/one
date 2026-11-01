@@ -167,9 +167,6 @@ mod ast_contract_tests {
             source.push_str(&" ".repeat(depth * 4));
             source.push_str("kalau benar\n");
         }
-        source.push_str(&" ".repeat((MAX_PARSE_DEPTH + 1) * 4));
-        source.push_str("tampilkan \"aman\"\n");
-
         let error = parse(&source).expect_err("excessive block nesting must be rejected");
         assert_eq!(error.0[0].code, "E1025");
     }
@@ -183,7 +180,7 @@ mod ast_contract_tests {
 
     #[test]
     fn excessively_long_binary_expression_returns_a_diagnostic() {
-        let source = format!("tampilkan 1 {}1\n", "ditambah 1 ".repeat(MAX_PARSE_DEPTH));
+        let source = format!("tampilkan 1 {}\n", "ditambah 1 ".repeat(MAX_PARSE_DEPTH + 1));
         let error = parse(&source).expect_err("excessive binary expression depth must be rejected");
         assert_eq!(error.0[0].code, "E1027");
     }
