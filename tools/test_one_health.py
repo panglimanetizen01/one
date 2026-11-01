@@ -703,7 +703,25 @@ if __name__ == "__main__":
             report = scan_repository(self.root, check_one_source=True)
             blocked = [finding for finding in report["findings"] if finding["rule_id"] == "one-cli-binary-not-confined"]
             self.assertTrue(blocked, "symlinked CLI binary must be blocked")
+            self.assertEqual("blocked", report["detector_coverage"]["status_by_detector"]["one-source-contract"])
             self.assertFalse(marker.exists(), "scanner must not execute a symlinked CLI binary")
+            baseline = {"schema_version": "one-health-report/1", "findings": [
+                {"finding_id": "OH-old-one-source", "detector_id": "one-source-contract", "status": "open"}
+            ]}
+            compared = apply_baseline(report, baseline)
+            self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
         finally:
             binary.unlink(missing_ok=True)
             outside.unlink(missing_ok=True)
+
+
+    def test_baseline_does_not_resolve_security_code_when_python_syntax_is_invalid(self):
+        self.write("broken.py", "def broken(:\\n")
+        current = scan_repository(self.root)
+        self.assertEqual(
+            "partial-invalid-python-files",
+            current["detector_coverage"]["status_by_detector"]["security-code"],
+        )
+        old = {"finding_id": "OH-old-python", "detector_id": "security-code", "status": "open"}
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
