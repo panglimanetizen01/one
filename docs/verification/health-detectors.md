@@ -42,7 +42,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 
 - Current schema: `one-health-report/2`; scanner version is reported separately.
 - Scanner version `0.2.0` hashes finding identity from detector, rule, path, and evidence, then applies deterministic collision suffixes so repeated same-rule findings in one file are not silently collapsed.
-- Schema 2 is required because finding identity semantics changed. Schema-1 baselines are incompatible and must be reviewed/rebuilt; automatic migration is intentionally not performed.
+- Schema 2 is required because finding identity semantics changed. Schema-1 baselines are incompatible and must be reviewed/rebuilt; automatic migration is intentionally not performed. The GitHub Actions historical-baseline cache prefix is also versioned (`one-health-baseline-v2-`) so schema-1 cache entries cannot be restored into schema 2.
 - Scanner implementation version `0.1.2` includes JavaScript/TypeScript source traversal and plural-aware prompt-injection secret-action correlation; the report schema remains version 1 because field types and finding identity semantics are unchanged.
 - Adding optional fields without changing existing field meaning is backward-compatible within schema version 2.
 - Removing fields, changing field types, changing finding identity semantics, or changing baseline comparison meanings requires a new schema version and migration notes.
