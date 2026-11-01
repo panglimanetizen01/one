@@ -9,7 +9,59 @@ fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &bundle.0 { eprintln!("{}: {}", diagnostic.code, diagnostic.message); if let Some(span) = &diagnostic.span { eprintln!("  baris {}, kolom {}", span.line, span.column); } for note in &diagnostic.notes { eprintln!("  catatan: {}", note); } for suggestion in &diagnostic.suggestions { eprintln!("  saran: {}", suggestion); } } }
 fn compile_source(source: &str) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let program = parse(source)?; let typed = analyze(&program)?; Ok((program, typed)) }
 fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("src").join("main.one"); if path.is_file() { Ok(path) } else { Err(format!("Proyek tidak memiliki '{}'.", path.display())) } }
-fn project_metadata(root: &Path) -> Result<(String, String), String> { let manifest = root.join("one.toml"); let text = fs::read_to_string(&manifest).map_err(|e| format!("Tidak dapat membaca '{}': {}", manifest.display(), e))?; let mut seen = HashSet::new(); let mut name = None; let mut version = None; for (index, raw_line) in text.lines().enumerate() { let line = raw_line.trim(); if line.is_empty() || line.starts_with('#') { continue; } let Some((raw_key, raw_value)) = line.split_once('=') else { return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1)); }; let key = raw_key.trim(); let value = raw_value.trim(); if !matches!(key, "nama" | "versi") || !seen.insert(key) { return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1)); } let Some(value) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else { return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1)); }; if value.is_empty() { return Err(format!("Manifest '{}' memiliki nilai kosong pada baris {}.", manifest.display(), index + 1)); } match key { "nama" => name = Some(value.to_owned()), "versi" => version = Some(value.to_owned()), _ => unreachable!() } } match (name, version) { (Some(name), Some(version)) => Ok((name, version)), _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())) } }
+fn is_safe_manifest_component(value: &str) -> bool {
+    !value.is_empty()
+        && value != "."
+        && value != ".."
+        && !value.starts_with('.')
+        && !value.ends_with('.')
+        && value.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'+')
+        })
+}
+
+fn project_metadata(root: &Path) -> Result<(String, String), String> {
+    let manifest = root.join("one.toml");
+    let text = fs::read_to_string(&manifest)
+        .map_err(|error| format!("Tidak dapat membaca '{}': {}", manifest.display(), error))?;
+    let mut seen = HashSet::new();
+    let mut name = None;
+    let mut version = None;
+
+    for (index, raw_line) in text.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((raw_key, raw_value)) = line.split_once('=') else {
+            return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1));
+        };
+        let key = raw_key.trim();
+        let value = raw_value.trim();
+        if !matches!(key, "nama" | "versi") || !seen.insert(key) {
+            return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1));
+        }
+        let Some(value) = value.strip_prefix('"').and_then(|value| value.strip_suffix('"')) else {
+            return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1));
+        };
+        if !is_safe_manifest_component(value) {
+            return Err(format!(
+                "Manifest '{}' memiliki nilai '{}' yang tidak aman untuk nama artefak pada field '{}' di baris {}.",
+                manifest.display(), key, key, index + 1
+            ));
+        }
+        match key {
+            "nama" => name = Some(value.to_owned()),
+            "versi" => version = Some(value.to_owned()),
+            _ => unreachable!(),
+        }
+    }
+
+    match (name, version) {
+        (Some(name), Some(version)) => Ok((name, version)),
+        _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())),
+    }
+}
 fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
 fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir() { return Ok(Vec::new()); } let mut files = fs::read_dir(root).map_err(|e| format!("Tidak dapat membaca '{}': {}", root.display(), e))?.map(|entry| entry.map(|e| e.path()).map_err(|e| format!("Tidak dapat membaca fixture: {}", e))).collect::<Result<Vec<_>, _>>()?; files.retain(|path| path.extension().and_then(|v| v.to_str()) == Some("one")); files.sort(); Ok(files) }
 fn sha256_hex(bytes: &[u8]) -> String {
