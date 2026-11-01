@@ -639,3 +639,48 @@ class OneHealthScannerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_directory_symlink_escape_is_reported_without_scanning_target(self):
+        outside = Path(self.tmp.name).parent / (Path(self.tmp.name).name + "-outside-dir")
+        outside.mkdir()
+        secret = "ghp_" + ("Z" * 36)
+        (outside / "outside.py").write_text("TOKEN = " + repr(secret) + "\\n", encoding="utf-8")
+        link = self.root / "docs" / "outside-dir"
+        try:
+            link.symlink_to(outside, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            shutil.rmtree(outside, ignore_errors=True)
+            self.skipTest("platform does not permit directory symlink creation for this user")
+        try:
+            report = scan_repository(self.root)
+            escaping = [f for f in report["findings"] if f["rule_id"] == "symlink-escapes-repository"]
+            self.assertTrue(any(f["path"] == "docs/outside-dir" for f in escaping))
+            self.assertFalse(any(f["path"].startswith("docs/outside-dir/") for f in report["findings"]))
+            self.assertNotIn(secret, json.dumps(report))
+        finally:
+            link.unlink(missing_ok=True)
+            shutil.rmtree(outside, ignore_errors=True)
+
+    def test_baseline_rejects_duplicate_finding_ids(self):
+        report = scan_repository(self.root)
+        duplicate = {"finding_id": "OH-duplicate", "detector_id": "markdown-links", "status": "open"}
+        baseline = {"schema_version": "one-health-report/1", "findings": [duplicate, dict(duplicate)]}
+        with self.assertRaisesRegex(ValueError, "duplicate baseline finding_id"):
+            apply_baseline(report, baseline)
+
+    def test_baseline_rejects_malformed_schema_and_findings(self):
+        report = scan_repository(self.root)
+        with self.assertRaisesRegex(ValueError, "unsupported baseline schema"):
+            apply_baseline(report, {"schema_version": "one-health-report/0", "findings": []})
+        with self.assertRaisesRegex(ValueError, "baseline findings must be an array"):
+            apply_baseline(report, {"schema_version": "one-health-report/1", "findings": {}})
+        with self.assertRaisesRegex(ValueError, "must be a non-empty string"):
+            apply_baseline(report, {"schema_version": "one-health-report/1", "findings": [{"finding_id": "", "detector_id": "x"}]})
+
+    def test_baseline_does_not_resolve_non_applicable_javascript_detector(self):
+        current = scan_repository(self.root)
+        old = {"finding_id": "OH-old-js", "detector_id": "security-javascript", "status": "open", "summary": "Old JS issue"}
+        compared = apply_baseline(current, {"schema_version": "one-health-report/1", "findings": [old]})
+        self.assertEqual("not_checked", compared["not_checked_findings"][0]["change_status"])
+        self.assertEqual("blocked", compared["not_checked_findings"][0]["status"])
