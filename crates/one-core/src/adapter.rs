@@ -22,22 +22,22 @@ fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
 
     #[repr(C)]
     struct FileTime {
-        low: u32,
-        high: u32,
+        _low: u32,
+        _high: u32,
     }
 
     #[repr(C)]
     struct ByHandleFileInformation {
-        file_attributes: u32,
-        creation_time: FileTime,
-        last_access_time: FileTime,
-        last_write_time: FileTime,
-        volume_serial_number: u32,
-        file_size_high: u32,
-        file_size_low: u32,
+        _file_attributes: u32,
+        _creation_time: FileTime,
+        _last_access_time: FileTime,
+        _last_write_time: FileTime,
+        _volume_serial_number: u32,
+        _file_size_high: u32,
+        _file_size_low: u32,
         number_of_links: u32,
-        file_index_high: u32,
-        file_index_low: u32,
+        _file_index_high: u32,
+        _file_index_low: u32,
     }
 
     #[link(name = "kernel32")]
