@@ -14,7 +14,7 @@ The matrix passed contract-artifact checks, build, AST contract regression tests
 
 Canonical hosted `One CI` runs `39372356906` and `39381125667` failed before executable steps (`steps: []`). These are infrastructure/runner failures and do not establish a source failure; the independent exact-SHA matrix is the positive source-revision evidence.
 
-The matrix verifies the recorded source revision on its Ubuntu and Windows hosts. Subsequent evidence-sync commits change documentation only, not source or tests. It does not automatically imply that every cross-compiled target artifact was executed on its own target architecture; target-specific execution claims remain bounded to their recorded evidence.
+The matrix verifies the recorded source revision on its Ubuntu and Windows hosts. Subsequent evidence-sync commits also added test-only standard-library regression coverage in `crates/one-core/src/stdlib.rs`; no production implementation changed. Those tests were not included in run `39554661451` at SHA `77a89a6…`. It does not automatically imply that every cross-compiled target artifact was executed on its own target architecture; target-specific execution claims remain bounded to their recorded evidence.
 
 ## Verified baseline
 
