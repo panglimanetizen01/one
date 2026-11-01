@@ -149,7 +149,7 @@ cargo build --locked -p one-cli
 python tools/one_health.py --check-one-source --json-out one-health-report.json
 ~~~
 
-This invokes only `one periksa`; it never invokes `one jalankan`. The experimental `tests/human-vnext` fixtures and `examples/human-vnext` programs are deliberately excluded because they have a separate, explicitly experimental grammar contract. A fixture whose actual parser acceptance differs from its expected valid/invalid class is reported as a high-severity contract mismatch.
+The scanner invokes the locally built CLI binary and runs only `one periksa`; it never invokes `one jalankan` and never executes fixture programs. The binary path must be a regular, single-link file confined beneath the checkout; symlinked, hard-linked, or out-of-root binaries are blocked. The scanner does not attest binary provenance, so CI must build the CLI from the same exact checkout before scanning. The experimental `tests/human-vnext` fixtures and `examples/human-vnext` programs are deliberately excluded because they have a separate, explicitly experimental grammar contract. A fixture whose actual parser acceptance differs from its expected valid/invalid class is reported as a high-severity contract mismatch.
 
 ## Detector quality and repair outcomes
 
