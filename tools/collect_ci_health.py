@@ -168,6 +168,13 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
             "head_sha": run.get("head_sha"),
             "html_url": run.get("html_url"),
         } for run in matching]
+        if not matching:
+            result["correlations"].append({
+                "rule_id": "no-exact-sha-runs",
+                "classification": "no-exact-sha-evidence",
+                "evidence": "The Actions API completed but returned no workflow runs whose head_sha exactly matched source_sha.",
+                "next_step": "Trigger the required workflows for this exact SHA or attach independent exact-SHA verification; an empty run list is not PASS.",
+            })
 
         for run in matching:
             run_id = run.get("id")
