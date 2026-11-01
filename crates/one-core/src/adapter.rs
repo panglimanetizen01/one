@@ -68,6 +68,28 @@ fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn write_file_within_project(
+    root: &Path,
+    relative: &Path,
+    contents: &[u8],
+) -> std::io::Result<()> {
+    if relative.as_os_str().is_empty()
+        || relative.is_absolute()
+        || relative.components().any(|component| {
+            !matches!(component, Component::Normal(_) | Component::CurDir)
+        })
+        || relative.file_name().is_none()
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "artifact path must be a non-empty relative path within the project",
+        ));
+    }
+
+    let mut file = open_write_target_in_project(root, relative)?;
+    file.write_all(contents)
+}
+
 pub(crate) fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
     if target.is_empty() || target.contains('\0') {
         return Err(AdapterError::InvalidArguments);
