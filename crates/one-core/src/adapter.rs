@@ -4,6 +4,36 @@ use std::time::Duration;
 
 const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 
+#[cfg(unix)]
+fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
+    use std::os::unix::fs::MetadataExt;
+    if file.metadata()?.nlink() != 1 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "hard-linked filesystem targets are outside the project confinement contract",
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
+    use std::os::windows::fs::MetadataExt;
+    let links = file.metadata()?.number_of_links().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "the filesystem did not report the target hard-link count",
+        )
+    })?;
+    if links != 1 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "hard-linked filesystem targets are outside the project confinement contract",
+        ));
+    }
+    Ok(())
+}
+
 pub(crate) fn validate_filesystem_target(target: &str) -> Result<(), AdapterError> {
     if target.is_empty() || target.contains('\0') {
         return Err(AdapterError::InvalidArguments);
@@ -235,6 +265,7 @@ fn open_read_target(path: &Path) -> std::io::Result<std::fs::File> {
             "target is not a regular non-reparse file",
         ));
     }
+    ensure_single_link(&file)?;
     windows_validate_opened_file(&file, &canonical)?;
     Ok(file)
 }
@@ -301,6 +332,7 @@ fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
                     "target is not a regular non-reparse file",
                 ));
             }
+            ensure_single_link(&file)?;
             windows_validate_opened_file(&file, &canonical)?;
             file.set_len(0)?;
             Ok(file)
@@ -338,7 +370,9 @@ fn open_write_target(path: &Path) -> std::io::Result<std::fs::File> {
                 .create_new(true)
                 .custom_flags(FILE_FLAG_OPEN_REPARSE_POINT)
                 .open(path)?;
-            if let Err(validation_error) = windows_validate_opened_file(&file, &expected) {
+            if let Err(validation_error) = ensure_single_link(&file)
+                .and_then(|()| windows_validate_opened_file(&file, &expected))
+            {
                 windows_delete_opened_file(&file);
                 return Err(validation_error);
             }
@@ -403,7 +437,8 @@ fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<
     if fd < 0 { return Err(std::io::Error::last_os_error()); }
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
-    ensure_same_filesystem_mount(&file, &directory)?;
+    ensure_single_link(&file)?;
++    ensure_same_filesystem_mount(&file, &directory)?;
     Ok(file)
 }
 
@@ -864,5 +899,49 @@ mod filesystem_windows_reparse_tests {
         assert!(open_read_target(&junction.join("secret.txt")).is_err());
         let _ = std::fs::remove_dir(&junction);
         let _ = std::fs::remove_dir_all(root);
+    }
+}
+
+
+#[cfg(all(test, any(unix, windows)))]
+mod hardlink_confinement_tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn fixture() -> (std::path::PathBuf, std::path::PathBuf, std::path::PathBuf) {
+        let id = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let base = std::env::temp_dir().join(format!("one-hardlink-confinement-{id}"));
+        let root = base.join("project");
+        let outside = base.join("outside.txt");
+        let linked = root.join("linked.txt");
+        std::fs::create_dir_all(&root).expect("create project root");
+        std::fs::write(&outside, b"outside secret").expect("create outside file");
+        std::fs::hard_link(&outside, &linked).expect("create in-root hard link");
+        (base, root, outside)
+    }
+
+    #[test]
+    fn project_read_rejects_a_hard_link_to_an_outside_file() {
+        let (base, root, outside) = fixture();
+        let result = open_read_target_in_project(&root, Path::new("linked.txt"));
+        let outside_contents = std::fs::read(&outside).expect("outside file remains readable");
+        let _ = std::fs::remove_dir_all(&base);
+
+        assert!(result.is_err(), "a hard link must not expose an outside file through the project root");
+        assert_eq!(outside_contents, b"outside secret");
+    }
+
+    #[test]
+    fn project_write_rejects_a_hard_link_without_modifying_the_outside_file() {
+        let (base, root, outside) = fixture();
+        let result = open_write_target_in_project(&root, Path::new("linked.txt"));
+        let outside_contents = std::fs::read(&outside).expect("outside file remains readable");
+        let _ = std::fs::remove_dir_all(&base);
+
+        assert!(result.is_err(), "a hard link must not permit writes through the project root");
+        assert_eq!(outside_contents, b"outside secret");
     }
 }
