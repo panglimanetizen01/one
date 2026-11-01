@@ -124,7 +124,7 @@ def collect_ci_health(repo: str, source_sha: str, token: str, root: Path,
             "GitHub API metadata only; job logs are not downloaded or interpreted.",
             "Artifact presence and digest metadata are recorded, not treated as proof of artifact correctness.",
             "Only runs whose head_sha exactly matches source_sha are included.",
-            "Runs, jobs, artifacts, Check Runs, and annotations are paginated up to 2,000 records per endpoint; exceeding that cap marks collection partial.",
+            "Runs, jobs, artifacts, Check Runs, and annotations are paginated up to 2,000 records per endpoint; exceeding that cap marks collection blocked or partial, never complete.",
             "High-signal secret patterns are redacted from Check Run and annotation text.",
         ],
     }
