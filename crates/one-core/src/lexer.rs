@@ -2,6 +2,23 @@ use crate::diagnostic::{Diagnostic, DiagnosticBundle};
 use crate::token::{Span, Token, TokenKind};
 
 const INDENT_WIDTH: usize = 4;
+const MAX_SOURCE_BYTES: usize = 4 * 1024 * 1024;
+const MAX_TOKENS: usize = 250_000;
+const MAX_INDENT_DEPTH: usize = 128;
+
+macro_rules! push_bounded_token {
+    ($tokens:expr, $token:expr) => {{
+        let token = $token;
+        if $tokens.len() >= MAX_TOKENS {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "E0009",
+                "Sumber One melebihi batas jumlah token yang aman.",
+                Some(token.span.clone()),
+            )));
+        }
+        $tokens.extend(std::iter::once(token));
+    }};
+}
 
 pub fn lex(source: &str) -> Result<Vec<Token>, DiagnosticBundle> { Lexer::new(source).scan() }
 
@@ -11,6 +28,13 @@ impl<'a> Lexer<'a> {
     pub fn new(source: &'a str) -> Self { Self { source } }
 
     pub fn scan(&mut self) -> Result<Vec<Token>, DiagnosticBundle> {
+        if self.source.len() > MAX_SOURCE_BYTES {
+            return Err(DiagnosticBundle::single(Diagnostic::error(
+                "E0008",
+                "Berkas sumber One melebihi batas 4 MiB.",
+                Some(Span::new(0, self.source.len(), 1, 1)),
+            )));
+        }
         let mut tokens = Vec::new();
         let mut indent_stack = vec![0usize];
         let mut offset = 0usize;
@@ -30,7 +54,10 @@ impl<'a> Lexer<'a> {
             let current = *indent_stack.last().unwrap();
             if leading > current {
                 if leading != current + INDENT_WIDTH { return Err(DiagnosticBundle::single(Diagnostic::error("E0003", "Blok baru harus menjorok tepat satu tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1))))); }
-                indent_stack.push(leading); tokens.push(Token::new(TokenKind::Indent, "", Span::new(line_start, line_start + leading, line_no, 1)));
+                if indent_stack.len() - 1 >= MAX_INDENT_DEPTH {
+                    return Err(DiagnosticBundle::single(Diagnostic::error("E0010", "Kedalaman blok sumber melebihi batas 128 tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1)))));
+                }
+                indent_stack.push(leading); push_bounded_token!(tokens, Token::new(TokenKind::Indent, "", Span::new(line_start, line_start + leading, line_no, 1)));
             } else if leading < current {
                 while *indent_stack.last().unwrap() > leading { indent_stack.pop(); tokens.push(Token::new(TokenKind::Dedent, "", Span::new(line_start, line_start + leading, line_no, 1))); }
                 if *indent_stack.last().unwrap() != leading { return Err(DiagnosticBundle::single(Diagnostic::error("E0004", "Indentasi kembali ke tingkat yang tidak pernah digunakan sebelumnya.", Some(Span::new(line_start, line_start + leading, line_no, 1))))); }
