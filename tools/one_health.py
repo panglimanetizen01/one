@@ -598,13 +598,46 @@ def _scan_security(rel: str, text: str, findings: list[dict]) -> None:
                 "Skrip menggabungkan pengunduhan konten jaringan dan eksekusi shell langsung.",
                 "Matched download-to-interpreter pattern; URL/payload omitted.",
                 "Jangan eksekusi konten jaringan secara langsung; verifikasi sumber, digest, tanda tangan, dan review payload sebelum penggunaan."))
-def _scan_json(rel, text, findings):
+def _scan_json(rel, text, findings, actual_sha=None):
     try: parsed = json.loads(text)
     except json.JSONDecodeError as exc:
         findings.append(_finding("syntax", "invalid-json", rel, exc.lineno, "high", "high",
             "Berkas JSON tidak dapat diparse.", exc.msg, "Perbaiki sintaks JSON lalu jalankan pemindai kembali."))
         return
     if isinstance(parsed, dict):
+        if parsed.get("collector") == "tools/collect_ci_health.py":
+            if parsed.get("schema_version") != "one-ci-health-evidence/2":
+                findings.append(_finding("ci-evidence", "unsupported-ci-collector-schema", rel, None, "high", "high",
+                    "Skema bukti CI tidak sesuai dengan kontrak collector yang berlaku.",
+                    f"schema_version={parsed.get('schema_version')!r}",
+                    "Jalankan ulang collector versi yang cocok; jangan gunakan metadata dari skema lama sebagai bukti current-SHA.",
+                    status="blocked"))
+            if parsed.get("working_tree_clean") is not True:
+                findings.append(_finding("ci-evidence", "ci-evidence-worktree-not-clean", rel, None, "high", "high",
+                    "Bukti CI dibuat dari working tree yang tidak terbukti bersih.",
+                    f"working_tree_clean={parsed.get('working_tree_clean')!r}",
+                    "Ulangi koleksi dari checkout exact-SHA yang bersih; bukti dari working tree kotor tidak dapat dipakai untuk klaim source.",
+                    status="blocked"))
+            source_sha = parsed.get("source_sha")
+            checked_sha = parsed.get("checked_out_sha")
+            if actual_sha and isinstance(source_sha, str) and source_sha.lower() != actual_sha.lower():
+                findings.append(_finding("ci-evidence", "ci-evidence-source-sha-not-current", rel, None, "critical", "high",
+                    "Metadata CI berasal dari SHA berbeda dari checkout yang sedang dipindai.",
+                    f"source_sha={source_sha}; actual_sha={actual_sha}",
+                    "Kumpulkan ulang metadata Actions pada SHA checkout saat ini.",
+                    status="blocked"))
+            if actual_sha and isinstance(checked_sha, str) and checked_sha.lower() != actual_sha.lower():
+                findings.append(_finding("ci-evidence", "ci-evidence-checkout-sha-not-current", rel, None, "critical", "high",
+                    "Checkout SHA pada metadata CI berbeda dari repository yang sedang dipindai.",
+                    f"checked_out_sha={checked_sha}; actual_sha={actual_sha}",
+                    "Kumpulkan ulang metadata CI dari checkout exact-SHA saat ini.",
+                    status="blocked"))
+            if not isinstance(parsed.get("runs"), list):
+                findings.append(_finding("ci-evidence", "ci-evidence-run-list-malformed", rel, None, "high", "high",
+                    "Metadata CI tidak memiliki daftar workflow run yang valid.",
+                    f"runs_type={type(parsed.get('runs')).__name__}",
+                    "Periksa collector output dan jalankan ulang pengumpulan metadata.",
+                    status="blocked"))
         collector_status = parsed.get("collector_status")
         if collector_status in {"blocked", "partial"}:
             errors = parsed.get("collection_errors", [])
