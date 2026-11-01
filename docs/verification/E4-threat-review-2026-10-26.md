@@ -111,3 +111,15 @@ The E4 acceptance review is complete for the current declared support boundary, 
 **Residual risk statements retained:** no claim of a universal sandbox, protection against a compromised kernel/administrator, universal heap cap, complete Windows filesystem-provider race proof, or strict bind-mount identity on non-Linux Unix. The tested current target controls cover root anchoring, Linux mount identity, Unix no-follow behavior, Windows handle/reparse confinement, capability denial before side effects, bounded subprocess execution/output, shared active-operation/SQLite budgets, output cap, and recovery assertions.
 
 **Disposition:** E4 is accepted provisionally as 6/6 for this candidate scope. This acceptance record itself is a source-document change, so the candidate SHA advances; the independent verifier must pin the resulting SHA and rerun the relevant matrix. Overall release gate remains NOT PASSED while E1, E2, E6 and final-freeze conditions remain open. No merge or production release is authorized.
+
+
+## Hard-link confinement correction — 2026-11-01
+
+A follow-up source review identified a filesystem confinement case not covered by the earlier symlink/reparse and mount-boundary checks: a regular file hard-linked into the project root can still share an inode/file identity with a name outside that root. Descriptor-relative no-follow traversal and same-mount checks alone do not reject that alias.
+
+The candidate implementation now rejects file targets whose opened-handle hard-link count is not exactly one:
+- Unix: inspect the opened file descriptor metadata before reading or truncating.
+- Windows: query `BY_HANDLE_FILE_INFORMATION.nNumberOfLinks` through the stable Win32 `GetFileInformationByHandle` API; fail closed if the query fails.
+- Regression tests cover both read and write attempts through an in-project hard link to a sibling/outside file and assert the outside contents remain unchanged.
+
+This is a source correction and test addition, **not yet verification evidence**. The new exact candidate SHA must pass the independent Linux/Windows matrix, including the hard-link regressions, before this control is marked verified. The restriction is intentionally conservative: project filesystem read/write adapters reject files with multiple hard links rather than attempting to infer which alias is authoritative.
