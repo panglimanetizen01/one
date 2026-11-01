@@ -743,7 +743,7 @@ def _trusted_cli_binary_reason(root: Path, binary: Path) -> str | None:
     return None
 
 
-def _check_one_source(root: Path, findings: list[dict]) -> None:
+def _check_one_source(root: Path, findings: list[dict]) -> str:
     """Invoke the trusted CLI parser on normative fixtures; never execute fixture programs."""
     candidates = [root / "target" / "debug" / "one", root / "target" / "debug" / "one.exe"]
     binary = next((path for path in candidates if path.exists() or path.is_symlink()), None)
@@ -753,7 +753,7 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
             "target/debug/one dan target/debug/one.exe tidak ada.",
             "Bangun CLI dengan cargo build --locked -p one-cli lalu jalankan pemindai dengan --check-one-source.",
             status="blocked"))
-        return
+        return "blocked"
     untrusted_reason = _trusted_cli_binary_reason(root, binary)
     if untrusted_reason is not None:
         findings.append(_finding("one-source-contract", "one-cli-binary-not-confined", ".", None, "high", "high",
@@ -761,7 +761,7 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
             untrusted_reason,
             "Bangun binary CLI dari checkout exact-SHA ini; jangan jalankan binary symlink, hard-link, atau di luar root.",
             status="blocked"))
-        return
+        return "blocked"
     fixtures = []
     valid_dir = root / "tests" / "conformance" / "valid"
     invalid_dir = root / "tests" / "conformance" / "invalid"
@@ -775,7 +775,8 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
             "Direktori conformance valid/invalid dan tests/spec/grammar_examples.one tidak tersedia.",
             "Pulihkan fixture normatif; jangan menganggap pemindaian tanpa fixture sebagai PASS.",
             status="blocked"))
-        return
+        return "blocked"
+    complete = True
     for path, should_pass in fixtures:
         rel = path.relative_to(root).as_posix()
         try:
@@ -785,11 +786,13 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
             findings.append(_finding("one-source-contract", "one-source-check-timeout", rel, None, "high", "high",
                 "Pemeriksaan source One melewati batas waktu.", "one periksa tidak selesai dalam 30 detik.",
                 "Reproduksi pada fixture tersebut dan periksa regresi parser/CLI."))
+            complete = False
             continue
         except OSError as exc:
             findings.append(_finding("one-source-contract", "one-source-check-unavailable", rel, None, "high", "high",
                 "CLI One tidak dapat dijalankan untuk memeriksa source.", str(exc),
                 "Periksa hasil build dan izin eksekusi binary."))
+            complete = False
             continue
         passed = result.returncode == 0
         if passed != should_pass:
@@ -799,6 +802,7 @@ def _check_one_source(root: Path, findings: list[dict]) -> None:
             findings.append(_finding("one-source-contract", "fixture-acceptance-mismatch", rel, None, "high", "high",
                 "Hasil parser berbeda dari status fixture conformance.", f"expected={expected}; actual={actual}; {detail}",
                 "Tinjau grammar normatif dan implementasi parser; jangan ubah status fixture tanpa alasan kontraktual."))
+    return "ran" if complete else "partial"
 
 def _scan_contract_documents(root: Path, findings: list[dict]) -> None:
     """Check high-value normative invariants without rewriting or executing One source."""
@@ -852,6 +856,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     findings, workflows = [], []
     files = list(_files(root))
     json_evidence_detectors = set()
+    python_syntax_failed = False
     actual_sha, branch = _git(root, "rev-parse", "HEAD"), _git(root, "branch", "--show-current")
     if expected_sha is not None:
         if not SHA_RE.fullmatch(expected_sha):
@@ -887,6 +892,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         if suffix == ".py":
             try: ast.parse(text, filename=rel)
             except SyntaxError as exc:
+                python_syntax_failed = True
                 findings.append(_finding("syntax", "invalid-python", rel, exc.lineno, "high", "high",
                     "Berkas Python memiliki kesalahan sintaks.", exc.msg, "Perbaiki sintaks dan tambahkan tes regresi bila perlu."))
         elif suffix == ".toml":
@@ -916,8 +922,9 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         elif suffix == ".md": _scan_markdown(path, rel, root, text, findings)
         if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}: workflows.append((rel, text))
     _scan_workflows(root, workflows, findings)
+    one_source_status = "not-requested"
     if check_one_source:
-        _check_one_source(root, findings)
+        one_source_status = _check_one_source(root, findings)
     cli_contract = root / "docs/spec/one-v0.1-cli-contract.md"
     cli_guide = root / "docs/panduan-pengguna/perintah-cli.md"
     if cli_contract.is_file() and cli_guide.is_file():
@@ -958,7 +965,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
     detector_status = {
         "path-integrity": "ran",
         "security-secrets": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
-        "security-code": "ran" if ".py" in suffixes else "not-applicable-no-python-files",
+        "security-code": ("partial-invalid-python-files" if python_syntax_failed else "ran") if ".py" in suffixes else "not-applicable-no-python-files",
         "security-javascript": "ran" if suffixes.intersection(JAVASCRIPT_SUFFIXES) else "not-applicable-no-javascript-typescript-files",
         "security-workflow": "ran" if workflows else "not-applicable-no-workflows",
         "security-prompt-injection": "ran" if agent_instruction_surfaces else "not-applicable-no-agent-instruction-surfaces",
@@ -973,7 +980,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "ci-evidence": "ran" if "ci-evidence" in detectors_run else "not-applicable-no-ci-evidence",
         "artifact-integrity": "ran" if "artifact-integrity" in detectors_run else "not-applicable-no-artifact-evidence",
         "contract-drift": "ran",
-        "one-source-contract": "ran" if check_one_source else "not-requested",
+        "one-source-contract": one_source_status,
     }
     detector_coverage = {
         "status_by_detector": detector_status,
