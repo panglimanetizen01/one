@@ -5,7 +5,7 @@ use std::time::Duration;
 const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 
 #[cfg(unix)]
-fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
+pub(crate) fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
     use std::os::unix::fs::MetadataExt;
     if file.metadata()?.nlink() != 1 {
         return Err(std::io::Error::new(
@@ -17,7 +17,7 @@ fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
 }
 
 #[cfg(windows)]
-fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
+pub(crate) fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
     use std::os::windows::io::AsRawHandle;
 
     #[repr(C)]
