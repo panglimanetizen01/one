@@ -47,7 +47,7 @@ fn project_metadata(root: &Path) -> Result<(String, String), String> {
         if !is_safe_manifest_component(value) {
             return Err(format!(
                 "Manifest '{}' memiliki nilai '{}' yang tidak aman untuk nama artefak pada field '{}' di baris {}.",
-                manifest.display(), key, key, index + 1
+                manifest.display(), value, key, index + 1
             ));
         }
         match key {
