@@ -133,7 +133,7 @@ fn verify_existing_module_lock(project_root: &Path, source_root: &Path, modules:
  let expected = module_lock_contents(source_root, modules)?;
  let actual = String::from_utf8(actual_bytes).map_err(|error| format!("Module lock tidak berisi UTF-8 valid: {error}"))?;
  if actual != expected {
-  return Err(format!("Module lock '{}' sudah usang; jalankan 'one package' untuk memperbaruinya.", lock_path.display()));
+  return Err(format!("Module lock '{}' sudah usang; jalankan 'one package' untuk memperbaruinya.", project_root.join(&lock_relative).display()));
  }
  Ok(())
 }
@@ -156,7 +156,8 @@ fn run_conformance_fixtures(root: &Path) -> Result<usize, String> {
   count += 1;
  }
  for path in invalid {
-  let source = fs::read_to_string(&path).map_err(|error| format!("Fixture '{}' tidak dapat dibaca: {}", path.display(), error))?;
+  let relative = path.strip_prefix(root).map_err(|_| format!("Fixture '{}' berada di luar akar proyek.", path.display()))?;
+  let source = read_project_source(root, relative)?;
   let accepted = if source.lines().next().unwrap_or("").starts_with("Buat program ") {
    one_core::human_compiler::compile_file(&path).is_ok()
   } else {
