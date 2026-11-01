@@ -304,31 +304,33 @@ fn shift_diagnostics(mut bundle: DiagnosticBundle, offset: usize) -> DiagnosticB
 /// declared immediately after the root/module header; path traversal and import cycles
 /// are rejected. All module bodies enter the same canonical semantic pipeline.
 pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, DiagnosticBundle> {
-    let canonical_root = std::fs::canonicalize(path).map_err(|error| {
+    let supplied_parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| std::path::Path::new("."));
+    let root_dir = std::fs::canonicalize(supplied_parent).map_err(|error| {
         DiagnosticBundle::single(Diagnostic::error(
             "HV1011",
-            format!("Tidak dapat menyelesaikan jalur proyek '{}': {}", path.display(), error),
+            format!("Tidak dapat menyelesaikan direktori proyek '{}': {}", supplied_parent.display(), error),
             None,
         ))
     })?;
-    let root_dir = canonical_root
-        .parent()
-        .unwrap_or_else(|| std::path::Path::new("."))
-        .to_path_buf();
-    let root_name = canonical_root.file_name().ok_or_else(|| {
+    let root_name = path.file_name().ok_or_else(|| {
         DiagnosticBundle::single(Diagnostic::error(
             "HV1010",
             "Jalur program harus menunjuk ke berkas reguler.",
             None,
         ))
     })?;
-    // Open the canonical root through the same no-follow, nonblocking, bounded reader
-    // used for imports. A FIFO or a path swapped to a symlink must fail closed.
+    let root_candidate = root_dir.join(root_name);
+
+    // Keep the caller-supplied final component: opening it with no-follow semantics
+    // rejects a root source symlink instead of canonicalizing it into a new project.
     let root_source = read_confined_module(
         &root_dir,
-        &canonical_root,
+        &root_candidate,
         std::path::Path::new(root_name),
-        &canonical_root,
+        &root_candidate,
     )
     .map_err(|error| {
         DiagnosticBundle::single(Diagnostic::error(
@@ -340,13 +342,12 @@ pub fn compile_file(path: &std::path::Path) -> Result<CompiledHumanProgram, Diag
     let root_header = root_source.lines().next().unwrap_or_default();
     let root = parse(&format!("{}\ntampilkan \"header probe\"\n", root_header))?;
     let mut collection = ModuleCollection::new(root_dir);
-    collection.collect(&canonical_root, &root_source, true)?;
+    collection.collect(&root_candidate, &root_source, true)?;
     let wrapped = format!("Buat program {}\n{}", root.name, collection.output);
     let mut compiled = compile(&wrapped)?;
     compiled.modules = collection.modules;
     Ok(compiled)
 }
-
 struct ModuleCollection {
     root_dir: std::path::PathBuf,
     seen: std::collections::HashSet<std::path::PathBuf>,
@@ -588,6 +589,29 @@ mod tests {
         let error = compile("Buat program rusak\ntampilkan tidak_ada\n").unwrap_err();
         assert_eq!(error.0[0].span.as_ref().unwrap().line, 2);
     } 
+    #[cfg(unix)]
+    #[test]
+    fn compile_file_rejects_root_source_symlink() {
+        use std::os::unix::fs::symlink;
+
+        let base = std::env::temp_dir().join(format!(
+            "one-human-root-symlink-{}",
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let root = base.join("project");
+        let target = root.join("actual.one");
+        let link = root.join("main.one");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(&target, "Buat program target\ntampilkan \"target\"\n").unwrap();
+        symlink(&target, &link).unwrap();
+
+        let error = compile_file(&link).expect_err("root source symlinks must fail closed");
+        let _ = std::fs::remove_dir_all(&base);
+
+        assert_eq!(error.0[0].code, "HV1010");
+        assert!(error.0[0].message.contains("tanpa mengikuti symlink"));
+    }
+
     #[cfg(unix)]
     #[test]
     fn compile_file_rejects_fifo_without_blocking() {
