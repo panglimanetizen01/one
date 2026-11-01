@@ -749,3 +749,29 @@ if __name__ == "__main__":
             and item["path"] == "README.md"
         }
         self.assertEqual({item["finding_id"] for item in findings}, repeated_ids)
+
+
+    def test_empty_exact_sha_ci_evidence_is_blocked_not_clean(self):
+        evidence = {
+            "schema_version": "one-ci-health-evidence/2",
+            "collector": "tools/collect_ci_health.py",
+            "collector_status": "complete",
+            "source_sha": "a" * 40,
+            "checked_out_sha": "a" * 40,
+            "working_tree_clean": True,
+            "runs": [],
+            "jobs": [],
+            "artifacts": [],
+            "correlations": [{
+                "rule_id": "no-exact-sha-runs",
+                "classification": "no-exact-sha-evidence",
+                "next_step": "Trigger required exact-SHA workflows; empty is not PASS.",
+            }],
+        }
+        self.write("ci-health-evidence.json", json.dumps(evidence))
+        report = scan_repository(self.root)
+        finding = next(
+            item for item in report["findings"]
+            if item["detector_id"] == "ci-evidence" and item["rule_id"] == "no-exact-sha-runs"
+        )
+        self.assertEqual("blocked", finding["status"])
