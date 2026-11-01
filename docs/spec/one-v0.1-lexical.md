@@ -17,6 +17,7 @@ The concrete grammar consumes the lexical stream and determines the boundaries o
 - Newline is normalized to LF before lexical analysis.
 - Tabs are rejected in indentation in v0.1 to prevent visual ambiguity.
 - Four spaces are the canonical indentation unit.
+- The v0.1 lexer rejects source files larger than 4 MiB (UTF-8 bytes), token streams larger than 250,000 tokens, and indentation deeper than 256 levels. These deterministic limits prevent unbounded token and indentation allocation.
 
 ## 3. Line structure
 
@@ -222,3 +223,7 @@ No lexer implementation may claim conformance to multi-word names by introducing
 **Approved:** lexical `WORD` tokens plus grammar-bounded multi-word names.
 
 This preserves deterministic lexing while allowing the beginner-oriented surface to use names such as `nama pengguna`, `daftar belanja`, and `saldo rekening` without requiring punctuation-heavy quoting.
+
+## 9. Deterministic implementation resource bounds
+
+The reference lexer enforces a maximum source size of 4 MiB, a maximum of 250,000 emitted tokens (including structural tokens), and a maximum indentation depth of 256 levels. Exceeding a limit returns a stable diagnostic; it must not panic, truncate input, or silently change tokenization.
