@@ -167,6 +167,8 @@ mod ast_contract_tests {
             source.push_str(&" ".repeat(depth * 4));
             source.push_str("kalau benar\n");
         }
+        source.push_str(&" ".repeat((MAX_PARSE_DEPTH + 1) * 4));
+        source.push_str("tampilkan \"aman\"\n");
         let error = parse(&source).expect_err("excessive block nesting must be rejected");
         assert_eq!(error.0[0].code, "E1025");
     }
