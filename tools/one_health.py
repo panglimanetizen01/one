@@ -655,6 +655,12 @@ def _scan_json(rel, text, findings):
                         f"run_id={correlation.get('run_id')!r}; evidence={correlation.get('evidence')!r}",
                         str(correlation.get("next_step") or "Periksa detail run dan ketersediaan runner; jangan menyimpulkan source test gagal."),
                         status="blocked"))
+                elif rule == "no-exact-sha-runs":
+                    findings.append(_finding("ci-evidence", rule, rel, None, "info", "high",
+                        "Tidak ada run GitHub Actions yang cocok dengan head_sha exact; metadata kosong bukan bukti PASS.",
+                        f"source_sha={parsed.get('source_sha')!r}; collector_status={parsed.get('collector_status')!r}",
+                        str(correlation.get("next_step") or "Jalankan workflow yang diwajibkan pada exact SHA atau gunakan bukti verifikasi independen."),
+                        status="blocked"))
                 elif rule == "billing-spending-limit-blocked":
                     findings.append(_finding("ci-evidence", rule, rel, None, "info", "high",
                         "Workflow diblokir oleh billing atau spending limit GitHub Actions; ini bukan kegagalan source code.",
@@ -677,7 +683,7 @@ def _scan_json(rel, text, findings):
                 if not isinstance(steps, list) or not steps:
                     findings.append(_finding("ci-evidence", "failed-job-without-visible-steps", rel, None, "medium", "high",
                         "Job CI gagal tetapi metadata tidak menunjukkan langkah yang dijalankan; penyebab belum diketahui.",
-                        f"job={name}; conclusion=failure; steps={steps!r}; runner_id={job.get('runner_id')!r}; logs_url={job.get('logs_url')!r}",
+                        f"job={name}; conclusion=failure; steps={steps!r}; runner_id={job.get('runner_id')!r}; job_url={job.get('job_url')!r}",
                         "Ambil logs/annotations atau minta admin memeriksa runner; jangan menyimpulkan source test gagal tanpa output perintah.",
                         status="blocked"))
                     continue
