@@ -48,7 +48,7 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 
 ## Last code-bearing canonical revision verified
 
-The last code-bearing source revision in canonical `main`, `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`, was verified by independent matrix run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451). The matrix passed on Ubuntu and Windows Server 2025; its workspace test step plus the exact-SHA verifier's targeted suites cover the filesystem-write, database-query, and HTTP GET source-level tests. Subsequent commits in this evidence-sync series modify documentation only and do not change source or tests.
+The last production-implementation revision in canonical `main`, `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`, was verified by independent matrix run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451). The matrix passed on Ubuntu and Windows Server 2025; its workspace test step plus the exact-SHA verifier's targeted suites cover the filesystem-write, database-query, and HTTP GET source-level tests. Subsequent evidence-sync commits also add test-only standard-library regression coverage in `crates/one-core/src/stdlib.rs`; no production implementation changed. Those tests were not included in run `39554661451`.
 
 The matrix completed successfully on Ubuntu and Windows Server 2025. Both jobs checked out the canonical One source at the requested target SHA and passed contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Windows also provisioned the Windows cross-compilers and Android NDK; Ubuntu provisioned cross-compilers.
 
@@ -68,4 +68,9 @@ Run `39554661451` verifies the exact code-bearing source SHA above on Ubuntu and
 - Evidence for one commit does not automatically verify later commits.
 - Filesystem write, database query, and HTTP GET retain their historical Termux/Android evidence; their source/core/CLI tests also passed in the Ubuntu/Windows Server 2025 exact-SHA matrix `39554661451` for `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. This does not imply every target architecture was executed.
 - Native Linux x86_64 and Windows x86_64 are build-proven on PR #64 but are not execution-verified until a real target executor succeeds.
-- The last code-bearing source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` has host-level Ubuntu/Windows exact-SHA verification in run `39554661451`. This does not certify every cross-compiled target artifact as executed, and does not by itself constitute release approval. Later evidence-sync commits changed documentation only.
+- The last code-bearing source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` has host-level Ubuntu/Windows exact-SHA verification in run `39554661451`. This does not certify every cross-compiled target artifact as executed, and does not by itself constitute release approval. Later evidence-sync commits also added test-only standard-library regression coverage; no production implementation changed.
+
+
+## Test-only source diff note — 2026-11-01
+
+The exact comparison from `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` to canonical `main` `d35db95153f6ddd79885494c72f5aee16c899751` contains one source-file diff in `crates/one-core/src/stdlib.rs`; the diff is confined to the `#[cfg(test)]` module. The earlier matrix run therefore proves production implementation at its pinned SHA, not the later-added test cases at `d35db951…`. Do not describe the entire series as documentation-only.
