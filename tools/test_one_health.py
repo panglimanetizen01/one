@@ -324,7 +324,7 @@ class OneHealthScannerTests(unittest.TestCase):
 
     def test_report_records_scanner_and_runtime_environment(self):
         report = scan_repository(self.root)
-        self.assertEqual("0.1.3", report["scanner_version"])
+        self.assertEqual("0.2.0", report["scanner_version"])
         self.assertTrue(report["environment"]["python"])
         self.assertIn(report["environment"]["platform"], {"Linux", "Windows", "Darwin", "FreeBSD", "OpenBSD", "NetBSD"})
         self.assertIn(report["working_tree"]["state"], {"clean", "dirty_or_unavailable"})
