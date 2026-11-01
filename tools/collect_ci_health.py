@@ -58,9 +58,11 @@ def _request_json(url: str, token: str) -> object:
 
 def _git_head(root: Path) -> str | None:
     try:
+        env = os.environ.copy()
+        env["GIT_PAGER"] = "cat"
         return subprocess.run(
             ["git", "-C", str(root), "rev-parse", "HEAD"],
-            check=True, capture_output=True, text=True, timeout=5,
+            check=True, capture_output=True, text=True, timeout=5, env=env,
         ).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return None
@@ -68,9 +70,11 @@ def _git_head(root: Path) -> str | None:
 
 def _git_worktree_clean(root: Path) -> bool | None:
     try:
+        env = os.environ.copy()
+        env["GIT_PAGER"] = "cat"
         status = subprocess.run(
             ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=all"],
-            check=True, capture_output=True, text=True, timeout=5,
+            check=True, capture_output=True, text=True, timeout=5, env=env,
         ).stdout
         return not status.strip()
     except (OSError, subprocess.SubprocessError):
