@@ -44,7 +44,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 - Scanner version `0.2.0` hashes finding identity from detector, rule, path, and evidence, then applies deterministic collision suffixes so repeated same-rule findings in one file are not silently collapsed.
 - Schema 2 is required because finding identity semantics changed. Schema-1 baselines are incompatible and must be reviewed/rebuilt; automatic migration is intentionally not performed.
 - Scanner implementation version `0.1.2` includes JavaScript/TypeScript source traversal and plural-aware prompt-injection secret-action correlation; the report schema remains version 1 because field types and finding identity semantics are unchanged.
-- Adding optional fields without changing existing field meaning is backward-compatible within schema version 1.
+- Adding optional fields without changing existing field meaning is backward-compatible within schema version 2.
 - Removing fields, changing field types, changing finding identity semantics, or changing baseline comparison meanings requires a new schema version and migration notes.
 - Baselines with unknown schema versions, malformed finding records, or duplicate finding IDs are rejected closed; never silently compare incompatible reports.
 - A missing finding is resolved only when `status_by_detector` explicitly says `ran`; `not-applicable`, `not-requested`, `blocked`, and `partial` coverage all remain `not_checked`.
@@ -91,7 +91,7 @@ Repairs are never authorized to change normative grammar, accepted/rejected fixt
 
 ## Schema compatibility
 
-- The scanner report uses schema version one-health-report/1. The detector_coverage object is an additive field; consumers should tolerate unknown fields and must not treat a missing field as a successful check.
+- The scanner report uses schema version one-health-report/2. `detector_coverage.status_by_detector` is required for safe baseline resolution; consumers must treat missing coverage as not checked, never as a successful check.
 - The CI collector uses one-ci-health-evidence/1. The correlations array is additive metadata; unknown or absent correlations are not evidence that a run is healthy.
 - The reviewed quality ledger uses its own one-health-quality/1 schema and is never merged into the fixed-weight acceptance ledger.
 - Any incompatible field rename, type change, or semantic change requires a schema version change, updated fixtures, and a migration note. Keep existing fields stable within a schema version.
