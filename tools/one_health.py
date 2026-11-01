@@ -29,7 +29,20 @@ def _finding(detector, rule, path, line, severity, confidence, summary, evidence
 
 def _files(root: Path):
     for current, dirs, names in os.walk(root, followlinks=False):
-        dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
+        # os.walk with followlinks=False does not put directory symlinks in
+        # names and will not descend into them. Inspect and yield them
+        # explicitly before pruning traversal, otherwise escaping directory
+        # symlinks evade the path-integrity detector entirely.
+        for name in sorted(dirs[:]):
+            path = Path(current) / name
+            if path.is_symlink():
+                dirs.remove(name)
+                try: rel = path.relative_to(root).as_posix()
+                except ValueError: continue
+                yield path, rel
+            elif name in SKIP_DIRS:
+                dirs.remove(name)
+        dirs[:] = sorted(dirs)
         for name in sorted(names):
             path = Path(current) / name
             try: rel = path.relative_to(root).as_posix()
@@ -953,9 +966,32 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 "The scanner is read-only unless the separately guarded safe-fix option is explicitly requested.",
                 "A finding is a lead for review; no inference is promoted to a root cause without supporting evidence."]}
 
+def _validate_baseline(baseline: object) -> dict:
+    """Reject malformed or ambiguous baselines before they influence triage."""
+    if not isinstance(baseline, dict) or baseline.get("schema_version") != SCHEMA_VERSION:
+        raise ValueError("unsupported baseline schema")
+    findings = baseline.get("findings")
+    if not isinstance(findings, list):
+        raise ValueError("baseline findings must be an array")
+    seen_ids = set()
+    for index, item in enumerate(findings):
+        if not isinstance(item, dict):
+            raise ValueError(f"baseline findings[{index}] must be an object")
+        finding_id = item.get("finding_id")
+        detector_id = item.get("detector_id")
+        if not isinstance(finding_id, str) or not finding_id.strip():
+            raise ValueError(f"baseline findings[{index}].finding_id must be a non-empty string")
+        if not isinstance(detector_id, str) or not detector_id.strip():
+            raise ValueError(f"baseline findings[{index}].detector_id must be a non-empty string")
+        if finding_id in seen_ids:
+            raise ValueError(f"duplicate baseline finding_id: {finding_id}")
+        seen_ids.add(finding_id)
+    return baseline
+
 def apply_baseline(report: dict, baseline: dict) -> dict:
     """Compare findings without changing the fixed-weight acceptance ledger."""
-    previous = {item.get("finding_id"): item for item in baseline.get("findings", []) if item.get("finding_id")}
+    baseline = _validate_baseline(baseline)
+    previous = {item["finding_id"]: item for item in baseline["findings"]}
     current_ids = {item["finding_id"] for item in report["findings"]}
     counts = {"new": 0, "recurring": 0, "reopened": 0, "resolved": 0, "not_checked": 0}
     for item in report["findings"]:
@@ -976,14 +1012,26 @@ def apply_baseline(report: dict, baseline: dict) -> dict:
                                    "acceptance_blocker_factor": blocker}
     resolved, not_checked = [], []
     current_detectors = set(report.get("detectors_run", []))
+    coverage = report.get("detector_coverage", {})
+    status_by_detector = coverage.get("status_by_detector", {}) if isinstance(coverage, dict) else {}
     for finding_id, old in previous.items():
         if finding_id in current_ids or old.get("status") == "resolved" or old.get("change_status") == "resolved":
             continue
         item = dict(old)
-        if item.get("detector_id") not in current_detectors:
+        detector_id = item.get("detector_id")
+        detector_status = status_by_detector.get(detector_id)
+        # detectors_run records the scanner's declared detector set, but some
+        # entries are intentionally marked not-applicable when their input
+        # surfaces do not exist. A missing finding can only be resolved when
+        # the detector actually ran against applicable input.
+        # Fail closed: only explicit positive coverage proves that the
+        # detector actually ran against applicable input. Missing/old reports
+        # must never turn an absent finding into an implicit resolution.
+        detector_ran = detector_id in current_detectors and detector_status == "ran"
+        if not detector_ran:
             item["status"] = "blocked"
             item["change_status"] = "not_checked"
-            item["resolution_basis"] = "The current scan did not run this detector; absence is not evidence of resolution."
+            item["resolution_basis"] = "The current scan did not run this detector against applicable input; absence is not evidence of resolution."
             not_checked.append(item)
             counts["not_checked"] += 1
         else:
