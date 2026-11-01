@@ -22,7 +22,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `syntax` | Python AST, TOML, JSON parsing | Does not validate all language/tool semantics |
 | `markdown-links` | Broken relative paths, links escaping repository root, and stale same-page/cross-file Markdown heading or explicit HTML anchors | Markdown extensions, reference-style links, and generated routes are not fully parsed; heading slugging is a conservative approximation |
 | `markdown-structure` | Fenced-code closure | Not a complete CommonMark validator |
-| `path-integrity` | Symlinks resolving outside repository | Does not validate every runtime path or filesystem race |
+| `path-integrity` | File and directory symlinks resolving outside repository; escaping directory symlinks are reported without traversing their targets | Does not validate every runtime path or filesystem race |
 | `file-integrity` | UTF-8 readability of scanned text files | Does not prove binary/artifact integrity |
 | `workflow-integrity` | Duplicate workflow names, missing local actions and targeted script paths | Not a full GitHub Actions YAML/schema validator |
 | `workflow-overlap` | Identical single-line `run:` commands in multiple workflow files | Low-confidence review hint; intentional duplication is common |
@@ -31,20 +31,23 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `ci-evidence` | Exact-SHA Actions run/job/step/artifact metadata, Check Run output and annotations, failed runs without job metadata, failed jobs without visible steps, failed steps needing log review, and explicit billing/spending-limit blocks | Does not download or interpret live logs; Check Run/annotation collection is limited to the first 100 results and secret redaction is heuristic; API outages remain blocked/partial, not source failures |
 | `artifact-integrity` | Expired CI artifacts, repeated artifact names within one run, missing artifact digests, and no-artifact observations in completed runs | Does not download artifact contents or prove their bytes match a digest; missing digest is informational, not a pass |
 | `security-secrets` | Known high-signal private-key, GitHub/AWS/Slack, Google API, Stripe live-secret, npm/PyPI token patterns, and likely hardcoded credentials | Heuristic coverage only; secret values are redacted from reports; unknown formats, encoded secrets, and false positives remain possible |
-| `security-code` | Python dynamic execution and shell usage; AST correlation for decoded/deserialized payload execution, downloaded-data execution, and credential/environment-to-network egress | Correlation is limited to expression trees and simple local assignments, not general taint analysis; a narrow `api.github.com` Authorization-client shape is excluded only when structurally rooted in that constant; other destinations remain findings; code is never executed |
+| `security-code` | Python dynamic execution and shell usage; AST correlation for decoded/deserialized payload execution, downloaded-data execution, and credential/environment-to-network egress; partial coverage when any Python file has a syntax error | Correlation is limited to expression trees and simple local assignments, not general taint analysis; a narrow `api.github.com` Authorization-client shape is excluded only when structurally rooted in that constant; other destinations remain findings; code is never executed |
 | `security-javascript` | JavaScript/TypeScript obfuscated dynamic execution, network-plus-execution correlation, sensitive-source/network-sink correlation, and Node `child_process.exec/execSync` use | Regex-based heuristics; no JavaScript parser, complete data-flow analysis, package lifecycle analysis, or runtime sandbox; findings require review |
 | `security-workflow` | Network-to-shell pipelines, broad write permissions, `pull_request_target`, and obviously mutable refs such as `main`/`master`/`latest` | Targeted checks only; not a full workflow security audit or YAML semantic analysis | 
 | `security-supply-chain` | Non-commit-pinned GitHub Actions and Git dependency refs that name mutable branches | Tags can be intentionally used but are mutable; pinning does not independently establish upstream trust or provenance |
 | `security-prompt-injection` | Agent-instruction surfaces that co-locate an instruction-override attempt with a request to reveal/send secrets | Only recognized agent-instruction paths/names and correlated phrases are checked; semantic obfuscation, encoded content, and other agent file conventions may evade detection; ordinary documentation is intentionally not treated as an agent prompt |
-| `one-source-contract` | Expected accept/reject results for normative v0.1 fixtures via `one periksa` | Runs only when explicitly enabled and CLI is built; never executes source |
+| `one-source-contract` | Expected accept/reject results for normative v0.1 fixtures via the trusted `one periksa` CLI | Runs only when explicitly enabled; refuses symlinked, hard-linked, or out-of-root CLI binaries; invokes the CLI parser but never executes fixture programs |
 
 ## Report schema compatibility
 
-- Current schema: `one-health-report/1`; scanner version is reported separately.
+- Current schema: `one-health-report/2`; scanner version is reported separately.
+- Scanner version `0.2.0` hashes finding identity from detector, rule, path, and evidence, then applies deterministic collision suffixes so repeated same-rule findings in one file are not silently collapsed.
+- Schema 2 is required because finding identity semantics changed. Schema-1 baselines are incompatible and must be reviewed/rebuilt; automatic migration is intentionally not performed.
 - Scanner implementation version `0.1.2` includes JavaScript/TypeScript source traversal and plural-aware prompt-injection secret-action correlation; the report schema remains version 1 because field types and finding identity semantics are unchanged.
 - Adding optional fields without changing existing field meaning is backward-compatible within schema version 1.
 - Removing fields, changing field types, changing finding identity semantics, or changing baseline comparison meanings requires a new schema version and migration notes.
-- Baselines with unknown schema versions are rejected closed; never silently compare incompatible reports.
+- Baselines with unknown schema versions, malformed finding records, or duplicate finding IDs are rejected closed; never silently compare incompatible reports.
+- A missing finding is resolved only when `status_by_detector` explicitly says `ran`; `not-applicable`, `not-requested`, `blocked`, and `partial` coverage all remain `not_checked`.
 - Consumers must tolerate additional fields and must not interpret absence of a detector from `detectors_run` as a clean result.
 
 ## Suppression policy
@@ -81,7 +84,8 @@ Repairs are never authorized to change normative grammar, accepted/rejected fixt
 ## Detector change log
 
 - 2026-10-28 — Initial catalog and governance policy for schema v1, baseline triage, suppression expiry, and guarded repair.
-- 2026-10-28 — Added scanner/runtime environment metadata, branch-scoped cached baseline comparison, and weekly scheduled repository-health scans. Independent scanner tests, CLI build, normative fixture validation, and cross-platform verification passed on source SHA `65d09e3f9ed8639ff0d22a948ada06c3def36c22`; subsequent source changes require a fresh exact-SHA run.
+- 2026-10-28 — Added scanner/runtime environment metadata, branch-scoped cached baseline comparison, and weekly scheduled repository-health scans.
+- 2026-11-01 — Schema 2 adds evidence-aware, collision-safe finding IDs; baseline validation; directory-symlink detection without traversal; refusal of unconfined CLI binaries; and explicit partial/blocked detector coverage. Independent scanner tests, CLI build, normative fixture validation, and cross-platform verification passed on source SHA `65d09e3f9ed8639ff0d22a948ada06c3def36c22`; subsequent source changes require a fresh exact-SHA run.
 - 2026-10-28 — Added JavaScript/TypeScript file coverage and `security-javascript` rules for decoded dynamic execution, network-plus-execution correlation, environment/credential-to-egress correlation, and Node `child_process.exec/execSync`. Positive/negative regression fixtures were added; this is heuristic static analysis, not JavaScript parsing or a sandbox. Exact-SHA test execution is still required.
 
 
