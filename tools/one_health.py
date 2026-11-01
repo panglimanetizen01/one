@@ -5,7 +5,7 @@ import argparse, ast, difflib, hashlib, json, os, platform, re, stat, subprocess
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-SCHEMA_VERSION = "one-health-report/1"
+SCHEMA_VERSION = "one-health-report/2"
 SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 JAVASCRIPT_SUFFIXES = {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
@@ -22,7 +22,8 @@ def _git(root: Path, *args: str) -> str | None:
     return result.stdout.strip()
 
 def _finding(detector, rule, path, line, severity, confidence, summary, evidence, recommendation, status="open"):
-    stable = hashlib.sha256(f"{detector}\0{rule}\0{path}".encode("utf-8")).hexdigest()[:12]
+    stable_evidence = evidence if isinstance(evidence, str) else json.dumps(evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    stable = hashlib.sha256(f"{detector}\0{rule}\0{path}\0{stable_evidence}".encode("utf-8")).hexdigest()[:12]
     return {"finding_id": f"OH-{stable}", "detector_id": detector, "rule_id": rule, "status": status,
             "severity": severity, "confidence": confidence, "path": path, "line": line,
             "summary": summary, "evidence": evidence, "recommendation": recommendation}
@@ -934,8 +935,17 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 findings.append(_finding("contract-drift", "missing-core-cli-command", "docs/panduan-pengguna/perintah-cli.md",
                     None, "medium", "high", "Panduan CLI tidak mencantumkan perintah inti yang ada di kontrak.",
                     command, "Perbarui panduan berdasarkan kontrak CLI dan bukti implementasi."))
-    unique = {item["finding_id"]: item for item in findings}
-    ordered = sorted(unique.values(), key=lambda f: ({"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(f["severity"], 5),
+    occurrences = {}
+    unique = []
+    for item in findings:
+        base_id = item["finding_id"]
+        occurrence = occurrences.get(base_id, 0) + 1
+        occurrences[base_id] = occurrence
+        if occurrence > 1:
+            item = dict(item)
+            item["finding_id"] = f"{base_id}-{occurrence}"
+        unique.append(item)
+    ordered = sorted(unique, key=lambda f: ({"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}.get(f["severity"], 5),
                                                       f["path"], f["line"] or 0, f["finding_id"]))
     counts = {level: sum(1 for item in ordered if item["severity"] == level) for level in ("critical", "high", "medium", "low", "info")}
     findings_by_detector = {}
@@ -989,7 +999,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "not_requested_count": sum(1 for status in detector_status.values() if status == "not-requested"),
         "finding_counts_by_detector": findings_by_detector,
     }
-    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.1.3", "repository": root.name,
+    return {"schema_version": SCHEMA_VERSION, "scanner_version": "0.2.0", "repository": root.name,
             "head_sha": actual_sha, "branch": branch, "expected_sha": expected_sha,
             "environment": {"python": platform.python_version(), "implementation": platform.python_implementation(),
                 "platform": platform.system(), "platform_release": platform.release()},
