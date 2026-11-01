@@ -68,6 +68,40 @@ pub(crate) fn ensure_single_link(file: &std::fs::File) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn read_file_within_project(
+    root: &Path,
+    relative: &Path,
+    max_bytes: usize,
+) -> std::io::Result<Vec<u8>> {
+    if relative.as_os_str().is_empty()
+        || relative.is_absolute()
+        || relative.components().any(|component| {
+            !matches!(component, Component::Normal(_) | Component::CurDir)
+        })
+        || relative.file_name().is_none()
+        || max_bytes > MAX_FILE_BYTES as usize
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "source path or read limit is outside the project reader contract",
+        ));
+    }
+
+    let file = open_read_target_in_project(root, relative)?;
+    let read_limit = u64::try_from(max_bytes)
+        .unwrap_or(u64::MAX)
+        .saturating_add(1);
+    let mut contents = Vec::new();
+    file.take(read_limit).read_to_end(&mut contents)?;
+    if contents.len() > max_bytes {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "project source exceeds the configured read limit",
+        ));
+    }
+    Ok(contents)
+}
+
 pub fn write_file_within_project(
     root: &Path,
     relative: &Path,
