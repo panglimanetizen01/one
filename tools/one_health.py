@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 SCHEMA_VERSION = "one-health-report/2"
-SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache"}
+SKIP_DIRS = {".git", "target", ".venv", "venv", "node_modules", "__pycache__", ".mypy_cache", ".pytest_cache", "health-baseline"}
 TEXT_SUFFIXES = {".md", ".py", ".toml", ".json", ".yml", ".yaml", ".sh", ".ps1", ".one", ".txt", ".rs", ".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 JAVASCRIPT_SUFFIXES = {".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx"}
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
@@ -48,6 +48,8 @@ def _files(root: Path):
             path = Path(current) / name
             try: rel = path.relative_to(root).as_posix()
             except ValueError: continue
+            if name in {"one-health-report.json", "one-health-report.md"} and not path.is_symlink():
+                continue
             if path.is_file() or path.is_symlink(): yield path, rel
 
 def _markdown_anchors(text: str) -> set[str]:
