@@ -43,7 +43,7 @@ pub mod types;
 pub use adapter::{
     AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileReadAdapter,
     FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter, ToolAdapter,
-    write_file_within_project,
+    read_file_within_project, write_file_within_project,
 };
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
 pub use capability::{Capability, CapabilitySet};
