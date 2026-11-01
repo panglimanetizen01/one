@@ -120,3 +120,116 @@ fn package_rejects_manifest_versions_with_path_separators() {
     assert!(!output.status.success(), "unsafe package version was accepted");
     assert!(!escaped_was_created, "package version escaped the project target directory");
 }
+
+
+#[cfg(unix)]
+#[test]
+fn package_rejects_symlinked_target_directory_without_writing_outside_project() {
+    use std::os::unix::fs::symlink;
+
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!("one-package-outside-target-{id}"));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::create_dir_all(&outside).unwrap();
+    symlink(&outside, root.join("target")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"proyek-one\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"paket\"\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["package", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let escaped_artifact = outside.join("proyek-one-0.1.0.onepkg");
+    let escaped_was_created = escaped_artifact.exists();
+    let _ = fs::remove_file(root.join("target"));
+    let _ = fs::remove_dir_all(&outside);
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(!output.status.success(), "package must reject a symlinked target directory");
+    assert!(!escaped_was_created, "package wrote its artifact outside the project");
+}
+
+#[cfg(windows)]
+#[test]
+fn package_rejects_target_directory_junction_without_writing_outside_project() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!("one-package-outside-target-{id}"));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::create_dir_all(&outside).unwrap();
+    let status = Command::new("cmd")
+        .args(["/C", "mklink", "/J"])
+        .arg(root.join("target"))
+        .arg(&outside)
+        .status()
+        .unwrap();
+    assert!(status.success(), "target junction must be created for regression test");
+    fs::write(root.join("one.toml"), "nama = \"proyek-one\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"paket\"\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["package", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let escaped_artifact = outside.join("proyek-one-0.1.0.onepkg");
+    let escaped_was_created = escaped_artifact.exists();
+    let _ = fs::remove_dir(root.join("target"));
+    let _ = fs::remove_dir_all(&outside);
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(!output.status.success(), "package must reject a target junction");
+    assert!(!escaped_was_created, "package wrote its artifact outside the project");
+}
+
+#[test]
+fn package_rejects_hard_linked_artifact_without_modifying_outside_file() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!("one-package-outside-artifact-{id}.onepkg"));
+    let artifact = root.join("target/proyek-one-0.1.0.onepkg");
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::create_dir_all(root.join("target")).unwrap();
+    fs::write(&outside, b"outside package data").unwrap();
+    fs::hard_link(&outside, &artifact).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"proyek-one\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"paket\"\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["package", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let outside_contents = fs::read(&outside).unwrap();
+    let _ = fs::remove_dir_all(&root);
+    let _ = fs::remove_file(&outside);
+
+    assert!(!output.status.success(), "package must reject a hard-linked artifact target");
+    assert_eq!(outside_contents, b"outside package data");
+}
+
+#[cfg(unix)]
+#[test]
+fn build_rejects_symlinked_target_directory_without_writing_outside_project() {
+    use std::os::unix::fs::symlink;
+
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!("one-build-outside-target-{id}"));
+    fs::create_dir_all(&root).unwrap();
+    fs::create_dir_all(&outside).unwrap();
+    fs::write(root.join("main.one"), "tampilkan \"build\"\n").unwrap();
+    symlink(&outside, root.join("target")).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["build", root.join("main.one").to_str().unwrap()])
+        .output()
+        .unwrap();
+    let escaped_artifact = outside.join("main.oneir");
+    let escaped_was_created = escaped_artifact.exists();
+    let _ = fs::remove_file(root.join("target"));
+    let _ = fs::remove_dir_all(&outside);
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(!output.status.success(), "build must reject a symlinked target directory");
+    assert!(!escaped_was_created, "build wrote its artifact outside the source project");
+}
