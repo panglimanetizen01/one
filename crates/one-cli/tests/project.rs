@@ -233,3 +233,111 @@ fn build_rejects_symlinked_target_directory_without_writing_outside_project() {
     assert!(!output.status.success(), "build must reject a symlinked target directory");
     assert!(!escaped_was_created, "build wrote its artifact outside the source project");
 }
+
+
+#[cfg(unix)]
+#[test]
+fn package_rejects_symlinked_main_source_without_packaging_external_content() {
+    use std::os::unix::fs::symlink;
+
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!(
+        "one-package-outside-main-{}.one",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(&outside, "tampilkan \"outside source\"\n").unwrap();
+    symlink(&outside, root.join("src/main.one")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"proyek-one\"\nversi = \"0.1.0\"\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["package", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let artifact_exists = root.join("target/proyek-one-0.1.0.onepkg").exists();
+    let _ = fs::remove_file(root.join("src/main.one"));
+    let _ = fs::remove_file(&outside);
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(!output.status.success(), "package must reject a symlinked main source");
+    assert!(!artifact_exists, "package must not produce an artifact from external source content");
+}
+
+#[test]
+fn package_rejects_hard_linked_manifest() {
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!(
+        "one-package-outside-manifest-{}.toml",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(&outside, "nama = \"proyek-one\"\nversi = \"0.1.0\"\n").unwrap();
+    fs::hard_link(&outside, root.join("one.toml")).unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"paket\"\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["package", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let artifact_exists = root.join("target/proyek-one-0.1.0.onepkg").exists();
+    let outside_contents = fs::read(&outside).unwrap();
+    let _ = fs::remove_dir_all(&root);
+    let _ = fs::remove_file(&outside);
+
+    assert!(!output.status.success(), "package must reject a hard-linked manifest");
+    assert!(!artifact_exists, "package must not proceed after an unconfined manifest read");
+    assert_eq!(outside_contents, b"nama = \"proyek-one\"\nversi = \"0.1.0\"\n");
+}
+
+#[cfg(unix)]
+#[test]
+fn build_rejects_symlinked_source_file() {
+    use std::os::unix::fs::symlink;
+
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!(
+        "one-build-outside-source-{}.one",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::write(&outside, "tampilkan \"outside source\"\n").unwrap();
+    symlink(&outside, root.join("main.one")).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["build", root.join("main.one").to_str().unwrap()])
+        .output()
+        .unwrap();
+    let artifact_exists = root.join("target/main.oneir").exists();
+    let _ = fs::remove_file(root.join("main.one"));
+    let _ = fs::remove_file(&outside);
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(!output.status.success(), "build must reject a symlinked source file");
+    assert!(!artifact_exists, "build must not create an artifact from external source content");
+}
+
+#[cfg(unix)]
+#[test]
+fn project_test_rejects_symlinked_conformance_fixture() {
+    use std::os::unix::fs::symlink;
+
+    let root = temp_dir();
+    let outside = root.parent().unwrap().join(format!(
+        "one-test-outside-fixture-{}.one",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::create_dir_all(root.join("tests/conformance/valid")).unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"main\"\n").unwrap();
+    fs::write(&outside, "tampilkan \"outside fixture\"\n").unwrap();
+    symlink(&outside, root.join("tests/conformance/valid/external.one")).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["test", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let _ = fs::remove_file(root.join("tests/conformance/valid/external.one"));
+    let _ = fs::remove_file(&outside);
+    let _ = fs::remove_dir_all(&root);
+
+    assert!(!output.status.success(), "project test must reject a symlinked conformance fixture");
+}
