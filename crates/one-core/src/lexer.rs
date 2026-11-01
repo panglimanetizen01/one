@@ -55,7 +55,7 @@ impl<'a> Lexer<'a> {
             if leading > current {
                 if leading != current + INDENT_WIDTH { return Err(DiagnosticBundle::single(Diagnostic::error("E0003", "Blok baru harus menjorok tepat satu tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1))))); }
                 if indent_stack.len() - 1 >= MAX_INDENT_DEPTH {
-                    return Err(DiagnosticBundle::single(Diagnostic::error("E0010", "Kedalaman blok sumber melebihi batas 128 tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1)))));
+                    return Err(DiagnosticBundle::single(Diagnostic::error("E0010", "Kedalaman indentasi sumber melebihi batas 256 tingkat.", Some(Span::new(line_start, line_start + leading, line_no, 1)))));
                 }
                 indent_stack.push(leading); push_bounded_token!(tokens, Token::new(TokenKind::Indent, "", Span::new(line_start, line_start + leading, line_no, 1)));
             } else if leading < current {
