@@ -456,3 +456,8 @@ No parser or lexer implementation change is authorized merely by this document. 
 Principle:
 
 > Natural on the surface; formal underneath.
+
+
+## 19. Deterministic parser resource bounds
+
+The v0.1 reference parser accepts at most 128 nested grammar blocks, 128 nested call-argument primary expressions, and 128 binary operators in a single expression. Inputs exceeding these bounds return stable parser diagnostics rather than exhausting the host call stack. These limits do not alter the meaning of any accepted program.
