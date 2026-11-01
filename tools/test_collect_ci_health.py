@@ -244,3 +244,22 @@ if __name__ == "__main__":
             bad_sha = collect_ci_health("owner/repo", "z" * 40, "token", Path("."), should_not_run)
         self.assertEqual("blocked", bad_repo["collector_status"])
         self.assertEqual("blocked", bad_sha["collector_status"])
+
+
+    def test_empty_exact_sha_run_list_is_not_reported_as_pass(self):
+        def fake_request(url, token):
+            if "/actions/runs?" in url:
+                return {"workflow_runs": []}
+            if "/check-runs?" in url:
+                return {"check_runs": []}
+            raise AssertionError(url)
+
+        with patch("collect_ci_health._git_head", return_value=SHA), patch(
+            "collect_ci_health._git_worktree_clean", return_value=True
+        ):
+            report = collect_ci_health("owner/repo", SHA, "token", Path("."), fake_request)
+        self.assertEqual("complete", report["collector_status"])
+        no_runs = [item for item in report["correlations"] if item["rule_id"] == "no-exact-sha-runs"]
+        self.assertEqual(1, len(no_runs))
+        self.assertEqual("no-exact-sha-evidence", no_runs[0]["classification"])
+        self.assertIn("not PASS", no_runs[0]["next_step"])
