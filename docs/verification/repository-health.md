@@ -63,7 +63,7 @@ The scanner does not interpret free-form Indonesian as executable source. It doe
 
 ## Finding contract
 
-Every finding includes a stable ID, detector/rule IDs, status, severity, confidence, path/line, evidence, and a recommended next action. The report schema is one-health-report/1. JSON and Markdown reports also expose detector status (ran, not applicable due to absent input, or not requested) and finding counts by detector. The source defines a human-adjudicated quality ledger for observed false-positive/miss shares and verified repair outcomes; those sample metrics are not representative accuracy estimates and remain unavailable without adjudicated records. Synthetic regression fixtures establish behavior on their explicit inputs only.
+Every finding includes a stable ID, detector/rule IDs, status, severity, confidence, path/line, evidence, and a recommended next action. The report schema is one-health-report/2. Finding IDs include detector/rule/path/evidence plus deterministic collision suffixes; schema-1 baselines are not compatible and must be reviewed before rebuilding. JSON and Markdown reports also expose detector status (ran, not applicable due to absent input, or not requested) and finding counts by detector. The source defines a human-adjudicated quality ledger for observed false-positive/miss shares and verified repair outcomes; those sample metrics are not representative accuracy estimates and remain unavailable without adjudicated records. Synthetic regression fixtures establish behavior on their explicit inputs only.
 
 - **critical / high:** fail the scan because revision identity or a severe structural/syntax condition cannot be trusted.
 - **medium:** actionable integrity issue; requires triage.
