@@ -472,7 +472,7 @@ fn open_read_target_in_project(root: &Path, relative: &Path) -> std::io::Result<
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
     ensure_single_link(&file)?;
-+    ensure_same_filesystem_mount(&file, &directory)?;
+    ensure_same_filesystem_mount(&file, &directory)?;
     Ok(file)
 }
 
@@ -490,6 +490,7 @@ fn open_write_target_in_project(root: &Path, relative: &Path) -> std::io::Result
     if fd < 0 { return Err(std::io::Error::last_os_error()); }
     let file = unsafe { std::fs::File::from_raw_fd(fd) };
     if !file.metadata()?.is_file() { return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "target is not a regular file")); }
+    ensure_single_link(&file)?;
     ensure_same_filesystem_mount(&file, &directory)?;
     file.set_len(0)?;
     Ok(file)
