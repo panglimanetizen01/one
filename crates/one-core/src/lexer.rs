@@ -4,7 +4,7 @@ use crate::token::{Span, Token, TokenKind};
 const INDENT_WIDTH: usize = 4;
 const MAX_SOURCE_BYTES: usize = 4 * 1024 * 1024;
 const MAX_TOKENS: usize = 250_000;
-const MAX_INDENT_DEPTH: usize = 128;
+const MAX_INDENT_DEPTH: usize = 256;
 
 macro_rules! push_bounded_token {
     ($tokens:expr, $token:expr) => {{
