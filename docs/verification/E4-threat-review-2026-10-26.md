@@ -123,3 +123,16 @@ The candidate implementation now rejects file targets whose opened-handle hard-l
 - Regression tests cover both read and write attempts through an in-project hard link to a sibling/outside file and assert the outside contents remain unchanged.
 
 This is a source correction and test addition, **not yet verification evidence**. The new exact candidate SHA must pass the independent Linux/Windows matrix, including the hard-link regressions, before this control is marked verified. The restriction is intentionally conservative: project filesystem read/write adapters reject files with multiple hard links rather than attempting to infer which alias is authoritative.
+
+
+## CLI artifact-output confinement correction — 2026-11-01
+
+A second path review found that the language-level filesystem adapters were not the only write surface. The CLI's build/package commands previously used ordinary `create_dir_all` and `fs::write` for `target/*.oneir`, `target/*.onepkg`, and module-lock files. A project-controlled `target` symlink/junction or pre-existing hard-linked artifact could therefore redirect or alias those writes outside the intended project tree.
+
+The candidate now routes CLI build, package, and module-lock output through the shared root-confined writer:
+- create the `target` directory only as a direct project child; an existing symlink/reparse point is rejected by descriptor/handle-based parent traversal;
+- open final artifacts without following symlinks/reparse points;
+- reject final files with more than one hard link before truncation;
+- reject unsafe artifact filename components before constructing output paths.
+
+Regression tests cover Unix symlinked `target`, Windows target junctions, hard-linked package artifact targets, and build output through a symlinked `target`. These are code and test additions only; they are **not verification evidence** until the new exact candidate SHA completes Linux/Windows tests, Clippy, and the dedicated E4 adversarial regression workflow.
