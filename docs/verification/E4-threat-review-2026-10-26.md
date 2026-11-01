@@ -141,3 +141,8 @@ Regression tests cover Unix symlinked `target`, Windows target junctions, hard-l
 ## Human-core imported-module hard-link correction — 2026-11-01
 
 The same hard-link alias applies to build-time human-core module loading: descriptor-relative no-follow traversal rejects symlinks, but an in-root hard link can still reference an inode with a name outside the project. The Unix and Windows module readers now reuse the opened-handle single-link check before reading source bytes. A regression creates an outside source file, hard-links it into the project, and requires the module reader to reject it. This addition is not verification evidence until the exact candidate SHA passes the compiler, Linux/Windows, and E4 regression suites.
+
+
+## Human-core root-source symlink correction — 2026-11-01
+
+The human-core compiler previously canonicalized the root source file before opening it, which erased evidence that the caller-supplied final component was a symlink. The compiler now canonicalizes only the selected parent directory and opens the original filename through the no-follow module reader. A regression requires a symlinked root source file to fail with the bounded HV1010 diagnostic. This code/test change is not verification evidence until the exact candidate SHA passes the Linux/Windows compiler and full workspace suites.
