@@ -673,6 +673,8 @@ if __name__ == "__main__":
         report = scan_repository(self.root)
         with self.assertRaisesRegex(ValueError, "unsupported baseline schema"):
             apply_baseline(report, {"schema_version": "one-health-report/0", "findings": []})
+        with self.assertRaisesRegex(ValueError, "unsupported baseline schema"):
+            apply_baseline(report, {"schema_version": "one-health-report/1", "findings": []})
         with self.assertRaisesRegex(ValueError, "baseline findings must be an array"):
             apply_baseline(report, {"schema_version": "one-health-report/2", "findings": {}})
         with self.assertRaisesRegex(ValueError, "must be a non-empty string"):
