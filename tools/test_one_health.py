@@ -775,3 +775,56 @@ if __name__ == "__main__":
             if item["detector_id"] == "ci-evidence" and item["rule_id"] == "no-exact-sha-runs"
         )
         self.assertEqual("blocked", finding["status"])
+
+
+    def test_ci_collector_schema_one_is_blocked_after_schema_two_upgrade(self):
+        evidence = {
+            "schema_version": "one-ci-health-evidence/1",
+            "collector": "tools/collect_ci_health.py",
+            "collector_status": "complete",
+            "source_sha": "a" * 40,
+            "checked_out_sha": "a" * 40,
+            "working_tree_clean": True,
+            "runs": [],
+            "jobs": [],
+            "artifacts": [],
+            "correlations": [],
+        }
+        self.write("ci-health-evidence.json", json.dumps(evidence))
+        report = scan_repository(self.root)
+        finding = next(
+            item for item in report["findings"]
+            if item["rule_id"] == "unsupported-ci-collector-schema"
+        )
+        self.assertEqual("blocked", finding["status"])
+
+    def test_ci_collector_source_sha_must_match_current_repository_head(self):
+        evidence = {
+            "schema_version": "one-ci-health-evidence/2",
+            "collector": "tools/collect_ci_health.py",
+            "collector_status": "complete",
+            "source_sha": "a" * 40,
+            "checked_out_sha": "a" * 40,
+            "working_tree_clean": True,
+            "runs": [{"id": 1, "head_sha": "a" * 40}],
+            "jobs": [],
+            "artifacts": [],
+            "correlations": [],
+        }
+        self.write("ci-health-evidence.json", json.dumps(evidence))
+
+        def fake_git(root, *args):
+            if args == ("rev-parse", "HEAD"):
+                return "b" * 40
+            if args == ("branch", "--show-current"):
+                return "health/test"
+            if args == ("status", "--porcelain"):
+                return ""
+            return None
+
+        from unittest.mock import patch
+        with patch("one_health._git", side_effect=fake_git):
+            report = scan_repository(self.root)
+        rules = {item["rule_id"] for item in report["findings"]}
+        self.assertIn("ci-evidence-source-sha-not-current", rules)
+        self.assertIn("ci-evidence-checkout-sha-not-current", rules)
