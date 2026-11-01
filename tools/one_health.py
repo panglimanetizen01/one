@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only integrity scanner for the One repository; Python standard library only."""
 from __future__ import annotations
-import argparse, ast, difflib, hashlib, json, os, platform, re, subprocess, sys
+import argparse, ast, difflib, hashlib, json, os, platform, re, stat, subprocess, sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -724,15 +724,42 @@ def _scan_workflows(root, workflows, findings):
                     f"command={command!r}; workflows={distinct!r}",
                     "Pertahankan jika tujuan/lingkungan pengujiannya berbeda; jika redundan, konsolidasikan tanpa mengurangi cakupan."))
 
+def _trusted_cli_binary_reason(root: Path, binary: Path) -> str | None:
+    try:
+        relative = binary.relative_to(root)
+        cursor = root
+        for part in relative.parts:
+            cursor = cursor / part
+            if cursor.is_symlink():
+                return f"binary path contains a symlink component: {cursor}"
+        metadata = binary.lstat()
+        if not stat.S_ISREG(metadata.st_mode):
+            return "CLI binary is not a regular file"
+        if metadata.st_nlink != 1:
+            return f"CLI binary has {metadata.st_nlink} hard links; exactly one is required"
+        binary.resolve(strict=True).relative_to(root.resolve(strict=True))
+    except (OSError, ValueError) as error:
+        return f"CLI binary is not confined to the repository: {error}"
+    return None
+
+
 def _check_one_source(root: Path, findings: list[dict]) -> None:
-    """Validate normative v0.1 fixtures without executing them."""
+    """Invoke the trusted CLI parser on normative fixtures; never execute fixture programs."""
     candidates = [root / "target" / "debug" / "one", root / "target" / "debug" / "one.exe"]
-    binary = next((path for path in candidates if path.is_file()), None)
+    binary = next((path for path in candidates if path.exists() or path.is_symlink()), None)
     if binary is None:
         findings.append(_finding("one-source-contract", "one-cli-unavailable", ".", None, "info", "high",
             "Pemeriksaan grammar One belum berjalan karena binary CLI tidak ditemukan.",
             "target/debug/one dan target/debug/one.exe tidak ada.",
             "Bangun CLI dengan cargo build --locked -p one-cli lalu jalankan pemindai dengan --check-one-source.",
+            status="blocked"))
+        return
+    untrusted_reason = _trusted_cli_binary_reason(root, binary)
+    if untrusted_reason is not None:
+        findings.append(_finding("one-source-contract", "one-cli-binary-not-confined", ".", None, "high", "high",
+            "Pemeriksaan grammar One diblokir karena binary CLI tidak memenuhi batas file tepercaya.",
+            untrusted_reason,
+            "Bangun binary CLI dari checkout exact-SHA ini; jangan jalankan binary symlink, hard-link, atau di luar root.",
             status="blocked"))
         return
     fixtures = []
