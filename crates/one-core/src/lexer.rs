@@ -59,7 +59,7 @@ impl<'a> Lexer<'a> {
                 }
                 indent_stack.push(leading); push_bounded_token!(tokens, Token::new(TokenKind::Indent, "", Span::new(line_start, line_start + leading, line_no, 1)));
             } else if leading < current {
-                while *indent_stack.last().unwrap() > leading { indent_stack.pop(); tokens.push(Token::new(TokenKind::Dedent, "", Span::new(line_start, line_start + leading, line_no, 1))); }
+                while *indent_stack.last().unwrap() > leading { indent_stack.pop(); push_bounded_token!(tokens, Token::new(TokenKind::Dedent, "", Span::new(line_start, line_start + leading, line_no, 1))); }
                 if *indent_stack.last().unwrap() != leading { return Err(DiagnosticBundle::single(Diagnostic::error("E0004", "Indentasi kembali ke tingkat yang tidak pernah digunakan sebelumnya.", Some(Span::new(line_start, line_start + leading, line_no, 1))))); }
             }
 
@@ -81,26 +81,26 @@ impl<'a> Lexer<'a> {
                         }
                     }
                     if !closed { return Err(DiagnosticBundle::single(Diagnostic::error("E0006", "String belum ditutup dengan tanda kutip.", Some(Span::new(start, absolute + 1, line_no, rel + 1))))); }
-                    tokens.push(Token::new(TokenKind::Text, value, Span::new(start, absolute + 1, line_no, rel + 1))); continue;
+                    push_bounded_token!(tokens, Token::new(TokenKind::Text, value, Span::new(start, absolute + 1, line_no, rel + 1))); continue;
                 }
                 if ch.is_ascii_digit() {
                     let start = rel; let mut end = rel + ch.len_utf8();
                     while let Some((idx, next)) = chars.peek().copied() { if next.is_ascii_digit() { chars.next(); end = idx + next.len_utf8(); } else { break; } }
-                    let text = &trimmed[start..end]; tokens.push(Token::new(TokenKind::Number, text, Span::new(absolute, absolute + text.len(), line_no, rel + 1))); continue;
+                    let text = &trimmed[start..end]; push_bounded_token!(tokens, Token::new(TokenKind::Number, text, Span::new(absolute, absolute + text.len(), line_no, rel + 1))); continue;
                 }
                 if ch.is_alphabetic() || ch == '_' {
                     let start = rel; let mut end = rel + ch.len_utf8();
                     while let Some((idx, next)) = chars.peek().copied() { if next.is_alphanumeric() || next == '_' { chars.next(); end = idx + next.len_utf8(); } else { break; } }
                     let text = &trimmed[start..end]; let kind = if is_keyword(text) { TokenKind::Keyword } else { TokenKind::Identifier };
-                    tokens.push(Token::new(kind, text, Span::new(absolute, absolute + text.len(), line_no, rel + 1))); continue;
+                    push_bounded_token!(tokens, Token::new(kind, text, Span::new(absolute, absolute + text.len(), line_no, rel + 1))); continue;
                 }
                 return Err(DiagnosticBundle::single(Diagnostic::error("E0007", format!("Karakter '{}' tidak dikenal oleh One v0.1.", ch), Some(Span::new(absolute, absolute + ch.len_utf8(), line_no, rel + 1)))));
             }
-            tokens.push(Token::new(TokenKind::Newline, "", Span::new(line_start + line.len(), line_start + line.len(), line_no, line.len() + 1)));
+            push_bounded_token!(tokens, Token::new(TokenKind::Newline, "", Span::new(line_start + line.len(), line_start + line.len(), line_no, line.len() + 1)));
             line_no += 1;
         }
-        while indent_stack.len() > 1 { indent_stack.pop(); tokens.push(Token::new(TokenKind::Dedent, "", Span::new(self.source.len(), self.source.len(), line_no, 1))); }
-        tokens.push(Token::new(TokenKind::Eof, "", Span::new(self.source.len(), self.source.len(), line_no, 1)));
+        while indent_stack.len() > 1 { indent_stack.pop(); push_bounded_token!(tokens, Token::new(TokenKind::Dedent, "", Span::new(self.source.len(), self.source.len(), line_no, 1))); }
+        push_bounded_token!(tokens, Token::new(TokenKind::Eof, "", Span::new(self.source.len(), self.source.len(), line_no, 1)));
         Ok(tokens)
     }
 }
