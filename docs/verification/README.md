@@ -1,6 +1,34 @@
 # Verification artifacts and workflows
 
-## Active exact-SHA recovery — 2026-10-31
+## Latest forensic audit — 2026-11-05
+
+**Audited parent candidate:** `fecf6e0883124e47aebdda13294714b5d9bc15d5` on `milestone/100-ecosystem-20261023`. PR [#80](https://github.com/panglimanetizen01/one/pull/80) remains open, draft, and unmerged; base `main` is `d35db95153f6ddd79885494c72f5aee16c899751`. This remediation commit advances the branch HEAD. The run results below are evidence for the parent SHA only; re-read the live HEAD and rerun required checks before assigning current-SHA acceptance.
+
+### Evidence inspected
+
+- [One CI 41262698742](https://github.com/panglimanetizen01/one/actions/runs/41262698742): Ubuntu and Windows reached runner setup, checkout, toolchain and documentation checks. Both stopped at the repository-health scanner regression test because one assertion expected scanner version `0.1.3`, while the implementation emits `0.2.0`. Build and later tests were skipped.
+- [Repository Health 41262698698](https://github.com/panglimanetizen01/one/actions/runs/41262698698): same stale scanner-version assertion failed on Ubuntu and Windows; the self-scan and evidence collection did not run.
+- [Linux Distribution Conformance 41262698730](https://github.com/panglimanetizen01/one/actions/runs/41262698730): build and Clippy passed on Ubuntu and Debian 12. Workspace tests exposed two project-test fixtures that attempted to create a symlink/write a source file beneath a temporary directory that had not been created.
+- [E1 lab 41262698708](https://github.com/panglimanetizen01/one/actions/runs/41262698708) and [E2 lab 41262698676](https://github.com/panglimanetizen01/one/actions/runs/41262698676): their focused standard-library and package/provenance tests passed, but full workspace tests also invoked Android/Windows cross-target CLI tests without installing those cross-compilers in these labs. Their summary step additionally used unescaped Markdown backticks in shell double-quoted echo strings, causing command substitution and spurious shell/Cargo errors.
+- [Focused standard-library run 41262698707](https://github.com/panglimanetizen01/one/actions/runs/41262698707) completed successfully.
+- The Android AArch64 job in One CI failed before the test script ran: the emulator never registered as `emulator-5554`, and the runner timed out waiting for boot. This is an emulator/harness failure, not proof of a ONE runtime defect or a PASS.
+- Debian's rustup bootstrap emitted a `$HOME`/UID-home mismatch warning (`/github/home` versus `/root`), but Rust installation and the subsequent build/Clippy steps completed. Do not misclassify that warning as the cause of the workspace test failures.
+
+### Remediation in this commit
+
+- Align the scanner regression expectation with the emitted `0.2.0` scanner version.
+- Create the temporary project directory in the two failing project-test fixtures before writing files or creating symlinks.
+- Exclude cross-target CLI tests from E1/E2 generic workspace labs; those labs do not provision the required target compilers. Dedicated native-target verification remains a separate gate.
+- Replace fragile shell backtick substitutions in E1/E2 test-lab summaries with safe `printf` output.
+
+### Acceptance boundary
+
+The previous ledger measurement (92/100 provisional implementation, 60/100 verified; 3/13 DoD boxes checked) belongs to an older exact source SHA and is not recalculated by these fixes. No new E1–E6 points are awarded here. Current final score remains **UNKNOWN / NOT RECONCILED** and the milestone-100 gate remains **NOT PASSED** until the new exact HEAD completes the required matrix, Android runtime evidence is resolved, and the independent ledger gate is rerun. No merge or release is authorized.
+
+---
+
+
+## Superseded exact-SHA recovery — 2026-10-31
 
 This current-state block supersedes prior active summaries. The parent candidate before this documentation reconciliation was `669fdd2e069181dd4db9268804db7e77dd3c6f78`. This commit advances the source SHA; the live PR #80 head and independent verifier pin are the authoritative exact current SHA, avoiding a self-referential SHA inside this file.
 

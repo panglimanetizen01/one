@@ -586,7 +586,7 @@ class OneHealthScannerTests(unittest.TestCase):
         self.write("README.md", "Healthy.\n")
         report = scan_repository(self.root)
         self.assertEqual("one-health-report/2", report["schema_version"])
-        self.assertEqual("0.1.3", report["scanner_version"])
+        self.assertEqual("0.2.0", report["scanner_version"])
         self.assertEqual(sum(report["severity_counts"].values()), report["finding_count"])
         self.assertIsInstance(report["findings"], list)
 

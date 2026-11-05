@@ -295,6 +295,7 @@ fn build_rejects_symlinked_source_file() {
     use std::os::unix::fs::symlink;
 
     let root = temp_dir();
+    fs::create_dir_all(&root).unwrap();
     let outside = root.parent().unwrap().join(format!(
         "one-build-outside-source-{}.one",
         SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
@@ -346,6 +347,7 @@ fn project_test_rejects_symlinked_conformance_fixture() {
 #[test]
 fn build_supports_spaces_in_source_file_names() {
     let root = temp_dir();
+    fs::create_dir_all(&root).unwrap();
     let source = root.join("program saya.one");
     fs::write(&source, "tampilkan \"aman\"\n").unwrap();
 

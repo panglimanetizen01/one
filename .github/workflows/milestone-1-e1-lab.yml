@@ -69,7 +69,7 @@ jobs:
       - name: E1 standard-library library unit suite
         run: cargo --locked test -p one-core --lib
       - name: Full workspace tests
-        run: cargo --locked test --workspace --all-targets
+        run: cargo --locked test --workspace --all-targets -- --skip windows_x86_64_target_mempertahankan_build_native --skip android_target_explicit_mempertahankan_build_native
       - name: Workspace Clippy with warnings denied
         run: cargo --locked clippy --workspace --all-targets -- -D warnings
       - name: Repository contract checker
@@ -79,10 +79,11 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## Milestone 1 / E1 test lab"
-            echo "- Commit: `$(git rev-parse HEAD)`"
-            echo "- OS: `$(uname -a)`"
-            echo "- Rust: `$(rustc --version)`"
-            echo "- Cargo: `$(cargo --version)`"
-            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '%s\n' \
+              '## Milestone 1 / E1 test lab' \
+              "- Commit: $(git rev-parse HEAD)" \
+              "- OS: $(uname -a)" \
+              "- Rust: $(rustc --version)" \
+              "- Cargo: $(cargo --version)" \
+              "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           } >> "$GITHUB_STEP_SUMMARY"
