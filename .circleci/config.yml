@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   linux-verify:
     docker:
-      - image: rust:1.99.0-bookworm
+      - image: rust:1.99.1-bookworm
     resource_class: medium
     working_directory: ~/project
     steps:
