@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, "milestone/**", "health/**", "diagnostic/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "milestone/**"]
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
