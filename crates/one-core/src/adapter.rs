@@ -820,7 +820,7 @@ mod tests { use super::*; use crate::capability::Capability; use crate::orchestr
 
 #[test]
 fn filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects() {
-    let outside = std::env::temp_dir().join(format!("one-project-root-outside-{}.txt", std::process::id()));
+    let outside = std::fs::canonicalize(std::env::temp_dir()).expect("canonicalize system temporary directory").join(format!("one-project-root-outside-{}.txt", std::process::id()));
     let _ = std::fs::remove_file(&outside);
     std::fs::write(&outside, "outside-secret").expect("create outside fixture");
     let read = CapabilityRequest::new(SemanticCapabilityId::FilesystemRead, Capability::FilesystemRead, ExecutionScope::target(outside.display().to_string()), EffectClass::Read);
@@ -1004,7 +1004,7 @@ mod hardlink_confinement_tests {
             .duration_since(UNIX_EPOCH)
             .expect("clock")
             .as_nanos();
-        let base = std::env::temp_dir().join(format!("one-hardlink-confinement-{id}"));
+        let base = std::fs::canonicalize(std::env::temp_dir()).expect("canonicalize system temporary directory").join(format!("one-hardlink-confinement-{id}"));
         let root = base.join("project");
         let outside = base.join("outside.txt");
         let linked = root.join("linked.txt");
