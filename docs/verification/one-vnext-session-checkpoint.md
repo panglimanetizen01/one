@@ -1,6 +1,19 @@
 # ONE vNext Session Checkpoint
 
-## Current exact-SHA state — 2026-11-05
+## Current continuation state — 2026-11-05
+
+- Canonical source: `panglimanetizen01/one`; branch `milestone/100-ecosystem-20261023`; PR #80 open/draft/unmerged; base `main` = `d35db95153f6ddd79885494c72f5aee16c899751`.
+- The exact source SHA is intentionally resolved from the live PR #80 head and matched verifier `CANONICAL_COMMIT.txt`, rather than embedded in this self-referential document. After this documentation commit, synchronize the verifier pin to the resulting branch HEAD before treating any matrix result as current.
+- Previous source candidate `85b035a9f0ec8512a13bb66c987e2f8ec024d8fd`: six canonical workflows (One CI 42019582401, E1 42019582386, E2 42019582378, Linux distro 42019582389, Repository Health 42019582606, focused stdlib 42019582717) completed FAILURE with job `steps: null`, no artifacts, and representative log downloads returning `BlobNotFound`. Root cause UNKNOWN; this is pre-step execution/evidence failure, not source-test failure and not PASS.
+- The last observable independent verifier matrix targeted predecessor `1248a39199322fd4007cbd043bb58864096842c8`. It exposed real Linux project-test fixture failures (missing temporary directories) and Windows CLI/package path/reparse failures. The Linux fixture setup was corrected in source ancestry after that run. Android API 35 AArch64 runtime run [41262527363](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262527363) passed on that predecessor only. Ledger gate [41262533958](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262533958) returned NOT PASSED: 10 DoD unchecked, E1–E6 0 verified, index/pin mismatch, incomplete/failed matrix jobs, and no protected production provenance run.
+- The source DoD checkbox count is **3 checked / 10 unchecked / 13 total**. Last measured ledger values remain **92/100 implementation provisional / 60/100 verified on an older SHA**; they are not current acceptance. E1–E6 remain 0 verified; fixed weights unchanged. Final score **UNKNOWN / NOT RECONCILED**; gate **NOT PASSED**.
+- PR #84 is open/draft, two commits ahead and three behind current `main`; its README correction is already represented in PR #80's branch. PR #85 is open/draft, three ahead and three behind `main`; its `ci.yml`/ `release-check.yml` checks overlap the current PR #80 branch. Both remain unmerged; do not close automatically. PR #83 remains an unaccepted SEC-05 experiment; #78 is scope-limited milestone-60 history; #77 is proposal/audit only; #76 is a separate HTTP IPv6 fix on a stale base.
+- No direct `main` edit, merge, release, protected E2 dispatch, secret/trust-store mutation, or branch-protection bypass is authorized. No-repeat guard: do not repeat the 132-file audit or identical zero-step retries.
+
+---
+
+
+## Superseded current-state snapshot — 2026-11-05 (replaced by continuation state above)
 
 - Canonical source: `panglimanetizen01/one`; branch `milestone/100-ecosystem-20261023`; PR #80 open/draft/unmerged; base `main` at `d35db95153f6ddd79885494c72f5aee16c899751`.
 - Current source HEAD: `85b035a9f0ec8512a13bb66c987e2f8ec024d8fd`; parent: `fecf6e0883124e47aebdda13294714b5d9bc15d5`. The independent verifier `verification` branch currently pins `1248a39199322fd4007cbd043bb58864096842c8`; this mismatch blocks current-HEAD acceptance.
@@ -14,7 +27,7 @@
 ---
 
 
-## Historical forensic audit — parent SHA fecf6e0 (superseded by current exact-SHA state above)
+## Historical forensic audit — parent SHA fecf6e0
 
 **Audited parent candidate:** `fecf6e0883124e47aebdda13294714b5d9bc15d5` on `milestone/100-ecosystem-20261023`. PR [#80](https://github.com/panglimanetizen01/one/pull/80) remains open, draft, and unmerged; base `main` is `d35db95153f6ddd79885494c72f5aee16c899751`. This remediation commit advances the branch HEAD. The run results below are evidence for the parent SHA only; re-read the live HEAD and rerun required checks before assigning current-SHA acceptance.
 
