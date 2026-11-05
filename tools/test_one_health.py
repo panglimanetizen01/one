@@ -436,6 +436,16 @@ class OneHealthScannerTests(unittest.TestCase):
             for f in report["findings"]
         ))
 
+    def test_repository_ci_collector_is_recognized_as_narrow_github_api_client(self):
+        collector = Path(__file__).with_name("collect_ci_health.py").read_text(encoding="utf-8")
+        self.write("trusted_repository_collector.py", collector)
+        report = scan_repository(self.root)
+        self.assertFalse(any(
+            finding["path"] == "trusted_repository_collector.py"
+            and finding["rule_id"] == "sensitive-data-egress"
+            for finding in report["findings"]
+        ))
+
     def test_security_ast_does_not_join_unrelated_sources_and_sinks(self):
         self.write("unrelated.py",
                    "import os\nimport requests\n"
