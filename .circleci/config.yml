@@ -40,6 +40,7 @@ jobs:
             cargo --locked build --workspace --all-targets
             CARGO_TARGET_DIR=target/one-health-cli cargo --locked build -p one-cli
             mkdir -p target/debug
+            rm -f target/debug/one
             cp target/one-health-cli/debug/one target/debug/one
             python3 -c 'import os,sys; p=sys.argv[1]; n=os.stat(p).st_nlink; print("trusted CLI hard-link count:", n); sys.exit(0 if n == 1 else 1)' target/debug/one
 
