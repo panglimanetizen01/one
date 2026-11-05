@@ -1,6 +1,20 @@
 # ONE vNext Session Checkpoint
 
-## Latest forensic audit — 2026-11-05
+## Current exact-SHA state — 2026-11-05
+
+- Canonical source: `panglimanetizen01/one`; branch `milestone/100-ecosystem-20261023`; PR #80 open/draft/unmerged; base `main` at `d35db95153f6ddd79885494c72f5aee16c899751`.
+- Current source HEAD: `85b035a9f0ec8512a13bb66c987e2f8ec024d8fd`; parent: `fecf6e0883124e47aebdda13294714b5d9bc15d5`. The independent verifier `verification` branch currently pins `1248a39199322fd4007cbd043bb58864096842c8`; this mismatch blocks current-HEAD acceptance.
+- Canonical source workflows on `85b035a9...`: One CI [42019582401](https://github.com/panglimanetizen01/one/actions/runs/42019582401), E1 [42019582386](https://github.com/panglimanetizen01/one/actions/runs/42019582386), E2 [42019582378](https://github.com/panglimanetizen01/one/actions/runs/42019582378), Linux distro [42019582389](https://github.com/panglimanetizen01/one/actions/runs/42019582389), Repository Health [42019582606](https://github.com/panglimanetizen01/one/actions/runs/42019582606), and focused stdlib [42019582717](https://github.com/panglimanetizen01/one/actions/runs/42019582717). All completed FAILURE with returned job `steps: null`; representative log downloads returned `BlobNotFound`; artifact lists were empty. Classify as pre-step execution/evidence failure, root cause UNKNOWN—not source-test failure and not PASS. Do not repeat identical retries without a changed condition or transient diagnosis.
+- Last observable verifier matrix is pinned to `1248a391...`, not current source. It found actual Linux fixture failures in `crates/one-cli/tests/project.rs`; the later source commits added the missing temporary-directory creation. It also found Windows CLI/package regressions involving reparse-point/canonical-path rejection in ordinary test temp directories. These failures are real for the tested `1248a391...` source and remain historical until the changed current source is re-run. Android API 35 AArch64 runtime run [41262527363](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262527363) passed on `1248a391...` only; not current-HEAD evidence.
+- Verifier ledger gate [41262533958](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262533958) returned NOT PASSED: evidence index did not name exact pin, 10 DoD items unchecked, E1–E6 all 0 verified, several matrix jobs incomplete/failed, and no protected production provenance run.
+- DoD checkbox count on the current source file is **3 checked / 10 unchecked / 13 total**. Last measured ledger subtotal remains **92/100 implementation provisional / 60/100 verified on an older source SHA**; it is not a current-SHA acceptance score. Final score **UNKNOWN / NOT RECONCILED**. E1–E6 remain 0 verified; fixed weights unchanged.
+- PR #84 remains open/draft and is two commits ahead/three behind current `main`; its only substantive README delta is already represented in PR #80's branch. PR #85 remains open/draft and is three commits ahead/three behind `main`; its CI/release-check delta overlaps checks already present in PR #80. Neither PR is merged; do not merge or close automatically. PR #83 remains an unaccepted SEC-05 experiment; #78 is scope-limited historical milestone-60 evidence; #77 is proposal/audit only; #76 remains a separate HTTP IPv6 fix requiring fresh base/diff review.
+- No merge, release, protected E2 dispatch, secret/trust-store mutation, or direct `main` edit is authorized. Pin synchronization and all further evidence must target the final resulting source SHA.
+
+---
+
+
+## Historical forensic audit — parent SHA fecf6e0 (superseded by current exact-SHA state above)
 
 **Audited parent candidate:** `fecf6e0883124e47aebdda13294714b5d9bc15d5` on `milestone/100-ecosystem-20261023`. PR [#80](https://github.com/panglimanetizen01/one/pull/80) remains open, draft, and unmerged; base `main` is `d35db95153f6ddd79885494c72f5aee16c899751`. This remediation commit advances the branch HEAD. The run results below are evidence for the parent SHA only; re-read the live HEAD and rerun required checks before assigning current-SHA acceptance.
 
