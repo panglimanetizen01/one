@@ -1,0 +1,81 @@
+version: 2.1
+
+jobs:
+  linux-verify:
+    docker:
+      - image: rust:1.99.0-bookworm
+    resource_class: medium
+    working_directory: ~/project
+    steps:
+      - checkout
+
+      - run:
+          name: Install repository verification prerequisites
+          command: |
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 clang mingw-w64
+            rustc --version
+            cargo --version
+            python3 --version
+            clang --version
+
+      - run:
+          name: Validate repository contracts and user documentation
+          command: |
+            python3 tools/check_contract.py
+            python3 tools/check_user_docs.py
+            python3 tools/check_user_docs_test.py
+            bash -n tools/verify-human-vnext.sh
+
+      - run:
+          name: Run repository health scanner regression tests
+          command: |
+            python3 -m unittest discover -s tools -p "test_one_health.py" -v
+            python3 -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+            python3 -m unittest discover -s tools -p "test_health_quality.py" -v
+
+      - run:
+          name: Build locked workspace and standalone trusted CLI
+          command: |
+            cargo --locked build --workspace --all-targets
+            CARGO_TARGET_DIR=target/one-health-cli cargo --locked build -p one-cli
+            mkdir -p target/debug
+            cp target/one-health-cli/debug/one target/debug/one
+            python3 -c 'import os,sys; p=sys.argv[1]; n=os.stat(p).st_nlink; print("trusted CLI hard-link count:", n); sys.exit(0 if n == 1 else 1)' target/debug/one
+
+      - run:
+          name: Run repository health and normative source checks
+          command: |
+            python3 tools/one_health.py --check-one-source --expected-sha "$CIRCLE_SHA1" --json-out one-health-report.json --markdown-out one-health-report.md --quiet
+
+      - run:
+          name: Run Clippy with warnings denied
+          command: cargo --locked clippy --workspace --all-targets -- -D warnings
+
+      - run:
+          name: Run full Rust workspace tests
+          command: cargo --locked test --workspace --all-targets
+
+      - run:
+          name: Verify deterministic package artifacts
+          command: cargo --locked test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+
+      - run:
+          name: Verify database and HTTP vertical slices
+          command: |
+            cargo --locked test -p one-core --test database_vertical_slice
+            cargo --locked test -p one-core --test http_get_vertical_slice
+            cargo --locked test -p one-cli --test http_get_orchestration
+
+      - store_artifacts:
+          path: one-health-report.json
+          destination: one-health-report.json
+
+      - store_artifacts:
+          path: one-health-report.md
+          destination: one-health-report.md
+
+workflows:
+  one-linux-verification:
+    jobs:
+      - linux-verify
