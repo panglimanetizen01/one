@@ -296,15 +296,47 @@ def _scan_python_security(rel: str, text: str, findings: list[dict]) -> None:
         )
         if not base_ok:
             return False
-        request_calls = [
-            node for node in ast.walk(collector_fn)
-            if isinstance(node, ast.Call) and _ast_name(node.func) == "request_json"
-        ]
-        if not request_calls or not all(
-            node.args and isinstance(node.args[0], ast.JoinedStr)
-            and any(isinstance(child, ast.Name) and child.id == "base" for child in ast.walk(node.args[0]))
-            for node in request_calls
-        ):
+        # The real collector routes requests through _paginate(request_json, url, ...).
+        # Validate every URL passed to that narrow helper, including local URL variables
+        # derived from the API_ROOT-based base; do not require direct request_json calls.
+        base_url_names = set()
+        for node in ast.walk(collector_fn):
+            if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+                continue
+            value = node.value
+            if not isinstance(value, ast.JoinedStr) or not any(
+                isinstance(child, ast.Name) and child.id == "base"
+                for child in ast.walk(value)
+            ):
+                continue
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            base_url_names.update(target.id for target in targets if isinstance(target, ast.Name))
+
+        request_routes = []
+        for node in ast.walk(collector_fn):
+            if not isinstance(node, ast.Call):
+                continue
+            callee = _ast_name(node.func)
+            if callee == "_paginate":
+                if len(node.args) < 2 or not (
+                    isinstance(node.args[0], ast.Name) and node.args[0].id == "request_json"
+                ):
+                    return False
+                request_routes.append(node.args[1])
+            elif callee == "request_json":
+                if not node.args:
+                    return False
+                request_routes.append(node.args[0])
+
+        def api_root_derived(url_node):
+            if isinstance(url_node, ast.Name):
+                return url_node.id in base_url_names
+            return isinstance(url_node, ast.JoinedStr) and any(
+                isinstance(child, ast.Name) and child.id == "base"
+                for child in ast.walk(url_node)
+            )
+
+        if not request_routes or not all(api_root_derived(url) for url in request_routes):
             return False
         other_sinks = [
             node for node in calls
