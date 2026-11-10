@@ -8,11 +8,11 @@ The repository is the persistent source of accepted One project context. A new d
 
 1. [`AGENTS.md`](AGENTS.md) — agent operating contract and required reading order.
 2. [`docs/ONE_CONSTITUTION.md`](docs/ONE_CONSTITUTION.md) — vision, mission, architecture invariants, portability, security, localization, and global direction.
-3. [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — accepted requirements baseline.
-4. [`docs/DECISIONS.md`](docs/DECISIONS.md) — accepted architectural decisions.
-5. [`docs/DEVELOPMENT_PROTOCOL.md`](docs/DEVELOPMENT_PROTOCOL.md) — execution, verification, bug, and evidence rules.
-6. Read the domain contract relevant to the task: [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`COMPATIBILITY.md`](docs/COMPATIBILITY.md), [`SECURITY.md`](docs/SECURITY.md), [`LOCALIZATION.md`](docs/LOCALIZATION.md), or [`INTEROPERABILITY.md`](docs/INTEROPERABILITY.md).
-7. Check current verification evidence before claiming support or completion.
+4. [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) — accepted requirements baseline.
+5. [`docs/DECISIONS.md`](docs/DECISIONS.md) — accepted architectural decisions.
+6. [`docs/DEVELOPMENT_PROTOCOL.md`](docs/DEVELOPMENT_PROTOCOL.md) — execution, verification, bug, and evidence rules.
+7. Read the domain contract relevant to the task: [`ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`COMPATIBILITY.md`](docs/COMPATIBILITY.md), [`SECURITY.md`](docs/SECURITY.md), [`LOCALIZATION.md`](docs/LOCALIZATION.md), or [`INTEROPERABILITY.md`](docs/INTEROPERABILITY.md).
+8. Check current verification evidence before claiming support or completion.
 
 This repository contract exists so project intent does not depend on a previous ChatGPT session.
 
@@ -179,3 +179,8 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 ## Verification boundary
 
 The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+
+
+## Engineering execution and CI authority
+
+All repository changes are made against GitHub branches; GitHub is the single source of truth. CircleCI is the canonical CI provider for this source repository and replaces GitHub Actions as the default CI path. Termux is limited to read-only, post-CircleCI verification of an already-proven exact SHA; it is not an implementation or repair environment. See [CI execution model](docs/CI_EXECUTION_MODEL.md).

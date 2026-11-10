@@ -1,4 +1,4 @@
-# Verification artifacts and workflows
+# Verification artifacts and workflows\n\n> Current execution authority: [CI execution model](../CI_EXECUTION_MODEL.md). GitHub is the source of truth, CircleCI is canonical source CI, and Termux is read-only post-CircleCI verification only.
 
 ## Active CI remediation checkpoint — 2026-11-10
 

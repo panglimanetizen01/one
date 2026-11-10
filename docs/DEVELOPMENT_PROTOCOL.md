@@ -121,3 +121,13 @@ Do not report a milestone as complete until all required artifacts exist, refere
 ## 14. Current CI remediation pointer
 
 See [the CircleCI native-toolchain remediation checkpoint](verification/circleci-native-toolchain-remediation.md) for the active branch, exact commits, pipeline history, first failure, next action, and no-repeat rules. This pointer is operational context, not evidence of a passing build.
+
+
+## 14. GitHub source authority, CircleCI canonical CI, and Termux boundary
+
+- All source, test, workflow, build, and documentation changes are performed on GitHub branches through GitHub-native operations. GitHub is the single source of truth; the live full SHA is authoritative. Never use a local checkout as the content source for repository writes.
+- CircleCI is the canonical CI provider for the One source repository, replacing GitHub Actions as the normal source CI path. Validate each material commit on its exact SHA and inspect pipeline, workflow, job, step, logs, checkout proof, and artifacts. Preserve old Actions workflows until their coverage is mapped and migration/removal is explicitly authorized.
+- Termux is read-only and verification-only after the corresponding GitHub commit and CircleCI checks have succeeded. Allowed: inspect exact SHA, retrieve logs/artifacts, verify manifests/hashes, and run isolated independent validation. Forbidden: edit/patch source or docs, fix bugs, format, stage, commit, branch, rebase, reset, stash, push, or change CI/repository settings.
+- A local discrepancy is a report to reproduce and fix on GitHub, not permission to patch locally. Local results are independent validation and never CircleCI evidence.
+- At session start, load enabled Notion skills, read live `AGENTS.md`, this policy, and the active checkpoint; reconcile live GitHub refs/PR SHAs and CircleCI before resuming the earliest unfinished task.
+- Every material change requires updates to all affected repository documentation and the existing Notion skill/checkpoint. Record exact SHA, CI evidence, hashes, unresolved gaps, and no-repeat scope. Do not merge or release without explicit authorization.
