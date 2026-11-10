@@ -173,3 +173,23 @@ python tools/one_health.py --baseline previous-report.json --json-out current-re
 Current findings are labeled `new`, `recurring`, or `reopened`; findings absent from the current completed scan are listed separately as `resolved` with a review caveat. The tool does not silently edit the fixed-weight One acceptance ledger. A triage priority score is provided alongside its inputs (impact, confidence, recurrence, and acceptance-blocker factor) so maintainers can review why a finding was ranked. It is an operational triage aid, not an acceptance score or proof of resolution.
 
 Baseline comparison is currently opt-in and file-based; persistent cross-run history and automatic GitHub job/log ingestion remain future work.
+
+
+## Native ONE integrity scanner preview
+
+The Rust-based ONE CLI now has an initial read-only scanner preview, invoked without Python:
+
+~~~sh
+cargo run -p one-cli --bin one -- pindai --scope all --root .
+cargo run -p one-cli --bin one -- pindai --scope sha --root . --expected-sha <40-character-git-sha>
+cargo run -p one-cli --bin one -- pindai --scope workflow --root .
+cargo run -p one-cli --bin one -- pindai keamanan --root .
+cargo run -p one-cli --bin one -- pindai --scope security --root .
+cargo run -p one-cli --bin one -- pindai --scope markdown --root .
+~~~
+
+This is an **initial implementation, not parity with tools/one_health.py**. It currently checks a narrow subset: expected Git HEAD identity, required foundation paths, UTF-8 readability for selected text extensions, basic relative Markdown links and fenced-code closure, workflow names/local-action paths, core CLI vocabulary in README, and the presence of Cargo.lock. It reports which detector scopes ran and which were not requested. Critical/high findings return a non-zero exit status.
+
+Known boundaries: no JSON/Markdown report export yet; no full YAML, Markdown, syntax, artifact-byte, or CI-log validation; security detection is a narrow heuristic only; no baseline/quality-ledger parity; and no recursive symlink traversal; external and dangling symlinks are flagged. The `security` scope checks known credential prefixes and private-key headers, possible hardcoded-secret assignments, download-and-execute commands, base64-to-shell and Python decode/execute patterns, encoded PowerShell, and workflow `permissions: write-all`; suspected secret values are redacted. It is not antivirus/EDR, does not inspect runtime behavior, and can miss obfuscated or unknown threats or report false positives. The scope called artifacts is currently only a lightweight lockfile-presence check plus SHA binding, not a cryptographic artifact verification. This command must not be treated as a replacement for the Python scanner, and no default CI gate has switched to it.
+
+Next gates: add adversarial fixtures and contract tests, run cargo fmt, Clippy, workspace tests and self-scan on exact SHA on Linux and Windows, then compare native/Python findings on the same revision and document each intentional gap before any promotion.
