@@ -10,14 +10,50 @@ jobs:
       - checkout
 
       - run:
-          name: Install repository verification prerequisites
+          name: Install repository verification prerequisites and native toolchains
           command: |
+            set -euo pipefail
             apt-get update
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends python3 clang mingw-w64
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+              python3 clang curl ca-certificates unzip file \
+              gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+
+            NDK_ARCHIVE="/tmp/android-ndk-r30-linux.zip"
+            curl -fsSL --retry 3 --retry-delay 2 \
+              "https://dl.google.com/android/repository/android-ndk-r30-linux.zip" \
+              -o "$NDK_ARCHIVE"
+            printf '%s  %s\n' \
+              '5107f898313790e449e87eee2183d9a20602dee9' "$NDK_ARCHIVE" | sha1sum --check -
+            unzip -q "$NDK_ARCHIVE" -d /opt
+            rm -f "$NDK_ARCHIVE"
+
+            ANDROID_CLANG="/opt/android-ndk-r30/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android35-clang"
+            MINGW_SYSROOT="/usr/x86_64-w64-mingw32"
+            MINGW_LD="$(command -v x86_64-w64-mingw32-ld)"
+            test -x "$ANDROID_CLANG"
+            test -d "$MINGW_SYSROOT/include"
+
+            cat > /usr/local/bin/one-windows-clang <<EOF
+            #!/bin/sh
+            exec /usr/bin/clang --sysroot="$MINGW_SYSROOT" --ld-path="$MINGW_LD" "\$@"
+            EOF
+            chmod 0755 /usr/local/bin/one-windows-clang
+
+            printf 'export ONE_ANDROID_CLANG="%s"\n' "$ANDROID_CLANG" >> "$BASH_ENV"
+            printf 'export ONE_WINDOWS_CLANG="%s"\n' "/usr/local/bin/one-windows-clang" >> "$BASH_ENV"
+
+            printf '#include <stdio.h>\nint main(void) { puts("toolchain-ok"); return 0; }\n' > /tmp/one-native-toolchain-probe.c
+            "$ANDROID_CLANG" /tmp/one-native-toolchain-probe.c -o /tmp/one-native-android-probe
+            /usr/local/bin/one-windows-clang /tmp/one-native-toolchain-probe.c -o /tmp/one-native-windows-probe.exe
+            file /tmp/one-native-android-probe | grep -q 'ARM aarch64'
+            file /tmp/one-native-windows-probe.exe | grep -q 'PE32+ executable'
+
             rustc --version
             cargo --version
             python3 --version
             clang --version
+            "$ANDROID_CLANG" --version
+            x86_64-w64-mingw32-ld --version
 
       - run:
           name: Validate repository contracts and user documentation
@@ -46,8 +82,7 @@ jobs:
 
       - run:
           name: Run repository health and normative source checks
-          command: |
-            python3 tools/one_health.py --check-one-source --expected-sha "$CIRCLE_SHA1" --json-out one-health-report.json --markdown-out one-health-report.md --quiet
+          command: python3 tools/one_health.py --check-one-source --expected-sha "$CIRCLE_SHA1" --json-out one-health-report.json --markdown-out one-health-report.md --quiet
 
       - run:
           name: Run Clippy with warnings denied
