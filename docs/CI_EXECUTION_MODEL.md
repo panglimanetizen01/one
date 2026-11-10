@@ -29,7 +29,7 @@ GitHub Actions workflow files already in the repository are legacy/transition as
 
 ### Coverage parity is not assumed
 
-At the 2026-11-11 checkpoint, `.circleci/config.yml` defines one `linux-verify` job. CircleCI pipeline #34 / job #19 passed on source SHA `e19d0129c6a3169a36e18a9ce7cd13f4a677d348`. It ran Linux build/Clippy/test and repository checks, and compiled small Windows PE32+ and Android AArch64 probes. Those probes are not native Windows or Android runtime tests.
+At the 2026-11-11 checkpoint, `.circleci/config.yml` defines one `linux-verify` job. The latest inspected exact-SHA run is workflow `f392e32f-564a-4756-a97c-87db69376cd0`, job #20 (`a28b1024-b9f1-424c-b92f-05f275366f98`), SUCCESS on source SHA `912c10fe86cee10294a5e09b96a99f00477d788a`. Contract/user-doc checks, health scanner regression tests, locked workspace build, health scan, Clippy, full workspace tests, deterministic package test, and database/HTTP vertical slices all reported success. Artifact metadata listed JSON and Markdown health reports, but both download URLs returned HTTP 404; payload contents and checksums are NOT VERIFIED. This run is historical for any subsequent source commit. It ran on Linux and performed Windows PE32+ and Android AArch64 compiler probes only; those probes are not native Windows or Android runtime tests.
 
 Therefore:
 - CircleCI is the canonical CI path by policy.

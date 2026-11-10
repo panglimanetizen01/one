@@ -108,10 +108,20 @@ def _scan_markdown(path, rel, root, text, findings):
     active = None
     for number, line in enumerate(text.splitlines(), 1):
         match = FENCE_RE.match(line)
-        if not match: continue
-        marker = match.group(2)
-        if active is None: active = (marker[0], len(marker), number)
-        elif marker[0] == active[0] and len(marker) >= active[1] and not match.group(3).strip(): active = None
+        if match:
+            marker = match.group(2)
+            if active is None:
+                active = (marker[0], len(marker), number)
+            elif marker[0] == active[0] and len(marker) >= active[1] and not match.group(3).strip():
+                active = None
+            continue
+        if active is None:
+            for escaped in re.finditer(r"\\n(?:\\n)?(?=\s*(?:[-*+]\s|#{1,6}\s))", line):
+                findings.append(_finding("markdown-structure", "literal-escaped-newline-before-block", rel, number,
+                    "medium", "high",
+                    "Literal backslash-n text appears where a Markdown block boundary is expected.",
+                    line[max(0, escaped.start() - 60):min(len(line), escaped.end() + 80)],
+                    "Replace the literal backslash-n sequence with actual Markdown line breaks; keep code examples inside fenced blocks."))
     if active:
         findings.append(_finding("markdown-structure", "unclosed-code-fence", rel, active[2], "medium", "high",
             "Blok kode Markdown tidak memiliki penutup yang cocok.", f"Fence dibuka pada baris {active[2]}.",
