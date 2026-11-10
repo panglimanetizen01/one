@@ -33,10 +33,10 @@ jobs:
             test -x "$ANDROID_CLANG"
             test -d "$MINGW_SYSROOT/include"
 
-            cat > /usr/local/bin/one-windows-clang <<EOF
-            #!/bin/sh
-            exec /usr/bin/clang --sysroot="$MINGW_SYSROOT" --ld-path="$MINGW_LD" "\$@"
-            EOF
+            printf '%s\n' \
+              '#!/bin/sh' \
+              'exec /usr/bin/clang --sysroot=/usr/x86_64-w64-mingw32 --ld-path=/usr/bin/x86_64-w64-mingw32-ld "$@"' \
+              > /usr/local/bin/one-windows-clang
             chmod 0755 /usr/local/bin/one-windows-clang
 
             printf 'export ONE_ANDROID_CLANG="%s"\n' "$ANDROID_CLANG" >> "$BASH_ENV"
