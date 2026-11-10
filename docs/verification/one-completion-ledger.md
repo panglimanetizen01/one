@@ -1,3 +1,15 @@
+## Active forensic continuation — 2026-11-11 — exact-SHA status supersession
+
+- Current PR #94 documentation candidate HEAD at this update: `41aace25f9d63e7002468f206307181517f09b79` on `fix/windows-temp-path-canonicalization`; PR remains OPEN / DRAFT / UNMERGED. Base `d75b2846465ba53281198693750f2e6ba39e2e33`.
+- The previous source candidate was `6b5070e7c01aa8cf2885653fa1d5728ad8fcdfbd`. Its verifier matrix last reached 14 SUCCESS, 2 IN PROGRESS (Android API 35 native ARM64 runtime #42881168518 and candidate artifact integrity #42881168487), and 1 early ledger-gate FAILURE (#42881168688). The gate passed 8/8 verifier unit tests but failed closed while required runs were pending, with 10 DoD unchecked, E1–E6 each 0 verified, and no protected production provenance.
+- These 6b results are historical for this new documentation SHA. Do not credit them to `41aace25f9d63e7002468f206307181517f09b79`. The 6b CircleCI status was SUCCESS at commit-status level only; authenticated job/step/log/artifact inspection remains outstanding. CircleCI for this new SHA is NOT YET VERIFIED.
+- The independent verifier pin remains on 6b until the new source SHA passes CircleCI and the source branch is stable. Keep the separate PR #92 `LOCAL_CI_CANONICAL_COMMIT.txt` unchanged.
+- Ledger values are not changed here: implementation 92/100 provisional; verified 60/100 historical subtotal; 10 DoD items unchecked; E1–E6 0 verified in the last gate evaluation; final score UNKNOWN / NOT RECONCILED; gate NOT PASSED. These values are not current-SHA evidence.
+- Do not change fixed weights, promote points, or check DoD boxes without row-level acceptance evidence. Protected E2 production provenance remains unauthorized and absent.
+- This active block supersedes older status snapshots below; retain their run details as historical evidence only. Re-evaluate only after all required exact-SHA workflows are terminal and the evidence index is reconciled.
+
+---
+
 ## Active CI remediation checkpoint — 2026-11-11 (CircleCI job #20 exact-SHA evidence)
 
 - Canonical source: `panglimanetizen01/one`; PR #94 remains OPEN / DRAFT / UNMERGED on `fix/windows-temp-path-canonicalization`, base `milestone/100-ecosystem-20261023`. This checkpoint records pre-reconciliation source revision `912c10fe86cee10294a5e09b96a99f00477d788a`; the documentation commit adding this checkpoint is a new candidate and requires its own CircleCI run.
