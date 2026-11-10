@@ -1,5 +1,23 @@
 # ONE Final Milestone Session Checkpoint
 
+## Active CI remediation checkpoint — 2026-11-10
+
+- Canonical repository: `panglimanetizen01/one`; active branch: `fix/windows-temp-path-canonicalization`; PR #94 remains the existing remediation PR. Do not create a duplicate PR, merge, release, or edit `main`.
+- Primary CI for this remediation is CircleCI. Use CircleCI API through the user's existing Termux `capi` shell function when the official CircleCI CLI is unavailable on Android/Termux. Never request the token again for each command, print it, or write it to repository files.
+- Latest confirmed source change before this documentation update: `3d9d5a37bc37517a5f0a800690d2fbc57fc05400` (`ci: use MinGW GCC runtime for Windows native target`). It changes only `.circleci/config.yml`: Windows wrapper strips the backend's Clang target argument and invokes `x86_64-w64-mingw32-gcc`; Android NDK r30 remains checksum-pinned and configured for API 35.
+- Pipeline history on the earlier revisions:
+  - Pipeline #22 / source `af33fccfa947bd88737920ca287201a013c6dc29`: workspace tests exposed missing Windows cross-compiler and Android NDK sysroot provisioning.
+  - Pipeline #23: configuration did not produce a workflow because a shell heredoc delimiter was interpreted by CircleCI config parsing.
+  - Pipeline #24 / job #9: config parsed and ran; Windows Clang preflight failed because MinGW headers were invoked without a compatible Windows target/declspec mode.
+  - Pipeline #25 / job #10 / job ID `311ef77e-f29d-4f04-93f6-24f9a9fe651d`: Windows Clang reached the MinGW linker, which failed with `cannot find -lgcc` and `cannot find -lgcc_eh`. This is a toolchain/link-runtime provisioning mismatch, not a Rust test failure. Android preflight was not reached/established by this failing step.
+- The latest config correction switches the Windows wrapper to the MinGW GCC driver so the compiler and its matching GCC runtime/linker libraries are selected together. This is an implemented config change only; it is NOT YET verified by a fresh pipeline.
+- Immediate next action: find the CircleCI pipeline triggered by commit `3d9d5a37bc37517a5f0a800690d2fbc57fc05400` (or by the newer documentation commit that contains this checkpoint), inspect workflow/job/first failing step and logs. Confirm both Windows PE32+ and Android AArch64 ELF preflight checks, then continue the full Rust workspace suite and all later steps. Fix the first deterministic failure minimally and rerun only the changed exact revision.
+- No-repeat guard: do not repeat diagnosis already completed for #22–#25; do not rerun unchanged predecessor pipelines; do not disable or skip native-target tests to obtain a green result. Preserve the full logs and exact job/pipeline IDs for each new failure.
+- Exact-SHA guard: every new source or documentation commit changes the revision under test. Record the new HEAD and pipeline association; do not transfer PASS evidence from any earlier SHA. The independent verifier pin/evidence index must be reconciled to the final intended source SHA before any final acceptance/gate claim.
+- Acceptance remains fail-closed. No CI success has yet been established for the latest MinGW GCC wrapper. Do not claim native Windows/Android support or overall project completion from compiler configuration alone.
+- Safety boundaries: no direct `main` edits, merge, release, protected E2 dispatch, secret/trust-store mutation, branch-protection changes, or PR closure. Continue from the latest checkpoint and preserve completed evidence rather than repeating it.
+
+
 ## Current continuation state — 2026-11-06
 
 - Canonical source repository: `panglimanetizen01/one`. PR #80 remains the milestone base candidate on `milestone/100-ecosystem-20261023`, open/draft/unmerged at `d75b2846465ba53281198693750f2e6ba39e2e33`; base `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`.
