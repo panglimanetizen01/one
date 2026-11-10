@@ -56,3 +56,7 @@ It prints every command, each step result, elapsed time, and a final summary. Th
 This runner is an orchestration tool; it does not replace the Rust compiler, Cargo, Clippy, or the test suite. It runs on the current host only. A successful Linux/Codespaces run does not prove Windows execution or Android cross-compilation/runtime behavior. Those claims still require evidence from the corresponding target environment.
 
 The existing hosted workflows remain unchanged. This tool is an additional local verification path, not proof that GitHub Actions infrastructure has been repaired and not a hosted CI service.
+
+## Unix test portability
+
+The Linux linker-discovery unit tests use symlinks to the host's true and false utilities instead of executable shell scripts created under the temporary directory. This keeps the tests meaningful on CI runners whose temporary filesystem may be mounted with noexec; it does not skip or weaken the linker compatibility checks.

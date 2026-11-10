@@ -509,7 +509,13 @@ fn resolve_linux_x86_64_linker(
 mod linker_discovery_tests {
     use super::*;
 
-    #[cfg(unix)]
+    fn unix_utility(name: &str) -> std::path::PathBuf {
+        std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default())
+            .map(|directory| directory.join(name))
+            .find(|candidate| candidate.is_file())
+            .unwrap_or_else(|| panic!("required Unix utility '{name}' not found in PATH"))
+    }
+
     #[test]
     fn linux_x86_64_linker_override_diprioritaskan() {
         let root = std::env::temp_dir().join(format!(
@@ -522,19 +528,8 @@ mod linker_discovery_tests {
 
         std::fs::create_dir_all(&root).unwrap();
         std::fs::create_dir_all(&path_candidate).unwrap();
-
-        std::fs::write(&expected, b"#!/bin/sh\nexit 0\n").unwrap();
-        std::fs::write(&path_linker, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            for path in [&expected, &path_linker] {
-                let mut permissions = std::fs::metadata(path).unwrap().permissions();
-                permissions.set_mode(0o755);
-                std::fs::set_permissions(path, permissions).unwrap();
-            }
-        }
+        std::os::unix::fs::symlink(unix_utility("true"), &expected).unwrap();
+        std::os::unix::fs::symlink(unix_utility("false"), &path_linker).unwrap();
 
         assert_eq!(
             resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
@@ -545,7 +540,6 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
-    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_override_tidak_kompatibel_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -555,28 +549,16 @@ mod linker_discovery_tests {
         let candidate = root.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&root).unwrap();
-        std::fs::write(&candidate, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = std::fs::metadata(&candidate).unwrap().permissions();
-            permissions.set_mode(0o755);
-            std::fs::set_permissions(&candidate, permissions).unwrap();
-        }
+        std::os::unix::fs::symlink(unix_utility("false"), &candidate).unwrap();
 
         let result = resolve_linux_x86_64_linker(Some(&candidate), None);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().code(),
-            "NATIVE-LINKER-INCOMPATIBLE"
-        );
+        assert_eq!(result.unwrap_err().code(), "NATIVE-LINKER-INCOMPATIBLE");
 
         let _ = std::fs::remove_dir_all(root);
     }
 
-    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_host_salah_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -587,28 +569,16 @@ mod linker_discovery_tests {
         let candidate = bin.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&bin).unwrap();
-        std::fs::write(&candidate, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = std::fs::metadata(&candidate).unwrap().permissions();
-            permissions.set_mode(0o755);
-            std::fs::set_permissions(&candidate, permissions).unwrap();
-        }
+        std::os::unix::fs::symlink(unix_utility("false"), &candidate).unwrap();
 
         let result = resolve_linux_x86_64_linker(None, Some(bin.as_os_str()));
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().code(),
-            "NATIVE-LINKER-INCOMPATIBLE"
-        );
+        assert_eq!(result.unwrap_err().code(), "NATIVE-LINKER-INCOMPATIBLE");
 
         let _ = std::fs::remove_dir_all(root);
     }
 
-    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_ditemukan_dari_path() {
         let root = std::env::temp_dir().join(format!(
@@ -619,14 +589,12 @@ mod linker_discovery_tests {
         let expected = bin.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&bin).unwrap();
-        // This test verifies PATH discovery and successful invocation, not GNU ld
-        // compatibility parsing. Use a known executable instead of a shell script
-        // so the test is independent of the host shell and script execution policy.
-        std::os::unix::fs::symlink("/bin/true", &expected).unwrap();
+        // Probe with a system executable so noexec temporary mounts do not make
+        // the test depend on shell-script execution policy.
+        std::os::unix::fs::symlink(unix_utility("true"), &expected).unwrap();
 
-        let path_env = bin.as_os_str();
         assert_eq!(
-            resolve_linux_x86_64_linker(None, Some(path_env)).unwrap(),
+            resolve_linux_x86_64_linker(None, Some(bin.as_os_str())).unwrap(),
             expected
         );
 
