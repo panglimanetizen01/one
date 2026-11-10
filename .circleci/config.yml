@@ -35,7 +35,8 @@ jobs:
 
             printf '%s\n' \
               '#!/bin/sh' \
-              'exec /usr/bin/clang --target=x86_64-w64-windows-gnu --sysroot=/usr/x86_64-w64-mingw32 --ld-path=/usr/bin/x86_64-w64-mingw32-ld -fdeclspec "$@"' \
+              'if [ "${1:-}" = "--target=x86_64-w64-windows-gnu" ]; then shift; fi' \
+              'exec /usr/bin/x86_64-w64-mingw32-gcc "$@"' \
               > /usr/local/bin/one-windows-clang
             chmod 0755 /usr/local/bin/one-windows-clang
 
