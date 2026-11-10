@@ -1,3 +1,16 @@
+## Active forensic continuation — 2026-11-11 — current source documentation candidate
+
+- PR #94 remains OPEN / DRAFT / UNMERGED; source branch `fix/windows-temp-path-canonicalization`; current HEAD at this update: `174df0d492c0260458c57ede87a8b45b18e872ed`; base `d75b2846465ba53281198693750f2e6ba39e2e33`.
+- This is a documentation-only continuation after source candidate `6b5070e7c01aa8cf2885653fa1d5728ad8fcdfbd`. All 6b CircleCI and verifier outcomes are historical for this new SHA until exact-SHA validation is complete.
+- 6b verifier matrix last observed: 14 SUCCESS, 2 IN PROGRESS (Android API 35 native ARM64 runtime #42881168518 and candidate artifact integrity #42881168487), 1 early ledger-gate FAILURE. The early gate passed its 8 unit tests but failed closed with 10 unchecked DoD items, E1–E6 each 0 verified, and no protected production provenance. Do not rerun it until the two matrix workflows are terminal and the evidence index is reconciled.
+- CircleCI for 6b was SUCCESS at commit-status level only; job details, exact checkout, per-step logs, and artifact hashes remain NOT VERIFIED in this session. CircleCI for `174df0d492c0260458c57ede87a8b45b18e872ed` is NOT YET VERIFIED.
+- Verifier pin remains on 6b and must not be advanced until the new source SHA passes CircleCI and its branch head is stable. Preserve the separate PR #92 Local CI pin.
+- Legacy Actions failures on 6b were pre-run infrastructure failures (runner_id 0, no runner name, empty steps), root cause UNKNOWN; not source-test failures.
+- Acceptance remains NOT PASSED; do not change ledger weights/points or DoD checkboxes without row-level exact-SHA evidence. No merge/release or protected E2 dispatch.
+- Continue from the forensic audit report and the earliest unfinished action; never repeat completed scopes on unchanged SHAs.
+
+---
+
 ## Active CI remediation checkpoint — 2026-11-11 (CircleCI job #20 exact-SHA evidence)
 
 - Canonical source: `panglimanetizen01/one`; PR #94 remains OPEN / DRAFT / UNMERGED on `fix/windows-temp-path-canonicalization`, base `milestone/100-ecosystem-20261023`. This checkpoint records pre-reconciliation source revision `912c10fe86cee10294a5e09b96a99f00477d788a`; the documentation commit adding this checkpoint is a new candidate and requires its own CircleCI run.
