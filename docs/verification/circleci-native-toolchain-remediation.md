@@ -1,3 +1,16 @@
+## Active forensic continuation — 2026-11-11 — documentation synchronization candidate
+
+- PR #94 remains OPEN / DRAFT / UNMERGED on `fix/windows-temp-path-canonicalization`; current source HEAD for this documentation update is `8c43a1533ee1e8f53d68984092873b9388442c98`; base `d75b2846465ba53281198693750f2e6ba39e2e33`.
+- This commit is documentation/operating-contract synchronization after source SHA `6b5070e7c01aa8cf2885653fa1d5728ad8fcdfbd`. The CircleCI status and independent verifier matrix recorded for 6b are historical for this new HEAD; do not claim they verify `8c43a1533ee1e8f53d68984092873b9388442c98`.
+- At last poll on source SHA 6b, CircleCI `ci/circleci: linux-verify` was SUCCESS at commit-status level only (workflow `d2f2171d-a60e-42df-8c72-d63d9f70a542`, job `61480bb4-6a12-4087-8566-3bf4da5b906c`); job detail, checkout, step logs/exit codes, and artifact hashes were not independently inspected in this session.
+- The 6b verifier matrix reached 14 SUCCESS, 2 IN PROGRESS, 1 early ledger-gate FAILURE. Remaining 6b runs: Android API 35 native ARM64 runtime #42881168518 and candidate artifact integrity #42881168487. The gate ran before matrix completion and remains a stale NOT PASSED snapshot; 10 DoD unchecked, E1–E6 each 0 verified, and protected E2 production provenance absent. Do not transfer any 6b result to this new SHA.
+- Verifier pin remains at 6b until CircleCI proves the new source SHA and the branch is stable. Keep `LOCAL_CI_CANONICAL_COMMIT.txt` unchanged for PR #92.
+- Legacy Actions on 6b failed pre-run (runner_id 0, empty runner name, no steps); root cause UNKNOWN, not a source-test failure. CircleCI remains canonical; preserve legacy workflow files pending coverage-parity review.
+- Acceptance remains NOT PASSED. No merge/release, protected E2 dispatch, secrets/trust-store mutation, branch-protection changes, or source Actions removal.
+- Next: inspect CircleCI status for `8c43a1533ee1e8f53d68984092873b9388442c98`, retrieve authenticated job detail/logs/artifacts via read-only Termux helper, then synchronize the verifier pin and run only the exact-SHA scopes required for this new candidate. Continue full documentation/contract audit and preserve no-repeat evidence.
+
+---
+
 # CircleCI Native Toolchain Remediation — Active Checkpoint
 
 
