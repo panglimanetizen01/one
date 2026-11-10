@@ -1,22 +1,19 @@
 # ONE Final Milestone Session Checkpoint
 
-## Active CI remediation checkpoint — 2026-11-10
+## Active CI remediation checkpoint — 2026-11-11
 
-- Canonical repository: `panglimanetizen01/one`; active branch: `fix/windows-temp-path-canonicalization`; PR #94 remains the existing remediation PR. Do not create a duplicate PR, merge, release, or edit `main`.
-- Primary CI for this remediation is CircleCI. Use CircleCI API through the user's existing Termux `capi` shell function when the official CircleCI CLI is unavailable on Android/Termux. Never request the token again for each command, print it, or write it to repository files.
-- Latest confirmed source change before this documentation update: `3d9d5a37bc37517a5f0a800690d2fbc57fc05400` (`ci: use MinGW GCC runtime for Windows native target`). It changes only `.circleci/config.yml`: Windows wrapper strips the backend's Clang target argument and invokes `x86_64-w64-mingw32-gcc`; Android NDK r30 remains checksum-pinned and configured for API 35.
-- Pipeline history on the earlier revisions:
-  - Pipeline #22 / source `af33fccfa947bd88737920ca287201a013c6dc29`: workspace tests exposed missing Windows cross-compiler and Android NDK sysroot provisioning.
-  - Pipeline #23: configuration did not produce a workflow because a shell heredoc delimiter was interpreted by CircleCI config parsing.
-  - Pipeline #24 / job #9: config parsed and ran; Windows Clang preflight failed because MinGW headers were invoked without a compatible Windows target/declspec mode.
-  - Pipeline #25 / job #10 / job ID `311ef77e-f29d-4f04-93f6-24f9a9fe651d`: Windows Clang reached the MinGW linker, which failed with `cannot find -lgcc` and `cannot find -lgcc_eh`. This is a toolchain/link-runtime provisioning mismatch, not a Rust test failure. Android preflight was not reached/established by this failing step.
-- The latest config correction switches the Windows wrapper to the MinGW GCC driver so the compiler and its matching GCC runtime/linker libraries are selected together. This is an implemented config change only; it is NOT YET verified by a fresh pipeline.
-- Immediate next action: find the CircleCI pipeline triggered by commit `3d9d5a37bc37517a5f0a800690d2fbc57fc05400` (or by the newer documentation commit that contains this checkpoint), inspect workflow/job/first failing step and logs. Confirm both Windows PE32+ and Android AArch64 ELF preflight checks, then continue the full Rust workspace suite and all later steps. Fix the first deterministic failure minimally and rerun only the changed exact revision.
-- No-repeat guard: do not repeat diagnosis already completed for #22–#25; do not rerun unchanged predecessor pipelines; do not disable or skip native-target tests to obtain a green result. Preserve the full logs and exact job/pipeline IDs for each new failure.
-- Exact-SHA guard: every new source or documentation commit changes the revision under test. Record the new HEAD and pipeline association; do not transfer PASS evidence from any earlier SHA. The independent verifier pin/evidence index must be reconciled to the final intended source SHA before any final acceptance/gate claim.
-- Acceptance remains fail-closed. No CI success has yet been established for the latest MinGW GCC wrapper. Do not claim native Windows/Android support or overall project completion from compiler configuration alone.
-- Safety boundaries: no direct `main` edits, merge, release, protected E2 dispatch, secret/trust-store mutation, branch-protection changes, or PR closure. Continue from the latest checkpoint and preserve completed evidence rather than repeating it.
-
+- Canonical source repository: `panglimanetizen01/one`. GitHub is the sole source of truth for source, tests, docs, workflows, branch/PR state, and exact revisions. The active candidate is the live GitHub PR #94 branch; merged `main` remains the accepted baseline.
+- Canonical CI policy: CircleCI replaces source-repository GitHub Actions as the normal CI route. Do all repository implementation and documentation changes on GitHub branches; validate each resulting SHA through CircleCI. Preserve existing Actions workflow files until coverage parity is reviewed and removal is explicitly authorized.
+- **Termux boundary:** Termux is read-only verification/validation only, and only after GitHub and CircleCI have proved the exact SHA. It may retrieve logs/artifacts, compare SHAs, inspect manifests, verify hashes, or run isolated independent checks. It must never edit source/tests/docs/config, repair bugs, create commits/branches, push, or administer CI/repository settings.
+- PR #94 remains OPEN / DRAFT / UNMERGED on `fix/windows-temp-path-canonicalization`; last live pre-documentation HEAD `e19d0129c6a3169a36e18a9ce7cd13f4a677d348`; base `milestone/100-ecosystem-20261023` at `d75b2846465ba53281198693750f2e6ba39e2e33`. Last live `main` HEAD: `d35db95153f6ddd79885494c72f5aee16c899751`. Resolve refs again before any new action.
+- CircleCI pipeline #34 / workflow `one-linux-verification` / job #19 `linux-verify` / job ID `1ef51523-a767-4ccf-bae8-9f806dc13ca7` completed SUCCESS on exact source SHA `e19d012...`. Contract/docs checks, scanner regression suites, locked workspace build, health scan, Clippy, workspace tests, deterministic package test, and database/HTTP vertical slices reported successful steps.
+- The job performed Windows PE32+ and Android AArch64 compiler probes. It is a Linux job; it does **not** prove native Windows Server 2025 execution or Android API 35 native runtime.
+- Health report schema `one-health-report/2`, scanner `0.2.0`: expected SHA and HEAD SHA both `e19d012...`; working tree clean; 27 findings, all low-confidence informational `workflow-overlap` hints; zero critical/high/medium/low findings. These are not test failures.
+- Artifacts downloaded successfully with authenticated CircleCI API access. JSON SHA-256: `76b77bcc94e066ad8f2b270318ab5a12db76c73b3ea2106d4cf3bcd1c5664359`; Markdown SHA-256: `a69a2db6806a1bd4347211db5b31097154023c19fb3df6d955e3cea8724e1baf`.
+- The current CircleCI config has one `linux-verify` job. Full parity with all prior Actions OS/runtime/artifact/release scopes remains NOT VERIFIED. Do not claim the migration or project acceptance is complete.
+- GitHub Actions source-repository failures remain UNKNOWN where job-step logs were unavailable. The independent verifier canonical pin still requires live reconciliation against the selected source candidate.
+- No code, workflow, verifier pin, repository setting, secret, merge, or release changes are authorized by this checkpoint beyond the requested documentation/operating-contract update. No direct `main` edit.
+- **Next:** inspect CircleCI for the resulting documentation SHA; then reconcile verifier pin and required CI coverage gaps. Do not rerun successful job #19 on unchanged SHA. Overall acceptance remains **NOT PASSED**.
 
 ## Current continuation state — 2026-11-06
 
