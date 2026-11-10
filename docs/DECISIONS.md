@@ -108,3 +108,10 @@ See [ADR-0016](decisions/ADR-0016-accept-language-invariants.md) for explicit gr
 **Status:** Accepted for the experimental core/runtime slice
 
 See [ADR-0017](decisions/ADR-0017-human-vnext-core-runtime.md) for the canonical-pipeline adapter, module visibility, mapping semantics, persistence format, and compatibility boundaries.
+
+
+## ADR-0018 — CircleCI-first verification for the active remediation
+
+**Status:** Accepted for the active verification remediation.
+
+The active branch `fix/windows-temp-path-canonicalization` uses CircleCI as its primary CI execution and evidence source. Where the official CircleCI CLI cannot run in Android/Termux, the user may use the CircleCI API through a shell-local authenticated helper. This is an operational CI-provider decision, not a change to One's platform support contract or release gate. Exact-SHA evidence remains mandatory; a successful CircleCI job does not by itself authorize merge or release.
