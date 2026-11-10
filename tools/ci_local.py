@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import time
@@ -41,6 +42,68 @@ CHECKS: list[tuple[str, Sequence[str]]] = [
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+
+def collect_git_metadata() -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "status": "UNAVAILABLE",
+        "commit_sha": None,
+        "branch": None,
+        "working_tree_clean": None,
+        "dirty_path_count": None,
+        "error": None,
+    }
+
+    def run_git(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", *args],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+    try:
+        commit = run_git("rev-parse", "HEAD")
+        if commit.returncode != 0:
+            metadata["error"] = commit.stderr.strip() or f"git rev-parse HEAD exited {commit.returncode}"
+            return metadata
+
+        commit_sha = commit.stdout.strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
+            metadata["error"] = f"git rev-parse HEAD returned an invalid commit SHA: {commit_sha!r}"
+            return metadata
+
+        branch = run_git("branch", "--show-current")
+        status = run_git("status", "--porcelain", "--untracked-files=all")
+        if branch.returncode != 0 or status.returncode != 0:
+            errors = [
+                result.stderr.strip() or f"git metadata command exited {result.returncode}"
+                for result in (branch, status)
+                if result.returncode != 0
+            ]
+            metadata.update(
+                status="PARTIAL",
+                commit_sha=commit_sha,
+                branch=branch.stdout.strip() or None if branch.returncode == 0 else None,
+                error="; ".join(errors),
+            )
+            return metadata
+
+        dirty_paths = [line for line in status.stdout.splitlines() if line]
+        metadata.update(
+            status="VERIFIED",
+            commit_sha=commit_sha,
+            branch=branch.stdout.strip() or None,
+            working_tree_clean=not dirty_paths,
+            dirty_path_count=len(dirty_paths),
+        )
+        return metadata
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        metadata["error"] = str(exc)
+        return metadata
 
 
 def run_step(
@@ -129,6 +192,14 @@ def main() -> int:
     print(f"Host: {platform.platform()}")
     print(f"Python: {sys.version.split()[0]}")
     print("Scope: current host only; this run does not prove Windows/Android execution.")
+    source_revision = collect_git_metadata()
+    if source_revision["commit_sha"]:
+        print(f"Source SHA: {source_revision['commit_sha']}")
+        print(f"Git branch: {source_revision['branch'] or '(detached HEAD)'}")
+        tree_state = "clean" if source_revision["working_tree_clean"] else f"dirty ({source_revision['dirty_path_count']} paths)"
+        print(f"Git worktree: {tree_state}")
+    else:
+        print(f"Source revision: {source_revision['status']} — {source_revision['error']}")
     print(f"Per-command timeout: {'disabled' if timeout_seconds is None else f'{timeout_seconds:g}s'}")
 
     steps: list[dict[str, Any]] = []
@@ -140,7 +211,7 @@ def main() -> int:
         steps.append(step)
         if step["status"] != "PASS":
             exit_code = 2
-            report = make_report(started_at, steps, args, exit_code)
+            report = make_report(started_at, steps, args, exit_code, source_revision)
             try:
                 write_report(args.report, report)
             except OSError as exc:
@@ -183,11 +254,14 @@ def make_report(
     steps: list[dict[str, Any]],
     args: argparse.Namespace,
     exit_code: int,
+    source_revision: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     passed = sum(step["status"] == "PASS" for step in steps)
+    revision = source_revision if source_revision is not None else collect_git_metadata()
     return {
         "schema_version": 1,
         "repository": str(ROOT),
+        "source_revision": revision,
         "host": platform.platform(),
         "python": sys.version.split()[0],
         "started_at": started_at,

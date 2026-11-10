@@ -16,7 +16,7 @@ From the repository root:
 python tools/ci_local.py
 ```
 
-By default, the runner writes `ci-local-report.json` in the repository root. The report includes host and Python versions, start/end timestamps, per-step commands, status, elapsed seconds, errors/exit codes, a summary, and an explicit evidence boundary.
+By default, the runner writes `ci-local-report.json` in the repository root. The report includes host and Python versions, exact Git source revision and worktree state, start/end timestamps, per-step commands, status, elapsed seconds, errors/exit codes, a summary, and an explicit evidence boundary. The JSON `source_revision` object records the commit SHA, branch (or detached HEAD), worktree cleanliness, and dirty-path count. If the runner is executed outside a Git checkout, `source_revision.status` is `UNAVAILABLE`; the run may still execute, but the report cannot independently prove an exact source revision. In hosted CI, compare `source_revision.commit_sha` with the workflow's pinned source SHA.
 
 To choose a different report path and per-command timeout:
 
