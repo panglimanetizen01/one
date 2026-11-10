@@ -40,7 +40,7 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 |---|---|---|
 | Revision integrity | expected SHA versus git rev-parse HEAD | Checks exact identity only when an expected SHA is supplied |
 | Syntax | Python AST, TOML and JSON parsing | TOML uses Python 3.11+ tomllib |
-| Markdown | relative links, repository-root escapes, conservative heading/HTML anchors, unclosed fenced code blocks | Does not parse every Markdown dialect or every generated/reference-style link |
+| Markdown | relative links, repository-root escapes, conservative heading/HTML anchors, unclosed fenced code blocks, and literal escaped-newline sequences before heading/list block markers outside fenced code | Does not parse every Markdown dialect or every generated/reference-style link |
 | Paths | symlinks resolving outside the repository | Does not follow symlink targets |
 | Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
 | Workflow overlap | exact repeated single-line run commands across workflow files | Low-confidence review hint; repetition may be intentional |

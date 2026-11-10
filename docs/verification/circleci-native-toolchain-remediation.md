@@ -1,17 +1,18 @@
 # CircleCI Native Toolchain Remediation — Active Checkpoint
 
-**Status:** CircleCI Linux verification PASS on exact SHA `e19d0129c6a3169a36e18a9ce7cd13f4a677d348`; full CircleCI coverage parity remains NOT VERIFIED.
 
-## Scope and guardrails
+## Active CI remediation checkpoint — 2026-11-11 (CircleCI exact-SHA evidence)
 
-- Repository: `panglimanetizen01/one`
-- Branch: `fix/windows-temp-path-canonicalization`
-- Existing PR: #94; keep open/draft/unmerged.
-- Primary CI: CircleCI.
-- Environment: user operates from Android/Termux. Termux is strictly read-only post-CircleCI verification: it may retrieve logs/artifacts through authenticated API calls and validate hashes/SHAs, but must never edit source/docs/config, repair code, commit, push, or administer CI/repository settings. The `capi` helper is read-only evidence retrieval only.
-- Never ask for the API token repeatedly, ask the user to paste it into chat, print it, or commit it. The helper exists only in the current Termux shell.
-- No main edits, merge, release, protected E2 dispatch, secrets/trust-store mutation, or branch-protection changes are authorized.
-- Never disable native target tests or weaken acceptance to manufacture a green build.
+- Source repository `panglimanetizen01/one`; PR #94 branch `fix/windows-temp-path-canonicalization`, OPEN / DRAFT / UNMERGED; base `milestone/100-ecosystem-20261023` at `d75b2846465ba53281198693750f2e6ba39e2e33`.
+- Last inspected source revision with completed CircleCI evidence: `912c10fe86cee10294a5e09b96a99f00477d788a`. Workflow `f392e32f-564a-4756-a97c-87db69376cd0`, job #20 `linux-verify`, ID `a28b1024-b9f1-424c-b92f-05f275366f98`, SUCCESS. It checked out the exact SHA and reported success for prerequisite/native compiler setup, contract/user-doc checks, scanner regression tests, locked workspace/CLI build, health/normative source scan, warnings-denied Clippy, full workspace tests, deterministic package artifact test, database/HTTP vertical slices, and artifact upload.
+- CircleCI #20 artifacts API listed `one-health-report.json` and `one-health-report.md`, but both metadata URLs returned HTTP 404. Payloads and hashes remain NOT VERIFIED; the 404 does not prove deletion/expiry.
+- Subsequent source commit `15781298a11c26580545b90c398a98d79b572a9b` updates docs and adds a literal escaped-newline Markdown detector/regression tests. CircleCI status was PENDING at last GitHub read; it is not yet verified. The following docs-only follow-up commit also invalidates that pending result; always resolve the latest live branch HEAD before reading CI.
+- Legacy source Actions runs on SHA `912c10f...` and `1578129...` completed FAILURE with `steps: null` and unavailable logs (`BlobNotFound`). Root cause UNKNOWN; do not call these source-test failures or PASS. CircleCI remains canonical; preserve Actions files while coverage parity is reviewed.
+- CircleCI config still defines one Linux job. Windows PE32+ and Android AArch64 compiler probes do not prove Windows Server 2025 runtime or Android API 35 AArch64 ELF runtime. Both remain NOT VERIFIED for the active source candidate until dedicated exact-SHA runtime evidence exists.
+- Independent verifier pin remains stale at `af33fccfa947bd88737920ca287201a013c6dc29`; verifier README has separately named `f21e8d...`. Synchronize only after source CircleCI proves the final source SHA; keep `LOCAL_CI_CANONICAL_COMMIT.txt` separate for its Local CI/PR #92 track.
+- Acceptance remains DoD 3 checked / 10 unchecked / 13 total; 92/100 implementation provisional; 60/100 historical verified subtotal; final score UNKNOWN / NOT RECONCILED; gate NOT PASSED. No weight or checkbox changes without direct exact-SHA evidence.
+- No-repeat: reuse CircleCI #20 only for SHA `912c10f...`; do not rerun it unchanged. Validate the final new source SHA once, inspect steps/logs/artifacts, then advance the verifier pin and run the required matrix. Do not dispatch protected E2 provenance or release without its existing authorization.
+- Termux is read-only verification only. No direct `main` edit, merge, release, secrets/trust-store mutation, branch-protection change, or source Actions removal.
 
 ## Confirmed pipeline history
 
