@@ -58,7 +58,7 @@ mod tests {
     use super::*;
     use crate::{normalize_result, AdapterRequest, AuditRecord, Capability, CapabilityRequest, EffectClass, ExecutionPolicy, NormalizationExpectation, Orchestrator, PlatformKind, ScopeRule, SemanticCapabilityId};
 
-    fn request() -> CapabilityRequest { CapabilityRequest::new(SemanticCapabilityId::NetworkDiscover, Capability::NetworkDiscover, ExecutionScope::target("127.0.0.1"), EffectClass::Discover) }
+    fn request() -> CapabilityRequest { CapabilityRequest::new(SemanticCapabilityId::NetworkDiscover, Capability::NetworkDiscover, ExecutionScope::target("localhost"), EffectClass::Discover) }
 
     #[test]
     fn dns_adapter_has_explicit_metadata_and_typed_request_boundary() {
@@ -73,12 +73,13 @@ mod tests {
     }
 
     #[test]
-    fn real_dns_adapter_resolves_loopback_without_external_command_text() {
+    fn real_dns_adapter_resolves_loopback_hostname_without_external_command_text() {
         let adapter = DnsResolveAdapter::new();
         let result = adapter.invoke(&AdapterRequest::new(request())).expect("loopback should resolve");
         assert!(result.success);
         assert!(!result.output.is_empty());
-        assert!(std::str::from_utf8(&result.output).expect("text").contains("127.0.0.1"));
+        let output = std::str::from_utf8(&result.output).expect("text");
+        assert!(output.contains("127.0.0.1") || output.contains("::1"), "localhost must resolve to loopback: {output}");
     }
 
     #[test]
@@ -95,7 +96,7 @@ mod tests {
 
     #[test]
     fn dns_adapter_end_to_end_uses_policy_normalization_and_audit() {
-        let mut orchestrator = Orchestrator::new(ExecutionPolicy::default().grant(Capability::NetworkDiscover).allow_scope(Capability::NetworkDiscover, ScopeRule::Target("127.0.0.1".into())));
+        let mut orchestrator = Orchestrator::new(ExecutionPolicy::default().grant(Capability::NetworkDiscover).allow_scope(Capability::NetworkDiscover, ScopeRule::Target("localhost".into())));
         orchestrator.register(Box::new(DnsResolveAdapter::new()));
         let mut audit = Vec::<AuditRecord>::new();
         let result = orchestrator.execute_with_audit(&request(), PlatformKind::Linux, &mut audit).expect("governed DNS request should execute");
