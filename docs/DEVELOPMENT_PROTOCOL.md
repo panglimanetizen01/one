@@ -105,3 +105,19 @@ Do not generalize a Termux/Android result to Ubuntu/Windows, or a Windows result
 ## 12. Completion
 
 Do not report a milestone as complete until all required artifacts exist, references are consistent, repository state is verified, and the final change has a concrete Git revision.
+
+
+## 13. Cross-session anti-duplication protocol
+
+1. Load enabled Notion skills at session start and read the active ONE skill/checkpoint before doing work.
+2. Resolve live repository, branch, HEAD, PR, and CI state. Treat old checkpoint identifiers as historical until compared with live state.
+3. Build a task ledger with explicit statuses: NOT STARTED, IN PROGRESS, PASS, FAIL, BLOCKED, UNKNOWN. A PASS must include exact SHA, command/job, environment, and evidence location.
+4. Resume the earliest unfinished dependency. Never repeat a PASS scope on the same SHA without a documented invalidating change. Never repeat a known deterministic failure without a changed input or corrective patch.
+5. Inspect the first failed CI step and its complete log before editing. Preserve later skipped steps as NOT RUN, not failed. Fix the root cause, not the test or gate.
+6. CircleCI is the primary CI for the active verification remediation. On Android/Termux, if the CircleCI CLI is incompatible, use the CircleCI API through a shell-local authenticated helper; do not expose or persist tokens in source files.
+7. Update the active checkpoint, relevant verification docs, and Notion skill after each material milestone. Record exact commit and run IDs; distinguish implemented config from executed/verified behavior.
+8. A new source or documentation commit creates a new exact-SHA verification target. Earlier results remain historical and are not silently promoted to the new HEAD.
+
+## 14. Current CI remediation pointer
+
+See [the CircleCI native-toolchain remediation checkpoint](verification/circleci-native-toolchain-remediation.md) for the active branch, exact commits, pipeline history, first failure, next action, and no-repeat rules. This pointer is operational context, not evidence of a passing build.
