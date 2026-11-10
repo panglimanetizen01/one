@@ -105,3 +105,12 @@ A milestone is complete only when its source capability or documentation contrac
 ## 10. Session continuity
 
 A new session must start from this repository contract instead of assuming that prior chat history is available. The repository is the persistent memory of One's accepted direction, decisions, requirements, and evidence boundaries.
+
+## 11. Mandatory cross-session continuation and Notion skill sync
+
+- At the start of every session, load the user's enabled Notion skills with the Notion `notion-get-enabled-skills` capability; load the relevant skill before project work. The Project ONE Cross-Session Memory & Anti-Duplication Skill is a required workflow reference.
+- Read this file, the current project checkpoint, and the active CI remediation record before running commands or editing files. Resolve the live branch HEAD and compare it with the recorded SHA; the recorded SHA is a checkpoint, not permission to assume the repository is unchanged.
+- Maintain a durable no-repeat ledger: each task/scope is tagged NOT STARTED, IN PROGRESS, PASS (exact SHA + evidence), FAIL (first failing step + log), BLOCKED (reason), or UNKNOWN. Never rerun a PASS scope on the same SHA unless its inputs/environment changed or a later change invalidated it.
+- Continue at the first unfinished dependency. Do not restart inventories, successful tests, completed audits, or prior toolchain diagnosis. If the source SHA changes, rerun only checks invalidated by that change, while preserving prior evidence as historical.
+- For CI, inspect workflow -> job -> step -> log before patching. Fix the earliest deterministic root cause; do not skip tests or weaken acceptance gates. CircleCI is the primary CI for the active remediation; use the authenticated API fallback from Termux when the CircleCI CLI is incompatible.
+- After every material code/config/documentation change, update the active checkpoint and Notion skill/reference with the exact commit, evidence, pending next action, and no-repeat guard. Do not claim a result until readback and executable evidence support it.
