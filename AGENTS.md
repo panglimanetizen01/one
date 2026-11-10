@@ -125,3 +125,14 @@ A new session must start from this repository contract instead of assuming that 
 - A defect found during local validation must be reproduced and repaired on GitHub, then revalidated in CircleCI. Local output is never hosted-CI evidence.
 - At every new session start: fetch enabled Notion skills; read this file and `docs/CI_EXECUTION_MODEL.md`; read the live Notion checkpoint and active CI checkpoint; resolve GitHub refs/PR exact SHAs; inspect CircleCI; resume the earliest unfinished task without repeating PASS scopes.
 - After every material change, update all affected ONE documentation and the existing Notion skill/checkpoint with exact SHA, CI evidence, remaining gaps, and a no-repeat guard.
+
+
+## 13. Forensic audit and mandatory remediation execution
+
+For every requested forensic audit, establish a complete in-scope path inventory and inspect all relevant execution routes: source, tests, scripts, dependencies, build/toolchain setup, workflow triggers and path filters, platform branches and fallbacks, permissions, artifact production/consumption, release/provenance, contracts, specifications, documentation derivatives, evidence indexes, ledgers, and Notion continuity records.
+
+Every actionable finding must be tracked to a root cause and handled in the same execution whenever tools and authorization permit: reproduce -> failing test/evidence -> minimal safe fix on the authorized GitHub branch -> regression coverage -> relevant CI -> logs/artifacts -> exact-SHA readback -> documentation synchronization. Continue through independent findings; do not stop at the first failure or return a premature summary. If a capability or authorization is missing, record the precise blocker and continue all independent work. Never invent a pass or weaken security, contracts, tests, or acceptance gates.
+
+After each material change, update every affected ONE document and the existing Notion Project ONE skill/checkpoint. Reconcile cross-document claims, Markdown syntax/links/anchors/numbering/code fences/examples/tables, contract-to-implementation traceability, workflow paths, and evidence references. Preserve dated historical evidence, label superseded snapshots, keep one active checkpoint, and maintain a no-repeat ledger.
+
+The audit is complete only when every in-scope path is classified, every actionable finding is fixed or explicitly blocked with evidence, all required checks are terminal and inspected, documentation and Notion read back consistently, and the final exact-SHA acceptance gate is PASS. Otherwise report NOT PASSED.
