@@ -22,21 +22,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 CHECKS: list[tuple[str, Sequence[str]]] = [
     ("Contract artifacts", (sys.executable, "tools/check_contract.py")),
-    ("Build workspace", ("cargo", "build", "--workspace", "--all-targets")),
-    ("Clippy", ("cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings")),
-    ("Workspace tests", ("cargo", "test", "--workspace", "--all-targets")),
+    ("Build workspace", ("cargo", "--locked", "build", "--workspace", "--all-targets")),
+    ("Clippy", ("cargo", "--locked", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings")),
+    ("Workspace tests", ("cargo", "--locked", "test", "--workspace", "--all-targets")),
     (
         "Deterministic .oneir/.onepkg artifacts",
         (
-            "cargo", "test", "-p", "one-cli", "--test", "cli",
+            "cargo", "--locked", "test", "-p", "one-cli", "--test", "cli",
             "build_and_package_artifacts_are_byte_deterministic",
         ),
     ),
-    ("DNS success/failure classification", ("cargo", "test", "-p", "one-core", "--all-targets", "dns_adapter")),
-    ("Orchestration policy paths", ("cargo", "test", "-p", "one-core", "--all-targets", "orchestrator")),
-    ("Database vertical slice", ("cargo", "test", "-p", "one-core", "--test", "database_vertical_slice")),
-    ("HTTP GET vertical slice", ("cargo", "test", "-p", "one-core", "--test", "http_get_vertical_slice")),
-    ("HTTP GET CLI vertical slice", ("cargo", "test", "-p", "one-cli", "--test", "http_get_orchestration")),
+    ("DNS success/failure classification", ("cargo", "--locked", "test", "-p", "one-core", "--all-targets", "dns_adapter")),
+    ("Orchestration policy paths", ("cargo", "--locked", "test", "-p", "one-core", "--all-targets", "orchestrator")),
+    ("Database vertical slice", ("cargo", "--locked", "test", "-p", "one-core", "--test", "database_vertical_slice")),
+    ("HTTP GET vertical slice", ("cargo", "--locked", "test", "-p", "one-core", "--test", "http_get_vertical_slice")),
+    ("HTTP GET CLI vertical slice", ("cargo", "--locked", "test", "-p", "one-cli", "--test", "http_get_orchestration")),
 ]
 
 
@@ -196,8 +196,11 @@ def main() -> int:
     if source_revision["commit_sha"]:
         print(f"Source SHA: {source_revision['commit_sha']}")
         print(f"Git branch: {source_revision['branch'] or '(detached HEAD)'}")
-        tree_state = "clean" if source_revision["working_tree_clean"] else f"dirty ({source_revision['dirty_path_count']} paths)"
-        print(f"Git worktree: {tree_state}")
+        if source_revision["status"] == "VERIFIED":
+            tree_state = "clean" if source_revision["working_tree_clean"] else f"dirty ({source_revision['dirty_path_count']} paths)"
+            print(f"Git worktree: {tree_state}")
+        else:
+            print(f"Git worktree: {source_revision['status']} — {source_revision['error']}")
     else:
         print(f"Source revision: {source_revision['status']} — {source_revision['error']}")
     print(f"Per-command timeout: {'disabled' if timeout_seconds is None else f'{timeout_seconds:g}s'}")
@@ -277,8 +280,9 @@ def make_report(
         },
         "steps": steps,
         "evidence_boundary": (
-            "This report describes checks run on this host only. It does not prove "
-            "execution on other operating systems or target architectures."
+            "This report describes checks run on this host only. source_revision records "
+            "the Git commit and worktree state when available; it does not prove execution "
+            "on other operating systems or target architectures."
         ),
     }
 

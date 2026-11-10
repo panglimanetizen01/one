@@ -4,9 +4,10 @@ from __future__ import annotations
 import argparse
 import subprocess
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from tools.ci_local import collect_git_metadata, make_report, run_step
+from tools.ci_local import CHECKS, collect_git_metadata, make_report, run_step
 
 
 class RunStepTests(unittest.TestCase):
@@ -43,6 +44,15 @@ class RunStepTests(unittest.TestCase):
         self.assertEqual(result["status"], "UNAVAILABLE (missing-tool not found)")
         self.assertIsNotNone(result["error"])
 
+
+
+
+class CargoLockTests(unittest.TestCase):
+    def test_every_cargo_check_uses_locked_mode(self):
+        cargo_checks = [(name, command) for name, command in CHECKS if command[0] == "cargo"]
+        self.assertGreaterEqual(len(cargo_checks), 8)
+        for name, command in cargo_checks:
+            self.assertIn("--locked", command, f"{name} must not mutate Cargo.lock")
 
 
 class GitMetadataTests(unittest.TestCase):
@@ -102,6 +112,16 @@ class GitMetadataTests(unittest.TestCase):
             0,
         )
         self.assertEqual(report["source_revision"], expected)
+
+
+class CircleCIIntegrationTests(unittest.TestCase):
+    def test_circleci_runs_local_runner_and_enforces_exact_sha_report(self):
+        root = Path(__file__).resolve().parents[1]
+        config = (root / ".circleci" / "config.yml").read_text(encoding="utf-8")
+        self.assertIn("python3 tools/ci_local.py --report ci-local-report.json", config)
+        self.assertIn('s["commit_sha"]==os.environ["CIRCLE_SHA1"]', config)
+        self.assertIn('s["working_tree_clean"] is True', config)
+        self.assertIn("ci-local-report.json", config)
 
 if __name__ == "__main__":
     unittest.main()

@@ -36,7 +36,7 @@ Offline mode intentionally fails if required dependencies are not cached. It doe
 
 ## Checks performed
 
-The runner checks `rustc --version` and `cargo --version`, then executes:
+The runner checks `rustc --version` and `cargo --version`, then executes every Cargo build/test/clippy command with `--locked` so the committed `Cargo.lock` cannot be silently rewritten. It then executes:
 
 1. `tools/check_contract.py`
 2. `cargo build --workspace --all-targets`
@@ -60,3 +60,7 @@ The existing hosted workflows remain unchanged. This tool is an additional local
 ## Unix test portability
 
 The Linux linker-discovery unit tests use symlinks to the host's true and false utilities instead of executable shell scripts created under the temporary directory. This keeps the tests meaningful on CI runners whose temporary filesystem may be mounted with noexec; it does not skip or weaken the linker compatibility checks.
+
+## CircleCI integration
+
+The source branch includes `.circleci/config.yml`. CircleCI runs the same Python runner on its Linux executor, stores `ci-local-report.json`, and rejects the job unless the report's embedded `source_revision.commit_sha` equals `CIRCLE_SHA1`, the report status is PASS, all 12 checks pass, and the pre-run Git worktree was clean. The hosted CircleCI run is the canonical source-CI evidence; the runner's local use remains host-only evidence.
