@@ -13,6 +13,7 @@ import os
 import platform
 import re
 import subprocess
+import tempfile
 import sys
 import time
 from pathlib import Path
@@ -52,6 +53,8 @@ def collect_git_metadata() -> dict[str, Any]:
         "branch": None,
         "working_tree_clean": None,
         "dirty_path_count": None,
+        "dirty_entries": [],
+        "dirty_entries_truncated": False,
         "error": None,
     }
 
@@ -99,11 +102,47 @@ def collect_git_metadata() -> dict[str, Any]:
             branch=branch.stdout.strip() or None,
             working_tree_clean=not dirty_paths,
             dirty_path_count=len(dirty_paths),
+            dirty_entries=dirty_paths[:100],
+            dirty_entries_truncated=len(dirty_paths) > 100,
         )
         return metadata
     except (OSError, subprocess.TimeoutExpired) as exc:
         metadata["error"] = str(exc)
         return metadata
+
+
+SECRET_ENV_PATTERN = re.compile(
+    r"(?:TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|PRIVATE_KEY|API_KEY|AUTHORIZATION)",
+    re.IGNORECASE,
+)
+
+
+def redact_text(value: Any, env: dict[str, str]) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        text_value = value.decode("utf-8", errors="replace")
+    else:
+        text_value = str(value)
+    secrets = sorted(
+        {
+            secret
+            for key, secret in env.items()
+            if SECRET_ENV_PATTERN.search(key) and isinstance(secret, str) and secret
+        },
+        key=len,
+        reverse=True,
+    )
+    for secret in secrets:
+        text_value = text_value.replace(secret, "[REDACTED]")
+    return text_value
+
+
+def emit_output(value: Any, env: dict[str, str], *, stream: Any | None = None) -> None:
+    output = redact_text(value, env)
+    if output:
+        destination = stream if stream is not None else sys.stdout
+        print(output, end="" if output.endswith("\n") else "\n", file=destination, flush=True)
 
 
 def run_step(
@@ -112,11 +151,15 @@ def run_step(
     env: dict[str, str],
     timeout_seconds: float | None,
 ) -> dict[str, Any]:
-    print(f"\n{'=' * 72}\nSTEP: {name}\nCOMMAND: {' '.join(command)}\n{'=' * 72}", flush=True)
+    safe_command = [redact_text(part, env) for part in command]
+    print(
+        f"\n{'=' * 72}\nSTEP: {name}\nCOMMAND: {' '.join(safe_command)}\n{'=' * 72}",
+        flush=True,
+    )
     started = time.monotonic()
     record: dict[str, Any] = {
         "name": name,
-        "command": list(command),
+        "command": safe_command,
         "status": "FAIL",
         "elapsed_seconds": 0.0,
         "exit_code": None,
@@ -129,18 +172,26 @@ def run_step(
             env=env,
             check=False,
             timeout=timeout_seconds,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
         )
+        emit_output(result.stdout, env)
+        emit_output(result.stderr, env, stream=sys.stderr)
         record["exit_code"] = result.returncode
         record["status"] = "PASS" if result.returncode == 0 else f"FAIL (exit {result.returncode})"
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as exc:
+        emit_output(exc.stdout, env)
+        emit_output(exc.stderr, env, stream=sys.stderr)
         record["status"] = f"TIMEOUT (>{timeout_seconds:g}s)"
-        record["error"] = f"Command exceeded the {timeout_seconds:g}-second timeout"
+        record["error"] = "Command exceeded the configured timeout"
     except FileNotFoundError as exc:
         record["status"] = f"UNAVAILABLE ({exc.filename} not found)"
-        record["error"] = str(exc)
+        record["error"] = redact_text(str(exc), env)
     except OSError as exc:
         record["status"] = "FAIL (could not start command)"
-        record["error"] = str(exc)
+        record["error"] = redact_text(str(exc), env)
 
     record["elapsed_seconds"] = round(time.monotonic() - started, 3)
     print(f"RESULT: {record['status']} [{record['elapsed_seconds']:.1f}s]", flush=True)
@@ -150,7 +201,28 @@ def run_step(
 def write_report(path: Path, report: dict[str, Any]) -> None:
     destination = path if path.is_absolute() else ROOT / path
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=destination.parent,
+            prefix=f".{destination.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(json.dumps(report, indent=2) + "\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, destination)
+        temporary_path = None
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
     print(f"JSON report: {destination}", flush=True)
 
 
@@ -214,7 +286,8 @@ def main() -> int:
         steps.append(step)
         if step["status"] != "PASS":
             exit_code = 2
-            report = make_report(started_at, steps, args, exit_code, source_revision)
+            worktree_after = collect_git_metadata()
+            report = make_report(started_at, steps, args, exit_code, source_revision, worktree_after)
             try:
                 write_report(args.report, report)
             except OSError as exc:
@@ -229,7 +302,8 @@ def main() -> int:
     passed = sum(step["status"] == "PASS" for step in steps)
     failed = len(steps) - passed
     exit_code = 0 if failed == 0 else 1
-    report = make_report(started_at, steps, args, exit_code)
+    worktree_after = collect_git_metadata()
+    report = make_report(started_at, steps, args, exit_code, source_revision, worktree_after)
 
     print("\n" + "=" * 72)
     print("ONE LOCAL CI SUMMARY")
@@ -258,13 +332,16 @@ def make_report(
     args: argparse.Namespace,
     exit_code: int,
     source_revision: dict[str, Any] | None = None,
+    worktree_after: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     passed = sum(step["status"] == "PASS" for step in steps)
     revision = source_revision if source_revision is not None else collect_git_metadata()
+    final_worktree = worktree_after if worktree_after is not None else collect_git_metadata()
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "repository": str(ROOT),
         "source_revision": revision,
+        "worktree_after": final_worktree,
         "host": platform.platform(),
         "python": sys.version.split()[0],
         "started_at": started_at,
@@ -281,8 +358,9 @@ def make_report(
         "steps": steps,
         "evidence_boundary": (
             "This report describes checks run on this host only. source_revision records "
-            "the Git commit and worktree state when available; it does not prove execution "
-            "on other operating systems or target architectures."
+            "the Git commit and worktree state before checks; worktree_after records the "
+            "state after checks and before report output. It does not prove execution on "
+            "other operating systems or target architectures."
         ),
     }
 

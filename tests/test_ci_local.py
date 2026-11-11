@@ -5,6 +5,10 @@ import argparse
 import subprocess
 import unittest
 from pathlib import Path
+from contextlib import redirect_stderr, redirect_stdout
+import io
+import tempfile
+import json
 from unittest.mock import patch
 
 from tools.ci_local import CHECKS, collect_git_metadata, make_report, run_step
@@ -77,6 +81,10 @@ class CargoLockTests(unittest.TestCase):
         )
         self.assertNotEqual(ignored.returncode, 0, "Cargo.lock must not be ignored")
 
+    def test_clippy_places_locked_after_external_subcommand(self):
+        clippy = next(command for name, command in CHECKS if name == "Clippy")
+        self.assertEqual(clippy[:3], ("cargo", "clippy", "--locked"))
+
 
 class GitMetadataTests(unittest.TestCase):
     @patch("tools.ci_local.subprocess.run")
@@ -106,6 +114,7 @@ class GitMetadataTests(unittest.TestCase):
         self.assertEqual(metadata["commit_sha"], "b" * 40)
         self.assertFalse(metadata["working_tree_clean"])
         self.assertEqual(metadata["dirty_path_count"], 2)
+        self.assertEqual(len(metadata["dirty_entries"]), 2)
 
     @patch("tools.ci_local.subprocess.run")
     def test_non_git_directory_is_explicitly_unavailable(self, run):
@@ -136,6 +145,51 @@ class GitMetadataTests(unittest.TestCase):
         )
         self.assertEqual(report["source_revision"], expected)
 
+    def test_report_preserves_before_and_after_worktree_snapshots(self):
+        before = {"status": "VERIFIED", "commit_sha": "a" * 40, "working_tree_clean": True}
+        after = {"status": "VERIFIED", "commit_sha": "a" * 40, "working_tree_clean": False}
+        report = make_report(
+            "2026-11-11T00:00:00+00:00",
+            [],
+            argparse.Namespace(offline=False, timeout=30),
+            0,
+            before,
+            after,
+        )
+        self.assertEqual(report["schema_version"], 2)
+        self.assertEqual(report["source_revision"], before)
+        self.assertEqual(report["worktree_after"], after)
+
+    def test_run_step_redacts_secret_from_command_stdout_and_stderr(self):
+        secret = "unit-test-secret-value"
+        env = {"TEST_TOKEN": secret}
+        completed = subprocess.CompletedProcess(
+            ["echo", secret], 0,
+            stdout=f"stdout={secret}\\n",
+            stderr=f"stderr={secret}\\n",
+        )
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with patch("tools.ci_local.subprocess.run", return_value=completed) as run:
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                result = run_step("redaction", ["echo", secret], env, 10)
+        self.assertNotIn(secret, stdout.getvalue())
+        self.assertNotIn(secret, stderr.getvalue())
+        self.assertIn("[REDACTED]", stdout.getvalue())
+        self.assertIn("[REDACTED]", stderr.getvalue())
+        self.assertEqual(result["command"], ["echo", "[REDACTED]"])
+        self.assertTrue(run.call_args.kwargs["capture_output"])
+
+    def test_write_report_is_atomic_and_leaves_no_temporary_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "report.json"
+            payload = {"schema_version": 2, "status": "PASS"}
+            with patch("tools.ci_local.ROOT", Path(directory)):
+                from tools.ci_local import write_report
+                write_report(Path("report.json"), payload)
+            self.assertEqual(json.loads(destination.read_text(encoding="utf-8")), payload)
+            self.assertEqual(list(Path(directory).glob(".report.json.*.tmp")), [])
+
 
 class CircleCIIntegrationTests(unittest.TestCase):
     def test_circleci_runs_local_runner_and_enforces_exact_sha_report(self):
@@ -144,6 +198,9 @@ class CircleCIIntegrationTests(unittest.TestCase):
         self.assertIn("python3 tools/ci_local.py --report ci-local-report.json", config)
         self.assertIn('s["commit_sha"]==os.environ["CIRCLE_SHA1"]', config)
         self.assertIn('s["working_tree_clean"] is True', config)
+        self.assertIn('p["schema_version"]==2', config)
+        self.assertIn('p["worktree_after"]["working_tree_clean"] is True', config)
+        self.assertIn("ci-local-manifest.json", config)
         self.assertIn("ci-local-report.json", config)
 
 if __name__ == "__main__":

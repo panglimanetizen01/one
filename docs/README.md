@@ -89,7 +89,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
-- `LOCAL_CI.md` — how to run the Python local CI runner and interpret host/platform limits. The canonical CircleCI Linux job runs `tools/ci_local.py` and verifies the report's exact source SHA and clean worktree.
+- `LOCAL_CI.md` — how to run the Python local CI runner and interpret host/platform limits. The canonical CircleCI Linux job runs `tools/ci_local.py`, verifies schema-v2 pre/post worktree provenance and exact source SHA, and stores a SHA-256 manifest.
 - `../tools/ci_local.py` — Python orchestrator for the portable contract, build, lint, and test checks from the hosted CI workflow.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
