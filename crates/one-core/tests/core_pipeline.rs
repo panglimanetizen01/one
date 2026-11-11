@@ -45,21 +45,21 @@ fn rejects_bad_indentation() {
 
 #[test]
 fn rejects_list_declaration_when_scalar_name_already_exists() {
-    let program = parse("belanja adalah 7\\nbuat daftar belanja\\n").expect("parse");
+    let program = parse("belanja adalah 7\nbuat daftar belanja\n").expect("parse");
     let error = analyze(&program).expect_err("list declaration must not replace scalar");
     assert_eq!(error.0[0].code, "E2001");
 }
 
 #[test]
 fn rejects_duplicate_list_declaration() {
-    let program = parse("buat daftar belanja\\nbuat daftar belanja\\n").expect("parse");
+    let program = parse("buat daftar belanja\nbuat daftar belanja\n").expect("parse");
     let error = analyze(&program).expect_err("duplicate list must be rejected");
     assert_eq!(error.0[0].code, "E2001");
 }
 
 #[test]
 fn allows_shadowing_in_a_nested_scope() {
-    let source = "nilai adalah 1\\nkalau benar\\n    nilai adalah 2\\n    tampilkan nilai\\ntampilkan nilai\\n";
+    let source = "nilai adalah 1\nkalau benar\n    nilai adalah 2\n    tampilkan nilai\ntampilkan nilai\n";
     assert_eq!(run(source), vec!["2", "1"]);
 }
 
