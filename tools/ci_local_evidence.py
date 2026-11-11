@@ -14,7 +14,41 @@ from typing import Any
 
 SCHEMA_VERSION = 2
 EXPECTED_STEP_COUNT = 12
+EXPECTED_STEPS: tuple[tuple[str, tuple[str, ...] | None], ...] = (
+    ("Rust compiler", ("rustc", "--version")),
+    ("Cargo", ("cargo", "--version")),
+    ("Contract artifacts", None),
+    ("Build workspace", ("cargo", "--locked", "build", "--workspace", "--all-targets")),
+    ("Clippy", ("cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings")),
+    ("Workspace tests", ("cargo", "--locked", "test", "--workspace", "--all-targets")),
+    ("Deterministic .oneir/.onepkg artifacts", ("cargo", "--locked", "test", "-p", "one-cli", "--test", "cli", "build_and_package_artifacts_are_byte_deterministic")),
+    ("DNS success/failure classification", ("cargo", "--locked", "test", "-p", "one-core", "--all-targets", "dns_adapter")),
+    ("Orchestration policy paths", ("cargo", "--locked", "test", "-p", "one-core", "--all-targets", "orchestrator")),
+    ("Database vertical slice", ("cargo", "--locked", "test", "-p", "one-core", "--test", "database_vertical_slice")),
+    ("HTTP GET vertical slice", ("cargo", "--locked", "test", "-p", "one-core", "--test", "http_get_vertical_slice")),
+    ("HTTP GET CLI vertical slice", ("cargo", "--locked", "test", "-p", "one-cli", "--test", "http_get_orchestration")),
+)
+EXPECTED_STEP_NAMES = tuple(name for name, _command in EXPECTED_STEPS)
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+
+
+def validate_step_records(steps: list[Any]) -> None:
+    actual_names = tuple(step.get("name") if isinstance(step, dict) else None for step in steps)
+    if actual_names != EXPECTED_STEP_NAMES:
+        raise EvidenceValidationError("report steps do not match the canonical Local CI check sequence")
+
+    for (name, expected_command), step in zip(EXPECTED_STEPS, steps, strict=True):
+        if step.get("status") != "PASS" or step.get("exit_code") != 0:
+            raise EvidenceValidationError(f"Local CI step '{name}' did not record PASS with exit code 0")
+        command = step.get("command")
+        if not isinstance(command, list) or not command or not all(isinstance(part, str) for part in command):
+            raise EvidenceValidationError(f"Local CI step '{name}' has an invalid command record")
+        if expected_command is None:
+            executable = command[0].replace("\\", "/").rsplit("/", 1)[-1].lower()
+            if len(command) != 2 or not executable.startswith("python") or command[1] != "tools/check_contract.py":
+                raise EvidenceValidationError("Contract artifacts step command does not match the canonical check")
+        elif tuple(command) != expected_command:
+            raise EvidenceValidationError(f"Local CI step '{name}' command does not match the canonical check")
 
 
 class EvidenceValidationError(ValueError):
@@ -45,8 +79,9 @@ def validate_report_payload(payload: Any, expected_source_sha: str) -> None:
     steps = payload.get("steps")
     if not isinstance(steps, list) or len(steps) != EXPECTED_STEP_COUNT:
         raise EvidenceValidationError(f"report must contain exactly {EXPECTED_STEP_COUNT} Local CI steps")
-    passed = sum(isinstance(step, dict) and step.get("status") == "PASS" for step in steps)
-    failed = len(steps) - passed
+    validate_step_records(steps)
+    passed = len(steps)
+    failed = 0
     expected_summary = {
         "total": EXPECTED_STEP_COUNT,
         "passed": passed,
