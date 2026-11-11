@@ -59,7 +59,7 @@ It prints every command, each step result, elapsed time, and a final summary. Th
 
 This runner is an orchestration tool; it does not replace the Rust compiler, Cargo, Clippy, or the test suite. It runs on the current host only. A successful Linux/Codespaces run does not prove Windows execution or Android cross-compilation/runtime behavior. Those claims still require evidence from the corresponding target environment.
 
-The existing hosted workflows remain unchanged. This tool is an additional local verification path, not proof that GitHub Actions infrastructure has been repaired and not a hosted CI service.
+The GitHub Actions workflows remain a separate infrastructure path and are not repaired or replaced by this script. CircleCI is also a distinct hosted CI path. The Local CI runner is an additional reproducible check, not a hosted CI service; only evidence tied to the same source SHA may be compared across these systems.
 
 ## Unix test portability
 
@@ -67,7 +67,7 @@ The Linux linker-discovery unit tests use symlinks to the host's true and false 
 
 ## CircleCI integration
 
-The source branch includes `.circleci/config.yml`. CircleCI runs the same Python runner on its Linux executor, checks schema-v2 exact-SHA provenance and both pre-run and post-check worktree snapshots, requires all 12 checks to pass, creates a manifest with the report SHA-256, and stores both report and manifest artifacts. The hosted CircleCI run is the canonical source-CI evidence; the runner's local use remains host-only evidence.
+The source branch includes `.circleci/config.yml`. The configured CircleCI job runs the same Python runner and shared report/manifest validator on Linux. A CircleCI result counts as evidence only when its status is attached to the exact source SHA, its job conclusion is successful, and the report/manifest verify. A config file or a failed/pending status alone is not proof of a successful CircleCI run. The runner's local use remains host-only evidence.
 
 
 ## Report integrity and secret handling
@@ -85,3 +85,24 @@ The Local CI runner sets `PYTHONDONTWRITEBYTECODE=1` for its child checks. The r
 ## Report/manifest verification contract
 
 `tools/ci_local_evidence.py` validates the report's schema, exact source SHA, pre-run and post-check worktree snapshots, individual step results, and summary consistency. It creates an atomic manifest with the report's byte length and SHA-256 plus verifier/run/OS identity. Its `verify` command re-reads the report and manifest and rejects missing files, malformed JSON, source/verifier SHA mismatch, summary inconsistency, and report digest/size mismatch. The independent verifier and CircleCI use the same helper instead of maintaining separate inline validation logic.
+
+
+## Pull request evidence review procedure
+
+For each PR candidate, reviewers must use the live PR head SHA, not a historical SHA copied from an earlier report.
+
+1. Record the exact PR head SHA and confirm the independent verifier's `LOCAL_CI_CANONICAL_COMMIT.txt` contains the same full 40-character SHA. Do not confuse it with the separate `CANONICAL_COMMIT.txt` pin used for another candidate.
+2. Confirm the verifier workflow actually checked out that SHA. Review the checkout log and `git rev-parse HEAD` output in each OS job. A pin file by itself is not checkout evidence.
+3. Require terminal PASS for every required OS job. Review the report's source SHA, pre-run and post-check worktree snapshots, all 12 individual step statuses, summary, exit code, and the verifier/run/OS identity in the manifest.
+4. Download both report and manifest. Compare the downloaded archive SHA-256 with the artifact digest published by GitHub. Then verify the extracted files:
+   ```sh
+   python tools/ci_local_evidence.py verify \
+     --report artifacts/ci-local-report.json \
+     --manifest artifacts/ci-local-manifest.json \
+     --expected-source-sha "$SOURCE_SHA" \
+     --expected-verifier-sha "$VERIFIER_SHA"
+   ```
+5. Check the CircleCI status context for the same source SHA. A CircleCI FAILURE remains FAIL even if the independent verifier passes; obtain its job logs and resolve the root cause before claiming CircleCI acceptance.
+6. Check whether the repository actually enforces required status checks. If classic branch protection or rulesets do not enforce them, treat CI evidence as a manual review gate; do not describe it as an automatic merge blocker.
+
+The current Local CI parity workflow does not execute an Android emulator or Android runtime test. Android SDK/NDK installation and cross-compiler discovery are setup evidence only. Android runtime remains NOT RUN unless a separate device/emulator execution is recorded against the same source SHA.

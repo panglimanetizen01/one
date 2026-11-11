@@ -11,7 +11,7 @@ import tempfile
 import json
 from unittest.mock import patch
 
-from tools.ci_local import CHECKS, collect_git_metadata, make_report, run_step
+from tools.ci_local import CHECKS, collect_git_metadata, main, make_report, run_step
 from tools.ci_local_evidence import EvidenceValidationError, create_manifest, verify_manifest
 
 
@@ -196,6 +196,78 @@ class GitMetadataTests(unittest.TestCase):
             self.assertEqual(list(Path(directory).glob(".report.json.*.tmp")), [])
 
 
+class MainExitCodeTests(unittest.TestCase):
+    def setUp(self):
+        self.clean_metadata = {
+            "status": "VERIFIED",
+            "commit_sha": "a" * 40,
+            "branch": "test-branch",
+            "working_tree_clean": True,
+            "dirty_path_count": 0,
+            "dirty_entries": [],
+            "dirty_entries_truncated": False,
+            "error": None,
+        }
+
+    @staticmethod
+    def step_result(name, status="PASS"):
+        return {
+            "name": name,
+            "command": ["true"],
+            "status": status,
+            "elapsed_seconds": 0.0,
+            "exit_code": 0 if status == "PASS" else 1,
+            "error": None,
+        }
+
+    def test_main_returns_2_when_rust_toolchain_is_unavailable(self):
+        unavailable = self.step_result("Rust compiler", "UNAVAILABLE (rustc not found)")
+        with (
+            patch("tools.ci_local.sys.argv", ["ci_local.py"]),
+            patch("tools.ci_local.collect_git_metadata", return_value=self.clean_metadata),
+            patch("tools.ci_local.run_step", return_value=unavailable) as run,
+            patch("tools.ci_local.write_report") as write_report,
+        ):
+            self.assertEqual(main(), 2)
+        self.assertEqual(run.call_count, 1)
+        report = write_report.call_args.args[1]
+        self.assertEqual(report["exit_code"], 2)
+        self.assertEqual(report["status"], "FAIL")
+        self.assertEqual(report["summary"]["total"], 1)
+
+    def test_main_returns_1_when_any_check_fails(self):
+        results = [
+            self.step_result("Rust compiler"),
+            self.step_result("Cargo"),
+        ]
+        results.extend(
+            self.step_result(name, "FAIL (exit 1)" if index == 0 else "PASS")
+            for index, (name, _command) in enumerate(CHECKS)
+        )
+        with (
+            patch("tools.ci_local.sys.argv", ["ci_local.py"]),
+            patch("tools.ci_local.collect_git_metadata", return_value=self.clean_metadata),
+            patch("tools.ci_local.run_step", side_effect=results),
+            patch("tools.ci_local.write_report") as write_report,
+        ):
+            self.assertEqual(main(), 1)
+        report = write_report.call_args.args[1]
+        self.assertEqual(report["exit_code"], 1)
+        self.assertEqual(report["summary"], {
+            "total": 12, "passed": 11, "failed_or_unavailable": 1,
+        })
+
+    def test_main_returns_1_when_report_cannot_be_written(self):
+        results = [self.step_result("toolchain")] * (len(CHECKS) + 2)
+        with (
+            patch("tools.ci_local.sys.argv", ["ci_local.py"]),
+            patch("tools.ci_local.collect_git_metadata", return_value=self.clean_metadata),
+            patch("tools.ci_local.run_step", side_effect=results),
+            patch("tools.ci_local.write_report", side_effect=OSError("disk full")),
+        ):
+            self.assertEqual(main(), 1)
+
+
 class EvidenceManifestTests(unittest.TestCase):
     def valid_report(self, source_sha="a" * 40):
         return {
@@ -277,6 +349,16 @@ class EvidenceManifestTests(unittest.TestCase):
             report.write_text(json.dumps(self.valid_report()), encoding="utf-8")
             with self.assertRaisesRegex(EvidenceValidationError, "manifest is missing"):
                 verify_manifest(report, root / "missing-manifest.json", "a" * 40)
+
+    def test_verifier_sha_mismatch_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            report.write_text(json.dumps(self.valid_report()), encoding="utf-8")
+            create_manifest(report, manifest, "a" * 40, verifier_sha="b" * 40)
+            with self.assertRaisesRegex(EvidenceValidationError, "verifier SHA"):
+                verify_manifest(report, manifest, "a" * 40, expected_verifier_sha="c" * 40)
 
     def test_report_summary_inconsistency_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
