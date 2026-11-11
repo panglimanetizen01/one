@@ -12,6 +12,7 @@ import json
 from unittest.mock import patch
 
 from tools.ci_local import CHECKS, collect_git_metadata, make_report, run_step
+from tools.ci_local_evidence import EvidenceValidationError, create_manifest, verify_manifest
 
 
 class RunStepTests(unittest.TestCase):
@@ -193,6 +194,102 @@ class GitMetadataTests(unittest.TestCase):
                 write_report(Path("report.json"), payload)
             self.assertEqual(json.loads(destination.read_text(encoding="utf-8")), payload)
             self.assertEqual(list(Path(directory).glob(".report.json.*.tmp")), [])
+
+
+class EvidenceManifestTests(unittest.TestCase):
+    def valid_report(self, source_sha="a" * 40):
+        return {
+            "schema_version": 2,
+            "source_revision": {
+                "status": "VERIFIED", "commit_sha": source_sha,
+                "working_tree_clean": True, "dirty_path_count": 0,
+            },
+            "worktree_after": {
+                "status": "VERIFIED", "commit_sha": source_sha,
+                "working_tree_clean": True, "dirty_path_count": 0,
+            },
+            "status": "PASS",
+            "exit_code": 0,
+            "summary": {"total": 12, "passed": 12, "failed_or_unavailable": 0},
+            "steps": [{"name": f"step-{index}", "status": "PASS"} for index in range(12)],
+        }
+
+    def test_manifest_create_and_verify_roundtrip(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            report.write_text(json.dumps(self.valid_report()), encoding="utf-8")
+            created = create_manifest(
+                report, manifest, "a" * 40, verifier_sha="b" * 40,
+                workflow="test", run_id="123", os_name="Linux", arch="X64",
+            )
+            self.assertEqual(created["validation_status"], "PASS")
+            verified = verify_manifest(report, manifest, "a" * 40, expected_verifier_sha="b" * 40)
+            self.assertEqual(verified["report_sha256"], created["report_sha256"])
+
+    def test_missing_report_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "ci-local-manifest.json"
+            created = create_manifest(root / "missing.json", manifest, "a" * 40)
+            self.assertEqual(created["validation_status"], "MISSING_REPORT")
+            with self.assertRaises(EvidenceValidationError):
+                verify_manifest(root / "missing.json", manifest, "a" * 40)
+
+    def test_corrupt_report_json_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            report.write_text("{not-json", encoding="utf-8")
+            created = create_manifest(report, manifest, "a" * 40)
+            self.assertEqual(created["validation_status"], "INVALID_JSON")
+            with self.assertRaises(EvidenceValidationError):
+                verify_manifest(report, manifest, "a" * 40)
+
+    def test_source_sha_mismatch_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            report.write_text(json.dumps(self.valid_report("a" * 40)), encoding="utf-8")
+            created = create_manifest(report, manifest, "c" * 40)
+            self.assertEqual(created["validation_status"], "FAIL")
+            with self.assertRaises(EvidenceValidationError):
+                verify_manifest(report, manifest, "c" * 40)
+
+    def test_report_tampering_is_detected_by_manifest_digest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            report.write_text(json.dumps(self.valid_report()), encoding="utf-8")
+            create_manifest(report, manifest, "a" * 40)
+            report.write_text(report.read_text(encoding="utf-8") + " ", encoding="utf-8")
+            with self.assertRaisesRegex(EvidenceValidationError, "SHA-256"):
+                verify_manifest(report, manifest, "a" * 40)
+
+    def test_missing_manifest_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            report.write_text(json.dumps(self.valid_report()), encoding="utf-8")
+            with self.assertRaisesRegex(EvidenceValidationError, "manifest is missing"):
+                verify_manifest(report, root / "missing-manifest.json", "a" * 40)
+
+    def test_report_summary_inconsistency_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            payload = self.valid_report()
+            payload["summary"]["passed"] = 11
+            report.write_text(json.dumps(payload), encoding="utf-8")
+            created = create_manifest(report, manifest, "a" * 40)
+            self.assertEqual(created["validation_status"], "FAIL")
+            with self.assertRaises(EvidenceValidationError):
+                verify_manifest(report, manifest, "a" * 40)
 
 
 class CircleCIIntegrationTests(unittest.TestCase):

@@ -74,52 +74,20 @@ jobs:
           name: Run Python Local CI runner and enforce exact-SHA report provenance
           command: |
             python3 tools/ci_local.py --report ci-local-report.json --timeout 3600
-            python3 - <<'PY'
-import hashlib
-import json
-import os
-import pathlib
-import tempfile
-
-report = pathlib.Path("ci-local-report.json")
-payload = json.loads(report.read_text(encoding="utf-8"))
-before = payload["source_revision"]
-after = payload["worktree_after"]
-assert payload["schema_version"] == 2
-assert payload["status"] == "PASS" and payload["exit_code"] == 0
-assert before["status"] == "VERIFIED"
-assert before["commit_sha"] == os.environ["CIRCLE_SHA1"]
-assert before["working_tree_clean"] is True
-assert after["status"] == "VERIFIED"
-assert after["commit_sha"] == os.environ["CIRCLE_SHA1"]
-assert after["working_tree_clean"] is True
-assert payload["summary"] == {"total": 12, "passed": 12, "failed_or_unavailable": 0}
-manifest = {
-    "schema_version": 1,
-    "source_sha": os.environ["CIRCLE_SHA1"],
-    "workflow_id": os.environ.get("CIRCLE_WORKFLOW_ID"),
-    "build_num": os.environ.get("CIRCLE_BUILD_NUM"),
-    "report_file": report.name,
-    "report_sha256": hashlib.sha256(report.read_bytes()).hexdigest(),
-}
-destination = pathlib.Path("ci-local-manifest.json")
-temporary = None
-try:
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=destination.parent,
-        prefix=".ci-local-manifest.", suffix=".tmp", delete=False
-    ) as stream:
-        temporary = pathlib.Path(stream.name)
-        stream.write(json.dumps(manifest, indent=2) + "\n")
-        stream.flush()
-        os.fsync(stream.fileno())
-    os.replace(temporary, destination)
-    temporary = None
-finally:
-    if temporary is not None:
-        temporary.unlink(missing_ok=True)
-print("Local CI schema-v2 exact-SHA report and SHA-256 manifest PASS")
-PY
+            python3 tools/ci_local_evidence.py create \
+              --report ci-local-report.json \
+              --manifest ci-local-manifest.json \
+              --expected-source-sha "$CIRCLE_SHA1" \
+              --workflow "one-linux-verification" \
+              --run-id "$CIRCLE_WORKFLOW_ID" \
+              --run-attempt "$CIRCLE_BUILD_NUM" \
+              --job "$CIRCLE_JOB" \
+              --os "Linux" \
+              --arch "$(uname -m)"
+            python3 tools/ci_local_evidence.py verify \
+              --report ci-local-report.json \
+              --manifest ci-local-manifest.json \
+              --expected-source-sha "$CIRCLE_SHA1"
 
       - run:
           name: Build standalone trusted CLI and enforce single link

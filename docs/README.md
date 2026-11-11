@@ -91,6 +91,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `LOCAL_CI.md` — how to run the Python local CI runner and interpret host/platform limits. The canonical CircleCI Linux job runs `tools/ci_local.py`, verifies schema-v2 pre/post worktree provenance and exact source SHA, and stores a SHA-256 manifest.
 - `../tools/ci_local.py` — Python orchestrator for the portable contract, build, lint, and test checks from the hosted CI workflow.
+- `../tools/ci_local_evidence.py` — exact-SHA report/manifest validation and artifact-integrity verification.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 - `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.

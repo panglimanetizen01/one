@@ -80,3 +80,8 @@ The hosted verifier validates schema version, exact source SHA, clean pre-run an
 ## Clean Python test execution
 
 The Local CI runner sets `PYTHONDONTWRITEBYTECODE=1` for its child checks. The repository also ignores Python-generated `__pycache__/` and `*.py[cod]` files so running the independent unit-test step before Local CI does not falsely mark an otherwise clean source checkout as modified. These are generated interpreter artifacts only; source files remain visible to the worktree audit.
+
+
+## Report/manifest verification contract
+
+`tools/ci_local_evidence.py` validates the report's schema, exact source SHA, pre-run and post-check worktree snapshots, individual step results, and summary consistency. It creates an atomic manifest with the report's byte length and SHA-256 plus verifier/run/OS identity. Its `verify` command re-reads the report and manifest and rejects missing files, malformed JSON, source/verifier SHA mismatch, summary inconsistency, and report digest/size mismatch. The independent verifier and CircleCI use the same helper instead of maintaining separate inline validation logic.
