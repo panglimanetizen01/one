@@ -2,6 +2,8 @@
 
 Nama One dapat terdiri dari beberapa kata jika grammar pada posisi tersebut mengizinkannya.
 
+Deklarasi daftar dengan `buat daftar` juga membuat nama baru. Nama daftar berbagi ruang nama dengan variabel biasa: membuat nama yang sama dua kali dalam satu ruang lingkup ditolak dengan diagnostik `E2001`. Ruang lingkup bersarang boleh mendeklarasikan nama yang sama untuk melakukan shadowing sesuai batas scope.
+
 ```text
 nama pengguna adalah "Budi"
 saldo rekening adalah 100000

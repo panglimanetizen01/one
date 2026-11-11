@@ -38,6 +38,8 @@ tambahkan apel ke daftar buah
 hapus telur dari daftar belanja
 ```
 
+Pembuatan daftar adalah deklarasi nama, bukan penimpaan variabel. Nama yang sudah dipakai pada ruang lingkup yang sama tidak dapat dibuat ulang; One mengembalikan diagnostik `E2001`. Ruang lingkup bersarang tetap dapat menggunakan nama lokal yang menutupi nama dari ruang lingkup luar.
+
 Kalimat bebas tidak menjadi aksi secara otomatis.
 
 ## Kondisi
