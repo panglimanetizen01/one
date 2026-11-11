@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = 2
-EXPECTED_STEP_COUNT = 12
 EXPECTED_STEPS: tuple[tuple[str, tuple[str, ...] | None], ...] = (
     ("Rust compiler", ("rustc", "--version")),
     ("Cargo", ("cargo", "--version")),
@@ -28,6 +27,7 @@ EXPECTED_STEPS: tuple[tuple[str, tuple[str, ...] | None], ...] = (
     ("HTTP GET vertical slice", ("cargo", "--locked", "test", "-p", "one-core", "--test", "http_get_vertical_slice")),
     ("HTTP GET CLI vertical slice", ("cargo", "--locked", "test", "-p", "one-cli", "--test", "http_get_orchestration")),
 )
+EXPECTED_STEP_COUNT = len(EXPECTED_STEPS)
 EXPECTED_STEP_NAMES = tuple(name for name, _command in EXPECTED_STEPS)
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
