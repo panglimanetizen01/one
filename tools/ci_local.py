@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHECKS: list[tuple[str, Sequence[str]]] = [
     ("Contract artifacts", (sys.executable, "tools/check_contract.py")),
     ("Build workspace", ("cargo", "--locked", "build", "--workspace", "--all-targets")),
-    ("Clippy", ("cargo", "--locked", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings")),
+    ("Clippy", ("cargo", "clippy", "--locked", "--workspace", "--all-targets", "--", "-D", "warnings")),
     ("Workspace tests", ("cargo", "--locked", "test", "--workspace", "--all-targets")),
     (
         "Deterministic .oneir/.onepkg artifacts",

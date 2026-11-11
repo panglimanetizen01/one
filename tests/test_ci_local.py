@@ -54,6 +54,29 @@ class CargoLockTests(unittest.TestCase):
         for name, command in cargo_checks:
             self.assertIn("--locked", command, f"{name} must not mutate Cargo.lock")
 
+    def test_clippy_places_locked_after_external_subcommand(self):
+        clippy = next(command for name, command in CHECKS if name == "Clippy")
+        self.assertEqual(clippy[:3], ("cargo", "clippy", "--locked"))
+
+
+
+
+
+    def test_workspace_lockfile_is_tracked_and_not_ignored(self):
+        root = Path(__file__).resolve().parents[1]
+        lockfile = root / "Cargo.lock"
+        self.assertTrue(lockfile.is_file(), "Cargo.lock must exist in a clean checkout")
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "Cargo.lock"],
+            cwd=root, check=False, capture_output=True, text=True,
+        )
+        self.assertEqual(tracked.returncode, 0, tracked.stderr)
+        ignored = subprocess.run(
+            ["git", "check-ignore", "--no-index", "Cargo.lock"],
+            cwd=root, check=False, capture_output=True, text=True,
+        )
+        self.assertNotEqual(ignored.returncode, 0, "Cargo.lock must not be ignored")
+
 
 class GitMetadataTests(unittest.TestCase):
     @patch("tools.ci_local.subprocess.run")

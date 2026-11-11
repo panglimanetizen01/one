@@ -1,3 +1,7 @@
+## Cargo lockfile policy
+
+The Rust workspace commits `Cargo.lock` so all CI and local Cargo commands using `--locked` resolve the same dependency graph. Do not remove `--locked` to work around a missing lockfile. When dependencies or manifests change, regenerate with `cargo generate-lockfile` using the repository toolchain, review the full lockfile diff and registry checksums, then verify with `cargo metadata --locked --format-version 1` and the complete Local CI runner. Never hand-edit the generated lockfile or copy one from another branch/source SHA without proving the workspace manifests and toolchain context are identical.
+
 # Local CI with Python
 
 The Python runner at `tools/ci_local.py` runs the repository's portable CI checks on the current machine. It is useful for repeatable local verification and produces a machine-readable JSON report for review or archiving.
