@@ -297,10 +297,10 @@ class CircleCIIntegrationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         config = (root / ".circleci" / "config.yml").read_text(encoding="utf-8")
         self.assertIn("python3 tools/ci_local.py --report ci-local-report.json", config)
-        self.assertIn('before["commit_sha"] == os.environ["CIRCLE_SHA1"]', config)
-        self.assertIn('before["working_tree_clean"] is True', config)
-        self.assertIn('payload["schema_version"] == 2', config)
-        self.assertIn('after["working_tree_clean"] is True', config)
+        self.assertIn("python3 tools/ci_local.py", config)
+        self.assertIn("python3 tools/ci_local_evidence.py create", config)
+        self.assertIn("python3 tools/ci_local_evidence.py verify", config)
+        self.assertIn('--expected-source-sha "$CIRCLE_SHA1"', config)
         self.assertIn("ci-local-manifest.json", config)
         self.assertIn("ci-local-report.json", config)
 
