@@ -874,14 +874,16 @@ mod c_identifier_tests {
     #[test]
     fn multi_word_and_underscore_names_get_distinct_c_identifiers() {
         let program = compile(
-            "nama lengkap adalah \"Budi\"\nnama_lengkap adalah \"Siti\"\nnama lengkap menjadi \"Citra\"\ntampilkan nama lengkap\ntampilkan nama_lengkap\n",
+            "nama lengkap adalah \"Budi\"\nnama_lengkap adalah \"Siti\"\nnama café adalah \"Dewi\"\nnama lengkap menjadi \"Citra\"\ntampilkan nama lengkap\ntampilkan nama_lengkap\ntampilkan nama café\n",
         );
         let generated = CGenerator::generate(&program).expect("C generation should succeed");
 
         assert!(generated.contains("const char* one_var_0 = \"Budi\";"));
         assert!(generated.contains("const char* one_var_1 = \"Siti\";"));
+        assert!(generated.contains("const char* one_var_2 = \"Dewi\";"));
         assert!(generated.contains("one_var_0 = \"Citra\";"));
         assert!(generated.contains("puts(one_var_0);"));
         assert!(generated.contains("puts(one_var_1);"));
+        assert!(generated.contains("puts(one_var_2);"));
     }
 }
