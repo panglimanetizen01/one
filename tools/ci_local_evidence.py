@@ -209,9 +209,12 @@ def verify_manifest(
         raise EvidenceValidationError("manifest source SHA does not match the expected source SHA")
     if expected_verifier_sha is not None and manifest.get("verifier_sha") != expected_verifier_sha:
         raise EvidenceValidationError("manifest verifier SHA does not match the expected verifier SHA")
+    # Validate the report before trusting the manifest's summary status.
+    # This preserves the actionable validation error for malformed report data
+    # instead of masking it with the manifest's expected FAIL marker.
+    validate_report_payload(payload, expected_source_sha)
     if manifest.get("validation_status") != "PASS":
         raise EvidenceValidationError("manifest validation status is not PASS")
-    validate_report_payload(payload, expected_source_sha)
     return manifest
 
 
