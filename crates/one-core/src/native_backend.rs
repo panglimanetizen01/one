@@ -160,7 +160,7 @@ impl TargetBackend for NativeAndroidAarch64Backend {
 }
 
 struct CGenerator {
-    variables: BTreeMap<String, CType>,
+    variables: BTreeMap<String, CVariable>,
     output: String,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -169,58 +169,49 @@ enum CType {
     Number,
     Boolean,
 }
+
+#[derive(Debug, Clone)]
+struct CVariable {
+    c_name: String,
+    ty: CType,
+}
+
 impl CGenerator {
-    fn identifier(name: &str) -> Result<(), NativeBackendError> {
-        let mut chars = name.chars();
-        let Some(first) = chars.next() else {
-            return Err(NativeBackendError::new(
-                "NATIVE-CODEGEN-IDENTIFIER",
-                "identifier native tidak boleh kosong",
-            ));
-        };
-        if !(first == '_' || first.is_ascii_alphabetic())
-            || !chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
-        {
-            return Err(NativeBackendError::new(
-                "NATIVE-CODEGEN-IDENTIFIER",
-                format!("identifier '{}' tidak dapat dipetakan aman ke C", name),
-            ));
-        }
-        Ok(())
+    fn c_name(index: usize) -> String {
+        format!("one_var_{index}")
     }
     fn statement(&mut self, statement: &IrStatement) -> Result<(), NativeBackendError> {
         match statement {
             IrStatement::Declaration { name, value } => {
-                Self::identifier(name)?;
                 let ty = self.expr_type(value)?;
-                self.variables.insert(name.clone(), ty);
+                let c_name = Self::c_name(self.variables.len());
+                self.variables.insert(name.clone(), CVariable { c_name: c_name.clone(), ty });
                 self.output.push_str("  ");
                 self.output.push_str(match ty {
                     CType::Text => "const char* ",
                     CType::Number => "long long ",
                     CType::Boolean => "bool ",
                 });
-                self.output.push_str(name);
+                self.output.push_str(&c_name);
                 self.output.push_str(" = ");
                 self.expr(value)?;
                 self.output.push_str(";\n");
             }
             IrStatement::Assignment { name, value } => {
-                Self::identifier(name)?;
-                let Some(expected) = self.variables.get(name).copied() else {
+                let Some(expected) = self.variables.get(name) else {
                     return Err(NativeBackendError::new(
                         "NATIVE-CODEGEN-UNDEFINED",
                         format!("assignment ke variabel '{}' tidak didukung", name),
                     ));
                 };
-                if expected != self.expr_type(value)? {
+                if expected.ty != self.expr_type(value)? {
                     return Err(NativeBackendError::new(
                         "NATIVE-CODEGEN-TYPE",
                         format!("tipe assignment '{}' tidak cocok", name),
                     ));
                 }
                 self.output.push_str("  ");
-                self.output.push_str(name);
+                self.output.push_str(&expected.c_name);
                 self.output.push_str(" = ");
                 self.expr(value)?;
                 self.output.push_str(";\n");
@@ -271,8 +262,7 @@ impl CGenerator {
             IrExpr::Number(_) => Ok(CType::Number),
             IrExpr::Boolean(_) => Ok(CType::Boolean),
             IrExpr::Identifier(name) => {
-                Self::identifier(name)?;
-                self.variables.get(name).copied().ok_or_else(|| {
+                self.variables.get(name).map(|variable| variable.ty).ok_or_else(|| {
                     NativeBackendError::new(
                         "NATIVE-CODEGEN-UNDEFINED",
                         format!("identifier '{}' tidak ditemukan", name),
@@ -306,8 +296,13 @@ impl CGenerator {
             IrExpr::Number(value) => self.output.push_str(&value.to_string()),
             IrExpr::Boolean(value) => self.output.push_str(if *value { "true" } else { "false" }),
             IrExpr::Identifier(name) => {
-                Self::identifier(name)?;
-                self.output.push_str(name);
+                let variable = self.variables.get(name).ok_or_else(|| {
+                    NativeBackendError::new(
+                        "NATIVE-CODEGEN-UNDEFINED",
+                        format!("identifier '{}' tidak ditemukan", name),
+                    )
+                })?;
+                self.output.push_str(&variable.c_name);
             }
             IrExpr::Binary { .. } | IrExpr::Nothing | IrExpr::Call { .. } => {
                 return Err(NativeBackendError::new(
@@ -847,5 +842,45 @@ mod artifact_validation_tests {
         assert!(result.is_ok());
 
         let _ = fs::remove_file(path);
+    }
+}
+
+
+#[cfg(test)]
+mod c_identifier_tests {
+    use super::*;
+    use crate::{analyze, lower, parse};
+
+    fn compile(source: &str) -> IrProgram {
+        let program = parse(source).expect("source should parse");
+        let typed = analyze(&program).expect("source should analyze");
+        lower(&typed).expect("source should lower")
+    }
+
+    #[test]
+    fn c_keywords_and_library_names_are_mangled() {
+        let program = compile(
+            "long adalah 7\nprintf adalah 9\ntampilkan long\ntampilkan printf\n",
+        );
+        let generated = CGenerator::generate(&program).expect("C generation should succeed");
+
+        assert!(generated.contains("long long one_var_0 = 7;"));
+        assert!(generated.contains("long long one_var_1 = 9;"));
+        assert!(generated.contains("printf(\"%lld\\n\", one_var_0);"));
+        assert!(generated.contains("printf(\"%lld\\n\", one_var_1);"));
+        assert!(!generated.contains("long long long"));
+    }
+
+    #[test]
+    fn multi_word_and_underscore_names_get_distinct_c_identifiers() {
+        let program = compile(
+            "nama lengkap adalah \"Budi\"\nnama_lengkap adalah \"Siti\"\ntampilkan nama lengkap\ntampilkan nama_lengkap\n",
+        );
+        let generated = CGenerator::generate(&program).expect("C generation should succeed");
+
+        assert!(generated.contains("const char* one_var_0 = \"Budi\";"));
+        assert!(generated.contains("const char* one_var_1 = \"Siti\";"));
+        assert!(generated.contains("puts(one_var_0);"));
+        assert!(generated.contains("puts(one_var_1);"));
     }
 }
