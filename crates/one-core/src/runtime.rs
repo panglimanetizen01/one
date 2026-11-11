@@ -31,6 +31,14 @@ impl Environment {
     pub fn push(&mut self) { self.scopes.push(HashMap::new()); }
     pub fn pop(&mut self) { if self.scopes.len() > 1 { self.scopes.pop(); } }
     pub fn define(&mut self, name: impl Into<String>, value: Value) { self.scopes.last_mut().unwrap().insert(name.into(), value); }
+    pub fn contains_current(&self, name: &str) -> bool { self.scopes.last().is_some_and(|scope| scope.contains_key(name)) }
+    pub fn define_if_absent(&mut self, name: impl Into<String>, value: Value) -> bool {
+        let name = name.into();
+        let Some(scope) = self.scopes.last_mut() else { return false; };
+        if scope.contains_key(&name) { return false; }
+        scope.insert(name, value);
+        true
+    }
     pub fn assign(&mut self, name: &str, value: Value) -> bool {
         for scope in self.scopes.iter_mut().rev() {
             if scope.contains_key(name) { scope.insert(name.to_string(), value); return true; }
