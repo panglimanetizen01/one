@@ -84,7 +84,7 @@ The Local CI runner sets `PYTHONDONTWRITEBYTECODE=1` for its child checks. The r
 
 ## Report/manifest verification contract
 
-`tools/ci_local_evidence.py` validates the report's schema, exact source SHA, pre-run and post-check worktree snapshots, individual step results, and summary consistency. It creates an atomic manifest with the report's byte length and SHA-256 plus verifier/run/OS identity. Its `verify` command re-reads the report and manifest and rejects missing files, malformed JSON, source/verifier SHA mismatch, summary inconsistency, and report digest/size mismatch. The independent verifier and CircleCI use the same helper instead of maintaining separate inline validation logic.
+`tools/ci_local_evidence.py` validates the report's schema, exact source SHA, pre-run and post-check worktree snapshots, the canonical ordered set of all 12 Local CI step names and commands, each step's PASS status and zero exit code, and summary consistency. The canonical step plan is defined once in the evidence validator and its count is derived from that plan, so a report cannot substitute arbitrary successful-looking steps or omit a required command while retaining a 12/12 summary. It creates an atomic manifest with the report's byte length and SHA-256 plus verifier/run/OS identity. Its `verify` command re-reads the report and manifest and rejects missing files, malformed JSON, source/verifier SHA mismatch, noncanonical step names/commands, missing or nonzero step exit codes, summary inconsistency, and report digest/size mismatch. The independent verifier and CircleCI use the same helper instead of maintaining separate inline validation logic.
 
 
 ## Pull request evidence review procedure
