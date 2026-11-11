@@ -19,7 +19,16 @@ def load_suite(start_directory: str | Path, pattern: str) -> unittest.TestSuite:
     start = start.resolve()
     if not start.is_dir():
         raise ValueError(f"test discovery directory does not exist: {start}")
-    return unittest.defaultTestLoader.discover(str(start), pattern=pattern)
+    # defaultTestLoader is a process-wide singleton. Its cached
+    # _top_level_dir can leak between independent discovery calls (notably
+    # temporary directories), making valid start directories look unimportable.
+    # A fresh loader keeps each discovery rooted at its own start directory.
+    loader = unittest.TestLoader()
+    return loader.discover(
+        str(start),
+        pattern=pattern,
+        top_level_dir=str(start),
+    )
 
 
 def main() -> int:
