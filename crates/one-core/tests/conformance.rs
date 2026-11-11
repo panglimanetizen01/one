@@ -29,6 +29,8 @@ fn invalid_fixtures_fail_with_stable_codes() {
         (include_str!("../../../tests/conformance/invalid/missing-comparison.one"), "E1014"),
         (include_str!("../../../tests/conformance/invalid/undefined-name.one"), "E2014"),
         (include_str!("../../../tests/conformance/invalid/duplicate-list-name.one"), "E2001"),
+        (include_str!("../../../tests/conformance/invalid/assignment-before-declaration.one"), "E2002"),
+        (include_str!("../../../tests/conformance/invalid/incompatible-reassignment.one"), "E2003"),
         (include_str!("../../../tests/conformance/invalid/bad-indentation.one"), "E0002"),
         (include_str!("../../../tests/conformance/invalid/empty-block.one"), "E1002"),
         (include_str!("../../../tests/conformance/invalid/implicit-action.one"), "E1016"),
