@@ -103,7 +103,7 @@ fn runtime_rejects_duplicate_ir_declaration() {
 
 #[test]
 fn rejects_scalar_declaration_when_list_name_already_exists() {
-    let program = parse("buat daftar belanja\\nbelanja adalah 7\\n").expect("parse");
+    let program = parse("buat daftar belanja\nbelanja adalah 7\n").expect("parse");
     let error = analyze(&program).expect_err("scalar declaration must not replace list");
     assert_eq!(error.0[0].code, "E2001");
 }
