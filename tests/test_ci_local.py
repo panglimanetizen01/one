@@ -12,7 +12,7 @@ import json
 from unittest.mock import patch
 
 from tools.ci_local import CHECKS, collect_git_metadata, main, make_report, run_step
-from tools.ci_local_evidence import EvidenceValidationError, create_manifest, verify_manifest
+from tools.ci_local_evidence import EXPECTED_STEPS, EvidenceValidationError, create_manifest, verify_manifest
 
 
 class RunStepTests(unittest.TestCase):
@@ -283,7 +283,15 @@ class EvidenceManifestTests(unittest.TestCase):
             "status": "PASS",
             "exit_code": 0,
             "summary": {"total": 12, "passed": 12, "failed_or_unavailable": 0},
-            "steps": [{"name": f"step-{index}", "status": "PASS"} for index in range(12)],
+            "steps": [
+                {
+                    "name": name,
+                    "command": ["python", "tools/check_contract.py"] if command is None else list(command),
+                    "status": "PASS",
+                    "exit_code": 0,
+                }
+                for name, command in EXPECTED_STEPS
+            ],
         }
 
     def test_manifest_create_and_verify_roundtrip(self):
@@ -359,6 +367,46 @@ class EvidenceManifestTests(unittest.TestCase):
             create_manifest(report, manifest, "a" * 40, verifier_sha="b" * 40)
             with self.assertRaisesRegex(EvidenceValidationError, "verifier SHA"):
                 verify_manifest(report, manifest, "a" * 40, expected_verifier_sha="c" * 40)
+
+
+    def test_noncanonical_step_name_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            payload = self.valid_report()
+            payload["steps"][0]["name"] = "fake-success"
+            report.write_text(json.dumps(payload), encoding="utf-8")
+            created = create_manifest(report, manifest, "a" * 40)
+            self.assertEqual(created["validation_status"], "FAIL")
+            with self.assertRaisesRegex(EvidenceValidationError, "canonical Local CI check sequence"):
+                verify_manifest(report, manifest, "a" * 40)
+
+    def test_step_without_zero_exit_code_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            payload = self.valid_report()
+            payload["steps"][0]["exit_code"] = 7
+            report.write_text(json.dumps(payload), encoding="utf-8")
+            created = create_manifest(report, manifest, "a" * 40)
+            self.assertEqual(created["validation_status"], "FAIL")
+            with self.assertRaisesRegex(EvidenceValidationError, "exit code 0"):
+                verify_manifest(report, manifest, "a" * 40)
+
+    def test_noncanonical_step_command_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "ci-local-report.json"
+            manifest = root / "ci-local-manifest.json"
+            payload = self.valid_report()
+            payload["steps"][3]["command"] = ["cargo", "test"]
+            report.write_text(json.dumps(payload), encoding="utf-8")
+            created = create_manifest(report, manifest, "a" * 40)
+            self.assertEqual(created["validation_status"], "FAIL")
+            with self.assertRaisesRegex(EvidenceValidationError, "command does not match"):
+                verify_manifest(report, manifest, "a" * 40)
 
     def test_report_summary_inconsistency_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
