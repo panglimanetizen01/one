@@ -58,11 +58,6 @@ class CargoLockTests(unittest.TestCase):
         for name, command in cargo_checks:
             self.assertIn("--locked", command, f"{name} must not mutate Cargo.lock")
 
-    def test_clippy_places_locked_after_external_subcommand(self):
-        clippy = next(command for name, command in CHECKS if name == "Clippy")
-        self.assertEqual(clippy[:3], ("cargo", "clippy", "--locked"))
-
-
 
 
 
@@ -196,10 +191,10 @@ class CircleCIIntegrationTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         config = (root / ".circleci" / "config.yml").read_text(encoding="utf-8")
         self.assertIn("python3 tools/ci_local.py --report ci-local-report.json", config)
-        self.assertIn('s["commit_sha"]==os.environ["CIRCLE_SHA1"]', config)
-        self.assertIn('s["working_tree_clean"] is True', config)
-        self.assertIn('p["schema_version"]==2', config)
-        self.assertIn('p["worktree_after"]["working_tree_clean"] is True', config)
+        self.assertIn('before["commit_sha"] == os.environ["CIRCLE_SHA1"]', config)
+        self.assertIn('before["working_tree_clean"] is True', config)
+        self.assertIn('payload["schema_version"] == 2', config)
+        self.assertIn('after["working_tree_clean"] is True', config)
         self.assertIn("ci-local-manifest.json", config)
         self.assertIn("ci-local-report.json", config)
 

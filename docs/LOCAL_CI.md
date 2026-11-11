@@ -20,7 +20,7 @@ From the repository root:
 python tools/ci_local.py
 ```
 
-By default, the runner writes `ci-local-report.json` in the repository root. The report includes host and Python versions, exact Git source revision and worktree state, start/end timestamps, per-step commands, status, elapsed seconds, errors/exit codes, a summary, and an explicit evidence boundary. The JSON `source_revision` object records the commit SHA, branch (or detached HEAD), and worktree state before checks. `worktree_after` records the state after checks but before report output, so the report file itself cannot make the recorded source tree appear dirty. Both snapshots include up to 100 dirty status entries for diagnosis. If the runner is executed outside a Git checkout, `source_revision.status` is `UNAVAILABLE`; the run may still execute, but the report cannot independently prove an exact source revision. In hosted CI, compare `source_revision.commit_sha` with the workflow's pinned source SHA.
+By default, the runner writes `ci-local-report.json` in the repository root. The schema-version 2 report includes host and Python versions, the exact pre-run Git source revision, a separate post-check worktree snapshot with bounded dirty-entry details, start/end timestamps, redacted per-step commands, status, elapsed seconds, errors/exit codes, a summary, and an explicit evidence boundary. Report output is written atomically. Child-process stdout/stderr and command arguments are redacted against credential-named environment variables before being printed; raw secret values are not stored in the report. The JSON `source_revision` object records the commit SHA, branch (or detached HEAD), and worktree state before checks. `worktree_after` records the state after checks but before report output, so the report file itself cannot make the recorded source tree appear dirty. Both snapshots include up to 100 dirty status entries for diagnosis. If the runner is executed outside a Git checkout, `source_revision.status` is `UNAVAILABLE`; the run may still execute, but the report cannot independently prove an exact source revision. In hosted CI, compare `source_revision.commit_sha` with the workflow's pinned source SHA.
 
 To choose a different report path and per-command timeout:
 
@@ -43,9 +43,9 @@ Offline mode intentionally fails if required dependencies are not cached. It doe
 The runner checks `rustc --version` and `cargo --version`, then executes every Cargo build/test/clippy command with `--locked` so the committed `Cargo.lock` cannot be silently rewritten. It then executes:
 
 1. `tools/check_contract.py`
-2. `cargo build --workspace --all-targets`
-3. `cargo clippy --workspace --all-targets -- -D warnings`
-4. `cargo test --workspace --all-targets`
+2. `cargo --locked build --workspace --all-targets`
+3. `cargo clippy --locked --workspace --all-targets -- -D warnings`
+4. `cargo --locked test --workspace --all-targets`
 5. Deterministic `.oneir`/`.onepkg` artifact test
 6. DNS adapter tests
 7. Orchestration tests
@@ -67,7 +67,7 @@ The Linux linker-discovery unit tests use symlinks to the host's true and false 
 
 ## CircleCI integration
 
-The source branch includes `.circleci/config.yml`. CircleCI runs the same Python runner on its Linux executor, stores `ci-local-report.json`, and rejects the job unless the report's embedded `source_revision.commit_sha` equals `CIRCLE_SHA1`, the report status is PASS, all 12 checks pass, and the pre-run Git worktree was clean. The hosted CircleCI run is the canonical source-CI evidence; the runner's local use remains host-only evidence.
+The source branch includes `.circleci/config.yml`. CircleCI runs the same Python runner on its Linux executor, checks schema-v2 exact-SHA provenance and both pre-run and post-check worktree snapshots, requires all 12 checks to pass, creates a manifest with the report SHA-256, and stores both report and manifest artifacts. The hosted CircleCI run is the canonical source-CI evidence; the runner's local use remains host-only evidence.
 
 
 ## Report integrity and secret handling
