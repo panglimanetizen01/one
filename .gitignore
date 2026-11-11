@@ -4,3 +4,5 @@ ci-local-report.json
 ci-local-manifest.json
 artifacts/ci-local-report.json
 artifacts/ci-local-manifest.json
+__pycache__/
+*.py[cod]

@@ -75,3 +75,8 @@ The source branch includes `.circleci/config.yml`. CircleCI runs the same Python
 The runner writes the JSON report using a temporary file in the destination directory, flushes it, and atomically replaces the destination. The runner redacts values from environment variables whose names indicate tokens, secrets, passwords, credentials, private keys, API keys, or authorization before printing command arguments and captured child-process output. Captured output is not copied into the JSON report.
 
 The hosted verifier validates schema version, exact source SHA, clean pre-run and post-check worktree snapshots, and the complete 12/12 Local CI summary before accepting a report. It creates a separate manifest containing the report SHA-256 and source/verifier execution identity. Missing reports or manifests are failures, not warnings. The report and manifest are distinct artifacts and their digests must be checked after download.
+
+
+## Clean Python test execution
+
+The Local CI runner sets `PYTHONDONTWRITEBYTECODE=1` for its child checks. The repository also ignores Python-generated `__pycache__/` and `*.py[cod]` files so running the independent unit-test step before Local CI does not falsely mark an otherwise clean source checkout as modified. These are generated interpreter artifacts only; source files remain visible to the worktree audit.

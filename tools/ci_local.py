@@ -255,6 +255,7 @@ def main() -> int:
     timeout_seconds = args.timeout or None
 
     env = os.environ.copy()
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     if args.offline:
         env["CARGO_NET_OFFLINE"] = "true"
 

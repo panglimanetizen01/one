@@ -61,6 +61,15 @@ class CargoLockTests(unittest.TestCase):
 
 
 
+    def test_python_bytecode_artifacts_are_ignored(self):
+        root = Path(__file__).resolve().parents[1]
+        for candidate in ("__pycache__/test_ci_local.cpython-312.pyc", "tools/ci_local.pyc"):
+            result = subprocess.run(
+                ["git", "check-ignore", "--no-index", candidate],
+                cwd=root, check=False, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, f"{candidate} must be ignored")
+
     def test_workspace_lockfile_is_tracked_and_not_ignored(self):
         root = Path(__file__).resolve().parents[1]
         lockfile = root / "Cargo.lock"
