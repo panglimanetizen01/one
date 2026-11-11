@@ -38,6 +38,20 @@ fn rejects_undefined_name() {
 }
 
 #[test]
+fn rejects_assignment_before_declaration() {
+    let program = parse("nilai menjadi 7\n").expect("parse");
+    let error = analyze(&program).expect_err("assignment before declaration must fail");
+    assert_eq!(error.0[0].code, "E2002");
+}
+
+#[test]
+fn rejects_incompatible_reassignment() {
+    let program = parse("nilai adalah 7\nnilai menjadi \"teks\"\n").expect("parse");
+    let error = analyze(&program).expect_err("incompatible reassignment must fail");
+    assert_eq!(error.0[0].code, "E2003");
+}
+
+#[test]
 fn rejects_bad_indentation() {
     let source = "kalau benar\n  tampilkan \"salah indentasi\"\n";
     assert!(parse(source).is_err());
@@ -80,6 +94,20 @@ fn runtime_rejects_list_action_that_would_replace_existing_value() {
     let mut interpreter = Interpreter::new(CapabilitySet::none());
     let error = interpreter.execute(&program).expect_err("runtime must not overwrite");
     assert_eq!(error.code, "R3022");
+}
+
+
+#[test]
+fn runtime_rejects_assignment_to_undefined_name() {
+    let program = one_core::IrProgram {
+        statements: vec![one_core::IrStatement::Assignment {
+            name: "hilang".into(),
+            value: one_core::IrExpr::Number(1),
+        }],
+    };
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let error = interpreter.execute(&program).expect_err("runtime must reject undefined assignment");
+    assert_eq!(error.code, "R3003");
 }
 
 #[test]
