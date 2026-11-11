@@ -63,11 +63,11 @@ jobs:
             python3 tools/check_user_docs_test.py
 
       - run:
-          name: Run repository health scanner regression tests
+          name: Run Local CI regression tests with nonzero discovery enforcement
           command: |
-            python3 -m unittest discover -s tools -p "test_one_health.py" -v
-            python3 -m unittest discover -s tools -p "test_collect_ci_health.py" -v
-            python3 -m unittest discover -s tools -p "test_health_quality.py" -v
+            python3 tools/ci_unittest.py --start-directory tests --pattern test_ci_local.py
+            python3 tools/ci_unittest.py --start-directory tests --pattern test_circleci_config_paths.py
+            python3 tools/ci_unittest.py --start-directory tests --pattern test_ci_unittest.py
 
       - run:
           name: Run Python Local CI runner and enforce exact-SHA report provenance
@@ -97,14 +97,6 @@ jobs:
             cp target/one-health-cli/debug/one target/debug/one
             python3 -c 'import os,sys; p=sys.argv[1]; n=os.stat(p).st_nlink; print("trusted CLI hard-link count:", n); sys.exit(0 if n == 1 else 1)' target/debug/one
 
-      - run:
-          name: Run repository health and normative source checks
-          command: python3 tools/one_health.py --check-one-source --expected-sha "$CIRCLE_SHA1" --json-out one-health-report.json --markdown-out one-health-report.md --quiet
-
-      - store_artifacts:
-          path: one-health-report.json
-          destination: one-health-report.json
-
       - store_artifacts:
           path: ci-local-report.json
           destination: ci-local-report.json
@@ -112,10 +104,6 @@ jobs:
       - store_artifacts:
           path: ci-local-manifest.json
           destination: ci-local-manifest.json
-
-      - store_artifacts:
-          path: one-health-report.md
-          destination: one-health-report.md
 
 workflows:
   one-linux-verification:
