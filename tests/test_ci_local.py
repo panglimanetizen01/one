@@ -422,6 +422,27 @@ class EvidenceManifestTests(unittest.TestCase):
                 verify_manifest(report, manifest, "a" * 40)
 
 
+
+class EvidencePlanConsistencyTests(unittest.TestCase):
+    def test_validator_plan_matches_runner_check_plan(self):
+        actual = [
+            ("Rust compiler", ("rustc", "--version")),
+            ("Cargo", ("cargo", "--version")),
+            *[(name, tuple(command)) for name, command in CHECKS],
+        ]
+        self.assertEqual(len(actual), len(EXPECTED_STEPS))
+        for (actual_name, actual_command), (expected_name, expected_command) in zip(
+            actual, EXPECTED_STEPS, strict=True
+        ):
+            self.assertEqual(actual_name, expected_name)
+            if expected_command is None:
+                executable = actual_command[0].replace("\\", "/").rsplit("/", 1)[-1].lower()
+                self.assertTrue(executable.startswith("python"))
+                self.assertEqual(actual_command[1:], ("tools/check_contract.py",))
+            else:
+                self.assertEqual(actual_command, expected_command)
+
+
 class CircleCIIntegrationTests(unittest.TestCase):
     def test_circleci_runs_local_runner_and_enforces_exact_sha_report(self):
         root = Path(__file__).resolve().parents[1]
