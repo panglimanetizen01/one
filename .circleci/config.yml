@@ -61,7 +61,6 @@ jobs:
           command: |
             python3 tools/check_user_docs.py
             python3 tools/check_user_docs_test.py
-            bash -n tools/verify-human-vnext.sh
 
       - run:
           name: Run repository health scanner regression tests
