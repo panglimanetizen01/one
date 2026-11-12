@@ -4,9 +4,9 @@
 
 **Audit baseline:** `01e0ad4a198d8095340da8d10adc3a6fa5ed9fa5` (CircleCI SUCCESS and independent Ubuntu/Windows Server 2025 parity PASS).
 
-**Candidate remediation commits:** `f16d100b2f416e14a708dc67de0fa9170ad23a10` and follow-up test correction `c512a902a61a3bdac61244d84a3851f5a15cbbbd`.
+**Candidate code/test commits:** `f16d100b2f416e14a708dc67de0fa9170ad23a10` and follow-up test correction `c512a902a61a3bdac61244d84a3851f5a15cbbbd`. This audit report is added in a subsequent documentation commit; the report commit itself changes the exact source SHA and must be reverified.
 
-**Important evidence boundary:** the current candidate head `c512a902...` has not yet received a terminal CircleCI result or fresh independent parity. The successful evidence on `01e0ad4...` must not be reused as proof for `c512a902...`.
+**Important evidence boundary:** the code/test snapshot at `c512a902...` had not yet received a terminal CircleCI result or fresh independent parity when this report was prepared. The follow-up documentation commit containing this report creates a new exact-SHA head; it must receive its own CircleCI and independent parity. The successful evidence on `01e0ad4...` must not be reused as proof for either later head.
 
 ## Confirmed defects and candidate remediations
 
