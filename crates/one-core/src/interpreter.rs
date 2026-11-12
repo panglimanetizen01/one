@@ -58,7 +58,8 @@ impl Interpreter {
 #[cfg(test)]
 mod orchestration_audit_tests {
     use super::*;
-    use crate::adapter::{AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, AdapterStatus, ToolAdapter};
+    use crate::adapter::{AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, ToolAdapter};
+    use crate::orchestration::AdapterStatus;
     use crate::governance::ScopeRule;
     use crate::orchestration::{AdapterId, EffectClass, SemanticCapabilityId};
     use crate::orchestration_audit::{AuditEvent, AuditEvidence};
