@@ -93,6 +93,24 @@ The existing numeric codes below remain valid for the current reference implemen
 - `R3018` — incompatible runtime operation.
 - `R3019` — runtime function missing.
 - `R3020` — runtime function arity mismatch.
+- `R3021` — event dispatch attempted before the program was executed.
+- `R3022` — duplicate list declaration in the current scope.
+- `R3023` — integer arithmetic overflow; checked arithmetic returns a deterministic runtime error.
+
+### Capability/orchestration runtime
+
+- `N3200` — orchestration target is not text.
+- `N3201` — filesystem content or SQL statement is not text.
+- `N3202` — database query parameter is not text.
+- `N3205` — orchestration is not configured for this interpreter.
+- `N3206` — adapter result could not be normalized.
+- `N3207` — adapter returned bytes that are not valid UTF-8 for a text result.
+- `N3208` — orchestration request is invalid.
+- `N3209` — capability policy denied the request.
+- `N3210` — orchestration request requires approval.
+- `N3211` — no compatible adapter is available.
+- `N3212` — adapter invocation failed.
+- `N3213` — adapter returned an unsuccessful execution result.
 
 ## Machine-readable structure
 
