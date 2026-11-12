@@ -21,10 +21,12 @@ impl Value {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Environment {
     scopes: Vec<HashMap<String, Value>>,
 }
+
+impl Default for Environment { fn default() -> Self { Self::new() } }
 
 impl Environment {
     pub fn new() -> Self { Self { scopes: vec![HashMap::new()] } }
@@ -46,4 +48,16 @@ impl Environment {
         false
     }
     pub fn get(&self, name: &str) -> Option<Value> { self.scopes.iter().rev().find_map(|scope| scope.get(name).cloned()) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_environment_has_a_root_scope_and_accepts_definitions() {
+        let mut environment = Environment::default();
+        environment.define("nilai", Value::Number(7));
+        assert_eq!(environment.get("nilai"), Some(Value::Number(7)));
+    }
 }

@@ -1,7 +1,7 @@
 use crate::adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 use crate::capability::Capability;
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
-use rusqlite::{types::ValueRef, Connection};
+use rusqlite::{types::ValueRef, Connection, OpenFlags};
 
 pub struct SqliteAdapter {
     metadata: AdapterMetadata,
@@ -76,7 +76,7 @@ impl ToolAdapter for SqliteAdapter {
             _ => return Err(AdapterError::InvalidArguments),
         };
 
-        let connection = Connection::open(path).map_err(|_| AdapterError::BackendFailure)?;
+        let connection = if path == ":memory:" { Connection::open_in_memory() } else { Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY) }.map_err(|_| AdapterError::BackendFailure)?;
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
@@ -128,5 +128,42 @@ mod tests {
             ))),
             Err(AdapterError::InvalidArguments)
         );
+    }
+}
+
+#[cfg(test)]
+mod read_only_tests {
+    use super::*;
+    use crate::orchestration::{EffectClass, SemanticCapabilityId};
+
+    fn query_request(path: String) -> AdapterRequest {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::DatabaseQuery,
+            Capability::DatabaseQuery,
+            ExecutionScope::resource(path),
+            EffectClass::Read,
+        );
+        AdapterRequest::new(request).with_argument(AdapterArgument::Text("SELECT 1".into()))
+    }
+
+    #[test]
+    fn missing_database_is_not_created_by_read_only_query() {
+        let path = std::env::temp_dir().join(format!("one-readonly-missing-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        assert!(!path.exists());
+
+        let result = SqliteAdapter::new().invoke(&query_request(path.to_string_lossy().into_owned()));
+
+        assert_eq!(result, Err(AdapterError::BackendFailure));
+        assert!(!path.exists(), "a read-only query must not create a database file");
+    }
+
+    #[test]
+    fn in_memory_database_remains_available_for_read_only_queries() {
+        let result = SqliteAdapter::new()
+            .invoke(&query_request(":memory:".into()))
+            .expect("in-memory query should remain available");
+        assert!(result.success);
+        assert_eq!(String::from_utf8(result.output).expect("UTF-8 result"), "1\\n");
     }
 }

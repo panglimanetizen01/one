@@ -248,3 +248,45 @@ fn failed_event_foreach_scope_is_cleaned_up() {
         }],
     );
 }
+
+fn execute_ir_expression(expression: one_core::ir::IrExpr) -> Result<one_core::interpreter::ExecutionResult, one_core::interpreter::RuntimeError> {
+    let program = one_core::ir::IrProgram {
+        statements: vec![one_core::ir::IrStatement::Action {
+            name: "tampilkan".into(),
+            args: vec![expression],
+        }],
+    };
+    Interpreter::new(CapabilitySet::none()).execute(&program)
+}
+
+#[test]
+fn integer_arithmetic_overflow_returns_stable_runtime_error() {
+    use one_core::ast::BinaryOp;
+    use one_core::ir::IrExpr;
+
+    let cases = vec![
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MAX)), op: BinaryOp::Add, right: Box::new(IrExpr::Number(1)) },
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MIN)), op: BinaryOp::Subtract, right: Box::new(IrExpr::Number(1)) },
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MAX)), op: BinaryOp::Multiply, right: Box::new(IrExpr::Number(2)) },
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MIN)), op: BinaryOp::Divide, right: Box::new(IrExpr::Number(-1)) },
+    ];
+
+    for expression in cases {
+        let error = execute_ir_expression(expression).expect_err("overflow must be reported, not panic or wrap");
+        assert_eq!(error.code, "R3023");
+    }
+}
+
+#[test]
+fn text_addition_is_rejected_as_a_type_mismatch() {
+    use one_core::ast::BinaryOp;
+    use one_core::ir::IrExpr;
+
+    let expression = IrExpr::Binary {
+        left: Box::new(IrExpr::Text("satu".into())),
+        op: BinaryOp::Add,
+        right: Box::new(IrExpr::Text("dua".into())),
+    };
+    let error = execute_ir_expression(expression).expect_err("text addition is not a numeric arithmetic operation");
+    assert_eq!(error.code, "R3018");
+}
