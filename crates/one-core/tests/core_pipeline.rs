@@ -135,3 +135,116 @@ fn rejects_scalar_declaration_when_list_name_already_exists() {
     let error = analyze(&program).expect_err("scalar declaration must not replace list");
     assert_eq!(error.0[0].code, "E2001");
 }
+
+
+fn assert_failed_event_preserves_outer_binding(
+    setup: Vec<one_core::IrStatement>,
+    failing_body: Vec<one_core::IrStatement>,
+) {
+    let mut statements = vec![one_core::IrStatement::Declaration {
+        name: "nilai".into(),
+        value: one_core::IrExpr::Number(1),
+    }];
+    statements.extend(setup);
+    statements.push(one_core::IrStatement::Event {
+        trigger: vec!["gagal".into()],
+        body: failing_body,
+    });
+    statements.push(one_core::IrStatement::Event {
+        trigger: vec!["baca".into()],
+        body: vec![one_core::IrStatement::Action {
+            name: "tampilkan".into(),
+            args: vec![one_core::IrExpr::Identifier("nilai".into())],
+        }],
+    });
+
+    let program = one_core::IrProgram { statements };
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    interpreter.execute(&program).expect("event definitions should register");
+    let error = interpreter
+        .dispatch_event("gagal")
+        .expect_err("unknown action should fail the event");
+    assert_eq!(error.code, "R3015");
+    let result = interpreter
+        .dispatch_event("baca")
+        .expect("later event should still see the original outer scope");
+    assert_eq!(result.output, vec!["1"]);
+}
+
+#[test]
+fn failed_event_conditional_scope_is_cleaned_up() {
+    assert_failed_event_preserves_outer_binding(
+        vec![],
+        vec![one_core::IrStatement::Conditional {
+            condition: one_core::IrExpr::Boolean(true),
+            then_block: vec![
+                one_core::IrStatement::Declaration {
+                    name: "nilai".into(),
+                    value: one_core::IrExpr::Number(2),
+                },
+                one_core::IrStatement::Action {
+                    name: "aksi_tidak_dikenal".into(),
+                    args: vec![],
+                },
+            ],
+            else_block: vec![],
+        }],
+    );
+}
+
+#[test]
+fn failed_event_while_scope_is_cleaned_up() {
+    assert_failed_event_preserves_outer_binding(
+        vec![],
+        vec![one_core::IrStatement::Loop {
+            kind: one_core::IrLoopKind::While {
+                condition: one_core::IrExpr::Boolean(true),
+            },
+            body: vec![
+                one_core::IrStatement::Declaration {
+                    name: "nilai".into(),
+                    value: one_core::IrExpr::Number(2),
+                },
+                one_core::IrStatement::Action {
+                    name: "aksi_tidak_dikenal".into(),
+                    args: vec![],
+                },
+            ],
+        }],
+    );
+}
+
+#[test]
+fn failed_event_foreach_scope_is_cleaned_up() {
+    assert_failed_event_preserves_outer_binding(
+        vec![
+            one_core::IrStatement::Action {
+                name: "buat daftar".into(),
+                args: vec![one_core::IrExpr::Identifier("items".into())],
+            },
+            one_core::IrStatement::Action {
+                name: "tambahkan".into(),
+                args: vec![
+                    one_core::IrExpr::Text("item".into()),
+                    one_core::IrExpr::Identifier("items".into()),
+                ],
+            },
+        ],
+        vec![one_core::IrStatement::Loop {
+            kind: one_core::IrLoopKind::ForEach {
+                variable: "item".into(),
+                iterable: one_core::IrExpr::Identifier("items".into()),
+            },
+            body: vec![
+                one_core::IrStatement::Declaration {
+                    name: "nilai".into(),
+                    value: one_core::IrExpr::Number(2),
+                },
+                one_core::IrStatement::Action {
+                    name: "aksi_tidak_dikenal".into(),
+                    args: vec![],
+                },
+            ],
+        }],
+    );
+}
