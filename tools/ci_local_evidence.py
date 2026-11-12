@@ -256,6 +256,10 @@ def main() -> int:
                 arch=args.arch,
             )
             print(f"Manifest written: {args.manifest} (validation_status={manifest['validation_status']})")
+            if manifest["validation_status"] != "PASS":
+                for error in manifest["validation_errors"]:
+                    print(f"Evidence validation failed: {error}", file=sys.stderr)
+                return 1
             return 0
         verify_manifest(
             args.report,

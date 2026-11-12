@@ -12,7 +12,7 @@ import json
 from unittest.mock import patch
 
 from tools.ci_local import CHECKS, collect_git_metadata, main, make_report, run_step
-from tools.ci_local_evidence import EXPECTED_STEPS, EvidenceValidationError, create_manifest, verify_manifest
+from tools.ci_local_evidence import EXPECTED_STEPS, EvidenceValidationError, create_manifest, main as evidence_main, verify_manifest
 
 
 class RunStepTests(unittest.TestCase):
@@ -338,6 +338,50 @@ class EvidenceManifestTests(unittest.TestCase):
             self.assertEqual(created["validation_status"], "FAIL")
             with self.assertRaises(EvidenceValidationError):
                 verify_manifest(report, manifest, "c" * 40)
+
+    def test_create_cli_exit_code_matches_manifest_validation(self):
+        cases = (
+            ("missing report", "MISSING_REPORT", None, "a" * 40, 1),
+            ("invalid JSON", "INVALID_JSON", "{not-json", "a" * 40, 1),
+            ("source SHA mismatch", "FAIL", self.valid_report("a" * 40), "c" * 40, 1),
+            ("valid report", "PASS", self.valid_report(), "a" * 40, 0),
+        )
+        for label, expected_status, report_payload, expected_sha, expected_exit in cases:
+            with self.subTest(case=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                report = root / "ci-local-report.json"
+                manifest = root / "ci-local-manifest.json"
+                if isinstance(report_payload, str):
+                    report.write_text(report_payload, encoding="utf-8")
+                elif report_payload is not None:
+                    report.write_text(json.dumps(report_payload), encoding="utf-8")
+
+                stdout = io.StringIO()
+                stderr = io.StringIO()
+                with (
+                    patch(
+                        "tools.ci_local_evidence.sys.argv",
+                        [
+                            "ci_local_evidence.py", "create",
+                            "--report", str(report),
+                            "--manifest", str(manifest),
+                            "--expected-source-sha", expected_sha,
+                        ],
+                    ),
+                    redirect_stdout(stdout),
+                    redirect_stderr(stderr),
+                ):
+                    self.assertEqual(evidence_main(), expected_exit)
+
+                self.assertTrue(manifest.is_file(), "diagnostic manifest must be retained")
+                diagnostic = json.loads(manifest.read_text(encoding="utf-8"))
+                self.assertEqual(diagnostic["validation_status"], expected_status)
+                if expected_status == "PASS":
+                    self.assertEqual(diagnostic["validation_errors"], [])
+                    self.assertEqual(stderr.getvalue(), "")
+                else:
+                    self.assertTrue(diagnostic["validation_errors"])
+                    self.assertIn("Evidence validation failed:", stderr.getvalue())
 
     def test_report_tampering_is_detected_by_manifest_digest(self):
         with tempfile.TemporaryDirectory() as directory:
