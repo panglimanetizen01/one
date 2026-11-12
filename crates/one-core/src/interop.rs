@@ -21,6 +21,39 @@ pub fn run_process(spec: &ProcessSpec, capabilities: &CapabilitySet) -> Result<P
 mod tests {
     use super::*;
 
+
+    #[test]
+    fn process_timeout_terminates_the_child_and_reports_timeout() {
+        use std::time::Duration;
+        let (program, args) = if cfg!(windows) {
+            ("cmd".to_owned(), vec!["/C".into(), "ping -n 10 127.0.0.1 >NUL".into()])
+        } else {
+            ("sh".to_owned(), vec!["-c".into(), "sleep 5".into()])
+        };
+        let spec = ProcessSpec { program, args, working_directory: None };
+        let limits = ProcessLimits { timeout: Duration::from_millis(200), max_stdout_bytes: 64, max_stderr_bytes: 64 };
+        let result = run_process_with_limits(&spec, &CapabilitySet::none().allow(Capability::Process), &limits)
+            .expect("allowed process should return a timeout result");
+        assert!(result.timed_out);
+        assert!(!result.success);
+    }
+
+    #[test]
+    fn process_output_is_bounded_and_truncation_is_reported() {
+        let spec = ProcessSpec {
+            program: "python".into(),
+            args: vec!["-c".into(), "import sys; sys.stdout.write('x'*4096); sys.stderr.write('y'*4096)".into()],
+            working_directory: None,
+        };
+        let limits = ProcessLimits { timeout: std::time::Duration::from_secs(10), max_stdout_bytes: 32, max_stderr_bytes: 24 };
+        let result = run_process_with_limits(&spec, &CapabilitySet::none().allow(Capability::Process), &limits)
+            .expect("allowed process should complete");
+        assert!(result.stdout.len() <= 32);
+        assert!(result.stderr.len() <= 24);
+        assert!(result.stdout_truncated);
+        assert!(result.stderr_truncated);
+    }
+
     #[test]
     fn denied_process_capability_never_spawns() {
         let spec = ProcessSpec { program: "one-test-process-that-must-not-run".into(), args: vec![], working_directory: None };
