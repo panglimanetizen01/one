@@ -164,6 +164,6 @@ mod read_only_tests {
             .invoke(&query_request(":memory:".into()))
             .expect("in-memory query should remain available");
         assert!(result.success);
-        assert_eq!(String::from_utf8(result.output).expect("UTF-8 result"), "1\\n");
+        assert_eq!(String::from_utf8(result.output).expect("UTF-8 result"), "1\n");
     }
 }
