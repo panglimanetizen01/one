@@ -175,3 +175,11 @@ The native Windows job must validate the DOS MZ header, PE signature, AMD64 mach
 ### PE32+ native verification hardening — latest source revision
 
 The Windows native artifact inspection now validates the DOS MZ header, PE signature, AMD64 machine field `0x8664`, and PE32+ optional-header magic `0x20B` before execution. The bounds check now requires the optional-header magic bytes to be present. `tools/check_contract.py` requires the optional-header validation guard, preventing the job from printing a PE32+ claim after checking only the machine field.
+
+
+### Candidate after shell and PE32+ guard corrections
+
+- Current migration candidate before this checkpoint: `5dcb7088910d0520252deffbdacf15caeffe907e`.
+- Config includes the Bash-only Linux command correction and a Windows PE32+ optional-header (`0x20B`) validation.
+- Static structural audit: 60 required contract paths exist; all 78 concrete docs-index references resolve; migration tree has zero `.github/` paths; Linux job contains no PowerShell `$env:`; Linux shell guard and PE32+ guard are present; all three Windows executor blocks use the documented nested `windows.medium` resource class.
+- The GitHub status endpoint returned no CircleCI statuses for this candidate at the last poll. This is NOT a PASS or a confirmed trigger; inspect the next exact-SHA status before treating the run as started.
