@@ -15,6 +15,13 @@ commands:
           name: Install Linux and Android cross-toolchains
           command: |
             set -euo pipefail
+            if ! command -v rustup >/dev/null 2>&1; then
+              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal --component rustfmt --component clippy
+            fi
+            source "$HOME/.cargo/env"
+            rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+            rustup default stable
+            echo 'source "$HOME/.cargo/env"' >> "$BASH_ENV"
             sudo apt-get update
             sudo apt-get install -y clang mingw-w64 binutils-x86-64-linux-gnu
             sdkmanager --licenses < <(yes)
@@ -81,13 +88,13 @@ jobs:
           keys:
             - one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
             - one-cargo-v1-{{ arch }}-
+      - setup-linux-cross-toolchains
       - run:
           name: Rust toolchain
           command: |
             rustc --version
             cargo --version
             python3 --version
-      - setup-linux-cross-toolchains
       - run:
           name: Contract artifacts
           command: python3 tools/check_contract.py
