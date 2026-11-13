@@ -1,7 +1,7 @@
 # Project ONE CI Contract
 
 **Canonical CI target:** CircleCI  
-**Migration state at 2026-11-13:** configuration introduced on the migration branch; exact-SHA jobs have started, but successful CircleCI verification and provider parity remain pending.  
+**Live migration state at 2026-11-14:** PR #95 HEAD `e36963a329d7f04e40278043d20f6cc86f314005`; CircleCI Linux is PASS and Windows is FAIL on this exact SHA. The first failing Windows step/root cause is not yet available from the current authenticated tool session. PR #95 remains draft/unmerged and main is unchanged; cross-platform parity is not yet proven.  
 **Canonical source repository:** `panglimanetizen01/one`  
 **Configuration:** `.circleci/config.yml`
 
@@ -37,7 +37,15 @@ The current canonical `main` tree does not contain a committed `Cargo.lock`. Acc
 
 The Windows setup explicitly installs Rust stable through rustup because the CircleCI Windows Server 2025 image's published software inventory does not list Rust/Cargo; every PowerShell step that invokes Cargo prepends `%USERPROFILE%\\.cargo\\bin` to PATH. It also installs MSYS2/MinGW-w64 and the exact Android NDK r27c package. Image inventory: https://circleci.com/developer/machine/image/windows-server-2025-gui. The downloaded Android NDK archive is SHA-256 checked before extraction. The expected digest is `27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494`.
 
-## First pipeline observations
+## Latest exact-SHA status — 2026-11-14
+
+- PR #95 branch `ci/circleci-migration-20261113`, exact HEAD `e36963a329d7f04e40278043d20f6cc86f314005`.
+- Workflow `62dcb9b5-814d-4303-b3e2-a9a0b99f19cf`: `one-linux` job `204f0cc7-d0e7-472f-a4cc-3e92c53158e9` SUCCESS; `one-windows` job `5128b82c-4b17-4670-8c47-7dbd7f4a124c` FAILURE.
+- The Windows status links to failure report `6f4e8066-370f-49c3-9cc6-e9734a9a7412`; the first failing step and root cause remain UNKNOWN until the authenticated CircleCI failure report/log is inspected. Do not infer a cause from the status alone or add blanket retries.
+- `.circleci/config.yml` is present on this migration branch; the three product GitHub Actions workflows are deleted on this branch. The source candidate on PR #92 predates this config and therefore reports “No configuration was found”; do not duplicate the config in PR #92.
+- The current assistant session exposes GitHub status summaries but not authenticated CircleCI job-log actions/CLI. PR #95 stays OPEN/DRAFT/UNMERGED; main remains unchanged.
+
+## Historical first pipeline observations
 
 CircleCI accepted the configuration and created Linux jobs, but the first observed Linux jobs failed. GitHub status contexts were `ci/circleci: one-linux` on `a213165cb175355c73412fe0787d11e6e0e9807f` and `17b81146dc610a44a369e29b36551f46e717ea9e`. The associated CircleCI workflow/job IDs are recorded in the verification record. Job logs were not accessible through the current ChatGPT integrations, so the failure root cause is UNKNOWN. The Android executor was changed from the Gen2-oriented `current` tag to the Gen1 `default` tag to match `resource_class: large`; this is a configuration correction, not a proven diagnosis. Recheck the latest PR SHA and inspect fresh job logs before claiming the issue is resolved.
 
