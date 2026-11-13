@@ -85,3 +85,16 @@ The public verification mirror remains infrastructure only; GitHub `main` remain
 - CircleCI supplied the CLI failure-report hint, but job logs were inaccessible through the available integrations. The exact failure step and root cause therefore remain UNKNOWN; do not label either failure as a Rust/product defect without logs.
 - Follow-up changes bootstrap Rust on the Android executor, install the GNU x86_64 linker explicitly, use the Android Gen1 `default` image with the `large` resource class, and avoid Cargo `--locked` while the repository has no lockfile.
 - Latest migration branch SHA at this update: `6af3ff690fe85a47dd94cb4deb6b749f7b8da4c9`. No PASS is claimed for this SHA; the GitHub status endpoint had not yet returned a CircleCI status for it.
+
+
+### Latest structural audit — 2026-11-13
+
+At migration branch SHA `94534c4e5ba6bba3acbf55f2838660df67ea2b81`:
+- Recursive Git tree contains 235 entries.
+- All 55 paths in the `tools/check_contract.py` required-artifact list exist.
+- All 74 concrete documentation-index references resolve to repository paths.
+- All 15 required CircleCI job/gate markers are present in `.circleci/config.yml`.
+- `Cargo.lock` is absent, and `--locked` is absent from CircleCI config.
+- The Python checker was not executed locally; this is a structural source/tree audit only.
+
+Temporary GitHub Actions run `43414203198` for SHA `94534c4e5ba6bba3acbf55f2838660df67ea2b81` failed on Ubuntu and Windows with zero executable steps. Treat it as runner/infrastructure evidence only. CircleCI had no reported status for this latest SHA at the time of the audit.
