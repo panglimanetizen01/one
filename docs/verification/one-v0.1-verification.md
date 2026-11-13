@@ -75,7 +75,7 @@ The public verification mirror remains infrastructure only; GitHub `main` remain
 - The config defines default Linux and Windows product CI, opt-in Linux/Windows release checks, and opt-in Windows native PE build/inspection/execution with stored artifact.
 - `tools/check_contract.py` now requires `.circleci/config.yml` and `docs/CI.md`, and statically checks that the config retains the named product/release/native gates.
 - CircleCI project integration, remote config validation, pipeline/job execution, exact-SHA PASS results, logs, and artifacts remain **NOT VERIFIED** in this checkpoint. The ChatGPT tool session currently exposes no authenticated CircleCI API/CLI action.
-- Legacy GitHub Actions workflows remain unchanged as a temporary safety net; their retirement is blocked on exact-SHA CircleCI parity. GitHub remains the source and PR host.
+- The three legacy GitHub Actions CI workflows are deleted from the migration branch; `main` remains unchanged until CircleCI exact-SHA parity is proven and the reviewed PR is merged. GitHub remains the source and PR host.
 
 
 ### CircleCI first-run failure evidence
