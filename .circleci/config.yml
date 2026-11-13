@@ -152,8 +152,8 @@ jobs:
   one-windows:
     machine:
       image: windows-server-2025-gui:current
-      resource_class: windows.medium
       shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
     environment:
       ONE_WINDOWS_CLANG: C:\msys64\mingw64\bin\clang.exe
       ONE_ANDROID_CLANG: C:\Android\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe
@@ -248,8 +248,8 @@ jobs:
   release-windows:
     machine:
       image: windows-server-2025-gui:current
-      resource_class: windows.medium
       shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
     environment:
       ONE_WINDOWS_CLANG: C:\msys64\mingw64\bin\clang.exe
       ONE_ANDROID_CLANG: C:\Android\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe
@@ -293,8 +293,8 @@ jobs:
   windows-native-verification:
     machine:
       image: windows-server-2025-gui:current
-      resource_class: windows.medium
       shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
     environment:
       ONE_WINDOWS_CLANG: C:\msys64\mingw64\bin\clang.exe
       ONE_ANDROID_CLANG: C:\Android\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe
