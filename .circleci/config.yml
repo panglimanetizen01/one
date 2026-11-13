@@ -117,7 +117,7 @@ jobs:
       - run:
           name: Clippy
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             cargo clippy --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
@@ -190,7 +190,6 @@ jobs:
           name: Workspace tests
           command: |
             $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo test --workspace --all-targets
       - run:
           name: Deterministic .oneir and .onepkg artifacts
@@ -276,7 +275,6 @@ jobs:
           name: Build
           command: |
             $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo build --workspace --all-targets
       - run:
           name: Clippy
@@ -287,7 +285,6 @@ jobs:
           name: Workspace tests
           command: |
             $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo test --workspace --all-targets
       - run:
           name: Real network runtime tests
@@ -297,7 +294,7 @@ jobs:
       - run:
           name: Offline verification
           command: |
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             .\tools\verify_offline.ps1
 
   windows-native-verification:
@@ -332,7 +329,6 @@ jobs:
           name: Build and test One
           command: |
             $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo test
             cargo clippy --all-targets -- -D warnings
             cargo build -p one-cli --bin one-native
@@ -340,7 +336,6 @@ jobs:
           name: Build Windows native target
           command: |
             $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo run -p one-cli --bin one-native -- build --target windows-x86_64 examples/hello.one one-windows-native.exe
             if (-not (Test-Path "examples\one-windows-native.exe")) {
               throw "Windows native artifact was not produced."
