@@ -17,7 +17,7 @@ class ProductCiContractTests(unittest.TestCase):
         cls.gitignore = GITIGNORE.read_text(encoding="utf-8").splitlines()
 
     def test_every_cargo_check_uses_locked_mode(self) -> None:
-        commands = re.findall(r"(?m)^\s*(?:CARGO_TARGET_DIR=[^\s]+\s+)?cargo\s+([^\n]+)$", self.config)
+        commands = re.findall(r"(?m)^\s*run:\s*cargo\s+([^\n]+)$", self.config)
         self.assertGreaterEqual(len(commands), 8, "expected direct product Cargo commands")
         for command in commands:
             with self.subTest(command=command):
@@ -48,7 +48,7 @@ class ProductCiContractTests(unittest.TestCase):
         self.assertNotEqual(ignored.returncode, 0, "Cargo.lock must not be ignored")
 
     def test_clippy_places_locked_after_external_subcommand(self) -> None:
-        clippy = re.search(r"(?m)^\s*cargo\s+clippy\s+([^\n]+)$", self.config)
+        clippy = re.search(r"(?m)^\s*run:\s*cargo\s+clippy\s+([^\n]+)$", self.config)
         self.assertIsNotNone(clippy, "expected direct Cargo Clippy command")
         self.assertTrue(clippy.group(1).startswith("--locked "), "Clippy must receive --locked after the subcommand")
 
