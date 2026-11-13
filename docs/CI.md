@@ -148,3 +148,8 @@ At migration branch SHA `e728f965165b21c72810c80dd64734912a916324`, the migratio
 - Windows job: `417b51de-5b84-43ac-a566-2e229464a4ff` — PENDING.
 
 This is the first observed default matrix on the branch with GitHub Actions CI removed. It is not a PASS; keep the PR draft until both jobs and the opt-in release/native workflows have terminal green results and their logs/artifacts are inspected.
+
+
+### Linux executor shell contract
+
+The `one-linux` job runs commands in Bash. PowerShell environment syntax such as `$env:PATH` is invalid there and must not be copied from the Windows jobs. The static contract checker rejects PowerShell `$env:` syntax inside the Linux job. Linux uses the executor-provided PATH and the Rustup environment sourced by the setup command through `BASH_ENV`.
