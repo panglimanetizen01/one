@@ -181,3 +181,12 @@ This is the first default Linux/Windows matrix observed after workflow retiremen
 ### PE32+ native artifact inspection hardening — 2026-11-13
 
 The Windows native verification now checks the DOS MZ header, PE signature, AMD64 machine field `0x8664`, and PE32+ optional-header magic `0x20B`; the bounds check ensures both optional-header bytes are present. The static contract checker requires this PE32+ guard. This strengthens the test contract but is not execution evidence.
+
+ 
+### Exact-SHA retry after Linux shell and PE32+ corrections — 2026-11-13
+
+Candidate `36a4051913c0063f0237bf41cf4b25ebc250e493`, workflow `e42b0304-1241-4327-807d-03926d7d0422`:
+- Linux `65187706-c4ac-4142-89b0-d1c93d7fa36c` — PENDING.
+- Windows `d51c952e-6484-4f6a-9375-bc57576110c6` — PENDING.
+
+The candidate contains the Linux Bash shell fix and the PE32+ optional-header guard. The preceding candidate `2095098ea0e97da1c06c3f260f1f95218a06a339` failed on both platforms; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`. Exact failing steps remain unknown without logs. No PASS is claimed.

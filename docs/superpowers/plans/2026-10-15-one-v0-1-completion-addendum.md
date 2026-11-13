@@ -94,3 +94,8 @@ A forensic config inspection found seven PowerShell `$env:PATH` assignments insi
 ### PE32+ optional-header validation — 2026-11-13
 
 The dedicated Windows native job now verifies the PE32+ optional-header magic (`0x20B`) and checks that the optional-header bytes are present before reporting a PE32+ artifact. The Python contract checker enforces this guard. This is a test-quality improvement, not proof of a successful native build or execution.
+
+ 
+### Exact-SHA retry — 2026-11-13
+
+Candidate `36a4051913c0063f0237bf41cf4b25ebc250e493` triggered CircleCI workflow `e42b0304-1241-4327-807d-03926d7d0422`; Linux job `65187706-c4ac-4142-89b0-d1c93d7fa36c` and Windows job `d51c952e-6484-4f6a-9375-bc57576110c6` were PENDING at last poll. No terminal PASS is claimed.

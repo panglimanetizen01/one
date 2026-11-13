@@ -38,3 +38,6 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
  
 - Strengthened Windows native artifact verification to assert the PE32+ optional-header magic (`0x20B`) and bounds before claiming a PE32+ AMD64 artifact.
+
+ 
+- Latest CircleCI retry on `36a4051913c0063f0237bf41cf4b25ebc250e493` started workflow `e42b0304-1241-4327-807d-03926d7d0422`; Linux and Windows jobs were pending at last poll. The previous candidate failed on both platforms; exact failure report remains inaccessible.

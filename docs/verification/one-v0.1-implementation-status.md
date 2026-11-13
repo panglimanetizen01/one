@@ -72,3 +72,6 @@ The migration branch now removes all three legacy GitHub Actions workflows and h
 
  
 The Windows native-verification gate was strengthened to validate the PE32+ optional-header magic (`0x20B`) in addition to the DOS MZ signature, PE signature, and AMD64 machine field (`0x8664`). The static contract checker requires this guard. This is a verification-contract improvement; CircleCI execution remains unproven until the exact-SHA job passes.
+
+ 
+The latest exact-SHA CircleCI retry on `36a4051913c0063f0237bf41cf4b25ebc250e493` started workflow `e42b0304-1241-4327-807d-03926d7d0422`: Linux job `65187706-c4ac-4142-89b0-d1c93d7fa36c` and Windows job `d51c952e-6484-4f6a-9375-bc57576110c6` were PENDING at last poll. The candidate includes the Bash shell correction and PE32+ optional-header guard. Previous candidate `2095098...` failed both jobs; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`; exact root cause unknown without logs.

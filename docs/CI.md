@@ -183,3 +183,12 @@ The Windows native artifact inspection now validates the DOS MZ header, PE signa
 - Config includes the Bash-only Linux command correction and a Windows PE32+ optional-header (`0x20B`) validation.
 - Static structural audit: 60 required contract paths exist; all 78 concrete docs-index references resolve; migration tree has zero `.github/` paths; Linux job contains no PowerShell `$env:`; Linux shell guard and PE32+ guard are present; all three Windows executor blocks use the documented nested `windows.medium` resource class.
 - The GitHub status endpoint returned no CircleCI statuses for this candidate at the last poll. This is NOT a PASS or a confirmed trigger; inspect the next exact-SHA status before treating the run as started.
+
+ 
+### Current exact-SHA retry after shell and PE32+ corrections
+
+At candidate SHA `36a4051913c0063f0237bf41cf4b25ebc250e493`, CircleCI workflow `e42b0304-1241-4327-807d-03926d7d0422` started:
+- Linux job `65187706-c4ac-4142-89b0-d1c93d7fa36c` — PENDING.
+- Windows job `d51c952e-6484-4f6a-9375-bc57576110c6` — PENDING.
+
+This candidate contains the Bash-only Linux command fix, Linux shell syntax regression guard, and PE32+ optional-header validation plus checker guard. The prior candidate `2095098ea0e97da1c06c3f260f1f95218a06a339` failed on both platforms; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`. The exact failed steps remain unknown without the report. Do not claim the latest corrections fixed those failures until the current jobs are terminal and logs are inspected.
