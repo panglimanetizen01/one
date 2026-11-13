@@ -48,7 +48,6 @@ The current `.circleci/config.yml` contains one `linux-verify` job. It provision
 
 ### 5. Independent verifier matrix for source SHA 6b
 
-Verifier branch `verification` HEAD at the 6b matrix was `c4feae062ae76b0a9e5f6c75ad13f5ee72513331`. Its `CANONICAL_COMMIT.txt`, active `CANDIDATE_VERIFICATION.md` section, and README target pointed to `6b5070e...`. The separate `LOCAL_CI_CANONICAL_COMMIT.txt` was unchanged.
 
 At the latest poll before documentation-only source commits:
 - 14 SUCCESS: synthetic-trust package lab #42881168763; Linux distro #42881168777; E4 SEC-05 #42881168514; Android cross-build #42881168917; focused stdlib/database #42881168836; E4 resource guard #42881168517; Android device artifact build #42881168813; x86_64 fallback cross-build #42881168802; E4 filesystem #42881168496; health scanner #42881168728; E1 Windows #42881168521; Cargo lock #42881168962; E1 milestone #42881168872; cross-platform Linux/Windows #42881168997.
@@ -82,7 +81,6 @@ Inventory completeness is verified at tree-response level. A semantic audit of a
 
 1. Resolve the live PR #94 HEAD after the documentation commits above. Check CircleCI status for that exact SHA.
 2. Inspect CircleCI through authenticated read-only Termux API: actual job number, `git rev-parse HEAD`, every step status/exit code/log, artifact names/IDs/bytes, embedded source SHA, and SHA-256.
-3. Only after CircleCI proves the latest source SHA and it is stable, advance verifier `CANONICAL_COMMIT.txt`, active `CANDIDATE_VERIFICATION.md`, and README pointer together. Preserve the separate PR #92 Local CI pin.
 4. Run the exact-SHA verifier matrix on the new candidate. Inspect every job/step/log/artifact. Windows Server 2025 native execution and Android API 35 AArch64 runtime require their own exact-SHA runtime evidence.
 5. Once all required workflows are terminal, reconcile evidence index and perform one fresh ledger gate evaluation. Keep NOT PASSED unless the gate itself returns PASS.
 6. Continue semantic review of all relevant source/spec/contract/user-guide/verification paths, workflow trigger/path-filter/fallback routes, Markdown derivatives, broken links, stale anchors, examples, and artifact consumers. Fix every actionable issue with regression coverage and CI; continue independent work while blocked items are investigated.
@@ -93,5 +91,5 @@ Inventory completeness is verified at tree-response level. A semantic audit of a
 - Do not rerun completed successful 6b matrix scopes on unchanged SHA 6b.
 - Do not rerun early gate #42881168688 before all required matrix runs are terminal and the evidence index is reconciled.
 - Do not repeat source Actions runs #42880624346/#42880624330 unchanged; their jobs failed before runner assignment.
-- Do not change `LOCAL_CI_CANONICAL_COMMIT.txt`, dispatch protected E2 provenance, merge, release, alter secrets/trust stores, change branch protection, or remove Actions workflows without explicit authorization.
 - Termux is read-only verification only. All source, tests, workflow, and documentation changes happen on GitHub branches.
+
