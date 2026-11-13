@@ -69,3 +69,8 @@ The original task ledger records the historical GitHub Actions CI implementation
 ### Windows toolchain provisioning correction — 2026-11-13
 
 CircleCI's published Windows Server 2025 image inventory does not list Rust/Cargo. The Windows jobs now install Rust stable through rustup and explicitly add the user Cargo bin directory to PATH in every Cargo-bearing PowerShell step. This addresses a guaranteed missing prerequisite; the earlier failed job's exact root cause remains unknown without its log. The next CircleCI run must prove the correction.
+
+
+### Dual-platform CircleCI failure — 2026-11-13
+
+The corrected config ran on SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`; both Linux and Windows jobs failed under workflow `e5a0662d-023a-4e3d-9174-62a7aa55329a`, failure-report pipeline `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`. The exact cause is unknown without logs. No speculative config changes are authorized by this evidence; retrieve the failure report and fix the specific failed step.
