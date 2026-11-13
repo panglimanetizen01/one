@@ -101,7 +101,7 @@ Any future addition of structured `Name` nodes, component spans, full node range
 
 **Status:** Accepted
 
-CircleCI is the canonical CI execution provider for Project ONE. GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface. The CI migration must preserve the product checks and platform boundaries previously implemented by the GitHub Actions workflows. Existing GitHub Actions workflows may be retired only after equivalent CircleCI Linux and Windows jobs have passed on the same exact source SHA and their logs/artifacts have been inspected. No CI migration may alter One grammar, semantics, compiler, interpreter, runtime, CLI, or user experience merely to accommodate tooling.
+CircleCI is the canonical CI execution provider for Project ONE. GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface. The CI migration must preserve the product checks and platform boundaries previously implemented by the GitHub Actions workflows. The migration branch removes the three Project ONE GitHub Actions CI workflows to avoid a parallel CI path. The default branch remains unchanged until the migration PR is eligible to merge. Merge is blocked until equivalent CircleCI Linux and Windows jobs pass on the same exact source SHA and their logs/artifacts have been inspected. No CI migration may alter One grammar, semantics, compiler, interpreter, runtime, CLI, or user experience merely to accommodate tooling.
 
 
 
