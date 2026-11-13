@@ -79,7 +79,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - one-cargo-v1-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
             - one-cargo-v1-{{ arch }}-
       - run:
           name: Rust toolchain
@@ -119,7 +119,7 @@ jobs:
           name: HTTP GET CLI vertical slice
           command: cargo test -p one-cli --test http_get_orchestration
       - save_cache:
-          key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.lock" }}
+          key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
           paths:
             - ~/.cargo/registry
             - ~/.cargo/git
@@ -276,14 +276,14 @@ jobs:
           name: Build and test One
           command: |
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
-            cargo test --locked
-            cargo clippy --all-targets --locked -- -D warnings
-            cargo build -p one-cli --bin one-native --locked
+            cargo test
+            cargo clippy --all-targets -- -D warnings
+            cargo build -p one-cli --bin one-native
       - run:
           name: Build Windows native target
           command: |
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
-            cargo run -p one-cli --bin one-native --locked -- build --target windows-x86_64 examples/hello.one one-windows-native.exe
+            cargo run -p one-cli --bin one-native -- build --target windows-x86_64 examples/hello.one one-windows-native.exe
             if (-not (Test-Path "examples\one-windows-native.exe")) {
               throw "Windows native artifact was not produced."
             }
