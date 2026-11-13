@@ -213,3 +213,10 @@ At PR #95 HEAD `0d33533fd2c1fef2a4ec648549dbd1fb18b6ba0c`, GitHub now reports:
 The Windows failure is now terminal, but the first failed step and diagnostic output have not been retrieved. The current agent session exposes GitHub/Notion operations but no authenticated CircleCI CLI, CircleCI MCP connector, or CircleCI API action. CircleCI API endpoints are inaccessible through the available web retrieval channel. Do not infer a cause from the status description, do not make speculative edits, and do not add blanket retries.
 
 Required next step: run `circleci run get 24b70353-4030-4a3a-86d2-842ed4dc6bb3 --failure-report` using an authenticated CircleCI CLI or connected CircleCI CLI MCP, identify the first failing Windows step and its evidence, then make the smallest confirmed fix. Re-poll both platforms against the resulting exact SHA. Keep PR #95 OPEN / DRAFT / UNMERGED; `main` remains unchanged. No CI PASS is claimed.
+
+
+### MSYS2 Windows CI provisioning — 2026-11-13
+
+The Windows cross-toolchain bootstrap now follows the official MSYS2 CI sequence: launch the extracted base environment once, run two complete `pacman --noconfirm -Syuu` passes (core update followed by the remaining full update), then install the MinGW-w64 Clang/toolchain packages. The two-pass update is required because core package updates can invalidate the running MSYS2 shell; the second invocation completes the upgrade after the first pass. The contract checker requires the shell-initialization command and the full-upgrade command marker so the setup does not regress to a single `pacman -Syu` pass.
+
+This is a source-backed provisioning hardening based on the MSYS2 CI guide. It is not yet proven to be the root cause of the prior Windows job failure because that job's failure log remains unavailable. Verify the next exact-SHA Windows run and inspect its first failed step if it still fails.
