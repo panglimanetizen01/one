@@ -35,7 +35,7 @@ The following pipeline parameters default to `false` and are intended for manual
 
 The current canonical `main` tree does not contain a committed `Cargo.lock`. Accordingly, the CircleCI cache key hashes the root/workspace manifests and Rust toolchain file, and the dedicated Windows job does not pass Cargo's `--locked` flag. The contract checker rejects reintroducing `--locked` until a lockfile is committed.
 
-The Windows cross-toolchain setup installs MSYS2/MinGW-w64 and the exact Android NDK r27c package. The downloaded Android NDK archive is SHA-256 checked before extraction. The expected digest is `27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494`.
+The Windows setup explicitly installs Rust stable through rustup because the CircleCI Windows Server 2025 image's published software inventory does not list Rust/Cargo; every PowerShell step that invokes Cargo prepends `%USERPROFILE%\\.cargo\\bin` to PATH. It also installs MSYS2/MinGW-w64 and the exact Android NDK r27c package. Image inventory: https://circleci.com/developer/machine/image/windows-server-2025-gui. The downloaded Android NDK archive is SHA-256 checked before extraction. The expected digest is `27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494`.
 
 ## First pipeline observations
 
@@ -104,3 +104,10 @@ At SHA `12d4006ecc239e9ae3fb6b3fc191a1d50dd17317`, CircleCI workflow `5f028c06-b
 - Windows job `d7e7de1d-0eb0-4485-957b-9882422701b3`.
 
 No terminal results are available for this latest SHA. The preceding Windows failure and its inaccessible failure report remain an open blocker.
+
+
+### Windows executor provisioning finding — 2026-11-13
+
+The Windows job failed on SHA `06a8d54654d671c9b642547eec1607f087434c6f` (workflow `42d15225-5ab1-4ab8-bb64-dbbf208e057b`, job `03c291bc-d501-4ac9-972b-7962d30ae50a`; failure-report pipeline `50b8afe4-3e92-4ae3-827a-89e2097056f8`). The log remains inaccessible, so this is not a proven root-cause diagnosis.
+
+Independent inspection of CircleCI's published Windows image inventory shows Rust/Cargo are not listed as preinstalled. This was a guaranteed provisioning defect in the original job definition, which assumed `rustc` and `cargo` were already on PATH. The config now installs Rust stable explicitly and prefixes the Cargo bin directory in every Windows Cargo step. This correction is justified by the image inventory; do not claim it explains the prior failure until a fresh exact-SHA job passes.
