@@ -99,3 +99,8 @@ The dedicated Windows native job now verifies the PE32+ optional-header magic (`
 ### Exact-SHA retry — 2026-11-13
 
 Candidate `36a4051913c0063f0237bf41cf4b25ebc250e493` triggered CircleCI workflow `e42b0304-1241-4327-807d-03926d7d0422`; Linux job `65187706-c4ac-4142-89b0-d1c93d7fa36c` and Windows job `d51c952e-6484-4f6a-9375-bc57576110c6` were PENDING at last poll. No terminal PASS is claimed.
+
+ 
+### Latest exact-SHA retry — 2026-11-13
+
+SHA `54386f415062d4c21a7acb5508d90fea4ba5cdef`, workflow `ca11e9e9-d870-43d8-8ea0-88949a1f3f62`: Linux job `d5947530-f1bb-4136-b137-f037a72b99a3` and Windows job `1739d1cc-b23c-40a6-924b-201616b4af6a` were pending at last poll. The exact-SHA structural audit passed; no executable PASS is claimed.

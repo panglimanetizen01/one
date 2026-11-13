@@ -192,3 +192,12 @@ At candidate SHA `36a4051913c0063f0237bf41cf4b25ebc250e493`, CircleCI workflow `
 - Windows job `d51c952e-6484-4f6a-9375-bc57576110c6` — PENDING.
 
 This candidate contains the Bash-only Linux command fix, Linux shell syntax regression guard, and PE32+ optional-header validation plus checker guard. The prior candidate `2095098ea0e97da1c06c3f260f1f95218a06a339` failed on both platforms; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`. The exact failed steps remain unknown without the report. Do not claim the latest corrections fixed those failures until the current jobs are terminal and logs are inspected.
+
+ 
+### Latest CircleCI retry — structural audit and current run
+
+At SHA `54386f415062d4c21a7acb5508d90fea4ba5cdef`, workflow `ca11e9e9-d870-43d8-8ea0-88949a1f3f62`:
+- Linux job `d5947530-f1bb-4136-b137-f037a72b99a3` — PENDING.
+- Windows job `1739d1cc-b23c-40a6-924b-201616b4af6a` — PENDING.
+
+Structural audit at this exact SHA: all 60 required contract paths present; all 78 concrete docs-index references resolve; 6 valid/6 invalid/3 golden fixtures; all five grammar markers present; all 21 CircleCI markers present; no `$env:` in Linux; Linux shell guard and PE32+ guard present; three Windows machine executor blocks correctly nested; no Cargo.lock/`--locked`; no `.github/` paths; release no-upgrade rule preserved. This is a structural mirror, not execution of the Python checker. Prior candidate `2095098...` failed both platforms with failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`; exact failing steps remain unknown without logs.

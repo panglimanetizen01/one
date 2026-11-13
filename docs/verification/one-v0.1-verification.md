@@ -190,3 +190,12 @@ Candidate `36a4051913c0063f0237bf41cf4b25ebc250e493`, workflow `e42b0304-1241-43
 - Windows `d51c952e-6484-4f6a-9375-bc57576110c6` — PENDING.
 
 The candidate contains the Linux Bash shell fix and the PE32+ optional-header guard. The preceding candidate `2095098ea0e97da1c06c3f260f1f95218a06a339` failed on both platforms; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`. Exact failing steps remain unknown without logs. No PASS is claimed.
+
+ 
+### Latest exact-SHA CircleCI retry — 2026-11-13
+
+SHA `54386f415062d4c21a7acb5508d90fea4ba5cdef`, workflow `ca11e9e9-d870-43d8-8ea0-88949a1f3f62`:
+- Linux `d5947530-f1bb-4136-b137-f037a72b99a3` — PENDING.
+- Windows `1739d1cc-b23c-40a6-924b-201616b4af6a` — PENDING.
+
+Structural audit: 60 required paths and 78 docs-index refs resolve; fixtures 6/6/3; five grammar markers; all 21 CI markers; Linux Bash syntax guard; Windows PE32+ optional-header guard; three correct Windows executor blocks; zero `.github/` files. This is not a CircleCI PASS. Prior candidate `2095098...` failed both platforms; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`, exact failed steps unknown.

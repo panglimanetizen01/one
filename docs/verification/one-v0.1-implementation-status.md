@@ -75,3 +75,6 @@ The Windows native-verification gate was strengthened to validate the PE32+ opti
 
  
 The latest exact-SHA CircleCI retry on `36a4051913c0063f0237bf41cf4b25ebc250e493` started workflow `e42b0304-1241-4327-807d-03926d7d0422`: Linux job `65187706-c4ac-4142-89b0-d1c93d7fa36c` and Windows job `d51c952e-6484-4f6a-9375-bc57576110c6` were PENDING at last poll. The candidate includes the Bash shell correction and PE32+ optional-header guard. Previous candidate `2095098...` failed both jobs; failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`; exact root cause unknown without logs.
+
+ 
+Latest CircleCI candidate `54386f415062d4c21a7acb5508d90fea4ba5cdef` triggered workflow `ca11e9e9-d870-43d8-8ea0-88949a1f3f62`; Linux `d5947530-f1bb-4136-b137-f037a72b99a3` and Windows `1739d1cc-b23c-40a6-924b-201616b4af6a` were pending at last poll. Structural audit passed (60 required paths, 78 index refs, fixtures 6/6/3, all CI markers, Linux Bash guard, PE32+ guard, zero GitHub Actions files); the Python checker itself has not been run outside CircleCI.

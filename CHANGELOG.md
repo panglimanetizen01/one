@@ -41,3 +41,6 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
  
 - Latest CircleCI retry on `36a4051913c0063f0237bf41cf4b25ebc250e493` started workflow `e42b0304-1241-4327-807d-03926d7d0422`; Linux and Windows jobs were pending at last poll. The previous candidate failed on both platforms; exact failure report remains inaccessible.
+
+ 
+- Structural audit at `54386f415062d4c21a7acb5508d90fea4ba5cdef` passed: 60 required paths, 78 docs-index refs, fixtures 6/6/3, Linux shell guard, PE32+ guard, and no legacy GitHub Actions paths. CircleCI Linux/Windows were pending at last poll.
