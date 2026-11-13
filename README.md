@@ -167,6 +167,3 @@ The private GitHub repository remains the source of truth. Verification mirrors 
 CircleCI is the selected canonical CI provider for Project ONE. The migration is in progress on `ci/circleci-migration-20261113`: the CircleCI configuration and its product/release/native-verification workflows have been added, but exact-SHA CircleCI execution has not yet been observed. Existing GitHub Actions workflows remain temporarily unchanged until CircleCI demonstrates equivalent green Linux and Windows checks. See [`docs/CI.md`](docs/CI.md) for the provider boundary and completion criteria.
 
 
-## CI execution provider
-
-CircleCI is the selected canonical CI provider for Project ONE. The migration is in progress on `ci/circleci-migration-20261113`: the CircleCI configuration and its product/release/native-verification workflows have been added, but exact-SHA CircleCI execution has not yet been observed. Existing GitHub Actions workflows remain temporarily unchanged until CircleCI demonstrates equivalent green Linux and Windows checks. See [`docs/CI.md`](docs/CI.md) for the provider boundary and completion criteria.
