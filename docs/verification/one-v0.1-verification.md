@@ -150,3 +150,12 @@ SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`, workflow `e5a0662d-023a-4e3d-917
 - Failure-report pipeline ID: `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`.
 
 Both jobs failed after the Windows Rust bootstrap and executor-schema corrections were present. The exact failing step/root cause is UNKNOWN because the job logs are inaccessible. No product source failure is inferred. Further changes must be evidence-led from the failure report.
+
+
+### Current CircleCI retry — 2026-11-13
+
+SHA `637ab548210a948f177186eb3a76381330f401f0`, workflow `b8e52e70-281f-4ac7-a898-a21d45ceedd9`:
+- Linux job `a26c2b6d-c66e-43b1-8337-108220e5dd4d` — PENDING.
+- Windows job `437e36cd-b267-407e-8919-92ce2e1a1a90` — PENDING.
+
+The config did not change after the preceding dual-platform failure; this retry follows documentation/verification record updates only.
