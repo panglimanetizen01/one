@@ -118,3 +118,14 @@ Independent inspection of CircleCI's published Windows image inventory shows Rus
 - Android Gen1 uses `android:default` with job-level `resource_class: large`; CircleCI documents that Gen2 uses `android:current` with a `.gen2` resource class: https://circleci.com/docs/guides/execute/android-machine-image/
 - Windows Server 2025 machine executor nests `resource_class: windows.medium` inside the `machine` block, alongside `image` and `shell`, matching CircleCI's published example: https://circleci.com/developer/machine/image/windows-server-2025-gui
 - `tools/check_contract.py` enforces this exact Windows machine block for all three Windows jobs, plus explicit Rust/Cargo PATH prefixes in every Windows command block that invokes Rust/Cargo.
+
+
+### Latest Linux + Windows job failure — 2026-11-13
+
+On SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`, both default CircleCI jobs transitioned from pending to failure:
+- Workflow: `e5a0662d-023a-4e3d-9174-62a7aa55329a`.
+- Linux job: `e87663d5-3843-4078-b155-efbb4c074a8d`.
+- Windows job: `5a0d780e-0521-4a90-80da-9293718266de`.
+- Failure-report pipeline ID for both: `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`.
+
+This run used the corrected Android Gen1 image/resource-class pairing, explicit Windows Rust installation/PATH, and nested Windows machine resource classes. Both platforms failing in the same workflow suggests a shared setup/integration/contract issue may exist, but that is not a diagnosis. The exact failing steps are UNKNOWN because CircleCI logs/failure reports are not accessible through the current ChatGPT tools. Do not change more provisioning based on speculation; retrieve the failure report before the next targeted fix.
