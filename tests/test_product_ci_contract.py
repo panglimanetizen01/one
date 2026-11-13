@@ -6,14 +6,14 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CIRCLECI = ROOT / ".circleci" / "config.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
 GITIGNORE = ROOT / ".gitignore"
 
 
 class ProductCiContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.config = CIRCLECI.read_text(encoding="utf-8")
+        cls.config = WORKFLOW.read_text(encoding="utf-8")
         cls.gitignore = GITIGNORE.read_text(encoding="utf-8").splitlines()
 
     def test_every_cargo_check_uses_locked_mode(self) -> None:
