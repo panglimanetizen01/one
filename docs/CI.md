@@ -83,3 +83,15 @@ CircleCI has now started both default product jobs for migration SHA `9776d7bdab
 - Windows job: `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02`, status PENDING/RUNNING at last poll.
 
 This is a valid exact-SHA execution trigger, not a PASS. Wait for terminal job states and inspect logs/artifacts before proceeding to release/native opt-in workflows or retiring GitHub Actions.
+
+
+### Windows first-run failure and latest retry
+
+On SHA `9776d7bdab72397cb533b052f7d5dfa2c0bad106`, CircleCI Windows job `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02` failed. The status description supplied failure-report pipeline ID `f84b18b4-80e2-4c21-8a04-ff36deacba81`. The job log is not accessible through the current ChatGPT integrations, so the failed step and root cause remain UNKNOWN. Linux was still pending at last poll for that SHA.
+
+A subsequent documentation/contract-checker update triggered both default jobs again on SHA `a1dd2b53a257a4a977bdf501c276e64f3046bf91`:
+- Workflow `94c0cd5e-b92a-45c4-9866-e10707ed7f24`
+- Linux job `3f57923e-2155-45e0-9227-b9a2829a4b32` — PENDING at last poll
+- Windows job `560f8b62-e133-4534-a892-b85e024bad4b` — PENDING at last poll
+
+Do not infer the Windows failure cause from timing or setup commands. Obtain the CircleCI failure report before changing the Windows provisioning path.
