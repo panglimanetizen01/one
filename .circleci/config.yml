@@ -90,14 +90,6 @@ jobs:
             cp target/one-health-cli/debug/one target/debug/one
             python3 -c 'import os,sys; p=sys.argv[1]; n=os.stat(p).st_nlink; print("trusted CLI hard-link count:", n); sys.exit(0 if n == 1 else 1)' target/debug/one
 
-      - store_artifacts:
-          path: ci-local-report.json
-          destination: ci-local-report.json
-
-      - store_artifacts:
-          path: ci-local-manifest.json
-          destination: ci-local-manifest.json
-
 workflows:
   one-linux-verification:
     jobs:
