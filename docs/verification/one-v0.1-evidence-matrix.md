@@ -16,7 +16,7 @@ This matrix ties each release claim to a canonical artifact. A claim is not cons
 | Process interoperability | `docs/spec/one-v0.1-interop.md`, `interop.rs` | process-boundary tests | IMPLEMENTED / independently exercised |
 | CLI | `crates/one-cli/src/main.rs`, `docs/spec/one-v0.1-cli-contract.md` | CLI integration + smoke tests | VERIFIED within recorded exact-SHA platform boundaries |
 | Contract consistency | `tools/check_contract.py` | artifact/index/fixture scan | VERIFIED when executed against recorded verification revisions |
-| CircleCI provider migration | `.circleci/config.yml`, `docs/CI.md`, `tools/check_contract.py` | CircleCI config validation + exact-SHA Linux/Windows jobs + release/native job evidence + legacy workflow retirement | CONFIGURATION ADDED on migration branch; CircleCI execution and parity PENDING |
+| CircleCI provider migration | `.circleci/config.yml`, `docs/CI.md`, `tools/check_contract.py` | CircleCI config validation + exact-SHA Linux/Windows jobs + release/native job evidence + legacy workflow retirement | CONFIGURATION ADDED; PR #95 exact SHA `e36963a329d7f04e40278043d20f6cc86f314005`: Linux PASS, Windows FAIL (first failing step/root cause UNKNOWN); release/native evidence pending |
 | Conformance | `docs/testing/conformance.md`, `crates/one-core/tests/conformance.rs` | fixture runner | IMPLEMENTED / independently exercised |
 | Golden outputs | `tests/golden/*.snap` | executable comparison tests | IMPLEMENTED / independently exercised |
 | Deterministic `.oneir` | `tools/verify_exact_sha.sh`, deterministic CLI test | byte-deterministic build/package evidence | VERIFIED within recorded exact-SHA platform boundaries |
