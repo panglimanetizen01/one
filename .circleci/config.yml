@@ -80,7 +80,7 @@ commands:
 jobs:
   one-linux:
     machine:
-      image: android:current
+      image: android:default
     resource_class: large
     steps:
       - checkout
@@ -184,7 +184,7 @@ jobs:
 
   release-linux:
     machine:
-      image: android:current
+      image: android:default
     resource_class: large
     steps:
       - checkout
