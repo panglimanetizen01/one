@@ -104,8 +104,4 @@ Any future addition of structured `Name` nodes, component spans, full node range
 CircleCI is the canonical CI execution provider for Project ONE. GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface. The CI migration must preserve the product checks and platform boundaries previously implemented by the GitHub Actions workflows. Existing GitHub Actions workflows may be retired only after equivalent CircleCI Linux and Windows jobs have passed on the same exact source SHA and their logs/artifacts have been inspected. No CI migration may alter One grammar, semantics, compiler, interpreter, runtime, CLI, or user experience merely to accommodate tooling.
 
 
-## ADR-0017 — CircleCI is the canonical CI execution provider
 
-**Status:** Accepted
-
-CircleCI is the canonical CI execution provider for Project ONE. GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface. The CI migration must preserve the product checks and platform boundaries previously implemented by the GitHub Actions workflows. Existing GitHub Actions workflows may be retired only after equivalent CircleCI Linux and Windows jobs have passed on the same exact source SHA and their logs/artifacts have been inspected. No CI migration may alter One grammar, semantics, compiler, interpreter, runtime, CLI, or user experience merely to accommodate tooling.
