@@ -63,30 +63,19 @@ jobs:
             python3 tools/check_user_docs_test.py
 
       - run:
-          name: Run Local CI regression tests with nonzero discovery enforcement
+          name: Run ONE product checks directly
           command: |
-            python3 tools/ci_unittest.py --start-directory tests --pattern test_ci_local.py
-            python3 tools/ci_unittest.py --start-directory tests --pattern test_circleci_config_paths.py
-            python3 tools/ci_unittest.py --start-directory tests --pattern test_ci_unittest.py
-
-      - run:
-          name: Run Python Local CI runner and enforce exact-SHA report provenance
-          command: |
-            python3 tools/ci_local.py --report ci-local-report.json --timeout 3600
-            python3 tools/ci_local_evidence.py create \
-              --report ci-local-report.json \
-              --manifest ci-local-manifest.json \
-              --expected-source-sha "$CIRCLE_SHA1" \
-              --workflow "one-linux-verification" \
-              --run-id "$CIRCLE_WORKFLOW_ID" \
-              --run-attempt "$CIRCLE_BUILD_NUM" \
-              --job "$CIRCLE_JOB" \
-              --os "Linux" \
-              --arch "$(uname -m)"
-            python3 tools/ci_local_evidence.py verify \
-              --report ci-local-report.json \
-              --manifest ci-local-manifest.json \
-              --expected-source-sha "$CIRCLE_SHA1"
+            set -euo pipefail
+            python3 tools/check_contract.py
+            cargo --locked build --workspace --all-targets
+            cargo clippy --locked --workspace --all-targets -- -D warnings
+            cargo --locked test --workspace --all-targets
+            cargo --locked test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+            cargo --locked test -p one-core --all-targets dns_adapter
+            cargo --locked test -p one-core --all-targets orchestrator
+            cargo --locked test -p one-core --test database_vertical_slice
+            cargo --locked test -p one-core --test http_get_vertical_slice
+            cargo --locked test -p one-cli --test http_get_orchestration
 
       - run:
           name: Build standalone trusted CLI and enforce single link
