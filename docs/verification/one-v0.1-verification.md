@@ -159,3 +159,12 @@ SHA `637ab548210a948f177186eb3a76381330f401f0`, workflow `b8e52e70-281f-4ac7-a89
 - Windows job `437e36cd-b267-407e-8919-92ce2e1a1a90` — PENDING.
 
 The config did not change after the preceding dual-platform failure; this retry follows documentation/verification record updates only.
+
+
+### CircleCI matrix after GitHub Actions removal
+
+At SHA `e728f965165b21c72810c80dd64734912a916324`, the migration branch contains no `.github/workflows/` files. CircleCI workflow `1c06b7ae-3464-4c6c-b835-ed0c050af262`:
+- Linux `55307f51-6de4-4b73-bc26-13f3a40c2589` — PENDING.
+- Windows `417b51de-5b84-43ac-a566-2e229464a4ff` — PENDING.
+
+This is the first default Linux/Windows matrix observed after workflow retirement in the migration branch. No PASS is claimed.
