@@ -1,7 +1,7 @@
 # Project ONE CI Contract
 
 **Canonical CI target:** CircleCI  
-**Migration state at 2026-11-13:** configuration introduced on the migration branch; exact-SHA CircleCI execution and parity are still pending.  
+**Migration state at 2026-11-13:** configuration introduced on the migration branch; exact-SHA jobs have started, but successful CircleCI verification and provider parity remain pending.  
 **Canonical source repository:** `panglimanetizen01/one`  
 **Configuration:** `.circleci/config.yml`
 
@@ -95,3 +95,12 @@ A subsequent documentation/contract-checker update triggered both default jobs a
 - Windows job `560f8b62-e133-4534-a892-b85e024bad4b` — PENDING at last poll
 
 Do not infer the Windows failure cause from timing or setup commands. Obtain the CircleCI failure report before changing the Windows provisioning path.
+
+
+### Current branch head — latest status poll
+
+At SHA `12d4006ecc239e9ae3fb6b3fc191a1d50dd17317`, CircleCI workflow `5f028c06-b3ff-4caf-9f96-b9b422640152` has both default jobs PENDING:
+- Linux job `0515fcdb-b3d5-47c6-8c90-d007fe7dac6b`.
+- Windows job `d7e7de1d-0eb0-4485-957b-9882422701b3`.
+
+No terminal results are available for this latest SHA. The preceding Windows failure and its inaccessible failure report remain an open blocker.
