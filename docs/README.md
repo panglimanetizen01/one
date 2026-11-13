@@ -62,6 +62,10 @@ User documentation is intentionally separate from normative engineering contract
 - `spec/one-network-foundation.md` — implemented typed network semantic/IR/reference boundary and explicit limits.
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
+## CI and developer operations
+
+- `CI.md` — CircleCI provider boundary, required product checks, opt-in release/native workflows, and exact-SHA migration completion criteria.
+
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
@@ -89,9 +93,10 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
+- `../.circleci/config.yml` — canonical CircleCI product CI, release-check, and Windows-native verification workflows.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
-- `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
+- `../.github/workflows/ci.yml`, `../.github/workflows/release-check.yml`, and `../.github/workflows/windows-native-verification.yml` — legacy GitHub Actions workflows retained temporarily until CircleCI exact-SHA parity is proven; not the intended long-term CI provider.
 
 ## Canonical rule
 
