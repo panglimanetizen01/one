@@ -63,3 +63,14 @@ Independent mirror run `38929072800` verified revision `9038ac75f197753ff1ab6af7
 ## Verification infrastructure status
 
 The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. Historical canonical hosted CI attempts for affected work produced zero-step job failures, so those runs are classified as infrastructure evidence failure rather than source failure. No paid GitHub upgrade was used or required.
+
+
+## CircleCI migration checkpoint — 2026-11-13
+
+- Migration branch: `ci/circleci-migration-20261113`.
+- CircleCI configuration introduction commit: `3157333c8618cb211ffebd00f983f9c49900d0cb`.
+- Linux cross-toolchain hardening commit: `1b110a8aeb76b5c836657a96ee7454d4b165e475`.
+- The config defines default Linux and Windows product CI, opt-in Linux/Windows release checks, and opt-in Windows native PE build/inspection/execution with stored artifact.
+- `tools/check_contract.py` now requires `.circleci/config.yml` and `docs/CI.md`, and statically checks that the config retains the named product/release/native gates.
+- CircleCI project integration, remote config validation, pipeline/job execution, exact-SHA PASS results, logs, and artifacts remain **NOT VERIFIED** in this checkpoint. The ChatGPT tool session currently exposes no authenticated CircleCI API/CLI action.
+- Legacy GitHub Actions workflows remain unchanged as a temporary safety net; their retirement is blocked on exact-SHA CircleCI parity. GitHub remains the source and PR host.
