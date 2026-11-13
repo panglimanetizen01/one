@@ -2,6 +2,8 @@
 
 ## Unreleased — One v0.1
 
+- Started migration of canonical Project ONE CI execution to CircleCI. Added Linux/Windows product CI, opt-in release checks, and dedicated Windows native verification in `.circleci/config.yml`; exact-SHA CircleCI execution and GitHub Actions retirement remain pending.
+
 - Added formal lexical and concrete grammar contracts.
 - Added Rust 2024 workspace and Linux/Windows CI matrix.
 - Added deterministic lexer, AST, parser, semantic analysis, Semantic IR, reference interpreter, diagnostics, and capability model.
