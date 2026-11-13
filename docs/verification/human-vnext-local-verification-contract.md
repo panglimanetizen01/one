@@ -1,8 +1,10 @@
 # Human-vNext Local Verification Contract (Review Required)
 
-**Status:** Proposed replacement evidence contract; not approved and not a substitute for hosted CI until explicitly reviewed.  
+**Status:** HISTORICAL / SUPERSEDED as a hosted-CI replacement. This proposal must not be used as a substitute for CircleCI or as permission to implement in Termux.  
 **Scope:** The isolated human-instruction vNext foundation on `spec/human-instruction-grammar-vnext-20261022`.  
 **Purpose:** Provide reproducible, exact-commit evidence when GitHub Actions jobs fail before executing any steps.
+
+> **Current operational rule (2026-11-11):** GitHub is the source of truth and CircleCI is canonical CI for the One source repository. Termux may only perform read-only independent verification after the matching GitHub SHA has passed CircleCI. Do not edit, repair, commit, or push One changes from Termux. This older proposal is retained only as historical context; any local check is supplementary and cannot replace CircleCI.
 
 ## What this contract can establish
 
@@ -50,3 +52,8 @@ Any nonzero exit, incomplete output, dirty verification checkout, or unrecorded 
 - The Android native execution test requiring Android AArch64 Clang remains unverified when ignored.
 - This procedure does not independently verify Windows/macOS behavior, hosted runner configuration, or release artifacts.
 - A human reviewer must explicitly approve this contract and decide whether its scope is an acceptable substitute for the hosted-CI portion of the 30% gate. Until that approval and the remaining F1–F6 acceptance evidence are recorded, verified points must not be increased and the 30% gate remains NOT PASSED.
+
+
+## Supersession notice
+
+The procedure above is not an approved fallback CI route under the current operating contract. Do not use it to replace failed/unavailable CircleCI jobs. If an independent local check is explicitly requested, perform it only after CircleCI has proven the same GitHub SHA, in an isolated read-only checkout, and report it as independent local evidence.

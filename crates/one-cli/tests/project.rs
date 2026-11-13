@@ -2,7 +2,7 @@ use std::{fs, process::Command, time::{SystemTime, UNIX_EPOCH}};
 
 fn temp_dir() -> std::path::PathBuf {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    std::env::temp_dir().join(format!("one-project-{id}"))
+    fs::canonicalize(std::env::temp_dir()).expect("canonicalize system temporary directory").join(format!("one-project-{id}"))
 }
 
 #[test]

@@ -52,6 +52,21 @@ class OneHealthScannerTests(unittest.TestCase):
         report = scan_repository(self.root)
         self.assertFalse(any(f["rule_id"] == "broken-heading-anchor" for f in report["findings"]))
 
+    def test_literal_escaped_newline_before_markdown_block_is_reported(self):
+        self.write("README.md", "# heading\\n- item\\n\\n## next heading\\n")
+        report = scan_repository(self.root)
+        findings = [f for f in report["findings"] if f["rule_id"] == "literal-escaped-newline-before-block"]
+        self.assertEqual(2, len(findings))
+        self.assertTrue(all(f["path"] == "README.md" for f in findings))
+        self.assertEqual("medium", findings[0]["severity"])
+        self.assertEqual("high", findings[0]["confidence"])
+
+    def test_literal_escaped_newline_inside_fenced_code_is_ignored(self):
+        fence = chr(96) * 3
+        self.write("README.md", fence + "text\\n- literal example\\n" + fence + "\\n")
+        report = scan_repository(self.root)
+        self.assertFalse(any(f["rule_id"] == "literal-escaped-newline-before-block" for f in report["findings"]))
+
     def test_unclosed_markdown_fence_is_reported(self):
         fence = chr(96) * 3
         self.write("guide.md", "Example:\n" + fence + "one\nnama adalah 1\n")
@@ -434,6 +449,16 @@ class OneHealthScannerTests(unittest.TestCase):
                 "sensitive-data-egress", "obfuscated-execution", "downloaded-code-execution"
             }
             for f in report["findings"]
+        ))
+
+    def test_repository_ci_collector_is_recognized_as_narrow_github_api_client(self):
+        collector = Path(__file__).with_name("collect_ci_health.py").read_text(encoding="utf-8")
+        self.write("trusted_repository_collector.py", collector)
+        report = scan_repository(self.root)
+        self.assertFalse(any(
+            finding["path"] == "trusted_repository_collector.py"
+            and finding["rule_id"] == "sensitive-data-egress"
+            for finding in report["findings"]
         ))
 
     def test_security_ast_does_not_join_unrelated_sources_and_sinks(self):

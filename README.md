@@ -179,3 +179,8 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 ## Verification boundary
 
 The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+
+
+## Engineering execution and CI authority
+
+All repository changes are made against GitHub branches; GitHub is the single source of truth. CircleCI is the canonical CI provider for this source repository and replaces GitHub Actions as the default CI path. Termux is limited to read-only, post-CircleCI verification of an already-proven exact SHA; it is not an implementation or repair environment. See [CI execution model](docs/CI_EXECUTION_MODEL.md).

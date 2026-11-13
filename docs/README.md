@@ -72,6 +72,7 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Verification and release
 
+- `verification/circleci-native-toolchain-remediation.md` — active CircleCI remediation history, exact-SHA evidence, and remaining platform coverage gaps.
 - `verification/repository-health.md` — repository health scanner, detector boundaries, guarded repair mode, and A–E development roadmap.
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.

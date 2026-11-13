@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, "milestone/**", "health/**", "diagnostic/**"]
   pull_request:
-    branches: [main]
+    branches: [main, "milestone/**"]
   schedule:
     - cron: "17 3 * * 1"
   workflow_dispatch:
@@ -48,6 +48,24 @@ jobs:
 
       - name: Build One CLI for source-only grammar checks
         run: cargo build --locked -p one-cli
+
+      - name: Prepare standalone trusted CLI binary for source-contract scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          CARGO_TARGET_DIR=target/one-health-cli cargo --locked build -p one-cli
+          if [[ -f target/one-health-cli/debug/one.exe ]]; then
+            built=target/one-health-cli/debug/one.exe
+            trusted=target/debug/one.exe
+          else
+            built=target/one-health-cli/debug/one
+            trusted=target/debug/one
+          fi
+          mkdir -p target/debug
+          rm -f "$trusted"
+          cp "$built" "$trusted"
+          test -f "$trusted"
+          python -c 'import os,sys; n=os.stat(sys.argv[1]).st_nlink; print("trusted CLI hard-link count:", n); sys.exit(0 if n == 1 else 1)' "$trusted"
 
       - name: Collect exact-SHA CI run, job, step, artifact, Check Run, and annotation metadata
         env:

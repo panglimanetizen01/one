@@ -18,7 +18,7 @@ python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
 python -m unittest discover -s tools -p "test_health_quality.py" -v
 ~~~
 
-Create machine-readable and human-readable reports outside the tracked source tree when possible:
+For independent post-CircleCI validation, create machine-readable and human-readable reports outside the tracked source tree:
 
 ~~~sh
 python tools/one_health.py --json-out /tmp/one-health.json --markdown-out /tmp/one-health.md
@@ -40,7 +40,7 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 |---|---|---|
 | Revision integrity | expected SHA versus git rev-parse HEAD | Checks exact identity only when an expected SHA is supplied |
 | Syntax | Python AST, TOML and JSON parsing | TOML uses Python 3.11+ tomllib |
-| Markdown | relative links, repository-root escapes, conservative heading/HTML anchors, unclosed fenced code blocks | Does not parse every Markdown dialect or every generated/reference-style link |
+| Markdown | relative links, repository-root escapes, conservative heading/HTML anchors, unclosed fenced code blocks, and literal escaped-newline sequences before heading/list block markers outside fenced code | Does not parse every Markdown dialect or every generated/reference-style link |
 | Paths | symlinks resolving outside the repository | Does not follow symlink targets |
 | Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
 | Workflow overlap | exact repeated single-line run commands across workflow files | Low-confidence review hint; repetition may be intentional |
@@ -173,3 +173,6 @@ python tools/one_health.py --baseline previous-report.json --json-out current-re
 Current findings are labeled `new`, `recurring`, or `reopened`; findings absent from the current completed scan are listed separately as `resolved` with a review caveat. The tool does not silently edit the fixed-weight One acceptance ledger. A triage priority score is provided alongside its inputs (impact, confidence, recurrence, and acceptance-blocker factor) so maintainers can review why a finding was ranked. It is an operational triage aid, not an acceptance score or proof of resolution.
 
 Baseline comparison is currently opt-in and file-based; persistent cross-run history and automatic GitHub job/log ingestion remain future work.
+
+
+**Repository-authority boundary:** Any defect found by this scanner must be repaired on a GitHub branch and verified by CircleCI. Do not apply safe fixes or edit the repository from Termux under the current Project ONE operating contract. The historical safe-fix feature remains documented as tooling capability, not current permission to use Termux as an implementation environment.

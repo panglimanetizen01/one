@@ -108,3 +108,31 @@ See [ADR-0016](decisions/ADR-0016-accept-language-invariants.md) for explicit gr
 **Status:** Accepted for the experimental core/runtime slice
 
 See [ADR-0017](decisions/ADR-0017-human-vnext-core-runtime.md) for the canonical-pipeline adapter, module visibility, mapping semantics, persistence format, and compatibility boundaries.
+
+
+## ADR-0018 — CircleCI-first verification for the active remediation
+
+**Status:** Accepted for the active verification remediation.
+
+The active branch `fix/windows-temp-path-canonicalization` uses CircleCI as its primary CI execution and evidence source. Authenticated Termux API access is limited to read-only retrieval and validation of hosted evidence; it is not an implementation or CI administration path. This is an operational CI-provider decision, not a change to One's platform support contract or release gate. Exact-SHA evidence remains mandatory; a successful CircleCI job does not by itself authorize merge or release.
+
+
+## ADR-0019 — GitHub repository as source of truth, CircleCI as canonical CI, Termux verification-only
+
+**Status:** Accepted — 2026-11-11
+
+**Decision**
+- The live GitHub repository `panglimanetizen01/one` is the single source of truth for source code, tests, workflows, documentation, branches, commits, PRs, and accepted state.
+- CircleCI is the canonical CI provider for the One source repository and replaces GitHub Actions as the normal source-repository CI path.
+- Termux is restricted to read-only, post-CircleCI verification and independent validation of an exact GitHub SHA already proven by the hosted pipeline. It is not an implementation, repair, authoring, commit, push, or CI administration environment.
+- Every material change must update all affected repository documentation and the existing Notion Project ONE skill/checkpoint. New sessions must load enabled Notion skills, read live `AGENTS.md` and checkpoints, resolve live GitHub refs/SHAs, inspect CircleCI, and continue without repeating successful unchanged scopes.
+
+**Rationale**
+
+GitHub must remain the authoritative, reviewable record of changes. Hosted CircleCI evidence must be tied to the exact GitHub commit. Local Termux is useful for independent validation and evidence inspection but must not become a second, divergent implementation source.
+
+**Consequences**
+- Existing source-repository GitHub Actions workflow files remain preserved during migration until their coverage is mapped and CircleCI parity is demonstrated; removal/disablement requires explicit authorization.
+- The current CircleCI `linux-verify` job passing does not establish native Windows/Android runtime or full matrix parity.
+- This decision does not authorize merge, release, protected environment changes, secret changes, branch-protection changes, or changes to fixed acceptance weights.
+- Earlier local-verification contracts remain historical evidence/proposals and do not supersede this decision.
