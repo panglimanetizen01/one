@@ -1,152 +1,19 @@
-from pathlib import Path
+# Windows Native Verification — CI Provider Contract
 
-ROOT = Path(__file__).resolve().parents[1]
+The historical design proposed running the Windows native verification workflow from a temporary public verification repository. That arrangement is superseded for the canonical Project ONE CI path by the accepted CircleCI provider decision (ADR-0017).
 
-required = [
-    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
-    ".circleci/config.yml", "docs/CI.md", "docs/README.md",
-    "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
-    "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
-    "docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md",
-    "docs/superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md",
-    "docs/superpowers/plans/2026-10-15-one-network-foundation.md",
-    "docs/superpowers/specs/2026-10-19-native-backends-linux-windows.md",
-    "docs/superpowers/plans/2026-10-19-native-backend-linux-aarch64.md",
-    "docs/superpowers/plans/2026-10-19-native-backend-linux-x86_64.md",
-    "docs/superpowers/plans/2026-10-19-native-backend-windows-x86_64.md",
-    "docs/spec/README.md", "docs/spec/one-v0.1-language-invariants.md", "docs/spec/one-v0.1-lexical.md",
-    "docs/spec/one-v0.1-grammar.md", "docs/spec/one-v0.1-ast.md", "docs/spec/one-v0.1-localization-contract.md",
-    "docs/spec/one-v0.1-localization.md", "docs/spec/one-v0.1-diagnostics.md", "docs/spec/one-v0.1-effect-capability.md",
-    "docs/spec/one-v0.1-runtime-model.md", "docs/spec/one-v0.1-reference-interpreter.md",
-    "docs/spec/one-v0.1-conformance-suite.md", "docs/spec/one-v0.1-platform-abstraction.md",
-    "docs/spec/one-v0.1-module-system.md", "docs/spec/one-v0.1-package-build.md", "docs/spec/one-v0.1-standard-library.md",
-    "docs/spec/one-v0.1-stdlib.md", "docs/spec/one-v0.1-cli-contract.md", "docs/spec/one-v0.1-cli.md",
-    "docs/spec/one-v0.1-interop.md", "docs/spec/one-network-foundation.md",
-    "docs/implementation/one-v0.1-core-implementation-gate.md", "docs/testing/conformance.md",
-    "docs/verification/one-v0.1-implementation-status.md", "docs/verification/one-v0.1-verification.md",
-    "docs/verification/one-v0.1-evidence-matrix.md", "docs/verification/windows-native-verification.md", "docs/verification/README.md", "docs/verification/repository-context-milestone.md", "docs/verification/forensic-audit-2026-10-21.md", "docs/verification/spec-implementation-gap-audit-2026-10-21.md", "docs/verification/one-v0.1-offline-evidence-template.md",
-    "docs/verification/one-v0.1-linux-windows-2026-10-15.md", "docs/verification/native-backends-2026-10-19.md",
-    "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
-    "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
-    "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
-]
+## Canonical Project ONE workflow
 
-ci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
-ci_contract_markers = [
-    "one-linux:",
-    "one-windows:",
-    "release-linux:",
-    "release-windows:",
-    "windows-native-verification:",
-    "cargo build --workspace --all-targets",
-    "cargo clippy --workspace --all-targets -- -D warnings",
-    "cargo test --workspace --all-targets",
-    "tools/check_contract.py",
-    "--features real-network",
-    "tools/verify_offline.sh",
-    "verify_offline.ps1",
-    "android:default",
-    "resource_class: large",
-    "windows-server-2025-gui:current",
-    "windows.medium",
-    "https://win.rustup.rs/x86_64",
-    "rustup-init.exe",
-    "store_artifacts:",
-    "27.2.12479018",
-    "mingw-w64",
-]
-if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
-    raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
+- Canonical source remains the private repository `panglimanetizen01/one`.
+- CircleCI configuration: `.circleci/config.yml`.
+- Workflow: `windows-native-verification`.
+- Trigger parameter: `run_windows_native_verification=true`.
+- The job provisions MSYS2/MinGW-w64 and the pinned Android NDK r27c toolchain, runs the locked-equivalent workspace test/build checks without Cargo's `--locked` flag while no `Cargo.lock` is committed, builds the Windows GNU native target, validates the PE signature, AMD64 machine type, and PE32+ optional-header magic (0x20B), executes the artifact on a Windows executor, and stores the executable as a CircleCI artifact.
 
-windows_machine_block = (
-    "    machine:\n"
-    "      image: windows-server-2025-gui:current\n"
-    "      resource_class: windows.medium\n"
-    "      shell: powershell.exe -ExecutionPolicy Bypass"
-)
-if ci_config.count(windows_machine_block) != 3:
-    raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must nest windows.medium under machine")
+## Independent verification boundary
 
-linux_job_start = ci_config.find("  one-linux:\n")
-linux_job_end = ci_config.find("  one-windows:\n", linux_job_start)
-if linux_job_start < 0 or linux_job_end < 0:
-    raise SystemExit("CIRCLECI CONTRACT: cannot isolate the Linux job")
-linux_job = ci_config[linux_job_start:linux_job_end]
-if "$env:" in linux_job:
-    raise SystemExit("CIRCLECI CONTRACT: PowerShell environment syntax is forbidden in the Bash one-linux job")
+The separate public verification repository remains supplemental infrastructure for independent exact-SHA verification when required. It is not the canonical CI provider and must not replace or mislabel CircleCI job evidence.
 
-windows_ci_jobs = (
-    "setup-windows-cross-toolchains",
-    "one-windows",
-    "release-windows",
-    "windows-native-verification",
-)
-for job_name in windows_ci_jobs:
-    job_start = ci_config.find(f"  {job_name}:\n")
-    if job_start < 0:
-        raise SystemExit(f"CIRCLECI CONTRACT: missing Windows job/command {job_name}")
-    job_lines = ci_config[job_start:].splitlines()[1:]
-    section = []
-    for line in job_lines:
-        if line.startswith("  ") and not line.startswith("    ") and line.rstrip().endswith(":"):
-            break
-        section.append(line)
-    for index, line in enumerate(section):
-        if not line.startswith("          command:"):
-            continue
-        block = [line]
-        cursor = index + 1
-        while cursor < len(section) and (not section[cursor].strip() or section[cursor].startswith("            ")):
-            block.append(section[cursor])
-            cursor += 1
-        command_text = "\n".join(block)
-        if any(token in command_text for token in ("cargo ", "rustc ", "rustup ")) and "USERPROFILE" not in command_text:
-            raise SystemExit(f"CIRCLECI CONTRACT: Windows Rust/Cargo PATH missing in {job_name} command block")
+## Evidence status
 
-missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
-if missing_ci_contract:
-    raise SystemExit("CIRCLECI CONTRACT: missing required CI gates/configuration: " + ", ".join(missing_ci_contract))
-
-missing = [path for path in required if not (ROOT / path).is_file()]
-if missing:
-    raise SystemExit("MISSING CONTRACT ARTIFACTS:\n" + "\n".join(missing))
-
-release = (ROOT / "docs/release/one-v0.1.md").read_text(encoding="utf-8")
-if "do not purchase an upgrade" not in release.lower():
-    raise SystemExit("RELEASE CONTRACT: missing no-upgrade rule")
-
-index = (ROOT / "docs/README.md").read_text(encoding="utf-8")
-index_references = set()
-for line in index.splitlines():
-    stripped = line.strip()
-    if not stripped.startswith("-") or "`" not in stripped:
-        continue
-    start = stripped.find("`") + 1
-    end = stripped.find("`", start)
-    if end > start:
-        index_references.add(stripped[start:end])
-
-for reference in sorted(index_references):
-    if "*" in reference:
-        continue
-    path = ROOT / reference.removeprefix("../") if reference.startswith("../") else ROOT / "docs" / reference
-    if not path.is_file():
-        raise SystemExit(f"DOC INDEX: referenced artifact is missing: {reference}")
-
-valid = sorted((ROOT / "tests/conformance/valid").glob("*.one"))
-invalid = sorted((ROOT / "tests/conformance/invalid").glob("*.one"))
-golden = sorted((ROOT / "tests/golden").glob("*.snap"))
-if len(valid) < 5 or len(invalid) < 4 or len(golden) < 3:
-    raise SystemExit("CONFORMANCE ARTIFACTS: expected valid/invalid/golden fixtures are missing")
-
-fixture = (ROOT / "tests/spec/grammar_examples.one").read_text(encoding="utf-8")
-for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika "):
-    if marker not in fixture:
-        raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
-
-print("CONTRACT CHECK: PASS")
-print(f"required artifacts: {len(required)}")
-print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
-print(f"valid fixtures: {len(valid)}")
-print(f"invalid fixtures: {len(invalid)}")
-print(f"golden fixtures: {len(golden)}")
+The CircleCI workflow configuration exists on the migration branch. Exact-SHA Windows job execution, PE artifact inspection, runtime execution, and artifact retrieval remain pending until CircleCI reports a successful run and the logs/artifact are inspected. Do not claim Windows native execution based only on configuration presence or a successful cross-build.

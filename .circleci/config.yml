@@ -342,10 +342,12 @@ jobs:
             if ($bytes.Length -lt 64) { throw "Artifact is too small to be a PE executable." }
             if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "Artifact does not have a PE MZ header." }
             $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
-            if ($peOffset -lt 0 -or $peOffset + 24 -gt $bytes.Length) { throw "Invalid PE header offset." }
+            if ($peOffset -lt 0 -or $peOffset + 26 -gt $bytes.Length) { throw "Invalid PE header offset or truncated optional header." }
             if ($bytes[$peOffset] -ne 0x50 -or $bytes[$peOffset + 1] -ne 0x45 -or $bytes[$peOffset + 2] -ne 0x00 -or $bytes[$peOffset + 3] -ne 0x00) { throw "Missing PE signature." }
             $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
             if ($machine -ne 0x8664) { throw ("Expected AMD64 PE machine 0x8664, got 0x{0:X4}." -f $machine) }
+            $optionalMagic = [BitConverter]::ToUInt16($bytes, $peOffset + 24)
+            if ($optionalMagic -ne 0x20B) { throw ("Expected PE32+ optional-header magic 0x20B, got 0x{0:X4}." -f $optionalMagic) }
             Write-Host "PE32+ AMD64 artifact verified."
             & ".\$artifact"
             if ($LASTEXITCODE -ne 0) { throw "Windows native artifact exited with code $LASTEXITCODE." }

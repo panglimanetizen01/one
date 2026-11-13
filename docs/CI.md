@@ -165,3 +165,8 @@ The `one-linux` job runs commands in Bash. PowerShell environment syntax such as
 - Latest observed candidate SHA before this documentation addendum: `2095098ea0e97da1c06c3f260f1f95218a06a339`; workflow `05a7e587-645d-4809-95a6-97d528c33507`; Linux `54a95e18-180c-40e9-b572-83baedfd4bce` and Windows `e44eb79c-605d-4dd6-8a5e-5ccaad91b06f` were PENDING at last poll.
 - The shell mismatch is a proven configuration defect, but the exact failing step for the previous Linux job remains unconfirmed until the failure report is retrieved. Do not claim this correction as the proven root cause without the log.
 - No product source, grammar, semantics, compiler, interpreter, runtime, or CLI files changed. The migration branch has no `.github/` files; `main` remains unchanged. Keep PR #95 draft/unmerged until default Linux/Windows, opt-in release/native checks, and artifact inspection pass.
+
+
+### Windows PE32+ verification boundary
+
+The native Windows job must validate the DOS MZ header, PE signature, AMD64 machine value `0x8664`, and PE32+ optional-header magic `0x20B` before executing the produced binary. The static contract checker requires the PE32+ optional-header guard so the log message cannot overstate what the test actually inspected.
