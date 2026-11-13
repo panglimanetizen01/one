@@ -51,6 +51,7 @@ commands:
             cargo --version
       - run:
           name: Install MSYS2 and MinGW-w64
+          no_output_timeout: 30m
           command: |
             $ErrorActionPreference = "Stop"
             $bash = "C:\msys64\usr\bin\bash.exe"
