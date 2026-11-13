@@ -315,4 +315,4 @@ Deep native FFI, package registry, full compiler backends, GUI framework, IDE, a
 
 ## CI provider supersession — 2026-11-13
 
-The original workflow tasks above record the historical GitHub Actions implementation. ADR-0017 now selects CircleCI as the canonical CI execution provider. The current migration configuration is `.circleci/config.yml`; the original GitHub Actions workflow files remain temporarily until equivalent CircleCI exact-SHA Linux/Windows, release, and native-verification evidence is green. Do not treat this historical plan's GitHub Actions task references as the current provider decision.
+The original workflow tasks above record the historical GitHub Actions implementation. ADR-0017 now selects CircleCI as the canonical CI execution provider. The current migration configuration is `.circleci/config.yml`; the three original GitHub Actions workflow files are deleted from the migration branch; `main` remains unchanged until exact-SHA CircleCI Linux/Windows, release, and native-verification evidence is green and the PR is reviewed. Do not treat this historical plan's GitHub Actions task references as the current provider decision.
