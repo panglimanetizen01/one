@@ -79,3 +79,8 @@ The corrected config ran on SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`; both
 ### Current CircleCI retry — 2026-11-13
 
 The documentation-only revision `637ab548210a948f177186eb3a76381330f401f0` triggered workflow `b8e52e70-281f-4ac7-a898-a21d45ceedd9`; Linux job `a26c2b6d-c66e-43b1-8337-108220e5dd4d` and Windows job `437e36cd-b267-407e-8919-92ce2e1a1a90` were pending at last poll. The CI config was unchanged from the preceding failed attempt.
+
+
+### First CircleCI run after GitHub Actions workflow removal — 2026-11-13
+
+Migration branch SHA `e728f965165b21c72810c80dd64734912a916324` contains no `.github/workflows/` files. CircleCI workflow `1c06b7ae-3464-4c6c-b835-ed0c050af262` started Linux job `55307f51-6de4-4b73-bc26-13f3a40c2589` and Windows job `417b51de-5b84-43ac-a566-2e229464a4ff`; both were pending at last poll. Keep PR #95 draft until terminal green results and release/native evidence are inspected.
