@@ -49,6 +49,9 @@ ci_contract_markers = [
     "27.2.12479018",
     "mingw-w64",
 ]
+if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
+    raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
+
 missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
 if missing_ci_contract:
     raise SystemExit("CIRCLECI CONTRACT: missing required CI gates/configuration: " + ", ".join(missing_ci_contract))
