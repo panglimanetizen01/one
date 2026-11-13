@@ -111,3 +111,10 @@ No terminal results are available for this latest SHA. The preceding Windows fai
 The Windows job failed on SHA `06a8d54654d671c9b642547eec1607f087434c6f` (workflow `42d15225-5ab1-4ab8-bb64-dbbf208e057b`, job `03c291bc-d501-4ac9-972b-7962d30ae50a`; failure-report pipeline `50b8afe4-3e92-4ae3-827a-89e2097056f8`). The log remains inaccessible, so this is not a proven root-cause diagnosis.
 
 Independent inspection of CircleCI's published Windows image inventory shows Rust/Cargo are not listed as preinstalled. This was a guaranteed provisioning defect in the original job definition, which assumed `rustc` and `cargo` were already on PATH. The config now installs Rust stable explicitly and prefixes the Cargo bin directory in every Windows Cargo step. This correction is justified by the image inventory; do not claim it explains the prior failure until a fresh exact-SHA job passes.
+
+
+### Executor schema references and guardrails
+
+- Android Gen1 uses `android:default` with job-level `resource_class: large`; CircleCI documents that Gen2 uses `android:current` with a `.gen2` resource class: https://circleci.com/docs/guides/execute/android-machine-image/
+- Windows Server 2025 machine executor nests `resource_class: windows.medium` inside the `machine` block, alongside `image` and `shell`, matching CircleCI's published example: https://circleci.com/developer/machine/image/windows-server-2025-gui
+- `tools/check_contract.py` enforces this exact Windows machine block for all three Windows jobs, plus explicit Rust/Cargo PATH prefixes in every Windows command block that invokes Rust/Cargo.
