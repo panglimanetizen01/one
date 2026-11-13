@@ -9,7 +9,7 @@
 
 - GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface.
 - CircleCI is the selected canonical CI execution provider for Project ONE.
-- GitHub Actions workflows are retained temporarily as a migration safety net. They must not be removed or disabled until CircleCI has passed the equivalent checks against the same exact source revision and required Windows/Linux evidence is available.
+- The migration branch deletes the three Project ONE GitHub Actions CI workflows so it has no parallel CI path. The `main` branch remains unchanged until the migration PR is reviewed and merged. The PR must remain draft/unmerged until CircleCI passes equivalent checks on the same exact source revision and required Windows/Linux/release/native evidence is available.
 - The standalone `ci-local` extraction is a separate completed project and is not imported, invoked, or recreated by this configuration.
 
 ## Default CI workflow
@@ -64,7 +64,7 @@ Do not record a CircleCI PASS based on a successful local YAML parser, a configu
 
 ## Migration rollback boundary
 
-Until CircleCI parity is proven, leave the existing GitHub Actions workflows unchanged. If CircleCI cannot start, keep the migration branch unmerged and continue using the existing documented independent exact-SHA verification route. No force-push, history rewrite, merge, release, or paid GitHub upgrade is authorized by this CI migration.
+The migration branch must not retain or reintroduce GitHub Actions CI workflows. If CircleCI cannot start or pass, keep the migration branch unmerged; `main` remains unchanged and its current workflows remain available until an approved merge. Continue using the documented independent exact-SHA verification route. No force-push, history rewrite, merge, release, or paid GitHub upgrade is authorized by this CI migration.
 
 
 ### Latest structural audit and legacy runner observation
@@ -82,7 +82,7 @@ CircleCI has now started both default product jobs for migration SHA `9776d7bdab
 - Linux job: `9148fb7a-4c9b-49aa-8ab1-3e4997cf08f8`, status PENDING/RUNNING at last poll.
 - Windows job: `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02`, status PENDING/RUNNING at last poll.
 
-This is a valid exact-SHA execution trigger, not a PASS. Wait for terminal job states and inspect logs/artifacts before proceeding to release/native opt-in workflows or retiring GitHub Actions.
+This is a valid exact-SHA execution trigger, not a PASS. Wait for terminal job states and inspect logs/artifacts before proceeding to release/native opt-in workflows or merging the branch that retires GitHub Actions.
 
 
 ### Windows first-run failure and latest retry
