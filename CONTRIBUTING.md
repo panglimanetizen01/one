@@ -13,13 +13,14 @@ One is specification-driven. Contributions must preserve the approved semantic c
 7. Update the specification when behavior intentionally changes.
 8. Record verification evidence with the exact commit, toolchain, platform, command, and result.
 
-## Verification without paid hosted CI
+## CI and verification
 
-If GitHub-hosted runners are unavailable or GitHub presents a paid-upgrade requirement, do not purchase capacity merely to validate One. Run the canonical offline verifier in an independent environment:
+CircleCI is the selected canonical CI provider. Its repository configuration is `.circleci/config.yml`; the required jobs and opt-in verification workflows are documented in `docs/CI.md`.
 
-- Linux: `bash tools/verify_offline.sh`
-- Windows PowerShell: `./tools/verify_offline.ps1`
+- Linux and Windows product checks must both pass on the exact commit SHA.
+- The release workflow retains real-network tests and platform-specific offline verification.
+- The dedicated Windows native workflow retains PE32+ validation, target execution, and artifact upload.
+- Do not retire GitHub Actions until CircleCI parity is proven at the same exact SHA. The legacy workflows remain a temporary migration safety net.
+- Do not purchase a GitHub upgrade solely to obtain hosted CI capacity. Independent offline verification remains a separate evidence path and must never be mislabeled as CircleCI execution.
 
-Independent results are execution evidence, but they must not be reported as GitHub-hosted CI results. Keep the hosted-CI blocker documented until it is actually resolved.
-
-GitHub `main` is the canonical source of truth. Local environments are for verification and validation.
+GitHub remains the canonical source repository and pull-request/code-review host. CircleCI is the intended CI execution authority.
