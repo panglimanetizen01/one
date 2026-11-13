@@ -39,6 +39,17 @@ commands:
   setup-windows-cross-toolchains:
     steps:
       - run:
+          name: Install Rust stable toolchain
+          command: |
+            $ErrorActionPreference = "Stop"
+            $rustupInit = Join-Path $env:TEMP "rustup-init.exe"
+            Invoke-WebRequest -Uri "https://win.rustup.rs/x86_64" -OutFile $rustupInit
+            & $rustupInit -y --default-toolchain stable --profile minimal --component rustfmt --component clippy
+            if ($LASTEXITCODE -ne 0) { throw "Rustup installation failed: $LASTEXITCODE" }
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            rustc --version
+            cargo --version
+      - run:
           name: Install MSYS2 and MinGW-w64
           command: |
             $ErrorActionPreference = "Stop"
@@ -92,6 +103,7 @@ jobs:
       - run:
           name: Rust toolchain
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             rustc --version
             cargo --version
             python3 --version
@@ -103,7 +115,9 @@ jobs:
           command: cargo build --workspace --all-targets
       - run:
           name: Clippy
-          command: cargo clippy --workspace --all-targets -- -D warnings
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo clippy --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
           command: cargo test --workspace --all-targets
@@ -112,19 +126,29 @@ jobs:
           command: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - run:
           name: DNS success and failure classification
-          command: cargo test -p one-core --all-targets dns_adapter
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo test -p one-core --all-targets dns_adapter
       - run:
           name: Orchestration policy deny and allow paths
-          command: cargo test -p one-core --all-targets orchestrator
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo test -p one-core --all-targets orchestrator
       - run:
           name: Database vertical slice
-          command: cargo test -p one-core --test database_vertical_slice
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo test -p one-core --test database_vertical_slice
       - run:
           name: HTTP GET vertical slice
-          command: cargo test -p one-core --test http_get_vertical_slice
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo test -p one-core --test http_get_vertical_slice
       - run:
           name: HTTP GET CLI vertical slice
-          command: cargo test -p one-cli --test http_get_orchestration
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo test -p one-cli --test http_get_orchestration
       - save_cache:
           key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
           paths:
@@ -153,11 +177,13 @@ jobs:
       - run:
           name: Build
           command: |
-            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             cargo build --workspace --all-targets
       - run:
           name: Clippy
-          command: cargo clippy --workspace --all-targets -- -D warnings
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
+            cargo clippy --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
           command: |
@@ -226,6 +252,7 @@ jobs:
       - run:
           name: Toolchain and contract artifacts
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             rustc --version
             cargo --version
             python --version
@@ -275,6 +302,7 @@ jobs:
       - run:
           name: Verify Rust toolchain and contract
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             rustc --version
             cargo --version
             cargo clippy --version
