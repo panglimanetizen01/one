@@ -63,6 +63,10 @@ jobs:
             python3 tools/check_user_docs_test.py
 
       - run:
+          name: Verify ONE product CI contracts
+          command: python3 -m unittest discover -s tests -p test_product_ci_contract.py -v
+
+      - run:
           name: Run ONE product checks directly
           command: |
             set -euo pipefail
