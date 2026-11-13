@@ -138,3 +138,13 @@ The documentation-only checkpoint at SHA `637ab548210a948f177186eb3a76381330f401
 - Windows job `437e36cd-b267-407e-8919-92ce2e1a1a90` — PENDING.
 
 The config itself was unchanged from the preceding dual-platform failure. The static structural audit passes, but the actual Python contract checker and product tests have not yet returned a terminal result. Do not infer the prior shared failure root cause without its CircleCI report.
+
+
+### CircleCI run after GitHub Actions workflow removal
+
+At migration branch SHA `e728f965165b21c72810c80dd64734912a916324`, the migration branch has no `.github/workflows/` files and CircleCI has triggered the default Linux/Windows matrix:
+- Workflow: `1c06b7ae-3464-4c6c-b835-ed0c050af262`.
+- Linux job: `55307f51-6de4-4b73-bc26-13f3a40c2589` — PENDING.
+- Windows job: `417b51de-5b84-43ac-a566-2e229464a4ff` — PENDING.
+
+This is the first observed default matrix on the branch with GitHub Actions CI removed. It is not a PASS; keep the PR draft until both jobs and the opt-in release/native workflows have terminal green results and their logs/artifacts are inspected.
