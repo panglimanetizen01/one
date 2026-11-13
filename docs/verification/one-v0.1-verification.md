@@ -1,5 +1,12 @@
 # One v0.1 Verification Record
 
+## Live CircleCI migration checkpoint — 2026-11-14
+
+- CircleCI is the canonical Project ONE CI provider; GitHub remains repository, version-control, PR, and code-review host. The migration branch deletes the three legacy product GitHub Actions workflows; main is unchanged until reviewed merge.
+- PR #95 exact HEAD `e36963a329d7f04e40278043d20f6cc86f314005`: `ci/circleci: one-linux` SUCCESS (job `204f0cc7-d0e7-472f-a4cc-3e92c53158e9`); `ci/circleci: one-windows` FAILURE (job `5128b82c-4b17-4670-8c47-7dbd7f4a124c`); workflow `62dcb9b5-814d-4303-b3e2-a9a0b99f19cf`.
+- Windows failure report `6f4e8066-370f-49c3-9cc6-e9734a9a7412` has not been retrieved in this session. First failing step/root cause remain UNKNOWN. Do not claim parity PASS or make speculative changes.
+
+
 ## Canonical repository
 
 `panglimanetizen01/one`, branch `main`.
