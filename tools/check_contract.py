@@ -67,6 +67,14 @@ windows_machine_block = (
 if ci_config.count(windows_machine_block) != 3:
     raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must nest windows.medium under machine")
 
+linux_job_start = ci_config.find("  one-linux:\n")
+linux_job_end = ci_config.find("  one-windows:\n", linux_job_start)
+if linux_job_start < 0 or linux_job_end < 0:
+    raise SystemExit("CIRCLECI CONTRACT: cannot isolate the Linux job")
+linux_job = ci_config[linux_job_start:linux_job_end]
+if "$env:" in linux_job:
+    raise SystemExit("CIRCLECI CONTRACT: PowerShell environment syntax is forbidden in the Bash one-linux job")
+
 windows_ci_jobs = (
     "setup-windows-cross-toolchains",
     "one-windows",
