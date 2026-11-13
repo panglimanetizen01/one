@@ -107,3 +107,10 @@ At SHA `9776d7bdab72397cb533b052f7d5dfa2c0bad106`, CircleCI workflow `cc29f03b-c
 - Windows: `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02` — PENDING/RUNNING at last poll.
 
 No terminal result or PASS is recorded yet.
+
+
+### CircleCI Windows failure and latest retry
+
+- SHA `9776d7bdab72397cb533b052f7d5dfa2c0bad106`: Windows job `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02` = FAILURE; failure-report pipeline ID `f84b18b4-80e2-4c21-8a04-ff36deacba81`. Job logs are inaccessible through the current integrations; exact failing step/root cause UNKNOWN. Linux remained pending at last poll.
+- Latest branch SHA at this update: `a1dd2b53a257a4a977bdf501c276e64f3046bf91`, workflow `94c0cd5e-b92a-45c4-9866-e10707ed7f24`: Linux job `3f57923e-2155-45e0-9227-b9a2829a4b32` and Windows job `560f8b62-e133-4534-a892-ff36deacba` were pending at last poll.
+- Do not infer the cause; obtain the CircleCI failure report before changing Windows provisioning.
