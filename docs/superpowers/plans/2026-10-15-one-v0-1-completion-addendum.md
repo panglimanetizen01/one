@@ -74,3 +74,8 @@ CircleCI's published Windows Server 2025 image inventory does not list Rust/Carg
 ### Dual-platform CircleCI failure — 2026-11-13
 
 The corrected config ran on SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`; both Linux and Windows jobs failed under workflow `e5a0662d-023a-4e3d-9174-62a7aa55329a`, failure-report pipeline `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`. The exact cause is unknown without logs. No speculative config changes are authorized by this evidence; retrieve the failure report and fix the specific failed step.
+
+
+### Current CircleCI retry — 2026-11-13
+
+The documentation-only revision `637ab548210a948f177186eb3a76381330f401f0` triggered workflow `b8e52e70-281f-4ac7-a898-a21d45ceedd9`; Linux job `a26c2b6d-c66e-43b1-8337-108220e5dd4d` and Windows job `437e36cd-b267-407e-8919-92ce2e1a1a90` were pending at last poll. The CI config was unchanged from the preceding failed attempt.
