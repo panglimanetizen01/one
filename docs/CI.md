@@ -201,3 +201,15 @@ At SHA `54386f415062d4c21a7acb5508d90fea4ba5cdef`, workflow `ca11e9e9-d870-43d8-
 - Windows job `1739d1cc-b23c-40a6-924b-201616b4af6a` — PENDING.
 
 Structural audit at this exact SHA: all 60 required contract paths present; all 78 concrete docs-index references resolve; 6 valid/6 invalid/3 golden fixtures; all five grammar markers present; all 21 CircleCI markers present; no `$env:` in Linux; Linux shell guard and PE32+ guard present; three Windows machine executor blocks correctly nested; no Cargo.lock/`--locked`; no `.github/` paths; release no-upgrade rule preserved. This is a structural mirror, not execution of the Python checker. Prior candidate `2095098...` failed both platforms with failure-report pipeline `991dcbb1-49e9-4b65-acb1-9083caf1f24f`; exact failing steps remain unknown without logs.
+
+
+### Exact-SHA status refresh — Windows failed, Linux pending — 2026-11-13
+
+At PR #95 HEAD `0d33533fd2c1fef2a4ec648549dbd1fb18b6ba0c`, GitHub now reports:
+- Windows job `a5fa0f85-5bdf-49f3-8c1f-6410ee5272d5` — FAILURE. CircleCI status exposes failure-report run ID `24b70353-4030-4a3a-86d2-842ed4dc6bb3`.
+- Linux job `5bc064d5-4ee5-4919-a9c5-ea5649064433` — PENDING at the same poll.
+- Workflow: `c6d194ab-b1c0-4a70-8361-e7af0ace3650`.
+
+The Windows failure is now terminal, but the first failed step and diagnostic output have not been retrieved. The current agent session exposes GitHub/Notion operations but no authenticated CircleCI CLI, CircleCI MCP connector, or CircleCI API action. CircleCI API endpoints are inaccessible through the available web retrieval channel. Do not infer a cause from the status description, do not make speculative edits, and do not add blanket retries.
+
+Required next step: run `circleci run get 24b70353-4030-4a3a-86d2-842ed4dc6bb3 --failure-report` using an authenticated CircleCI CLI or connected CircleCI CLI MCP, identify the first failing Windows step and its evidence, then make the smallest confirmed fix. Re-poll both platforms against the resulting exact SHA. Keep PR #95 OPEN / DRAFT / UNMERGED; `main` remains unchanged. No CI PASS is claimed.
