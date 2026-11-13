@@ -70,6 +70,7 @@ commands:
       - run:
           name: Install pinned Android NDK r27c
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             $ErrorActionPreference = "Stop"
             $androidRoot = "C:\Android"
             $ndkRoot = Join-Path $androidRoot "android-ndk-r27c"
@@ -172,6 +173,7 @@ jobs:
       - run:
           name: Rust toolchain
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             rustc --version
             cargo --version
       - run:
@@ -187,26 +189,39 @@ jobs:
       - run:
           name: Workspace tests
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo test --workspace --all-targets
       - run:
           name: Deterministic .oneir and .onepkg artifacts
-          command: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - run:
           name: DNS success and failure classification
-          command: cargo test -p one-core --all-targets dns_adapter
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-core --all-targets dns_adapter
       - run:
           name: Orchestration policy deny and allow paths
-          command: cargo test -p one-core --all-targets orchestrator
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-core --all-targets orchestrator
       - run:
           name: Database vertical slice
-          command: cargo test -p one-core --test database_vertical_slice
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-core --test database_vertical_slice
       - run:
           name: HTTP GET vertical slice
-          command: cargo test -p one-core --test http_get_vertical_slice
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-core --test http_get_vertical_slice
       - run:
           name: HTTP GET CLI vertical slice
-          command: cargo test -p one-cli --test http_get_orchestration
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-cli --test http_get_orchestration
 
   release-linux:
     machine:
@@ -260,19 +275,25 @@ jobs:
       - run:
           name: Build
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo build --workspace --all-targets
       - run:
           name: Clippy
-          command: cargo clippy --workspace --all-targets -- -D warnings
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo clippy --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo test --workspace --all-targets
       - run:
           name: Real network runtime tests
-          command: cargo test -p one-core --features real-network --all-targets
+          command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
+            cargo test -p one-core --features real-network --all-targets
       - run:
           name: Offline verification
           command: |
@@ -310,6 +331,7 @@ jobs:
       - run:
           name: Build and test One
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo test
             cargo clippy --all-targets -- -D warnings
@@ -317,6 +339,7 @@ jobs:
       - run:
           name: Build Windows native target
           command: |
+            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
             cargo run -p one-cli --bin one-native -- build --target windows-x86_64 examples/hello.one one-windows-native.exe
             if (-not (Test-Path "examples\one-windows-native.exe")) {
