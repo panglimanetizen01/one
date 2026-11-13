@@ -140,3 +140,13 @@ No terminal result/PASS is recorded for the current branch head.
 ### CircleCI executor schema correction
 
 CircleCI's published Windows Server 2025 machine-image example nests `resource_class: windows.medium` inside `machine`; all three Windows jobs now match that structure. Android Gen1 remains `android:default` + job-level `resource_class: large`. The static contract checker now enforces the Windows block shape and Rust/Cargo PATH setup.
+
+
+### Latest dual-platform CircleCI failure — 2026-11-13
+
+SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`, workflow `e5a0662d-023a-4e3d-9174-62a7aa55329a`:
+- Linux job `e87663d5-3843-4078-b155-efbb4c074a8d` — FAILURE.
+- Windows job `5a0d780e-0521-4a90-80da-9293718266de` — FAILURE.
+- Failure-report pipeline ID: `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`.
+
+Both jobs failed after the Windows Rust bootstrap and executor-schema corrections were present. The exact failing step/root cause is UNKNOWN because the job logs are inaccessible. No product source failure is inferred. Further changes must be evidence-led from the failure report.
