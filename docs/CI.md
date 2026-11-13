@@ -33,6 +33,8 @@ The following pipeline parameters default to `false` and are intended for manual
 - `run_release_checks=true`: runs the Linux and Windows release checks, including real-network runtime tests and the repository's platform-specific offline verification scripts.
 - `run_windows_native_verification=true`: runs the dedicated Windows native verification: host architecture, Rust/Clippy, locked tests, Windows GNU native build, PE32+ AMD64 validation, execution smoke test, and artifact upload.
 
+The current canonical `main` tree does not contain a committed `Cargo.lock`. Accordingly, the CircleCI cache key hashes the root/workspace manifests and Rust toolchain file, and the dedicated Windows job does not pass Cargo's `--locked` flag. The contract checker rejects reintroducing `--locked` until a lockfile is committed.
+
 The Windows cross-toolchain setup installs MSYS2/MinGW-w64 and the exact Android NDK r27c package. The downloaded Android NDK archive is SHA-256 checked before extraction. The expected digest is `27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494`.
 
 ## Exact-SHA evidence requirements
