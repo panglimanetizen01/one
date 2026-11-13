@@ -98,3 +98,12 @@ At migration branch SHA `94534c4e5ba6bba3acbf55f2838660df67ea2b81`:
 - The Python checker was not executed locally; this is a structural source/tree audit only.
 
 Temporary GitHub Actions run `43414203198` for SHA `94534c4e5ba6bba3acbf55f2838660df67ea2b81` failed on Ubuntu and Windows with zero executable steps. Treat it as runner/infrastructure evidence only. CircleCI had no reported status for this latest SHA at the time of the audit.
+
+
+### CircleCI latest default matrix — pending
+
+At SHA `9776d7bdab72397cb533b052f7d5dfa2c0bad106`, CircleCI workflow `cc29f03b-c0f9-45f4-99aa-ab5a40b814c6` started both default jobs:
+- Linux: `9148fb7a-4c9b-49aa-8ab1-3e4997cf08f8` — PENDING/RUNNING at last poll.
+- Windows: `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02` — PENDING/RUNNING at last poll.
+
+No terminal result or PASS is recorded yet.
