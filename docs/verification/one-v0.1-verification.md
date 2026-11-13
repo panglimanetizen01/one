@@ -70,6 +70,8 @@ The public verification mirror remains infrastructure only; GitHub `main` remain
 - Migration branch: `ci/circleci-migration-20261113`.
 - CircleCI configuration introduction commit: `3157333c8618cb211ffebd00f983f9c49900d0cb`.
 - Linux cross-toolchain hardening commit: `1b110a8aeb76b5c836657a96ee7454d4b165e475`.
+- Cargo cache/lockfile correction commit: `a17ade8c2808c17ca67749e59d0ff01e61869890`.
+- The verified `main` tree does not track `Cargo.lock`; CircleCI cache keys therefore hash the root/workspace Cargo manifests and `rust-toolchain.toml`, and native verification omits `--locked` to avoid a guaranteed lockfile precondition failure.
 - The config defines default Linux and Windows product CI, opt-in Linux/Windows release checks, and opt-in Windows native PE build/inspection/execution with stored artifact.
 - `tools/check_contract.py` now requires `.circleci/config.yml` and `docs/CI.md`, and statically checks that the config retains the named product/release/native gates.
 - CircleCI project integration, remote config validation, pipeline/job execution, exact-SHA PASS results, logs, and artifacts remain **NOT VERIFIED** in this checkpoint. The ChatGPT tool session currently exposes no authenticated CircleCI API/CLI action.
