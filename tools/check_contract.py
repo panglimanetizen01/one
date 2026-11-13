@@ -24,7 +24,7 @@ required = [
     "docs/spec/one-v0.1-interop.md", "docs/spec/one-network-foundation.md",
     "docs/implementation/one-v0.1-core-implementation-gate.md", "docs/testing/conformance.md",
     "docs/verification/one-v0.1-implementation-status.md", "docs/verification/one-v0.1-verification.md",
-    "docs/verification/one-v0.1-evidence-matrix.md", "docs/verification/windows-native-verification.md", "docs/verification/README.md", "docs/verification/one-v0.1-offline-evidence-template.md",
+    "docs/verification/one-v0.1-evidence-matrix.md", "docs/verification/windows-native-verification.md", "docs/verification/README.md", "docs/verification/repository-context-milestone.md", "docs/verification/forensic-audit-2026-10-21.md", "docs/verification/spec-implementation-gap-audit-2026-10-21.md", "docs/verification/one-v0.1-offline-evidence-template.md",
     "docs/verification/one-v0.1-linux-windows-2026-10-15.md", "docs/verification/native-backends-2026-10-19.md",
     "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
