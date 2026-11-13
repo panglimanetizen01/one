@@ -123,3 +123,10 @@ At SHA `12d4006ecc239e9ae3fb6b3fc191a1d50dd17317`, CircleCI workflow `5f028c06-b
 - Windows job `d7e7de1d-0eb0-4485-957b-9882422701b3` — PENDING.
 
 No terminal result/PASS is recorded for the current branch head.
+
+
+### Windows Rust provisioning correction
+
+- SHA `06a8d54654d671c9b642547eec1607f087434c6f`: Windows job `03c291bc-d501-4ac9-972b-7962d30ae50a` failed; failure-report pipeline `50b8afe4-3e92-4ae3-827a-89e2097056f8`. Job logs remain inaccessible; exact failing step UNKNOWN.
+- CircleCI's published Windows Server 2025 image inventory does not list Rust/Cargo. The job had assumed `rustc`/ `cargo` were preinstalled. The configuration now bootstraps stable Rust via rustup and prepends `%USERPROFILE%\\.cargo\\bin` for each Windows Cargo invocation.
+- This is a proven missing prerequisite in the configuration, but not a proven diagnosis of the earlier job failure without its log. Verify the fix with a fresh exact-SHA CircleCI run.
