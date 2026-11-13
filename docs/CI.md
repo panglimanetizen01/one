@@ -116,7 +116,7 @@ Independent inspection of CircleCI's published Windows image inventory shows Rus
 ### Executor schema references and guardrails
 
 - Android Gen1 uses `android:default` with job-level `resource_class: large`; CircleCI documents that Gen2 uses `android:current` with a `.gen2` resource class: https://circleci.com/docs/guides/execute/android-machine-image/
-- Windows Server 2025 machine executor nests `resource_class: windows.medium` inside the `machine` block, alongside `image` and `shell`, matching CircleCI's published example: https://circleci.com/developer/machine/image/windows-server-2025-gui
+- Windows Server 2025 machine jobs declare `resource_class: windows.medium` at the job level; `image` and `shell` remain under `machine`. This follows CircleCI's v2.1 job schema and September 21, 2026 strict-compilation guidance: https://circleci.com/docs/reference/configuration-reference/ and https://discuss.circleci.com/t/breaking-changes-config-compilation-updates-september-21-2026/54719
 - `tools/check_contract.py` enforces this exact Windows machine block for all three Windows jobs, plus explicit Rust/Cargo PATH prefixes in every Windows command block that invokes Rust/Cargo.
 
 
@@ -128,7 +128,7 @@ On SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`, both default CircleCI jobs tr
 - Windows job: `5a0d780e-0521-4a90-80da-9293718266de`.
 - Failure-report pipeline ID for both: `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`.
 
-This run used the corrected Android Gen1 image/resource-class pairing, explicit Windows Rust installation/PATH, and nested Windows machine resource classes. Both platforms failing in the same workflow suggests a shared setup/integration/contract issue may exist, but that is not a diagnosis. The exact failing steps are UNKNOWN because CircleCI logs/failure reports are not accessible through the current ChatGPT tools. Do not change more provisioning based on speculation; retrieve the failure report before the next targeted fix.
+This run used the corrected Android Gen1 image/resource-class pairing, explicit Windows Rust installation/PATH, and corrected job-level Windows resource classes. Both platforms failing in the same workflow suggests a shared setup/integration/contract issue may exist, but that is not a diagnosis. The exact failing steps are UNKNOWN because CircleCI logs/failure reports are not accessible through the current ChatGPT tools. Do not change more provisioning based on speculation; retrieve the failure report before the next targeted fix.
 
 
 ### Current retry after dual-platform failure
@@ -181,7 +181,7 @@ The Windows native artifact inspection now validates the DOS MZ header, PE signa
 
 - Current migration candidate before this checkpoint: `5dcb7088910d0520252deffbdacf15caeffe907e`.
 - Config includes the Bash-only Linux command correction and a Windows PE32+ optional-header (`0x20B`) validation.
-- Static structural audit: 60 required contract paths exist; all 78 concrete docs-index references resolve; migration tree has zero `.github/` paths; Linux job contains no PowerShell `$env:`; Linux shell guard and PE32+ guard are present; all three Windows executor blocks use the documented nested `windows.medium` resource class.
+- Static structural audit: 60 required contract paths exist; all 78 concrete docs-index references resolve; migration tree has zero `.github/` paths; Linux job contains no PowerShell `$env:`; Linux shell guard and PE32+ guard are present; all three Windows executor blocks use job-level `windows.medium` resource classes.
 - The GitHub status endpoint returned no CircleCI statuses for this candidate at the last poll. This is NOT a PASS or a confirmed trigger; inspect the next exact-SHA status before treating the run as started.
 
  
