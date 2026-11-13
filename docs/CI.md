@@ -72,3 +72,14 @@ Until CircleCI parity is proven, leave the existing GitHub Actions workflows unc
 At migration branch SHA `94534c4e5ba6bba3acbf55f2838660df67ea2b81`, the repository tree audit found all 55 paths required by `tools/check_contract.py`, all 74 concrete documentation-index references resolved, and all CircleCI gate markers present. The Python checker itself has not been executed in this session.
 
 The temporary GitHub Actions safety-net run `43414203198` for the same SHA failed on both Ubuntu and Windows with zero executable steps (`steps: []`). This is runner/infrastructure evidence, not a product test result. CircleCI has no reported status yet for this latest SHA. Do not treat either provider's unstarted jobs as source PASS/FAIL.
+
+
+### Latest exact-SHA pipeline — 2026-11-13
+
+CircleCI has now started both default product jobs for migration SHA `9776d7bdab72397cb533b052f7d5dfa2c0bad106`:
+
+- Workflow: `cc29f03b-c0f9-45f4-99aa-ab5a40b814c6`.
+- Linux job: `9148fb7a-4c9b-49aa-8ab1-3e4997cf08f8`, status PENDING/RUNNING at last poll.
+- Windows job: `b18d9d6a-b2c4-4878-bed0-c1f5380ffe02`, status PENDING/RUNNING at last poll.
+
+This is a valid exact-SHA execution trigger, not a PASS. Wait for terminal job states and inspect logs/artifacts before proceeding to release/native opt-in workflows or retiring GitHub Actions.
