@@ -58,6 +58,15 @@ ci_contract_markers = [
 if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
     raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
 
+windows_machine_block = (
+    "    machine:\\n"
+    "      image: windows-server-2025-gui:current\\n"
+    "      resource_class: windows.medium\\n"
+    "      shell: powershell.exe -ExecutionPolicy Bypass"
+)
+if ci_config.count(windows_machine_block) != 3:
+    raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must nest windows.medium under machine")
+
 windows_ci_jobs = (
     "setup-windows-cross-toolchains",
     "one-windows",
