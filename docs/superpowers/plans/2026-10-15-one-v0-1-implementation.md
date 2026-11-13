@@ -6,7 +6,7 @@
 
 **Architecture:** Implement One as a Rust workspace with a dependency-ordered compiler front end and reference interpreter. The language surface is localized and conversational, but parsing produces a language-independent AST and Semantic IR; execution is performed without an LLM. Platform-sensitive operations are isolated behind a capability-aware runtime boundary.
 
-**Tech Stack:** Rust stable; Cargo workspace; Rust standard library first; GitHub Actions on Linux and Windows; no runtime dependency on Python, Node.js, Java, or an LLM.
+**Tech Stack:** Rust stable; Cargo workspace; Rust standard library first; CircleCI as the canonical Linux/Windows CI provider (superseding the original GitHub Actions selection); no runtime dependency on Python, Node.js, Java, or an LLM.
 
 **Spec:** `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
 
@@ -311,3 +311,8 @@ One v0.1 is not considered complete until:
 - no known failing test or contradictory contract remains in the canonical repository.
 
 Deep native FFI, package registry, full compiler backends, GUI framework, IDE, and additional locales are follow-on milestones unless their contracts are explicitly implemented and verified in v0.1. They must not be represented as already complete.
+
+
+## CI provider supersession — 2026-11-13
+
+The original workflow tasks above record the historical GitHub Actions implementation. ADR-0017 now selects CircleCI as the canonical CI execution provider. The current migration configuration is `.circleci/config.yml`; the original GitHub Actions workflow files remain temporarily until equivalent CircleCI exact-SHA Linux/Windows, release, and native-verification evidence is green. Do not treat this historical plan's GitHub Actions task references as the current provider decision.
