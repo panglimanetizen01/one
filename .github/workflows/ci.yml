@@ -50,6 +50,8 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: Product CI contracts
+        run: python -m unittest discover -s tests -p test_product_ci_contract.py -v
       - name: Build
         run: cargo --locked build --workspace --all-targets
       - name: Clippy
