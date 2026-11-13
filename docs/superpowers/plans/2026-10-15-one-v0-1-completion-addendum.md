@@ -84,3 +84,8 @@ The documentation-only revision `637ab548210a948f177186eb3a76381330f401f0` trigg
 ### First CircleCI run after GitHub Actions workflow removal — 2026-11-13
 
 Migration branch SHA `e728f965165b21c72810c80dd64734912a916324` contains no `.github/workflows/` files. CircleCI workflow `1c06b7ae-3464-4c6c-b835-ed0c050af262` started Linux job `55307f51-6de4-4b73-bc26-13f3a40c2589` and Windows job `417b51de-5b84-43ac-a566-2e229464a4ff`; both were pending at last poll. Keep PR #95 draft until terminal green results and release/native evidence are inspected.
+
+ 
+### Linux Bash/PowerShell mismatch correction — 2026-11-13
+
+A forensic config inspection found seven PowerShell `$env:PATH` assignments inside the Bash `one-linux` job. These were removed; the Python contract checker now rejects PowerShell `$env:` syntax in that job. Corrected candidate SHA `2095098ea0e97da1c06c3f260f1f95218a06a339` triggered workflow `05a7e587-645d-4809-95a6-97d528c33507`, with Linux `54a95e18-180c-40e9-b572-83baedfd4bce` and Windows `e44eb79c-605d-4dd6-8a5e-5ccaad91b06f` pending at last poll. The shell mismatch is a proven configuration defect, not yet a confirmed root cause for the preceding failure without its log.

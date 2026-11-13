@@ -32,3 +32,6 @@
 - Updated the native backend contract map, implementation-status inventory, evidence matrix, release boundary, user feature-status guide, and verification record to reflect the merged state and preserve exact-SHA evidence boundaries.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
+
+ 
+- Fixed the CircleCI Linux job's shell mismatch by removing PowerShell-only `$env:PATH` assignments from Bash commands and adding a static contract guard against reintroduction. Exact-SHA CircleCI verification remains pending.

@@ -168,3 +168,11 @@ At SHA `e728f965165b21c72810c80dd64734912a916324`, the migration branch contains
 - Windows `417b51de-5b84-43ac-a566-2e229464a4ff` — PENDING.
 
 This is the first default Linux/Windows matrix observed after workflow retirement in the migration branch. No PASS is claimed.
+
+ 
+### Linux shell mismatch remediation and retry — 2026-11-13
+
+- SHA `ebf6a41f2ab0c71ac2441f41fac96da21375b0b6`: Linux job `4e13ae26-bab1-4850-b513-ee15a69846a6` failed with CircleCI failure-report pipeline `0cb3e736-20ac-452c-a566-7e7b5a2f33d6`; Windows job `cd106523-748c-4ef7-9702-a8ef81caf06f` was pending at last poll.
+- Static inspection found seven PowerShell `$env:PATH` statements in the Bash Linux job. They were removed. The contract checker now rejects PowerShell `$env:` syntax in the Linux job.
+- Corrected candidate `2095098ea0e97da1c06c3f260f1f95218a06a339`, workflow `05a7e587-645d-4809-95a6-97d528c33507`: Linux `54a95e18-180c-40e9-b572-83baedfd4bce` and Windows `e44eb79c-605d-4dd6-8a5e-5ccaad91b06f` were pending at last poll. No PASS is claimed.
+- The syntax defect is independently proven from the config; its status as the actual failed CircleCI step is not confirmed without the failure report.

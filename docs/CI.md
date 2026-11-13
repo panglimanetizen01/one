@@ -153,3 +153,15 @@ This is the first observed default matrix on the branch with GitHub Actions CI r
 ### Linux executor shell contract
 
 The `one-linux` job runs commands in Bash. PowerShell environment syntax such as `$env:PATH` is invalid there and must not be copied from the Windows jobs. The static contract checker rejects PowerShell `$env:` syntax inside the Linux job. Linux uses the executor-provided PATH and the Rustup environment sourced by the setup command through `BASH_ENV`.
+
+ 
+### Latest Linux shell correction and exact-SHA retry — 2026-11-13
+
+- Previous candidate SHA `ebf6a41f2ab0c71ac2441f41fac96da21375b0b6`: Linux job `4e13ae26-bab1-4850-b513-ee15a69846a6` failed; CircleCI status exposed failure-report pipeline `0cb3e736-20ac-452c-a566-7e7b5a2f33d6`. Windows job `cd106523-748c-4ef7-9702-a8ef81caf06f` was still pending at last poll.
+- Static inspection found seven PowerShell `$env:PATH` assignments inside the Bash `one-linux` job. Those assignments were removed. Rustup already adds `$HOME/.cargo/bin` to `BASH_ENV` in the Linux setup command.
+- `tools/check_contract.py` now rejects any `$env:` syntax inside the isolated `one-linux` job to prevent this shell mismatch from returning.
+- Corrected config commit: `940fa17b6c19ec050a8b8e720fc3046d438247dc`; contract guard: `dc58507b466c803c2d62358566350b370027c10d`.
+- Documentation reconciliation commits: `dfa5571f54aefa58d352d41222bac5f5390d05c1`, `6f81120ff75488c2c9edb66e8c4b32294b014a25`, `2095098ea0e97da1c06c3f260f1f95218a06a339`.
+- Latest observed candidate SHA before this documentation addendum: `2095098ea0e97da1c06c3f260f1f95218a06a339`; workflow `05a7e587-645d-4809-95a6-97d528c33507`; Linux `54a95e18-180c-40e9-b572-83baedfd4bce` and Windows `e44eb79c-605d-4dd6-8a5e-5ccaad91b06f` were PENDING at last poll.
+- The shell mismatch is a proven configuration defect, but the exact failing step for the previous Linux job remains unconfirmed until the failure report is retrieved. Do not claim this correction as the proven root cause without the log.
+- No product source, grammar, semantics, compiler, interpreter, runtime, or CLI files changed. The migration branch has no `.github/` files; `main` remains unchanged. Keep PR #95 draft/unmerged until default Linux/Windows, opt-in release/native checks, and artifact inspection pass.
