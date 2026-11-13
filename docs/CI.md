@@ -129,3 +129,12 @@ On SHA `e44d16b2b5f4ef50c33674ccf711bd11b410effa`, both default CircleCI jobs tr
 - Failure-report pipeline ID for both: `ac6f1f05-1bbf-4d26-80ea-bf498ba29af3`.
 
 This run used the corrected Android Gen1 image/resource-class pairing, explicit Windows Rust installation/PATH, and nested Windows machine resource classes. Both platforms failing in the same workflow suggests a shared setup/integration/contract issue may exist, but that is not a diagnosis. The exact failing steps are UNKNOWN because CircleCI logs/failure reports are not accessible through the current ChatGPT tools. Do not change more provisioning based on speculation; retrieve the failure report before the next targeted fix.
+
+
+### Current retry after dual-platform failure
+
+The documentation-only checkpoint at SHA `637ab548210a948f177186eb3a76381330f401f0` triggered another default CircleCI workflow `b8e52e70-281f-4ac7-a898-a21d45ceedd9`:
+- Linux job `a26c2b6d-c66e-43b1-8337-108220e5dd4d` — PENDING.
+- Windows job `437e36cd-b267-407e-8919-92ce2e1a1a90` — PENDING.
+
+The config itself was unchanged from the preceding dual-platform failure. The static structural audit passes, but the actual Python contract checker and product tests have not yet returned a terminal result. Do not infer the prior shared failure root cause without its CircleCI report.
