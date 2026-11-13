@@ -1,0 +1,325 @@
+version: 2.1
+
+parameters:
+  run_release_checks:
+    type: boolean
+    default: false
+  run_windows_native_verification:
+    type: boolean
+    default: false
+
+commands:
+  setup-linux-cross-toolchains:
+    steps:
+      - run:
+          name: Install Linux and Android cross-toolchains
+          command: |
+            set -euo pipefail
+            sudo apt-get update
+            sudo apt-get install -y clang mingw-w64
+            yes | sdkmanager --licenses >/dev/null
+            sdkmanager --install "ndk;27.2.12479018"
+            ndk_clang="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+            test -x "$ndk_clang"
+            {
+              echo "export ONE_ANDROID_CLANG=$ndk_clang"
+              echo "export ONE_WINDOWS_CLANG=clang"
+            } >> "$BASH_ENV"
+            echo "Android NDK clang: $ndk_clang"
+            clang --version
+            x86_64-w64-mingw32-gcc --version
+
+  setup-windows-cross-toolchains:
+    steps:
+      - run:
+          name: Install MSYS2 and MinGW-w64
+          command: |
+            $ErrorActionPreference = "Stop"
+            $bash = "C:\msys64\usr\bin\bash.exe"
+            if (-not (Test-Path $bash)) {
+              $installer = Join-Path $env:TEMP "msys2-base-x86_64-latest.sfx.exe"
+              Invoke-WebRequest -Uri "https://github.com/msys2/msys2-installer/releases/latest/download/msys2-base-x86_64-latest.sfx.exe" -OutFile $installer
+              & $installer -y -oC:\
+              if ($LASTEXITCODE -ne 0) { throw "MSYS2 base extraction failed: $LASTEXITCODE" }
+            }
+            & $bash -lc "pacman -Syu --noconfirm"
+            if ($LASTEXITCODE -ne 0) { throw "MSYS2 base update failed: $LASTEXITCODE" }
+            & $bash -lc "pacman -S --needed --noconfirm mingw-w64-x86_64-clang mingw-w64-x86_64-toolchain"
+            if ($LASTEXITCODE -ne 0) { throw "MinGW-w64 toolchain installation failed: $LASTEXITCODE" }
+            if (-not (Test-Path "C:\msys64\mingw64\bin\clang.exe")) {
+              throw "MinGW-w64 clang.exe was not installed."
+            }
+      - run:
+          name: Install pinned Android NDK r27c
+          command: |
+            $ErrorActionPreference = "Stop"
+            $androidRoot = "C:\Android"
+            $ndkRoot = Join-Path $androidRoot "android-ndk-r27c"
+            $ndkZip = Join-Path $env:TEMP "android-ndk-r27c-windows.zip"
+            if (-not (Test-Path (Join-Path $ndkRoot "toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe"))) {
+              New-Item -ItemType Directory -Force -Path $androidRoot | Out-Null
+              Invoke-WebRequest -Uri "https://dl.google.com/android/repository/android-ndk-r27c-windows.zip" -OutFile $ndkZip
+              $actual = (Get-FileHash -Path $ndkZip -Algorithm SHA256).Hash.ToLowerInvariant()
+              $expected = "27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494"
+              if ($actual -ne $expected) { throw "Android NDK SHA-256 mismatch: $actual" }
+              Expand-Archive -Path $ndkZip -DestinationPath $androidRoot -Force
+            }
+            if (-not (Test-Path (Join-Path $ndkRoot "toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe"))) {
+              throw "Pinned Android NDK clang.exe is missing."
+            }
+            rustc --version
+            cargo --version
+
+jobs:
+  one-linux:
+    machine:
+      image: android:current
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - one-cargo-v1-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - one-cargo-v1-{{ arch }}-
+      - run:
+          name: Rust toolchain
+          command: |
+            rustc --version
+            cargo --version
+            python3 --version
+      - setup-linux-cross-toolchains
+      - run:
+          name: Contract artifacts
+          command: python3 tools/check_contract.py
+      - run:
+          name: Build
+          command: cargo build --workspace --all-targets
+      - run:
+          name: Clippy
+          command: cargo clippy --workspace --all-targets -- -D warnings
+      - run:
+          name: Workspace tests
+          command: cargo test --workspace --all-targets
+      - run:
+          name: Deterministic .oneir and .onepkg artifacts
+          command: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+      - run:
+          name: DNS success and failure classification
+          command: cargo test -p one-core --all-targets dns_adapter
+      - run:
+          name: Orchestration policy deny and allow paths
+          command: cargo test -p one-core --all-targets orchestrator
+      - run:
+          name: Database vertical slice
+          command: cargo test -p one-core --test database_vertical_slice
+      - run:
+          name: HTTP GET vertical slice
+          command: cargo test -p one-core --test http_get_vertical_slice
+      - run:
+          name: HTTP GET CLI vertical slice
+          command: cargo test -p one-cli --test http_get_orchestration
+      - save_cache:
+          key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.lock" }}
+          paths:
+            - ~/.cargo/registry
+            - ~/.cargo/git
+
+  one-windows:
+    machine:
+      image: windows-server-2025-gui:current
+      shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
+    environment:
+      ONE_WINDOWS_CLANG: C:\msys64\mingw64\bin\clang.exe
+      ONE_ANDROID_CLANG: C:\Android\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe
+    steps:
+      - checkout
+      - setup-windows-cross-toolchains
+      - run:
+          name: Contract artifacts
+          command: python tools/check_contract.py
+      - run:
+          name: Rust toolchain
+          command: |
+            rustc --version
+            cargo --version
+      - run:
+          name: Build
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            cargo build --workspace --all-targets
+      - run:
+          name: Clippy
+          command: cargo clippy --workspace --all-targets -- -D warnings
+      - run:
+          name: Workspace tests
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            cargo test --workspace --all-targets
+      - run:
+          name: Deterministic .oneir and .onepkg artifacts
+          command: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+      - run:
+          name: DNS success and failure classification
+          command: cargo test -p one-core --all-targets dns_adapter
+      - run:
+          name: Orchestration policy deny and allow paths
+          command: cargo test -p one-core --all-targets orchestrator
+      - run:
+          name: Database vertical slice
+          command: cargo test -p one-core --test database_vertical_slice
+      - run:
+          name: HTTP GET vertical slice
+          command: cargo test -p one-core --test http_get_vertical_slice
+      - run:
+          name: HTTP GET CLI vertical slice
+          command: cargo test -p one-cli --test http_get_orchestration
+
+  release-linux:
+    machine:
+      image: android:current
+    resource_class: large
+    steps:
+      - checkout
+      - setup-linux-cross-toolchains
+      - run:
+          name: Toolchain and contract artifacts
+          command: |
+            rustc --version
+            cargo --version
+            python3 --version
+            python3 tools/check_contract.py
+      - run:
+          name: Build
+          command: cargo build --workspace --all-targets
+      - run:
+          name: Clippy
+          command: cargo clippy --workspace --all-targets -- -D warnings
+      - run:
+          name: Workspace tests
+          command: cargo test --workspace --all-targets
+      - run:
+          name: Real network runtime tests
+          command: cargo test -p one-core --features real-network --all-targets
+      - run:
+          name: Offline verification
+          command: bash tools/verify_offline.sh
+
+  release-windows:
+    machine:
+      image: windows-server-2025-gui:current
+      shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
+    environment:
+      ONE_WINDOWS_CLANG: C:\msys64\mingw64\bin\clang.exe
+      ONE_ANDROID_CLANG: C:\Android\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe
+    steps:
+      - checkout
+      - setup-windows-cross-toolchains
+      - run:
+          name: Toolchain and contract artifacts
+          command: |
+            rustc --version
+            cargo --version
+            python --version
+            python tools/check_contract.py
+      - run:
+          name: Build
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            cargo build --workspace --all-targets
+      - run:
+          name: Clippy
+          command: cargo clippy --workspace --all-targets -- -D warnings
+      - run:
+          name: Workspace tests
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            cargo test --workspace --all-targets
+      - run:
+          name: Real network runtime tests
+          command: cargo test -p one-core --features real-network --all-targets
+      - run:
+          name: Offline verification
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            .\tools\verify_offline.ps1
+
+  windows-native-verification:
+    machine:
+      image: windows-server-2025-gui:current
+      shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
+    environment:
+      ONE_WINDOWS_CLANG: C:\msys64\mingw64\bin\clang.exe
+      ONE_ANDROID_CLANG: C:\Android\android-ndk-r27c\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe
+    steps:
+      - checkout
+      - setup-windows-cross-toolchains
+      - run:
+          name: Verify Windows host
+          command: |
+            $ErrorActionPreference = "Stop"
+            if ($env:PROCESSOR_ARCHITECTURE -ne "AMD64") {
+              throw "Expected AMD64 Windows runner, got $env:PROCESSOR_ARCHITECTURE"
+            }
+            Write-Host "OS: $([System.Environment]::OSVersion.VersionString)"
+            Write-Host "Architecture: $env:PROCESSOR_ARCHITECTURE"
+      - run:
+          name: Verify Rust toolchain and contract
+          command: |
+            rustc --version
+            cargo --version
+            cargo clippy --version
+            python tools/check_contract.py
+      - run:
+          name: Build and test One
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            cargo test --locked
+            cargo clippy --all-targets --locked -- -D warnings
+            cargo build -p one-cli --bin one-native --locked
+      - run:
+          name: Build Windows native target
+          command: |
+            $env:PATH = "C:\msys64\mingw64\bin;$env:PATH"
+            cargo run -p one-cli --bin one-native --locked -- build --target windows-x86_64 examples/hello.one one-windows-native.exe
+            if (-not (Test-Path "examples\one-windows-native.exe")) {
+              throw "Windows native artifact was not produced."
+            }
+      - run:
+          name: Inspect and execute Windows native artifact
+          command: |
+            $ErrorActionPreference = "Stop"
+            $artifact = "examples\one-windows-native.exe"
+            $bytes = [System.IO.File]::ReadAllBytes($artifact)
+            if ($bytes.Length -lt 64) { throw "Artifact is too small to be a PE executable." }
+            if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { throw "Artifact does not have a PE MZ header." }
+            $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+            if ($peOffset -lt 0 -or $peOffset + 24 -gt $bytes.Length) { throw "Invalid PE header offset." }
+            if ($bytes[$peOffset] -ne 0x50 -or $bytes[$peOffset + 1] -ne 0x45 -or $bytes[$peOffset + 2] -ne 0x00 -or $bytes[$peOffset + 3] -ne 0x00) { throw "Missing PE signature." }
+            $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+            if ($machine -ne 0x8664) { throw ("Expected AMD64 PE machine 0x8664, got 0x{0:X4}." -f $machine) }
+            Write-Host "PE32+ AMD64 artifact verified."
+            & ".\$artifact"
+            if ($LASTEXITCODE -ne 0) { throw "Windows native artifact exited with code $LASTEXITCODE." }
+      - store_artifacts:
+          path: examples/one-windows-native.exe
+          destination: windows-native-verification/one-windows-native.exe
+
+workflows:
+  one-ci:
+    jobs:
+      - one-linux
+      - one-windows
+
+  release-check:
+    when: << pipeline.parameters.run_release_checks >>
+    jobs:
+      - release-linux
+      - release-windows
+
+  windows-native-verification:
+    when: << pipeline.parameters.run_windows_native_verification >>
+    jobs:
+      - windows-native-verification
