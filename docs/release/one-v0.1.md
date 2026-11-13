@@ -94,3 +94,10 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 ## Verification infrastructure rule
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution. **Do not purchase an upgrade** merely to obtain hosted runner execution; use the independent verification path when the canonical hosted runner is unavailable.
+
+
+## CI provider migration — 2026-11-13
+
+CircleCI is the selected canonical CI execution provider under ADR-0017. The migration branch adds `.circleci/config.yml` with the default Linux/Windows product matrix, opt-in release checks, and dedicated Windows native verification. The configuration commit is `3157333c8618cb211ffebd00f983f9c49900d0cb`.
+
+This is a configuration milestone only. It is **not** evidence of a successful CircleCI pipeline, exact-SHA product verification, release approval, or completed GitHub Actions retirement. Existing GitHub Actions workflows remain unchanged until CircleCI passes equivalent Linux and Windows checks on the same exact SHA and logs/artifacts are inspected. The current migration status and exact completion gates are maintained in `docs/CI.md`.
