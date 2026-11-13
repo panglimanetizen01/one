@@ -1,6 +1,6 @@
 # Runtime and Governance Source Audit — 2026-11-12
 
-**Scope:** candidate PR #92 source branch `tooling/python-local-ci`, repository `panglimanetizen01/one`.
+**Scope:** candidate PR #92 source branch, repository `panglimanetizen01/one`.
 
 **Audit baseline:** `01e0ad4a198d8095340da8d10adc3a6fa5ed9fa5` (CircleCI SUCCESS and independent Ubuntu/Windows Server 2025 parity PASS).
 
