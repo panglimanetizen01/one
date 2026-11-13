@@ -58,6 +58,34 @@ ci_contract_markers = [
 if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
     raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
 
+windows_ci_jobs = (
+    "setup-windows-cross-toolchains",
+    "one-windows",
+    "release-windows",
+    "windows-native-verification",
+)
+for job_name in windows_ci_jobs:
+    job_start = ci_config.find(f"  {job_name}:\\n")
+    if job_start < 0:
+        raise SystemExit(f"CIRCLECI CONTRACT: missing Windows job/command {job_name}")
+    job_lines = ci_config[job_start:].splitlines()[1:]
+    section = []
+    for line in job_lines:
+        if line.startswith("  ") and not line.startswith("    ") and line.rstrip().endswith(":"):
+            break
+        section.append(line)
+    for index, line in enumerate(section):
+        if not line.startswith("          command:"):
+            continue
+        block = [line]
+        cursor = index + 1
+        while cursor < len(section) and (not section[cursor].strip() or section[cursor].startswith("            ")):
+            block.append(section[cursor])
+            cursor += 1
+        command_text = "\\n".join(block)
+        if any(token in command_text for token in ("cargo ", "rustc ", "rustup ")) and "USERPROFILE" not in command_text:
+            raise SystemExit(f"CIRCLECI CONTRACT: Windows Rust/Cargo PATH missing in {job_name} command block")
+
 missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
 if missing_ci_contract:
     raise SystemExit("CIRCLECI CONTRACT: missing required CI gates/configuration: " + ", ".join(missing_ci_contract))
