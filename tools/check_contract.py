@@ -4,8 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 required = [
     "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
-    ".github/workflows/ci.yml", ".github/workflows/release-check.yml", ".github/workflows/windows-native-verification.yml",
-    "docs/README.md",
+    ".circleci/config.yml", "docs/CI.md", "docs/README.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
     "docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md",
@@ -31,6 +30,28 @@ required = [
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
     "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
 ]
+
+ci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
+ci_contract_markers = [
+    "one-linux:",
+    "one-windows:",
+    "release-linux:",
+    "release-windows:",
+    "windows-native-verification:",
+    "cargo build --workspace --all-targets",
+    "cargo clippy --workspace --all-targets -- -D warnings",
+    "cargo test --workspace --all-targets",
+    "tools/check_contract.py",
+    "--features real-network",
+    "tools/verify_offline.sh",
+    "tools/verify_offline.ps1",
+    "store_artifacts:",
+    "27.2.12479018",
+    "mingw-w64",
+]
+missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
+if missing_ci_contract:
+    raise SystemExit("CIRCLECI CONTRACT: missing required CI gates/configuration: " + ", ".join(missing_ci_contract))
 
 missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
