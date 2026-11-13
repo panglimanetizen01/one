@@ -4,4 +4,4 @@ The canonical Project ONE CI configuration belongs in the private source reposit
 
 Independent verification mirrors and their runner-specific workflow artifacts remain outside the canonical private repository unless explicitly approved. They are supplementary verification infrastructure, not the source repository and not a substitute for recording exact-SHA CircleCI results.
 
-The legacy `.github/workflows/*.yml` files are retained temporarily during the CircleCI migration. They may be retired only after the equivalent CircleCI workflows have passed on the same exact source SHA and the migration evidence has been reviewed.
+The migration branch deletes the three Project ONE `.github/workflows/*.yml` CI files to avoid a parallel CI path. The `main` branch remains unchanged until the migration PR is reviewed and eligible to merge. Keep the PR draft/unmerged until equivalent CircleCI Linux/Windows, release, and native-verification evidence passes on exact SHAs.
