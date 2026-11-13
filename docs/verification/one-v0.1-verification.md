@@ -130,3 +130,8 @@ No terminal result/PASS is recorded for the current branch head.
 - SHA `06a8d54654d671c9b642547eec1607f087434c6f`: Windows job `03c291bc-d501-4ac9-972b-7962d30ae50a` failed; failure-report pipeline `50b8afe4-3e92-4ae3-827a-89e2097056f8`. Job logs remain inaccessible; exact failing step UNKNOWN.
 - CircleCI's published Windows Server 2025 image inventory does not list Rust/Cargo. The job had assumed `rustc`/ `cargo` were preinstalled. The configuration now bootstraps stable Rust via rustup and prepends `%USERPROFILE%\\.cargo\\bin` for each Windows Cargo invocation.
 - This is a proven missing prerequisite in the configuration, but not a proven diagnosis of the earlier job failure without its log. Verify the fix with a fresh exact-SHA CircleCI run.
+
+
+### Windows PATH contract regression guard
+
+`tools/check_contract.py` now inspects the Windows provisioning, default CI, release, and native-verification command blocks. Any `cargo`, `rustc`, or `rustup` invocation without the explicit user Cargo-bin PATH prefix is a contract-check failure. This guards against future Windows jobs silently depending on an image-level Rust installation.
