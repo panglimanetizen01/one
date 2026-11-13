@@ -63,8 +63,8 @@ if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
 windows_machine_block = (
     "    machine:\n"
     "      image: windows-server-2025-gui:current\n"
-    "      resource_class: windows.medium\n"
-    "      shell: powershell.exe -ExecutionPolicy Bypass"
+    "      shell: powershell.exe -ExecutionPolicy Bypass\n"
+    "    resource_class: windows.medium"
 )
 if ci_config.count(windows_machine_block) != 3:
     raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must nest windows.medium under machine")
