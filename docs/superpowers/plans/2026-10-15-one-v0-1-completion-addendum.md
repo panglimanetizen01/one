@@ -61,5 +61,6 @@ The original task ledger records the historical GitHub Actions CI implementation
 - Added `.circleci/config.yml` with default Linux/Windows product checks, opt-in release checks, and opt-in Windows native verification.
 - Added `docs/CI.md` and updated the contributor guide, root README, documentation map, decision record (ADR-0017), implementation status, evidence matrix, release contract, and verification protocol.
 - Updated `tools/check_contract.py` so the contract-artifact gate requires the CircleCI config rather than requiring GitHub Actions workflow files as permanent artifacts. It also checks for required job and product-gate markers.
+- Forensic tree inspection confirmed that canonical `main` has no committed `Cargo.lock`; the CircleCI cache key was corrected to hash existing workspace manifests, and `--locked` was removed from the native verification commands. The contract checker now guards against reintroducing `--locked` before a lockfile exists.
 - Legacy GitHub Actions workflows are intentionally retained unchanged until CircleCI demonstrates equivalent green checks on the same exact SHA.
 - CircleCI project connectivity, CircleCI schema validation, pipeline execution, job logs, and artifacts are not yet verified in this checkpoint. No CircleCI PASS is claimed.
