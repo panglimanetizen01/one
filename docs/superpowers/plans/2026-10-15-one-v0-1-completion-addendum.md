@@ -64,3 +64,8 @@ The original task ledger records the historical GitHub Actions CI implementation
 - Forensic tree inspection confirmed that canonical `main` has no committed `Cargo.lock`; the CircleCI cache key was corrected to hash existing workspace manifests, and `--locked` was removed from the native verification commands. The contract checker now guards against reintroducing `--locked` before a lockfile exists.
 - Legacy GitHub Actions workflows are intentionally retained unchanged until CircleCI demonstrates equivalent green checks on the same exact SHA.
 - CircleCI VCS connectivity is evidenced by actual Linux job creation, but the first two observed Linux jobs failed and their logs are not accessible in the current integration. The root cause remains UNKNOWN; no CircleCI PASS is claimed. The Windows job failed on SHA `9776d7bdab72397cb533b052f7d5dfa2c0bad106` (failure-report pipeline `f84b18b4-80e2-4c21-8a04-ff36deacba81`); its root cause remains unknown because logs are inaccessible. The latest Linux/Windows retry is pending on SHA `12d4006ecc239e9ae3fb6b3fc191a1d50dd17317` under workflow `5f028c06-b3ff-4caf-9f96-b9b422640152`.
+
+
+### Windows toolchain provisioning correction — 2026-11-13
+
+CircleCI's published Windows Server 2025 image inventory does not list Rust/Cargo. The Windows jobs now install Rust stable through rustup and explicitly add the user Cargo bin directory to PATH in every Cargo-bearing PowerShell step. This addresses a guaranteed missing prerequisite; the earlier failed job's exact root cause remains unknown without its log. The next CircleCI run must prove the correction.
