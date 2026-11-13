@@ -104,7 +104,6 @@ jobs:
       - run:
           name: Rust toolchain
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             rustc --version
             cargo --version
             python3 --version
@@ -117,7 +116,6 @@ jobs:
       - run:
           name: Clippy
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;C:\msys64\mingw64\bin;$env:PATH"
             cargo clippy --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
@@ -128,27 +126,22 @@ jobs:
       - run:
           name: DNS success and failure classification
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             cargo test -p one-core --all-targets dns_adapter
       - run:
           name: Orchestration policy deny and allow paths
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             cargo test -p one-core --all-targets orchestrator
       - run:
           name: Database vertical slice
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             cargo test -p one-core --test database_vertical_slice
       - run:
           name: HTTP GET vertical slice
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             cargo test -p one-core --test http_get_vertical_slice
       - run:
           name: HTTP GET CLI vertical slice
           command: |
-            $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
             cargo test -p one-cli --test http_get_orchestration
       - save_cache:
           key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
