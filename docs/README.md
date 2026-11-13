@@ -66,9 +66,6 @@ User documentation is intentionally separate from normative engineering contract
 
 - `CI.md` — CircleCI provider boundary, required product checks, opt-in release/native workflows, and exact-SHA migration completion criteria.
 
-## CI and developer operations
-
-- `CI.md` — CircleCI provider boundary, required product checks, opt-in release/native workflows, and exact-SHA migration completion criteria.
 
 ## Verification and release
 
@@ -97,7 +94,6 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
-- `../.circleci/config.yml` — canonical CircleCI product CI, release-check, and Windows-native verification workflows.
 - `../.circleci/config.yml` — canonical CircleCI product CI, release-check, and Windows-native verification workflows.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
