@@ -67,7 +67,7 @@ windows_machine_block = (
     "    resource_class: windows.medium"
 )
 if ci_config.count(windows_machine_block) != 3:
-    raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must nest windows.medium under machine")
+    raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must declare windows.medium at job level outside machine")
 
 linux_job_start = ci_config.find("  one-linux:\n")
 linux_job_end = ci_config.find("  one-windows:\n", linux_job_start)
