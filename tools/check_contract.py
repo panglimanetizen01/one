@@ -56,9 +56,18 @@ ci_contract_markers = [
     'if ($optionalMagic -ne 0x20B)',
     "27.2.12479018",
     "mingw-w64",
+    "no_output_timeout: 30m",
 ]
 if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
     raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
+
+windows_msys2_step_start = ci_config.find("          name: Install MSYS2 and MinGW-w64\n")
+windows_msys2_step_end = ci_config.find("      - run:\n", windows_msys2_step_start + 1)
+if windows_msys2_step_start < 0 or windows_msys2_step_end < 0:
+    raise SystemExit("CIRCLECI CONTRACT: cannot isolate the MSYS2 installation step")
+windows_msys2_step = ci_config[windows_msys2_step_start:windows_msys2_step_end]
+if "          no_output_timeout: 30m" not in windows_msys2_step:
+    raise SystemExit("CIRCLECI CONTRACT: MSYS2 package installation must allow 30 minutes without output")
 
 windows_machine_block = (
     "    machine:\n"
