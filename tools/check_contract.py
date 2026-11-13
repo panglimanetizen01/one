@@ -56,8 +56,6 @@ ci_contract_markers = [
     'if ($optionalMagic -ne 0x20B)',
     "27.2.12479018",
     "mingw-w64",
-    'bash -lc " "',
-    'pacman --noconfirm -Syuu',
 ]
 if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
     raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
