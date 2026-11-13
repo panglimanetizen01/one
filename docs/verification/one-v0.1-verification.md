@@ -139,7 +139,7 @@ No terminal result/PASS is recorded for the current branch head.
 
 ### CircleCI executor schema correction
 
-CircleCI's published Windows Server 2025 machine-image example nests `resource_class: windows.medium` inside `machine`; all three Windows jobs now match that structure. Android Gen1 remains `android:default` + job-level `resource_class: large`. The static contract checker now enforces the Windows block shape and Rust/Cargo PATH setup.
+CircleCI's v2.1 job schema requires `resource_class: windows.medium` at the job level, outside `machine`; all three Windows jobs now follow that structure. The September 21, 2026 strict-compilation guidance explicitly rejects nesting `resource_class` inside `machine`. Android Gen1 remains `android:default` + job-level `resource_class: large`. The static contract checker now enforces the Windows block shape and Rust/Cargo PATH setup.
 
 
 ### Latest dual-platform CircleCI failure — 2026-11-13
