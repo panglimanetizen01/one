@@ -170,3 +170,8 @@ The `one-linux` job runs commands in Bash. PowerShell environment syntax such as
 ### Windows PE32+ verification boundary
 
 The native Windows job must validate the DOS MZ header, PE signature, AMD64 machine value `0x8664`, and PE32+ optional-header magic `0x20B` before executing the produced binary. The static contract checker requires the PE32+ optional-header guard so the log message cannot overstate what the test actually inspected.
+
+ 
+### PE32+ native verification hardening — latest source revision
+
+The Windows native artifact inspection now validates the DOS MZ header, PE signature, AMD64 machine field `0x8664`, and PE32+ optional-header magic `0x20B` before execution. The bounds check now requires the optional-header magic bytes to be present. `tools/check_contract.py` requires the optional-header validation guard, preventing the job from printing a PE32+ claim after checking only the machine field.

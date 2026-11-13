@@ -69,3 +69,6 @@ Canonical hosted CI runs `39372356906` and `39381125667` failed on both matrix j
 ## CircleCI migration — latest forensic correction (2026-11-13)
 
 The migration branch now removes all three legacy GitHub Actions workflows and has a static guard for shell-specific commands. A forensic inspection found and removed seven PowerShell `$env:PATH` assignments from the Bash `one-linux` job. The contract checker now fails if `$env:` appears in that Linux job. The corrected candidate SHA `2095098ea0e97da1c06c3f260f1f95218a06a339` triggered workflow `05a7e587-645d-4809-95a6-97d528c33507`; Linux and Windows were both pending at last poll. This is not yet CircleCI PASS evidence. Prior Linux failure on `ebf6a41f...` returned failure-report pipeline `0cb3e736-20ac-452c-a566-7e7b5a2f33d6`; exact failed step remains unknown because logs are not accessible in this session.
+
+ 
+The Windows native-verification gate was strengthened to validate the PE32+ optional-header magic (`0x20B`) in addition to the DOS MZ signature, PE signature, and AMD64 machine field (`0x8664`). The static contract checker requires this guard. This is a verification-contract improvement; CircleCI execution remains unproven until the exact-SHA job passes.

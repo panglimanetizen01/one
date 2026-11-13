@@ -176,3 +176,8 @@ This is the first default Linux/Windows matrix observed after workflow retiremen
 - Static inspection found seven PowerShell `$env:PATH` statements in the Bash Linux job. They were removed. The contract checker now rejects PowerShell `$env:` syntax in the Linux job.
 - Corrected candidate `2095098ea0e97da1c06c3f260f1f95218a06a339`, workflow `05a7e587-645d-4809-95a6-97d528c33507`: Linux `54a95e18-180c-40e9-b572-83baedfd4bce` and Windows `e44eb79c-605d-4dd6-8a5e-5ccaad91b06f` were pending at last poll. No PASS is claimed.
 - The syntax defect is independently proven from the config; its status as the actual failed CircleCI step is not confirmed without the failure report.
+
+ 
+### PE32+ native artifact inspection hardening — 2026-11-13
+
+The Windows native verification now checks the DOS MZ header, PE signature, AMD64 machine field `0x8664`, and PE32+ optional-header magic `0x20B`; the bounds check ensures both optional-header bytes are present. The static contract checker requires this PE32+ guard. This strengthens the test contract but is not execution evidence.

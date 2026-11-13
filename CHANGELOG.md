@@ -35,3 +35,6 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
  
 - Fixed the CircleCI Linux job's shell mismatch by removing PowerShell-only `$env:PATH` assignments from Bash commands and adding a static contract guard against reintroduction. Exact-SHA CircleCI verification remains pending.
+
+ 
+- Strengthened Windows native artifact verification to assert the PE32+ optional-header magic (`0x20B`) and bounds before claiming a PE32+ AMD64 artifact.

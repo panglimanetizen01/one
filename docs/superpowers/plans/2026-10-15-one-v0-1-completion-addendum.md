@@ -89,3 +89,8 @@ Migration branch SHA `e728f965165b21c72810c80dd64734912a916324` contains no `.gi
 ### Linux Bash/PowerShell mismatch correction — 2026-11-13
 
 A forensic config inspection found seven PowerShell `$env:PATH` assignments inside the Bash `one-linux` job. These were removed; the Python contract checker now rejects PowerShell `$env:` syntax in that job. Corrected candidate SHA `2095098ea0e97da1c06c3f260f1f95218a06a339` triggered workflow `05a7e587-645d-4809-95a6-97d528c33507`, with Linux `54a95e18-180c-40e9-b572-83baedfd4bce` and Windows `e44eb79c-605d-4dd6-8a5e-5ccaad91b06f` pending at last poll. The shell mismatch is a proven configuration defect, not yet a confirmed root cause for the preceding failure without its log.
+
+ 
+### PE32+ optional-header validation — 2026-11-13
+
+The dedicated Windows native job now verifies the PE32+ optional-header magic (`0x20B`) and checks that the optional-header bytes are present before reporting a PE32+ artifact. The Python contract checker enforces this guard. This is a test-quality improvement, not proof of a successful native build or execution.
