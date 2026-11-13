@@ -95,3 +95,10 @@ For v0.1, the normative AST schema is the public structure in `crates/one-core/s
 This decision avoids treating an aspirational draft schema as if it were already implemented or silently changing the public AST to a much larger shape without tests. It does not remove the requirement for deterministic parsing, formal grammar boundaries, stable diagnostics, or LLM-independent semantics.
 
 Any future addition of structured `Name` nodes, component spans, full node ranges, or action-specific variants requires fail-first tests and a coordinated compatibility review across parser, semantic analysis, IR lowering, diagnostics, and tooling. It must not silently alter v0.1 meaning.
+
+
+## ADR-0017 — CircleCI is the canonical CI execution provider
+
+**Status:** Accepted
+
+CircleCI is the canonical CI execution provider for Project ONE. GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface. The CI migration must preserve the product checks and platform boundaries previously implemented by the GitHub Actions workflows. Existing GitHub Actions workflows may be retired only after equivalent CircleCI Linux and Windows jobs have passed on the same exact source SHA and their logs/artifacts have been inspected. No CI migration may alter One grammar, semantics, compiler, interpreter, runtime, CLI, or user experience merely to accommodate tooling.
