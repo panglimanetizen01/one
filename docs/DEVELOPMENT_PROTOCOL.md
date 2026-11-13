@@ -109,7 +109,7 @@ Do not report a milestone as complete until all required artifacts exist, refere
 
 ## 13. CircleCI exact-SHA discipline
 
-CircleCI is the canonical CI execution provider. A CI configuration change is not verified by YAML syntax or file presence alone. Record the exact source SHA, pipeline ID, workflow/job names, executor platform, job result, logs, and artifacts. Preserve Linux and Windows coverage, Android NDK/Clang, MinGW-w64, GNU x86_64 linker, deterministic artifact checks, real-network release checks, offline verification, and dedicated Windows native PE validation/execution. Keep legacy GitHub Actions workflows until equivalent CircleCI checks pass on the same exact SHA. Never report an unstarted pipeline or missing job steps as a source PASS/FAIL.
+CircleCI is the canonical CI execution provider. A CI configuration change is not verified by YAML syntax or file presence alone. Record the exact source SHA, pipeline ID, workflow/job names, executor platform, job result, logs, and artifacts. Preserve Linux and Windows coverage, Android NDK/Clang, MinGW-w64, GNU x86_64 linker, deterministic artifact checks, real-network release checks, offline verification, and dedicated Windows native PE validation/execution. Remove legacy GitHub Actions CI workflows from the migration branch; keep `main` unchanged until the reviewed migration PR passes exact-SHA CircleCI parity and is merged. Never report an unstarted pipeline or missing job steps as a source PASS/FAIL.
 
 
 
