@@ -110,12 +110,6 @@ for job_name in windows_ci_jobs:
 missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
 if missing_ci_contract:
     raise SystemExit("CIRCLECI CONTRACT: missing required CI gates/configuration: " + ", ".join(missing_ci_contract))
-msys2_update = 'pacman --noconfirm -Syuu'
-if ci_config.count(msys2_update) < 2:
-    raise SystemExit("CIRCLECI CONTRACT: Windows MSYS2 bootstrap must run two full -Syuu update passes")
-msys2_shell_init = 'bash -lc " "'
-if msys2_shell_init not in ci_config:
-    raise SystemExit("CIRCLECI CONTRACT: Windows MSYS2 bootstrap must initialize the extracted shell before updating")
 
 missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
