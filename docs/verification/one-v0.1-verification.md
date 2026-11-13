@@ -76,3 +76,12 @@ The public verification mirror remains infrastructure only; GitHub `main` remain
 - `tools/check_contract.py` now requires `.circleci/config.yml` and `docs/CI.md`, and statically checks that the config retains the named product/release/native gates.
 - CircleCI project integration, remote config validation, pipeline/job execution, exact-SHA PASS results, logs, and artifacts remain **NOT VERIFIED** in this checkpoint. The ChatGPT tool session currently exposes no authenticated CircleCI API/CLI action.
 - Legacy GitHub Actions workflows remain unchanged as a temporary safety net; their retirement is blocked on exact-SHA CircleCI parity. GitHub remains the source and PR host.
+
+
+### CircleCI first-run failure evidence
+
+- Commit `a213165cb175355c73412fe0787d11e6e0e9807f`: GitHub status `ci/circleci: one-linux` = FAILURE; CircleCI workflow `c1a9d9ef-305d-4347-8031-53f59cb48244`, job `7e50636b-ebbd-4bb2-8680-be056a091ce7`.
+- Commit `17b81146dc610a44a369e29b36551f46e717ea9e`: GitHub status `ci/circleci: one-linux` = FAILURE; CircleCI workflow `e02c1358-fb93-498c-a6b6-39e3a515231a`, job `539c5580-e078-4f76-8e8d-79ed9bfcffda`.
+- CircleCI supplied the CLI failure-report hint, but job logs were inaccessible through the available integrations. The exact failure step and root cause therefore remain UNKNOWN; do not label either failure as a Rust/product defect without logs.
+- Follow-up changes bootstrap Rust on the Android executor, install the GNU x86_64 linker explicitly, use the Android Gen1 `default` image with the `large` resource class, and avoid Cargo `--locked` while the repository has no lockfile.
+- Latest migration branch SHA at this update: `6af3ff690fe85a47dd94cb4deb6b749f7b8da4c9`. No PASS is claimed for this SHA; the GitHub status endpoint had not yet returned a CircleCI status for it.
