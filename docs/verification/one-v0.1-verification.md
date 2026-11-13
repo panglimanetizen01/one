@@ -135,3 +135,8 @@ No terminal result/PASS is recorded for the current branch head.
 ### Windows PATH contract regression guard
 
 `tools/check_contract.py` now inspects the Windows provisioning, default CI, release, and native-verification command blocks. Any `cargo`, `rustc`, or `rustup` invocation without the explicit user Cargo-bin PATH prefix is a contract-check failure. This guards against future Windows jobs silently depending on an image-level Rust installation.
+
+
+### CircleCI executor schema correction
+
+CircleCI's published Windows Server 2025 machine-image example nests `resource_class: windows.medium` inside `machine`; all three Windows jobs now match that structure. Android Gen1 remains `android:default` + job-level `resource_class: large`. The static contract checker now enforces the Windows block shape and Rust/Cargo PATH setup.
