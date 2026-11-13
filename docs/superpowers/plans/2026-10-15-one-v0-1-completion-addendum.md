@@ -52,3 +52,14 @@ The derivative set includes:
 ## Current release gate
 
 Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The current canonical release gate is **VERIFIED** for exact SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` by independent run `38848143359` on Ubuntu and Windows Server 2025. Any later canonical commit requires a new exact-SHA matrix.
+
+
+## CI provider migration addendum — 2026-11-13
+
+The original task ledger records the historical GitHub Actions CI implementation. A later explicit project directive selects CircleCI as the canonical CI execution provider without changing the product scope or reopening the completed standalone `ci-local` extraction.
+
+- Added `.circleci/config.yml` with default Linux/Windows product checks, opt-in release checks, and opt-in Windows native verification.
+- Added `docs/CI.md` and updated the contributor guide, root README, documentation map, decision record (ADR-0017), implementation status, evidence matrix, release contract, and verification protocol.
+- Updated `tools/check_contract.py` so the contract-artifact gate requires the CircleCI config rather than requiring GitHub Actions workflow files as permanent artifacts. It also checks for required job and product-gate markers.
+- Legacy GitHub Actions workflows are intentionally retained unchanged until CircleCI demonstrates equivalent green checks on the same exact SHA.
+- CircleCI project connectivity, CircleCI schema validation, pipeline execution, job logs, and artifacts are not yet verified in this checkpoint. No CircleCI PASS is claimed.
