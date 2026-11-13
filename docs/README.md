@@ -70,6 +70,10 @@ User documentation is intentionally separate from normative engineering contract
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
+- `verification/README.md` — ownership and evidence rules for canonical CI and independent verification artifacts.
+- `verification/repository-context-milestone.md` — repository-persisted project context and cross-session continuity contract.
+- `verification/forensic-audit-2026-10-21.md` — historical forensic audit findings and dispositions.
+- `verification/spec-implementation-gap-audit-2026-10-21.md` — historical specification/implementation gap audit and evidence boundaries.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
