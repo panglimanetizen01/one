@@ -20,7 +20,7 @@ CircleCI is the selected canonical CI provider. Its repository configuration is 
 - Linux and Windows product checks must both pass on the exact commit SHA.
 - The release workflow retains real-network tests and platform-specific offline verification.
 - The dedicated Windows native workflow retains PE32+ validation, target execution, and artifact upload.
-- Do not retire GitHub Actions until CircleCI parity is proven at the same exact SHA. The legacy workflows remain a temporary migration safety net.
+- The CircleCI migration branch deletes the three legacy Project ONE GitHub Actions CI workflows; do not reintroduce them as a parallel path. `main` remains unchanged until the migration PR is reviewed and merged. Do not merge this draft PR until CircleCI parity is proven at the same exact SHA.
 - Do not purchase a GitHub upgrade solely to obtain hosted CI capacity. Independent offline verification remains a separate evidence path and must never be mislabeled as CircleCI execution.
 
 GitHub remains the canonical source repository and pull-request/code-review host. CircleCI is the intended CI execution authority.
