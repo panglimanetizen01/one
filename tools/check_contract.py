@@ -28,7 +28,7 @@ required = [
     "docs/verification/one-v0.1-linux-windows-2026-10-15.md", "docs/verification/native-backends-2026-10-19.md",
     "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
-    "tools/check_contract.py", "tools/verify_offline.sh", "verify_offline.ps1",
+    "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
 ]
 
 ci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
@@ -44,7 +44,7 @@ ci_contract_markers = [
     "tools/check_contract.py",
     "--features real-network",
     "tools/verify_offline.sh",
-    "tools/verify_offline.ps1",
+    "verify_offline.ps1",
     "store_artifacts:",
     "27.2.12479018",
     "mingw-w64",
