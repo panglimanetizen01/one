@@ -102,7 +102,6 @@ User documentation is intentionally separate from normative engineering contract
 - `../.circleci/config.yml` — canonical CircleCI product CI, release-check, and Windows-native verification workflows.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
-- `../.circleci/config.yml` — canonical CircleCI configuration for the migration branch; GitHub Actions CI workflows are removed from this branch to avoid parallel CI. `main` remains unchanged until the migration PR passes and is merged.
 
 ## Canonical rule
 
