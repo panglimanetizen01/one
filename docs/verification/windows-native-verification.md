@@ -6,7 +6,7 @@
 - Canonical Linux CI: CircleCI, configured in `.circleci/config.yml`.
 - Windows host verification: independent repository `panglimanetizen01/one-windows-verification`.
 - Workflow: `.github/workflows/windows-native-backend-runtime.yml`.
-- Executor: GitHub-hosted Windows Server 2025 AMD64.
+- Executor: GitHub-hosted Windows Server 2025 AMD64 (`runs-on: windows-2025`).
 - The Windows workflow is not a CircleCI job and its result must never be described as CircleCI evidence.
 
 The canonical ONE repository contains no CircleCI Windows executor jobs. Its Linux job retains MinGW-w64 only for Linux-hosted cross-compilation regression coverage of the Windows target. Actual Windows-host build and execution are performed by this independent verifier.
