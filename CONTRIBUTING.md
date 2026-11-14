@@ -15,12 +15,14 @@ One is specification-driven. Contributions must preserve the approved semantic c
 
 ## CI and verification
 
-CircleCI is the selected canonical CI provider. Its repository configuration is `.circleci/config.yml`; the required jobs and opt-in verification workflows are documented in `docs/CI.md`.
+CircleCI is the canonical CI provider for the ONE repository's Linux product and Linux release checks. Its configuration is `.circleci/config.yml`; the current migration contract is documented in `docs/CI.md`.
 
-- Linux and Windows product checks must both pass on the exact commit SHA.
-- The release workflow retains real-network tests and platform-specific offline verification.
-- The dedicated Windows native workflow retains PE32+ validation, target execution, and artifact upload.
-- The CircleCI migration branch deletes the three legacy Project ONE GitHub Actions CI workflows; do not reintroduce them as a parallel path. `main` remains unchanged until the migration PR is reviewed and merged. Do not merge this draft PR until CircleCI parity is proven at the same exact SHA.
-- Do not purchase a GitHub upgrade solely to obtain hosted CI capacity. Independent offline verification remains a separate evidence path and must never be mislabeled as CircleCI execution.
+- The CircleCI `one-linux` job must pass on the exact canonical source SHA.
+- Windows Server 2025 host verification must pass separately in `panglimanetizen01/one-windows-verification`, using the same exact source SHA in `WINDOWS_SOURCE_COMMIT.txt`.
+- The independent Windows manifest must record matching source/verifier identities and a binary SHA-256 matching the uploaded executable.
+- Linux-host MinGW-w64 cross-compilation tests may remain in CircleCI; they do not replace Windows-host execution evidence.
+- The opt-in CircleCI release workflow is Linux-only. Release approval remains a separate project-level decision.
+- The migration branch deletes the three legacy Project ONE GitHub Actions CI workflows. Do not reintroduce them as a parallel CI path. `main` remains unchanged until the migration PR is reviewed and merged.
+- Do not purchase a GitHub upgrade solely to obtain hosted CI capacity. Independent offline and Windows verification are separate evidence paths and must never be mislabeled as CircleCI execution.
 
-GitHub remains the canonical source repository and pull-request/code-review host. CircleCI is the intended CI execution authority.
+GitHub remains the canonical source repository and pull-request/code-review host. CircleCI owns canonical Linux CI; the independent verifier owns Windows-host verification.

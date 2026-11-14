@@ -96,8 +96,10 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution. **Do not purchase an upgrade** merely to obtain hosted runner execution; use the independent verification path when the canonical hosted runner is unavailable.
 
 
-## CI provider migration — 2026-11-13
+## CI provider ownership — 2026-11-14
 
-CircleCI is the selected canonical CI execution provider under ADR-0017. The migration branch adds `.circleci/config.yml` with the default Linux/Windows product matrix, opt-in release checks, and dedicated Windows native verification. The configuration was introduced in commit `3157333c8618cb211ffebd00f983f9c49900d0cb`. The three legacy GitHub Actions CI workflows have since been deleted from the migration branch; `main` remains unchanged until the reviewed migration PR is eligible to merge.
+CircleCI is the canonical CI execution provider for the ONE repository's Linux product and Linux release checks. The migration branch runs `one-linux` and, when requested, `release-linux`; it does not define a Windows CircleCI executor or Windows release job.
 
-This is still a configuration milestone only. It is **not** evidence of a successful CircleCI pipeline, exact-SHA product verification, release approval, or completed migration. CircleCI Linux and Windows jobs must pass at the exact candidate SHA, and opt-in release/native workflows and artifacts must be inspected before merge. The current migration status and exact completion gates are maintained in `docs/CI.md`.
+Windows Server 2025 product/native verification is performed by the independent `panglimanetizen01/one-windows-verification` repository. Its workflow pins the canonical ONE source by full commit SHA, asserts source and verifier identities, executes the Windows native artifact, and uploads a manifest plus binary. The Linux CircleCI result and Windows verifier result must both pass for the same exact source SHA before cross-platform verification is claimed.
+
+The Linux CircleCI job retains MinGW-w64 cross-compilation regression coverage for the Windows target. This does not prove Windows-host execution. Current provider boundaries and evidence requirements are maintained in `docs/CI.md` and `docs/verification/windows-native-verification.md`.

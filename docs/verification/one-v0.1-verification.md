@@ -1,11 +1,22 @@
 # One v0.1 Verification Record
 
-## Live CircleCI migration checkpoint — 2026-11-14
+## Historical pre-split CircleCI checkpoint — 2026-11-14
 
 - CircleCI is the canonical Project ONE CI provider; GitHub remains repository, version-control, PR, and code-review host. The migration branch removes the three legacy product GitHub Actions workflows; `main` remains unchanged until reviewed merge.
 - PR #95 exact tested SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`: Linux FAILURE (job `3dbeadff-6151-4346-8b9b-d088f8fca33a`) and Windows FAILURE (job `0c0cc6dc-a795-4917-a588-ada5f48d80ee`); workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`; shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf`.
 - First failing steps/root causes remain UNKNOWN until authenticated CircleCI failure report/job logs are retrieved. Do not claim parity PASS or make speculative changes. PR #95 remains OPEN/DRAFT/UNMERGED; `main` unchanged.
 - Read-only repository inspection found all 60 contract-required paths, all 78 documentation-index references, and expected conformance fixture counts present. This is not an execution PASS for the contract checker or product tests.
+
+## Current CI ownership split and independent Windows baseline — 2026-11-14
+
+- CircleCI is the canonical Linux product/release CI provider for PR #95. Windows-host jobs have been removed from the canonical CircleCI design; Linux-host MinGW cross-compilation remains only for Windows-target backend regression coverage.
+- Windows Server 2025 product/native verification is owned by `panglimanetizen01/one-windows-verification`, workflow `.github/workflows/windows-native-backend-runtime.yml`, with source pin `WINDOWS_SOURCE_COMMIT.txt`.
+- Independent verifier PR #42 is OPEN / DRAFT / UNMERGED at branch `verify/windows-pr95-20261114`. It checks out the private canonical source at the exact 40-character pin and records the source SHA separately from the verifier SHA.
+- Baseline run [#9](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43589646641) is terminal SUCCESS for pre-split source SHA `195755054bb733f44ff30acf8d3281b4efc820bf`; verifier checkout SHA `d2ee1902f343108a4b87f586921e7799608b1ff1`.
+- Run #9 completed contract/user-doc checks, workspace build, Clippy, full workspace tests, deterministic artifacts, DNS/orchestration/database/HTTP checks, real-network tests, offline verification, Windows native build, PE32+ AMD64 inspection, and native execution. Runtime exit code was `0`, output `Budi`.
+- Artifact ID `14111933646`; ZIP SHA-256 `baebbed5fd822fdd35748e03a22dbbddbe7ad6c15d735ce3108718c9616055c2`; manifest SHA-256 `adba50318a035da3842658e97b0bd5cc51fe3fcb50d558712eb66fccfa029b6e`; embedded executable SHA-256 `257aebe8f2bdd790064578faae1d41ece4d62fd73bda3d0ffd1c2fdff7bcaf3d`. The downloaded ZIP digest and embedded executable hash were independently recomputed and matched.
+- This is evidence of verifier viability and of source SHA `195755...` only. The post-split PR #95 candidate is a different source SHA and requires a fresh exact-SHA Windows run. Do not transfer the baseline PASS.
+- PR #95 remains OPEN / DRAFT / UNMERGED; canonical `main` remains unchanged. No CircleCI Windows PASS is claimed or required under the new ownership split.
 
 ## Canonical repository
 

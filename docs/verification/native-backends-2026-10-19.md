@@ -23,3 +23,10 @@ Target execution evidence remains target-specific:
 - Linux AArch64: verified for the recorded AArch64/Linux host and earlier implementation SHA.
 - Linux x86_64: the exact-SHA source build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
 - Windows x86_64: the exact-SHA Windows build and test matrix passed; claim actual target execution only where the recorded native backend test ran the produced artifact.
+
+
+## Independent Windows-host verification path — 2026-11-14
+
+Windows host verification is now performed outside canonical CircleCI by `panglimanetizen01/one-windows-verification`, workflow `.github/workflows/windows-native-backend-runtime.yml`. The workflow pins a full canonical source SHA in `WINDOWS_SOURCE_COMMIT.txt`, checks the source checkout and verifier checkout identities independently, builds and executes the Windows GNU artifact on Windows Server 2025 AMD64, and uploads a manifest plus executable.
+
+Baseline run [#9](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43589646641) passed for source SHA `195755054bb733f44ff30acf8d3281b4efc820bf`; the PE32+ AMD64 artifact executed with exit code `0` and output `Budi`. See `windows-native-verification.md` for the independently verified ZIP, manifest, and binary digests. This result is source-SHA-specific and does not transfer to later commits.

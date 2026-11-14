@@ -1,13 +1,25 @@
 # Verification artifacts and CI workflows
 
-## Live CircleCI migration checkpoint — 2026-11-14
+## Current CI ownership split — 2026-11-14
 
-- CircleCI is the canonical Project ONE product CI; GitHub remains source control and PR/review host. No parallel GitHub Actions product CI is intended after migration.
-- PR #95 exact tested SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`: Linux job `3dbeadff-6151-4346-8b9b-d088f8fca33a` FAIL; Windows job `0c0cc6dc-a795-4917-a588-ada5f48d80ee` FAIL; workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`; shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf`.
-- First failing steps/root causes are UNKNOWN pending authenticated CircleCI logs. Keep PR #95 draft/unmerged and `main` unchanged; release/native evidence remains pending.
+- Canonical source: private `panglimanetizen01/one`.
+- Canonical product CI: CircleCI Linux-only, configured at `.circleci/config.yml`.
+- Independent Windows host verification: `panglimanetizen01/one-windows-verification`, workflow `.github/workflows/windows-native-backend-runtime.yml`.
+- The canonical CircleCI configuration no longer defines `one-windows`, `release-windows`, or `windows-native-verification` jobs. Linux-host MinGW cross-compilation remains a regression check, not Windows-host evidence.
+- PR #95 remains the CircleCI migration review branch; PR #42 in the independent verifier contains the Windows exact-SHA workflow and remains draft/unmerged.
+- Windows baseline run [#9](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43589646641) passed on source SHA `195755054bb733f44ff30acf8d3281b4efc820bf`; see [the Windows verification contract](windows-native-verification.md) for manifest/artifact hashes and the strict evidence boundary.
+- Run #9 is pre-split baseline evidence only. Do not transfer it to a later source SHA; consult the exact-source pin and manifest for each candidate.
 
-The canonical Project ONE CI configuration belongs in the private source repository at `.circleci/config.yml`. CircleCI job logs and stored artifacts are the primary CI execution evidence.
+## Canonical evidence locations
 
-Independent verification mirrors and their runner-specific workflow artifacts remain outside the canonical private repository unless explicitly approved. They are supplementary verification infrastructure, not the source repository and not a substitute for recording exact-SHA CircleCI results.
+- CircleCI job logs/artifacts: Linux product and Linux release jobs for the exact ONE source SHA.
+- Independent Windows logs/artifacts: exact source pin, verifier SHA, native executable, and runtime manifest in `one-windows-verification`.
+- Historical cross-platform evidence remains recorded in `one-v0.1-verification.md`, `one-v0.1-evidence-matrix.md`, and `native-backends-2026-10-19.md`.
 
-The migration branch deletes the three Project ONE `.github/workflows/*.yml` CI files to avoid a parallel CI path. The `main` branch remains unchanged until the migration PR is reviewed and eligible to merge. Keep the PR draft/unmerged until equivalent CircleCI Linux/Windows, release, and native-verification evidence passes on exact SHAs.
+## Evidence rules
+
+- Source presence and workflow configuration are not execution evidence.
+- A failed or unstarted job does not establish a source-code failure without executable steps.
+- Every platform result is bound to its exact canonical source SHA and stated host boundary.
+- Windows PASS requires terminal-success Windows workflow plus independent manifest and binary-hash verification.
+- A CircleCI Linux PASS does not imply Windows PASS; a Windows verifier PASS does not imply CircleCI Linux PASS.

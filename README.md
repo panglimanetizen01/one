@@ -162,8 +162,11 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
 
 
+
 ## CI execution provider
 
-CircleCI is the selected canonical CI provider for Project ONE. The migration is in progress on `ci/circleci-migration-20261113`: the CircleCI configuration and its product/release/native-verification workflows have been added, CircleCI has triggered exact-SHA Linux/Windows jobs, but no successful results or verified parity have been recorded yet. The migration branch removes the three Project ONE GitHub Actions CI workflows so the proposed final branch has no parallel CI path. The `main` branch remains unchanged until this draft PR is eligible to merge; merge is blocked on successful CircleCI Linux/Windows, release, and native-verification evidence. See [`docs/CI.md`](docs/CI.md) for the provider boundary and completion criteria.
+CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. The migration is reviewed on `ci/circleci-migration-20261113`; its proposed CircleCI configuration runs `one-linux` and `release-linux` only.
 
+Windows Server 2025 product/native verification is maintained separately in [`panglimanetizen01/one-windows-verification`](https://github.com/panglimanetizen01/one-windows-verification), using an explicit full-SHA source pin and a manifest that records both source and verifier identities. The Linux CircleCI job retains MinGW-w64 cross-compilation coverage for Windows-target backend tests; that does not claim Windows-host execution.
 
+See [`docs/CI.md`](docs/CI.md) and [the independent Windows verification contract](docs/verification/windows-native-verification.md). A CircleCI Linux result and a Windows verifier result must each be checked against the same exact canonical source SHA. Neither result substitutes for the other.

@@ -1,50 +1,79 @@
 # Project ONE CI Contract
 
-**Canonical CI target:** CircleCI  
-**Live migration state at 2026-11-14:** latest observed tested PR #95 SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`; CircleCI `one-linux` FAILURE (job `3dbeadff-6151-4346-8b9b-d088f8fca33a`) and `one-windows` FAILURE (job `0c0cc6dc-a795-4917-a588-ada5f48d80ee`), workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`, shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf`. First failing steps/root causes remain UNKNOWN because authenticated CircleCI logs are not exposed in this session. PR #95 remains OPEN/DRAFT/UNMERGED; `main` unchanged; cross-platform parity is not proven.
-**Canonical source repository:** `panglimanetizen01/one`  
-**Configuration:** `.circleci/config.yml`
+**Canonical CI execution:** CircleCI, Linux host only.  
+**Independent Windows host verification:** GitHub Actions in `panglimanetizen01/one-windows-verification`.  
+**Canonical source:** `panglimanetizen01/one`  
+**CircleCI configuration:** `.circleci/config.yml`
 
 ## Provider boundary
 
 - GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface.
-- CircleCI is the selected canonical CI execution provider for Project ONE.
-- The migration branch deletes the three Project ONE GitHub Actions CI workflows so it has no parallel CI path. The `main` branch remains unchanged until the migration PR is reviewed and merged. The PR must remain draft/unmerged until CircleCI passes equivalent checks on the same exact source revision and required Windows/Linux/release/native evidence is available.
+- CircleCI is the canonical CI execution provider for the ONE repository's Linux product checks and Linux release checks.
+- Windows-host product/native verification is owned by the independent `panglimanetizen01/one-windows-verification` repository. It checks out the private canonical ONE repository at a full, explicit source SHA and records the verifier SHA separately.
+- The CircleCI `one-windows`, `release-windows`, and `windows-native-verification` jobs, their Windows provisioning command, and the `run_windows_native_verification` parameter are retired from the canonical configuration.
+- The Linux CircleCI job retains MinGW-w64 as a Linux-host cross-toolchain for the existing Windows-target backend build regression. That is cross-compilation on Linux, not execution or host verification on Windows.
 - The standalone `ci-local` extraction is a separate completed project and is not imported, invoked, or recreated by this configuration.
+- The migration remains on PR #95 and must remain unmerged until the exact-SHA Linux CircleCI result and the independent Windows exact-SHA result are both inspected. The `main` branch is unchanged.
 
-## Default CI workflow
+## Default product workflow
 
-The `one-ci` workflow runs the product CI suite on Linux and Windows for repository-triggered pipelines:
+The `one-ci` workflow runs only `one-linux` on repository-triggered pipelines. It:
 
-1. Verify Rust, Cargo, and Python toolchains.
-2. Provision the Android NDK r27c, Android AArch64 Clang, and MinGW-w64 cross-toolchains.
-3. Run `python tools/check_contract.py`.
-4. Build all workspace targets.
-5. Run Clippy with warnings denied.
-6. Run all workspace/all-target tests.
-7. Explicitly retain deterministic `.oneir`/`.onepkg`, DNS, orchestration, database, HTTP GET, and HTTP GET CLI regression gates.
+1. Verifies Rust, Cargo, and Python toolchains.
+2. Provisions Android NDK r27c, Android AArch64 Clang, and the Linux-host MinGW-w64 cross-toolchain used by Windows-target backend tests.
+3. Runs `python3 tools/check_contract.py`.
+4. Builds all workspace targets.
+5. Runs Clippy with warnings denied.
+6. Runs all workspace/all-target tests.
+7. Retains deterministic `.oneir`/`.onepkg`, DNS, orchestration, database, HTTP GET, and HTTP GET CLI regression gates.
 
-The Linux executor uses CircleCI's Android Gen1 machine image tag `android:default` with the `large` resource class. It supplies the Android SDK/NDK tooling required by the existing native CLI tests. The job bootstraps the stable Rust toolchain through rustup because the Android image does not guarantee Rust is preinstalled. The pinned NDK revision remains `27.2.12479018`; do not silently change the toolchain revision without updating the existing product CI contract and evidence.
+The Linux executor uses CircleCI's Android Gen1 machine image tag `android:default` with the `large` resource class. It bootstraps stable Rust through rustup and installs the pinned NDK revision `27.2.12479018`. The Linux job also installs MinGW-w64 so its Windows-target native-backend regression can cross-compile from Linux; it does not replace the independent Windows-host verification.
 
-## Opt-in verification workflows
+## Opt-in Linux release workflow
 
-The following pipeline parameters default to `false` and are intended for manual/API-triggered pipelines:
+The `run_release_checks` parameter defaults to `false`. When enabled, `release-check` runs only `release-linux`, including workspace build/tests, real-network runtime tests, and `tools/verify_offline.sh`.
 
-- `run_release_checks=true`: runs the Linux and Windows release checks, including real-network runtime tests and the repository's platform-specific offline verification scripts.
-- `run_windows_native_verification=true`: runs the dedicated Windows native verification: host architecture, Rust/Clippy, locked tests, Windows GNU native build, PE32+ AMD64 validation, execution smoke test, and artifact upload.
+There is no Windows release job in CircleCI. Windows-host build/runtime evidence is recorded by the independent verifier. The Windows-specific Rust/MinGW/NDK provisioning formerly performed by CircleCI has moved to that verifier workflow.
 
-The current canonical `main` tree does not contain a committed `Cargo.lock`. Accordingly, the CircleCI cache key hashes the root/workspace manifests and Rust toolchain file, and the dedicated Windows job does not pass Cargo's `--locked` flag. The contract checker rejects reintroducing `--locked` until a lockfile is committed. It also inspects each Windows provisioning/default/release/native command block and fails if a Rust/Cargo invocation lacks the explicit user Cargo-bin PATH prefix.
+## Independent Windows exact-SHA verification
 
-The Windows setup explicitly installs Rust stable through rustup because the CircleCI Windows Server 2025 image's published software inventory does not list Rust/Cargo; every PowerShell step that invokes Cargo prepends `%USERPROFILE%\\.cargo\\bin` to PATH. It also installs MSYS2/MinGW-w64 and the exact Android NDK r27c package. Image inventory: https://circleci.com/developer/machine/image/windows-server-2025-gui. The downloaded Android NDK archive is SHA-256 checked before extraction. The expected digest is `27e49f11e0cee5800983d8af8f4acd5bf09987aa6f790d4439dda9f3643d2494`.
+- Repository: `panglimanetizen01/one-windows-verification`.
+- Review branch: `verify/windows-pr95-20261114`, PR #42 (draft/unmerged while under review).
+- Source pin: `WINDOWS_SOURCE_COMMIT.txt`, containing a full 40-character canonical ONE commit SHA.
+- Workflow: `.github/workflows/windows-native-backend-runtime.yml`, on Windows Server 2025 AMD64.
+- Read access: repository-scoped `CANONICAL_READ_TOKEN` secret; no source repository visibility change is required.
+- Identity assertions: the workflow checks `git -C source rev-parse HEAD` against the source pin and independently checks its own verifier checkout SHA.
+- Required checks: source contracts/user documentation, stable Rust, MinGW-w64 Clang/linker, pinned Android NDK r27c, full workspace build, Clippy, full workspace tests, deterministic artifacts, DNS/orchestration/database/HTTP vertical slices, real-network tests, offline verification, Windows native build, PE32+ AMD64 inspection, and native execution.
+- Evidence: the workflow writes `one-windows-native-runtime-manifest.txt` with `source_sha`, `verifier_sha`, run identity, host/toolchain details, binary SHA-256, and native runtime output; it uploads that manifest and the executable.
 
-## Latest exact-SHA status — 2026-11-14
+A Windows PASS requires a terminal-success run for the exact source SHA, successful native build/PE32+ inspection/execution, matching source and verifier identities in the manifest, and an independently matching executable SHA-256. A queued workflow, pin file, successful Linux CircleCI job, or older source SHA is not a Windows PASS.
 
-- PR #95 branch `ci/circleci-migration-20261113`, exact tested SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`.
-- Workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`: `one-linux` job `3dbeadff-6151-4346-8b9b-d088f8fca33a` FAILURE; `one-windows` job `0c0cc6dc-a795-4917-a588-ada5f48d80ee` FAILURE.
-- Shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf` is the required diagnostic target. The first failing step/root cause for each job remains UNKNOWN; authenticated CircleCI report/log access is required before applying a fix. Do not infer causes or add blanket retries.
-- A read-only source-contract inspection on this SHA found all 60 paths in `tools/check_contract.py` present, all 78 concrete `docs/README.md` index references resolvable, and the expected conformance fixture counts (6 valid, 6 invalid, 3 golden) plus all five grammar markers. This is repository-structure evidence only; it is not execution of `tools/check_contract.py` or a CI PASS.
-- The current session has GitHub and Notion access but no CircleCI job-log connector/CLI; CircleCI job URLs are inaccessible through the web reader. Preserve this as an access blocker, not a product failure diagnosis.
-- PR #95 remains OPEN/DRAFT/UNMERGED; `main` remains unchanged. Release and Windows-native opt-in workflows have not been proven on the current candidate.
+### Demonstrated independent verifier baseline — before this CircleCI split
+
+Verifier run [#9](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43589646641) completed SUCCESS on 2026-11-14 for canonical source SHA `195755054bb733f44ff30acf8d3281b4efc820bf`. Its manifest recorded verifier checkout SHA `d2ee1902f343108a4b87f586921e7799608b1ff1`, Windows Server 2025 / AMD64, native exit code `0`, and output `Budi`. Artifact ID `14111933646` had GitHub ZIP digest `sha256:baebbed5fd822fdd35748e03a22dbbddbe7ad6c15d735ce3108718c9616055c2`; the downloaded ZIP independently matched that digest, and the embedded executable SHA-256 matched the manifest (`257aebe8f2bdd790064578faae1d41ece4d62fd73bda3d0ffd1c2fdff7bcaf3d`).
+
+This is baseline evidence for source SHA `195755...` only. It does not verify any later PR #95 commit. Each later source SHA requires a new independent Windows run and its own manifest/artifact inspection.
+
+## Exact-SHA evidence requirements
+
+- CircleCI must reach terminal SUCCESS for the exact candidate SHA on `one-linux`; inspect its executable steps and artifacts.
+- The independent Windows workflow must reach terminal SUCCESS for the same exact source SHA; inspect its manifest and binary hash.
+- Release approval remains a separate project-level decision. A successful Linux release check or Windows verification does not automatically authorize a release.
+- Keep source SHA, verifier SHA, run ID/attempt, platform, command/check set, artifact digest, and terminal result bound together.
+- Evidence for one commit never transfers automatically to another commit.
+
+## Failure handling
+
+- Preserve CircleCI logs/artifacts and independent Windows logs/manifests/artifacts.
+- Treat a job that never starts or has no executable steps as infrastructure failure/inconclusive, not proof of a source failure.
+- Fix only evidenced failures and add focused regression checks.
+- Do not weaken language semantics, security/capability rules, or product tests to make CI green.
+
+## Migration safety boundary
+
+The PR #95 migration branch must not reintroduce a Windows executor into canonical CircleCI or restore the retired GitHub Actions CI workflows. If CircleCI Linux cannot start or pass, keep PR #95 unmerged; `main` remains unchanged. If the independent Windows workflow cannot run, do not claim Windows verification. No force-push, history rewrite, merge, release, paid GitHub upgrade, or repository visibility change is authorized by this migration.
+
+> The historical event log below includes old CircleCI Windows jobs. Those entries describe earlier candidates only; the current provider contract above supersedes them.
 
 ## Historical first pipeline observations
 

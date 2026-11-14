@@ -34,89 +34,83 @@ required = [
 ci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
 ci_contract_markers = [
     "one-linux:",
-    "one-windows:",
     "release-linux:",
-    "release-windows:",
-    "windows-native-verification:",
+    "setup-linux-cross-toolchains:",
+    "run_release_checks:",
     "cargo build --workspace --all-targets",
     "cargo clippy --workspace --all-targets -- -D warnings",
     "cargo test --workspace --all-targets",
     "tools/check_contract.py",
     "--features real-network",
     "tools/verify_offline.sh",
-    "verify_offline.ps1",
     "android:default",
     "resource_class: large",
-    "windows-server-2025-gui:current",
-    "windows.medium",
-    "https://win.rustup.rs/x86_64",
-    "rustup-init.exe",
-    "store_artifacts:",
-    '$optionalMagic = [BitConverter]::ToUInt16($bytes, $peOffset + 24)',
-    'if ($optionalMagic -ne 0x20B)',
     "27.2.12479018",
     "mingw-w64",
-    "no_output_timeout: 30m",
+    "ONE_WINDOWS_CLANG=clang",
 ]
 if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
     raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
 
-windows_msys2_step_start = ci_config.find("          name: Install MSYS2 and MinGW-w64\n")
-windows_msys2_step_end = ci_config.find("      - run:\n", windows_msys2_step_start + 1)
-if windows_msys2_step_start < 0 or windows_msys2_step_end < 0:
-    raise SystemExit("CIRCLECI CONTRACT: cannot isolate the MSYS2 installation step")
-windows_msys2_step = ci_config[windows_msys2_step_start:windows_msys2_step_end]
-if "          no_output_timeout: 30m" not in windows_msys2_step:
-    raise SystemExit("CIRCLECI CONTRACT: MSYS2 package installation must allow 30 minutes without output")
-
-windows_machine_block = (
-    "    machine:\n"
-    "      image: windows-server-2025-gui:current\n"
-    "      shell: powershell.exe -ExecutionPolicy Bypass\n"
-    "    resource_class: windows.medium"
+forbidden_circleci_windows = (
+    "run_windows_native_verification",
+    "setup-windows-cross-toolchains",
+    "windows-server-2025-gui:current",
+    "windows.medium",
+    "Install MSYS2 and MinGW-w64",
+    "no_output_timeout: 30m",
+    "verify_offline.ps1",
 )
-if ci_config.count(windows_machine_block) != 3:
-    raise SystemExit("CIRCLECI CONTRACT: all three Windows jobs must declare windows.medium at job level outside machine")
+for marker in forbidden_circleci_windows:
+    if marker in ci_config:
+        raise SystemExit(f"CIRCLECI CONTRACT: Windows host job remains in canonical CircleCI config: {marker}")
 
-linux_job_start = ci_config.find("  one-linux:\n")
-linux_job_end = ci_config.find("  one-windows:\n", linux_job_start)
+for forbidden_job in ("  one-windows:", "  release-windows:", "  windows-native-verification:"):
+    if forbidden_job in ci_config.splitlines():
+        raise SystemExit(f"CIRCLECI CONTRACT: Windows job remains in canonical CircleCI config: {forbidden_job.strip()}")
+
+workflows_start = ci_config.find("workflows:")
+if workflows_start < 0:
+    raise SystemExit("CIRCLECI CONTRACT: missing workflows section")
+workflow_config = ci_config[workflows_start:]
+if "      - one-linux" not in workflow_config or "      - release-linux" not in workflow_config:
+    raise SystemExit("CIRCLECI CONTRACT: Linux product and release jobs must remain wired")
+if any(marker in workflow_config for marker in ("one-windows", "release-windows", "windows-native-verification")):
+    raise SystemExit("CIRCLECI CONTRACT: Windows jobs must not be wired into CircleCI workflows")
+
+linux_job_start = ci_config.find("  one-linux:")
+linux_job_end = ci_config.find("  release-linux:", linux_job_start)
 if linux_job_start < 0 or linux_job_end < 0:
-    raise SystemExit("CIRCLECI CONTRACT: cannot isolate the Linux job")
+    raise SystemExit("CIRCLECI CONTRACT: cannot isolate the Linux product job")
 linux_job = ci_config[linux_job_start:linux_job_end]
 if "$env:" in linux_job:
     raise SystemExit("CIRCLECI CONTRACT: PowerShell environment syntax is forbidden in the Bash one-linux job")
 
-windows_ci_jobs = (
-    "setup-windows-cross-toolchains",
-    "one-windows",
-    "release-windows",
-    "windows-native-verification",
+linux_toolchains_start = ci_config.find("  setup-linux-cross-toolchains:")
+linux_toolchains_end = ci_config.find("jobs:", linux_toolchains_start)
+if linux_toolchains_start < 0 or linux_toolchains_end < 0:
+    raise SystemExit("CIRCLECI CONTRACT: cannot isolate Linux-host cross-toolchain setup")
+linux_toolchains = ci_config[linux_toolchains_start:linux_toolchains_end]
+if "mingw-w64" not in linux_toolchains or "ONE_WINDOWS_CLANG=clang" not in linux_toolchains:
+    raise SystemExit("CIRCLECI CONTRACT: Linux-host Windows-target cross-compilation coverage must remain explicit")
+
+windows_verification = (ROOT / "docs/verification/windows-native-verification.md").read_text(encoding="utf-8")
+windows_verification_markers = (
+    "panglimanetizen01/one-windows-verification",
+    "WINDOWS_SOURCE_COMMIT.txt",
+    ".github/workflows/windows-native-backend-runtime.yml",
+    "windows-2025",
+    "source_sha",
+    "verifier_sha",
+    "PE32+",
 )
-for job_name in windows_ci_jobs:
-    job_start = ci_config.find(f"  {job_name}:\n")
-    if job_start < 0:
-        raise SystemExit(f"CIRCLECI CONTRACT: missing Windows job/command {job_name}")
-    job_lines = ci_config[job_start:].splitlines()[1:]
-    section = []
-    for line in job_lines:
-        if line.startswith("  ") and not line.startswith("    ") and line.rstrip().endswith(":"):
-            break
-        section.append(line)
-    for index, line in enumerate(section):
-        if not line.startswith("          command:"):
-            continue
-        block = [line]
-        cursor = index + 1
-        while cursor < len(section) and (not section[cursor].strip() or section[cursor].startswith("            ")):
-            block.append(section[cursor])
-            cursor += 1
-        command_text = "\n".join(block)
-        if any(token in command_text for token in ("cargo ", "rustc ", "rustup ")) and "USERPROFILE" not in command_text:
-            raise SystemExit(f"CIRCLECI CONTRACT: Windows Rust/Cargo PATH missing in {job_name} command block")
+missing_windows_contract = [marker for marker in windows_verification_markers if marker not in windows_verification]
+if missing_windows_contract:
+    raise SystemExit("WINDOWS VERIFICATION CONTRACT: missing independent exact-SHA evidence markers: " + ", ".join(missing_windows_contract))
 
 missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
 if missing_ci_contract:
-    raise SystemExit("CIRCLECI CONTRACT: missing required CI gates/configuration: " + ", ".join(missing_ci_contract))
+    raise SystemExit("CIRCLECI CONTRACT: missing required Linux CI gates/configuration: " + ", ".join(missing_ci_contract))
 
 missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
