@@ -3,7 +3,8 @@
 ## Live CircleCI migration checkpoint — 2026-11-14
 
 - CircleCI is the canonical Project ONE product CI; GitHub remains source control and PR/review host. No parallel GitHub Actions product CI is intended after migration.
-- PR #95 latest observed tested SHA `9c1873f109512002af5c09789e91dfe5f99615c7`: Linux job `09d65e6c-1081-4331-9528-a92b3915dd29` FAIL; Windows job `81733a94-be9e-42be-ad12-b052104f3863` FAIL; workflow `ee0e1c19-4899-4e13-bede-38345e931704`; failure report `558caa03-5580-4f31-b621-55a4e118369c`.
+- PR #95 latest observed tested SHA `e38d561387896723510530630e9842d89b7fc94a`: Linux job `68b6e45a-7fd6-4d66-bac5-c12fd6467215` FAIL; Windows job `280d2b50-cbd4-42da-a82c-2342e8ec4daa` FAIL; workflow `2a133b0a-f3db-4980-a35a-652670d7897e`; failure report `b3c73393-a3a7-4689-af86-6480bf80cc29`.
+- First failing steps/root causes are not yet known; authenticated CircleCI report/log access is required before any fix. Keep PR #95 draft/unmerged and main unchanged until both OS and required opt-in release/native evidence pass.
 - First failing steps/root causes are not yet known; authenticated CircleCI report/log access is required before any fix. Keep PR #95 draft/unmerged and main unchanged until both OS and required opt-in release/native evidence pass.
 - Windows first failing step is not yet known; failure report identifier `0ad0f9f7-db81-4b2b-8477-c3e89b546fc1` must be read before any fix. Keep PR #95 draft/unmerged and main unchanged until both OS and required opt-in release/native evidence pass.
 
