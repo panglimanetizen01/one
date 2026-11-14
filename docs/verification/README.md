@@ -3,7 +3,7 @@
 ## Live CircleCI migration checkpoint — 2026-11-14
 
 - CircleCI is the canonical Project ONE product CI; GitHub remains source control and PR/review host. No parallel GitHub Actions product CI is intended after migration.
-- PR #95 exact tested SHA `f4d08cb7c13ca132e7553610bf62a504a32ec65b`: Linux job `a92345e7-96ce-4d86-8a15-3e0734a0bb55` FAIL; Windows job `2f95ae9e-005e-4c69-9ff1-1c69e8f7d806` FAIL; workflow `599c3f0d-a97c-4386-a4d3-0762fb39fd82`; shared failure report `079b7551-fef5-4a3e-81b2-65cd9c85cf7b`.
+- PR #95 exact tested SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`: Linux job `3dbeadff-6151-4346-8b9b-d088f8fca33a` FAIL; Windows job `0c0cc6dc-a795-4917-a588-ada5f48d80ee` FAIL; workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`; shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf`.
 - First failing steps/root causes are UNKNOWN pending authenticated CircleCI logs. Keep PR #95 draft/unmerged and `main` unchanged; release/native evidence remains pending.
 
 The canonical Project ONE CI configuration belongs in the private source repository at `.circleci/config.yml`. CircleCI job logs and stored artifacts are the primary CI execution evidence.
