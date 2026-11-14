@@ -2,12 +2,10 @@
 
 ## Live CircleCI migration checkpoint — 2026-11-14
 
-- CircleCI is the canonical Project ONE CI provider; GitHub remains repository, version-control, PR, and code-review host. The migration branch deletes the three legacy product GitHub Actions workflows; main is unchanged until reviewed merge.
-- PR #95 latest observed tested SHA `e38d561387896723510530630e9842d89b7fc94a`: `ci/circleci: one-linux` FAILURE (job `68b6e45a-7fd6-4d66-bac5-c12fd6467215`); `ci/circleci: one-windows` FAILURE (job `280d2b50-cbd4-42da-a82c-2342e8ec4daa`); workflow `2a133b0a-f3db-4980-a35a-652670d7897e`.
-- CircleCI failure report `b3c73393-a3a7-4689-af86-6480bf80cc29` has not been retrieved in this session. First failing steps/root causes remain UNKNOWN. Do not claim parity PASS or make speculative changes.
-- CircleCI failure report `558caa03-5580-4f31-b621-55a4e118369c` has not been retrieved in this session. First failing steps/root causes remain UNKNOWN. Do not claim parity PASS or make speculative changes.
-- Windows failure report `0ad0f9f7-db81-4b2b-8477-c3e89b546fc1` has not been retrieved in this session. First failing step/root cause remain UNKNOWN. Do not claim parity PASS or make speculative changes.
-
+- CircleCI is the canonical Project ONE CI provider; GitHub remains repository, version-control, PR, and code-review host. The migration branch removes the three legacy product GitHub Actions workflows; `main` remains unchanged until reviewed merge.
+- PR #95 exact tested SHA `f4d08cb7c13ca132e7553610bf62a504a32ec65b`: Linux FAILURE (job `a92345e7-96ce-4d86-8a15-3e0734a0bb55`) and Windows FAILURE (job `2f95ae9e-005e-4c69-9ff1-1c69e8f7d806`); workflow `599c3f0d-a97c-4386-a4d3-0762fb39fd82`; shared failure report `079b7551-fef5-4a3e-81b2-65cd9c85cf7b`.
+- First failing steps/root causes remain UNKNOWN until authenticated CircleCI failure report/job logs are retrieved. Do not claim parity PASS or make speculative changes. PR #95 remains OPEN/DRAFT/UNMERGED; `main` unchanged.
+- Read-only repository inspection found all 60 contract-required paths, all 78 documentation-index references, and expected conformance fixture counts present. This is not an execution PASS for the contract checker or product tests.
 
 ## Canonical repository
 
