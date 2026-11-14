@@ -3,7 +3,8 @@
 ## Live CircleCI migration checkpoint — 2026-11-14
 
 - CircleCI is the canonical Project ONE CI provider; GitHub remains repository, version-control, PR, and code-review host. The migration branch deletes the three legacy product GitHub Actions workflows; main is unchanged until reviewed merge.
-- PR #95 exact HEAD `6b130c7db9faca5ed6b6cd044c49e582fcafddf9`: `ci/circleci: one-windows` FAILURE (job `639baf29-477d-44e9-9287-7907aa241711`); workflow `7acbf7b4-8dd6-4f90-bf92-5ad243da6845`. `ci/circleci: one-linux` has not yet reported a status for this exact SHA; do not inherit prior-SHA PASS.
+- PR #95 latest observed tested SHA `9c1873f109512002af5c09789e91dfe5f99615c7`: `ci/circleci: one-linux` FAILURE (job `09d65e6c-1081-4331-9528-a92b3915dd29`); `ci/circleci: one-windows` FAILURE (job `81733a94-be9e-42be-ad12-b052104f3863`); workflow `ee0e1c19-4899-4e13-bede-38345e931704`.
+- CircleCI failure report `558caa03-5580-4f31-b621-55a4e118369c` has not been retrieved in this session. First failing steps/root causes remain UNKNOWN. Do not claim parity PASS or make speculative changes.
 - Windows failure report `0ad0f9f7-db81-4b2b-8477-c3e89b546fc1` has not been retrieved in this session. First failing step/root cause remain UNKNOWN. Do not claim parity PASS or make speculative changes.
 
 
