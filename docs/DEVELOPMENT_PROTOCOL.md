@@ -107,9 +107,10 @@ Do not generalize a Termux/Android result to Ubuntu/Windows, or a Windows result
 Do not report a milestone as complete until all required artifacts exist, references are consistent, repository state is verified, and the final change has a concrete Git revision.
 
 
-## 13. CircleCI exact-SHA discipline
+## 13. CircleCI and independent Windows exact-SHA discipline
 
-CircleCI is the canonical CI execution provider. A CI configuration change is not verified by YAML syntax or file presence alone. Record the exact source SHA, pipeline ID, workflow/job names, executor platform, job result, logs, and artifacts. Preserve Linux and Windows coverage, Android NDK/Clang, MinGW-w64, GNU x86_64 linker, deterministic artifact checks, real-network release checks, offline verification, and dedicated Windows native PE validation/execution. Remove legacy GitHub Actions CI workflows from the migration branch; keep `main` unchanged until the reviewed migration PR passes exact-SHA CircleCI parity and is merged. Never report an unstarted pipeline or missing job steps as a source PASS/FAIL.
+CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. Keep the canonical CircleCI configuration Linux-hosted; Linux-host MinGW-w64 cross-compilation may remain as Windows-target backend regression coverage, but it is not Windows-host execution evidence.
 
+Windows Server 2025 product/native verification belongs to the independent `panglimanetizen01/one-windows-verification` repository. Its workflow must check out the private canonical ONE repository at a full explicit source SHA, assert that checkout identity, record the verifier checkout SHA separately, run the required product/native checks, and preserve the manifest and executable artifact. Verify CircleCI Linux and independent Windows separately against the same exact canonical source SHA; neither result substitutes for the other.
 
-
+Do not reintroduce Windows executor jobs into canonical CircleCI or restore the retired GitHub Actions product workflows in the ONE repository. Record exact source SHA, verifier SHA, pipeline/run/job IDs, host platform, terminal result, logs, and artifact digests. Never report an unstarted pipeline or missing job steps as PASS/FAIL. Keep `main` unchanged until the reviewed migration PR is eligible for an authorized merge. CI/tooling changes must not alter ONE grammar, semantics, compiler, interpreter, runtime, CLI, or user experience.

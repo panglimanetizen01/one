@@ -104,3 +104,8 @@ Candidate `36a4051913c0063f0237bf41cf4b25ebc250e493` triggered CircleCI workflow
 ### Latest exact-SHA retry — 2026-11-13
 
 SHA `54386f415062d4c21a7acb5508d90fea4ba5cdef`, workflow `ca11e9e9-d870-43d8-8ea0-88949a1f3f62`: Linux job `d5947530-f1bb-4136-b137-f037a72b99a3` and Windows job `1739d1cc-b23c-40a6-924b-201616b4af6a` were pending at last poll. The exact-SHA structural audit passed; no executable PASS is claimed.
+
+
+## Latest CI provider ownership correction — 2026-11-14
+
+The final provider boundary is CircleCI Linux-only in canonical `panglimanetizen01/one`; Windows Server 2025 product/native verification is performed by the independent `panglimanetizen01/one-windows-verification` repository. The initial CircleCI Windows matrix described in earlier historical entries has been retired. PR #95's candidate at source SHA `fcbda49b586fb5cede2f7ff000e6e43969aaa642` has independent Windows run [#10](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43591754838) terminal SUCCESS, with exact source/verifier identities and independently verified artifact hashes. CircleCI's Linux context on that same SHA is FAILURE; its first failed step is not yet known because authenticated logs are inaccessible in the current session. This is not an overall cross-platform PASS. The source branch remains draft/unmerged and `main` is unchanged.

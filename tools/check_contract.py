@@ -69,6 +69,13 @@ for forbidden_job in ("  one-windows:", "  release-windows:", "  windows-native-
     if forbidden_job in ci_config.splitlines():
         raise SystemExit(f"CIRCLECI CONTRACT: Windows job remains in canonical CircleCI config: {forbidden_job.strip()}")
 
+legacy_workflow_dir = ROOT / ".github" / "workflows"
+if legacy_workflow_dir.exists() and any(path.is_file() for path in legacy_workflow_dir.rglob("*")):
+    raise SystemExit(
+        "CI CONTRACT: canonical ONE must not retain GitHub Actions workflows; "
+        "Windows host verification belongs to panglimanetizen01/one-windows-verification"
+    )
+
 workflows_start = ci_config.find("workflows:")
 if workflows_start < 0:
     raise SystemExit("CIRCLECI CONTRACT: missing workflows section")
@@ -150,6 +157,7 @@ for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika 
         raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
 
 print("CONTRACT CHECK: PASS")
+print("legacy GitHub Actions workflow files: 0")
 print(f"required artifacts: {len(required)}")
 print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
 print(f"valid fixtures: {len(valid)}")

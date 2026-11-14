@@ -64,7 +64,7 @@ User documentation is intentionally separate from normative engineering contract
 
 ## CI and developer operations
 
-- `CI.md` — CircleCI provider boundary, required product checks, opt-in release/native workflows, and exact-SHA migration completion criteria.
+- `CI.md` — CircleCI Linux-only provider boundary, required product checks, opt-in Linux release checks, independent Windows exact-SHA verification, and migration completion criteria.
 
 
 ## Verification and release
@@ -77,7 +77,7 @@ User documentation is intentionally separate from normative engineering contract
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
-- `verification/windows-native-verification.md` — canonical CircleCI Windows native artifact verification contract and current evidence gate.
+- `verification/windows-native-verification.md` — independent Windows-host native artifact verification contract and current exact-SHA evidence gate.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
 - `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded source revision.
 - `verification/one-v0.1-linux-windows-2026-10-15.md` — historical independent Linux/Windows execution evidence for its explicitly recorded source revision.
@@ -99,7 +99,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
-- `../.circleci/config.yml` — canonical CircleCI product CI, release-check, and Windows-native verification workflows.
+- `../.circleci/config.yml` — canonical Linux product CI and opt-in Linux release checks; Windows-host verification is owned by the independent verifier repository.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 
