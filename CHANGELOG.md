@@ -3,7 +3,7 @@
 ## Unreleased — One v0.1
 
 - Started migration of canonical Project ONE CI execution to CircleCI Linux-only product/release jobs. Windows Server 2025 product/native verification is separated into `panglimanetizen01/one-windows-verification` with an explicit exact-SHA source pin and independent evidence manifest; the three legacy GitHub Actions CI workflows are removed from the migration branch. Exact-SHA Linux CircleCI and independent Windows results remain separate required evidence.
-- Independently validated the Windows split on exact canonical source `fcbda49b586fb5cede2f7ff000e6e43969aaa642` with verifier run [#10](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43591754838): Windows Server 2025 native execution returned exit code 0 / `Budi`, and the downloaded artifact ZIP and executable hashes matched. CircleCI Linux on the same SHA remains FAILURE; no overall cross-platform PASS is claimed.
+- Independently validated the Windows split on exact canonical source `4d22db6eae48739fd79dce732d99c9b6d86b5858` with verifier run [#11](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43592922789): Windows Server 2025 native execution returned exit code 0 / `Budi`, and the downloaded artifact ZIP, manifest, and executable hashes matched. CircleCI Linux on the same SHA remains FAILURE; no overall cross-platform PASS is claimed.
 
 - Added formal lexical and concrete grammar contracts.
 - Added Rust 2024 workspace and Linux/Windows CI matrix.

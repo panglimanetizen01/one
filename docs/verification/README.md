@@ -7,9 +7,9 @@
 - Independent Windows host verification: `panglimanetizen01/one-windows-verification`, workflow `.github/workflows/windows-native-backend-runtime.yml`.
 - The canonical CircleCI configuration no longer defines `one-windows`, `release-windows`, or `windows-native-verification` jobs. Linux-host MinGW cross-compilation remains a regression check, not Windows-host evidence.
 - PR #95 remains the CircleCI migration review branch; PR #42 in the independent verifier contains the Windows exact-SHA workflow and remains draft/unmerged.
-- Current post-split Windows run [#10](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43591754838) completed SUCCESS for exact source SHA `fcbda49b586fb5cede2f7ff000e6e43969aaa642`; its manifest verifier checkout SHA is `07cd54d440c4f22910e4ed8417f4e6515339fb8d`. The downloaded ZIP digest and executable SHA-256 were independently checked; see [the Windows verification contract](windows-native-verification.md).
-- Historical run #9 remains pre-split baseline evidence for source SHA `195755054bb733f44ff30acf8d3281b4efc820bf` only. Do not transfer it to a later source SHA.
-- CircleCI on the same current candidate SHA `fcbda49b586fb5cede2f7ff000e6e43969aaa642` reports `ci/circleci: one-linux` FAILURE (workflow `bb9174a8-ac7f-42e1-84ed-1ce816267d64`, job `301edf07-748d-4adb-83b0-ba4dc8594ac9`). The first failing step remains UNKNOWN without the authenticated CircleCI log; therefore the overall cross-platform candidate is not PASS.
+- Latest post-split Windows run [#11](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43592922789) completed SUCCESS for exact source SHA `4d22db6eae48739fd79dce732d99c9b6d86b5858`; manifest verifier checkout SHA `4435dbac04103c140b2ec14abc97d816ade28be9`. Its downloaded ZIP digest, manifest SHA, executable SHA-256, and PE32+ AMD64 header were independently checked; see [the Windows verification contract](windows-native-verification.md).
+- Run #10 remains a separate terminal SUCCESS for predecessor source SHA `fcbda49b586fb5cede2f7ff000e6e43969aaa642`; run #9 remains the earlier pre-split baseline. Neither result transfers to another SHA.
+- CircleCI on the same current source SHA `4d22db6eae48739fd79dce732d99c9b6d86b5858` reports `ci/circleci: one-linux` FAILURE (workflow `ae7233e9-6146-417e-bef9-17b236a93716`, job `a8c73406-8277-4c6b-83d1-5d0ed85670a2`). The first failing step remains UNKNOWN without the authenticated CircleCI log; therefore the overall cross-platform candidate is not PASS.
 
 ## Canonical evidence locations
 
