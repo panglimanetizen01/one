@@ -45,3 +45,5 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
  
 - Structural audit at `54386f415062d4c21a7acb5508d90fea4ba5cdef` passed: 60 required paths, 78 docs-index refs, fixtures 6/6/3, Linux shell guard, PE32+ guard, and no legacy GitHub Actions paths. CircleCI Linux/Windows were pending at last poll.
+
+- Independently revalidated the final Windows-verification source snapshot `f85375e279257dcbb7d4ded9632800fcd1b78cc9` in verifier run [#12](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43593490063): terminal SUCCESS on Windows Server 2025, native exit code 0 / `Budi`, and independently matched ZIP/manifest/executable hashes. CircleCI Linux on the same source SHA remains FAILURE; no overall cross-platform PASS is claimed.
