@@ -1,7 +1,7 @@
 # Project ONE CI Contract
 
 **Canonical CI target:** CircleCI  
-**Live migration state at 2026-11-14:** PR #95 HEAD `e36963a329d7f04e40278043d20f6cc86f314005`; CircleCI Linux is PASS and Windows is FAIL on this exact SHA. The first failing Windows step/root cause is not yet available from the current authenticated tool session. PR #95 remains draft/unmerged and main is unchanged; cross-platform parity is not yet proven.  
+**Live migration state at 2026-11-14:** PR #95 HEAD `6b130c7db9faca5ed6b6cd044c49e582fcafddf9`; CircleCI `one-windows` is FAILURE (job `639baf29-477d-44e9-9287-7907aa241711`, workflow `7acbf7b4-8dd6-4f90-bf92-5ad243da6845`, failure report `0ad0f9f7-db81-4b2b-8477-c3e89b546fc1`). `one-linux` has not yet reported a status on this exact SHA; do not inherit the prior SHA's PASS. First failing step/root cause remain UNKNOWN. PR #95 remains draft/unmerged and `main` is unchanged; cross-platform parity is not proven.  
 **Canonical source repository:** `panglimanetizen01/one`  
 **Configuration:** `.circleci/config.yml`
 
@@ -39,9 +39,9 @@ The Windows setup explicitly installs Rust stable through rustup because the Cir
 
 ## Latest exact-SHA status — 2026-11-14
 
-- PR #95 branch `ci/circleci-migration-20261113`, exact HEAD `e36963a329d7f04e40278043d20f6cc86f314005`.
-- Workflow `62dcb9b5-814d-4303-b3e2-a9a0b99f19cf`: `one-linux` job `204f0cc7-d0e7-472f-a4cc-3e92c53158e9` SUCCESS; `one-windows` job `5128b82c-4b17-4670-8c47-7dbd7f4a124c` FAILURE.
-- The Windows status links to failure report `6f4e8066-370f-49c3-9cc6-e9734a9a7412`; the first failing step and root cause remain UNKNOWN until the authenticated CircleCI failure report/log is inspected. Do not infer a cause from the status alone or add blanket retries.
+- PR #95 branch `ci/circleci-migration-20261113`, exact HEAD `6b130c7db9faca5ed6b6cd044c49e582fcafddf9`.
+- Workflow `7acbf7b4-8dd6-4f90-bf92-5ad243da6845`: `one-windows` job `639baf29-477d-44e9-9287-7907aa241711` FAILURE; `one-linux` status has not yet been reported for this exact SHA.
+- The Windows status links to failure report `0ad0f9f7-db81-4b2b-8477-c3e89b546fc1`; the first failing step and root cause remain UNKNOWN until the authenticated CircleCI failure report/log is inspected. Do not infer a cause from the status alone or add blanket retries.
 - `.circleci/config.yml` is present on this migration branch; the three product GitHub Actions workflows are deleted on this branch. The source candidate on PR #92 predates this config and therefore reports “No configuration was found”; do not duplicate the config in PR #92.
 - The current assistant session exposes GitHub status summaries but not authenticated CircleCI job-log actions/CLI. PR #95 stays OPEN/DRAFT/UNMERGED; main remains unchanged.
 
