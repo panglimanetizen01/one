@@ -1,7 +1,7 @@
 # Project ONE CI Contract
 
 **Canonical CI target:** CircleCI  
-**Live migration state at 2026-11-14:** latest observed tested PR #95 SHA `f4d08cb7c13ca132e7553610bf62a504a32ec65b`; CircleCI `one-linux` FAILURE (job `a92345e7-96ce-4d86-8a15-3e0734a0bb55`) and `one-windows` FAILURE (job `2f95ae9e-005e-4c69-9ff1-1c69e8f7d806`), workflow `599c3f0d-a97c-4386-a4d3-0762fb39fd82`, shared failure report `079b7551-fef5-4a3e-81b2-65cd9c85cf7b`. First failing steps/root causes remain UNKNOWN because authenticated CircleCI logs are not exposed in this session. PR #95 remains OPEN/DRAFT/UNMERGED; `main` unchanged; cross-platform parity is not proven.
+**Live migration state at 2026-11-14:** latest observed tested PR #95 SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`; CircleCI `one-linux` FAILURE (job `3dbeadff-6151-4346-8b9b-d088f8fca33a`) and `one-windows` FAILURE (job `0c0cc6dc-a795-4917-a588-ada5f48d80ee`), workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`, shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf`. First failing steps/root causes remain UNKNOWN because authenticated CircleCI logs are not exposed in this session. PR #95 remains OPEN/DRAFT/UNMERGED; `main` unchanged; cross-platform parity is not proven.
 **Canonical source repository:** `panglimanetizen01/one`  
 **Configuration:** `.circleci/config.yml`
 
@@ -39,9 +39,9 @@ The Windows setup explicitly installs Rust stable through rustup because the Cir
 
 ## Latest exact-SHA status — 2026-11-14
 
-- PR #95 branch `ci/circleci-migration-20261113`, exact tested SHA `f4d08cb7c13ca132e7553610bf62a504a32ec65b`.
-- Workflow `599c3f0d-a97c-4386-a4d3-0762fb39fd82`: `one-linux` job `a92345e7-96ce-4d86-8a15-3e0734a0bb55` FAILURE; `one-windows` job `2f95ae9e-005e-4c69-9ff1-1c69e8f7d806` FAILURE.
-- Shared failure report `079b7551-fef5-4a3e-81b2-65cd9c85cf7b` is the required diagnostic target. The first failing step/root cause for each job remains UNKNOWN; authenticated CircleCI report/log access is required before applying a fix. Do not infer causes or add blanket retries.
+- PR #95 branch `ci/circleci-migration-20261113`, exact tested SHA `2e4832c3d7a761a9bc00d6888bb6a7a98cb5de9b`.
+- Workflow `8de847a4-d996-4f6a-9b92-1a3e0120dc53`: `one-linux` job `3dbeadff-6151-4346-8b9b-d088f8fca33a` FAILURE; `one-windows` job `0c0cc6dc-a795-4917-a588-ada5f48d80ee` FAILURE.
+- Shared failure report `5c65f369-082d-4288-8e16-8d5e6aee95bf` is the required diagnostic target. The first failing step/root cause for each job remains UNKNOWN; authenticated CircleCI report/log access is required before applying a fix. Do not infer causes or add blanket retries.
 - A read-only source-contract inspection on this SHA found all 60 paths in `tools/check_contract.py` present, all 78 concrete `docs/README.md` index references resolvable, and the expected conformance fixture counts (6 valid, 6 invalid, 3 golden) plus all five grammar markers. This is repository-structure evidence only; it is not execution of `tools/check_contract.py` or a CI PASS.
 - The current session has GitHub and Notion access but no CircleCI job-log connector/CLI; CircleCI job URLs are inaccessible through the web reader. Preserve this as an access blocker, not a product failure diagnosis.
 - PR #95 remains OPEN/DRAFT/UNMERGED; `main` remains unchanged. Release and Windows-native opt-in workflows have not been proven on the current candidate.
