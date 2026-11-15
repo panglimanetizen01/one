@@ -2,6 +2,13 @@
 
 This directory is the normative documentation surface for One v0.1. When code and prose disagree, the implementation status document must identify the discrepancy; a silent contract change is not allowed.
 
+## Architecture navigation
+
+- [Full architecture map](architecture/one-full-architecture-map.png) — visual navigation across language foundation, compiler/runtime, platform, capability, interoperability, and verification layers.
+- [Architecture contract](ARCHITECTURE.md) — written architecture boundaries, semantic authority, and implementation constraints.
+
+The diagram complements the written contract. It is a navigation reference, not a substitute for specifications, source code, tests, or exact-SHA verification evidence.
+
 ## User documentation
 
 For people who want to **use One**, start here:
