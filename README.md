@@ -157,6 +157,12 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 - `docs/verification/native-backends-2026-10-19.md`
 - `docs/release/one-v0.1.md`
 
+## Architecture navigation
+
+- [Full architecture map](docs/architecture/one-full-architecture-map.png) — visual navigation across the ONE system.
+- [Architecture contract](docs/ARCHITECTURE.md) — normative written boundaries and semantic authority.
+- The diagram is a navigation aid; written contracts, implementation, and exact-SHA evidence remain authoritative for technical claims.
+
 ## Verification boundary
 
 The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
