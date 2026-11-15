@@ -303,3 +303,14 @@ The Windows MSYS2 base is provisioned from the self-extracting archive, which un
 The latest failed `one-windows` log confirms that MSYS2 keyring initialization and package-signature verification succeeded. The `mingw-w64-x86_64-clang` plus `mingw-w64-x86_64-toolchain` transaction then began installing 47 packages (213.49 MiB download; approximately 1.45 GiB installed size) but produced no output for the CircleCI default 10-minute no-output window. CircleCI terminated the step with `Too long with no output (exceeded 10m0s): context deadline exceeded`; the log does not show a package-manager error or a completed transaction.
 
 The MSYS2 installation run step now sets `no_output_timeout: 30m` so the large first-time package transaction can finish without being mistaken for a hung command. The contract checker scopes a regression guard to this exact MSYS2 step and requires the 30-minute setting. This is a targeted timeout correction based on the attached log; it does not claim that the Windows job has passed. The next exact-SHA run must confirm whether the package transaction completes and whether subsequent NDK/build/test steps pass.
+
+
+### Latest independent Windows exact-SHA evidence — run #19 — 2026-11-15
+
+- Windows run [#19](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43666673348) completed terminal SUCCESS on Windows Server 2025 / AMD64; job `132668616929`.
+- Exact canonical source SHA: `f85375e279257dcbb7d4ded9632800fcd1b78cc9`; verifier branch HEAD at trigger: `89700258033c16bf6bad7ef983b0f442703d5a4c`; manifest verifier merge-ref SHA: `40b7087bbd30dbf9c30cfec2c1d4af94e2796505`.
+- All 28 substantive checks succeeded: source/verifier identity, Rust/Clang/NDK provisioning, contracts/docs, workspace build, Clippy, full tests, deterministic package artifacts, DNS/orchestration/database/HTTP, real-network/offline behavior, Windows native build, PE32+ AMD64 inspection, execution, manifest and artifact upload.
+- Manifest: target `x86_64-pc-windows-gnu`, exit code `0`, output `Budi`; executable SHA-256 `ef996ba9a1229afca36fcf9767042a1eb0032fc44b279588dfb5de59d74e3d34`.
+- Artifact ID `14142329450`; ZIP SHA-256 `1c51ca84a1396d25585d30a65295821ce5c8ac545cf8e29787e16bae64f53a0e`. Downloaded artifact digest independently matched GitHub's digest; embedded manifest and executable hash were independently inspected and matched.
+- This result verifies source SHA `f85375e...` only. The later PR #95 HEAD `5d50f42...` remains unverified on Windows by this run.
+- CircleCI Linux on PR #95 HEAD `5d50f42...` remains FAILURE; workflow `d98d94fa-cb59-4487-84e9-582d889f6143`, job `b4427cc0-8253-4d95-8b5d-51f2f2778ca6`. Root cause remains unknown until the first-failure output is retrieved. Overall cross-platform result remains NOT PASS.
