@@ -1,5 +1,16 @@
 # One v0.1 Verification Record
 
+## Current exact-SHA CI candidate checkpoint — 2026-11-16
+
+- Last fully verified canonical source SHA: `bf37ccd3af924c95594b8ff3226b720f71dfdbb7`, PR #95 branch `ci/circleci-migration-20261113`, base `main` `d35db95153f6ddd79885494c72f5aee16c899751`.
+- CircleCI `ci/circleci: one-linux`: SUCCESS for that exact SHA; status ID `59019926594`; workflow `742c32f4-6257-4b50-8de2-052ba494756a`; job `c516b092-744c-42c7-9959-683715952beb`.
+- Independent Windows Server 2025 run [#27](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43858874677): SUCCESS for that same exact SHA; 32/32 steps; native target `x86_64-pc-windows-gnu`; exit code `0`; output `Budi`.
+- Windows artifact ID `14222217931`; ZIP SHA-256 `9a95c4b824c2f8ae938ece2d984ded52604bb5d9db1a70fbd4ade87d1bc29a98`; executable SHA-256 `7b5e04217fd38eb91d7deb8b67c9c8e28604f47a75865d3f74cc56c25cdb7dbe`; manifest SHA-256 `b9ccd1f8d9358cacb483718bc9d9d5c095bdf94b7ab5a765141a7a07061543e0`. Artifact, manifest, PE32+ AMD64 headers, and source pin were independently checked.
+- Both required CI gates passed on the same exact SHA `bf37ccd...`. This evidence does not automatically transfer to later documentation commits.
+- PR #95 remains OPEN / DRAFT / UNMERGED; `main` remains `d35db95153f6ddd79885494c72f5aee16c899751` with the three legacy GitHub Actions workflows. Migration is not live on main until authorized merge.
+- Opt-in CircleCI `release-check` remains unexecuted. No merge, tag, or release is authorized.
+
+
 ## Latest exact-SHA Windows verification — run #12 — 2026-11-14
 
 - Canonical source snapshot: `panglimanetizen01/one` SHA `f85375e279257dcbb7d4ded9632800fcd1b78cc9`, which was PR #95's HEAD when run #12 was triggered. Independent verifier PR #42 head: `e765113b66eca514aa4759ddcc7215fc09254554`; `WINDOWS_SOURCE_COMMIT.txt` pins the canonical source SHA exactly.
