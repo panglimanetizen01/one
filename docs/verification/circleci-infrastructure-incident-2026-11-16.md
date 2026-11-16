@@ -8,7 +8,7 @@
 |---|---|---|
 | Historical CircleCI job #254, one-windows, pipeline #201 | **FAILED — MSYS2 first-run/keyring initialization** | The Windows job started and failed during MSYS2 package database synchronization before ONE source verification. |
 | CircleCI job #426, pipeline #290 | **PLAN-CREDIT-BLOCKED — explicit provider message** | The v1.1 job response explicitly reports `free-plan-no-credits-available`; no runner execution or source/test result is demonstrated. |
-| CircleCI job #407, pipeline #277 | **PLAN-CREDIT-BLOCKED — explicit provider message** | The v1.1 job response for UUID `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f` explicitly reports `free-plan-no-credits-available`; no runner execution or source/test result is demonstrated. |
+| CircleCI job #409, pipeline #278 | **PLAN-CREDIT-BLOCKED — explicit provider message** | The v1.1 job response for UUID `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f` explicitly reports `free-plan-no-credits-available`; no runner execution or source/test result is demonstrated. |
 | Jobs #408–#409 (pipeline #278) | **BLOCKED — pre-run/runner not started; cause unknown** | Usage records show 0 seconds, 0 credits, NULL executor/resource class; no explicit no-credit message has been supplied for these two jobs. |
 | Job #424 | **PLAN-CREDIT-BLOCKED — explicit provider message** | CircleCI explicitly reported that no plan credits were available for this job; classify it independently. |
 | Independent Windows verifier run #21 | **SUCCESS — exact-SHA and platform-bounded** | Windows Server 2025 verification passed for ONE source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9; it does not verify later SHAs. |
@@ -50,17 +50,17 @@ Official guidance:
 
 Classification: **PLAN-CREDIT-BLOCKED**. This is now confirmed for #426; the earlier “root cause unknown” wording is superseded.
 
-### Job #407 — explicit no-credit block
+### Job #409 — explicit no-credit block
 
 - Job UUID: `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`
 - Pipeline #277 / UUID `37b9eaf1-5259-4aaa-9f32-f6ff4b2f3481`
-- The newly supplied CircleCI v1.1 response likewise reports reason `free-plan-no-credits-available`. No executable build/test step ran.
+- The newly supplied CircleCI v1.1 response for pipeline #278 (the one-linux run whose preceding same-job build was #407) reports reason `free-plan-no-credits-available`. No executable build/test step ran.
 
 Classification: **PLAN-CREDIT-BLOCKED**. This is job-level evidence and is not inferred from #424 or #426.
 
-### Jobs #408–#409 — cause remains unconfirmed
+### Jobs #407–#408 — cause remains unconfirmed
 
-Usage-export rows for #408 and #409 show zero elapsed seconds, zero credits, and NULL executor/resource class; v2 details expose no steps. No explicit no-credit message has been supplied for these two jobs. Keep them **RUNNER-NOT-STARTED / BLOCKED — cause unknown** until their own provider responses identify a cause.
+Usage-export rows for #407 and #408 show zero elapsed seconds, zero credits, and NULL executor/resource class; v2 details expose no steps. No explicit no-credit message has been supplied for these two jobs. Keep them **RUNNER-NOT-STARTED / BLOCKED — cause unknown** until their own provider responses identify a cause.
 
 ### Job #424 — separate explicit no-credit block
 
@@ -136,11 +136,11 @@ CircleCI's Cloud job-status documentation defines Failed as a job that failed or
 
 The user supplied the complete job metadata response for #407 and #426 after the earlier incident record was written. These responses supersede the earlier statement that their root causes were unknown:
 
-- **#407** (`dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`, pipeline #277): explicit `free-plan-no-credits-available` message.
+- **#409** (`dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`, pipeline #278): explicit `free-plan-no-credits-available` message.
 - **#426** (`16aedf05-149f-4c3e-9d25-888d1af8fe10`, pipeline #290): explicit `free-plan-no-credits-available` message.
 - **#424**: remains independently and explicitly credit-blocked.
-- **#408 and #409**: remain pre-run / runner-not-started with cause unknown; do not infer their cause from the other jobs.
+- **#407 and #408**: remain pre-run / runner-not-started with cause unknown; do not infer their cause from the other jobs.
 
 The #426 response's `circle_yml` is the current Linux-only workflow: it defines `one-linux` and `release-linux`; workflow `one-ci` runs only `one-linux`. It contains no `one-windows`, `release-windows`, or MSYS2 installation step. This confirms that #426 did not execute the historical Windows/MSYS2 job. The current config blob on `ci/circleci-migration-20261113` is `35eed93039992108041e0982f233eac138735df2`.
 
-No CI tests ran in #407 or #426. These are plan-credit blockers, not source-code failures. No rerun, paid upgrade, billing change, merge, or product-code modification is authorized or performed. CircleCI has no connected execution tool in this session; its hosted dashboard/API cannot be operated directly here. The repository evidence and Skill checkpoint are being synchronized without exposing credentials or presigned output URLs.
+No CI tests ran in #409 or #426. These are plan-credit blockers, not source-code failures. No rerun, paid upgrade, billing change, merge, or product-code modification is authorized or performed. CircleCI has no connected execution tool in this session; its hosted dashboard/API cannot be operated directly here. The repository evidence and Skill checkpoint are being synchronized without exposing credentials or presigned output URLs.
