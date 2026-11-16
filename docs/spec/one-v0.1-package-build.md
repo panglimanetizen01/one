@@ -10,7 +10,7 @@ The package/build layer turns a declared One project and its dependency graph in
 
 The package/build architecture reserves a stable manifest model for language version, localization, entry module, dependencies, build targets, and required effect/capability policy metadata. **The executable v0.1 subset intentionally implements the minimal manifest fields `nama` and `versi`; the remaining manifest dimensions are reserved for later executable contracts and must not be claimed as implemented.**
 
-For the executable v0.1 subset, project entry is deterministically fixed to `src/main.one`, and the package command rejects missing or invalid `nama`/`versi` fields rather than guessing defaults.
+For the executable v0.1 subset, project entry is deterministically fixed to `src/main.one`, and the package command rejects missing or invalid `nama`/`versi` fields rather than guessing defaults. Both fields are also used to form the `.onepkg` filename, so each value must be a single safe portable filename component; path separators, reserved filename characters, control characters, leading/trailing whitespace, and `.`/`..` components are rejected before any artifact write.
 
 ## 3. Dependency resolution
 
