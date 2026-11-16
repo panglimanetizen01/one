@@ -7,7 +7,7 @@
 - CircleCI Linux `one-linux`: SUCCESS pada SHA tersebut; workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`, job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`.
 - Independent Windows Server 2025 run [#28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749): SUCCESS pada source SHA yang sama; job `133292953068`, 32/32 main steps, target `x86_64-pc-windows-gnu`, exit code `0`, output `Budi`.
 - Windows artifact ID `14225302303`; ZIP SHA-256 `7dd4435e41bc8f0660f454768711c0fc460e2ca0fe38f2dee1034c59c0f767a5`; executable SHA-256 `9004e87f0c9d0357ee0197a1bce2a26474cb714aa8d71d54990236c9266dcfeb`; manifest SHA-256 `d95ae44ee24c5b793aeef59fb006e48d4c5b3e62de4cd5012b2b5a769cbf92a4`.
-- Kedua bukti PASS terikat pada source code/config SHA `07d8cbf...`. HEAD PR #95 sekarang `d06d2529d4c96eecd563a2c3cb4ff98b910cb061`, hanya tujuh perubahan dokumentasi setelah SHA tersebut; hasil CI tidak diklaim sebagai run baru pada HEAD dokumentasi.
+- Kedua bukti PASS terikat pada source code/config SHA `07d8cbf...`. PR #95 kemudian menerima sinkronisasi dokumentasi tambahan; hasil CI tetap terikat pada source code/config SHA yang tercatat dan tidak diklaim sebagai run baru pada HEAD dokumentasi.
 - PR #95 tetap OPEN / DRAFT / UNMERGED. `main` tetap `d35db95153f6ddd79885494c72f5aee16c899751` dan masih memuat tiga workflow GitHub Actions lama; migrasi belum aktif pada main.
 - CircleCI `release-check` opsional belum dijalankan. CI PASS bukan persetujuan release atau bukti bahwa seluruh proyek ONE telah selesai 100%. Tidak ada merge, tag, atau release yang diizinkan.
 
