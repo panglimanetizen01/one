@@ -9,7 +9,7 @@
 | Historical CircleCI job #254, one-windows, pipeline #201 | **FAILED — MSYS2 first-run/keyring initialization** | The Windows job started and failed during MSYS2 package database synchronization before ONE source verification. |
 | CircleCI job #426, pipeline #290 | **PLAN-CREDIT-BLOCKED — explicit provider message** | The v1.1 job response explicitly reports `free-plan-no-credits-available`; no runner execution or source/test result is demonstrated. |
 | CircleCI job #409, pipeline #278 | **PLAN-CREDIT-BLOCKED — explicit provider message** | The v1.1 job response for UUID `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f` explicitly reports `free-plan-no-credits-available`; no runner execution or source/test result is demonstrated. |
-| Jobs #408–#409 (pipeline #278) | **BLOCKED — pre-run/runner not started; cause unknown** | Usage records show 0 seconds, 0 credits, NULL executor/resource class; no explicit no-credit message has been supplied for these two jobs. |
+| Jobs #407–#408 | **BLOCKED — pre-run/runner not started; cause unknown** | Available records show no executed steps; their individual root causes remain unconfirmed. Do not infer their cause from the separate no-credit responses for #409, #424, or #426. |
 | Job #424 | **PLAN-CREDIT-BLOCKED — explicit provider message** | CircleCI explicitly reported that no plan credits were available for this job; classify it independently. |
 | Independent Windows verifier run #21 | **SUCCESS — exact-SHA and platform-bounded** | Windows Server 2025 verification passed for ONE source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9; it does not verify later SHAs. |
 
@@ -53,7 +53,7 @@ Classification: **PLAN-CREDIT-BLOCKED**. This is now confirmed for #426; the ear
 ### Job #409 — explicit no-credit block
 
 - Job UUID: `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`
-- Pipeline #277 / UUID `37b9eaf1-5259-4aaa-9f32-f6ff4b2f3481`
+- Pipeline #278 / UUID `3b065bab-76cf-4fa2-8a81-de878e7d5993`
 - The newly supplied CircleCI v1.1 response for pipeline #278 (the one-linux run whose preceding same-job build was #407) reports reason `free-plan-no-credits-available`. No executable build/test step ran.
 
 Classification: **PLAN-CREDIT-BLOCKED**. This is job-level evidence and is not inferred from #424 or #426.
@@ -115,12 +115,7 @@ circleci run get 37b9eaf1-5259-4aaa-9f32-f6ff4b2f3481 --failure-report
 circleci run get 76ef6e84-7795-4519-bb09-0a38d74e8ece --failure-report
 ```
 
-For direct job metadata and step output, use:
-
-- #407: dde778de-e8d9-48ff-b2ac-18b9aa2a04f
-- #408: c70d0a4a-b681-49a7-a510-e185a6e0f92e
-- #409: a55423d0-6ec9-4047-b3e9-2812dd31c4e4
-- #426: 16aedf05-149f-4c3e-9d25-888d1af8fe10
+For direct job metadata and step output, use the job UUID returned by the live CircleCI details response for the specific job number. A previously copied job-number-to-UUID list in this record was internally inconsistent with later v1.1 responses and is withdrawn; do not use that stale mapping for lookups.
 
 ```sh
 circleci job get <JOB_UUID> --json
@@ -134,7 +129,7 @@ CircleCI's Cloud job-status documentation defines Failed as a job that failed or
 
 ## 8. Correction from additional CircleCI v1.1 responses — 2026-11-16
 
-The user supplied the complete job metadata response for #407 and #426 after the earlier incident record was written. These responses supersede the earlier statement that their root causes were unknown:
+Additional CircleCI v1.1 responses supplied after the earlier incident record was written establish the following classifications and supersede the earlier uncertainty where explicitly stated:
 
 - **#409** (`dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`, pipeline #278): explicit `free-plan-no-credits-available` message.
 - **#426** (`16aedf05-149f-4c3e-9d25-888d1af8fe10`, pipeline #290): explicit `free-plan-no-credits-available` message.
