@@ -165,7 +165,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## Verification boundary
 
-The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+GitHub `main` remains the canonical source of truth. Verification mirrors and local environments are verification infrastructure only. Repository visibility is an owner-controlled setting and must not be changed as part of routine development. Never generalize evidence from one revision or platform to another without proof.
 
 ## CI and verification evidence
 
