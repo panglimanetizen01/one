@@ -66,3 +66,15 @@ Run `39554661451` verifies the exact code-bearing source SHA above on Ubuntu and
 - Filesystem write, database query, and HTTP GET retain their historical Termux/Android evidence; their source/core/CLI tests also passed in the Ubuntu/Windows Server 2025 exact-SHA matrix `39554661451` for `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. This does not imply every target architecture was executed.
 - Native Linux x86_64 and Windows x86_64 are build-proven on PR #64 but are not execution-verified until a real target executor succeeds.
 - The last code-bearing source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` has host-level Ubuntu/Windows exact-SHA verification in run `39554661451`. This does not certify every cross-compiled target artifact as executed, and does not by itself constitute release approval. Later evidence-sync commits changed documentation only.
+
+## Hosted CI infrastructure incidents — 2026-11-16
+
+| Item | Exact evidence | Classification | Product-code conclusion |
+|---|---|---|---|
+| CircleCI #254 / pipeline #201 | Source SHA e44d16b2b5f4ef50c33674ccf711bd11b410effa; Windows Server 2025; MSYS2 package sync failed before ONE checks | TOOLCHAIN-BOOTSTRAP-FAIL: MSYS2 first-run/keyring initialization | No ONE source/test result from this job |
+| CircleCI #426 / pipeline #290 | Source SHA e92d3a3003b68283d5f0fe1315dcb41dcc33bd62; 0 ms, no steps, no command | RUNNER-NOT-STARTED; root cause unknown | No source/test result |
+| CircleCI #407–#409 | 0 seconds, 0 credits, NULL executor/resource class, no steps | RUNNER-NOT-STARTED; root cause unknown | No source/test result |
+| CircleCI #424 | Explicit provider message: no plan credits available | PLAN-CREDIT-BLOCKED for this job only | No source/test result inferred |
+| Independent Windows run #21 | ONE source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9; verifier SHA 9c40fffdaca6125561320a16475515e82923e9e8 | PASS, exact-SHA Windows Server 2025 boundary | Success applies only to the pinned SHA |
+
+See [incident record](circleci-infrastructure-incident-2026-11-16.md) and [CI evidence contract](../spec/one-v0.1-ci-verification-contract.md). Do not transfer evidence across SHAs or infer a source failure from a runner that did not execute.
