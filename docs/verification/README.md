@@ -1,1 +1,1 @@
-Verification artifacts and workflows must remain outside the canonical private repository unless explicitly approved.
+Verification artifacts and workflows are maintained in their dedicated verification repository or CI provider. GitHub metadata currently reports the canonical ONE repository as PUBLIC; do not treat it as private or place secrets in its files or public build logs. Keep verifier credentials narrowly scoped and never expose secrets to untrusted fork workflows.
