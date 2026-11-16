@@ -163,6 +163,14 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 - [Architecture contract](docs/ARCHITECTURE.md) — normative written boundaries and semantic authority.
 - The diagram is a navigation aid; written contracts, implementation, and exact-SHA evidence remain authoritative for technical claims.
 
+## CI execution provider
+
+CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. The migration is reviewed on `ci/circleci-migration-20261113`; its proposed CircleCI configuration runs `one-linux` by default and `release-linux` only when explicitly requested.
+
+Windows Server 2025 product/native verification is maintained separately in [`panglimanetizen01/one-windows-verification`](https://github.com/panglimanetizen01/one-windows-verification), using an explicit full-SHA source pin and a manifest that records both source and verifier identities. The Linux CircleCI job retains MinGW-w64 cross-compilation coverage for Windows-target backend tests; that does not claim Windows-host execution.
+
+See [`docs/CI.md`](docs/CI.md) and [the independent Windows verification contract](docs/verification/windows-native-verification.md). A CircleCI Linux result and a Windows verifier result must each be checked against the same exact canonical source SHA. Neither result substitutes for the other.
+
 ## Verification boundary
 
 GitHub `main` remains the canonical source of truth. Verification mirrors and local environments are verification infrastructure only. Repository visibility is an owner-controlled setting and must not be changed as part of routine development. Never generalize evidence from one revision or platform to another without proof.
