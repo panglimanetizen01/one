@@ -63,3 +63,9 @@ Independent mirror run `38929072800` verified revision `9038ac75f197753ff1ab6af7
 ## Verification infrastructure status
 
 The public verification mirror remains infrastructure only; GitHub `main` remains the canonical source of truth. Historical canonical hosted CI attempts for affected work produced zero-step job failures, so those runs are classified as infrastructure evidence failure rather than source failure. No paid GitHub upgrade was used or required.
+
+## CircleCI infrastructure incident record — 2026-11-16
+
+The historical Windows CircleCI job #254 at source SHA e44d16b2b5f4ef50c33674ccf711bd11b410effa failed during MSYS2 first-run/keyring initialization after the Windows runner and Rust installation had succeeded. It did not reach ONE source verification. This workflow is superseded; current ONE CircleCI configuration does not require reintroducing MSYS2. Windows host verification is handled separately.
+
+CircleCI job #426 and jobs #407–#409 have no demonstrated executable steps and remain runner-not-started blockers with unknown root cause. Job #424 has a separate explicit no-credit message. Do not conflate these records. Independent Windows verifier run #21 passed only for pinned source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9. See [full incident evidence](circleci-infrastructure-incident-2026-11-16.md) and [normative CI evidence contract](../spec/one-v0.1-ci-verification-contract.md).
