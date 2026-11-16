@@ -102,7 +102,7 @@ The `jalankan proses "<program>"` source operation maps to semantic capability `
 one jalankan <file.one> --izinkan database.query --target <database>
 ```
 
-The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The current implementation is limited to parameterized read-only SQLite `SELECT` statements and is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The current implementation is limited to parameterized read-only SQLite `SELECT` statements. It must open existing database files in read-only mode; a query must not create a missing database or modify an existing one. The slice is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
 
 Rules for current orchestration permission surfaces:
 
