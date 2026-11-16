@@ -64,3 +64,9 @@ Canonical hosted CI runs `39372356906` and `39381125667` failed on both matrix j
 ## Release interpretation
 
 `IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means executable evidence exists for the exact recorded source revision and stated platform boundary. `EXPERIMENTAL` means the declared vertical slice is executable and verified but intentionally limited in scope. `BUILD TERBUKTI` means the native artifact was produced and structurally validated but target execution evidence is still missing. `Supported` is reserved for a stronger support claim.
+
+## Hosted CI infrastructure status — 2026-11-16
+
+Hosted-CI evidence is tracked separately from product implementation status. Historical Windows job #254 at source SHA e44d16b2b5f4ef50c33674ccf711bd11b410effa executed the Windows environment and Rust setup, then failed in MSYS2 package synchronization because the extracted environment's first-run/keyring initialization was missing. This is a toolchain-bootstrap failure on a superseded workflow, not a ONE source/test failure. Do not reintroduce that Windows/MSYS2 job into the current ONE CircleCI configuration; Windows host verification is separated into the independent verification repository.
+
+CircleCI job #426 and jobs #407–#409 did not demonstrate executable test steps. Their root cause remains unknown; do not label them source failures or assert a credit cause. Job #424 alone carried an explicit no-credit message. Independent Windows verifier run #21 succeeded only for its pinned ONE source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9. Full job-level evidence and identifiers are in [the incident record](circleci-infrastructure-incident-2026-11-16.md). Apply [the CI verification evidence contract](../spec/one-v0.1-ci-verification-contract.md) to future classifications.
