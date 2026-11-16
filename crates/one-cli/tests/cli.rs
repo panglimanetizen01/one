@@ -38,3 +38,32 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
 }
+
+
+#[test] fn package_rejects_path_traversal_in_project_name() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("one-project-package-path-traversal-{id}"));
+    let escaped = std::env::temp_dir().join(format!("one-package-escape-{id}-0.1.0.onepkg"));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), format!("nama = \"../../one-package-escape-{id}\"\nversi = \"0.1.0\"\n")).unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["package", root.to_str().unwrap()]);
+    let escaped_created = escaped.exists();
+    let _ = fs::remove_file(&escaped);
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
+    assert!(!escaped_created, "package output must not escape the project target directory");
+}
+
+#[test] fn package_rejects_path_traversal_in_project_version() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("one-project-package-version-traversal-{id}"));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"paket\"\nversi = \"../../escape\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["package", root.to_str().unwrap()]);
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
+}
