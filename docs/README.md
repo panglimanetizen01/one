@@ -101,6 +101,13 @@ User documentation is intentionally separate from normative engineering contract
 - `../.circleci/config.yml` — canonical Linux product CI and opt-in Linux release checks.
 - [Independent Windows verification repository](https://github.com/panglimanetizen01/one-windows-verification) — Windows Server 2025 native build and exact-SHA execution evidence.
 
+## CI and developer operations
+
+- [`CI.md`](CI.md) — CircleCI Linux-only provider boundary, required product checks, opt-in Linux release checks, and independent Windows exact-SHA verification.
+- [`verification/README.md`](verification/README.md) — ownership and evidence rules for canonical CI and independent verification artifacts.
+- [`verification/windows-native-verification.md`](verification/windows-native-verification.md) — independent Windows-host native artifact verification contract.
+- [`../.circleci/config.yml`](../.circleci/config.yml) — canonical Linux product CI and opt-in Linux release checks.
+
 ## Canonical rule
 
 GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. Native Linux AArch64 is currently verified on the exact PR #64 SHA within the AArch64/Linux host boundary; Linux x86_64 and Windows x86_64 are currently build-proven but lack target execution evidence. The process/system and other source-level orchestration capabilities retain their separately recorded evidence boundaries.
