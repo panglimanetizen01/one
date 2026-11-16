@@ -222,3 +222,49 @@ mod tests {
         assert_eq!(policy.evaluate(&id_request), policy.evaluate(&en_request));
     }
 }
+
+
+    #[test]
+    fn coarse_filesystem_denial_overrides_inherited_read_and_write_grants() {
+        let read = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Read,
+        );
+        let write = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemWrite,
+            Capability::FilesystemWrite,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Write,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::Filesystem)
+            .deny(Capability::Filesystem)
+            .allow_scope(Capability::Filesystem, ScopeRule::Any);
+
+        assert_eq!(
+            policy.evaluate(&read),
+            PolicyDecision::Deny(DenyReason::ExplicitlyDenied)
+        );
+        assert_eq!(
+            policy.evaluate(&write),
+            PolicyDecision::Deny(DenyReason::ExplicitlyDenied)
+        );
+    }
+
+    #[test]
+    fn coarse_filesystem_approval_applies_to_inherited_child_capabilities() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Read,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::Filesystem)
+            .require_approval(Capability::Filesystem)
+            .allow_scope(Capability::Filesystem, ScopeRule::Any);
+
+        assert_eq!(policy.evaluate(&request), PolicyDecision::RequireApproval);
+    }
