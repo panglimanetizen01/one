@@ -131,7 +131,7 @@ status_markers = (
     "07d8cbf7422b8340f8efda3c2f9d4425f85b7537",
     "43865524749",
     "14225302303",
-    "run #28",
+    "[#28]",
 )
 missing_status_markers = [marker for marker in status_markers if marker not in current_status_section]
 if missing_status_markers:
