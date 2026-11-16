@@ -59,7 +59,7 @@ The user guide must explain only the practical impact: CI infrastructure may be 
 
 ## 8. Current recorded incident
 
-See [CircleCI Infrastructure Incident Record — 2026-11-16](../verification/circleci-infrastructure-incident-2026-11-16.md). The historical Windows job #254 is diagnosed as an MSYS2 first-run/keyring initialization failure on a superseded workflow. Jobs #407 and #426 have explicit `free-plan-no-credits-available` messages and are PLAN-CREDIT-BLOCKED; #408–#409 remain runner-not-started with cause unknown; #424 is independently credit-blocked. Independent Windows run #21 is successful only for its pinned source SHA.
+See [CircleCI Infrastructure Incident Record — 2026-11-16](../verification/circleci-infrastructure-incident-2026-11-16.md). The historical Windows job #254 is diagnosed as an MSYS2 first-run/keyring initialization failure on a superseded workflow. Jobs #409 and #426 have explicit `free-plan-no-credits-available` messages and are PLAN-CREDIT-BLOCKED; #407–#408 remain runner-not-started with cause unknown; #424 is independently credit-blocked. Independent Windows run #21 is successful only for its pinned source SHA.
 
 ## 9. Diagnostic evidence retrieval
 
@@ -68,4 +68,4 @@ For CircleCI Cloud, prefer the official CLI failure report for completed failed 
 
 ## 10. Correction — explicit CircleCI credit blocks (2026-11-16)
 
-New user-supplied CircleCI v1.1 job responses establish `free-plan-no-credits-available` for jobs #407 (UUID `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`, pipeline #277) and #426 (UUID `16aedf05-149f-4c3e-9d25-888d1af8fe10`, pipeline #290). Both MUST be classified PLAN-CREDIT-BLOCKED, not root-cause-unknown runner failures and not source/test failures. Job #424 has its own explicit no-credit message. Jobs #408–#409 remain runner-not-started with cause unknown until their own job-level evidence is available. The #426 configuration snapshot is Linux-only (`one-linux`, plus parameter-gated `release-linux`); it has no Windows/MSYS2 job. No source-code change or CI rerun is justified by these blocked results.
+New user-supplied CircleCI v1.1 job responses establish `free-plan-no-credits-available` for jobs #409 (UUID `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`, pipeline #278) and #426 (UUID `16aedf05-149f-4c3e-9d25-888d1af8fe10`, pipeline #290). Both MUST be classified PLAN-CREDIT-BLOCKED, not root-cause-unknown runner failures and not source/test failures. Job #424 has its own explicit no-credit message. Jobs #407–#408 remain runner-not-started with cause unknown until their own job-level evidence is available. The #426 configuration snapshot is Linux-only (`one-linux`, plus parameter-gated `release-linux`); it has no Windows/MSYS2 job. No source-code change or CI rerun is justified by these blocked results.
