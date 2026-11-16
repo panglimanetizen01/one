@@ -1,14 +1,14 @@
 # Verification artifacts and CI workflows
 
-## Current CI ownership split — 2026-11-16
+## Current CI ownership split — 2026-11-17
 
-- Canonical source: `panglimanetizen01/one`; candidate PR #95 branch `ci/circleci-migration-20261113`, exact SHA `bf37ccd3af924c95594b8ff3226b720f71dfdbb7`.
-- Canonical Linux product CI: CircleCI `one-linux`, terminal SUCCESS on this exact SHA (workflow `742c32f4-6257-4b50-8de2-052ba494756a`, job `c516b092-744c-42c7-9959-683715952beb`, status ID `59019926594`).
-- Independent Windows host verification: [run #27](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43858874677), terminal SUCCESS on Windows Server 2025 AMD64; 32/32 steps, native exit 0, output `Budi`; artifact and manifest hashes independently checked.
+- Canonical source: `panglimanetizen01/one`; candidate PR #95 branch `ci/circleci-migration-20261113`, exact SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`.
+- Canonical Linux product CI: CircleCI `one-linux`, terminal SUCCESS on this exact SHA (workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`, job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`).
+- Independent Windows host verification: [run #28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749), terminal SUCCESS on Windows Server 2025 AMD64; 32/32 steps, native exit 0, output `Budi`; artifact and manifest hashes independently checked.
 - Both results bind to the same exact canonical source SHA. Linux-host MinGW cross-compilation is not Windows-host execution evidence.
+- GitHub metadata reports the canonical repository as PUBLIC. Keep credentials and private data out of tracked files and public build logs.
 - PR #95 remains OPEN / DRAFT / UNMERGED; canonical `main` remains unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`. The migration is not live on main until separately authorized merge.
 - The opt-in Linux release-check has not run. No merge, tag, or release is authorized by this CI checkpoint.
-
 
 ## Canonical evidence locations
 
