@@ -86,3 +86,35 @@ This success is valid only for the pinned source SHA and recorded environment. I
 - [MSYS2 CI documentation](https://www.msys2.org/docs/ci/)
 - [MSYS2 installer documentation](https://www.msys2.org/docs/installer/)
 - [MSYS2 updating documentation](https://www.msys2.org/docs/updating/)
+
+## 7. Follow-up diagnostic route — official CircleCI CLI
+
+The official CircleCI CLI supports consolidated failed-step output for completed failed runs. It reads the CIRCLE_TOKEN environment variable when set; do not paste tokens into chat or print them.
+
+Run-level reports to retrieve:
+
+- Pipeline #278: 3b065bab-76cf-4fa2-8a81-de878e7d5993 (jobs #408 and #409)
+- Pipeline #277: 37b9eaf1-5259-4aaa-9f32-f6ff4b2f3481 (job #407)
+- Pipeline #290: 76ef6e84-7795-4519-bb09-0a38d74e8ece (job #426)
+
+```sh
+circleci run get 3b065bab-76cf-4fa2-8a81-de878e7d5993 --failure-report
+circleci run get 37b9eaf1-5259-4aaa-9f32-f6ff4b2f3481 --failure-report
+circleci run get 76ef6e84-7795-4519-bb09-0a38d74e8ece --failure-report
+```
+
+For direct job metadata and step output, use:
+
+- #407: dde778de-e8d9-48ff-b2ac-18b9aa2a04f
+- #408: c70d0a4a-b681-49a7-a510-e185a6e0f92e
+- #409: a55423d0-6ec9-4047-b3e9-2812dd31c4e4
+- #426: 16aedf05-149f-4c3e-9d25-888d1af8fe10
+
+```sh
+circleci job get <JOB_UUID> --json
+circleci job output list <JOB_UUID> --json
+```
+
+The CLI must be installed and authenticated; the existing CIRCLE_TOKEN environment variable is supported. If a failure report returns no output, inspect run status and job details first. The command only returns failed-step context for completed failed runs; it cannot manufacture logs for jobs with no recorded steps. Preserve output/errors exactly, redact secrets, and do not rerun while credits are unavailable or before a plausible transient cause is established.
+
+CircleCI's Cloud job-status documentation defines Failed as a job that failed or terminated for unknown reasons. This reinforces that a failed status alone does not prove a source-code failure. See [Jobs and steps](https://circleci.com/docs/guides/orchestrate/jobs-steps/), [failure-report guide](https://circleci.com/docs/guides/toolkit/diagnose-failed-runs-with-failure-report/), and [CLI reference](https://cli.circleci.com/reference/).
