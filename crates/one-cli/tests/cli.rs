@@ -21,7 +21,7 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
 #[test] fn test_command_rejects_missing_project_manifest() {
     let root = std::env::temp_dir().join(format!("one-project-test-missing-manifest-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
     fs::create_dir_all(root.join("src")).unwrap();
-    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
     let output = run(&["test", root.to_str().unwrap()]);
     let _ = fs::remove_dir_all(&root);
     assert_eq!(output.status.code(), Some(2));
@@ -31,8 +31,8 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
 #[test] fn test_command_rejects_invalid_project_manifest() {
     let root = std::env::temp_dir().join(format!("one-project-test-invalid-manifest-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
     fs::create_dir_all(root.join("src")).unwrap();
-    fs::write(root.join("one.toml"), "nama = \"uji\"\\n").unwrap();
-    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\\n").unwrap();
+    fs::write(root.join("one.toml"), "nama = \"uji\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
     let output = run(&["test", root.to_str().unwrap()]);
     let _ = fs::remove_dir_all(&root);
     assert_eq!(output.status.code(), Some(2));
