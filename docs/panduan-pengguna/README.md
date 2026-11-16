@@ -61,3 +61,9 @@ Lihat [cara memperbarui dokumentasi](memperbarui-dokumentasi.md).
 Panduan pengguna menjelaskan cara menggunakan kemampuan One yang sudah ada. Panduan ini **bukan** sumber kebenaran semantik bahasa. Grammar, CLI contract, implementation status, dan verification evidence tetap menjadi sumber normatif sesuai area masing-masing.
 
 One juga tidak mengubah kalimat bebas menjadi perintah executable secara otomatis. Sintaks yang digunakan harus sesuai grammar yang didukung.
+
+## Ketersediaan pemeriksaan otomatis
+
+Pemeriksaan otomatis di layanan CI adalah bagian dari infrastruktur pengembangan. Jika runner CI tidak tersedia atau proses penyiapan toolchain gagal, hal itu **tidak otomatis berarti program One atau kode pengguna salah**. Status kemampuan One tetap ditentukan oleh implementasi, kontrak, dan bukti pengujian pada revisi yang tepat.
+
+Untuk melihat arti status fitur, baca [status fitur](status-fitur.md). Catatan teknis insiden CI tersedia di [catatan infrastruktur CircleCI](../verification/circleci-infrastructure-incident-2026-11-16.md); catatan tersebut bukan instruksi penggunaan One.
