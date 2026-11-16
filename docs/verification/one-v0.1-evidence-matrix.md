@@ -72,7 +72,7 @@ Run `39554661451` verifies the exact code-bearing source SHA above on Ubuntu and
 | Item | Exact evidence | Classification | Product-code conclusion |
 |---|---|---|---|
 | CircleCI #254 / pipeline #201 | Source SHA e44d16b2b5f4ef50c33674ccf711bd11b410effa; Windows Server 2025; MSYS2 package sync failed before ONE checks | TOOLCHAIN-BOOTSTRAP-FAIL: MSYS2 first-run/keyring initialization | No ONE source/test result from this job |
-| CircleCI #426 / pipeline #290 | Source SHA e92d3a3003b68283d5f0fe1315dcb41dcc33bd62; 0 ms, no steps, no command | RUNNER-NOT-STARTED; root cause unknown | No source/test result |
+| CircleCI #426 / pipeline #290 | Source SHA e92d3a3003b68283d5f0fe1315dcb41dcc33bd62; provider explicitly reports `free-plan-no-credits-available`; no source/test step ran | PLAN-CREDIT-BLOCKED | No source/test result |
 | CircleCI #407–#409 | 0 seconds, 0 credits, NULL executor/resource class, no steps | RUNNER-NOT-STARTED; root cause unknown | No source/test result |
 | CircleCI #424 | Explicit provider message: no plan credits available | PLAN-CREDIT-BLOCKED for this job only | No source/test result inferred |
 | Independent Windows run #21 | ONE source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9; verifier SHA 9c40fffdaca6125561320a16475515e82923e9e8 | PASS, exact-SHA Windows Server 2025 boundary | Success applies only to the pinned SHA |
