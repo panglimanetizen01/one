@@ -2,6 +2,14 @@
 
 Status: **EXACT-SHA CROSS-PLATFORM VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION; RELEASE APPROVAL REMAINS A SEPARATE GATE**.
 
+## Current migration candidate — PR #95 — 2026-11-16
+
+- Candidate branch: `ci/circleci-migration-20261113`; exact source SHA: `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`; base `main`: `d35db95153f6ddd79885494c72f5aee16c899751`.
+- CircleCI `ci/circleci: one-linux`: PASS; workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`; job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`.
+- Independent Windows Server 2025 run [#28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749): PASS, 32/32 steps; verifier SHA `29df4c3f0cd4bf15fcba2d74106bf21d5fc07507`; native exit code `0`, output `Budi`.
+- Windows artifact ZIP SHA-256: `7dd4435e41bc8f0660f454768711c0fc460e2ca0fe38f2dee1034c59c0f767a5`; executable SHA-256: `9004e87f0c9d0357ee0197a1bce2a26474cb714aa8d71d54990236c9266dcfeb`; manifest SHA-256: `d95ae44ee24c5b793aeef59fb006e48d4c5b3e62de4cd5012b2b5a769cbf92a4`.
+- PR #95 remains OPEN / DRAFT / UNMERGED. `main` remains unchanged and still owns the legacy GitHub Actions workflows until an authorized merge. The opt-in CircleCI `release-check` has not been run. This candidate evidence is not release approval and does not establish 100% project completion.
+
 ## Scope
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
