@@ -166,3 +166,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 ## Verification boundary
 
 The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+
+## CI and verification evidence
+
+The development-side CI outcome classifications and current infrastructure incident record are documented in [the CI verification evidence contract](docs/spec/one-v0.1-ci-verification-contract.md) and [the CircleCI infrastructure incident record](docs/verification/circleci-infrastructure-incident-2026-11-16.md). Runner/toolchain failures must not be presented as ONE language failures without executed source/test evidence.
