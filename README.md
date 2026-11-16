@@ -169,7 +169,7 @@ CircleCI is the canonical CI execution provider for Project ONE's Linux product 
 
 Windows Server 2025 product/native verification is maintained separately in [`panglimanetizen01/one-windows-verification`](https://github.com/panglimanetizen01/one-windows-verification), using an explicit full-SHA source pin and a manifest that records both source and verifier identities. The Linux CircleCI job retains MinGW-w64 cross-compilation coverage for Windows-target backend tests; that does not claim Windows-host execution.
 
-See [`docs/CI.md`](docs/CI.md) and [the independent Windows verification contract](docs/verification/windows-native-verification.md). A CircleCI Linux result and a Windows verifier result must each be checked against the same exact canonical source SHA. Neither result substitutes for the other.
+See [CI migration contract on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/docs/CI.md) and [the independent Windows verification contract](docs/verification/windows-native-verification.md). A CircleCI Linux result and a Windows verifier result must each be checked against the same exact canonical source SHA. Neither result substitutes for the other.
 
 ## Verification boundary
 
