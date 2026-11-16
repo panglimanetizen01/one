@@ -110,10 +110,20 @@ windows_verification_markers = (
     "source_sha",
     "verifier_sha",
     "PE32+",
+    "07d8cbf7422b8340f8efda3c2f9d4425f85b7537",
+    "43865524749",
+    "14225302303",
+    "GitHub metadata currently reports the repository as PUBLIC",
 )
+
 missing_windows_contract = [marker for marker in windows_verification_markers if marker not in windows_verification]
 if missing_windows_contract:
     raise SystemExit("WINDOWS VERIFICATION CONTRACT: missing independent exact-SHA evidence markers: " + ", ".join(missing_windows_contract))
+
+if "run #28" not in windows_verification:
+    raise SystemExit("WINDOWS VERIFICATION CONTRACT: current candidate evidence must point to independent Windows run #28")
+if "private repository" in windows_verification.lower() or "repository remains private" in windows_verification.lower():
+    raise SystemExit("WINDOWS VERIFICATION CONTRACT: stale private-repository visibility claim remains")
 
 missing_ci_contract = [marker for marker in ci_contract_markers if marker not in ci_config]
 if missing_ci_contract:
