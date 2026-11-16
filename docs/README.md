@@ -103,10 +103,10 @@ User documentation is intentionally separate from normative engineering contract
 
 ## CI and developer operations
 
-- [`CI.md`](CI.md) — CircleCI Linux-only provider boundary, required product checks, opt-in Linux release checks, and independent Windows exact-SHA verification.
+- [CI migration contract on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/docs/CI.md) — CircleCI Linux-only provider boundary, required product checks, opt-in Linux release checks, and independent Windows exact-SHA verification.
 - [`verification/README.md`](verification/README.md) — ownership and evidence rules for canonical CI and independent verification artifacts.
 - [`verification/windows-native-verification.md`](verification/windows-native-verification.md) — independent Windows-host native artifact verification contract.
-- [`../.circleci/config.yml`](../.circleci/config.yml) — canonical Linux product CI and opt-in Linux release checks.
+- [CircleCI config on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/.circleci/config.yml) — canonical Linux product CI and opt-in Linux release checks.
 
 ## Canonical rule
 
