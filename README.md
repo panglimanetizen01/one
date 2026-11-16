@@ -159,7 +159,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## Verification boundary
 
-The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+The canonical GitHub repository is the source of truth. GitHub metadata currently reports it as PUBLIC; treat source and public build logs as a disclosure boundary and never store credentials or private data in tracked files or logs. Verification repositories and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
 
 
 
