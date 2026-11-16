@@ -148,13 +148,13 @@ No CI tests ran in #409 or #426. These are plan-credit blockers, not source-code
 
 ## 9. Free-plan recovery research — 2026-11-16
 
-### Verified account and repository constraints
+### Verified account and repository observations
 
-- GitHub repository metadata on 2026-11-16 reports `panglimanetizen01/one` visibility as **private**.
-- The supplied CircleCI job metadata reports `oss: false`. This matches the private-repository state; the jobs are not receiving CircleCI's open-source allocation.
-- CircleCI's published Free Plan provides 30,000 credits/month for personal/non-open-source usage. When the balance reaches zero, private/personal builds are blocked until the next monthly refill.
-- CircleCI's published Free Plan open-source allocation is up to 400,000 credits/month for Linux, Arm, and Docker open-source builds. The same credits page states that keeping the repository public enables the open-source allocation. Open-source Windows/macOS allocations are smaller (30,000 credits/month in current pricing/docs).
-- CircleCI warns that a public repository makes its CircleCI project and build logs public. Environment variables configured in CircleCI are hidden, but secrets are not passed to forked PRs unless explicitly enabled. Never print secrets in build logs.
+- GitHub repository metadata checked during the current continuation (2026-11-16) reports `panglimanetizen01/one` visibility as **public**. This is a read-only observation; this work did not change repository visibility. The earlier private-visibility statement in this incident record is superseded.
+- Historical CircleCI job metadata for the blocked runs reports `oss: false`. That value applies to those job records and does not establish the current CircleCI project's open-source eligibility, activation state, or available credits.
+- CircleCI's published Free Plan has separate private/personal and open-source credit allocations. Public visibility alone must not be treated as proof that the CircleCI project is currently enrolled in or receiving the open-source allocation.
+- CircleCI warns that public projects/build logs are public. Treat this as an ongoing disclosure boundary; never print secrets in build logs or enable secrets for forked PRs without a deliberate security review.
+- Before making any current credit/billing recommendation, inspect the CircleCI project's present classification and Plan Usage directly. Historical job metadata and repository visibility are not substitutes for that live account state.
 
 Official sources:
 - https://circleci.com/docs/guides/plans-pricing/credits/
