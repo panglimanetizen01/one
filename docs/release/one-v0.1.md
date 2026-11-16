@@ -1,17 +1,17 @@
 # One v0.1 Release Contract
 
 
-## Current exact-SHA CI candidate checkpoint — 2026-11-16
+## Current exact-SHA CI candidate checkpoint — 2026-11-17
 
-- Canonical candidate: PR #95, branch `ci/circleci-migration-20261113`, exact source SHA `bf37ccd3af924c95594b8ff3226b720f71dfdbb7`; base `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`.
-- CircleCI `ci/circleci: one-linux`: terminal SUCCESS for this exact SHA; status ID `59019926594`, description `Your tests passed on CircleCI!`; workflow `742c32f4-6257-4b50-8de2-052ba494756a`, job `c516b092-744c-42c7-9959-683715952beb`.
-- Independent Windows Server 2025 native verification: [run #27](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43858874677), terminal SUCCESS; job `133270151783`, 32/32 steps succeeded. Manifest source SHA exactly matches this candidate; target `x86_64-pc-windows-gnu`; host Windows Server 2025 AMD64; native exit code `0`, output `Budi`.
-- Windows artifact ID `14222217931`, 15,870 bytes; independently recomputed ZIP SHA-256 `9a95c4b824c2f8ae938ece2d984ded52604bb5d9db1a70fbd4ade87d1bc29a98`; executable SHA-256 `7b5e04217fd38eb91d7deb8b67c9c8e28604f47a75865d3f74cc56c25cdb7dbe`; PE MZ/signature, AMD64 `0x8664`, PE32+ `0x20B` inspected. Manifest SHA-256 `b9ccd1f8d9358cacb483718bc9d9d5c095bdf94b7ab5a765141a7a07061543e0`; verifier SHA `07f3fb4c488a90d2dfbecba08df39e3a1328f94f`.
-- Both required candidate CI gates therefore report PASS on the same exact source SHA: CircleCI Linux and independent native Windows. Historical failures on earlier SHAs do not override this exact-SHA evidence.
-- CircleCI config defines Linux-host `one-linux` by default and opt-in Linux `release-linux`; it does not claim a CircleCI Windows executor. Linux MinGW cross-compilation is not Windows-host execution.
-- PR #95 remains OPEN / DRAFT / UNMERGED. Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751` and still contains the three legacy GitHub Actions workflows; migration is not active on main until an authorized merge.
-- Opt-in CircleCI `release-check` (`run_release_checks=true`) has not been executed for this candidate. CI PASS is not release approval or proof that the entire ONE project is 100% complete. No merge, tag, or release is authorized.
-
+- Verified code/config candidate: PR #95 branch `ci/circleci-migration-20261113`, exact source SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`; base `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`.
+- CircleCI `ci/circleci: one-linux`: terminal SUCCESS for exact SHA `07d8cbf...`; workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`; job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`.
+- Independent Windows Server 2025 native verification: [run #28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749), terminal SUCCESS for the same exact source SHA; job `133292953068`, 32/32 steps, native target `x86_64-pc-windows-gnu`, exit code `0`, output `Budi`.
+- Windows artifact ID `14225302303`, 15,868 bytes; ZIP SHA-256 `7dd4435e41bc8f0660f454768711c0fc460e2ca0fe38f2dee1034c59c0f767a5`; executable SHA-256 `9004e87f0c9d0357ee0197a1bce2a26474cb714aa8d71d54990236c9266dcfeb`; manifest SHA-256 `d95ae44ee24c5b793aeef59fb006e48d4c5b3e62de4cd5012b2b5a769cbf92a4`. Verifier workflow head: `a83e05437a7d0612f1bf6f5dcc0c7b39483a8173`.
+- Both required platform gates PASS for exact source SHA `07d8cbf...`. The optional CircleCI `release-check` has not run.
+- PR #95 has since received documentation-only commits; current HEAD is `32ffd8d71403d4601b2a04374450a442bd73f7ef`. Compare confirms only `README.md`, `docs/CI.md`, and `docs/verification/README.md` changed between `07d8cbf...` and `32ffd8d...`; no product source, tests, or CircleCI config changed. The recorded execution evidence remains tied to `07d8cbf...`, not relabeled as a run on `32ffd8d...`.
+- PR #95 remains OPEN / DRAFT / UNMERGED. Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751` and still contains three legacy GitHub Actions workflows. Migration is not active on main until an authorized merge.
+- GitHub metadata reports the canonical repository as PUBLIC. Keep credentials/private data out of tracked files and public build logs.
+- CI PASS is not release approval or proof that the entire ONE project is 100% complete. No merge, tag, or release is authorized.
 
 Status: **EXACT-SHA CROSS-PLATFORM VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION; RELEASE APPROVAL REMAINS A SEPARATE GATE**.
 
