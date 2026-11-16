@@ -52,3 +52,49 @@ impl Interpreter {
  fn eval_binary(&self, op: BinaryOp, left: Value, right: Value) -> Result<Value, RuntimeError> { match (op, left, right) { (BinaryOp::Add, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)), (BinaryOp::Subtract, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a - b)), (BinaryOp::Multiply, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a * b)), (BinaryOp::Divide, Value::Number(a), Value::Number(b)) if b != 0 => Ok(Value::Number(a / b)), (BinaryOp::Divide, _, Value::Number(0)) => Err(RuntimeError { code: "R3017", message: "Pembagian dengan nol tidak diperbolehkan.".into() }), (BinaryOp::Equal, a, b) => Ok(Value::Boolean(a == b)), (BinaryOp::Greater, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a > b)), (BinaryOp::Less, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a < b)), (BinaryOp::AtMost, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a <= b)), (BinaryOp::AtLeast, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a >= b)), (BinaryOp::Add, Value::Text(a), Value::Text(b)) => Ok(Value::Text(format!("{}{}", a, b))), _ => Err(RuntimeError { code: "R3018", message: "Operasi tidak cocok dengan tipe nilai.".into() }) } }
  fn call_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Environment) -> Result<Value, RuntimeError> { let (params, result, body) = self.functions.get(name).cloned().ok_or_else(|| RuntimeError { code: "R3019", message: format!("Pekerjaan '{}' belum dibuat.", name) })?; if params.len() != args.len() { return Err(RuntimeError { code: "R3020", message: format!("Pekerjaan '{}' membutuhkan {} parameter.", name, params.len()) }); } let mut env = caller_env.clone(); env.push(); for (param, arg) in params.iter().zip(args) { let value = self.eval(arg, caller_env)?; env.define(param.clone(), value); } let mut ignored_output = Vec::new(); self.exec_block(&body, &mut env, &mut ignored_output)?; self.eval(&result, &env) }
 }
+
+
+#[cfg(test)]
+mod scope_cleanup_tests {
+    use super::*;
+
+    #[test]
+    fn failed_event_does_not_leak_nested_scope_variables() {
+        let mut interpreter = Interpreter::new(CapabilitySet::none());
+        let program = IrProgram {
+            statements: vec![
+                IrStatement::Declaration {
+                    name: "root".into(),
+                    value: IrExpr::Text("retained".into()),
+                },
+                IrStatement::Event {
+                    trigger: vec!["uji".into()],
+                    body: vec![IrStatement::Conditional {
+                        condition: IrExpr::Boolean(true),
+                        then_block: vec![
+                            IrStatement::Declaration {
+                                name: "temporary".into(),
+                                value: IrExpr::Text("must not leak".into()),
+                            },
+                            IrStatement::Action {
+                                name: "unknown action".into(),
+                                args: Vec::new(),
+                            },
+                        ],
+                        else_block: Vec::new(),
+                    }],
+                },
+            ],
+        };
+
+        interpreter.execute(&program).expect("program setup should succeed");
+        let error = interpreter
+            .dispatch_event("uji")
+            .expect_err("unknown action should fail the event");
+        assert_eq!(error.code, "R3015");
+
+        let environment = interpreter.environment.as_ref().expect("event environment should be retained");
+        assert_eq!(environment.get("root"), Some(Value::Text("retained".into())));
+        assert_eq!(environment.get("temporary"), None);
+    }
+}
