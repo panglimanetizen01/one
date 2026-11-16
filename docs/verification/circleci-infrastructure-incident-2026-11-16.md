@@ -144,3 +144,44 @@ The user supplied the complete job metadata response for #407 and #426 after the
 The #426 response's `circle_yml` is the current Linux-only workflow: it defines `one-linux` and `release-linux`; workflow `one-ci` runs only `one-linux`. It contains no `one-windows`, `release-windows`, or MSYS2 installation step. This confirms that #426 did not execute the historical Windows/MSYS2 job. The current config blob on `ci/circleci-migration-20261113` is `35eed93039992108041e0982f233eac138735df2`.
 
 No CI tests ran in #409 or #426. These are plan-credit blockers, not source-code failures. No rerun, paid upgrade, billing change, merge, or product-code modification is authorized or performed. CircleCI has no connected execution tool in this session; its hosted dashboard/API cannot be operated directly here. The repository evidence and Skill checkpoint are being synchronized without exposing credentials or presigned output URLs.
+
+
+## 9. Free-plan recovery research — 2026-11-16
+
+### Verified account and repository constraints
+
+- GitHub repository metadata on 2026-11-16 reports `panglimanetizen01/one` visibility as **private**.
+- The supplied CircleCI job metadata reports `oss: false`. This matches the private-repository state; the jobs are not receiving CircleCI's open-source allocation.
+- CircleCI's published Free Plan provides 30,000 credits/month for personal/non-open-source usage. When the balance reaches zero, private/personal builds are blocked until the next monthly refill.
+- CircleCI's published Free Plan open-source allocation is up to 400,000 credits/month for Linux, Arm, and Docker open-source builds. The same credits page states that keeping the repository public enables the open-source allocation. Open-source Windows/macOS allocations are smaller (30,000 credits/month in current pricing/docs).
+- CircleCI warns that a public repository makes its CircleCI project and build logs public. Environment variables configured in CircleCI are hidden, but secrets are not passed to forked PRs unless explicitly enabled. Never print secrets in build logs.
+
+Official sources:
+- https://circleci.com/docs/guides/plans-pricing/credits/
+- https://circleci.com/pricing/
+- https://circleci.com/docs/guides/integration/oss/
+
+### Free recovery options, ordered by preserving repository privacy
+
+1. **Keep ONE private — wait for the next Free Plan monthly credit refill.** This is the only clearly documented CircleCI-hosted compute path that preserves current repository privacy without payment or external hardware. It cannot unblock jobs while the balance remains zero. The next actual refill date must be read from CircleCI Plan → Plan Usage/Plan Overview; do not assume the calendar-month boundary if the account UI shows a different billing cycle.
+2. **Keep ONE private — use a CircleCI self-hosted runner after at least one credit is available.** CircleCI says runner compute itself does not consume credits, but the organization must have at least one credit and storage/network usage may consume credits. The owner must supply and maintain supported hardware. Supported machine runner platforms include Windows Server 2019+ x86_64 and Linux x86_64/ARM64; Android/Termux is not a documented supported platform. This is a viable future option only if the owner has an always-on supported Windows/Linux host.
+3. **Opt into CircleCI open-source allocation only if the owner deliberately approves public visibility.** This is the strongest no-cost hosted CircleCI option for Linux, but it requires the repository to be public and means project/build logs are public. This is a privacy decision, not an automatic CI fix. No visibility change has been made.
+4. **Use local/independent test evidence while waiting.** Local builds or the independent Windows verifier can establish evidence for their exact tested SHA, but cannot turn a CircleCI job that never ran into CircleCI PASS. Do not forge statuses or relabel BLOCKED as PASS.
+
+### Cost and trigger optimization
+
+- Current canonical config on `ci/circleci-migration-20261113` uses `machine.image: android:default` and `resource_class: large` for `one-linux`. CircleCI documents Android machine images and recommends `large` or above for Android-related workloads. The current configuration uses the Android SDK/NDK but does not launch an emulator in the shown product CI steps.
+- CircleCI's price list reports Linux VM Gen1 `large` at 20 credits/minute and `medium` at 10 credits/minute; Docker x86 `small` is 5 credits/minute. Do not change the Android job to a smaller class blindly: first measure peak RAM/CPU and run a controlled exact-SHA trial when credits are available. If a standard Linux VM replaces the Android image, explicitly provision and pin Android command-line tools/NDK; do not assume the Android SDK remains preinstalled.
+- The usage export showed 11 distinct documentation-only commits triggering 11 pipelines in about 94 seconds on the migration branch. This was not a duplicate webhook loop, but it is avoidable CI spend. Keep documentation-only work on the dedicated docs branch/PR #97 rather than pushing it to the CircleCI migration branch. For future docs-only commits on a CI-enabled branch, use a supported CI-skip commit marker only when no product/CI source has changed, or introduce carefully tested path-based workflow filtering.
+- Avoid duplicate full-workflow triggers, opt-in release jobs, repeated cache misses, and unnecessary artifact retention. Keep release checks opt-in.
+
+### Self-hosted runner constraints
+
+CircleCI's self-hosted runner docs state that the organization must have at least one credit; runner execution itself does not use compute credits, but storage/network may. Public projects cannot use self-hosted runners while forked-PR builds are enabled. Sources:
+- https://circleci.com/docs/guides/execute/run-jobs-on-self-hosted-runners/
+- https://circleci.com/docs/guides/execution-runner/runner-overview/
+- https://circleci.com/pricing/price-list/
+
+### Explicit non-actions
+
+No repository visibility change, paid plan/credit purchase, billing mutation, fake status, source-code change, CircleCI rerun, or merge was performed. No CircleCI PASS can be claimed for #407, #408, #409, #424, or #426: those jobs remain historical blocked/pre-run records. A new, eligible run on an exact SHA is required to produce a real PASS.
