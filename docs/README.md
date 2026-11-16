@@ -103,3 +103,10 @@ User documentation is intentionally separate from normative engineering contract
 ## Canonical rule
 
 GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. Native Linux AArch64 is currently verified on the exact PR #64 SHA within the AArch64/Linux host boundary; Linux x86_64 and Windows x86_64 are currently build-proven but lack target execution evidence. The process/system and other source-level orchestration capabilities retain their separately recorded evidence boundaries.
+
+## CI and verification infrastructure
+
+- [CI and verification evidence contract](spec/one-v0.1-ci-verification-contract.md) — normative classification rules for executed failures, toolchain bootstrap failures, runner blockers, plan-credit blockers, and exact-SHA evidence.
+- [CircleCI infrastructure incident record — 2026-11-16](verification/circleci-infrastructure-incident-2026-11-16.md) — forensic evidence for historical MSYS2 job #254, runner-not-started jobs #426/#407–#409, separate no-credit job #424, and independent Windows run #21.
+
+These are development/tooling records. They do not alter ONE language semantics or user-facing CLI behavior.
