@@ -60,3 +60,7 @@ The user guide must explain only the practical impact: CI infrastructure may be 
 ## 8. Current recorded incident
 
 See [CircleCI Infrastructure Incident Record — 2026-11-16](../verification/circleci-infrastructure-incident-2026-11-16.md). The historical Windows job #254 is diagnosed as an MSYS2 first-run/keyring initialization failure on a superseded workflow. Jobs #426 and #407–#409 remain runner-not-started blockers with unknown root cause; job #424 alone has an explicit no-credit message. Independent Windows run #21 is successful only for its pinned source SHA.
+
+## 9. Diagnostic evidence retrieval
+
+For CircleCI Cloud, prefer the official CLI failure report for completed failed runs: `circleci run get <run-uuid> --failure-report`. Inspect a specific job with `circleci job get <job-uuid> --json` and `circleci job output list <job-uuid> --json`. The CLI accepts the `CIRCLE_TOKEN` environment variable. A failure report may be empty when no failed executable steps are recorded or the run is not an eligible completed failure; inspect status and job metadata before drawing conclusions. CircleCI defines Failed as a job that failed or terminated for unknown reasons, so a generic failed status alone MUST NOT be treated as a source failure. See [the official failure-report guide](https://circleci.com/docs/guides/toolkit/diagnose-failed-runs-with-failure-report/) and [CLI reference](https://cli.circleci.com/reference/).
