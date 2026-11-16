@@ -107,6 +107,6 @@ GitHub `main` is the canonical source. Local/Termux copies are verification envi
 ## CI and verification infrastructure
 
 - [CI and verification evidence contract](spec/one-v0.1-ci-verification-contract.md) — normative classification rules for executed failures, toolchain bootstrap failures, runner blockers, plan-credit blockers, and exact-SHA evidence.
-- [CircleCI infrastructure incident record — 2026-11-16](verification/circleci-infrastructure-incident-2026-11-16.md) — forensic evidence for historical MSYS2 job #254, runner-not-started jobs #426/#407–#409, separate no-credit job #424, and independent Windows run #21.
+- [CircleCI infrastructure incident record — 2026-11-16](verification/circleci-infrastructure-incident-2026-11-16.md) — forensic evidence for historical MSYS2 job #254, explicit no-credit jobs #409/#424/#426, pre-run jobs #407/#408 with cause unconfirmed, and independent Windows run #21.
 
 These are development/tooling records. They do not alter ONE language semantics or user-facing CLI behavior.
