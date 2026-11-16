@@ -122,7 +122,7 @@ Library composition must preserve the transitive effect requirements needed by e
 
 ## 14. Capability inheritance
 
-Child function calls inherit only the capabilities explicitly available to the executing runtime context. A function cannot manufacture a broader capability from an ordinary value or from another denied request.
+Child function calls inherit only the capabilities explicitly available to the executing runtime context. A function cannot manufacture a broader capability from an ordinary value or from another denied request. Where a policy explicitly supports coarse capability inheritance (for example, a `filesystem` grant covering `filesystem.read` and `filesystem.write`), parent-level denials and approval requirements apply to those inherited child requests as well. Explicit denial takes precedence over an inherited grant.
 
 Process children do not automatically receive all parent capabilities; inheritance must be explicitly configured by the process policy.
 
