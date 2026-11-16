@@ -69,3 +69,24 @@ For CircleCI Cloud, prefer the official CLI failure report for completed failed 
 ## 10. Correction — explicit CircleCI credit blocks (2026-11-16)
 
 New user-supplied CircleCI v1.1 job responses establish `free-plan-no-credits-available` for jobs #409 (UUID `dde778de-e8d9-48ff-b2ac-18b9aa2aa04f`, pipeline #278) and #426 (UUID `16aedf05-149f-4c3e-9d25-888d1af8fe10`, pipeline #290). Both MUST be classified PLAN-CREDIT-BLOCKED, not root-cause-unknown runner failures and not source/test failures. Job #424 has its own explicit no-credit message. Jobs #407–#408 remain runner-not-started with cause unknown until their own job-level evidence is available. The #426 configuration snapshot is Linux-only (`one-linux`, plus parameter-gated `release-linux`); it has no Windows/MSYS2 job. No source-code change or CI rerun is justified by these blocked results.
+
+
+## 11. Free CI recovery and truthful status policy — 2026-11-16
+
+The main ONE repository is currently private (GitHub repository metadata verified 2026-11-16). The supplied CircleCI job records show `oss: false`. Under CircleCI's published Free Plan, private/personal builds receive 30,000 credits/month and are blocked at zero until the next monthly refill. The separate open-source allocation (up to 400,000 credits/month for Linux/Arm/Docker) requires a public repository. CircleCI also states that public project build logs are public. Therefore no open-source-credit eligibility is assumed while ONE remains private.
+
+A no-cost recovery may preserve privacy by waiting for the Free Plan refill, or by using a CircleCI self-hosted runner on owner-provided supported Windows/Linux hardware once the organization has at least one credit. Self-hosted runner compute itself is not charged per minute, but CircleCI requires at least one credit and network/storage can consume credits. Android/Termux is not among the documented supported machine-runner platforms.
+
+A public-repository transition is an owner-only privacy decision and MUST NOT be performed without explicit approval. No public mirror, alternate account, fake OSS classification, or hidden source publication may be used to bypass eligibility rules.
+
+For cost control, keep documentation-only commits on the separate docs branch/PR #97; do not repeatedly trigger full CircleCI product workflows for docs-only changes on the migration branch. Consider path-based filtering or a CI-skip marker only for changes proven not to affect source, contracts, or CI configuration. The current Android VM large resource class should not be downgraded without measured memory/CPU evidence and a controlled exact-SHA trial.
+
+A historical BLOCKED job cannot be converted to PASS retroactively. Only a new eligible CircleCI run that actually executes all required gates and ends in terminal success can produce CircleCI PASS. Local or independent verifier PASS evidence must remain separately labeled and SHA-bound.
+
+Official sources:
+- https://circleci.com/docs/guides/plans-pricing/credits/
+- https://circleci.com/pricing/
+- https://circleci.com/docs/guides/integration/oss/
+- https://circleci.com/docs/guides/execute/run-jobs-on-self-hosted-runners/
+- https://circleci.com/docs/guides/execution-runner/runner-overview/
+- https://circleci.com/pricing/price-list/
