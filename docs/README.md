@@ -98,7 +98,8 @@ User documentation is intentionally separate from normative engineering contract
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
-- `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
+- `../.circleci/config.yml` — canonical Linux product CI and opt-in Linux release checks.
+- [Independent Windows verification repository](https://github.com/panglimanetizen01/one-windows-verification) — Windows Server 2025 native build and exact-SHA execution evidence.
 
 ## Canonical rule
 
