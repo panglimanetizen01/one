@@ -94,3 +94,9 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 ## Verification infrastructure rule
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution. **Do not purchase an upgrade** merely to obtain hosted runner execution; use the independent verification path when the canonical hosted runner is unavailable.
+
+## Hosted CI infrastructure interpretation — 2026-11-16
+
+A hosted CI failure is not automatically a release-blocking product defect. The evidence must identify whether ONE checks actually executed. The historical Windows job #254 failed during MSYS2 first-run/keyring initialization before ONE checks and belongs to a superseded workflow; do not reintroduce that job solely to make its historical run green. Jobs #426 and #407–#409 did not demonstrate runner execution and retain unknown root cause. Job #424 alone has an explicit no-credit message. Independent Windows run #21 is positive evidence only for source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9.
+
+Release claims remain tied to exact source SHA and platform-specific executable evidence. See [CircleCI incident record](../verification/circleci-infrastructure-incident-2026-11-16.md) and [CI verification evidence contract](../spec/one-v0.1-ci-verification-contract.md). No paid-plan upgrade is implied or authorized by an infrastructure incident.
