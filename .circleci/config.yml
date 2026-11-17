@@ -66,7 +66,7 @@ jobs:
             python3 -m unittest discover -s tools -p "test_health_quality.py" -v
       - run:
           name: Native integrity preview focused tests
-          command: cargo test --locked -p one-cli --bin one integrity::tests
+          command: cargo test --locked -p one-cli --bin one-integrity
       - run:
           name: Python integrity preview exact-SHA scan (non-gating findings)
           command: |
@@ -89,7 +89,7 @@ jobs:
           name: Native integrity preview exact-SHA scan (non-gating findings)
           command: |
             set +e
-            cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha "$CIRCLE_SHA1" > /tmp/one-native-health.txt 2>&1
+            cargo run --locked -p one-cli --bin one-integrity -- --scope all --root . --expected-sha "$CIRCLE_SHA1" > /tmp/one-native-health.txt 2>&1
             scanner_status=$?
             cat /tmp/one-native-health.txt
             set -e
