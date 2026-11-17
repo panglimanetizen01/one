@@ -3,9 +3,9 @@
 ## Current continuation state — 2026-11-17 (live refresh)
 
 - Canonical repository: `panglimanetizen01/one`; `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`; visibility PUBLIC.
-- PR #102 latest source HEAD `4f9b8b08a550b368b8588855239c35948ad53990`; exact-SHA run #44009296614 is IN_PROGRESS: Windows job `133792143016` at cross-compiler installation, Ubuntu job `133792143314` at Build. Current HEAD NOT VERIFIED.
-- Previous SHA `87c80e2f21ebdc7dd3e4bd02744b30c4efd1a068`, run [#44008584799](https://github.com/panglimanetizen01/one/actions/runs/44008584799): Ubuntu PASS; Windows Build/Clippy PASS; tests 119 passed / 1 failed. Descendant PID `8208` survived (`WAIT_TIMEOUT=258`), while the exact invocation-job membership assertion passed. Last-handle close did not terminate this confirmed member; precise reason remains NOT VERIFIED.
-- Latest implementation change `4f9b8b0...` explicitly terminates remaining job members and waits for active process accounting to reach zero within five seconds; `KILL_ON_JOB_CLOSE` remains fallback. Not yet verified.
+- PR #102 latest source HEAD `d7b80f9cd99f14d67daa30675ad0a73026eb9c20`; exact-SHA run #44009787017 is IN_PROGRESS: Ubuntu job `133793751187` at Build; Windows job `133793750893` at cross-compiler installation. Current HEAD NOT VERIFIED.
+- Previous source `4f9b8b08a550b368b8588855239c35948ad53990`, run #44009296614: Ubuntu PASS; Windows build/Clippy PASS; tests 119 passed / 1 failed. Descendant PID `4124` survived (`WAIT_TIMEOUT=258`) despite exact invocation-job membership being true.
+- Latest change `d7b80f9...` invokes `TerminateJobObject` unconditionally after the direct child exits, then waits for active process accounting to reach zero within five seconds. `KILL_ON_JOB_CLOSE` remains fallback. Await exact-SHA terminal verification.
 - Previous SHA `b088bc49839ea093f2e1fa234baa23dcfe05465d`, run [#44008055855](https://github.com/panglimanetizen01/one/actions/runs/44008055855): Ubuntu PASS; Windows build failed before tests due windows-sys 0.61.2 API imports. Corrected on `87c80e2...`.
 - Previous SHA `54a68a7673247c0fe23aba24c5e86f7f77372c60`, run [#44007422002](https://github.com/panglimanetizen01/one/actions/runs/44007422002): Ubuntu PASS; Windows build/Clippy PASS; descendant PID `9876` survived. Exact invocation-job membership was not yet checked.
 - Earlier failures on `385d8e0...`, `5d92a17...`, and `a472b3d...` remain recorded above; none is a PASS for the latest source.
