@@ -268,3 +268,11 @@ Run #44012805081 on PR #102 SHA `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubun
 - The new docs section records CircleCI SUCCESS on APT-fix code/config SHA `4db76fbaf651dd069c7000fb46a4dea61b11fbd8` and terminal FAILURE on docs-only descendant `9b233dfe75da8c0752c203af3711bf3da319dc02` (workflow `91d704b2-516e-4736-9fb2-d4c8504e001b`, job `948e41bd-2090-4708-8b1b-1dc142672580`; cause UNKNOWN due inaccessible authenticated logs).
 - New exact PR #95 HEAD `cef1f41...` currently has no status reported. Do not claim PASS; this exact docs descendant requires its own terminal CircleCI result.
 - Independent Windows verifier pin remains `9b233d...`; no run for `cef1f41...`. Migration acceptance NOT PASSED; E6 NOT IMPLEMENTED / release gate NOT PASSED; no merge/release.
+
+
+### PR #95 latest exact-SHA CircleCI rerun — 2026-11-17
+
+- Exact PR #95 HEAD `cef1f41c97585b6e25bf91af6e8b4281efe299c4` now has CircleCI `ci/circleci: one-linux` PENDING: workflow `930378d8-49bb-416e-a42c-63e1797b991c`, job `0e2642b0-bd94-4892-baca-df5b6c8fa4ed`.
+- This is a fresh run on the corrected documentation descendant. No terminal outcome is available yet; do not claim PASS until terminal SUCCESS.
+- APT shell-correction code/config SHA `4db76fb...` remains CircleCI SUCCESS. Preceding docs-only SHA `9b233d...` remains terminal FAILURE, first failing step/root cause UNKNOWN because authenticated logs are inaccessible.
+- Independent Windows verifier PR #42 remains pinned to `9b233d...`; no Windows run for `cef1f41...` is observed. Migration acceptance NOT PASSED; E6 NOT IMPLEMENTED / release gate NOT PASSED; no merge/release.
