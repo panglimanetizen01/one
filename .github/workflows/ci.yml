@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, fix/commit-cargo-lockfile-20261117 ]
 
 permissions:
   contents: read
@@ -50,22 +50,64 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: User documentation consistency
+        run: python tools/check_user_docs.py
+      - name: User documentation checker tests
+        run: python tools/check_user_docs_test.py
       - name: Build
-        run: cargo build --workspace --all-targets
+        run: cargo build --workspace --all-targets --locked
       - name: Clippy
         shell: bash
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Tests
-        run: cargo test --workspace --all-targets
+        run: cargo test --workspace --all-targets --locked
       - name: Deterministic .oneir and .onepkg artifacts
-        run: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+        run: cargo test --locked -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - name: DNS success and failure classification
-        run: cargo test -p one-core --all-targets dns_adapter
+        run: cargo test --locked -p one-core --all-targets dns_adapter
       - name: Orchestration policy deny and allow paths
-        run: cargo test -p one-core --all-targets orchestrator
+        run: cargo test --locked -p one-core --all-targets orchestrator
       - name: Database vertical slice
-        run: cargo test -p one-core --test database_vertical_slice
+        run: cargo test --locked -p one-core --test database_vertical_slice
       - name: HTTP GET vertical slice
-        run: cargo test -p one-core --test http_get_vertical_slice
+        run: cargo test --locked -p one-core --test http_get_vertical_slice
       - name: HTTP GET CLI vertical slice
-        run: cargo test -p one-cli --test http_get_orchestration
+        run: cargo test --locked -p one-cli --test http_get_orchestration
+      - name: Build release CLI
+        run: cargo build --release --locked -p one-cli --bin one
+      - name: Smoke-test release CLI (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary=target/release/one
+          test -x "$binary"
+          version=$("$binary" version)
+          test "$version" = "one 0.1.0"
+          temp_dir=$(mktemp -d)
+          trap 'rm -rf "$temp_dir"' EXIT
+          cat > "$temp_dir/halo.one" <<'ONE'
+          nama adalah "Budi"
+          tampilkan nama
+          ONE
+          output=$("$binary" jalankan "$temp_dir/halo.one")
+          test "$output" = "Budi"
+      - name: Smoke-test release CLI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $binary = Join-Path $PWD 'target/release/one.exe'
+          if (-not (Test-Path $binary)) { throw 'Release CLI binary was not produced.' }
+          $version = & $binary version
+          if ($LASTEXITCODE -ne 0 -or $version -ne 'one 0.1.0') { throw "Unexpected CLI version output: $version" }
+          $tempDir = Join-Path $env:RUNNER_TEMP ("one-cli-smoke-" + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $tempDir | Out-Null
+          try {
+            $source = Join-Path $tempDir 'halo.one'
+            [System.IO.File]::WriteAllText($source, "nama adalah `"Budi`"`ntampilkan nama`n", [System.Text.UTF8Encoding]::new($false))
+            $output = & $binary jalankan $source
+            if ($LASTEXITCODE -ne 0 -or (($output -join "`n").Trim() -ne 'Budi')) { throw "CLI smoke test failed: $output" }
+          } finally {
+            Remove-Item -LiteralPath $tempDir -Recurse -Force
+          }

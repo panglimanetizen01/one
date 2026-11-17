@@ -22,4 +22,6 @@ If GitHub-hosted runners are unavailable or GitHub presents a paid-upgrade requi
 
 Independent results are execution evidence, but they must not be reported as GitHub-hosted CI results. Keep the hosted-CI blocker documented until it is actually resolved.
 
+The workspace `Cargo.lock` is committed and must remain in version control. Dependency changes must update the lockfile intentionally; CI uses `--locked` so an unrecorded dependency resolution fails closed.
+
 GitHub `main` is the canonical source of truth. Local environments are for verification and validation.
