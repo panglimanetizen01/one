@@ -306,3 +306,13 @@ No local Cargo/Python execution was available in this environment. Do not claim 
 - The branch remains 53 commits ahead of its PR #108 base `a6f91c07b04d7b9fafb9e99d0356954012ae3001`, with no commits behind that base. The three documentation files are the only files touched by this follow-up.
 - PR metadata readback reports OPEN/DRAFT/UNMERGED and mergeable=true at the latest refresh. No merge was attempted.
 - GitHub combined status and GitHub Actions workflow-runs remain empty for this final SHA. CircleCI terminal logs and local Rust/Python test execution remain unavailable; no validation PASS is claimed.
+
+
+## 16. Pointer hygiene and current execution boundary — 2026-11-17
+
+- Sections 14–15 above are historical snapshots, not live branch pointers. The final docs-only follow-up moved the branch again; always query PR #109 metadata and the branch ref before selecting an exact SHA.
+- The current code base remains the PR #108 candidate at `a6f91c07b04d7b9fafb9e99d0356954012ae3001`; PR #109 contains 57 commits ahead and zero behind at the latest refresh recorded in the session.
+- Latest PR metadata readback reported OPEN/DRAFT/UNMERGED and `mergeable=false`. This field changed across refreshes, so mergeability is unresolved; do not merge or try to auto-resolve conflicts.
+- GitHub status contexts and GitHub Actions workflow-runs were empty for the latest exact SHA. They do not represent CircleCI results.
+- CircleCI pipeline/job logs and local Cargo/Python execution are unavailable in this session. No test/build/CI PASS is asserted. Keep the work blocked at evidence acquisition until an authorized CircleCI integration or user-provided terminal logs are available.
+- Keep the main `one` CLI and language grammar/semantics untouched. Do not add security tooling to the beginner-facing CLI.
