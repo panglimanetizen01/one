@@ -53,7 +53,7 @@ The interpreter does not directly embed arbitrary OS behavior into semantic exec
 
 ## 8. State isolation
 
-Each test execution starts from a clean runtime state unless a test explicitly defines retained state. A failed test must not contaminate later tests.
+Each test execution starts from a clean runtime state unless a test explicitly defines retained state. A failed test must not contaminate later tests. Nested lexical scopes must be restored on both successful and failed block execution; a failed event dispatch must not leak local bindings into subsequent event dispatches.
 
 ## 9. Error fidelity
 
