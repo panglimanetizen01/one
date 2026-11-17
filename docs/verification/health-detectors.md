@@ -128,7 +128,7 @@ Reference revisions for this comparison: Python `tools/one_health.py` at PR #91 
 | Supply-chain / dependency and workflow security | Dependency/workflow pinning and related correlation checks | Basic download-and-execute and `write-all` checks | Gap: narrower coverage; do not claim parity |
 | CI run/job/step/artifact evidence | Dedicated collector/correlation, baseline triage and artifact freshness/digest observations | No equivalent live CI metadata collection in scanner module | Gap: remains Python-only unless a separate native contract is added |
 | Baseline / finding lifecycle | Validated baseline; new/recurring/reopened/resolved classification | Not present in current Rust scanner module | Gap: Python-only feature; specify whether this remains intentionally out of scope |
-| JSON and Markdown reports / CLI exit contract | Structured report, Markdown rendering, severity-based exit codes | Native CLI integration exists; report contract requires separate verification | Pending: compare schema, redaction, ordering, exit codes and error behavior with shared fixtures |
+| JSON and Markdown reports / CLI exit contract | Structured report, Markdown rendering, severity-based exit codes | Separate developer-only `one-integrity` binary; not part of the beginner-facing `one` CLI; report contract requires separate verification | Pending: compare schema, redaction, ordering, exit codes and error behavior with shared fixtures |
 | Safe repair | Guarded, allowlisted Markdown newline repair only | Read-only scanner | Intentional divergence: Rust must remain read-only unless a separately reviewed repair contract is approved |
 
 ### Acceptance gate
@@ -144,3 +144,6 @@ The historical `tools/collect_ci_health.py` collector reads GitHub Actions API m
 
 
 CircleCI's implicit single-job form is valid when the only job is named `build`; the scanner must not report a missing `workflows:` section as an error. Supported config version values are `2`, `2.0`, and `2.1`. The checks remain structural heuristics, not a substitute for CircleCI's config compiler.
+
+
+The native preview is built as a separate `one-integrity` developer binary. It is intentionally not registered as a `one` subcommand, and it must not add scanner/security vocabulary to the beginner-facing ONE CLI or user guide.
