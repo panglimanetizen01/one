@@ -158,6 +158,8 @@ CircleCI is the intended canonical Linux CI provider. The migration is still a d
 Windows Server 2025 native execution remains independently verified in [one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Linux-host MinGW cross-compilation does not replace Windows-host execution.
 
 ## Documentation
+- [Forensic repository audit](docs/verification/forensic-audit-2026-11-17.md) — latest inventory, confirmed findings, exact-SHA evidence, and open gates.
+- [Master continuation prompt](docs/verification/MASTER_CONTINUATION_PROMPT_2026-11-17.md) — mandatory read-first context and next-session execution order.
 
 - `docs/panduan-pengguna/README.md`
 - `docs/panduan-pengguna/status-fitur.md`
