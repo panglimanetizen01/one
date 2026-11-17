@@ -314,9 +314,9 @@ name = "one-core"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "libc",
  "h2",
  "http",
+ "libc",
  "quinn",
  "rcgen",
  "rusqlite",
