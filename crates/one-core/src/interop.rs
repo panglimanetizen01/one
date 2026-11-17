@@ -667,8 +667,9 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         }
     }
 
-    // Ensure the direct process is reaped even after timeout/output-limit/error.
-    if unsafe { WaitForSingleObject(process.raw(), INFINITE) } != WAIT_OBJECT_0 {
+    // Ensure the direct process is reaped even after timeout/output-limit/error,
+    // but keep cleanup bounded if the termination request itself fails.
+    if unsafe { WaitForSingleObject(process.raw(), 5_000) } != WAIT_OBJECT_0 {
         wait_failed = true;
     }
 
