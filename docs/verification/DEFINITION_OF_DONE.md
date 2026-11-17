@@ -216,3 +216,11 @@ Run #44012805081 on PR #102 SHA `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubun
 - CircleCI `ci/circleci: one-linux` is PENDING for this exact SHA (workflow `07e89069-4b33-49f6-b32c-8e70519f5221`, job `781e65c4-e43d-4e55-89d3-beaa61623629`). Earlier CircleCI failure root cause remains NOT VERIFIED because authenticated job logs are unavailable in the current tool context.
 - Independent verifier PR #42 now pins this exact SHA, but no workflow run has been observed. Windows run #32 is PASS only for older source SHA `a10a69afdf8675e703f38f1620abc935d8361897`; no Windows PASS is claimed for `c71d81a...`.
 - PR #95 migration acceptance remains NOT PASSED. The optional release-check remains NOT RUN. No merge or release.
+
+
+## PR #95 latest status correction — 2026-11-17
+
+- Code/config candidate `c71d81a60f7792ed8536ba2b70464b9922f33c18` has CircleCI `ci/circleci: one-linux` terminal FAILURE (workflow `07e89069-4b33-49f6-b32c-8e70519f5221`, job `781e65c4-e43d-4e55-89d3-beaa61623629`). First failing step/root cause remains NOT VERIFIED: the active session has no CircleCI CLI, token/auth configuration, connected CircleCI job-log action, or accessible CircleCI job page.
+- Documentation-only descendant PR #95 HEAD is `dd9960ff52d005c4c5bf02bc11fc3c8ef8482ab9`; its fresh CircleCI status is PENDING (workflow `e02ca4dd-a15a-4d44-a5bb-7c2a2db13629`, job `d7aaea88-f864-489d-b717-b95b60dc0078`). Do not attribute the older failure to the descendant or claim its pending run passed.
+- Independent verifier PR #42 now pins `dd9960f...`, but no Windows run is observed. Run #32 is PASS only for `a10a69...`.
+- PR #95 migration acceptance remains NOT PASSED; optional release-check NOT RUN; no merge/release.
