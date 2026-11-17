@@ -334,3 +334,13 @@ The MSYS2 installation run step now sets `no_output_timeout: 30m` so the large f
 - This run tests source SHA `f85375e...`. Current PR #95 HEAD `cab441c45ade081c429476a5a432b91f35246399` is two commits ahead, and the compare shows only documentation paths changed; no product source or CircleCI config changed between those SHAs. The verifier run therefore exercises the same code/config tree, but it does not validate the later documentation tree at `cab441c...`.
 - CircleCI on current PR #95 HEAD `cab441c...` remains `ci/circleci: one-linux = FAILURE`; workflow `5b7d5721-7975-46d5-bec0-f01d90a8196a`, job `5b937529-aa87-4228-9fd4-79e4bf7507cc`. The user-retrieved API response exposed only `Task information unavailable` and a pre-signed output URL returning HTTP 404. First failing step/root cause remain UNKNOWN. No speculative code/config fix is justified.
 - Result: Windows exact-SHA PASS for `f85375e...`; Linux FAILURE for current PR head; overall cross-platform verification remains NOT PASS. PR #95 and PR #42 remain OPEN / DRAFT / UNMERGED; `main` unchanged.
+
+
+## Current CircleCI lockfile integration candidate — 2026-11-17
+
+- PR #95 latest source candidate: `e6bfb6bb0256dbd30710ceb544cc0d776e2927bf` (OPEN / DRAFT / UNMERGED).
+- The candidate now tracks the workspace `Cargo.lock`, includes the target-specific `libc` and `windows-sys` dependencies required by `one-core`, and invokes every CircleCI Cargo build, Clippy, and test command with `--locked`.
+- `tools/check_contract.py` now requires `Cargo.lock` and checks inline as well as multiline Cargo invocations for the `--locked` flag.
+- CircleCI `ci/circleci: one-linux` for this exact SHA is PENDING (workflow `ca520794-8456-4c2d-af0b-a7f85baaea83`, job `9cd8432e-89c8-4867-b661-64096ab6920f`). The failing step from earlier CircleCI attempts remains NOT VERIFIED because job logs are not accessible in the current integration context. Do not infer that this integration change is the earlier failure's root cause.
+- Independent Windows native verification run #32 is PASS only for source SHA `a10a69afdf8675e703f38f1620abc935d8361897`; it does not verify this new candidate. A fresh Windows exact-SHA run is required.
+- No local Cargo execution is claimed. Revalidate this exact candidate with CircleCI and the independent Windows verifier before promoting any migration gate.
