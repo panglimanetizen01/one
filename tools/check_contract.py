@@ -55,7 +55,7 @@ if not (ROOT / "Cargo.lock").is_file():
 cargo_commands = [
     line.strip()
     for line in ci_config.splitlines()
-    if line.strip().startswith(("cargo build ", "cargo clippy ", "cargo test "))
+    if any(token in line for token in ("cargo build ", "cargo clippy ", "cargo test "))
 ]
 if not cargo_commands:
     raise SystemExit("CIRCLECI CONTRACT: no explicit Cargo build, Clippy, or test commands found")
