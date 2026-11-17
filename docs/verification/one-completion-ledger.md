@@ -122,7 +122,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | E4 | Security, resource bounds, and recovery — **6** | Threat review and tested security/resource controls within declared Linux/Windows first-class targets and Android/Linux integration boundary; broader platform expansion remains out of scope | 6/6 | 0/6 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E5 | Documentation and developer tooling — **4** | Contract checker, documentation consistency and relative links, examples, CLI create/check/run/build/test/package smoke tests, and developer workflow instructions | 4/4 | 0/4 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
-|  | **TOTAL** |  | **92/100** | **60/100** | **MILESTONE 100% IN PROGRESS — CURRENT EXACT-SHA SCORE UNKNOWN / NOT RECONCILED; GATE NOT PASSED** |
+| | **TOTAL** | | **92/100** | **0/100** | **NOT PASSED — CURRENT SHA NOT VERIFIED** |
 
 ## Baseline and evidence
 
