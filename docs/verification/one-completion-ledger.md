@@ -1020,3 +1020,12 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 ### Next executable action
 
 - Obtain an authorized exact-SHA CI execution path for PR #106's dependent-base branch (CircleCI pipeline #622 job details or an appropriately triggered GHA run), then fix any reproduced issue and verify Linux + Windows. In parallel, keep Issue #105 open until strong Unix containment or an explicitly narrowed per-platform contract has production descendant-cleanup evidence.
+
+
+## Documentation branch SHA refresh — 2026-11-17 19:00 WIB
+
+- Live readback after the latest documentation corrections: PR #97 remains OPEN / DRAFT / UNMERGED, branch `docs/system-architecture-diagram-20261115`, HEAD `8203b12b2f5b2cd07611262874d1ecf2a7574201`; PR #103 remains OPEN / DRAFT / UNMERGED, branch `docs/restore-completion-ledger-dod-20261117`, HEAD `7baeee6482a88687537515b71cc12e39da456678`.
+- PR #106 remains OPEN / DRAFT / UNMERGED at exact source HEAD `5c4b482009e88f7e4db7d2585afd29c3996c2df9`, based on PR #102 branch HEAD `ac1bb214bc028395367cce7edc234a1909971e2a`; current combined CircleCI status is ERROR for pipeline #622, but job-level cause is NOT VERIFIED and GHA does not trigger because the dependent PR base is not `main`.
+- PR #95 remains OPEN / DRAFT / UNMERGED at HEAD `993f76351c7a119bea2e66f7d9e5bca07f392fbc`; Windows exact-source verifier run #43 is PASS on this SHA, while CircleCI Linux and optional release-check are NOT VERIFIED on current HEAD. Earlier CircleCI PASS on `e50748a...` remains historical.
+- The verifier health-scanner mismatch is now documented accurately: current verifier `verification` branch workflow reads shared pin `e507...` where scanner files are absent; draft PR #39 corrects it with dedicated pin `9b38...`, where scanner and test files exist. PR #39 execution remains NOT VERIFIED.
+- Repository remains PUBLIC, default branch `main`, main SHA `d35db95153f6ddd79885494c72f5aee16c899751`. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED; DoD remains 3 checked / 10 unchecked. No merge or release.
