@@ -124,3 +124,10 @@ The ZIP digest was independently recomputed from the downloaded artifact; the ex
 - CircleCI Linux is PENDING for this exact SHA (workflow `ca520794-8456-4c2d-af0b-a7f85baaea83`, job `9cd8432e-89c8-4867-b661-64096ab6920f`).
 - Windows run #32 remains PASS only for older source SHA `a10a69afdf8675e703f38f1620abc935d8361897`; no Windows PASS is claimed for `e6bfb6b...`. A fresh exact-SHA native Windows run is still required.
 - Earlier CircleCI failure root cause remains NOT VERIFIED; do not infer it from the lockfile integration gap.
+
+
+## CircleCI result and Windows verification boundary — 2026-11-17
+
+- PR #95 exact source SHA `c71d81a60f7792ed8536ba2b70464b9922f33c18` has CircleCI `ci/circleci: one-linux` terminal FAILURE (workflow `07e89069-4b33-49f6-b32c-8e70519f5221`, job `781e65c4-e43d-4e55-89d3-beaa61623629`). First failed step/root cause is NOT VERIFIED because CircleCI logs are unavailable in the current execution environment.
+- No Windows run has been observed for `c71d81a...`; verifier PR #42 is pinned to it but remains untriggered. Windows run #32 is PASS only for `a10a69...`.
+- Do not combine the older Windows PASS with the current CircleCI failure or claim cross-platform acceptance. Diagnose CircleCI from authenticated logs and run the Windows verifier on the same final source SHA.
