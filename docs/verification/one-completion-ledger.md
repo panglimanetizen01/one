@@ -1,17 +1,18 @@
 # ONE Completion Ledger — Human Instruction vNext Roadmap
 
-## Current continuation state — 2026-11-17
+## Current continuation state — 2026-11-17 (live refresh)
 
-- Canonical repository: `panglimanetizen01/one`; current `main` SHA: `d35db95153f6ddd79885494c72f5aee16c899751`.
-- Active work remains in separate open/draft PRs: #95 CircleCI migration, #97 architecture/documentation, #98–#101 implementation fixes, and #102 Cargo.lock plus bounded subprocess hardening. No PR is merged.
-- PR #102 current HEAD: `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`. Its current exact-SHA GitHub Actions run #44002493159 is in progress; previous Ubuntu tests passed on parent SHA `b468282...`, while Windows exposed and corrected an import-location error. Do not assign PASS to the current HEAD until both jobs complete.
-- A lockfile-only source candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed GitHub Actions One CI on Ubuntu and Windows and independent Windows native PE32+ build/runtime verification (exit 0, output `Budi`). This is prior-SHA evidence and does not verify the newer subprocess-hardening source.
-- Historical implementation inventory remains **92/100 provisional** from the 2026-11-05 ledger snapshot. It is a planning estimate, not a current-source acceptance score.
-- **Current exact-SHA verified points: 0/100.** The historical 60/100 verified subtotal belongs to an older candidate and is not carried forward. No final candidate SHA is frozen; E1–E6 acceptance must be re-established against one exact final SHA.
-- The prior Definition of Done recorded 3 checked / 10 unchecked. Those checks are historical and must be revalidated against the final source SHA; the release gate remains **NOT PASSED**.
-- Fixed row weights are unchanged. Do not increase points or check acceptance boxes without current exact-SHA evidence. Do not interpret infrastructure/configuration errors as source-test failures.
-- PR #98–#101 CircleCI ERROR contexts are consistent with the missing `.circleci/config.yml` on `main` while PR #95 remains unmerged. They are not proof that Rust tests failed. CircleCI is not yet active on main.
+- Canonical repository: `panglimanetizen01/one`; `main` SHA: `d35db95153f6ddd79885494c72f5aee16c899751`; visibility PUBLIC.
+- Active PRs remain OPEN / DRAFT / UNMERGED: #95, #97, #102, #103; independent verifier PR #42 is also OPEN / DRAFT / UNMERGED. No PR is merged.
+- PR #102 branch `fix/commit-cargo-lockfile-20261117`, exact HEAD `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`.
+- Exact-SHA GitHub Actions run [#44002493159](https://github.com/panglimanetizen01/one/actions/runs/44002493159) is TERMINAL: Ubuntu job `133769724724` SUCCESS; Windows job `133769724148` FAILURE. Windows build and Clippy passed, but tests reported 119 passed / 1 failed. The failing regression `windows_job_object_terminates_descendants_when_parent_exits` observed descendant PID `8864` still alive (`WAIT_TIMEOUT=258`) after the bounded invocation returned. This is a real Windows descendant-containment failure, not a harness parsing issue. Do not award Windows PASS or close the PR.
+- The earlier lockfile-only source candidate `a10a69afdf8675e703f38f1620abc935d8361897` retains its exact-SHA Ubuntu/Windows CI and independent Windows native PE32+ runtime PASS. It does not verify the newer process-hardening implementation.
+- PR #97 live HEAD `8b44c42bf61980c1983ce20725606cd2ab0a269d`; PR #103 live HEAD `43eedb0a64b62cbc1492ec046b9ef79e2af816fa`; PR #95 live HEAD `e50748a1b25922d9090eba1f5fb90548d7c7d003`; verifier PR #42 live HEAD `4b7138dd4f8cc8e958decaea8e70dab67d3c1454`.
+- Historical implementation inventory remains **92/100 provisional**; current exact-SHA verified points remain **0/100**. Do not award points from prior-SHA evidence.
+- Definition of Done historical state remains 3 checked / 10 unchecked; all require final-SHA revalidation. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release gate NOT PASSED.
+- PR #95 CircleCI migration remains unmerged; CircleCI is not yet active on main. The release-check has not been proven executed.
 - No merge, release, protected release dispatch, secret/trust-store mutation, repository visibility change, or direct `main` edit is authorized.
+
 
 ---
 
