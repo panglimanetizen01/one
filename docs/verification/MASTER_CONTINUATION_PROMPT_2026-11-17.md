@@ -213,3 +213,16 @@ PR #109 latest branch HEAD after docs/PR-body synchronization: `d15a0aa321cc906d
 A static review against official CircleCI docs found the native preview incorrectly treated missing `workflows:` as an error. CircleCI permits an implicit workflow for a single job named `build`. Corrected in source commit `408b6c6adb57c935c34235c9316f8417a421b143`: native scanner now checks supported version values `2`, `2.0`, `2.1` and presence of `jobs:`, but does not require `workflows:`. Rust regression fixture covers valid implicit single-job build, quoted 2.0, unsupported version, and missing jobs. Detector/health docs updated. See Issue #90 comment for the proof boundary.
 
 **Not validated yet:** no local Rust build/test; no CircleCI terminal run or job logs; GitHub check-runs/status empty. Do not call the correction passing or compile-verified. CircleCI's own config compiler is authoritative. Next action: obtain CircleCI pipeline/job evidence for the latest exact SHA; if still inaccessible, continue static source review and keep this gate NOT VERIFIED. Do not repeat historical PR #89/#91 test runs.
+
+
+## 13. Developer-only binary boundary — 2026-11-17
+
+The native scanner MUST remain separate from the beginner-facing `one` CLI. The earlier `one pindai` subcommand was a product-boundary violation and has been removed.
+- Main CLI `crates/one-cli/src/main.rs`: no scanner module import, dispatch, or scanner help vocabulary.
+- Separate explicit Cargo binary: `one-integrity` at `crates/one-cli/src/bin/one-integrity.rs`; module remains `crates/one-cli/src/integrity.rs`.
+- CircleCI focused tests: `cargo test --locked -p one-cli --bin one-integrity`.
+- CircleCI preview scan: `cargo run --locked -p one-cli --bin one-integrity -- --scope all --root . --expected-sha "$CIRCLE_SHA1"`.
+- Contract checker requires the separate binary and rejects scanner dispatch/import in the main `one` CLI.
+- CONTRIBUTING, ADR-0018, repository-health usage, detector parity docs, PR #109 body and Issue #90 comment are synchronized.
+
+This source change has only been read back through GitHub; no Cargo/Rust execution or CircleCI terminal evidence is available. The next exact source HEAD must compile/test `one-integrity` and verify that the main `one help` remains unchanged. Do not add scanner commands to beginner user docs.
