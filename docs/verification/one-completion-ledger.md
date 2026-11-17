@@ -881,3 +881,12 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - Previous source `ed2382...` passed full Windows run #39 / `44046670869`; artifact `14312311019`, ZIP SHA-256 `aa56f8275042969b18c12283eb152e0572b8970159e3df7db62e9aad9f109da1`; native/CLI outputs `Budi`, exit 0; CLI version `one 0.1.0`.
 - Correction: CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. PR #95 `ed2382...` had no CircleCI context visible in GitHub; current PR #95 `993f763...` also has no status context at last read. PR #102 GHA PASS and generic CircleCI ERROR are separate; pipeline root cause NOT VERIFIED without CircleCI logs.
 - PR #103 ledger/DoD current head is being updated in this commit; PR #97 README current head is being updated in its own docs branch. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No merge/release.
+
+
+## ProcessSpec input validation remediation — PR #102 — 2026-11-17
+
+- Differential code review found that the custom Windows `CreateProcessW` path did not reject embedded NUL characters in executable path, arguments, or working directory. Win32 null-terminated strings could truncate these values, diverging from Unix `Command`; empty executable path also needed rejection before Windows PATH resolution.
+- Added cross-platform `validate_process_spec` after the Process capability check and before OS-specific spawn. It rejects empty executable paths and embedded NUL in executable path, all args, and optional working directory. Added four regression tests and documented the rule in `docs/spec/one-v0.1-interop.md`.
+- Current PR #102 exact source HEAD: `fe3e4d0ae55a90a0b07deec124def54f7c79f041`. Current-SHA GitHub Actions run has not yet appeared in the branch run list at this evidence boundary; do not claim PASS until Windows and Ubuntu jobs complete.
+- Intermediate source `790dd187...` contained over-escaped NUL literals, corrected in `ac2ee8ea...`; final formatting commit `fe3e4d0...` is the current candidate. Any result for `790dd...` is superseded and not evidence for the current SHA.
+- This is process interop validation only; ONE grammar, language semantics, CLI UX and release acceptance are unchanged. PR #102 remains OPEN / DRAFT / UNMERGED; no DoD checkbox or E4 score promoted pending exact-SHA verification.
