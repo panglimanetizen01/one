@@ -42,7 +42,7 @@ Use directory descriptors and descriptor-relative operations:
 
 1. Open the trusted root as a directory with close-on-exec and no-follow semantics; retain its device/inode identity.
 2. Walk each parent component with openat using O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC.
-3. Verify each opened directory is on the same device as the trusted root; fail closed on mount crossing.
+3. Verify each opened directory against the trusted root's mount identity as well as device identity. On Linux, use statx with STATX_MNT_ID (or a stronger available mount identifier); st_dev alone is insufficient because bind mounts can share a device number. On other Unix targets, use an equivalent mount-identity primitive or fail closed where mount-boundary enforcement cannot be proven.
 4. Open the leaf relative to the retained parent descriptor with O_NOFOLLOW | O_CLOEXEC, then validate with fstat that it is a regular file and satisfies the link-count policy.
 5. Reads use a bounded loop and stop before exceeding the configured maximum.
 6. Writes use a bounded input and a same-directory exclusive temporary file, flush/sync as required by the durability contract, then atomically rename relative to the parent descriptor. Cleanup the temporary entry on every failure path.
