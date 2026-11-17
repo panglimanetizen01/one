@@ -741,4 +741,48 @@ mod tests {
         .expect_err("stderr beyond the configured cap must be rejected");
         assert!(error.contains("output limit"));
     }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_job_object_terminates_descendants_when_parent_exits() {
+        use windows_sys::Win32::Foundation::{CloseHandle, WAIT_OBJECT_0};
+        use windows_sys::Win32::System::Threading::{
+            OpenProcess, WaitForSingleObject, PROCESS_QUERY_LIMITED_INFORMATION, SYNCHRONIZE,
+        };
+
+        let script = "$p = Start-Process -FilePath ping.exe -ArgumentList @('-n','30','127.0.0.1') -PassThru; [Console]::Out.WriteLine($p.Id)";
+        let result = run_process(
+            &ProcessSpec {
+                program: "powershell.exe".into(),
+                args: vec!["-NoProfile".into(), "-Command".into(), script.into()],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+        )
+        .expect("PowerShell parent process should complete");
+        let pid = result
+            .stdout
+            .trim()
+            .parse::<u32>()
+            .expect("PowerShell should report the descendant PID");
+
+        // The child was created after the parent was assigned to the Job Object.
+        // Closing the kill-on-close job must terminate it before run_process returns.
+        let process = unsafe {
+            OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE,
+                0,
+                pid,
+            )
+        };
+        if !process.is_null() {
+            let wait = unsafe { WaitForSingleObject(process, 0) };
+            unsafe { CloseHandle(process) };
+            assert_eq!(
+                wait, WAIT_OBJECT_0,
+                "descendant process {pid} survived the bounded process invocation"
+            );
+        }
+    }
+
 }
