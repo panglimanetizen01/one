@@ -115,3 +115,12 @@ The ZIP digest was independently recomputed from the downloaded artifact; the ex
 - The CircleCI job page and authenticated first-failure output are inaccessible through the current tools. The first failed Linux step/root cause remain UNKNOWN; do not infer a product-code defect or claim Linux PASS.
 - Result: Windows PASS for canonical source SHA `f85375e279257dcbb7d4ded9632800fcd1b78cc9` only. Overall cross-platform verification is NOT PASS because CircleCI Linux is failed. PR #95 and PR #42 remain OPEN / DRAFT / UNMERGED; `main` is unchanged.
 - The subsequent PR #95 evidence-only documentation commit records this run; the tested source snapshot remains the exact SHA pinned above.
+
+
+## Latest PR #95 source candidate — 2026-11-17
+
+- Canonical candidate SHA: `e6bfb6bb0256dbd30710ceb544cc0d776e2927bf`.
+- This candidate adds the workspace Cargo lockfile and matching target-specific platform dependencies; the CircleCI candidate now uses `--locked` for all build, Clippy, and test commands and its contract checker enforces that requirement.
+- CircleCI Linux is PENDING for this exact SHA (workflow `ca520794-8456-4c2d-af0b-a7f85baaea83`, job `9cd8432e-89c8-4867-b661-64096ab6920f`).
+- Windows run #32 remains PASS only for older source SHA `a10a69afdf8675e703f38f1620abc935d8361897`; no Windows PASS is claimed for `e6bfb6b...`. A fresh exact-SHA native Windows run is still required.
+- Earlier CircleCI failure root cause remains NOT VERIFIED; do not infer it from the lockfile integration gap.
