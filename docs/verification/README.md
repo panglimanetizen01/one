@@ -22,6 +22,11 @@ GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No
 - The current PR #102 process-containment candidate is separate: source HEAD `5d92a17fcc34178c419e6817030058ee17cafc6c`; GitHub Actions run #44006414909 has Ubuntu SUCCESS and Windows still running at the last check. It is not release evidence yet.
 - CircleCI is not active on `main` while PR #95 remains unmerged. The release-check remains unproven; no merge/release is authorized.
 
+
+## Independent verifier security hardening — 2026-11-17
+
+PR #39, #40 and #42 now remove the unnecessary `CANONICAL_READ_TOKEN` secret from exact-source checkout steps because the canonical ONE repository is public. All harness and source `actions/checkout` steps set `persist-credentials: false`, preventing checkout credentials from remaining in the worktree while build/test code runs. The PRs remain OPEN / DRAFT / UNMERGED; these security changes still require exact workflow execution and review.
+
 ## Canonical evidence locations
 
 - CircleCI job logs/artifacts: Linux product and Linux release jobs for the exact ONE source SHA.
@@ -48,7 +53,7 @@ Current disposition is deliberately fail-closed:
 - Historical implementation inventory: 92/100 provisional; current exact-SHA verified points: 0/100.
 - Historical DoD state: 3 checked / 10 unchecked; the checked items require revalidation against a frozen final source SHA.
 - Lockfile candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed GitHub Actions Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime (exit 0, output `Budi`). This is prior-SHA evidence and does not verify the newer process-hardening HEAD.
-- PR #102 latest HEAD: `385d8e0ab25d82dae8c15b2ae49ac491b3747458`; no GitHub Actions run is visible yet. CircleCI Pipeline context is ERROR at pipeline #433; this is not source-test evidence. Current HEAD is NOT VERIFIED. The follow-up normalizes the PowerShell membership marker to lowercase, reaps the test-owned descendant after recording its observed liveness, and explicitly terminates/reaps a direct child if Job membership cannot be established.
+- PR #102 latest HEAD: `54a68a7673247c0fe23aba24c5e86f7f77372c60`; no GitHub Actions run is visible yet. Current HEAD is NOT VERIFIED. The previous SHA `385d8e0...` passed Ubuntu and Windows build but failed Clippy before tests on an unused `PROCESS_TERMINATE` import; latest source uses that access right in the `OpenProcess` mask.
 - Previous diagnostic SHA `5d92a17fcc34178c419e6817030058ee17cafc6c`, run #44006414909: Ubuntu SUCCESS; Windows build/Clippy SUCCESS; Windows tests 119 passed / 1 failed due `ParseBoolError` parsing PowerShell's capitalized `True`. Direct child was confirmed in the intended Job Object; descendant membership remains NOT VERIFIED.
 - Earlier source SHA `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`, run #44002493159: Ubuntu SUCCESS; Windows FAILURE (119 passed / 1 failed), descendant PID `8864` survived (`WAIT_TIMEOUT=258`).
 - CircleCI migration PR #95 remains unmerged; `.circleci/config.yml` is absent from `main`. CircleCI ERROR contexts on product-fix branches are not proof that source tests failed.
