@@ -251,3 +251,7 @@ The Issue #104 design and normative spec now specify a shared immutable authorit
 ### Historical PR #80 filesystem implementation review — 2026-11-18
 
 PR #80 exact head d75b2846465ba53281198693750f2e6ba39e2e33 was reviewed as reference only. Its Unix code contains useful openat/O_NOFOLLOW, statx mount-id, regular-file and hard-link checks, and race-test patterns. It is not accepted as-is: root is recomputed from cwd rather than injected/retained; root traversal is reopened per operation; non-Linux Unix falls back to st_dev; writes are not atomic temp+rename; Windows remains path-based canonicalize/check/open. Current Issue #104 design explicitly rejects copying those gaps.
+
+### Independent E4 verifier run diagnosis — 2026-11-18
+
+GitHub Actions run `43998206030` was inspected at job-log level. Unix job `133755415781` and Windows job `133755416047` both failed before executing the first filtered test because `cargo test --locked` could not create `source/Cargo.lock`. The verifier repository's `CANONICAL_COMMIT.txt` pointed to `e50748a1b25922d9090eba1f5fb90548d7c7d003`, which has no Cargo.lock. Current PR #108 candidate `c4bb4b690e698a83e4ddaf279596479d3dc282ca` does contain Cargo.lock. Classify the historical failure as stale verifier candidate/lockfile precondition, not as a source test failure or PASS. Do not update canonical candidate to current source until the Issue #104 test filters are actually implemented; otherwise the verifier will fail on zero matches. The verifier branch was not changed.
