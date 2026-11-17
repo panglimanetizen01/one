@@ -640,3 +640,11 @@ Exact run #44010448799 on source `eaa7cf77bd9971f1fd9b5205cef975e6acad270f`: Ubu
 ## 2026-11-17 — PR #102 retained-handle failure and identity diagnostics
 
 Exact run #44012805081 on source `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubuntu SUCCESS; Windows FAILURE. Windows build and Clippy passed; tests reached `windows_job_object_terminates_descendants_when_parent_exits` and failed with `WAIT_TIMEOUT=258` on the retained process handle for descendant PID 3444. This confirms the original process object was still unsignaled after `run_process` returned; PID-reuse ambiguity is removed. The test-owned descendant is terminated through that retained handle after the observation. Follow-up diagnostic commit `efc5422845927c2a46e08e61aeb6a497e2f9980b` adds `GetProcessId` and `GetExitCodeProcess` checks on the retained handle so the next run confirms handle identity and reports its exit state. Run #44018063886 for exact SHA `efc5422...` is IN_PROGRESS; Windows and Ubuntu jobs are still running. Keep containment NOT VERIFIED until diagnostics identify the process object and a later exact-SHA run proves termination.
+
+## Current PR #95 CircleCI migration candidate — 2026-11-17
+
+- PR #95 current source HEAD: `c71d81a60f7792ed8536ba2b70464b9922f33c18`; OPEN / DRAFT / UNMERGED.
+- The candidate now tracks `Cargo.lock`, synchronizes the `one-core` Unix/Windows target dependencies, uses `--locked` for all CircleCI Cargo build/Clippy/test commands, and enforces the lockfile/locked-command contract in `tools/check_contract.py`.
+- CircleCI `ci/circleci: one-linux` is PENDING for this exact SHA (workflow `07e89069-4b33-49f6-b32c-8e70519f5221`, job `781e65c4-e43d-4e55-89d3-beaa61623629`). Earlier CircleCI failure root cause remains NOT VERIFIED because authenticated job logs are unavailable in the current tool context.
+- Independent verifier PR #42 now pins this exact SHA, but no workflow run has been observed. Windows run #32 is PASS only for older source SHA `a10a69afdf8675e703f38f1620abc935d8361897`; no Windows PASS is claimed for `c71d81a...`.
+- PR #95 migration acceptance remains NOT PASSED. The optional release-check remains NOT RUN. No merge or release.
