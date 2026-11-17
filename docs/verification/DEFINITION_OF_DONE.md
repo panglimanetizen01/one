@@ -346,3 +346,34 @@ This section supersedes prior current-head statements where they conflict. Histo
 - Current PR #95 HEAD `54bf0973f59c2705decd91a8457cf08d6bbb7f8e` is a docs-only descendant recording run #35. CircleCI is PENDING (workflow `4e04be28-3664-4842-a4c8-6844d1d45817`, job `cc67ef7a-1df1-4a31-a694-05725f702652`).
 - Verifier PR #42 pin matches `54bf097...`; Windows run #36 / `44031839506` is IN_PROGRESS with verifier SHA `c40752bd134c83a671e928a0a2aab25953e4ad6e`. Do not transfer run #35 to this descendant.
 - Optional CircleCI release-check remains NOT VERIFIED. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
+
+
+## Differential open-PR verification checkpoint — 2026-11-17
+
+### PR #95 / PR #42 — latest exact-SHA PASS
+
+- PR #95 source `54bf0973f59c2705decd91a8457cf08d6bbb7f8e`: CircleCI Linux SUCCESS (workflow `4e04be28-3664-4842-a4c8-6844d1d45817`, job `cc67ef7a-1df1-4a31-a694-05725f702652`) and independent Windows run #36 / `44031839506` SUCCESS (verifier `c40752bd134c83a671e928a0a2aab25953e4ad6e`, job `133865371299`). Artifact `14304669534`; ZIP SHA-256 `b281dc52a781063fdda0570e357d5f1cee30a86fc6b77fa4c287b52514c8adb2`; executable SHA-256 `515bb17d95223108934dbedce435d93ab823f231a3d6ce1be95ab2c532e51dd4`; manifest SHA-256 `73472141307457975dcc10dc9e923afa5be7e6d1b83e796cba05168de02f86f4`; runtime exit 0 / `Budi`.
+- The optional CircleCI `release-check` remains NOT VERIFIED. PR #95 and verifier PR #42 remain OPEN / DRAFT / UNMERGED.
+
+### PR #98, #99, #100 — exact-SHA legacy GHA PASS
+
+- PR #98 SHA `a83321bc41b3d0d28378841e29a6169abed8ac15`: GHA run #2018 / `43923604400`, Ubuntu job `133497053339` and Windows job `133497052786`, both SUCCESS including build, Clippy, tests and vertical slices.
+- PR #99 SHA `8800b885a4ffcb1931a7a3c71f3eaff888e9f5e9`: GHA run #2019 / `43923948205`, Ubuntu job `133498292797` and Windows job `133498293201`, both SUCCESS.
+- PR #100 SHA `6375356c9c275ace5fd35cf4a81799a9546e1e1d`: GHA run #2020 / `43924465030`, Ubuntu job `133500117683` and Windows job `133500117243`, both SUCCESS.
+- Their CircleCI Pipeline contexts are ERROR because main has no `.circleci/config.yml` before PR #95 migration. This is not evidence of Rust test failure. Their GHA evidence remains exact-SHA historical PASS; reassess CircleCI after the authorized migration.
+
+### PR #101 — compile failure fixed; new CI running
+
+- Old SHA `bbcc86876553ffd9a97af12c11bf99bdabae2792`, GHA run #2021 / `43924632960`: Ubuntu and Windows both failed during Build, before Clippy/tests. Root cause: two new filesystem denial/approval regression tests were appended outside the closing brace of `#[cfg(test)] mod tests`, so `SemanticCapabilityId`, `ExecutionScope`, and `EffectClass` were out of scope.
+- Fixed in commit `cdf7bd5b8cff86e1ce271c8f03ef8c01ff61005f` by moving the premature module-closing brace after the new tests. No test was removed or weakened; production behavior unchanged.
+- New GHA run #2138 / `44032422058` is IN_PROGRESS on exact SHA `cdf7bd...`; Ubuntu job `133867259381` and Windows job `133867259061`. No PASS claim until both finish.
+
+### PR #96 — superseded CircleCI Windows patch
+
+- PR #96 only fixes MSYS2 keyring initialization in the historical CircleCI Windows executor path. Current PR #95 architecture intentionally uses CircleCI Linux plus the independent Windows verifier; the current CircleCI config has no Windows executor. Merging #96 would reintroduce the superseded Windows job. Its disposition is historical/superseded; leave open/unmerged, preserve original failure evidence.
+
+### Completion controls
+
+- PR #102 remains GHA PASS on exact source `7e10e758d7e1ca70f450bfbb6cf397d805500e53`, including Windows Job Object descendant termination.
+- E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; no score or DoD checkbox is promoted. Optional release-check, clean installation/use acceptance and release authorization remain outstanding.
+- Main remains PUBLIC and unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`. No merge or release.
