@@ -3,7 +3,7 @@
 Status: **implemented first increment; evolving**  
 Tool: tools/one_health.py  
 Regression tests: tools/test_one_health.py  
-CI: .github/workflows/repository-health.yml
+CI: .circleci/config.yml (development-side scanner checks; CircleCI is the canonical CI)
 
 This tool checks the integrity of the repository around the One language. It is **not a One-language command** and does not change One syntax or grammar. One source programs remain governed by the normative grammar and CLI contracts.
 
@@ -32,7 +32,7 @@ To assert that the checkout matches an exact commit:
 python tools/one_health.py --expected-sha <40-character-git-sha>
 ~~~
 
-CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a non-zero exit.
+CircleCI exposes CIRCLE_SHA1; the scanner uses it as the default expected SHA. GITHUB_SHA remains supported for historical GitHub Actions runs. A mismatch is a critical finding and causes a non-zero exit.
 
 ## Current detector catalogue
 
@@ -42,10 +42,10 @@ CI sets GITHUB_SHA automatically. A mismatch is a critical finding and causes a 
 | Syntax | Python AST, TOML and JSON parsing | TOML uses Python 3.11+ tomllib |
 | Markdown | relative links, repository-root escapes, conservative heading/HTML anchors, unclosed fenced code blocks | Does not parse every Markdown dialect or every generated/reference-style link |
 | Paths | file and directory symlinks resolving outside the repository | Symlink targets are not traversed; filesystem races and platform-specific symlink behavior remain outside the guarantee |
-| Workflow integrity | duplicate workflow names, missing local actions, missing referenced scripts | Targeted checks, not a complete GitHub Actions schema validator |
+| Workflow integrity | duplicate CI config names, missing local actions, missing referenced scripts in GitHub Actions YAML and `.circleci/config.yml` | Structural heuristics only; not a full provider schema validator |
 | Workflow overlap | exact repeated single-line run commands across workflow files | Low-confidence review hint; repetition may be intentional |
 | Evidence freshness | source SHA versus checked-out SHA in structured JSON evidence | Only for records that declare both values |
-| Live CI metadata and correlations | exact-SHA Actions runs/jobs/steps/artifacts; surfaced findings for failed runs without jobs, failed jobs without visible steps, failed steps needing log review, and absent artifacts | Requires Actions read permission; logs are link-only; absence is not proof of a source failure or missing required artifact |
+| Historical GitHub Actions metadata | exact-SHA Actions runs/jobs/steps/artifacts from legacy GitHub Actions history | The collector is Actions-only and does not collect CircleCI data; logs are link-only; absence is not proof of a source failure or missing required artifact |
 | Normative One contract drift | required grammar, CLI, diagnostics, package/build, and platform invariants | Text-presence checks only; conformance tests and human review remain authoritative |
 | One source fixtures | runs one periksa against normative v0.1 valid/invalid fixtures when explicitly enabled | Requires a built CLI; never executes source |
 | CLI documentation drift | approved core CLI vocabulary against the user-facing CLI guide | A focused consistency check; not proof the command is implemented |
