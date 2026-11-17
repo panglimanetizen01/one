@@ -749,7 +749,7 @@ mod tests {
             OpenProcess, WaitForSingleObject, PROCESS_QUERY_LIMITED_INFORMATION,
         };
 
-        let script = "$p = Start-Process -FilePath ping.exe -ArgumentList @('-n','30','127.0.0.1') -PassThru; [Console]::Out.WriteLine($p.Id)";
+        let script = "$p = [System.Diagnostics.Process]::Start('ping.exe','-n 30 127.0.0.1'); [Console]::Out.WriteLine($p.Id)";
         let result = run_process(
             &ProcessSpec {
                 program: "powershell.exe".into(),
