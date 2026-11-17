@@ -945,6 +945,8 @@ mod tests {
         assert!(result.stderr.contains("stderr"));
     }
 
+    // The helper waits until the setsid child has entered its new session before
+    // the direct shell exits, ensuring the inherited pipe writer is truly escaped.
     #[cfg(target_os = "linux")]
     #[test]
     fn escaped_session_descendant_cannot_hold_output_readers_open() {
