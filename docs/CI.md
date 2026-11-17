@@ -352,3 +352,11 @@ The MSYS2 installation run step now sets `no_output_timeout: 30m` so the large f
 - The current session has no CircleCI CLI installed, no CircleCI token in its environment, no CLI auth config, and no connected CircleCI job-log integration. The CircleCI job page is also inaccessible through the available web reader. Therefore the first failing step and root cause remain NOT VERIFIED.
 - Do not infer that the lockfile/platform-dependency integration caused this failure. It is a confirmed integration correction, but failure attribution requires the job log.
 - The next candidate must be diagnosed from authenticated CircleCI logs before any speculative config/code change or retry. No broad retries are introduced.
+
+
+### CircleCI Ubuntu APT mirror 404 diagnosis and mitigation — 2026-11-17
+
+- User-retrieved authenticated CircleCI job output for PR #95 code/config candidate `c71d81a60f7792ed8536ba2b70464b9922f33c18` identifies the first failing step as cross-toolchain provisioning (step index 103): `apt-get install` exited 100 after multiple Ubuntu Noble package URLs on `us-east1.gce.archive.ubuntu.com` returned HTTP 404. The failing package set includes MinGW i686/x86_64 runtime/compiler packages and MinGW binutils; other packages downloaded successfully. This is an APT mirror/index-to-pool inconsistency, not a Rust build/test failure.
+- The shared `setup-linux-cross-toolchains` CircleCI command now rewrites the affected regional GCE Ubuntu archive hostname to `archive.ubuntu.com` in APT `.sources`/`.list` files, cleans cached APT metadata, refreshes indexes with `Acquire::Retries=3`, and installs the same required toolchains with transport retries. The package set and product code/tests are unchanged.
+- Config fix commit: `481873f277cb8601fc8881f8e5cc3fb0383f9115`. This is a targeted mitigation based on the observed 404 evidence; it is not yet a verified fix until the CircleCI run for the resulting exact SHA completes successfully.
+- Keep migration acceptance NOT PASSED until CircleCI terminal success and independent Windows exact-SHA verification are both recorded.
