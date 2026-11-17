@@ -3,7 +3,7 @@
 
 ## Current exact-SHA CI candidate checkpoint — 2026-11-17
 
-- PR #95 current source HEAD: `e50748a1b25922d9090eba1f5fb90548d7c7d003`, branch `ci/circleci-migration-20261113`, based on `main` `d35db95153f6ddd79885494c72f5aee16c899751`. PR #95 remains OPEN / DRAFT / UNMERGED.
+- Latest PR #95 code/config evidence SHA: `e50748a1b25922d9090eba1f5fb90548d7c7d003`, branch `ci/circleci-migration-20261113`, based on `main` `d35db95153f6ddd79885494c72f5aee16c899751`. The current PR head has since received documentation-only evidence corrections; this section distinguishes the last tested code/config SHA from later documentation-only commits. PR #95 remains OPEN / DRAFT / UNMERGED.
 - CircleCI `ci/circleci: one-linux` is terminal SUCCESS on exact source SHA `e50748a...`: workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`.
 - Independent Windows native verification on the same source SHA `e50748a...` is NOT PASS: verifier run [#31](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43998206222), verifier commit `9cf1bb3071c56497118ad9c9e532abfee3fd60ee`, failed before compilation because `Cargo.lock` was not tracked while the verifier invoked Cargo with `--locked`. No native artifact or runtime PASS was produced for `e50748a...`.
 - The earlier Windows run [#28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749) passed on the older source SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`; it is historical and does not replace the failed run #31 on current PR #95 HEAD.
