@@ -189,3 +189,12 @@ Windows native verification for the current PR #95 source remains NOT VERIFIED u
 - Artifact ID `14310959518`; ZIP SHA-256 `8e10e35d04709eee8429f143ef8bde0ca358941b51a4785f49e934e94f9f163c`. Native EXE SHA-256 `11ed652bd05e09145c8ca304762b72391de952eb2f441344dd259efda38221c7`; release CLI EXE SHA-256 `61a5e8166831153c2b98f69e09ceeda84759cee53e8d060f406c5d8a7ea12dba`. Manifest SHA-256 `9844c92e89ed1ac805adbf757c8a111ba66163acf265f00f428ba587f090ba23`.
 - Manifest confirms native runtime exit 0/output `Budi`, CLI version `one 0.1.0`, CLI runtime exit 0/output `Budi`. Both executables independently inspected as PE32+ AMD64.
 - CircleCI Pipeline #558 is separately ERROR at pipeline level; no CircleCI job logs/status context available. Do not infer source test failure from that alone. Optional release-check remains NOT VERIFIED.
+
+
+### Exact-SHA Windows run #39 — terminal PASS; correction to CircleCI attribution — 2026-11-17
+
+- ONE source `ed2382eed9022a8c67a13d72a5de6a4d9134f631`; verifier `a07c79d71ebfe1b37c35955529edb9e2f5b60e2b`; run #39 / `44046670869`; Windows Server 2025 job `133913951181`; terminal SUCCESS, all primary steps passed.
+- Artifact `14312311019`; ZIP SHA-256 `aa56f8275042969b18c12283eb152e0572b8970159e3df7db62e9aad9f109da1`; native EXE SHA-256 `212d7bd8873844a9fa50d382e00ac03dfbe01a87aac8d9dd44f571df8e2b6117`; CLI EXE SHA-256 `cd2a054929de2ec6c9f83c709adf04bbf2c8198ea02f99815e6a9f428daa3258`; manifest SHA-256 `af40dab6bc542c3cad1d5a0def9e6e1c76f884a78a2ed14dbbab83e3af3eae72`. Manifest/ZIP hashes and PE32+ AMD64 headers were verified locally.
+- Manifest confirms native exit 0/output `Budi`; CLI `one 0.1.0`, exit 0/output `Budi`.
+- Correction: CircleCI Pipeline #558 is associated with PR #102 SHA `5ee645...`, not this PR #95 source. PR #95 source `ed2382...` had no CircleCI status context visible in GitHub. Do not misattribute pipeline #558. PR #102 has separate GHA PASS and CircleCI Pipeline ERROR; root cause of the generic pipeline error is NOT VERIFIED without authenticated CircleCI logs.
+- Optional `release-check` remains NOT VERIFIED; release gate NOT PASSED.

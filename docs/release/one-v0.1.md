@@ -158,3 +158,11 @@ The Linux CircleCI job retains MinGW-w64 cross-compilation regression coverage f
 - Full Windows verifier job terminal SUCCESS; native backend and release CLI both built and executed successfully. CLI version `one 0.1.0`; both native and CLI sample output `Budi`, exit code 0.
 - Artifact `14310959518` ZIP SHA-256 `8e10e35d04709eee8429f143ef8bde0ca358941b51a4785f49e934e94f9f163c`; manifest and executable hashes are recorded in `docs/CI.md` and `docs/verification/windows-native-verification.md`.
 - CircleCI Pipeline #558 reported pipeline-level ERROR without a visible `one-linux` job context. This does not constitute an observed source test failure; authenticated pipeline diagnostics are still required. Optional `release-check` is NOT VERIFIED; release acceptance remains NOT PASSED.
+
+
+## Exact-SHA Windows run #39 and CI status attribution correction — 2026-11-17
+
+- PR #95 source `ed2382eed9022a8c67a13d72a5de6a4d9134f631` passed full Windows Server 2025 verifier run #39 / `44046670869`, verifier `a07c79d71ebfe1b37c35955529edb9e2f5b60e2b`, job `133913951181`.
+- Native backend and release CLI both executed successfully; outputs `Budi`, exit 0; CLI version `one 0.1.0`. Artifact `14312311019`, ZIP SHA-256 `aa56f8275042969b18c12283eb152e0572b8970159e3df7db62e9aad9f109da1`.
+- Correction: CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. PR #95 `ed2382...` has no CircleCI status context visible in GitHub. Pipeline #558 root cause remains NOT VERIFIED; do not infer a product test failure.
+- Optional `release-check` remains NOT VERIFIED. Release acceptance remains NOT PASSED.
