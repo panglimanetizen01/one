@@ -104,7 +104,7 @@ The HTTP GET adapter currently accepts only explicit `http://` targets, performs
 
 ## 10. Process scope
 
-Process execution requires `process.spawn`. The capability may constrain executable identity, arguments, working directory, environment inheritance, and standard-stream routing. A denied process request must not start a process.
+Process execution requires `process.spawn`. The capability may constrain executable identity, arguments, working directory, environment inheritance, and standard-stream routing. A denied process request must not start a process. Process execution is resource-bounded: the reference adapter enforces a 10-second deadline, a 1 MiB limit per captured output stream, and process-tree cleanup on completion, timeout, or output-limit violation.
 
 ## 11. Native calls
 
