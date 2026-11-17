@@ -287,3 +287,14 @@ Additional exact-HEAD readback:
 - Python and native scanners are not parity-equivalent; native gaps are documented in the parity matrix.
 
 No local Cargo/Python execution was available in this environment. Do not claim build/test success. Docs-only synchronization after this audit will advance the branch head; keep `b66324a...` as the implementation SHA and record the new docs commit separately.
+
+
+## 14. Live PR #109 exact-head reconciliation — 2026-11-17
+
+- Live PR metadata confirms HEAD `0866a6df8733df092ed287423b2e2d505aa464b2`, branch `ci/scanner-restoration-20261117`, base `ci/circleci-migration-rebased-20261117` (PR #108 branch).
+- PR #109 remains OPEN/DRAFT/UNMERGED; PR #108 remains OPEN/DRAFT/UNMERGED. No merge or main-branch change was made.
+- Native scanner is a separate `one-integrity` Cargo binary. The main beginner-facing `one` CLI remains free of scanner imports, dispatch, and help vocabulary.
+- Exact-SHA GitHub combined status has zero status contexts and GitHub Actions workflow-runs collection is empty. These are GitHub observations, not proof that CircleCI has no pipeline.
+- CircleCI terminal job logs and local Rust/Python execution remain unavailable. No compile/test PASS, CircleCI PASS, or Python/native parity claim is made.
+- Earlier SHA references in §§11–13 are historical checkpoints and must not be treated as the live HEAD.
+- Required next evidence: authenticated CircleCI pipeline/job details for this exact SHA, followed by terminal logs and independent Linux/Windows verification. Do not request raw tokens in chat.
