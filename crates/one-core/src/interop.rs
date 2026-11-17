@@ -65,16 +65,16 @@ fn validate_process_spec(spec: &ProcessSpec) -> Result<(), String> {
     if spec.program.is_empty() {
         return Err("Process executable path must not be empty.".into());
     }
-    if spec.program.contains('\\0') {
+    if spec.program.contains('\0') {
         return Err("Process executable path must not contain an embedded NUL byte.".into());
     }
-    if let Some((index, _)) = spec.args.iter().enumerate().find(|(_, arg)| arg.contains('\\0')) {
+    if let Some((index, _)) = spec.args.iter().enumerate().find(|(_, arg)| arg.contains('\0')) {
         return Err(format!("Process argument {index} must not contain an embedded NUL byte."));
     }
     if spec
         .working_directory
         .as_deref()
-        .is_some_and(|directory| directory.contains('\\0'))
+        .is_some_and(|directory| directory.contains('\0'))
     {
         return Err("Process working directory must not contain an embedded NUL byte.".into());
     }
@@ -803,7 +803,7 @@ mod tests {
     fn process_spec_rejects_embedded_nul_in_executable_path() {
         let error = run_process(
             &ProcessSpec {
-                program: "tool\\0.exe".into(),
+                program: "tool\0.exe".into(),
                 args: vec![],
                 working_directory: None,
             },
@@ -818,7 +818,7 @@ mod tests {
         let error = run_process(
             &ProcessSpec {
                 program: "tool".into(),
-                args: vec!["safe\\0truncated".into()],
+                args: vec!["safe\0truncated".into()],
                 working_directory: None,
             },
             &CapabilitySet::none().allow(Capability::Process),
@@ -834,7 +834,7 @@ mod tests {
             &ProcessSpec {
                 program: "tool".into(),
                 args: vec![],
-                working_directory: Some("safe\\0truncated".into()),
+                working_directory: Some("safe\0truncated".into()),
             },
             &CapabilitySet::none().allow(Capability::Process),
         )
