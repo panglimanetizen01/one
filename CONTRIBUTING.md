@@ -31,3 +31,16 @@ GitHub `main` is the canonical source of truth. Local environments are for verif
 CircleCI is the intended canonical Linux CI provider. Until the migration PR is merged with explicit owner authorization and a terminal exact-SHA CircleCI PASS, GitHub `main` remains on its existing GitHub Actions workflow. Do not describe the migration as active merely because a draft branch contains `.circleci/config.yml`.
 
 Windows Server 2025 native execution is verified separately in [panglimanetizen01/one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Record both the exact ONE source SHA and verifier SHA. Linux-host cross-compilation is not Windows-host execution evidence.
+
+
+### Repository integrity preview (developer tooling)
+
+The read-only repository integrity preview is a development tool, not part of the ONE source language or beginner-facing CLI guide:
+
+~~~sh
+cargo test --locked -p one-cli --bin one-integrity
+cargo run --locked -p one-cli --bin one-integrity -- --scope all --root . --expected-sha <40-character-git-sha>
+python3 -m unittest discover -s tools -p "test_one_health.py" -v
+~~~
+
+The native Rust preview and Python reference scanner are intentionally separate implementations. Do not claim parity until both run on the same exact checkout and their differences are reviewed. Findings are advisory at this preview stage; execution errors and exact-SHA mismatches are not advisory.

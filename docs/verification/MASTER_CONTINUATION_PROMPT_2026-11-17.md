@@ -89,15 +89,9 @@ CircleCI contexts #669/#671/#673 on refs without .circleci/config.yml are pipeli
 
 ## 5. Open blockers — actual next engineering work
 
-### P0 — integrate already-passing fixes into one candidate
+### P0 — PR #98–#101 integration checkpoint (completed in PR #108 candidate; validation pending)
 
-PR #98–#101 each fix a confirmed main-branch bug and pass on separate exact SHAs:
-- #98: one test manifest validation and safe package name/version components.
-- #99: database.query must open existing database files read-only; missing paths must not be created.
-- #100: interpreter lexical scopes must be popped/restored even after runtime errors.
-- #101: parent filesystem deny and approval policies must inherit to child filesystem read/write capabilities.
-
-Integrate these changes into one branch based on the refreshed PR #108 candidate without copying unrelated legacy milestone branches. Resolve conflicts against current PR #107/#102 source and normative contracts. Then run full Ubuntu + Windows exact-SHA CI once on the combined candidate.
+The live PR #108 candidate at `a6f91c07b04d7b9fafb9e99d0356954012ae3001` already contains the source fixes from PRs #98–#101 and PR #107, according to its current PR description and branch readback. Do not repeat cherry-picking or re-integrating those changes. Their historical PASS results remain bound to their original SHAs and do not validate the combined PR #108/#109 candidate. The remaining action is exact-SHA Linux/CircleCI and independent Windows validation when authorized execution access is available; reconcile any concrete failure on the relevant candidate branch.
 
 ### P0 — Issue #104 filesystem root confinement
 
@@ -159,7 +153,120 @@ After every successfully completed task:
 4. Read docs/verification/forensic-audit-2026-11-17.md and all listed canonical docs/links.
 5. Refresh live PR #108 HEAD/base, PR #102/#107/#103/#97/#95 states, Issues #104/#105/#82/#81/#90, and exact commit statuses.
 6. Do not repeat any successful run listed in Section 3.
-7. First seek authenticated CircleCI validation/log evidence for the updated PR #108 exact SHA. If unavailable, state the access limitation precisely and proceed to integrate PR #98–#101 fixes and implement Issue #104; do not stall or pretend CI results exist.
+7. First seek authenticated CircleCI validation/log evidence for the live PR #108/#109 exact SHAs. If unavailable, state the access limitation precisely; do not repeat the completed PR #98–#101 integration. Continue with static review and prepare/implement the next independent blocker (Issue #104) only on a non-main candidate branch, with adversarial tests and no unsupported security claims.
 8. Continue execution until a real blocker requiring owner action is reached. After every task that passes, synchronize all relevant docs, derivative artifacts, ledger, and Notion Skill immediately.
 
 **The purpose of this prompt is to prevent rediscovery and repeated successful audits. The next session must start from the current live PR #108 candidate and unresolved engineering gates, not restart the project or re-run completed checks.**
+
+
+## 10. Latest live continuation checkpoint — scanner migration child PR — 2026-11-17
+
+This addendum supersedes any older PR #108 head pointer above. Refresh live metadata first.
+
+- PR #108 remains OPEN/DRAFT/UNMERGED at head `a6f91c07b04d7b9fafb9e99d0356954012ae3001`; it is the CircleCI migration candidate.
+- Draft PR #109: https://github.com/panglimanetizen01/one/pull/109
+  - Head branch `ci/scanner-restoration-20261117`.
+  - Base branch `ci/circleci-migration-rebased-20261117` (PR #108 branch).
+  - Current checkpoint head after docs index synchronization: `4aa0198d63db22258385cf6afc9d9f5f5446c6c2`; refresh live head.
+  - PR #109 is OPEN/DRAFT/UNMERGED. Do not merge without explicit owner authorization.
+- PR #109 restores native integrity preview from PR #89 and Python reference scanner + regression/quality assets from PR #91, adds CircleCI config structural checks to both scanners, a separate developer-only `one-integrity` binary (not main CLI dispatch), ADR-0018, CircleCI development-side scanner steps, contract enforcement, and synchronized docs.
+- Python `collect_ci_health.py` remains historical GitHub Actions API collector only. It does not collect CircleCI runs/jobs. Never cite it as CircleCI evidence.
+- Python scanner now scans `.circleci/config.yml` for generic workflow integrity and recognizes `CIRCLE_SHA1`. GitHub Actions-specific checks remain scoped to legacy `.github/workflows/`.
+- Native preview is read-only and developer-side; it is not a language semantic change, parity replacement, default gate, or release gate.
+- Historical PR #89/#91 PASS evidence is not current-source validation.
+- GitHub combined status/check-runs/check-suites for PR #109 initial code SHA `3ce4c0f...` were empty. No CircleCI terminal job evidence or local Rust/Python execution is currently available. The docs-only update to `4aa0198...` also has no test evidence.
+- Issue #90 remains OPEN. Implementation is isolated in PR #109; it is not yet integrated into PR #108.
+
+### Immediate next execution sequence
+1. Read latest Notion Skill checkpoint, verification index, and forensic audit addenda; refresh PR #109 head.
+2. Find an authorized CircleCI connector/CLI path and inspect pipeline/job logs for current PR #109 exact SHA. Do not ask for raw secrets in chat.
+3. Fix only the first confirmed failure on PR #109; run affected focused tests, then full CircleCI/independent Linux+Windows matrix on the final exact SHA.
+4. Perform native/Python same-checkout parity adjudication and update evidence matrix/ledger without promoting scores until acceptance is met.
+5. Merge PR #109 into PR #108 only after evidence/review and explicit owner authorization. Do not merge PR #108 to main or release without separate explicit authorization.
+6. Continue Issues #104 and #105 after scanner validation, preserving current root-confinement and non-escapable descendant requirements.
+
+
+## 11. Exact-SHA scanner wrapper correction — 2026-11-17
+
+The CircleCI preview wrapper was tightened after finding that scanner exit code 1 can mean either ordinary high/critical findings or exact-SHA mismatch. The current wrapper must fail closed on:
+- Python: `invalid-expected-sha`, `git-head-unavailable`, `checkout-sha-mismatch` in JSON output.
+- Native: `expected-sha-mismatch`, `head-unavailable` in captured output.
+Ordinary high/critical findings remain report-only while the scanner is a preview; operational errors and SHA mismatch are failures. Issue #90 comment: `6953106805`.
+
+Latest verified source/config checkpoint before this documentation-only synchronization:
+- PR #109 source HEAD: `be8683a233be61dec20c81cb25a8049c2a2df9be`.
+- CircleCI config blob: `750df015567cbba6927eb015e8d4054ffb8ca22d`.
+- Combined status empty; check-runs count 0; no terminal CircleCI execution evidence.
+Refresh live PR metadata before acting; this prompt update itself creates a later documentation-only HEAD.
+
+
+## 12. Latest scanner static-review correction — 2026-11-17
+
+PR #109 latest branch HEAD after docs/PR-body synchronization: `d15a0aa321cc906d0bc989fe9b517c979631d362` (refresh live metadata before work). It remains OPEN/DRAFT/UNMERGED and targets PR #108's migration branch.
+
+A static review against official CircleCI docs found the native preview incorrectly treated missing `workflows:` as an error. CircleCI permits an implicit workflow for a single job named `build`. Corrected in source commit `408b6c6adb57c935c34235c9316f8417a421b143`: native scanner now checks supported version values `2`, `2.0`, `2.1` and presence of `jobs:`, but does not require `workflows:`. Rust regression fixture covers valid implicit single-job build, quoted 2.0, unsupported version, and missing jobs. Detector/health docs updated. See Issue #90 comment for the proof boundary.
+
+**Not validated yet:** no local Rust build/test; no CircleCI terminal run or job logs; GitHub check-runs/status empty. Do not call the correction passing or compile-verified. CircleCI's own config compiler is authoritative. Next action: obtain CircleCI pipeline/job evidence for the latest exact SHA; if still inaccessible, continue static source review and keep this gate NOT VERIFIED. Do not repeat historical PR #89/#91 test runs.
+
+
+## 13. Developer-only binary boundary — 2026-11-17
+
+The native scanner MUST remain separate from the beginner-facing `one` CLI. The earlier `one pindai` subcommand was a product-boundary violation and has been removed.
+- Main CLI `crates/one-cli/src/main.rs`: no scanner module import, dispatch, or scanner help vocabulary.
+- Separate explicit Cargo binary: `one-integrity` at `crates/one-cli/src/bin/one-integrity.rs`; module remains `crates/one-cli/src/integrity.rs`.
+- CircleCI focused tests: `cargo test --locked -p one-cli --bin one-integrity`.
+- CircleCI preview scan: `cargo run --locked -p one-cli --bin one-integrity -- --scope all --root . --expected-sha "$CIRCLE_SHA1"`.
+- Contract checker requires the separate binary and rejects scanner dispatch/import in the main `one` CLI.
+- CONTRIBUTING, ADR-0018, repository-health usage, detector parity docs, PR #109 body and Issue #90 comment are synchronized.
+
+This source change has only been read back through GitHub; no Cargo/Rust execution or CircleCI terminal evidence is available. The next exact source HEAD must compile/test `one-integrity` and verify that the main `one help` remains unchanged. Do not add scanner commands to beginner user docs.
+
+
+### Current exact PR #109 state after binary separation
+
+- Live HEAD: `94aeb1a336eae2348dfc2910b69f00bd6b00b156`.
+- PR #109 OPEN/DRAFT/UNMERGED; PR #108 OPEN/DRAFT/UNMERGED.
+- Main `one` CLI remains unchanged in vocabulary; native scanner is separate `one-integrity` binary.
+- Current SHA has no GitHub check-runs and no combined status. No local Rust compile/test or CircleCI terminal evidence. Do not reuse historical PR #89/#91 PASS results.
+
+
+## 14. Live PR #109 head refreshed — 2026-11-17
+
+- Live branch ref and PR metadata agree: `b66324a6cca8f72c52a9c2ec8d1af3e7ec8526fb`.
+- PR #109 remains OPEN/DRAFT/UNMERGED, base `ci/circleci-migration-rebased-20261117` (PR #108 branch).
+- This supersedes earlier PR #109 head references `94aeb1a...` and `d15a0aa...` in historical sections. Preserve those as historical checkpoints, not current pointers.
+- Exact-head tree has 217 tracked files; required native scanner root paths are present, including `AGENTS.md`.
+- Native scanner remains separate `one-integrity` binary; main `one` CLI has no scanner dispatch or help vocabulary.
+- No GitHub check runs/status contexts surfaced for the current SHA. CircleCI job logs and local Rust/Python execution remain unavailable; no test PASS is claimed.
+- The Python scanner regression suite contains 73 test methods; this is source inspection only. Native/Python parity remains unproven and documented gaps remain.
+- The following documentation synchronization commit will advance the branch head. Treat `b66324a...` as the code/source-review SHA and refresh live metadata again after the docs commit.
+
+
+## 16. Live PR #109 exact-head checkpoint — 2026-11-17
+
+- Live PR #109 HEAD: `0866a6df8733df092ed287423b2e2d505aa464b2`; branch `ci/scanner-restoration-20261117`; base PR #108 branch `ci/circleci-migration-rebased-20261117`.
+- PR #109 is OPEN/DRAFT/UNMERGED. PR #108 remains OPEN/DRAFT/UNMERGED. Do not merge either and do not change `main` without explicit authorization.
+- The native scanner is a separate `one-integrity` Cargo binary. Do not describe it as native CLI dispatch; keep the beginner-facing `one` command surface unchanged.
+- GitHub combined status has zero status contexts and GitHub Actions workflow-runs are empty for this exact SHA. This does not establish CircleCI pipeline absence.
+- CircleCI pipeline/job logs and local Rust/Python test execution are still NOT AVAILABLE. No build/test/CI PASS or parity claim is permitted.
+- Continue from this exact live HEAD. Obtain authenticated CircleCI job evidence, inspect logs, fix confirmed defects, and rerun affected plus full validations. Do not repeat historical PR #89/#91 tests as substitutes.
+
+
+## 17. Final docs-sync SHA refresh — 2026-11-17
+
+- Current PR #109 exact HEAD after the three-file verification-document synchronization: `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`.
+- PR #109 remains OPEN/DRAFT/UNMERGED, mergeable=true at the latest metadata refresh; base remains PR #108 branch at `a6f91c07b04d7b9fafb9e99d0356954012ae3001`.
+- Compare confirms 53 commits ahead and zero behind the PR #108 base. No merge or main-branch write occurred.
+- GitHub status contexts and GitHub Actions workflow-runs are empty. CircleCI job logs, local Cargo/Python test execution, and exact-SHA platform validation remain NOT VERIFIED.
+- Continue from `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`; do not reuse the previous `0866a6d...` as the live HEAD.
+
+
+## 18. Pointer hygiene and next execution gate — 2026-11-17
+
+- Earlier sections 14, 16, and 17 record historical exact-head snapshots. They are not live pointers. Always fetch current PR #109 metadata and branch ref before any operation; documentation-only commits also move the head.
+- Latest live head at the time of this checkpoint was `243e784da88e62d10d7b7f1c73677f332fd192bf`; refresh it again at session start. Base remains PR #108 candidate `a6f91c07b04d7b9fafb9e99d0356954012ae3001`.
+- PR #109 remains OPEN/DRAFT/UNMERGED. GitHub mergeability metadata is unresolved (latest readback false after inconsistent earlier responses). Do not merge or auto-resolve conflicts.
+- GitHub status contexts and GitHub Actions workflow-runs are empty; this is not CircleCI evidence.
+- CircleCI pipeline/job logs and local Cargo/Python execution are NOT AVAILABLE in this session. No test/build/CI PASS or parity claim is permitted.
+- The next real execution step is to obtain authorized CircleCI pipeline/job access or terminal logs, then run/inspect the exact-SHA jobs, fix confirmed defects, and repeat affected plus full verification. Never request raw API tokens in chat.
+- Preserve the developer-tool boundary: `one-integrity` stays separate from beginner-facing `one`; do not change ONE grammar, semantics, or UX to accommodate tooling.

@@ -95,3 +95,26 @@ For v0.1, the normative AST schema is the public structure in `crates/one-core/s
 This decision avoids treating an aspirational draft schema as if it were already implemented or silently changing the public AST to a much larger shape without tests. It does not remove the requirement for deterministic parsing, formal grammar boundaries, stable diagnostics, or LLM-independent semantics.
 
 Any future addition of structured `Name` nodes, component spans, full node ranges, or action-specific variants requires fail-first tests and a coordinated compatibility review across parser, semantic analysis, IR lowering, diagnostics, and tooling. It must not silently alter v0.1 meaning.
+
+
+## ADR-0018 — Native repository integrity engine; Python scanner remains an adapter
+
+**Status:** Accepted architectural direction; initial Rust CLI preview implemented, parity and acceptance pending.
+
+ONE's repository-integrity capability is a first-party toolchain responsibility, but `tools/one_health.py` is not itself part of the ONE language runtime or source-language semantics. Keep it as an independent developer/CI reference scanner during migration; do not make Python a runtime prerequisite for using ONE or for the eventual first-party integrity command.
+
+The target is a native integrity engine shipped as a separate developer-only toolchain binary (`one-integrity`), not as a subcommand or vocabulary addition to the beginner-facing `one` CLI. It is implemented against ONE's existing architecture and contracts. It must provide deterministic, auditable checks for revision/SHA identity, repository paths and structure, workflow configuration, contracts, documentation/Markdown, and build/evidence artifacts. Findings must have stable rule identifiers, severity, confidence, location, evidence, and remediation guidance. Scope selection must report what was checked and what was not checked; an unrequested detector must never be represented as passing.
+
+Migration is evidence-gated:
+
+1. Specify the report and detector contracts independently of Python implementation details.
+2. Implement the native engine and fail-first regression tests in the current ONE toolchain (currently Rust-based).
+3. Run native and Python scanners against the same repository revision and compare results, explaining intentional differences and adjudicating false positives/misses.
+4. Verify supported host platforms and exact source revision in CI before making the native command the default.
+5. Retain or retire the Python adapter only after equivalent coverage and operational evidence are established.
+
+“Native” here means first-party and free of a Python runtime dependency, not that the current compiler is already self-hosted in the ONE language. Rust is an implementation technology of the present toolchain and may be replaced only through a separately verified migration. JSON/Markdown may remain report interchange formats; their use does not make them the language or semantic authority of ONE.
+
+This decision does not authorize merging the scanner-hardening PR, bypassing repository protections, or treating existing verification evidence as current for a changed SHA.
+
+**Implementation status (2026-11-17):** the initial read-only Rust preview is exposed as the separate developer-only binary `one-integrity` (`--scope all` / `--scope security`); the main `one` CLI and its help vocabulary remain unchanged. The Python scanner remains the independent developer/CI reference. The native preview is not a parity replacement, release gate, or default gate. CircleCI is the canonical CI provider; GitHub Actions metadata collection, where retained, is historical-only. Promotion requires same-checkout parity review and exact-SHA supported-platform evidence.
