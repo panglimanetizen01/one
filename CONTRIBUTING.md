@@ -25,3 +25,9 @@ Independent results are execution evidence, but they must not be reported as Git
 The workspace `Cargo.lock` is committed and must remain in version control. Dependency changes must update the lockfile intentionally; CI uses `--locked` so an unrecorded dependency resolution fails closed.
 
 GitHub `main` is the canonical source of truth. Local environments are for verification and validation.
+
+## Canonical CI and platform verification
+
+CircleCI is the intended canonical Linux CI provider. Until the migration PR is merged with explicit owner authorization and a terminal exact-SHA CircleCI PASS, GitHub `main` remains on its existing GitHub Actions workflow. Do not describe the migration as active merely because a draft branch contains `.circleci/config.yml`.
+
+Windows Server 2025 native execution is verified separately in [panglimanetizen01/one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Record both the exact ONE source SHA and verifier SHA. Linux-host cross-compilation is not Windows-host execution evidence.
