@@ -105,3 +105,12 @@ Do not generalize a Termux/Android result to Ubuntu/Windows, or a Windows result
 ## 12. Completion
 
 Do not report a milestone as complete until all required artifacts exist, references are consistent, repository state is verified, and the final change has a concrete Git revision.
+
+
+## 13. CircleCI and independent Windows exact-SHA discipline
+
+CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. Keep the canonical CircleCI configuration Linux-hosted; Linux-host MinGW-w64 cross-compilation may remain as Windows-target backend regression coverage, but it is not Windows-host execution evidence.
+
+Windows Server 2025 product/native verification belongs to the independent `panglimanetizen01/one-windows-verification` repository. Its workflow must check out the private canonical ONE repository at a full explicit source SHA, assert that checkout identity, record the verifier checkout SHA separately, run the required product/native checks, and preserve the manifest and executable artifact. Verify CircleCI Linux and independent Windows separately against the same exact canonical source SHA; neither result substitutes for the other.
+
+Do not reintroduce Windows executor jobs into canonical CircleCI or restore the retired GitHub Actions product workflows in the ONE repository. Record exact source SHA, verifier SHA, pipeline/run/job IDs, host platform, terminal result, logs, and artifact digests. Never report an unstarted pipeline or missing job steps as PASS/FAIL. Keep `main` unchanged until the reviewed migration PR is eligible for an authorized merge. CI/tooling changes must not alter ONE grammar, semantics, compiler, interpreter, runtime, CLI, or user experience.

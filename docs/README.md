@@ -62,12 +62,22 @@ User documentation is intentionally separate from normative engineering contract
 - `spec/one-network-foundation.md` — implemented typed network semantic/IR/reference boundary and explicit limits.
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
+## CI and developer operations
+
+- `CI.md` — CircleCI Linux-only provider boundary, required product checks, opt-in Linux release checks, independent Windows exact-SHA verification, and migration completion criteria.
+
+
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
+- `verification/README.md` — ownership and evidence rules for canonical CI and independent verification artifacts.
+- `verification/repository-context-milestone.md` — repository-persisted project context and cross-session continuity contract.
+- `verification/forensic-audit-2026-10-21.md` — historical forensic audit findings and dispositions.
+- `verification/spec-implementation-gap-audit-2026-10-21.md` — historical specification/implementation gap audit and evidence boundaries.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
+- `verification/windows-native-verification.md` — independent Windows-host native artifact verification contract and current exact-SHA evidence gate.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
 - `verification/one-v0.1-linux-termux-2026-10-15.md` — historical independent Linux/Termux execution evidence for its explicitly recorded source revision.
 - `verification/one-v0.1-linux-windows-2026-10-15.md` — historical independent Linux/Windows execution evidence for its explicitly recorded source revision.
@@ -89,9 +99,9 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
+- `../.circleci/config.yml` — canonical Linux product CI and opt-in Linux release checks; Windows-host verification is owned by the independent verifier repository.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
-- `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
 
 ## Canonical rule
 

@@ -6,7 +6,7 @@
 
 **Architecture:** Implement One as a Rust workspace with a dependency-ordered compiler front end and reference interpreter. The language surface is localized and conversational, but parsing produces a language-independent AST and Semantic IR; execution is performed without an LLM. Platform-sensitive operations are isolated behind a capability-aware runtime boundary.
 
-**Tech Stack:** Rust stable; Cargo workspace; Rust standard library first; GitHub Actions on Linux and Windows; no runtime dependency on Python, Node.js, Java, or an LLM.
+**Tech Stack:** Rust stable; Cargo workspace; Rust standard library first; CircleCI as the canonical Linux CI provider, with Windows-host verification in the independent `panglimanetizen01/one-windows-verification` repository (superseding the original GitHub Actions selection); no runtime dependency on Python, Node.js, Java, or an LLM.
 
 **Spec:** `docs/superpowers/specs/2026-10-15-one-language-foundation-design.md`
 
@@ -202,7 +202,7 @@
 
 - [ ] Add failing CLI tests for valid run, syntax error, semantic error, and missing file.
 - [ ] Implement CLI.
-- [ ] Verify on Linux and Windows CI.
+- [ ] Verify Linux product checks in CircleCI and Windows host execution through the independent exact-SHA verifier.
 - [ ] Commit `feat: add one cli`.
 
 ### Task 11: Add standard library core and project execution support
@@ -311,3 +311,8 @@ One v0.1 is not considered complete until:
 - no known failing test or contradictory contract remains in the canonical repository.
 
 Deep native FFI, package registry, full compiler backends, GUI framework, IDE, and additional locales are follow-on milestones unless their contracts are explicitly implemented and verified in v0.1. They must not be represented as already complete.
+
+
+## CI provider supersession — 2026-11-13
+
+The original workflow tasks above record the historical GitHub Actions implementation. ADR-0017 selects CircleCI as the canonical Linux CI execution provider. The current migration configuration is `.circleci/config.yml` and retains Linux product/release jobs only; Windows Server 2025 host verification is performed by the independent `panglimanetizen01/one-windows-verification` workflow at a full pinned source SHA. The three original GitHub Actions workflow files are deleted from the migration branch; `main` remains unchanged until exact-SHA Linux CircleCI and independent Windows evidence are inspected and the PR is reviewed. Do not treat this historical plan's GitHub Actions task references as the current provider decision.

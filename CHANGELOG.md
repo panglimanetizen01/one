@@ -2,6 +2,9 @@
 
 ## Unreleased — One v0.1
 
+- Started migration of canonical Project ONE CI execution to CircleCI Linux-only product/release jobs. Windows Server 2025 product/native verification is separated into `panglimanetizen01/one-windows-verification` with an explicit exact-SHA source pin and independent evidence manifest; the three legacy GitHub Actions CI workflows are removed from the migration branch. Exact-SHA Linux CircleCI and independent Windows results remain separate required evidence.
+- Independently validated the Windows split on exact canonical source `4d22db6eae48739fd79dce732d99c9b6d86b5858` with verifier run [#11](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43592922789): Windows Server 2025 native execution returned exit code 0 / `Budi`, and the downloaded artifact ZIP, manifest, and executable hashes matched. CircleCI Linux on the same SHA remains FAILURE; no overall cross-platform PASS is claimed.
+
 - Added formal lexical and concrete grammar contracts.
 - Added Rust 2024 workspace and Linux/Windows CI matrix.
 - Added deterministic lexer, AST, parser, semantic analysis, Semantic IR, reference interpreter, diagnostics, and capability model.
@@ -30,3 +33,17 @@
 - Updated the native backend contract map, implementation-status inventory, evidence matrix, release boundary, user feature-status guide, and verification record to reflect the merged state and preserve exact-SHA evidence boundaries.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
+
+ 
+- Fixed the CircleCI Linux job's shell mismatch by removing PowerShell-only `$env:PATH` assignments from Bash commands and adding a static contract guard against reintroduction. Exact-SHA CircleCI verification remains pending.
+
+ 
+- Strengthened Windows native artifact verification to assert the PE32+ optional-header magic (`0x20B`) and bounds before claiming a PE32+ AMD64 artifact.
+
+ 
+- Latest CircleCI retry on `36a4051913c0063f0237bf41cf4b25ebc250e493` started workflow `e42b0304-1241-4327-807d-03926d7d0422`; Linux and Windows jobs were pending at last poll. The previous candidate failed on both platforms; exact failure report remains inaccessible.
+
+ 
+- Structural audit at `54386f415062d4c21a7acb5508d90fea4ba5cdef` passed: 60 required paths, 78 docs-index refs, fixtures 6/6/3, Linux shell guard, PE32+ guard, and no legacy GitHub Actions paths. CircleCI Linux/Windows were pending at last poll.
+
+- Independently revalidated the final Windows-verification source snapshot `f85375e279257dcbb7d4ded9632800fcd1b78cc9` in verifier run [#12](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43593490063): terminal SUCCESS on Windows Server 2025, native exit code 0 / `Budi`, and independently matched ZIP/manifest/executable hashes. CircleCI Linux on the same source SHA remains FAILURE; no overall cross-platform PASS is claimed.

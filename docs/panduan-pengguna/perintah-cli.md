@@ -79,7 +79,7 @@ one jalankan main.one --izinkan process.execute --target rustc
 
 Boundary saat ini: satu program yang ditargetkan secara eksplisit tanpa argumen tambahan.
 
-## Menjalankan kueri database — dalam pengembangan
+## Menjalankan kueri database — eksperimental
 
 SQLite-backed database query sudah diimplementasikan, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
 
@@ -102,10 +102,11 @@ Boundary implementasi saat ini:
 - adapter menggunakan SQLite nyata dan parameterized SELECT;
 - hasil dinormalisasi sebagai teks UTF-8;
 - INSERT/UPDATE/DELETE/DDL belum termasuk boundary query ini;
-- current implementation lineage `0aa4acdf3796235eac432138fec829b6508879e3` belum executable-verified;
-- hosted CI run `550` gagal tanpa step yang dieksekusi, sehingga bukan source-failure evidence.
+- executable runtime evidence tercatat pada boundary Termux/Android;
+- source/core/CLI regression tests juga lulus pada exact-SHA Ubuntu/Windows Server 2025 matrix `39554661451` untuk source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`;
+- status tetap eksperimental dan tidak menyatakan dukungan database lintas-platform umum.
 
-## Mengambil HTTP — dalam pengembangan
+## Mengambil HTTP — eksperimental
 
 HTTP GET sudah diimplementasikan sebagai vertical slice terbatas, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
 
@@ -130,8 +131,9 @@ Boundary implementasi saat ini:
 - hasil yang dikembalikan adalah response body di bawah ekspektasi UTF-8;
 - response non-2xx diperlakukan sebagai adapter failure;
 - HTTPS, method selain GET, custom headers/body, redirects, cookies, dan API-specific authentication belum termasuk boundary ini;
-- current implementation head `913e644ea665711c669590a80d7ff19866cb7671` belum executable-verified;
-- latest inspected hosted CI run `585` gagal dengan zero reported steps pada Ubuntu dan Windows, sehingga bukan source-failure evidence.
+- executable runtime evidence tercatat pada boundary Termux/Android;
+- source/core/CLI regression tests juga lulus pada exact-SHA Ubuntu/Windows Server 2025 matrix `39554661451` untuk source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`;
+- status tetap eksperimental dan tidak menyatakan dukungan HTTPS, method lain, atau API umum.
 
 ## `bangun` dan `package`
 
@@ -146,4 +148,4 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 Latest exact-SHA executable evidence for filesystem write/CLI is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
 
-The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write, database, or HTTP changes.
+The latest code-bearing canonical source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` passed independent exact-SHA matrix run `39554661451` on Ubuntu + Windows Server 2025. That matrix covers build, Clippy, workspace tests, real-network runtime tests, and offline verification; it also covers the database-query and HTTP GET source/core/CLI regression suites. Database-query and HTTP GET runtime execution evidence remains bounded to the separately recorded Termux/Android environment. The older process/system run `38929072800` remains historical evidence for its own exact source SHA.

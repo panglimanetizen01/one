@@ -95,3 +95,14 @@ For v0.1, the normative AST schema is the public structure in `crates/one-core/s
 This decision avoids treating an aspirational draft schema as if it were already implemented or silently changing the public AST to a much larger shape without tests. It does not remove the requirement for deterministic parsing, formal grammar boundaries, stable diagnostics, or LLM-independent semantics.
 
 Any future addition of structured `Name` nodes, component spans, full node ranges, or action-specific variants requires fail-first tests and a coordinated compatibility review across parser, semantic analysis, IR lowering, diagnostics, and tooling. It must not silently alter v0.1 meaning.
+
+
+## ADR-0017 — CircleCI is the canonical Linux CI execution provider
+
+**Status:** Accepted
+
+CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. GitHub remains the canonical source repository, version-control host, pull-request system, and code-review surface. Windows Server 2025 host/product/native verification is executed by the independent `panglimanetizen01/one-windows-verification` repository, which checks out the private canonical ONE repository at a full explicit source SHA and records the source SHA separately from the verifier SHA.
+
+The canonical CircleCI configuration must retain Linux product/release gates and must not define Windows-host executor jobs. Linux-host MinGW-w64 cross-compilation may remain for Windows-target backend regression coverage, but it is not Windows-host verification. The independent Windows result and CircleCI Linux result must both bind to the same exact source SHA before cross-platform verification is claimed.
+
+The migration branch removes the three Project ONE GitHub Actions CI workflows to avoid a parallel product-CI path in the canonical repository. The default branch remains unchanged until the migration PR is reviewed. No CI migration may alter One grammar, semantics, compiler, interpreter, runtime, CLI, or user experience merely to accommodate tooling.

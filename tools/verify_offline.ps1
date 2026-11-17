@@ -11,30 +11,30 @@ Write-Host '=== CONTRACT ARTIFACTS ==='
 python tools/check_contract.py
 
 Write-Host '=== BUILD ==='
-cargo build --workspace --all-targets
+cargo build --locked --workspace --all-targets
 
 Write-Host '=== CLIPPY ==='
-cargo clippy --workspace --all-targets -- -D warnings
+cargo clippy --locked --workspace --all-targets -- -D warnings
 
 Write-Host '=== TESTS ==='
-cargo test --workspace --all-targets
+cargo test --locked --workspace --all-targets
 
 Write-Host '=== CLI SMOKE ==='
 $tmp = Join-Path $env:TEMP ('one-verify-' + [guid]::NewGuid().ToString())
 try {
-    cargo run --quiet --package one-cli --bin one -- buat $tmp
+    cargo run --locked --quiet --package one-cli --bin one -- buat $tmp
     Set-Content -Path (Join-Path $tmp 'src/main.one') -Value @('nama adalah "Budi"','tampilkan nama') -Encoding UTF8
-    cargo run --quiet --package one-cli --bin one -- periksa (Join-Path $tmp 'src/main.one')
-    cargo run --quiet --package one-cli --bin one -- jalankan (Join-Path $tmp 'src/main.one')
-    cargo run --quiet --package one-cli --bin one -- 'lihat' 'struktur' (Join-Path $tmp 'src/main.one') | Out-Null
-    cargo run --quiet --package one-cli --bin one -- bangun (Join-Path $tmp 'src/main.one')
+    cargo run --locked --quiet --package one-cli --bin one -- periksa (Join-Path $tmp 'src/main.one')
+    cargo run --locked --quiet --package one-cli --bin one -- jalankan (Join-Path $tmp 'src/main.one')
+    cargo run --locked --quiet --package one-cli --bin one -- 'lihat' 'struktur' (Join-Path $tmp 'src/main.one') | Out-Null
+    cargo run --locked --quiet --package one-cli --bin one -- bangun (Join-Path $tmp 'src/main.one')
     Copy-Item (Join-Path $tmp 'src/target/main.oneir') (Join-Path $tmp 'first.oneir')
-    cargo run --quiet --package one-cli --bin one -- bangun (Join-Path $tmp 'src/main.one')
+    cargo run --locked --quiet --package one-cli --bin one -- bangun (Join-Path $tmp 'src/main.one')
     if ((Get-FileHash (Join-Path $tmp 'first.oneir')).Hash -ne (Get-FileHash (Join-Path $tmp 'src/target/main.oneir')).Hash) { throw 'oneir artifact is not deterministic' }
-    cargo run --quiet --package one-cli --bin one -- test $tmp
-    cargo run --quiet --package one-cli --bin one -- package $tmp
+    cargo run --locked --quiet --package one-cli --bin one -- test $tmp
+    cargo run --locked --quiet --package one-cli --bin one -- package $tmp
     Copy-Item (Join-Path $tmp 'target/proyek-one-0.1.0.onepkg') (Join-Path $tmp 'first.onepkg')
-    cargo run --quiet --package one-cli --bin one -- package $tmp
+    cargo run --locked --quiet --package one-cli --bin one -- package $tmp
     if ((Get-FileHash (Join-Path $tmp 'first.onepkg')).Hash -ne (Get-FileHash (Join-Path $tmp 'target/proyek-one-0.1.0.onepkg')).Hash) { throw 'onepkg artifact is not deterministic' }
 }
 finally {

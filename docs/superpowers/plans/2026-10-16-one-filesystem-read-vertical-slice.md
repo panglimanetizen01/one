@@ -6,7 +6,7 @@
 
 **Architecture:** Reuse the existing parser/AST/semantic/IR pipeline, capability request validation, policy/scope gate, deterministic adapter registry, normalized result, audit path, interpreter, and CLI. Add only the minimum generic IR/interpreter adapter-selection information required by evidence.
 
-**Tech Stack:** Rust workspace, One lexer/parser/semantic/IR/interpreter, GitHub Actions Ubuntu/Windows verification.
+**Tech Stack:** Rust workspace, One lexer/parser/semantic/IR/interpreter, CircleCI canonical Ubuntu/Windows verification (supersedes the original GitHub Actions verification selection).
 
 **Spec:** `docs/superpowers/specs/2026-10-16-one-filesystem-vertical-slice.md`
 
@@ -87,3 +87,8 @@
 ## Completion Gate
 
 Filesystem read is complete only when all tasks are green, the exact implementation commit has independent Ubuntu/Windows evidence, DNS remains green, documentation matches the actual boundary, and no proven failure remains.
+
+
+## CI provider update — 2026-11-13
+
+CircleCI is the canonical CI provider under ADR-0017. Historical independent exact-SHA verification remains supplemental evidence and must not be mislabeled as CircleCI execution.

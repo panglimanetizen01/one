@@ -13,13 +13,16 @@ One is specification-driven. Contributions must preserve the approved semantic c
 7. Update the specification when behavior intentionally changes.
 8. Record verification evidence with the exact commit, toolchain, platform, command, and result.
 
-## Verification without paid hosted CI
+## CI and verification
 
-If GitHub-hosted runners are unavailable or GitHub presents a paid-upgrade requirement, do not purchase capacity merely to validate One. Run the canonical offline verifier in an independent environment:
+CircleCI is the canonical CI provider for the ONE repository's Linux product and Linux release checks. Its configuration is `.circleci/config.yml`; the current migration contract is documented in `docs/CI.md`.
 
-- Linux: `bash tools/verify_offline.sh`
-- Windows PowerShell: `./tools/verify_offline.ps1`
+- The CircleCI `one-linux` job must pass on the exact canonical source SHA.
+- Windows Server 2025 host verification must pass separately in `panglimanetizen01/one-windows-verification`, using the same exact source SHA in `WINDOWS_SOURCE_COMMIT.txt`.
+- The independent Windows manifest must record matching source/verifier identities and a binary SHA-256 matching the uploaded executable.
+- Linux-host MinGW-w64 cross-compilation tests may remain in CircleCI; they do not replace Windows-host execution evidence.
+- The opt-in CircleCI release workflow is Linux-only. Release approval remains a separate project-level decision.
+- The migration branch deletes the three legacy Project ONE GitHub Actions CI workflows. Do not reintroduce them as a parallel CI path. `main` remains unchanged until the migration PR is reviewed and merged.
+- Do not purchase a GitHub upgrade solely to obtain hosted CI capacity. Independent offline and Windows verification are separate evidence paths and must never be mislabeled as CircleCI execution.
 
-Independent results are execution evidence, but they must not be reported as GitHub-hosted CI results. Keep the hosted-CI blocker documented until it is actually resolved.
-
-GitHub `main` is the canonical source of truth. Local environments are for verification and validation.
+GitHub remains the canonical source repository and pull-request/code-review host. CircleCI owns canonical Linux CI; the independent verifier owns Windows-host verification.
