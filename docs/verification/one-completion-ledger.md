@@ -121,7 +121,7 @@ For each row, **implemented points** are provisional progress based on code actu
 | E3 | Native backends and conformance across Linux, Windows, and Android AArch64 — **8** | Exact-SHA Linux/Windows builds and tests, Linux distro matrix, artifact integrity, and actual Android API 35 arm64-v8a ELF execution | 8/8 | 0/8 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E4 | Security, resource bounds, and recovery — **6** | Threat review and tested security/resource controls within declared Linux/Windows first-class targets and Android/Linux integration boundary; broader platform expansion remains out of scope | 6/6 | 0/6 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E5 | Documentation and developer tooling — **4** | Contract checker, documentation consistency and relative links, examples, CLI create/check/run/build/test/package smoke tests, and developer workflow instructions | 4/4 | 0/4 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
-| E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
+| E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED |
 | | **TOTAL** | | **92/100** | **0/100** | **NOT PASSED — CURRENT SHA NOT VERIFIED** |
 
 ## Baseline and evidence
