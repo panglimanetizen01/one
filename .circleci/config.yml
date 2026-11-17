@@ -59,6 +59,39 @@ jobs:
             cargo --version
             python3 --version
       - run:
+          name: Python repository-health regression tests
+          command: |
+            python3 -m unittest discover -s tools -p "test_one_health.py" -v
+            python3 -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+            python3 -m unittest discover -s tools -p "test_health_quality.py" -v
+      - run:
+          name: Native integrity preview focused tests
+          command: cargo test --locked -p one-cli --bin one integrity::tests
+      - run:
+          name: Python integrity preview exact-SHA scan (non-gating findings)
+          command: |
+            set +e
+            python3 tools/one_health.py --expected-sha "$CIRCLE_SHA1" --json-out /tmp/one-health.json --markdown-out /tmp/one-health.md --quiet
+            scanner_status=$?
+            set -e
+            if [ "$scanner_status" -gt 1 ]; then exit "$scanner_status"; fi
+            echo "Python scanner completed; finding status=$scanner_status (preview only, not a release gate)."
+      - run:
+          name: Native integrity preview exact-SHA scan (non-gating findings)
+          command: |
+            set +e
+            cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha "$CIRCLE_SHA1"
+            scanner_status=$?
+            set -e
+            if [ "$scanner_status" -gt 1 ]; then exit "$scanner_status"; fi
+            echo "Native scanner completed; finding status=$scanner_status (preview only, not a release gate)."
+      - store_artifacts:
+          path: /tmp/one-health.json
+          destination: one-health.json
+      - store_artifacts:
+          path: /tmp/one-health.md
+          destination: one-health.md
+      - run:
           name: Contract artifacts
           command: python3 tools/check_contract.py
       - run:
