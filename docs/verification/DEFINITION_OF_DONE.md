@@ -3,7 +3,7 @@
 ## Current continuation state — 2026-11-17
 
 - Canonical repository: `panglimanetizen01/one`; `main` remains at `d35db95153f6ddd79885494c72f5aee16c899751`.
-- Current implementation work is in open/draft PRs, including PR #102 HEAD `d6f7230de89fb70b6abb54a44d18f1c380b9a09b`; its exact-SHA GitHub Actions run #44000173122 is still in progress.
+- Current implementation work is in open/draft PRs, including PR #102 HEAD `c498fc4d2a9f870b6fa06edfa4b04af9cef58217`; its exact-SHA GitHub Actions run #44000173122 is still in progress.
 - Lockfile candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime (exit 0, output `Budi`). This is not evidence for the newer process-hardening HEAD.
 - No final source SHA is frozen. All release acceptance must be evaluated against one exact final source SHA after implementation changes stop.
 - Historical DoD state was 3 checked / 10 unchecked. The checked items are not current-final-SHA acceptance; revalidate them before release. Keep all other acceptance items unchecked until evidence is attached.
