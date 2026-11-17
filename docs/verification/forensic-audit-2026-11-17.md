@@ -140,3 +140,45 @@ These are separate draft branches. The PASS records do not prove that PR #98–#
 7. Revisit Android E3 Issue #82 only with a real device/runtime execution path.
 8. After each completed task, update source tests, normative specs, user docs, implementation status, evidence matrix, completion ledger/DoD, and the Notion Skill using exact-SHA evidence. Do not promote scores/checkboxes until acceptance criteria are actually satisfied.
 
+
+
+## 9. Scanner migration correction — source branches recovered — 2026-11-17
+
+This section supersedes the earlier interpretation in §5 and §8 that Issue #90 is only a historical runner-allocation problem. The runner incident is infrastructure-related, but the CircleCI candidate has a separate, concrete scanner migration gap.
+
+### Native scanner (PR #89)
+
+- PR #89 remains OPEN/DRAFT/UNMERGED at source SHA `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`.
+- Native module `crates/one-cli/src/integrity.rs` exists at blob `8f5f162b1ba19cc730df77fcbe83595f8d9e455d`.
+- CLI integration is in `crates/one-cli/src/main.rs` blob `4b42efe2467cefc5a6a5822dd3c1408b86d6b344`; it adds `mod integrity`, `one pindai`, and `one pindai keamanan`.
+- ADR-0018 is present in `docs/DECISIONS.md` blob `e20ef64e1dbdf5eec526f3955a8d0bf08598ed52`. It explicitly retains Python as the developer/CI reference until native/Python parity is reviewed and exact-SHA platform evidence is established.
+- Source-repository preview run #40795245283 failed; its job logs are unavailable (BlobNotFound). Do not classify that as a code/test failure.
+
+### Independent validation of native scanner source SHA
+
+The independent verifier PR #40 remains OPEN/DRAFT/UNMERGED, but completed exact-source jobs provide positive evidence for source SHA `242b88e4...`:
+- Run #40797612541: Ubuntu and Windows jobs passed, including build, scanner/self-scan, Clippy, workspace tests, and real-network tests.
+- Run #40797612556: Debian 12 and Ubuntu 24.04 build, Clippy, workspace tests, and real-network tests passed.
+- Run #40797612448: Android API 35 AArch64 ELF build and ARM64-host runtime passed. This is native backend evidence at the same source SHA, not scanner runtime evidence on Android.
+
+### Python reference scanner (PR #91)
+
+- PR #91 remains OPEN/DRAFT/UNMERGED. Its live branch head is `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`; older head references in its PR description are stale.
+- Latest `tools/one_health.py` blob: `5e6b1b4fe25bdaac8dd7ef3d387fb3da7617dba2`.
+- Latest `tools/test_one_health.py` blob: `7795d9ed3ea4b4af2b9ad154f7759427c5f92679` (72 test methods).
+- No workflow run surfaced for current head `9b38c246...`; earlier passing evidence on d67f/8c455/9197 does not validate this latest head.
+
+### Exact PR #108 candidate gap
+
+At previously verified candidate HEAD `039c7d70f3ccdde5c9fe91551e54595afb0dbd05`:
+- Native `integrity.rs` is absent.
+- Python `tools/one_health.py` is absent.
+- CLI `main.rs` has no native integrity module or dispatch.
+- `docs/DECISIONS.md` does not contain ADR-0018.
+- `.circleci/config.yml` defines only `one-linux` and `release-linux`; no scanner/reference job exists.
+
+### Corrected required action
+
+Do not close or de-scope Issue #90. Port the native preview and ADR-0018 from PR #89 onto a branch based on the current PR #108 candidate; restore the latest Python reference scanner and required test/collector/quality assets from PR #91; add development-side CircleCI jobs with exact checkout SHA, least privilege, and redacted findings; run both scanners on the same integrated checkout and adjudicate parity differences. Keep native scanner preview-only until parity and platform acceptance are established. No code port or current-candidate scanner validation has yet been performed.
+
+The earlier isolated PR #89/#91 PASS evidence remains tied to its exact historical source SHA and must not be attributed to PR #108 or any later integration SHA.
