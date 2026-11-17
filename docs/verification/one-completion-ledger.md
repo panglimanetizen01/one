@@ -674,3 +674,11 @@ Exact run #44012805081 on source `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubu
 - CI docs record the diagnosis and correction in `4db76fbaf651dd069c7000fb46a4dea61b11fbd8`. PR #95 latest HEAD at this checkpoint: `4db76fbaf651dd069c7000fb46a4dea61b11fbd8`; CircleCI status had not yet appeared for this exact SHA. No PASS claim.
 - Independent Windows verifier PR #42 advanced its pin to `4db76fb...`: pin commit `860d9c2d2aaa0eda8c76572271e0c18c49cf3d37`; docs commit `8c493983fc95b75f32f5862afccb0489786ca302`. No Windows result for this SHA is claimed.
 - PR #95 remains OPEN / DRAFT / UNMERGED; CircleCI migration acceptance NOT PASSED. E6 remains NOT IMPLEMENTED / final release gate NOT PASSED. No merge/release.
+
+
+## PR #95 post-correction CircleCI rerun — 2026-11-17
+
+- CircleCI is PENDING for the exact APT shell-correction source `4db76fbaf651dd069c7000fb46a4dea61b11fbd8`: workflow `d436555e-6a03-4167-a844-acc2ac5e50d6`, job `b8478a26-15f6-457c-b8e4-f30e461e17e9`.
+- PR #95 then advanced to documentation-only descendant `9b233dfe75da8c0752c203af3711bf3da319dc02`, which had no status reported at the subsequent check. No terminal PASS is claimed for either SHA.
+- Independent verifier PR #42 pin advanced to `9b233df...`: pin commit `e88b2be4e0845f932cd978e26305d25f9730f777`; docs commit `af52f1ab4897f8a464b787fa895ba2051f311372`. No Windows run is yet claimed for this pin.
+- PR #95 remains OPEN / DRAFT / UNMERGED; CircleCI migration acceptance NOT PASSED. E6 remains NOT IMPLEMENTED / final release gate NOT PASSED.
