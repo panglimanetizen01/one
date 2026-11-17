@@ -708,3 +708,13 @@ Exact run #44012805081 on source `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubu
 - This is a fresh run on the corrected documentation descendant. No terminal outcome is available yet; do not claim PASS until terminal SUCCESS.
 - APT shell-correction code/config SHA `4db76fb...` remains CircleCI SUCCESS. Preceding docs-only SHA `9b233d...` remains terminal FAILURE, first failing step/root cause UNKNOWN because authenticated logs are inaccessible.
 - Independent Windows verifier PR #42 remains pinned to `9b233d...`; no Windows run for `cef1f41...` is observed. Migration acceptance NOT PASSED; E6 NOT IMPLEMENTED / release gate NOT PASSED; no merge/release.
+
+
+## Live evidence correction — 2026-11-17 12:51 WIB
+
+This addendum supersedes older current-state statements above where they conflict; historical evidence remains preserved.
+
+- PR #102 current HEAD is `7e10e758d7e1ca70f450bfbb6cf397d805500e53`. GitHub Actions run [#44019833034](https://github.com/panglimanetizen01/one/actions/runs/44019833034) is terminal SUCCESS on this exact SHA. Windows 2025 job `133826414765` and Ubuntu job `133826415064` both succeeded, including Build, Clippy, Tests, deterministic artifacts and configured vertical slices. The Windows descendant Job Object regression passed. PR #102 remains OPEN / DRAFT / UNMERGED.
+- PR #95 current HEAD is `cef1f41c97585b6e25bf91af6e8b4281efe299c4`. CircleCI context `ci/circleci: one-linux` is terminal SUCCESS on this exact SHA; workflow `930378d8-49bb-416e-a42c-63e1797b991c`, job `0e2642b0-bd94-4892-baca-df5b6c8fa4ed`, status timestamp 2026-11-17 05:49:29 UTC. This is commit-status evidence; detailed CircleCI step logs were not exposed by the connected integration.
+- PR #95 remains OPEN / DRAFT / UNMERGED. CircleCI is not active on main until separately authorized merge. The independent verifier PR #42 still pins `9b233dfe75da8c0752c203af3711bf3da319dc02`; no Windows verification is evidenced for `cef1f41...`. Current release acceptance remains NOT PASSED.
+- Fixed-weight ledger remains unchanged; no points or DoD items are promoted by these CI results alone. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`. No merge or release.
