@@ -371,3 +371,17 @@ The MSYS2 installation run step now sets `no_output_timeout: 30m` so the large f
 - Exact PR #95 HEAD: `4db76fbaf651dd069c7000fb46a4dea61b11fbd8`.
 - CircleCI `ci/circleci: one-linux` has started and is PENDING for this exact SHA: workflow `d436555e-6a03-4167-a844-acc2ac5e50d6`, job `b8478a26-15f6-457c-b8e4-f30e461e17e9`.
 - This run is the first verification attempt after correcting the doubled shell escapes in the APT source-rewrite command. No terminal outcome is available yet; do not claim the mirror mitigation passed.
+
+
+## Superseding live migration evidence — 2026-11-17
+
+This addendum supersedes older candidate-status statements above where they conflict; historical run records remain unchanged.
+
+- PR #95 source HEAD at this evidence boundary: `cef1f41c97585b6e25bf91af6e8b4281efe299c4` (OPEN / DRAFT / UNMERGED).
+- CircleCI context `ci/circleci: one-linux` is terminal SUCCESS for that exact SHA: workflow `930378d8-49bb-416e-a42c-63e1797b991c`, job `0e2642b0-bd94-4892-baca-df5b6c8fa4ed`. The connected integration exposes the exact-SHA commit status but not step-level CircleCI logs; no unobserved step details are claimed.
+- Independent verifier PR #42 has synchronized `WINDOWS_SOURCE_COMMIT.txt` to `cef1f41...` (pin commit `f5113c084fa978f275bc8426a4ca1e4d74376549`; verifier PR head `44b36a1894382cc2508edf0166f60b06c9434d7a`). No workflow run is evidenced for this exact source SHA. Windows verification is therefore NOT VERIFIED. Historical run #32 is PASS only for source `a10a69afdf8675e703f38f1620abc935d8361897` and must not be reused.
+- The optional CircleCI `release-check` workflow with `run_release_checks=true` has not been proven to have run. Release acceptance remains NOT PASSED.
+- Main remains PUBLIC at exact SHA `d35db95153f6ddd79885494c72f5aee16c899751`; PR #95 is not merged, so CircleCI migration is not active on main.
+- No merge or release is authorized or performed.
+
+A later documentation-only commit changes the PR head SHA. Treat the evidence above as bound to `cef1f41...`; do not silently transfer the status to a descendant commit. If this addendum is committed as a new PR head, refresh CircleCI status for that new head and keep Windows exact-SHA status NOT VERIFIED until a matching run exists.
