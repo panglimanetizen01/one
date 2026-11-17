@@ -265,3 +265,14 @@ This source change has only been read back through GitHub; no Cargo/Rust executi
 - Compare confirms 53 commits ahead and zero behind the PR #108 base. No merge or main-branch write occurred.
 - GitHub status contexts and GitHub Actions workflow-runs are empty. CircleCI job logs, local Cargo/Python test execution, and exact-SHA platform validation remain NOT VERIFIED.
 - Continue from `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`; do not reuse the previous `0866a6d...` as the live HEAD.
+
+
+## 18. Pointer hygiene and next execution gate — 2026-11-17
+
+- Earlier sections 14, 16, and 17 record historical exact-head snapshots. They are not live pointers. Always fetch current PR #109 metadata and branch ref before any operation; documentation-only commits also move the head.
+- Latest live head at the time of this checkpoint was `243e784da88e62d10d7b7f1c73677f332fd192bf`; refresh it again at session start. Base remains PR #108 candidate `a6f91c07b04d7b9fafb9e99d0356954012ae3001`.
+- PR #109 remains OPEN/DRAFT/UNMERGED. GitHub mergeability metadata is unresolved (latest readback false after inconsistent earlier responses). Do not merge or auto-resolve conflicts.
+- GitHub status contexts and GitHub Actions workflow-runs are empty; this is not CircleCI evidence.
+- CircleCI pipeline/job logs and local Cargo/Python execution are NOT AVAILABLE in this session. No test/build/CI PASS or parity claim is permitted.
+- The next real execution step is to obtain authorized CircleCI pipeline/job access or terminal logs, then run/inspect the exact-SHA jobs, fix confirmed defects, and repeat affected plus full verification. Never request raw API tokens in chat.
+- Preserve the developer-tool boundary: `one-integrity` stays separate from beginner-facing `one`; do not change ONE grammar, semantics, or UX to accommodate tooling.
