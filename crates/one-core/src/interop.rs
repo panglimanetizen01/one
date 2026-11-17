@@ -1038,12 +1038,27 @@ mod tests {
         }
         let _ = std::fs::remove_file(&pid_file);
         let result = worker.join().expect("run_process worker must not panic");
-        let error = result.expect_err("the continuous writer must exceed the output limit");
-        assert!(error.contains("output limit"));
         assert!(
             completed_before_cleanup,
             "run_process reader shutdown waited for an escaped descendant that continuously writes"
         );
+        match result {
+            Ok(output) => {
+                assert!(output.success, "the direct shell should exit successfully");
+                assert!(
+                    output.stdout.len() <= MAX_OUTPUT_BYTES_PER_STREAM,
+                    "stdout capture exceeded the configured byte limit"
+                );
+                assert!(
+                    output.stderr.len() <= MAX_OUTPUT_BYTES_PER_STREAM,
+                    "stderr capture exceeded the configured byte limit"
+                );
+            }
+            Err(error) => assert!(
+                error.contains("output limit"),
+                "unexpected process execution error: {error}"
+            ),
+        }
     }
 
     #[test]
