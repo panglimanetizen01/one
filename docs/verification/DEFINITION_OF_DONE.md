@@ -560,3 +560,38 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - Verifier PR #40 is a separate native-scanner verification for ONE PR #89, pinned by its `CANONICAL_COMMIT.txt` to `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`; it is not the Python health-scanner workflow. PR #40 remains OPEN / DRAFT / UNMERGED.
 - PR #39 workflow triggers on pushes to verifier branch `verification` or manual dispatch. Since PR #39 remains draft/unmerged, its new workflow execution is NOT VERIFIED; do not claim it ran. No merge or dispatch was performed.
 - Conclusion: the workflow is historical PR #39 verification scope, not a stale workflow in verifier main or PR #42. Preserve it and its source pin; do not reintroduce developer scanner files into current ONE product branches.
+
+
+## Session continuation checkpoint — 2026-11-17 18:55 WIB
+
+### PR #106 — bounded Unix reader drain hardening
+
+- PR #106 remains OPEN / DRAFT / UNMERGED on branch `fix/unix-reader-shutdown-deadline-20261117`, based on PR #102 branch `fix/commit-cargo-lockfile-20261117` at base SHA `ac1bb214bc028395367cce7edc234a1909971e2a`.
+- Current exact source HEAD: `5c4b482009e88f7e4db7d2585afd29c3996c2df9`. Compare to PR #102: 21 commits ahead / 0 behind; four incremental files only: `crates/one-core/src/interop.rs`, `docs/spec/one-v0.1-effect-capability.md`, `docs/spec/one-v0.1-interop.md`, `docs/spec/one-v0.1-runtime-model.md`.
+- Further review found that the prior test-only correction (accepting bounded success when the escaped writer had not yet been observed beyond the cap) could mask output overflow or a pipe that never became idle. The implementation now drains nonblocking after shutdown until the pipe is idle, output exceeds 1 MiB per stream, or a 100 ms shutdown grace expires. It returns an explicit error for output overflow or a non-idle reader at the grace deadline. The continuous-writer regression now requires one of those errors and uses `yes x` as its high-throughput escaped writer fixture.
+- Code commit `15edfef435f8054c505d7ff4b451f5503a5108e4` adds the bounded drain/error behavior and Unix-only compilation guard. Contract documentation commits: interop `39f9daa2778be5b09ab640daa060361d9c612367`, effect-capability `90fe9c64e0e2344c8a1712f430c0fab19cb49a2a`, runtime-model `5c4b482009e88f7e4db7d2585afd29c3996c2df9`.
+- Previous candidate `4883c8b255c45bf9cec177d61fd02678dec24eca`, GHA run #2187 / `44075728210`: Ubuntu job `134013109795` FAIL at continuous escaped-writer regression; Windows job `134013109380` PASS. The current exact HEAD has no GHA run returned and no GitHub status contexts.
+- The GHA workflow `.github/workflows/ci.yml` has `pull_request.branches: [main]`, while PR #106 currently targets PR #102's branch. Therefore the normal GHA PR workflow does not trigger for this dependent-base configuration. The execution environment also has no Cargo/Rust toolchain for local test execution.
+- Current exact HEAD combined status has CircleCI context `CircleCI Pipeline` = `error`, pipeline #622. The CircleCI page is inaccessible through the available session tools and no CircleCI connector is exposed; job-level root cause and test result remain NOT VERIFIED. Do not infer code failure or PASS from the status context alone.
+- PR #106 body now records the 100 ms grace, exact SHA, prior failure, trigger limitation, CircleCI pipeline status, and security boundary.
+
+### Issue #105 security boundary
+
+- Issue #105 remains OPEN. This work bounds output-reader shutdown; it does not terminate escaped descendants. No E4/E6 or release-acceptance promotion.
+- Linux cgroup v2 remains only a candidate. A nested cgroup under a shared writable delegated ancestor is insufficient if the workload can migrate itself out. Any strong backend must establish a verified permission/namespace boundary, atomic placement, and a kill handle the workload cannot tamper with; otherwise fail closed or explicitly narrow the platform guarantee.
+
+### Health-scanner verifier provenance correction
+
+- Verifier `main` does not contain `.github/workflows/health-scanner-verification.yml` (contents API 404). The verifier `verification` base branch does contain an earlier workflow version (blob `1a8302cebc893fc709c1ea1fadc3e2f10b82cea3`) that reads shared `CANONICAL_COMMIT.txt`; current base pin is `e50748a1b25922d9090eba1f5fb90548d7c7d003`, where ONE scanner files are absent. This is a stale source-pin mismatch on the verifier `verification` branch, not on verifier `main`.
+- PR #39 branch `verify/one-health-pr91-20261029`, HEAD `6e2ce12eeb36ec2ffa0db38c9fce7e98faf2fbdd`, corrects this by using dedicated `HEALTH_SCANNER_SOURCE_COMMIT.txt` pin `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`. At that exact ONE PR #91 SHA, `tools/one_health.py`, `tools/test_one_health.py`, `tools/test_collect_ci_health.py`, and `tools/test_health_quality.py` all exist. PR #39 also sets its shared canonical pin to the same source for its PR #91 Linux/Windows workflows.
+- PR #39 remains OPEN / DRAFT / UNMERGED; no workflow run for its current head was returned. The workflow's push trigger targets verifier branch `verification`; a push to the draft PR branch does not execute it. No merge or dispatch was performed. PR #39 body now records the branch-level pin mismatch and corrected ownership.
+- PR #42 changed files do not include the health-scanner workflow. Its branch snapshot has a different shared pin `5486c09b746254e65ec647e86db3e48fde975747`, where scanner files are present; do not conflate that snapshot with the current verifier `verification` branch pin.
+
+### Documentation and release status
+
+- Updated PR #97 `docs/verification/README.md` and PR #103 `docs/verification/one-completion-ledger.md` / `DEFINITION_OF_DONE.md` to correct the health-scanner provenance statement and preserve the current exact-SHA evidence boundary.
+- E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No score or checkbox promotion. PRs remain open/draft/unmerged. No merge, release, force-push, history rewrite, visibility, secrets, or billing changes.
+
+### Next executable action
+
+- Obtain an authorized exact-SHA CI execution path for PR #106's dependent-base branch (CircleCI pipeline #622 job details or an appropriately triggered GHA run), then fix any reproduced issue and verify Linux + Windows. In parallel, keep Issue #105 open until strong Unix containment or an explicitly narrowed per-platform contract has production descendant-cleanup evidence.
