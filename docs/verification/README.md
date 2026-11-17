@@ -15,6 +15,9 @@ This directory contains exact-SHA verification records, release gates, incident 
 
 ## Canonical records
 
+- [Forensic repository audit — 2026-11-17](forensic-audit-2026-11-17.md)
+- [Master continuation prompt — 2026-11-17](MASTER_CONTINUATION_PROMPT_2026-11-17.md)
+
 - [CI and verification evidence contract](../spec/one-v0.1-ci-verification-contract.md)
 - [Release contract](../release/one-v0.1.md)
 - [Implementation status](one-v0.1-implementation-status.md)
