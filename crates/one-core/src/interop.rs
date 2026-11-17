@@ -975,6 +975,45 @@ mod tests {
         assert!(result.stderr.contains("stderr"));
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn non_idle_reader_stops_after_shutdown_grace() {
+        struct SlowAlwaysReadyReader;
+
+        impl Read for SlowAlwaysReadyReader {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                thread::sleep(Duration::from_millis(1));
+                buffer[0] = b'x';
+                Ok(1)
+            }
+        }
+
+        let output_limit_exceeded = Arc::new(AtomicBool::new(false));
+        let shutdown_requested = Arc::new(AtomicBool::new(true));
+        let shutdown_incomplete = Arc::new(AtomicBool::new(false));
+        let started = Instant::now();
+        let reader = spawn_bounded_reader(
+            SlowAlwaysReadyReader,
+            Arc::clone(&output_limit_exceeded),
+            shutdown_requested,
+            Arc::clone(&shutdown_incomplete),
+        );
+        let _captured = join_reader(reader).expect("bounded reader should return captured bytes");
+
+        assert!(
+            started.elapsed() < Duration::from_secs(1),
+            "reader exceeded the bounded shutdown grace"
+        );
+        assert!(
+            shutdown_incomplete.load(Ordering::Acquire),
+            "a reader that never becomes idle must report incomplete shutdown"
+        );
+        assert!(
+            !output_limit_exceeded.load(Ordering::Acquire),
+            "the slow fixture must exercise the non-idle deadline, not output overflow"
+        );
+    }
+
     // The helper waits until the setsid child has entered its new session before
     // the direct shell exits, ensuring the inherited pipe writer is truly escaped.
     #[cfg(target_os = "linux")]
