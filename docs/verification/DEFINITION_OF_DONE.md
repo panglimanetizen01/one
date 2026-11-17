@@ -330,3 +330,11 @@ This section supersedes prior current-head statements where they conflict. Histo
 - Independent verifier PR #42 pin matches `c207fb...` (pin commit `8db417749753009ad5dbc69f8b4d2bb00c5d1642`; verifier docs commit/current head `b45f9a259ea072168a1efc3300300438e78fbbf6`). No matching Windows run is observed; status NOT VERIFIED. The verifier workflow now uses `--locked` for all Cargo commands and self-checks the invariant.
 - PR #102 exact source `7e10e758d7e1ca70f450bfbb6cf397d805500e53` remains GitHub Actions PASS on Ubuntu and Windows (run #44019833034); the Windows descendant Job Object regression passed.
 - Optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; no score or DoD checkbox is promoted.
+
+
+## Current PR #95 docs-only descendant and Windows rerun — 2026-11-17
+
+- Previous PR #95 source `c207fb15bc19889a8c8e60923581ef1b1f7a6374` has CircleCI Linux terminal SUCCESS and independent Windows run #34 terminal SUCCESS (run `44030597595`, verifier SHA `3f8e9b662805a89fd5145e8691a221218b098e11`, job `133861337521`). Artifact ID `14305081962`; ZIP SHA-256 `7cbbf251efe2f56ba24965a76cd420ccddae8e84e8f0dcd727b09943014f3b8f`; executable SHA-256 `0c79f06f37f793061884acf43c9ba419bb0fc4ccf48c4a487f511e462cf55af5`; manifest SHA-256 `7ac05a71f1f5e5149f1dd721d2ca9c610bfe7504acb6b164938a51255c60b1d6`; native exit 0 / output `Budi`.
+- Current PR #95 HEAD `048f87f5e9c14fdda33c7fa7a3d6dd77f469b9d4` is a docs-only descendant recording the run #34 evidence. CircleCI on this exact SHA is PENDING (workflow `875e39ae-399d-4803-81f7-407c7dc3f0d3`, job `40fbbc41-4a32-4796-b817-d144f8186e46`).
+- Independent verifier PR #42 pin matches `048f87...`; Windows run #35 / ID `44031205160` is IN_PROGRESS with verifier SHA `62f401db17e5bc2ff3ae4c53e02cc721ed1d191e`. Run #34 remains bound only to `c207fb...`.
+- Optional CircleCI `release-check` remains NOT VERIFIED. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; no score/DoD promotion or release acceptance.
