@@ -6,11 +6,38 @@ One v0.1 menyediakan CLI yang dapat dibangun dari source. **Installer siap-pasan
 
 - Git.
 - Rust toolchain yang memenuhi `rust-version = "1.97"` pada workspace (rustc dan Cargo 1.97 atau lebih baru).
+- C/C++ build tools. Workspace memakai SQLite bundled melalui `rusqlite`, sehingga build mengompilasi kode C SQLite dari source.
 - Terminal Linux atau PowerShell pada Windows.
+
+### Linux (Debian/Ubuntu)
+
+Pasang compiler dan build tools:
+
+```sh
+sudo apt update
+sudo apt install build-essential
+```
+
+Distribusi Linux lain memerlukan paket yang menyediakan GCC atau Clang dan `make`.
+
+### Windows
+
+Pasang **Visual Studio Build Tools 2022 atau lebih baru** melalui Visual Studio Installer, pilih workload **Desktop development with C++**, dan pastikan MSVC x64/x86 build tools serta Windows SDK ikut terpasang. Jalankan perintah build dari **Developer PowerShell for Visual Studio** agar compiler dan linker tersedia.
 
 Periksa toolchain:
 
+```powershell
+where.exe cl
+where.exe link
+rustc --version
+cargo --version
+```
+
+Linux:
+
 ```sh
+cc --version
+make --version
 rustc --version
 cargo --version
 ```
