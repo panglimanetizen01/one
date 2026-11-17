@@ -881,7 +881,7 @@ mod tests {
     #[test]
     fn windows_job_object_terminates_descendants_when_parent_exits() {
         use windows_sys::Win32::Foundation::{HANDLE, WAIT_OBJECT_0};
-        use windows_sys::Win32::System::Threading::{TerminateProcess, WaitForSingleObject, INFINITE};
+        use windows_sys::Win32::System::Threading::{GetExitCodeProcess, GetProcessId, TerminateProcess, WaitForSingleObject, INFINITE};
 
         let parent_pid = std::process::id();
         let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool DuplicateHandle(IntPtr sourceProcess, IntPtr sourceHandle, IntPtr targetProcess, out IntPtr targetHandle, uint access, bool inherit, uint options); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetCurrentProcess(); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool CloseHandle(IntPtr handle); }'; $jobHandle = [IntPtr]::new([Int64]::Parse('__ONE_JOB_QUERY_HANDLE__')); if (-not [JobProbe]::SetHandleInformation($jobHandle, 1, 0)) { throw ('SetHandleInformation failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); try { $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, $jobHandle, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob(target job) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_IN_INVOCATION_JOB=' + $inJob.ToString().ToLowerInvariant())); $parent = [JobProbe]::OpenProcess(0x0040, $false, [uint32]__ONE_PARENT_PID__); if ($parent -eq [IntPtr]::Zero) { throw ('OpenProcess(parent PROCESS_DUP_HANDLE) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $childWaitHandle = [IntPtr]::Zero; try { if (-not [JobProbe]::DuplicateHandle([JobProbe]::GetCurrentProcess(), $child.Handle, $parent, [ref]$childWaitHandle, 0x00100001, $false, 0)) { throw ('DuplicateHandle(child TERMINATE|SYNCHRONIZE into parent) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) } } finally { [void][JobProbe]::CloseHandle($parent) }; [Console]::Out.WriteLine(('CHILD_WAIT_HANDLE=' + $childWaitHandle.ToInt64())) } catch { try { if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit() } } catch {}; throw }";
@@ -936,6 +936,12 @@ mod tests {
             .parse::<i64>()
             .expect("PowerShell should report a numeric duplicated process handle") as usize as HANDLE;
         assert!(!wait_handle.is_null(), "duplicated descendant process handle must be non-null");
+        // Confirm that the retained handle still identifies the exact process
+        // whose PID the wrapper reported; this validates the cross-process
+        // DuplicateHandle direction and rules out a malformed or stale handle.
+        let retained_pid = unsafe { GetProcessId(wait_handle) };
+        let mut retained_exit_code = 0u32;
+        let exit_code_ok = unsafe { GetExitCodeProcess(wait_handle, &mut retained_exit_code) } != 0;
         // This handle is duplicated into this test process before the wrapper
         // exits, so it remains bound to the original process object across PID reuse.
         let wait = unsafe { WaitForSingleObject(wait_handle, 0) };
@@ -955,8 +961,12 @@ mod tests {
             result.stdout, result.stderr
         );
         assert_eq!(
+            retained_pid, pid,
+            "retained process handle identity mismatch: reported PID {pid}, handle PID {retained_pid}, exit-code query ok={exit_code_ok}, exit code={retained_exit_code}"
+        );
+        assert_eq!(
             wait, WAIT_OBJECT_0,
-            "descendant process {pid} survived the bounded process invocation"
+            "descendant process {pid} survived the bounded process invocation; retained handle PID={retained_pid}, exit-code query ok={exit_code_ok}, exit code={retained_exit_code}"
         );
     }
 
