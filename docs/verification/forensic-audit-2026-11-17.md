@@ -220,7 +220,7 @@ A separate draft integration PR was opened rather than rewriting or merging PR #
 - Added Python CircleCI config regression test in `tools/test_one_health.py` blob `899caa80186277658973cb110011f1fe6dadcae0`.
 - Restored historical GitHub Actions collector/tests and health-quality ledger tools. Collector is explicitly Actions-only; it is not a CircleCI collector.
 - Restored ADR-0018; updated detector governance, health scanner docs, verification index, CONTRIBUTING, docs index, and `tools/check_contract.py`.
-- CircleCI config blob `6631ef2df82c69512417655a752493ffc8fe7d46` adds development-side Python regression tests, native focused tests, and exact-SHA preview scan commands. Findings remain non-gating at preview stage; execution errors and SHA mismatches fail.
+- CircleCI config initially added development-side Python regression tests, native focused tests, and exact-SHA preview scan commands (earlier blob `6631ef2df82c69512417655a752493ffc8fe7d46`). A follow-up corrected the exact-SHA fail-closed logic; latest config blob at the code checkpoint is `750df015567cbba6927eb015e8d4054ffb8ca22d`. Python JSON is checked for invalid/missing/mismatched checkout SHA; native output is checked for expected-SHA mismatch or unavailable HEAD. Ordinary high/critical scanner findings remain report-only at preview stage; execution errors and SHA mismatches fail.
 
 ### Current evidence boundary
 - Combined GitHub status, check-runs, and check-suites for source SHA `3ce4c0f5821738c0c12a2670e54ab0a3a28edf3f` were empty. This does not prove a CircleCI run; no terminal CircleCI output has been inspected.
@@ -237,3 +237,7 @@ A separate draft integration PR was opened rather than rewriting or merging PR #
 4. Run independent Linux and Windows verification against that same exact SHA.
 5. Compare native and Python findings on that exact checkout; document detector coverage and differences.
 6. Only after successful review may PR #109 be merged into the PR #108 branch, and only with explicit owner authorization. Do not merge PR #108 to main or release without separate explicit authorization.
+
+
+### Exact-SHA guard correction — follow-up
+The initial preview shell wrapper incorrectly treated exit code 1 as report-only even though both scanners use that code for critical/high findings, including exact-SHA mismatch. This was corrected: Python report JSON is inspected for invalid/missing/mismatched checkout SHA; native output is checked for `expected-sha-mismatch` and `head-unavailable`. The correction was posted to Issue #90 comment `6953106805`. Latest config blob at this point is `750df015567cbba6927eb015e8d4054ffb8ca22d`. This is source readback only; no CircleCI job execution is evidenced.
