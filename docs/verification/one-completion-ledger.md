@@ -862,3 +862,12 @@ This section supersedes prior current-head statements where they conflict. Histo
 - PR #102 installation guide now documents a truthful source-build path (Rust/Cargo 1.97+, clone, locked release build, platform binary path, version check, and first program); no installer or official binary release is claimed.
 - PR #102 CI workflow includes user-doc consistency tests and Linux/Windows release CLI smoke. All Cargo build/Clippy/test commands use `--locked`.
 - This is exact-SHA implementation/verification evidence only. It does not promote E6, final release acceptance, or DoD checkboxes.
+
+
+## Latest PR #95 exact-SHA verification checkpoint — 2026-11-17
+
+- ONE source `876b83170af2e77adcc43e408901e99ea37f6b0f` passed full independent Windows Server 2025 verifier run #38 / `44045612644`, verifier SHA `564fd1e0853dd424eb8d451678faaa77aaa59d11`, job `133910422388`. All 31 primary steps passed, including locked Cargo guard, contract/docs checks, workspace build/Clippy/tests, release CLI, product vertical slices, real-network/offline, Windows native backend, PE32+ inspection, native execution, manifest and artifact upload.
+- Run #38 artifact ID `14310959518`, ZIP SHA-256 `8e10e35d04709eee8429f143ef8bde0ca358941b51a4785f49e934e94f9f163c`; native EXE SHA `11ed652bd05e09145c8ca304762b72391de952eb2f441344dd259efda38221c7`; CLI EXE SHA `61a5e8166831153c2b98f69e09ceeda84759cee53e8d060f406c5d8a7ea12dba`; manifest SHA `9844c92e89ed1ac805adbf757c8a111ba66163acf265f00f428ba587f090ba23`. ZIP readback, manifest hashes and PE32+ AMD64 headers independently matched.
+- PR #95 docs-only descendant/current HEAD is `ed2382eed9022a8c67a13d72a5de6a4d9134f631`; verifier PR #42 pin matches it. New exact-source verifier runs #39 / `44046670869` (IN_PROGRESS) and #40 / `44046678525` (PENDING) were triggered by successive verifier branch pushes. Do not transfer run #38 to this descendant.
+- CircleCI Pipeline #558 reported pipeline-level ERROR on the previous candidate without exposing a `one-linux` job context/log. This is not enough to diagnose a source test failure. Current integrations do not expose authenticated CircleCI pipeline details; optional `release-check` remains NOT VERIFIED.
+- PR #95/#42/#97/#103 remain OPEN / DRAFT / UNMERGED. Main remains unchanged. E6 and release acceptance remain NOT PASSED.
