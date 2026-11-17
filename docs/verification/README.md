@@ -49,17 +49,15 @@ GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No
 
 
 
-## Current PR #95 migration candidate — 2026-11-17
+## PR #95 live migration status — 2026-11-17 18:56 WIB
 
-- PR #95 remains OPEN / DRAFT / UNMERGED on branch `ci/circleci-migration-20261113`. Latest branch head is `de71a54762b72f3347002cbe848467dc2d9b1f7a` (documentation-only evidence correction); the latest tested product/config candidate remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`.
-- CircleCI `ci/circleci: one-linux` was terminal SUCCESS on exact source/config SHA `e50748a...` (workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`).
-- Independent Windows native run #31 on exact `e50748a...` failed before compilation because the source did not track `Cargo.lock` while the verifier used `--locked`; no Windows artifact/runtime PASS exists for that SHA. Earlier run #28 PASS on `07d8cbf...` is historical and cannot replace run #31 on `e50748a...`.
-- Lockfile-only candidate `a10a69afdf8675e703f38f1620abc935d8361897` adds only `Cargo.lock`. GitHub Actions One CI run #43998641019 passed Linux+Windows on that SHA, and independent Windows native runtime run #32 passed (exit 0, output `Budi`). This is not CircleCI evidence and is not the same SHA as PR #95's CircleCI PASS; do not combine into same-SHA parity.
-- CircleCI on docs-only PR heads `2f1c57e95c0d51725aa8aace3c00583b681025ad` and `de71a54762b72f3347002cbe848467dc2d9b1f7a` both reported FAILURE. Latest workflow `ca8b9376-9ded-4ccc-9540-7ab9f9011c07`, job `aba2c931-3fb7-43c7-b152-67eaebf2dc7c`. Logs are not accessible through the current integration, so the failing step/root cause is NOT VERIFIED. Latest PR #95 branch is not green.
-- PR #102 is a separate lockfile and Windows subprocess-containment change: latest source HEAD `87c80e2f21ebdc7dd3e4bd02744b30c4efd1a068`; exact-SHA GitHub Actions run #44008584799 remains IN_PROGRESS (Ubuntu and Windows jobs at toolchain setup at last check). This is not release evidence.
-- Integration requirement: after authorized PR sequencing brings the lockfile and CircleCI config together, add `--locked` to every CircleCI Cargo build/Clippy/test command and require it in `tools/check_contract.py` when `Cargo.lock` is tracked. Current PR #95 config does not yet use `--locked`.
-- CircleCI is not active on `main` while PR #95 remains unmerged. Optional `release-check` remains unproven; no merge/release is authorized.
-
+- PR #95 remains OPEN / DRAFT / UNMERGED on branch `ci/circleci-migration-20261113`; current HEAD is `993f76351c7a119bea2e66f7d9e5bca07f392fbc`. Compare to the previously tested candidate `e50748a1b25922d9090eba1f5fb90548d7c7d003`: 32 commits ahead / 0 behind, including the CircleCI config, `Cargo.lock`, lockfile-aware contract checker, and related CI/release documentation.
+- The current CircleCI config blob is `9d05f65badffae75e7e22bd1f0962e056b4960bd`; every Cargo build, Clippy, test, and release command inspected uses `--locked`. The contract checker also enforces lockfile-aware commands.
+- Historical CircleCI Linux PASS: exact source/config SHA `e50748a...`, workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`. This evidence is not automatically transferable to current HEAD `993f763...`.
+- Independent Windows verification PASS on exact current source SHA `993f763...`: verifier run #43 / `44049102193`, verifier HEAD `56271be82645357c2feaa1134ae2dc1d2ceae734`, Windows job `133922119577`. Artifact #14313416141 ZIP SHA-256 `4b5102dfdb1fcecc41a155f2b97fa3caf244986120c263f50bd5733888e7bbcd`; native and CLI PE32+ AMD64, both output `Budi`, exit 0; CLI `one 0.1.0`.
+- Current PR #95 HEAD `993f763...` has no GitHub combined-status contexts. Current CircleCI Linux execution is NOT VERIFIED on this SHA; the historical PASS on `e50748a...` is not a substitute. Optional `run_release_checks=true` remains NOT VERIFIED.
+- The older Windows run #31 failure on `e50748a...` occurred before compilation because that candidate lacked tracked `Cargo.lock`; it is superseded for the current Windows verifier result, but remains valid historical evidence for the older SHA.
+- PR #95 removes the three legacy workflows from its candidate branch, but migration is not active on `main` until separately authorized merge. No merge or release is authorized.
 
 ## Independent verifier security hardening — 2026-11-17
 
