@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 required = [
     "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml",
-    ".circleci/config.yml",
+    ".circleci/config.yml", "docs/spec/one-v0.1-ci-verification-contract.md",
     "docs/README.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
