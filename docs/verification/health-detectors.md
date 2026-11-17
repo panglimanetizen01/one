@@ -134,3 +134,10 @@ Reference revisions for this comparison: Python `tools/one_health.py` at PR #91 
 ### Acceptance gate
 
 Do not describe the scanners as parity-equivalent yet. For each shared capability, run the same positive and negative fixture corpus against both implementations and compare normalized `rule_id`, path, severity, confidence, redacted evidence, exit code and JSON schema. Mark Python-only capabilities explicitly rather than silently treating missing Rust findings as passes. Python regression suites, normative self-scan and Linux Rust build/Clippy/workspace tests passed on the exact revisions listed above in the independent verifier. Windows Rust native tests and Android AArch64 artifact/runtime checks remain pending; do not call native validation complete until those checks finish.
+
+
+## CI provider boundary — CircleCI migration
+
+The canonical CI provider for the migration candidate is CircleCI. The repository-health scanner includes `.circleci/config.yml` in generic workflow-integrity checks for duplicate configuration names and missing referenced scripts. GitHub Actions-specific security checks remain applicable only to legacy `.github/workflows/` files. A missing GitHub Actions workflow is not a CircleCI failure, and CircleCI config scanning does not claim full CircleCI schema validation.
+
+The historical `tools/collect_ci_health.py` collector reads GitHub Actions API metadata only. It is not a CircleCI collector and must never be used to claim CircleCI run/job status. CircleCI pipeline/job evidence is recorded separately against the exact checkout SHA.
