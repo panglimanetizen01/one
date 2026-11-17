@@ -103,3 +103,24 @@ The test harness must assert side effects, not merely error codes or metadata sn
 ## 9. Explicit non-acceptance
 
 This design document is not an implementation, a test result, or a security certification. No source code has been changed by this checkpoint. Issue #104 remains OPEN. Do not close it, promote DoD/E4 evidence, or claim the filesystem sandbox is secure based on this document.
+
+## 10. Independent verifier's current exact test filters
+
+The existing independent verifier workflow at panglimanetizen01/one-windows-verification, branch verification, currently requires these nonzero test matches on the candidate source:
+
+Unix:
+- 2 passing tests matching `descriptor_relative_read_rejects_`
+- 1 passing test matching `descriptor_relative_write_rejects_`
+- 1 passing test matching `descriptor_relative_walk_rejects_`
+- exact test `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink`
+- exact test `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file`
+
+Windows:
+- exact test `filesystem_reader_rejects_directory_junction_escape`
+- exact test `filesystem_adapter_reads_absolute_target_inside_project_root`
+- exact test `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`
+- exact test `filesystem_write_adapter_writes_text_target`
+- exact test `filesystem_write_adapter_rejects_oversized_content`
+- exact test `filesystem_adapters_reject_parent_directory_traversal`
+
+The verifier checks that the expected tests actually execute and pass; filtered-only output is explicitly rejected. The implementation must either preserve these exact test names/counts or update the independent verifier filters in a separately reviewed change. Do not weaken nonzero-match assertions. This inventory is from the currently checked-in verifier workflow and must be refreshed before the final acceptance run.
