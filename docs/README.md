@@ -71,8 +71,8 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Verification and release
 
-- `verification/one-completion-ledger.md` — fixed-weight completion ledger; current implementation estimate and exact-SHA verified points.
-- `verification/DEFINITION_OF_DONE.md` — release acceptance checklist and fail-closed Definition of Done.
+- [one-completion-ledger.md](https://github.com/panglimanetizen01/one/blob/docs/restore-completion-ledger-dod-20261117/docs/verification/one-completion-ledger.md) — fixed-weight completion ledger; current implementation estimate and exact-SHA verified points.
+- [DEFINITION_OF_DONE.md](https://github.com/panglimanetizen01/one/blob/docs/restore-completion-ledger-dod-20261117/docs/verification/DEFINITION_OF_DONE.md) — release acceptance checklist and fail-closed Definition of Done.
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
