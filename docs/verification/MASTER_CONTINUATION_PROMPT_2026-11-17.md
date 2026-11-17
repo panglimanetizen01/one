@@ -226,3 +226,11 @@ The native scanner MUST remain separate from the beginner-facing `one` CLI. The 
 - CONTRIBUTING, ADR-0018, repository-health usage, detector parity docs, PR #109 body and Issue #90 comment are synchronized.
 
 This source change has only been read back through GitHub; no Cargo/Rust execution or CircleCI terminal evidence is available. The next exact source HEAD must compile/test `one-integrity` and verify that the main `one help` remains unchanged. Do not add scanner commands to beginner user docs.
+
+
+### Current exact PR #109 state after binary separation
+
+- Live HEAD: `94aeb1a336eae2348dfc2910b69f00bd6b00b156`.
+- PR #109 OPEN/DRAFT/UNMERGED; PR #108 OPEN/DRAFT/UNMERGED.
+- Main `one` CLI remains unchanged in vocabulary; native scanner is separate `one-integrity` binary.
+- Current SHA has no GitHub check-runs and no combined status. No local Rust compile/test or CircleCI terminal evidence. Do not reuse historical PR #89/#91 PASS results.
