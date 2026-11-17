@@ -71,6 +71,9 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Verification and release
 
+- `verification/one-completion-ledger.md` — fixed-weight completion ledger; current implementation estimate and exact-SHA verified points.
+- `verification/DEFINITION_OF_DONE.md` — release acceptance checklist and fail-closed Definition of Done.
+
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
