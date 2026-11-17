@@ -202,7 +202,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         CreateFileW, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING,
     };
     use windows_sys::Win32::System::JobObjects::{
-        CreateJobObjectW, SetInformationJobObject, TerminateJobObject,
+        CreateJobObjectW, IsProcessInJob, SetInformationJobObject, TerminateJobObject,
         JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
         JobObjectExtendedLimitInformation,
     };
@@ -525,6 +525,21 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
 
     let process = Handle::new(process_information.hProcess)?;
     let thread_handle = Handle::new(process_information.hThread)?;
+
+    // Verify that PROC_THREAD_ATTRIBUTE_JOB_LIST actually placed the direct
+    // child in this invocation's job. A successful CreateProcessW call alone
+    // is not sufficient evidence of the intended containment relationship.
+    let mut process_in_job = 0i32;
+    // SAFETY: both handles are live; process has query rights and this job was
+    // created by this function with query access.
+    if unsafe { IsProcessInJob(process.raw(), job.raw(), &mut process_in_job) } == 0 {
+        return Err(format!("IsProcessInJob failed (error {}).", unsafe {
+            GetLastError()
+        }));
+    }
+    if process_in_job == 0 {
+        return Err("Windows subprocess was created outside its assigned Job Object.".into());
+    }
     drop(thread_handle);
     drop(attributes);
     drop(stdin);
@@ -749,7 +764,7 @@ mod tests {
             OpenProcess, WaitForSingleObject, PROCESS_QUERY_LIMITED_INFORMATION,
         };
 
-        let script = "$ErrorActionPreference = 'Stop'; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id))";
+        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); }'; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, [IntPtr]::Zero, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); [Console]::Out.WriteLine(('CHILD_IN_ANY_JOB=' + $inJob))";
         let result = run_process(
             &ProcessSpec {
                 program: "powershell.exe".into(),
@@ -759,6 +774,23 @@ mod tests {
             &CapabilitySet::none().allow(Capability::Process),
         )
         .expect("PowerShell parent process should complete");
+        let child_in_any_job = result
+            .stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("CHILD_IN_ANY_JOB="))
+            .unwrap_or_else(|| panic!(
+                "PowerShell did not report descendant Job membership; stdout={:?}, stderr={:?}",
+                result.stdout, result.stderr
+            ))
+            .trim()
+            .parse::<bool>()
+            .expect("PowerShell should report a boolean Job membership result");
+        assert!(
+            child_in_any_job,
+            "descendant was not in any Windows Job Object; stdout={:?}, stderr={:?}",
+            result.stdout, result.stderr
+        );
+
         let pid = result
             .stdout
             .lines()
