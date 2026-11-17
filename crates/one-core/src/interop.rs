@@ -749,7 +749,7 @@ mod tests {
             OpenProcess, WaitForSingleObject, PROCESS_QUERY_LIMITED_INFORMATION,
         };
 
-        let script = "$psi = New-Object System.Diagnostics.ProcessStartInfo; $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $p = [System.Diagnostics.Process]::Start($psi); [Console]::Out.WriteLine($p.Id)";
+        let script = "$ErrorActionPreference = 'Stop'; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id))";
         let result = run_process(
             &ProcessSpec {
                 program: "powershell.exe".into(),
@@ -761,9 +761,15 @@ mod tests {
         .expect("PowerShell parent process should complete");
         let pid = result
             .stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("CHILD_PID="))
+            .unwrap_or_else(|| panic!(
+                "PowerShell did not report a child PID; stdout={:?}, stderr={:?}",
+                result.stdout, result.stderr
+            ))
             .trim()
             .parse::<u32>()
-            .expect("PowerShell should report the descendant PID");
+            .expect("PowerShell should report a numeric descendant PID");
 
         // The child was created after the parent was assigned to the Job Object.
         // Closing the kill-on-close job must terminate it before run_process returns.
