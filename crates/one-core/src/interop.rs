@@ -87,6 +87,35 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     })
 }
 
+#[cfg(windows)]
+fn spawn_bounded_reader<R: Read + Send + 'static>(
+    mut reader: R,
+    output_limit_exceeded: Arc<AtomicBool>,
+    _shutdown_requested: Arc<AtomicBool>,
+) -> JoinHandle<io::Result<Vec<u8>>> {
+    // Windows reader threads remain blocking: closing the invocation's Job
+    // Object terminates its descendants and closes inherited pipe writers.
+    // The shutdown flag is intentionally not used to interrupt a blocking
+    // Read; Job Object teardown remains the Windows reader termination path.
+    thread::spawn(move || {
+        let mut captured = Vec::with_capacity(MAX_OUTPUT_BYTES_PER_STREAM.min(16 * 1024));
+        let mut buffer = [0_u8; 8192];
+        loop {
+            let read = reader.read(&mut buffer)?;
+            if read == 0 {
+                break;
+            }
+            let remaining = MAX_OUTPUT_BYTES_PER_STREAM.saturating_sub(captured.len());
+            let retained = read.min(remaining);
+            captured.extend_from_slice(&buffer[..retained]);
+            if retained < read {
+                output_limit_exceeded.store(true, Ordering::Release);
+            }
+        }
+        Ok(captured)
+    })
+}
+
 #[cfg(unix)]
 fn set_reader_nonblocking<R: AsRawFd>(reader: &R) -> io::Result<()> {
     let descriptor = reader.as_raw_fd();
