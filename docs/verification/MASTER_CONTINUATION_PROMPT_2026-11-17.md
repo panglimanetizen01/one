@@ -163,3 +163,30 @@ After every successfully completed task:
 8. Continue execution until a real blocker requiring owner action is reached. After every task that passes, synchronize all relevant docs, derivative artifacts, ledger, and Notion Skill immediately.
 
 **The purpose of this prompt is to prevent rediscovery and repeated successful audits. The next session must start from the current live PR #108 candidate and unresolved engineering gates, not restart the project or re-run completed checks.**
+
+
+## 10. Latest live continuation checkpoint — scanner migration child PR — 2026-11-17
+
+This addendum supersedes any older PR #108 head pointer above. Refresh live metadata first.
+
+- PR #108 remains OPEN/DRAFT/UNMERGED at head `a6f91c07b04d7b9fafb9e99d0356954012ae3001`; it is the CircleCI migration candidate.
+- Draft PR #109: https://github.com/panglimanetizen01/one/pull/109
+  - Head branch `ci/scanner-restoration-20261117`.
+  - Base branch `ci/circleci-migration-rebased-20261117` (PR #108 branch).
+  - Current checkpoint head after docs index synchronization: `4aa0198d63db22258385cf6afc9d9f5f5446c6c2`; refresh live head.
+  - PR #109 is OPEN/DRAFT/UNMERGED. Do not merge without explicit owner authorization.
+- PR #109 restores native integrity preview from PR #89 and Python reference scanner + regression/quality assets from PR #91, adds CircleCI config structural checks to both scanners, native CLI dispatch, ADR-0018, CircleCI development-side scanner steps, contract enforcement, and synchronized docs.
+- Python `collect_ci_health.py` remains historical GitHub Actions API collector only. It does not collect CircleCI runs/jobs. Never cite it as CircleCI evidence.
+- Python scanner now scans `.circleci/config.yml` for generic workflow integrity and recognizes `CIRCLE_SHA1`. GitHub Actions-specific checks remain scoped to legacy `.github/workflows/`.
+- Native preview is read-only and developer-side; it is not a language semantic change, parity replacement, default gate, or release gate.
+- Historical PR #89/#91 PASS evidence is not current-source validation.
+- GitHub combined status/check-runs/check-suites for PR #109 initial code SHA `3ce4c0f...` were empty. No CircleCI terminal job evidence or local Rust/Python execution is currently available. The docs-only update to `4aa0198...` also has no test evidence.
+- Issue #90 remains OPEN. Implementation is isolated in PR #109; it is not yet integrated into PR #108.
+
+### Immediate next execution sequence
+1. Read latest Notion Skill checkpoint, verification index, and forensic audit addenda; refresh PR #109 head.
+2. Find an authorized CircleCI connector/CLI path and inspect pipeline/job logs for current PR #109 exact SHA. Do not ask for raw secrets in chat.
+3. Fix only the first confirmed failure on PR #109; run affected focused tests, then full CircleCI/independent Linux+Windows matrix on the final exact SHA.
+4. Perform native/Python same-checkout parity adjudication and update evidence matrix/ledger without promoting scores until acceptance is met.
+5. Merge PR #109 into PR #108 only after evidence/review and explicit owner authorization. Do not merge PR #108 to main or release without separate explicit authorization.
+6. Continue Issues #104 and #105 after scanner validation, preserving current root-confinement and non-escapable descendant requirements.
