@@ -23,7 +23,7 @@ commands:
             # GCE mirror whose package indexes and pool files briefly diverge.
             # Use Ubuntu's canonical archive so apt does not request stale
             # package versions from that regional mirror.
-            sudo find /etc/apt -type f \\( -name '*.sources' -o -name '*.list' \\) \\
+            sudo find /etc/apt -type f \( -name '*.sources' -o -name '*.list' \) \
               -exec sed -i 's/us-east1.gce.archive.ubuntu.com/archive.ubuntu.com/g' {} +
             sudo apt-get clean
             sudo apt-get update -o Acquire::Retries=3
