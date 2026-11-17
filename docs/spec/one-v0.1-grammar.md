@@ -447,7 +447,7 @@ The implementation MUST NOT claim conformance to grammar-bounded multi-word name
 
 The `cari alamat`, `baca berkas`, `tulis ke berkas`, `jalankan proses`, `kueri database`, and `ambil dari` productions are source-level orchestration boundaries. Their grammar recognition does not imply execution permission; runtime governance remains mandatory.
 
-No parser or lexer implementation change is authorized merely by this document. Implementation follows only after the specification gate is accepted.
+The v0.1 grammar specification gate is accepted. Parser and lexer implementations MUST conform to this contract; implementation changes MUST NOT silently alter grammar, ambiguity handling, or language meaning. Any normative grammar change requires an explicit compatibility/specification decision.
 
 ## 19. Design decision
 
