@@ -139,3 +139,23 @@ Use one shared authority object so read and write adapters cannot drift to diffe
 - Preserve the existing capability-policy evaluation order and inherited deny/approval semantics. Root-handle acquisition occurs at host setup; per-operation policy authorization still precedes adapter invocation and filesystem access.
 
 No root may be derived from the target, source text, ambient environment override, or a path supplied by the program. A root configuration failure is a host setup error; an operation with no filesystem authority is denied/fails closed without touching the filesystem.
+
+## 12. Historical PR #80 implementation review — reuse boundaries
+
+PR #80 at exact head `d75b2846465ba53281198693750f2e6ba39e2e33` was inspected as reference material, not accepted as an implementation to copy.
+
+Reusable Unix techniques, subject to current-contract adaptation and tests:
+- descriptor-relative parent traversal with `openat`, `O_DIRECTORY`, `O_NOFOLLOW`, `O_CLOEXEC`, and `O_NONBLOCK`;
+- leaf-handle validation for regular-file type and link count;
+- Linux `statx` mount identity plus device identity;
+- race-test structure for parent-directory symlink substitution and side-effect assertions.
+
+Rejected as-is:
+- root authority is recalculated from `std::env::current_dir()` for each operation rather than injected and retained by the host;
+- the Unix root walk reopens a path chain instead of deriving operations from one retained trusted root handle;
+- non-Linux Unix mount identity falls back to device number only, which cannot prove bind-mount separation;
+- the write path is not a same-directory exclusive-temp + atomic rename transaction;
+- Windows opens by path, then uses canonicalization/final-path comparison; this is check/open and path-based, not a handle-relative traversal guarantee;
+- the API has no shared immutable root authority or host-supplied per-operation byte limits.
+
+The current implementation must be a fresh, narrowly scoped design that preserves only the reviewed Unix primitives and closes the listed gaps. Do not copy PR #80's adapter, path resolution, or Windows implementation wholesale.
