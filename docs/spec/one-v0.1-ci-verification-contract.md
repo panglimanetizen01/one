@@ -103,3 +103,7 @@ Official sources:
 - CircleCI schema validation, job provisioning, and execution for the updated candidate remain NOT VERIFIED until a new pipeline reaches terminal state and its job steps/logs are inspected.
 - Windows Server 2025 host execution remains the responsibility of the independent `panglimanetizen01/one-windows-verification` repository. Linux-host MinGW cross-compilation is not Windows-host execution evidence.
 - No merge, release, billing change, repository-visibility change, or final acceptance promotion is authorized by this checkpoint.
+
+## 13. Cargo cache identity
+
+CircleCI Cargo cache keys MUST include the architecture, workspace/package manifests, `Cargo.lock`, and `rust-toolchain.toml`. A lockfile change must produce a distinct primary cache key so dependency-resolution changes cannot silently reuse the same exact cache identity. A broader fallback cache may be used only as an optimization; Cargo remains authoritative for dependency integrity, and every CI Cargo build, Clippy, test, and run command MUST continue to use `--locked`. Cache hits are performance evidence only, never verification evidence.
