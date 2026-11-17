@@ -204,3 +204,12 @@ Latest verified source/config checkpoint before this documentation-only synchron
 - CircleCI config blob: `750df015567cbba6927eb015e8d4054ffb8ca22d`.
 - Combined status empty; check-runs count 0; no terminal CircleCI execution evidence.
 Refresh live PR metadata before acting; this prompt update itself creates a later documentation-only HEAD.
+
+
+## 12. Latest scanner static-review correction — 2026-11-17
+
+PR #109 latest branch HEAD after docs/PR-body synchronization: `d15a0aa321cc906d0bc989fe9b517c979631d362` (refresh live metadata before work). It remains OPEN/DRAFT/UNMERGED and targets PR #108's migration branch.
+
+A static review against official CircleCI docs found the native preview incorrectly treated missing `workflows:` as an error. CircleCI permits an implicit workflow for a single job named `build`. Corrected in source commit `408b6c6adb57c935c34235c9316f8417a421b143`: native scanner now checks supported version values `2`, `2.0`, `2.1` and presence of `jobs:`, but does not require `workflows:`. Rust regression fixture covers valid implicit single-job build, quoted 2.0, unsupported version, and missing jobs. Detector/health docs updated. See Issue #90 comment for the proof boundary.
+
+**Not validated yet:** no local Rust build/test; no CircleCI terminal run or job logs; GitHub check-runs/status empty. Do not call the correction passing or compile-verified. CircleCI's own config compiler is authoritative. Next action: obtain CircleCI pipeline/job evidence for the latest exact SHA; if still inaccessible, continue static source review and keep this gate NOT VERIFIED. Do not repeat historical PR #89/#91 test runs.
