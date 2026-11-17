@@ -215,3 +215,17 @@ Use PR #80 only as a source of reviewed Unix primitives and test patterns. Do no
 ### E4 verifier stale-candidate diagnosis — 2026-11-18
 
 Historical run `43998206030` failed before any Issue #104 tests ran: both Unix and Windows logs show Cargo could not create `source/Cargo.lock` under `--locked`. The verifier's canonical source SHA was `e50748a1b25922d9090eba1f5fb90548d7c7d003`, which has no Cargo.lock. Current PR #108 base SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca` does have Cargo.lock. Treat this as a stale verifier input/lockfile precondition failure, not a security test result. Do not update the verifier canonical SHA to a candidate lacking the required Issue #104 test names. First implement tests and source, then update CANONICAL_COMMIT.txt to that exact candidate and run both jobs.
+### Issue #104 current-source implementation map — 2026-11-18
+
+Exact PR #108 base source SHA: `c4bb4b690e698a83e4ddaf279596479d3dc282ca`.
+
+- `crates/one-core/src/adapter.rs`: replace the current parameterless `FileReadAdapter::new()` / `FileWriteAdapter::new()` and direct `std::fs::read/write` calls. Inject shared `Arc<ProjectFilesystem>`; read accepts no args, write accepts exactly one Text arg and must enforce max bytes.
+- `crates/one-core/src/interpreter.rs`: add a dedicated constructor accepting policy + filesystem authority; this is the one adapter registration point. Preserve orchestrator policy-first evaluation and no-authority fail-closed behavior.
+- `crates/one-cli/src/main.rs`: capture host cwd independently from `--target` and inject only for filesystem capability dispatch. Non-filesystem dispatch stays unchanged.
+- `crates/one-core/src/lib.rs`: export public authority/limits types, not platform handle internals.
+- `crates/one-core/Cargo.toml`: libc and windows-sys 0.61 already exist as target dependencies; no dependency changes until required APIs are verified.
+- Migrate adapter unit tests and `filesystem_vertical_slice.rs` to explicit temporary roots; preserve policy/scope assertions. Review `filesystem_write_runtime.rs`. CLI build/package direct file operations are separate host operations, not automatically covered by adapter confinement.
+
+Implementation sequence: authority + limits; Unix/Windows handle-relative primitives; adapters; interpreter; CLI; adversarial tests; Unix + Windows same-SHA validation.
+
+Runner gate: no authenticated CircleCI tool or GitHub Actions workflow-dispatch action is exposed in this session, and the local clone route previously failed DNS resolution. Do not write uncompiled security-sensitive platform code. Static map only; no production source edits or test execution.
