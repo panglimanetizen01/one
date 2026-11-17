@@ -38,8 +38,8 @@ Windows Server 2025 native execution is verified separately in [panglimanetizen0
 The read-only repository integrity preview is a development tool, not part of the ONE source language or beginner-facing CLI guide:
 
 ~~~sh
-cargo test --locked -p one-cli --bin one integrity::tests
-cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha <40-character-git-sha>
+cargo test --locked -p one-cli --bin one-integrity
+cargo run --locked -p one-cli --bin one-integrity -- --scope all --root . --expected-sha <40-character-git-sha>
 python3 -m unittest discover -s tools -p "test_one_health.py" -v
 ~~~
 
