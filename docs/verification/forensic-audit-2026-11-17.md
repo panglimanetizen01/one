@@ -73,7 +73,7 @@ At SHA `d35db95153f6ddd79885494c72f5aee16c899751`:
 
 ### Static defects found and fixed on PR #108 candidate
 
-1. `tools/check_contract.py` originally required the three GitHub Actions workflow files. It would therefore fail after the migration deleted those files. It now requires `.circleci/config.yml`, `Cargo.lock`, and the CI verification contract instead.
+1. `tools/check_contract.py` originally required the three GitHub Actions workflow files. It would therefore fail after the migration deleted those files. It now requires `.circleci/config.yml`, `Cargo.lock`, and the CI verification contract instead, and fails if any of the three retired GitHub Actions workflow files reappear.
 2. The portable offline scripts used Cargo build/Clippy/test/run commands without `--locked`, contrary to the committed lockfile policy. All such commands in `tools/verify_offline.sh` and `tools/verify_offline.ps1` now include `--locked`.
 3. The first PR #108 migration candidate removed only `ci.yml`, leaving the legacy `release-check.yml` and `windows-native-verification.yml`. All three legacy repository workflows are now absent from the candidate branch.
 4. The initial PR #108 candidate did not contain PR #107's reader-shutdown implementation. The implementation and its three reconciled process/capability/runtime specifications have now been copied from exact PR #107 source SHA `21e393157e52728d9510699ac6c9120987e3852c`.
