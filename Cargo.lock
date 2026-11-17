@@ -314,6 +314,7 @@ name = "one-core"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "libc",
  "h2",
  "http",
  "quinn",
@@ -322,6 +323,7 @@ dependencies = [
  "rustls",
  "tokio",
  "webpki-roots 0.26.11",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
