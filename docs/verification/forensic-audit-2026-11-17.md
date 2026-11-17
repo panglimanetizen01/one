@@ -211,3 +211,13 @@ Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tool
 - Resulting commit: `c968c6a9dc067be85bc1160c95c0a91c555468ea` (documentation commit follows config commit `e91e092e5fca5b1e7ee2f8502b779dd5afd4888c`).
 - Validation boundary: GitHub readback confirms both restore/save primary keys include `Cargo.lock` and the same v2 key expression. CircleCI schema validation, pipeline provisioning, and job execution remain NOT VERIFIED because authenticated CircleCI job access is unavailable in this session. No CircleCI PASS is claimed.
 - Scope: cache identity only. No source semantics, Rust toolchain version, resource class, runner image, release gate, or provider cutover was changed.
+
+## CircleCI release-workflow deduplication — 2026-11-18
+
+- Config change commit: `a7fc834bb7e88f3fee535d3167ab6b870f658964`.
+- The duplicate `release-linux` job was removed. It previously repeated toolchain bootstrap, contract/docs checks, build, Clippy, workspace tests, and release CLI build/smoke already performed by `one-linux`.
+- The two workflows are now mutually exclusive: `one-ci` runs when `run_release_checks` is false; `release-check` runs when it is true. Both select the single `one-linux` baseline job.
+- Release-only checks remain present as a conditional step block in `one-linux`: real-network runtime tests and `bash tools/verify_offline.sh`. They are not removed or weakened.
+- Normative contract update: Section 14 of `docs/spec/one-v0.1-ci-verification-contract.md` requires mutually exclusive workflow selection, one baseline job, and preservation of release-only gates. Contract commit: `d4152f1cf6b8f3b9300575f649824551b408f910`.
+- Static review intent: avoid duplicate baseline execution while retaining the same baseline checks and additional release-only gates. No runtime/source semantics changed.
+- Validation boundary: GitHub readback and structural inspection only. CircleCI CLI/schema validation and actual conditional workflow execution remain NOT VERIFIED because authenticated CircleCI access is unavailable in this session. No CircleCI PASS is claimed; the exact resulting HEAD must be refreshed after documentation synchronization.
