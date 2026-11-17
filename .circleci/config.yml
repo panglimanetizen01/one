@@ -56,37 +56,37 @@ jobs:
           command: python3 tools/check_contract.py
       - run:
           name: Build
-          command: cargo build --workspace --all-targets
+          command: cargo build --locked --workspace --all-targets
       - run:
           name: Clippy
           command: |
-            cargo clippy --workspace --all-targets -- -D warnings
+            cargo clippy --locked --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
-          command: cargo test --workspace --all-targets
+          command: cargo test --locked --workspace --all-targets
       - run:
           name: Deterministic .oneir and .onepkg artifacts
-          command: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+          command: cargo test --locked -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - run:
           name: DNS success and failure classification
           command: |
-            cargo test -p one-core --all-targets dns_adapter
+            cargo test --locked -p one-core --all-targets dns_adapter
       - run:
           name: Orchestration policy deny and allow paths
           command: |
-            cargo test -p one-core --all-targets orchestrator
+            cargo test --locked -p one-core --all-targets orchestrator
       - run:
           name: Database vertical slice
           command: |
-            cargo test -p one-core --test database_vertical_slice
+            cargo test --locked -p one-core --test database_vertical_slice
       - run:
           name: HTTP GET vertical slice
           command: |
-            cargo test -p one-core --test http_get_vertical_slice
+            cargo test --locked -p one-core --test http_get_vertical_slice
       - run:
           name: HTTP GET CLI vertical slice
           command: |
-            cargo test -p one-cli --test http_get_orchestration
+            cargo test --locked -p one-cli --test http_get_orchestration
       - save_cache:
           key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
           paths:
@@ -109,16 +109,16 @@ jobs:
             python3 tools/check_contract.py
       - run:
           name: Build
-          command: cargo build --workspace --all-targets
+          command: cargo build --locked --workspace --all-targets
       - run:
           name: Clippy
-          command: cargo clippy --workspace --all-targets -- -D warnings
+          command: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run:
           name: Workspace tests
-          command: cargo test --workspace --all-targets
+          command: cargo test --locked --workspace --all-targets
       - run:
           name: Real network runtime tests
-          command: cargo test -p one-core --features real-network --all-targets
+          command: cargo test --locked -p one-core --features real-network --all-targets
       - run:
           name: Offline verification
           command: bash tools/verify_offline.sh
