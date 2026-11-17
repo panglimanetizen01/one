@@ -124,3 +124,18 @@ Windows:
 - exact test `filesystem_adapters_reject_parent_directory_traversal`
 
 The verifier checks that the expected tests actually execute and pass; filtered-only output is explicitly rejected. The implementation must either preserve these exact test names/counts or update the independent verifier filters in a separately reviewed change. Do not weaken nonzero-match assertions. This inventory is from the currently checked-in verifier workflow and must be refreshed before the final acceptance run.
+
+## 11. Host-owned API and CLI integration contract
+
+Use one shared authority object so read and write adapters cannot drift to different roots or limits:
+
+- `FilesystemLimits` is immutable and carries `max_read_bytes` and `max_write_bytes`; construction rejects zero or unsupported platform values and uses checked conversions before allocation.
+- `ProjectFilesystem::open(root: &Path, limits: FilesystemLimits)` is the only operation that establishes root authority. It opens the root itself without following a final symlink/reparse point, verifies it is a directory, retains its handle, and records its file identity and mount/volume identity.
+- `FileReadAdapter::new(filesystem: Arc<ProjectFilesystem>)` and `FileWriteAdapter::new(filesystem: Arc<ProjectFilesystem>)` share that same immutable authority. There is no parameterless production constructor that silently adopts the process working directory.
+- Add an explicit interpreter host constructor, conceptually `Interpreter::with_orchestration_policy_and_filesystem(policy, filesystem)`. Existing non-filesystem interpreter construction remains available. Existing `with_orchestration_policy(policy)` must not infer a filesystem root; filesystem adapter invocation without an injected authority fails closed.
+- The CLI is the trusted host boundary. For a filesystem capability invocation it obtains `std::env::current_dir()` independently of the user-supplied `--target`, opens that directory as the project root, and injects the authority. A target is never used to select or widen the root.
+- CLI callers that need to access a file outside the current project directory must explicitly change the trusted host root through a separately designed host configuration; the language source and `--target` cannot do so.
+- Tests create a temporary project directory, explicitly open it as the trusted root, and place all positive fixtures inside it. They must not make the target's parent directory the root as a shortcut.
+- Preserve the existing capability-policy evaluation order and inherited deny/approval semantics. Root-handle acquisition occurs at host setup; per-operation policy authorization still precedes adapter invocation and filesystem access.
+
+No root may be derived from the target, source text, ambient environment override, or a path supplied by the program. A root configuration failure is a host setup error; an operation with no filesystem authority is denied/fails closed without touching the filesystem.
