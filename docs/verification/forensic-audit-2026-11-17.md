@@ -265,3 +265,11 @@ A product-boundary review found that the initial scanner port added `one pindai`
 - Updated CONTRIBUTING, ADR-0018, scanner docs, detector parity matrix, PR description, and Issue #90 comment.
 
 The main `one` CLI help and dispatch are restored to the pre-scanner vocabulary. No ONE language grammar, semantics, runtime behavior, or beginner user-guide vocabulary changed. This is static readback only; compilation/tests and CircleCI exact-SHA evidence remain NOT VERIFIED.
+
+
+### Exact current PR #109 checkpoint after developer-binary separation
+
+- Latest exact HEAD: `94aeb1a336eae2348dfc2910b69f00bd6b00b156`.
+- PR #109 remains OPEN/DRAFT/UNMERGED; PR #108 remains OPEN/DRAFT/UNMERGED.
+- Changed-file set now includes explicit Cargo target `one-integrity`, its entrypoint, updated CircleCI invocation, and contract guard. Main CLI help/dispatch no longer includes scanner vocabulary.
+- GitHub check-runs: 0; combined status: empty. No local `cargo`/`rustc`, no CircleCI CLI/token, no CircleCI terminal logs. No compile/test PASS is claimed.
