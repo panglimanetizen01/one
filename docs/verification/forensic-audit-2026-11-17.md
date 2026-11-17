@@ -298,3 +298,11 @@ No local Cargo/Python execution was available in this environment. Do not claim 
 - CircleCI terminal job logs and local Rust/Python execution remain unavailable. No compile/test PASS, CircleCI PASS, or Python/native parity claim is made.
 - Earlier SHA references in §§11–13 are historical checkpoints and must not be treated as the live HEAD.
 - Required next evidence: authenticated CircleCI pipeline/job details for this exact SHA, followed by terminal logs and independent Linux/Windows verification. Do not request raw tokens in chat.
+
+
+## 15. Documentation-only follow-up HEAD — 2026-11-17
+
+- After correcting stale live-head and scanner-architecture wording in the verification index, forensic audit, and master continuation prompt, PR #109 advanced to exact HEAD `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`.
+- The branch remains 53 commits ahead of its PR #108 base `a6f91c07b04d7b9fafb9e99d0356954012ae3001`, with no commits behind that base. The three documentation files are the only files touched by this follow-up.
+- PR metadata readback reports OPEN/DRAFT/UNMERGED and mergeable=true at the latest refresh. No merge was attempted.
+- GitHub combined status and GitHub Actions workflow-runs remain empty for this final SHA. CircleCI terminal logs and local Rust/Python test execution remain unavailable; no validation PASS is claimed.
