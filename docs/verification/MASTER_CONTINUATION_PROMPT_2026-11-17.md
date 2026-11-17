@@ -211,3 +211,7 @@ Keep policy-first ordering and PR #101 inherited deny/approval behavior unchange
 ### Historical PR #80 reuse boundary
 
 Use PR #80 only as a source of reviewed Unix primitives and test patterns. Do not copy its current_dir-derived root, per-operation root path walk, st_dev-only non-Linux fallback, non-atomic write path, or Windows canonicalize/check/open implementation. The current Issue #104 design and normative contract supersede those mechanisms.
+
+### E4 verifier stale-candidate diagnosis — 2026-11-18
+
+Historical run `43998206030` failed before any Issue #104 tests ran: both Unix and Windows logs show Cargo could not create `source/Cargo.lock` under `--locked`. The verifier's canonical source SHA was `e50748a1b25922d9090eba1f5fb90548d7c7d003`, which has no Cargo.lock. Current PR #108 base SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca` does have Cargo.lock. Treat this as a stale verifier input/lockfile precondition failure, not a security test result. Do not update the verifier canonical SHA to a candidate lacking the required Issue #104 test names. First implement tests and source, then update CANONICAL_COMMIT.txt to that exact candidate and run both jobs.
