@@ -116,3 +116,11 @@ CircleCI is the canonical CI execution provider for the ONE repository's Linux p
 Windows Server 2025 product/native verification is performed by the independent `panglimanetizen01/one-windows-verification` repository. Its workflow pins the canonical ONE source by full commit SHA, asserts source and verifier identities, executes the Windows native artifact, and uploads a manifest plus binary. The Linux CircleCI result and Windows verifier result must both pass for the same exact source SHA before cross-platform verification is claimed.
 
 The Linux CircleCI job retains MinGW-w64 cross-compilation regression coverage for the Windows target. This does not prove Windows-host execution. Current provider boundaries and evidence requirements are maintained in `docs/CI.md` and `docs/verification/windows-native-verification.md`.
+
+
+## Latest release-gate evidence boundary — 2026-11-17
+
+- The offline verification scripts now enforce the committed Cargo lockfile with `--locked` for build, Clippy, tests, and every CLI smoke invocation; the source contract checker enforces that invariant.
+- The independent Windows verifier workflow has been aligned to use `--locked` for its full workspace, real-network, and native backend Cargo commands. Its workflow change is present in verifier PR #42 but has not yet been executed on the current source pin.
+- The optional CircleCI `release-check` parameter `run_release_checks=true` remains NOT VERIFIED; no release-check execution evidence is available.
+- No release acceptance point is promoted. The v0.1 release gate remains NOT PASSED until the required exact-SHA platform checks, release checks, clean-install/use checks, and documented acceptance criteria are complete.

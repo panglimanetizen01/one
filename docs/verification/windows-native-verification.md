@@ -143,3 +143,10 @@ The ZIP digest was independently recomputed from the downloaded artifact; the ex
 - A subsequent docs-only update to PR #95 `docs/CI.md` is commit `75e934051fed648477f68301b7d8a5dd1bb02095`. That changes the PR head but not product/test inputs. Do not transfer exact-SHA status automatically; reconcile the current pin and check whether CircleCI published a status for the new head.
 
 Windows native verification for the current PR #95 source remains NOT VERIFIED until a matching exact-SHA run and artifact/manifest inspection are available.
+
+
+### Cargo.lock enforcement in independent Windows verification — 2026-11-17
+
+- The independent verifier workflow now uses `--locked` for all Cargo build, Clippy, test, real-network, and native-backend build commands. Workflow change commit: `19188f888ba5e2c7d65f8e06069ba1b65bbb1917`.
+- The exact source checkout remains pinned by `WINDOWS_SOURCE_COMMIT.txt`; the source pin must be synchronized to the final PR #95 HEAD after the documentation commits below.
+- No Windows run is claimed for the new workflow revision or the latest PR #95 source. Exact-SHA Windows verification remains NOT VERIFIED until a matching run and artifact/manifest inspection complete.

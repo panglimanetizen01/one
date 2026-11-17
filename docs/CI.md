@@ -385,3 +385,12 @@ This addendum supersedes older candidate-status statements above where they conf
 - No merge or release is authorized or performed.
 
 A later documentation-only commit changes the PR head SHA. Treat the evidence above as bound to `cef1f41...`; do not silently transfer the status to a descendant commit. If this addendum is committed as a new PR head, refresh CircleCI status for that new head and keep Windows exact-SHA status NOT VERIFIED until a matching run exists.
+
+
+### Cargo.lock enforcement extended to offline paths — 2026-11-17
+
+- The offline verification scripts `tools/verify_offline.sh` and `tools/verify_offline.ps1` now pass `--locked` to every Cargo build, Clippy, test, and run command.
+- `tools/check_contract.py` now checks both offline scripts and fails if any build/Clippy/test/run command omits `--locked`. This closes a gap where the CircleCI `release-linux` and independent Windows offline steps could invoke Cargo without the explicit lockfile guard.
+- The independent Windows verifier workflow in PR #42 was also updated to use `--locked` for all Cargo build, Clippy, test, real-network, and native-backend build commands (verifier workflow commit `19188f888ba5e2c7d65f8e06069ba1b65bbb1917`).
+- These are CI/developer-tooling and verification-contract changes only; ONE grammar, semantics, compiler/runtime behavior, CLI, and user experience are unchanged.
+- The CircleCI status for the code/tooling source before this documentation-only addendum, SHA `a337c8f42f7914129faf9d281bda599c324c2db2`, is PENDING (workflow `deaa1f53-a0f5-4ad4-a500-7d4a41a53592`, job `7da760ac-4a9e-437b-aa83-06f629cec8ee`). The final documentation descendant must be checked independently; no result is transferred automatically.
