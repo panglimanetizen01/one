@@ -127,3 +127,12 @@ This addendum supersedes older PR #95 current-status statements above where they
 - Independent verifier PR #42 pin matches `d426897...`; verifier workflow enforces `--locked` on all Cargo commands and includes a self-check for the rule. Verifier docs/current PR head: `9475956ae0ddccb969a5d14d1c9e803c7e44d097`.
 - Windows exact-SHA run for `d426897...` is NOT VERIFIED. Optional CircleCI `release-check` remains NOT VERIFIED.
 - No implementation score, verified score, DoD checkbox, or E6 status is promoted. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release acceptance remains NOT PASSED.
+
+
+## Superseding exact-SHA evidence boundary — 2026-11-17
+
+- PR #95 code/tooling candidate `d42689718870236694f6cab841f8b7be1afccfcc` has CircleCI `ci/circleci: one-linux` terminal SUCCESS (workflow `6af2386b-dd8d-47c8-b414-4237e92130fd`, job `6cf4f8c5-7b2d-4876-a448-89dc0c596c68`). It includes `--locked` enforcement in both offline scripts and the source contract checker.
+- Current PR #95 HEAD `c207fb15bc19889a8c8e60923581ef1b1f7a6374` is a documentation-only descendant and its CircleCI status is PENDING (workflow `15aa40bb-0225-4ad6-a2ea-fdaa0f364b0b`, job `cdcc88bd-abdc-43b0-9885-1e696bd07ac8`). Do not transfer the prior SUCCESS automatically.
+- Independent verifier PR #42 pin matches `c207fb...` (pin commit `8db417749753009ad5dbc69f8b4d2bb00c5d1642`; verifier docs commit/current head `b45f9a259ea072168a1efc3300300438e78fbbf6`). No matching Windows run is observed; status NOT VERIFIED. The verifier workflow now uses `--locked` for all Cargo commands and self-checks the invariant.
+- PR #102 exact source `7e10e758d7e1ca70f450bfbb6cf397d805500e53` remains GitHub Actions PASS on Ubuntu and Windows (run #44019833034); the Windows descendant Job Object regression passed.
+- Optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; no score or DoD checkbox is promoted.
