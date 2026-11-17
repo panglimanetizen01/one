@@ -16,6 +16,8 @@ const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
 #[cfg(unix)]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
+#[cfg(unix)]
+const READER_SHUTDOWN_GRACE: Duration = Duration::from_millis(100);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProcessSpec {
@@ -36,15 +38,28 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     mut reader: R,
     output_limit_exceeded: Arc<AtomicBool>,
     shutdown_requested: Arc<AtomicBool>,
+    shutdown_incomplete: Arc<AtomicBool>,
 ) -> JoinHandle<io::Result<Vec<u8>>> {
     thread::spawn(move || {
         let mut captured = Vec::with_capacity(MAX_OUTPUT_BYTES_PER_STREAM.min(16 * 1024));
         let mut buffer = [0_u8; 8192];
+        let mut shutdown_deadline = None;
         loop {
+            let shutdown = shutdown_requested.load(Ordering::Acquire);
+            if shutdown && shutdown_deadline.is_none() {
+                shutdown_deadline = Some(Instant::now() + READER_SHUTDOWN_GRACE);
+            }
+            if shutdown_deadline.is_some_and(|deadline| Instant::now() >= deadline) {
+                // A writer that never lets the nonblocking pipe become idle must
+                // not keep this thread alive forever or be silently accepted.
+                shutdown_incomplete.store(true, Ordering::Release);
+                break;
+            }
+
             let read = match reader.read(&mut buffer) {
                 Ok(read) => read,
                 Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
-                    if shutdown_requested.load(Ordering::Acquire) {
+                    if shutdown {
                         break;
                     }
                     thread::sleep(Duration::from_millis(5));
@@ -60,13 +75,12 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
             captured.extend_from_slice(&buffer[..retained]);
             if retained < read {
                 output_limit_exceeded.store(true, Ordering::Release);
-            }
-            // Once shutdown is requested, perform at most one final nonblocking
-            // read and then exit. An escaped descendant may continuously write
-            // to the pipe, so waiting for WouldBlock alone is not a bounded stop.
-            if shutdown_requested.load(Ordering::Acquire) {
                 break;
             }
+            // After shutdown, keep draining only until the pipe becomes idle,
+            // the output cap is exceeded, or the bounded grace period expires.
+            // This preserves overflow detection without waiting indefinitely
+            // for an escaped descendant to close its inherited writer.
         }
         Ok(captured)
     })
@@ -187,15 +201,18 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
 
     let output_limit_exceeded = Arc::new(AtomicBool::new(false));
     let reader_shutdown = Arc::new(AtomicBool::new(false));
+    let reader_shutdown_incomplete = Arc::new(AtomicBool::new(false));
     let stdout_reader = spawn_bounded_reader(
         stdout,
         Arc::clone(&output_limit_exceeded),
         Arc::clone(&reader_shutdown),
+        Arc::clone(&reader_shutdown_incomplete),
     );
     let stderr_reader = spawn_bounded_reader(
         stderr,
         Arc::clone(&output_limit_exceeded),
         Arc::clone(&reader_shutdown),
+        Arc::clone(&reader_shutdown_incomplete),
     );
     let deadline = Instant::now() + PROCESS_TIMEOUT;
     let mut timed_out = false;
@@ -251,6 +268,12 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         return Err(format!(
             "Subprocess exceeded the {} byte per-stream output limit.",
             MAX_OUTPUT_BYTES_PER_STREAM
+        ));
+    }
+    if reader_shutdown_incomplete.load(Ordering::Acquire) {
+        return Err(format!(
+            "Subprocess output reader did not become idle within the {:?} shutdown grace period.",
+            READER_SHUTDOWN_GRACE
         ));
     }
 
@@ -1002,7 +1025,7 @@ mod tests {
             std::process::id()
         ));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \"$1\"; while :; do printf x; done' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let script = "setsid sh -c 'echo $ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
         let spec = ProcessSpec {
             program: "sh".into(),
             args: vec![
@@ -1042,23 +1065,13 @@ mod tests {
             completed_before_cleanup,
             "run_process reader shutdown waited for an escaped descendant that continuously writes"
         );
-        match result {
-            Ok(output) => {
-                assert!(output.success, "the direct shell should exit successfully");
-                assert!(
-                    output.stdout.len() <= MAX_OUTPUT_BYTES_PER_STREAM,
-                    "stdout capture exceeded the configured byte limit"
-                );
-                assert!(
-                    output.stderr.len() <= MAX_OUTPUT_BYTES_PER_STREAM,
-                    "stderr capture exceeded the configured byte limit"
-                );
-            }
-            Err(error) => assert!(
-                error.contains("output limit"),
-                "unexpected process execution error: {error}"
-            ),
-        }
+        let error = result.expect_err(
+            "a continuously writing escaped descendant must not be silently accepted"
+        );
+        assert!(
+            error.contains("output limit") || error.contains("reader did not become idle"),
+            "unexpected bounded-reader error: {error}"
+        );
     }
 
     #[test]
