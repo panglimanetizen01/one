@@ -471,3 +471,10 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - Artifact `14312034494`, ZIP SHA-256 `0d86f4876414d032d4062554958f23d7308ae38c76ff3a4cf491292757df7ef0`; native EXE SHA `45ebf54262ab9d77ba14f63b79f7d0e80987df27659ea65311b078453dacdf9a`; release CLI EXE SHA `a53e5f5e41e493a3c98123a592321242f8efa2883f3d2ee8b538d4c6385c0a88`; manifest SHA `62297b0ea101d53fdcf93e610503d02e5ae803a2e1ec19f4680e6a7635f83834`. Artifact and manifest hashes match; both executables parse as PE32+ AMD64; native and CLI outputs `Budi`, exit 0; CLI `one 0.1.0`.
 - Verifier PR #42 docs current commit `56271be82645357c2feaa1134ae2dc1d2ceae734` records run #42; documentation-only verifier run #43 / `44049102193` is IN_PROGRESS on the same exact source pin. No product source change.
 - CircleCI status for PR #95 source `993f763...` is not visible through GitHub; optional `release-check` remains NOT VERIFIED. CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. No merge/release or DoD promotion.
+
+
+## User installation prerequisites correction — PR #102 — 2026-11-17
+
+- Review of workspace dependency `rusqlite = { version = "0.40.2", features = ["bundled"] }` confirmed the build compiles bundled SQLite C source. The installation guide previously listed Git/Rust only and omitted the native compiler toolchain, which could cause first-time builds to fail on clean Linux/Windows machines.
+- Updated `docs/panduan-pengguna/instalasi.md`: Debian/Ubuntu installs `build-essential`; other Linux distributions need GCC/Clang and `make`; Windows requires Visual Studio Build Tools 2022+ with Desktop development with C++, MSVC x64/x86 build tools and Windows SDK, using Developer PowerShell. Added `cc`, `make`, `cl`, and `link` checks. The doc still accurately states no installer or official prebuilt release exists.
+- Current PR #102 source HEAD `ac1bb214bc028395367cce7edc234a1909971e2a` is a docs-only descendant of exact-SHA GHA PASS `fe3e4d0...`. Fresh current-SHA GHA run has not yet appeared; no PASS is transferred. PR remains OPEN / DRAFT / UNMERGED.
