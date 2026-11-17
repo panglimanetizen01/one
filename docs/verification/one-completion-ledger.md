@@ -1031,7 +1031,7 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - Repository remains PUBLIC, default branch `main`, main SHA `d35db95153f6ddd79885494c72f5aee16c899751`. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED; DoD remains 3 checked / 10 unchecked. No merge or release.
 
 
-## PR #106 exact-head regression follow-up — 2026-11-17 19:03 WIB
+## PR #106 exact-head regression follow-up — 2026-11-17 18:57 WIB
 
 - Current PR #106 exact source SHA is now `63946bbeab4ae1ed29290a3d271d63e132198ace`, branch `fix/unix-reader-shutdown-deadline-20261117`, based on PR #102 branch SHA `ac1bb214bc028395367cce7edc234a1909971e2a`. Incremental PR diff remains four files (one Rust source file and three specifications), 22 commits ahead / 0 behind.
 - Added `non_idle_reader_stops_after_shutdown_grace`, a focused Unix test that keeps a reader continuously ready without reaching the 1 MiB output cap and asserts it returns within one second with the non-idle shutdown flag. This specifically exercises the 100 ms shutdown-grace error path; the escaped-session and continuous-writer integration regressions remain in place.
