@@ -63,6 +63,9 @@ User documentation is intentionally separate from normative engineering contract
 - `implementation/one-v0.1-core-implementation-gate.md` — implementation sequencing and evidence gate.
 
 ## Verification and release
+- `verification/forensic-audit-2026-11-17.md` — repository-wide forensic inventory, documentation/CI drift, exact-SHA evidence, and open security gates.
+- `verification/MASTER_CONTINUATION_PROMPT_2026-11-17.md` — read-first master prompt for the next execution session; prevents re-auditing completed exact-SHA work.
+- `spec/one-v0.1-ci-verification-contract.md` — normative development-side CI and exact-SHA evidence contract.
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
