@@ -31,8 +31,8 @@ GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No
 
 The fixed-weight completion ledger and Definition of Done are restored in the canonical documentation surface by [PR #103](https://github.com/panglimanetizen01/one/pull/103):
 
-- [Fixed-weight completion ledger](one-completion-ledger.md) — F1–F6, C1–C6, and E1–E6; weights remain fixed at 100 points.
-- [Definition of Done](DEFINITION_OF_DONE.md) — release acceptance checklist.
+- [Fixed-weight completion ledger](https://github.com/panglimanetizen01/one/blob/docs/restore-completion-ledger-dod-20261117/docs/verification/one-completion-ledger.md) — F1–F6, C1–C6, and E1–E6; weights remain fixed at 100 points.
+- [Definition of Done](https://github.com/panglimanetizen01/one/blob/docs/restore-completion-ledger-dod-20261117/docs/verification/DEFINITION_OF_DONE.md) — release acceptance checklist.
 
 Current disposition is deliberately fail-closed:
 - Historical implementation inventory: 92/100 provisional; current exact-SHA verified points: 0/100.
