@@ -367,3 +367,10 @@ The MSYS2 installation run step now sets `no_output_timeout: 30m` so the large f
 - Static review of the first APT mirror mitigation found that the generated CircleCI YAML contained doubled backslashes around the `find` expression and line continuation. The shell command was corrected to use single shell escapes; this is a configuration syntax correction, not a new product/toolchain change.
 - Correction commit: `0dbc23dd47243a7b2ae5736c32943e3014353d4f`. The APT mirror rewrite now uses `find ... \( ... \) \\ ` with valid single-character shell escapes and the existing canonical archive, cache refresh, and retry behavior.
 - PR #95 exact HEAD is now `0dbc23dd47243a7b2ae5736c32943e3014353d4f`. No CircleCI status had yet been published at the time of this documentation update; do not claim the correction or mirror mitigation has passed until the exact-SHA run completes.
+
+
+### CircleCI rerun after APT shell correction — exact-SHA pending — 2026-11-17
+
+- Exact PR #95 HEAD: `4db76fbaf651dd069c7000fb46a4dea61b11fbd8`.
+- CircleCI `ci/circleci: one-linux` has started and is PENDING for this exact SHA: workflow `d436555e-6a03-4167-a844-acc2ac5e50d6`, job `b8478a26-15f6-457c-b8e4-f30e461e17e9`.
+- This run is the first verification attempt after correcting the doubled shell escapes in the APT source-rewrite command. No terminal outcome is available yet; do not claim the mirror mitigation passed.
