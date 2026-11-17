@@ -1,15 +1,17 @@
 # ONE v0.1 — Definition of Done and Release Gate
 
-## Current continuation state — 2026-11-17
+## Current continuation state — 2026-11-17 (live refresh)
 
-- Canonical repository: `panglimanetizen01/one`; `main` remains at `d35db95153f6ddd79885494c72f5aee16c899751`.
-- Current implementation work is in open/draft PRs, including PR #102 HEAD `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`; its exact-SHA GitHub Actions run #44002493159 is in progress.
-- Lockfile candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime (exit 0, output `Budi`). This is not evidence for the newer process-hardening HEAD.
+- Canonical repository: `panglimanetizen01/one`; `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`; visibility PUBLIC.
+- PR #102 branch HEAD `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`; exact-SHA GitHub Actions run [#44002493159](https://github.com/panglimanetizen01/one/actions/runs/44002493159) is terminal: Ubuntu job `133769724724` PASS; Windows job `133769724148` FAIL.
+- Windows build and Clippy passed, but test suite reported 119 passed / 1 failed. `windows_job_object_terminates_descendants_when_parent_exits` failed because descendant PID `8864` remained alive after the parent invocation returned (`WAIT_TIMEOUT=258`). Descendant containment is NOT VERIFIED / FAIL on this exact SHA; do not treat this as a harness-only parse error.
+- Lockfile-only candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed prior Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime. That evidence predates subprocess implementation changes and does not verify PR #102 current HEAD.
 - No final source SHA is frozen. All release acceptance must be evaluated against one exact final source SHA after implementation changes stop.
-- Historical DoD state was 3 checked / 10 unchecked. The checked items are not current-final-SHA acceptance; revalidate them before release. Keep all other acceptance items unchecked until evidence is attached.
-- The fixed-weight ledger carries a provisional 92/100 implementation inventory and 0/100 current-SHA verified points. Historical verified points are not carried forward.
-- PR #95 CircleCI migration remains unmerged; `.circleci/config.yml` is absent from `main`. CircleCI ERROR contexts on product-fix branches are therefore not test-failure evidence.
-- The release gate remains **NOT PASSED**. No merge, release, protected E2 dispatch, secret/trust-store mutation, visibility change, or direct `main` edit is authorized.
+- Historical DoD state was 3 checked / 10 unchecked. The checked items are not current-final-SHA acceptance; revalidate them before release.
+- Fixed-weight ledger remains 92/100 provisional implementation and 0/100 current-SHA verified points. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`.
+- PR #95 CircleCI migration remains OPEN / DRAFT / UNMERGED; `.circleci/config.yml` is absent from `main`. CircleCI is not yet active on main.
+- Release gate remains **NOT PASSED**. No merge, release, protected E2 dispatch, secret/trust-store mutation, visibility change, or direct `main` edit is authorized.
+
 
 ---
 
