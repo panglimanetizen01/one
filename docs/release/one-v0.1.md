@@ -142,3 +142,11 @@ The Linux CircleCI job retains MinGW-w64 cross-compilation regression coverage f
 - Windows native executable ran with exit code 0 and output `Budi`; PE32+ AMD64 artifact and manifest were inspected. ZIP SHA-256 `7cbbf251efe2f56ba24965a76cd420ccddae8e84e8f0dcd727b09943014f3b8f`; executable SHA-256 `0c79f06f37f793061884acf43c9ba419bb0fc4ccf48c4a487f511e462cf55af5`; manifest SHA-256 `7ac05a71f1f5e5149f1dd721d2ca9c610bfe7504acb6b164938a51255c60b1d6`.
 - The optional CircleCI `release-check` parameter `run_release_checks=true` remains NOT VERIFIED. Therefore cross-platform CI gates pass for this exact source SHA, but final release acceptance remains NOT PASSED.
 - No merge or release is authorized or performed.
+
+
+## Latest exact-SHA cross-platform gate — run #35 — 2026-11-17
+
+- PR #95 source SHA `048f87f5e9c14fdda33c7fa7a3d6dd77f469b9d4`: CircleCI Linux terminal SUCCESS (workflow `875e39ae-399d-4803-81f7-407c7dc3f0d3`, job `40fbbc41-4a32-4796-b817-d144f8186e46`).
+- Independent Windows run #35 / `44031205160` terminal SUCCESS for the same exact source SHA; verifier SHA `62f401db17e5bc2ff3ae4c53e02cc721ed1d191e`, job `133863311567`.
+- Windows native exit code 0 / output `Budi`; PE32+ AMD64 executable hash `7d9eaa745e561bafe4203404c9d6b0601b584ff93eec46a379e5fa1d0e9afd0a`; ZIP hash `0238718f261ba9f9840d26eb243ce3196931f1f9927c98e438b3077f7cf1a58b`; manifest hash `eace9930574e939e94a3f5d18c75901ffe883a43852ff43c281b236ece22543e`.
+- The optional CircleCI `release-check` remains NOT VERIFIED. Release acceptance remains NOT PASSED; no merge/release is authorized.

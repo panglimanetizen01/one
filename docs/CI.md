@@ -414,3 +414,12 @@ A later documentation-only commit changes the PR head SHA. Treat the evidence ab
 - The artifact ZIP digest matches GitHub's artifact digest; the executable digest matches the manifest. Independent file inspection identifies PE32+ x86-64.
 - The optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED. Cross-platform CI PASS is not release acceptance or merge authorization.
 - These results are bound to source SHA `c207fb...`. This documentation update is a docs-only descendant; do not relabel the evidence as a run on the new descendant SHA.
+
+
+### Latest exact-SHA cross-platform gate — run #35 — 2026-11-17
+
+- Canonical source SHA `048f87f5e9c14fdda33c7fa7a3d6dd77f469b9d4`: CircleCI `ci/circleci: one-linux` terminal SUCCESS, workflow `875e39ae-399d-4803-81f7-407c7dc3f0d3`, job `40fbbc41-4a32-4796-b817-d144f8186e46`.
+- Independent Windows run #35 / ID `44031205160` terminal SUCCESS for the same source SHA; verifier SHA `62f401db17e5bc2ff3ae4c53e02cc721ed1d191e`, job `133863311567`.
+- Windows runtime exit 0 / output `Budi`; PE32+ AMD64 executable SHA-256 `7d9eaa745e561bafe4203404c9d6b0601b584ff93eec46a379e5fa1d0e9afd0a`; artifact ID `14304459543`; ZIP SHA-256 `0238718f261ba9f9840d26eb243ce3196931f1f9927c98e438b3077f7cf1a58b`; manifest SHA-256 `eace9930574e939e94a3f5d18c75901ffe883a43852ff43c281b236ece22543e`.
+- Artifact digest matches GitHub's digest; executable hash matches manifest; local PE inspection confirms PE32+ x86-64. All build/test, real-network, offline, native build/inspect/execute and upload steps passed.
+- Optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED. Cross-platform CI PASS is not release acceptance.

@@ -169,3 +169,13 @@ Windows native verification for the current PR #95 source remains NOT VERIFIED u
 - Artifact ID `14305081962`, ZIP size 15,867 bytes, SHA-256 `7cbbf251efe2f56ba24965a76cd420ccddae8e84e8f0dcd727b09943014f3b8f`. Manifest size 563 bytes, SHA-256 `7ac05a71f1f5e5149f1dd721d2ca9c610bfe7504acb6b164938a51255c60b1d6`.
 - Matching CircleCI Linux result for source `c207fb...`: workflow `15aa40bb-0225-4ad6-a2ea-fdaa0f364b0b`, job `cdcc88bd-abdc-43b0-9885-1e696bd07ac8`, terminal SUCCESS.
 - The optional CircleCI release-check remains NOT VERIFIED; release acceptance is not passed. Historical Windows run #32 applies only to its own older source SHA and is not reused.
+
+
+### Latest exact-SHA Windows verifier run #35 — terminal PASS — 2026-11-17
+
+- Canonical source SHA `048f87f5e9c14fdda33c7fa7a3d6dd77f469b9d4`; verifier SHA `62f401db17e5bc2ff3ae4c53e02cc721ed1d191e`; run #35 / ID `44031205160`, job `133863311567`, terminal SUCCESS.
+- All reported job steps succeeded: locked Cargo workflow guard, exact source pin/identity, toolchain setup, source contract/docs, workspace build, Clippy, complete tests, deterministic artifacts, DNS/orchestration/database/HTTP, real-network, offline, native Windows build, PE inspection, execution, manifest, and upload.
+- Host Windows NT 10.0.26100.0 / AMD64; target `x86_64-pc-windows-gnu`; rustc/cargo 1.100.0; clang 20.1.8; Android NDK r27c.
+- Native runtime exit code 0, output `Budi`. Executable size 52,918 bytes, SHA-256 `7d9eaa745e561bafe4203404c9d6b0601b584ff93eec46a379e5fa1d0e9afd0a`; PE32+ AMD64.
+- Artifact ID `14304459543`, ZIP size 15,867 bytes, SHA-256 `0238718f261ba9f9840d26eb243ce3196931f1f9927c98e438b3077f7cf1a58b`; manifest size 563 bytes, SHA-256 `eace9930574e939e94a3f5d18c75901ffe883a43852ff43c281b236ece22543e`.
+- CircleCI Linux for the same source SHA: workflow `875e39ae-399d-4803-81f7-407c7dc3f0d3`, job `40fbbc41-4a32-4796-b817-d144f8186e46`, terminal SUCCESS. Historical run #34 remains bound to its own earlier SHA.
