@@ -23,3 +23,13 @@
 - Every platform result is bound to its exact canonical source SHA and stated host boundary.
 - Windows PASS requires terminal-success Windows workflow plus independent manifest and binary-hash verification.
 - A CircleCI Linux PASS does not imply Windows PASS; a Windows verifier PASS does not imply CircleCI Linux PASS.
+
+
+## Current CircleCI migration candidate — exact-source reconciliation — 2026-11-17 19:23 WIB
+
+- PR #95 current HEAD: `993f76351c7a119bea2e66f7d9e5bca07f392fbc`, OPEN / DRAFT / UNMERGED. Config blob: `9d05f65badffae75e7e22bd1f0962e056b4960bd`.
+- The branch contains `Cargo.lock` blob `3fd2cb2be6aa30afa54602c733b2ab192cc91d2b`, identical to PR #102 branch HEAD `32fc9b77bac14ecfc06a6fddd946a5419298e997`. Root `Cargo.toml`, `crates/one-core/Cargo.toml`, and `crates/one-cli/Cargo.toml` blobs also match across PR #95 and PR #102.
+- All inspected Cargo build, Clippy, test, vertical-slice, real-network, and release build commands in `.circleci/config.yml` use `--locked`. `tools/check_contract.py` requires the tracked lockfile and checks inline and multiline Cargo build/Clippy/test/run invocations, including offline scripts, for `--locked`.
+- Independent Windows verifier run #43 / `44049102193` is PASS for exact ONE source SHA `993f763...` (verifier SHA `56271be82645357c2feaa1134ae2dc1d2ceae734`, Windows job `133922119577`, artifact `14313416141`).
+- No CircleCI status context is visible on current PR #95 HEAD `993f763...`; the default `one-linux` workflow is defined without branch filters, but the session has no authenticated CircleCI job-log/API/CLI access to determine why a current status has not appeared. Optional `release-check` with `run_release_checks=true` remains NOT VERIFIED. Static configuration alignment is not CircleCI execution PASS.
+- PR #95 remains unmerged, so CircleCI migration is proposed but not active on `main`. Do not infer that the CircleCI error context on dependent PR #106 pipeline #643 is a failure of this PR #95 candidate; the two refs have different config availability. No merge or release.
