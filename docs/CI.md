@@ -3,13 +3,15 @@
 
 ## Current exact-SHA CI candidate checkpoint — 2026-11-17
 
-- Canonical candidate: PR #95, branch `ci/circleci-migration-20261113`, exact source SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`; base `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`.
-- CircleCI `ci/circleci: one-linux`: terminal SUCCESS for this exact SHA; workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`, job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`.
-- Independent Windows Server 2025 native verification: [run #28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749), terminal SUCCESS; job `133292953068`, 32/32 main steps succeeded. Manifest source SHA matches the exact candidate; target `x86_64-pc-windows-gnu`; host Windows Server 2025 AMD64; native exit code `0`, output `Budi`.
-- Windows artifact ID `14225302303`, 15,868 bytes; ZIP SHA-256 `7dd4435e41bc8f0660f454768711c0fc460e2ca0fe38f2dee1034c59c0f767a5`; executable SHA-256 `9004e87f0c9d0357ee0197a1bce2a26474cb714aa8d71d54990236c9266dcfeb`; manifest SHA-256 `d95ae44ee24c5b793aeef59fb006e48d4c5b3e62de4cd5012b2b5a769cbf92a4`.
-- Both required candidate gates therefore report PASS on the same exact source SHA: CircleCI Linux and independent native Windows. The optional `release-check` has not been executed for this candidate.
-- PR #95 remains OPEN / DRAFT / UNMERGED. Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751` and still contains the three legacy GitHub Actions workflows; migration is not active on main until an authorized merge.
-- CI PASS is not release approval or proof that the entire ONE project is 100% complete. No merge, tag, or release is authorized.
+- PR #95 current source HEAD: `e50748a1b25922d9090eba1f5fb90548d7c7d003`, branch `ci/circleci-migration-20261113`, based on `main` `d35db95153f6ddd79885494c72f5aee16c899751`. PR #95 remains OPEN / DRAFT / UNMERGED.
+- CircleCI `ci/circleci: one-linux` is terminal SUCCESS on exact source SHA `e50748a...`: workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`.
+- Independent Windows native verification on the same source SHA `e50748a...` is NOT PASS: verifier run [#31](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43998206222), verifier commit `9cf1bb3071c56497118ad9c9e532abfee3fd60ee`, failed before compilation because `Cargo.lock` was not tracked while the verifier invoked Cargo with `--locked`. No native artifact or runtime PASS was produced for `e50748a...`.
+- The earlier Windows run [#28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749) passed on the older source SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`; it is historical and does not replace the failed run #31 on current PR #95 HEAD.
+- A separate lockfile-only candidate `a10a69afdf8675e703f38f1620abc935d8361897` adds `Cargo.lock` (the only file in that commit). GitHub Actions One CI run [#43998641019](https://github.com/panglimanetizen01/one/actions/runs/43998641019) completed SUCCESS on that exact SHA; independent Windows native runtime run [#32](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43999096244) also completed SUCCESS on that exact SHA (job `133758391930`, verifier commit `566a2edf7a30638d99a146e283c294b6bf707f2e`). The native artifact passed PE32+ AMD64 inspection and executed with exit code 0 / output `Budi`.
+- The `a10a69...` result is not CircleCI evidence: its CircleCI status is generic Pipeline ERROR because that source ref does not contain `.circleci/config.yml`. Do not combine PR #95 CircleCI PASS on `e50748a...` with Windows PASS on `a10a69...` and claim a same-SHA provider-split PASS.
+- PR #102 is the separate lockfile and Windows subprocess-containment change. Its latest source HEAD is `b088bc49839ea093f2e1fa234baa23dcfe05465d`; exact-SHA GitHub Actions run #44008055855 is currently IN_PROGRESS (Ubuntu and Windows jobs have not both reached terminal results at the last check). This later source is not release evidence.
+- Integration requirement: after the lockfile change and CircleCI migration are brought together through the authorized PR sequence, add `--locked` to every CircleCI Cargo build/Clippy/test command and strengthen `tools/check_contract.py` to require it when `Cargo.lock` is tracked. The current PR #95 config has no `--locked` flags and no lockfile; do not add the flags before the lockfile is present.
+- The optional `release-check` workflow has not been executed. PR #95 remains OPEN / DRAFT / UNMERGED; `main` remains `d35db951...` with three legacy GitHub Actions workflows. Migration is not active on main. No merge, tag, or release is authorized.
 
 ## Provider boundary
 
@@ -47,7 +49,7 @@ There is no Windows release job in CircleCI. Windows-host build/runtime evidence
 - Review branch: `verify/windows-pr95-20261114`, PR #42 (draft/unmerged while under review).
 - Source pin: `WINDOWS_SOURCE_COMMIT.txt`, containing a full 40-character canonical ONE commit SHA.
 - Workflow: `.github/workflows/windows-native-backend-runtime.yml`, on Windows Server 2025 AMD64.
-- Read access: repository-scoped `CANONICAL_READ_TOKEN` secret; no source repository visibility change is required.
+- Read access: the canonical ONE repository is PUBLIC, so no separate `CANONICAL_READ_TOKEN` secret is needed. Exact-source and verifier-harness checkouts set `persist-credentials: false`; source build/test code does not receive a persisted checkout credential.
 - Identity assertions: the workflow checks `git -C source rev-parse HEAD` against the source pin and independently checks its own verifier checkout SHA.
 - Required checks: source contracts/user documentation, stable Rust, MinGW-w64 Clang/linker, pinned Android NDK r27c, full workspace build, Clippy, full workspace tests, deterministic artifacts, DNS/orchestration/database/HTTP vertical slices, real-network tests, offline verification, Windows native build, PE32+ AMD64 inspection, and native execution.
 - Evidence: the workflow writes `one-windows-native-runtime-manifest.txt` with `source_sha`, `verifier_sha`, run identity, host/toolchain details, binary SHA-256, and native runtime output; it uploads that manifest and the executable.
