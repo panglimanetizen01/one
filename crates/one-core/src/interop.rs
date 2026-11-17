@@ -1,5 +1,7 @@
 use std::io::{self, Read};
 #[cfg(unix)]
+use std::os::fd::AsRawFd;
+#[cfg(unix)]
 use std::process::{Command, Stdio};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -14,6 +16,8 @@ const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
 #[cfg(unix)]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
+#[cfg(unix)]
+const READER_SHUTDOWN_GRACE: Duration = Duration::from_millis(100);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProcessSpec {
@@ -30,10 +34,69 @@ pub struct ProcessResult {
     pub stderr: String,
 }
 
+#[cfg(unix)]
 fn spawn_bounded_reader<R: Read + Send + 'static>(
     mut reader: R,
     output_limit_exceeded: Arc<AtomicBool>,
+    shutdown_requested: Arc<AtomicBool>,
+    shutdown_incomplete: Arc<AtomicBool>,
 ) -> JoinHandle<io::Result<Vec<u8>>> {
+    thread::spawn(move || {
+        let mut captured = Vec::with_capacity(MAX_OUTPUT_BYTES_PER_STREAM.min(16 * 1024));
+        let mut buffer = [0_u8; 8192];
+        let mut shutdown_deadline = None;
+        loop {
+            let shutdown = shutdown_requested.load(Ordering::Acquire);
+            if shutdown && shutdown_deadline.is_none() {
+                shutdown_deadline = Some(Instant::now() + READER_SHUTDOWN_GRACE);
+            }
+            if shutdown_deadline.is_some_and(|deadline| Instant::now() >= deadline) {
+                // A writer that never lets the nonblocking pipe become idle must
+                // not keep this thread alive forever or be silently accepted.
+                shutdown_incomplete.store(true, Ordering::Release);
+                break;
+            }
+
+            let read = match reader.read(&mut buffer) {
+                Ok(read) => read,
+                Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
+                    if shutdown {
+                        break;
+                    }
+                    thread::sleep(Duration::from_millis(5));
+                    continue;
+                }
+                Err(error) => return Err(error),
+            };
+            if read == 0 {
+                break;
+            }
+            let remaining = MAX_OUTPUT_BYTES_PER_STREAM.saturating_sub(captured.len());
+            let retained = read.min(remaining);
+            captured.extend_from_slice(&buffer[..retained]);
+            if retained < read {
+                output_limit_exceeded.store(true, Ordering::Release);
+                break;
+            }
+            // After shutdown, keep draining only until the pipe becomes idle,
+            // the output cap is exceeded, or the bounded grace period expires.
+            // This preserves overflow detection without waiting indefinitely
+            // for an escaped descendant to close its inherited writer.
+        }
+        Ok(captured)
+    })
+}
+
+#[cfg(windows)]
+fn spawn_bounded_reader<R: Read + Send + 'static>(
+    mut reader: R,
+    output_limit_exceeded: Arc<AtomicBool>,
+    _shutdown_requested: Arc<AtomicBool>,
+) -> JoinHandle<io::Result<Vec<u8>>> {
+    // Windows reader threads remain blocking: closing the invocation's Job
+    // Object terminates its descendants and closes inherited pipe writers.
+    // The shutdown flag is intentionally not used to interrupt a blocking
+    // Read; Job Object teardown remains the Windows reader termination path.
     thread::spawn(move || {
         let mut captured = Vec::with_capacity(MAX_OUTPUT_BYTES_PER_STREAM.min(16 * 1024));
         let mut buffer = [0_u8; 8192];
@@ -51,6 +114,21 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
         }
         Ok(captured)
     })
+}
+
+#[cfg(unix)]
+fn set_reader_nonblocking<R: AsRawFd>(reader: &R) -> io::Result<()> {
+    let descriptor = reader.as_raw_fd();
+    // SAFETY: fcntl only reads and updates flags for this live pipe descriptor.
+    let flags = unsafe { libc::fcntl(descriptor, libc::F_GETFL) };
+    if flags < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    // SAFETY: the descriptor remains owned by the reader and the flags are valid.
+    if unsafe { libc::fcntl(descriptor, libc::F_SETFL, flags | libc::O_NONBLOCK) } < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(())
 }
 
 fn join_reader(reader: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, String> {
@@ -140,9 +218,32 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         .take()
         .ok_or_else(|| "Subprocess stderr pipe was not created.".to_owned())?;
 
+    if let Err(error) =
+        set_reader_nonblocking(&stdout).and_then(|()| set_reader_nonblocking(&stderr))
+    {
+        kill_process_group(process_group);
+        let _ = child.kill();
+        let _ = child.wait();
+        return Err(format!(
+            "Failed to configure bounded subprocess pipe readers: {error}"
+        ));
+    }
+
     let output_limit_exceeded = Arc::new(AtomicBool::new(false));
-    let stdout_reader = spawn_bounded_reader(stdout, Arc::clone(&output_limit_exceeded));
-    let stderr_reader = spawn_bounded_reader(stderr, Arc::clone(&output_limit_exceeded));
+    let reader_shutdown = Arc::new(AtomicBool::new(false));
+    let reader_shutdown_incomplete = Arc::new(AtomicBool::new(false));
+    let stdout_reader = spawn_bounded_reader(
+        stdout,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+        Arc::clone(&reader_shutdown_incomplete),
+    );
+    let stderr_reader = spawn_bounded_reader(
+        stderr,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+        Arc::clone(&reader_shutdown_incomplete),
+    );
     let deadline = Instant::now() + PROCESS_TIMEOUT;
     let mut timed_out = false;
 
@@ -160,6 +261,7 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
                 kill_process_group(process_group);
                 let _ = child.kill();
                 let _ = child.wait();
+                reader_shutdown.store(true, Ordering::Release);
                 let _ = join_reader(stdout_reader);
                 let _ = join_reader(stderr_reader);
                 return Err(format!("Failed while waiting for subprocess: {error}"));
@@ -175,9 +277,13 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         thread::sleep(PROCESS_POLL_INTERVAL);
     };
 
-    // A child may exit while leaving descendants holding the inherited pipes.
-    // They share this process group and must not outlive the bounded invocation.
+    // Terminate members of the original process group. This is best-effort
+    // cleanup only: a descendant may escape into a different session/group.
     kill_process_group(process_group);
+    // Descendants may escape the process group while retaining inherited pipe
+    // writers. Readers are nonblocking on Unix, so request shutdown after
+    // draining all bytes currently available instead of joining indefinitely.
+    reader_shutdown.store(true, Ordering::Release);
     let stdout = join_reader(stdout_reader)?;
     let stderr = join_reader(stderr_reader)?;
     let status = status.map_err(|error| format!("Failed to reap subprocess: {error}"))?;
@@ -192,6 +298,12 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         return Err(format!(
             "Subprocess exceeded the {} byte per-stream output limit.",
             MAX_OUTPUT_BYTES_PER_STREAM
+        ));
+    }
+    if reader_shutdown_incomplete.load(Ordering::Acquire) {
+        return Err(format!(
+            "Subprocess output reader did not become idle within the {:?} shutdown grace period.",
+            READER_SHUTDOWN_GRACE
         ));
     }
 
@@ -643,8 +755,17 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     let stdout_file = unsafe { File::from_raw_handle(stdout_read.into_raw() as _) };
     let stderr_file = unsafe { File::from_raw_handle(stderr_read.into_raw() as _) };
     let output_limit_exceeded = Arc::new(AtomicBool::new(false));
-    let stdout_reader = spawn_bounded_reader(stdout_file, Arc::clone(&output_limit_exceeded));
-    let stderr_reader = spawn_bounded_reader(stderr_file, Arc::clone(&output_limit_exceeded));
+    let reader_shutdown = Arc::new(AtomicBool::new(false));
+    let stdout_reader = spawn_bounded_reader(
+        stdout_file,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+    );
+    let stderr_reader = spawn_bounded_reader(
+        stderr_file,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+    );
 
     let deadline = Instant::now() + PROCESS_TIMEOUT;
     let mut timed_out = false;
@@ -738,6 +859,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
 
     // KILL_ON_JOB_CLOSE remains the final safety net after explicit cleanup.
     drop(job);
+    reader_shutdown.store(true, Ordering::Release);
     let mut exit_code = 1u32;
     // SAFETY: the process has signaled or was terminated and remains open.
     if unsafe { GetExitCodeProcess(process.raw(), &mut exit_code) } == 0 {
@@ -880,6 +1002,145 @@ mod tests {
         assert_eq!(result.status_code, Some(7));
         assert!(result.stdout.contains("stdout"));
         assert!(result.stderr.contains("stderr"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn non_idle_reader_stops_after_shutdown_grace() {
+        struct SlowAlwaysReadyReader;
+
+        impl Read for SlowAlwaysReadyReader {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                thread::sleep(Duration::from_millis(1));
+                buffer[0] = b'x';
+                Ok(1)
+            }
+        }
+
+        let output_limit_exceeded = Arc::new(AtomicBool::new(false));
+        let shutdown_requested = Arc::new(AtomicBool::new(true));
+        let shutdown_incomplete = Arc::new(AtomicBool::new(false));
+        let started = Instant::now();
+        let reader = spawn_bounded_reader(
+            SlowAlwaysReadyReader,
+            Arc::clone(&output_limit_exceeded),
+            shutdown_requested,
+            Arc::clone(&shutdown_incomplete),
+        );
+        let _captured = join_reader(reader).expect("bounded reader should return captured bytes");
+
+        assert!(
+            started.elapsed() < Duration::from_secs(1),
+            "reader exceeded the bounded shutdown grace"
+        );
+        assert!(
+            shutdown_incomplete.load(Ordering::Acquire),
+            "a reader that never becomes idle must report incomplete shutdown"
+        );
+        assert!(
+            !output_limit_exceeded.load(Ordering::Acquire),
+            "the slow fixture must exercise the non-idle deadline, not output overflow"
+        );
+    }
+
+    // The helper waits until the setsid child has entered its new session before
+    // the direct shell exits, ensuring the inherited pipe writer is truly escaped.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn escaped_session_descendant_cannot_hold_output_readers_open() {
+        let pid_file = std::env::temp_dir().join(format!(
+            "one-escaped-descendant-{}.pid",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&pid_file);
+        let script = "setsid sh -c 'echo $$ > \"$1\"; exec sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let started = Instant::now();
+        let result = run_process(
+            &ProcessSpec {
+                program: "sh".into(),
+                args: vec![
+                    "-c".into(),
+                    script.into(),
+                    "one-test".into(),
+                    pid_file.to_string_lossy().into_owned(),
+                ],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+        )
+        .expect("the shell command itself should complete successfully");
+        let elapsed = started.elapsed();
+        let pid = std::fs::read_to_string(&pid_file)
+            .expect("escaped descendant PID should be recorded")
+            .trim()
+            .parse::<libc::pid_t>()
+            .expect("escaped descendant PID should be numeric");
+        // The escaped process is test-owned; clean it up by its recorded PID.
+        // SAFETY: the helper created this process exclusively for this test.
+        unsafe { libc::kill(-pid, libc::SIGKILL); }
+        let _ = std::fs::remove_file(&pid_file);
+        assert!(result.success, "helper shell should exit successfully");
+        assert!(
+            elapsed < Duration::from_secs(3),
+            "reader shutdown took {elapsed:?}; an escaped pipe writer must not hold run_process open"
+        );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn escaped_session_writer_cannot_hold_output_readers_open() {
+        let pid_file = std::env::temp_dir().join(format!(
+            "one-escaped-writer-{}.pid",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&pid_file);
+        let script = "setsid sh -c 'echo $$ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let spec = ProcessSpec {
+            program: "sh".into(),
+            args: vec![
+                "-c".into(),
+                script.into(),
+                "one-test".into(),
+                pid_file.to_string_lossy().into_owned(),
+            ],
+            working_directory: None,
+        };
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let result = run_process(&spec, &CapabilitySet::none().allow(Capability::Process));
+            let _ = sender.send(result.clone());
+            result
+        });
+
+        let pid_deadline = Instant::now() + Duration::from_secs(2);
+        while !pid_file.exists() && Instant::now() < pid_deadline {
+            thread::sleep(Duration::from_millis(10));
+        }
+        let pid = std::fs::read_to_string(&pid_file)
+            .expect("escaped writer PID should be recorded")
+            .trim()
+            .parse::<libc::pid_t>()
+            .expect("escaped writer PID should be numeric");
+
+        // The reader must stop before this test kills the escaped test-owned writer.
+        let completed_before_cleanup = receiver.recv_timeout(Duration::from_secs(3)).is_ok();
+        // SAFETY: this process group was created exclusively by this regression test.
+        unsafe {
+            libc::kill(-pid, libc::SIGKILL);
+        }
+        let _ = std::fs::remove_file(&pid_file);
+        let result = worker.join().expect("run_process worker must not panic");
+        assert!(
+            completed_before_cleanup,
+            "run_process reader shutdown waited for an escaped descendant that continuously writes"
+        );
+        let error = result.expect_err(
+            "a continuously writing escaped descendant must not be silently accepted"
+        );
+        assert!(
+            error.contains("output limit") || error.contains("reader did not become idle"),
+            "unexpected bounded-reader error: {error}"
+        );
     }
 
     #[test]
