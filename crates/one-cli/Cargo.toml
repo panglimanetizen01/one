@@ -14,5 +14,9 @@ path = "src/main.rs"
 name = "one-native"
 path = "src/native_main.rs"
 
+[[bin]]
+name = "one-integrity"
+path = "src/bin/one-integrity.rs"
+
 [dependencies]
 one-core = { path = "../one-core" }
