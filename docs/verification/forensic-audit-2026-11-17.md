@@ -253,3 +253,15 @@ During static review of PR #109 native scanner code, the first CircleCI structur
 - Official reference: https://circleci.com/docs/guides/server/getting-started/introduction-to-yaml-configurations/.
 
 Current PR #109 HEAD after docs and PR-body synchronization: `d15a0aa321cc906d0bc989fe9b517c979631d362`. PR #109 remains OPEN/DRAFT/UNMERGED. This correction has not been compiled or executed locally or in CircleCI. Combined GitHub status/check-runs remain empty; no CircleCI terminal job evidence is available.
+
+
+## 12. Native scanner isolated from beginner CLI — 2026-11-17
+
+A product-boundary review found that the initial scanner port added `one pindai` / `one pindai keamanan` to the main beginner-facing CLI. This violated the standing constraint that security/repository tooling remain development-side and not expand ONE's beginner vocabulary. Corrected on the PR #109 branch:
+- Removed scanner module import, dispatch, and help entries from `crates/one-cli/src/main.rs`.
+- Added explicit Cargo target `one-integrity` at `crates/one-cli/src/bin/one-integrity.rs`, sharing the read-only scanner module.
+- CircleCI now tests/runs `--bin one-integrity` rather than the main `one` CLI.
+- Contract checker enforces separation and rejects scanner import/subcommand leakage into main CLI.
+- Updated CONTRIBUTING, ADR-0018, scanner docs, detector parity matrix, PR description, and Issue #90 comment.
+
+The main `one` CLI help and dispatch are restored to the pre-scanner vocabulary. No ONE language grammar, semantics, runtime behavior, or beginner user-guide vocabulary changed. This is static readback only; compilation/tests and CircleCI exact-SHA evidence remain NOT VERIFIED.
