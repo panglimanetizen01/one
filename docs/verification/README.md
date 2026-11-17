@@ -217,3 +217,13 @@ This addendum supersedes older PR #95 current-status statements above where they
 - PR #95 source `54bf097...`: CircleCI Linux + independent Windows run #36 PASS exact SHA; PR #102 exact SHA `7e10e...` GHA PASS; PR #101 exact SHA `cdf7bd5...` GHA PASS; PR #98–#100 exact SHA GHA PASS.
 - E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. Optional CircleCI release-check, clean installation/use acceptance and final release authorization remain outstanding.
 - No PR merge, branch deletion, release, visibility change, secret change, or history rewrite performed.
+
+
+## Source installation and release CLI smoke evidence — 2026-11-17
+
+- PR #102 exact source SHA `cb2748c5bb7143d62818068bd2a7128520ae2c69`; GitHub Actions run #44043930974 terminal SUCCESS on Ubuntu job `133904876367` and Windows Server 2025 job `133904877181`.
+- Both platforms built the release CLI with `cargo build --release --locked -p one-cli --bin one` and passed their platform-specific smoke test: version output `one 0.1.0`, execution of a temporary One source program, expected output `Budi`.
+- `docs/panduan-pengguna/instalasi.md` on the PR #102 candidate now documents source build prerequisites (Rust/Cargo 1.97+), clone/build commands, Linux `target/release/one` and Windows `target/release/one.exe`, version verification, and first program. It explicitly does not claim a prebuilt installer or official binary release; `.oneir`/`.onepkg` are not installers.
+- All Cargo commands in the PR #102 GitHub Actions workflow now use `--locked`.
+- CircleCI's separate error context on this main-based PR #102 branch is not the result of the PR #102 GitHub Actions workflow and does not negate the exact-SHA Ubuntu/Windows PASS. CircleCI migration remains a separate PR #95 candidate.
+- This is implementation/verification evidence only; no release acceptance or DoD completion is inferred.
