@@ -819,7 +819,7 @@ def _scan_contract_documents(root: Path, findings: list[dict]) -> None:
                     "Tinjau perubahan dokumen terhadap kontrak normatif dan implementasi; jangan menambahkan frasa hanya untuk membuat pemindai hijau."))
 def scan_repository(root: Path, expected_sha: str | None = None, check_one_source: bool = False) -> dict:
     root = root.resolve()
-    findings, workflows = [], []
+    findings, workflows, ci_configs = [], [], []
     files = list(_files(root))
     json_evidence_detectors = set()
     actual_sha, branch = _git(root, "rev-parse", "HEAD"), _git(root, "branch", "--show-current")
@@ -884,8 +884,12 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
                 if isinstance(parsed_json.get("artifacts"), list):
                     json_evidence_detectors.add("artifact-integrity")
         elif suffix == ".md": _scan_markdown(path, rel, root, text, findings)
-        if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}: workflows.append((rel, text))
-    _scan_workflows(root, workflows, findings)
+        if rel.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}:
+            workflows.append((rel, text))
+        elif rel == ".circleci/config.yml":
+            ci_configs.append((rel, text))
+    workflow_configs = workflows + ci_configs
+    _scan_workflows(root, workflow_configs, findings)
     if check_one_source:
         _check_one_source(root, findings)
     cli_contract = root / "docs/spec/one-v0.1-cli-contract.md"
@@ -907,7 +911,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         findings_by_detector[detector] = findings_by_detector.get(detector, 0) + 1
     suffixes = {path.suffix.lower() for path, _ in files if not path.is_symlink()}
     agent_instruction_surfaces = any(_is_agent_instruction_surface(rel) for path, rel in files if not path.is_symlink())
-    dependency_surfaces = bool(workflows or any(_is_dependency_surface(rel) for path, rel in files if not path.is_symlink()))
+    dependency_surfaces = bool(workflow_configs or any(_is_dependency_surface(rel) for path, rel in files if not path.is_symlink()))
     detectors_run = ["path-integrity"]
     if expected_sha is not None:
         detectors_run.append("revision-integrity")
@@ -917,7 +921,7 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         detectors_run.extend(["markdown-links", "markdown-structure"])
     if suffixes.intersection(TEXT_SUFFIXES):
         detectors_run.append("file-integrity")
-    if workflows:
+    if workflow_configs:
         detectors_run.extend(["workflow-integrity", "workflow-overlap"])
     detectors_run.extend(sorted(json_evidence_detectors))
     detectors_run.extend(["security-secrets", "security-code", "security-javascript", "security-workflow", "security-prompt-injection", "security-supply-chain"])
@@ -938,8 +942,8 @@ def scan_repository(root: Path, expected_sha: str | None = None, check_one_sourc
         "markdown-links": "ran" if ".md" in suffixes else "not-applicable-no-markdown",
         "markdown-structure": "ran" if ".md" in suffixes else "not-applicable-no-markdown",
         "file-integrity": "ran" if suffixes.intersection(TEXT_SUFFIXES) else "not-applicable-no-text-files",
-        "workflow-integrity": "ran" if workflows else "not-applicable-no-workflows",
-        "workflow-overlap": "ran" if workflows else "not-applicable-no-workflows",
+        "workflow-integrity": "ran" if workflow_configs else "not-applicable-no-ci-configs",
+        "workflow-overlap": "ran" if workflow_configs else "not-applicable-no-ci-configs",
         "ci-evidence": "ran" if "ci-evidence" in detectors_run else "not-applicable-no-ci-evidence",
         "artifact-integrity": "ran" if "artifact-integrity" in detectors_run else "not-applicable-no-artifact-evidence",
         "contract-drift": "ran",
@@ -1134,7 +1138,7 @@ def _safe_fix_missing_markdown_newline(root: Path, report: dict, apply: bool,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("."))
-    parser.add_argument("--expected-sha", default=os.environ.get("GITHUB_SHA"))
+    parser.add_argument("--expected-sha", default=os.environ.get("CIRCLE_SHA1") or os.environ.get("GITHUB_SHA"))
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--markdown-out", type=Path)
     parser.add_argument("--baseline", type=Path, help="compare findings with a previous JSON report")
