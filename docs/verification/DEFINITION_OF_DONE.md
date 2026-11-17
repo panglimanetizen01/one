@@ -250,3 +250,13 @@ Run #44012805081 on PR #102 SHA `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubun
 - PR #95 then advanced to documentation-only descendant `9b233dfe75da8c0752c203af3711bf3da319dc02`, which had no status reported at the subsequent check. No terminal PASS is claimed for either SHA.
 - Independent verifier PR #42 pin advanced to `9b233df...`: pin commit `e88b2be4e0845f932cd978e26305d25f9730f777`; docs commit `af52f1ab4897f8a464b787fa895ba2051f311372`. No Windows run is yet claimed for this pin.
 - PR #95 remains OPEN / DRAFT / UNMERGED; CircleCI migration acceptance NOT PASSED. E6 remains NOT IMPLEMENTED / final release gate NOT PASSED.
+
+
+### PR #95 APT mitigation and latest CircleCI terminal status refresh — 2026-11-17
+
+- Live PR #95 remains OPEN / DRAFT / UNMERGED; exact current HEAD `9b233dfe75da8c0752c203af3711bf3da319dc02`.
+- CircleCI `ci/circleci: one-linux` is terminal SUCCESS on the APT shell-correction code/config SHA `4db76fbaf651dd069c7000fb46a4dea61b11fbd8`: workflow `d436555e-6a03-4167-a844-acc2ac5e50d6`, job `b8478a26-15f6-457c-b8e4-f30e461e17e9`. This verifies the targeted mirror mitigation and corrected shell expression on that exact source SHA.
+- The current PR HEAD `9b233dfe75da8c0752c203af3711bf3da319dc02` has terminal CircleCI FAILURE: workflow `91d704b2-516e-4736-9fb2-d4c8504e001b`, job `948e41bd-2090-4708-8b1b-1dc142672580`.
+- The current connected tools cannot retrieve the authenticated CircleCI job page/logs. The first failing step and root cause for `9b233d...` remain UNKNOWN. Do not attribute this failure to APT, docs, or product code without the first-failure output. Do not claim the current PR head is green.
+- Independent verifier PR #42 remains OPEN / DRAFT / UNMERGED and is pinned to `9b233d...`; no Windows run for this exact pin is observed. Historical Windows run #32 applies only to `a10a69...`.
+- Migration acceptance remains NOT PASSED. E6 remains NOT IMPLEMENTED / final release gate NOT PASSED. No merge or release.
