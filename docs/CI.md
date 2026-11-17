@@ -360,3 +360,10 @@ The MSYS2 installation run step now sets `no_output_timeout: 30m` so the large f
 - The shared `setup-linux-cross-toolchains` CircleCI command now rewrites the affected regional GCE Ubuntu archive hostname to `archive.ubuntu.com` in APT `.sources`/`.list` files, cleans cached APT metadata, refreshes indexes with `Acquire::Retries=3`, and installs the same required toolchains with transport retries. The package set and product code/tests are unchanged.
 - Config fix commit: `481873f277cb8601fc8881f8e5cc3fb0383f9115`. This is a targeted mitigation based on the observed 404 evidence; it is not yet a verified fix until the CircleCI run for the resulting exact SHA completes successfully.
 - Keep migration acceptance NOT PASSED until CircleCI terminal success and independent Windows exact-SHA verification are both recorded.
+
+
+### APT mirror rewrite shell-quoting correction — 2026-11-17
+
+- Static review of the first APT mirror mitigation found that the generated CircleCI YAML contained doubled backslashes around the `find` expression and line continuation. The shell command was corrected to use single shell escapes; this is a configuration syntax correction, not a new product/toolchain change.
+- Correction commit: `0dbc23dd47243a7b2ae5736c32943e3014353d4f`. The APT mirror rewrite now uses `find ... \( ... \) \\ ` with valid single-character shell escapes and the existing canonical archive, cache refresh, and retry behavior.
+- PR #95 exact HEAD is now `0dbc23dd47243a7b2ae5736c32943e3014353d4f`. No CircleCI status had yet been published at the time of this documentation update; do not claim the correction or mirror mitigation has passed until the exact-SHA run completes.
