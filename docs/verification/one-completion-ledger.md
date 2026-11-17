@@ -871,3 +871,20 @@ This section supersedes prior current-head statements where they conflict. Histo
 - PR #95 docs-only descendant/current HEAD is `ed2382eed9022a8c67a13d72a5de6a4d9134f631`; verifier PR #42 pin matches it. New exact-source verifier runs #39 / `44046670869` (IN_PROGRESS) and #40 / `44046678525` (PENDING) were triggered by successive verifier branch pushes. Do not transfer run #38 to this descendant.
 - CircleCI Pipeline #558 reported pipeline-level ERROR on the previous candidate without exposing a `one-linux` job context/log. This is not enough to diagnose a source test failure. Current integrations do not expose authenticated CircleCI pipeline details; optional `release-check` remains NOT VERIFIED.
 - PR #95/#42/#97/#103 remain OPEN / DRAFT / UNMERGED. Main remains unchanged. E6 and release acceptance remain NOT PASSED.
+
+
+## Active product remediation PR exact-SHA CI matrix — 2026-11-17
+
+The following open product PRs were rechecked against live GitHub Actions run metadata. Each listed run is terminal SUCCESS on the exact current PR source SHA, with both Windows Server 2025 and Ubuntu jobs SUCCESS. These are implementation/test evidence only; the PRs remain open/draft/unmerged and do not independently complete release acceptance.
+
+| PR | Exact source SHA | GitHub Actions run | Windows job | Ubuntu job | Scope |
+|---|---|---:|---:|---:|---|
+| #98 | `a83321bc41b3d0d28378841e29a6169abed8ac15` | `43923604400` | `133497052786` PASS | `133497053339` PASS | Validate project manifest in `one test`; reject unsafe package filename components and path traversal |
+| #99 | `8800b885a4ffcb1931a7a3c71f3eaff888e9f5e9` | `43923948205` | `133498293201` PASS | `133498292797` PASS | Open existing SQLite database files read-only; never create missing DB on query; preserve `:memory:` fixture behavior |
+| #100 | `6375356c9c275ace5fd35cf4a81799a9546e1e1d` | `43924465030` | `133500117243` PASS | `133500117683` PASS | Restore lexical scope frames after nested block errors and failed event dispatch |
+| #101 | `cdf7bd5b8cff86e1ce271c8f03ef8c01ff61005f` | `44032422058` | `133867259061` PASS | `133867259381` PASS | Apply coarse Filesystem parent coverage consistently to grants, scopes, denials and approvals; explicit parent denial precedes inherited grants |
+
+- All four changes are confined to CLI/runtime/governance contract behavior and tests; no changes to the language grammar or beginner-facing syntax are claimed.
+- CircleCI pipeline statuses for these PR branches are separately ERROR (pipeline numbers #369, #373, #377 and #550 respectively) while GitHub Actions is green. These are pipeline-level CircleCI statuses and are not enough to claim Rust test failures. The current PR #95 CircleCI migration candidate is separately being diagnosed; do not conflate CI providers.
+- PR #96 (`25ea36051eb6fb4cefc40c1867f5a6fc3e777bca`) modifies the historical CircleCI Windows/MSYS2 setup, but it is superseded by the current PR #95 design (CircleCI Linux + independent Windows verifier). Its exact status shows CircleCI Linux PASS and Windows FAIL on the old workflow; do not merge/reintroduce the retired CircleCI Windows job. Preserve as historical evidence.
+- These PRs remain implementation candidates until integrated through authorized review. No DoD checkbox, E6, verified score, or release acceptance is promoted solely by CI PASS.
