@@ -421,3 +421,12 @@ This section supersedes prior current-head statements where they conflict. Histo
 - All Cargo commands in the PR #102 GitHub Actions workflow now use `--locked`.
 - CircleCI's separate error context on this main-based PR #102 branch is not the result of the PR #102 GitHub Actions workflow and does not negate the exact-SHA Ubuntu/Windows PASS. CircleCI migration remains a separate PR #95 candidate.
 - This is implementation/verification evidence only; no release acceptance or DoD completion is inferred.
+
+
+## Latest source-install and documentation-check gates — 2026-11-17
+
+- PR #102 current exact source SHA `5ee645507199bdd94955099f6633aa67bb697ee5`; GHA run #44044795819 terminal SUCCESS on Ubuntu job `133907717583` and Windows Server 2025 job `133907717844`.
+- Both platforms passed user documentation consistency and checker unit tests; both built the release CLI with `cargo build --release --locked -p one-cli --bin one`; both passed version and sample execution smoke tests (`one 0.1.0`, output `Budi`). Full workflow jobs were terminal SUCCESS.
+- PR #102 installation guide now documents a truthful source-build path (Rust/Cargo 1.97+, clone, locked release build, platform binary path, version check, and first program); no installer or official binary release is claimed.
+- PR #102 CI workflow includes user-doc consistency tests and Linux/Windows release CLI smoke. All Cargo build/Clippy/test commands use `--locked`.
+- This is exact-SHA implementation/verification evidence only. It does not promote E6, final release acceptance, or DoD checkboxes.
