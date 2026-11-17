@@ -221,3 +221,14 @@ Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tool
 - Normative contract update: Section 14 of `docs/spec/one-v0.1-ci-verification-contract.md` requires mutually exclusive workflow selection, one baseline job, and preservation of release-only gates. Contract commit: `d4152f1cf6b8f3b9300575f649824551b408f910`.
 - Static review intent: avoid duplicate baseline execution while retaining the same baseline checks and additional release-only gates. No runtime/source semantics changed.
 - Validation boundary: GitHub readback and structural inspection only. CircleCI CLI/schema validation and actual conditional workflow execution remain NOT VERIFIED because authenticated CircleCI access is unavailable in this session. No CircleCI PASS is claimed; the exact resulting HEAD must be refreshed after documentation synchronization.
+
+## Issue #104 filesystem confinement design checkpoint — 2026-11-18
+
+- Created stacked draft PR #110 from current PR #108 exact parent SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca`; PR #110 head after documentation synchronization is to be refreshed from live metadata.
+- Design document: `docs/security/issue-104-filesystem-root-confinement-design.md`. It specifies explicit trusted-root configuration and retained handle authority, Unix descriptor-relative traversal, Windows native handle-relative traversal, no-follow/reparse rejection, device/volume boundaries, hard-link policy, bounded I/O, atomic same-directory writes, and a real-side-effect adversarial test matrix.
+- Normative effect/capability contract Section 20 added: path-based check-then-open and canonicalize-then-open are insufficient; policy-first ordering remains unchanged; unsupported platforms must fail closed; feature remains experimental until exact-SHA Unix and Windows tests pass.
+- Documentation index links the design checkpoint.
+- No product source code or tests were changed or executed. This is design/specification only, not remediation or a security PASS. Issue #104 remains OPEN; E4/DoD unchanged.
+- The older branch `security/issue-104-filesystem-confinement-20261118` is stale relative to PR #108 (0 commits ahead, 8 behind at last comparison) and must not be used as the implementation base. PR #110 is based on current PR #108 instead.
+- CircleCI validation/log access remains unavailable; no CircleCI PASS is claimed.
+- Next implementation step: perform a complete adapter/interpreter/CLI call-site inventory, define the explicit host root configuration API, implement Unix and Windows handle-relative primitives without fallback, then add side-effect/race tests and run the independent Unix/Windows verifier on the same exact source SHA.
