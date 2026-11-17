@@ -1082,7 +1082,7 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - Artifact ID `14328017616`, name `one-windows-verification-44082635958-1`, size 1,241,086 bytes, SHA-256 `2ba8c8ca6e926f4693b80bc53b73bd58adb4e32ce4889cd25b80114604905b39` (GitHub artifact digest).
 - This closes the independent Windows verification gate for exact PR #95 source SHA `db859f24...` only. It does not establish CircleCI execution on that SHA: GitHub combined commit status returned no status contexts and no PR-triggered GHA runs for the ONE repository commit. The optional CircleCI `release-check` remains NOT VERIFIED. PR #95 remains OPEN / DRAFT / UNMERGED; no merge or release is inferred.
 
-## PR #106 exact-head CI reconciliation — 2026-11-17 19:3x WIB
+## PR #106 exact-head CI reconciliation — 2026-11-17
 
 - Live PR #106 metadata: OPEN / DRAFT / UNMERGED; source HEAD `7da358abcd1e5e7d5e257db5eec0d1b4081aa7fc`; base PR #102 branch HEAD `32fc9b77bac14ecfc06a6fddd946a5419298e997`. Compare remains 25 ahead / 1 behind with four incremental files.
 - Exact-source GitHub Actions run #2215 / `44080978536` is terminal SUCCESS. Ubuntu job `134031174299` and Windows Server 2025 job `134031174982` both completed successfully. Build, Clippy, full Tests, contract/documentation gates, deterministic artifacts, DNS, orchestration, database, HTTP GET, HTTP GET CLI, release CLI build, and platform-specific release CLI smoke all passed. Linux test step includes the escaped-session descendant, continuous escaped-writer, and non-idle-reader deadline regressions.
