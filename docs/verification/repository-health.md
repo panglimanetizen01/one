@@ -173,3 +173,10 @@ python tools/one_health.py --baseline previous-report.json --json-out current-re
 Current findings are labeled `new`, `recurring`, or `reopened`; findings absent from the current completed scan are listed separately as `resolved` with a review caveat. The tool does not silently edit the fixed-weight One acceptance ledger. A triage priority score is provided alongside its inputs (impact, confidence, recurrence, and acceptance-blocker factor) so maintainers can review why a finding was ranked. It is an operational triage aid, not an acceptance score or proof of resolution.
 
 Baseline comparison is currently opt-in and file-based; persistent cross-run history and automatic GitHub job/log ingestion remain future work.
+
+
+## CircleCI migration boundary (2026-11-17)
+
+CircleCI is the canonical CI provider for the migration candidate. The Python scanner now treats `.circleci/config.yml` as a CI configuration for generic workflow-integrity checks (duplicate config names and referenced script paths). GitHub Actions-specific checks, such as mutable Action refs and `permissions: write-all`, remain scoped to legacy `.github/workflows/` files and must not be represented as CircleCI coverage.
+
+`tools/collect_ci_health.py` and its tests are retained as a historical GitHub Actions evidence collector only. They call the GitHub Actions API and do **not** collect CircleCI pipeline/job data. CircleCI exact-SHA execution must be verified from CircleCI pipeline/job evidence; the collector's output cannot substitute for it. The current CircleCI job runs scanner regression tests and records JSON/Markdown preview artifacts. High/critical findings are reported but do not become a release gate at this preview stage; execution errors and exact-SHA mismatches remain failures.
