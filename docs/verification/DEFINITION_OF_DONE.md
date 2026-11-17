@@ -1,35 +1,37 @@
-## Live continuation checkpoint — 2026-11-17 18:30 WIB
+## Live continuation checkpoint — 2026-11-17
 
-This checkpoint supersedes stale PR-head and run references below where they conflict. It records live GitHub state, not merge or release acceptance.
+This block is the active state summary. Older sections below are historical evidence and must not override live PR metadata or exact-SHA run results.
 
 ### Canonical repository and PR state
-- `panglimanetizen01/one` remains PUBLIC; default branch `main`; canonical main SHA `d35db95153f6ddd79885494c72f5aee16c899751`. No visibility/default-branch change.
-- PR #95 remains OPEN / DRAFT / UNMERGED, branch `ci/circleci-migration-20261113`, exact HEAD `993f76351c7a119bea2e66f7d9e5bca07f392fbc`. Its CircleCI config is blob `9d05f65badffae75e7e22bd1f0962e056b4960bd`; all Cargo build/test/Clippy/release commands use `--locked`. Main still contains the three legacy workflows `.github/workflows/ci.yml`, `release-check.yml`, and `windows-native-verification.yml`; PR #95 removes them on its candidate branch. No migration is active on main.
-- PR #95 exact-source independent Windows evidence: run #42 / `44048174334` and docs-only verifier run #43 / `44049102193`, both pinning source `993f763...`; run #43 verifier HEAD `56271be82645357c2feaa1134ae2dc1d2ceae734`, Windows job `133922119577`, terminal SUCCESS. Latest artifact #14313416141, ZIP SHA-256 `4b5102dfdb1fcecc41a155f2b97fa3caf244986120c263f50bd5733888e7bbcd`; native and CLI PE32+ AMD64, both output `Budi`, exit 0; CLI `one 0.1.0`. Verifier PR #42 remains OPEN / DRAFT / UNMERGED and `WINDOWS_SOURCE_COMMIT.txt` exactly pins `993f...`.
-- PR #95's current source has zero GitHub status contexts in the combined-status endpoint. CircleCI Linux execution and optional `run_release_checks=true` remain NOT VERIFIED. CircleCI config source review is not a CircleCI run. The active session has no authenticated CircleCI operational tool/CLI; do not claim pipeline success/failure or trigger jobs without that access.
-- PR #97 remains OPEN / DRAFT / UNMERGED, branch `docs/system-architecture-diagram-20261115`, live HEAD `41d835fb23a459e736e62639394c2fc0e8e0d005`. Architecture document links the main diagram and preserves the recorded image SHA-256 `e2f30a7...`; no re-upload is needed.
-- PR #102 remains OPEN / DRAFT / UNMERGED, branch `fix/commit-cargo-lockfile-20261117`, exact HEAD `ac1bb214bc028395367cce7edc234a1909971e2a`. GitHub Actions run #2165 / `44049452639` terminal SUCCESS: Windows job `133923280923`, Ubuntu job `133923281493`; both passed toolchain, docs gates, build, Clippy, full tests, artifacts, vertical slices, release CLI and applicable smoke tests. This is GitHub Actions evidence, not CircleCI. Historical run #44002493159 on predecessor `a472b3b...` remains Windows FAIL / Ubuntu PASS and is superseded; do not transfer it to current HEAD.
-- PR #103 remains OPEN / DRAFT / UNMERGED, branch `docs/restore-completion-ledger-dod-20261117`, live HEAD `736c23f063f17cea9201aca374bd9a7808148f0a`.
-- Independent verifier PR #42 remains OPEN / DRAFT / UNMERGED, branch `verify/windows-pr95-20261114`, verifier HEAD `56271be82645357c2feaa1134ae2dc1d2ceae734`. Never conflate verifier SHA with ONE source SHA.
 
-### Unix process containment follow-up — PR #106 / Issue #105
-- Issue #105 remains OPEN: Unix descendants can escape the original process group/session using `setsid()`, survive the invocation, and retain inherited stdout/stderr handles.
-- PR #106 is OPEN / DRAFT / UNMERGED, branch `fix/unix-reader-shutdown-deadline-20261117`, exact HEAD `060ce71c3bfb272c3d90c65e95b0982bf0d69020`. It now correctly targets PR #102 branch `fix/commit-cargo-lockfile-20261117` at base SHA `ac1bb214...`. GitHub compare confirms 8 commits ahead, 0 behind, and a one-file incremental diff limited to `crates/one-core/src/interop.rs`.
-- Exact-SHA GitHub Actions run #2177 / `44067989787` is terminal SUCCESS on source `060ce71...`: Windows job `133986568685` PASS; Ubuntu job `133986569118` PASS. The escaped-session regression proves reader shutdown returns promptly despite a descendant retaining inherited pipes.
-- Scope boundary: PR #106 does NOT terminate the escaped descendant in production; its regression cleans up its test-owned descendant after measuring the bounded return. It closes the unbounded reader-join subproblem only. It does not close Issue #105 or establish strong Unix process-tree containment. PR #106 description now records this boundary and exact evidence. No E4/E6 or release acceptance promotion.
+- Repository `panglimanetizen01/one` remains PUBLIC; default branch `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. No main-branch change.
+- PR #95 CircleCI migration remains OPEN / DRAFT / UNMERGED at source HEAD `db859f24aa4ad76bf16e55c6b1f2fb06f3c22ac8`. The proposed config blob is `9d05f65badffae75e7e22bd1f0962e056b4960bd`; it is not active on main. Current-source independent Windows verification is PASS: verifier PR #42 HEAD `170f882a702dffbb94e116c2c51b7cec7f6912f5` pins `WINDOWS_SOURCE_COMMIT.txt` exactly to `db859f24...`; run #44 / `44082635958`, Windows Server 2025 job `134036849522`, terminal SUCCESS. Artifact #14328017616, SHA-256 `2ba8c8ca6e926f4693b80bc53b73bd58adb4e32ce4889cd25b80114604905b39`. This is Windows verifier PASS only; current PR #95 CircleCI status contexts are absent and optional `release-check` remains NOT VERIFIED. Previous verifier run #43 applies to predecessor source `993f763...` only.
+- PR #97 architecture/documentation branch remains OPEN / DRAFT / UNMERGED at HEAD `029471e0396504c030db60833fcda5b5baff24dd`; exact GHA run #2220 / `44082263286` terminal SUCCESS on Ubuntu `134035560175` and Windows `134035560564`.
+- PR #102 process-resource branch remains OPEN / DRAFT / UNMERGED at HEAD `32fc9b77bac14ecfc06a6fddd946a5419298e997`; exact GHA run `44080488453` terminal SUCCESS on Ubuntu `134029477684` and Windows `134029477904`. Its PR description was corrected: Unix process-group cleanup is best-effort and descendants that create a new session/group can survive. It does not claim unescapable process-tree containment.
+- PR #106 remains OPEN / DRAFT / UNMERGED at source HEAD `7da358abcd1e5e7d5e257db5eec0d1b4081aa7fc`, based on PR #102 branch HEAD `32fc9b77...`. Exact GHA run #2215 / `44080978536` terminal SUCCESS on Ubuntu `134031174299` and Windows Server 2025 `134031174982`. Full Build, Clippy, Tests, docs/contracts, deterministic artifacts, vertical slices, release CLI and platform smoke passed. This verifies bounded reader shutdown and cross-platform compilation, not production Unix descendant termination.
+- PR #103 completion-ledger/DoD branch remains OPEN / DRAFT / UNMERGED. Its ledger update commit is `8f4e29fc8e0f825daf21ac29bcbe54af2d25df2f`; exact GHA run #2222 / `44083769200` terminal SUCCESS on Ubuntu `134040745052` and Windows `134040745386`. This run verifies the ledger commit, not full E1–E6 acceptance.
+- The PR #103 ledger commit has CircleCI context ERROR at pipeline #657; PR #106 has CircleCI context ERROR at pipeline #643. The current session has no authenticated CircleCI operational connector/job-log access. `.circleci/config.yml` is absent from main, PR #102 and PR #106 branches, while the proposed config exists on unmerged PR #95. This is consistent with a config-source issue but is not a proven root cause. Do not infer source/test failure or CircleCI PASS from the status context.
+- Independent verifier PR #42 remains OPEN / DRAFT / UNMERGED at HEAD `170f882a702dffbb94e116c2c51b7cec7f6912f5`. Keep verifier SHA distinct from ONE source SHA.
 
-### Historical health-scanner verifier finding
-- The health-scanner workflow is absent from verifier `main`, but an earlier version exists on verifier branch `verification` and is inherited by some verifier PR branches. The current `verification` branch version reads shared `CANONICAL_COMMIT.txt` (`e50748a1b25922d9090eba1f5fb90548d7c7d003`), where the ONE scanner files are absent; this is a stale source-pin mismatch on that verifier branch. PR #39 is the corrective draft: it reads dedicated `HEALTH_SCANNER_SOURCE_COMMIT.txt` pinned to ONE PR #91 SHA `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`, where the scanner and its test corpus exist. The workflow remains developer-side/historical verification, not current ONE product code. Preserve the dedicated pin; do not reintroduce scanner files into current ONE product branches.
+### Unix process containment — Issue #105
 
-### Completion and safety
-- PR #95, #97, #102, #103, #106 and verifier PR #42 remain unmerged. Main remains unchanged.
-- E6 remains **NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED**. The current ledger/DoD checkpoint previously recorded 3 checked / 10 unchecked / 13 total; no score or checkbox is promoted by these scoped CI results.
-- No merge, release, force-push, history rewrite, visibility, secrets, billing, or default-branch action was performed.
+- Issue #105 remains OPEN. Unix descendants can escape the original process group/session via `setsid()`; the 100 ms nonblocking reader shutdown only prevents a retained pipe writer from holding the reader join indefinitely. It does not terminate escaped production descendants.
+- Linux cgroup v2 with host-created per-invocation boundary, verified delegation/namespace permissions, atomic placement, and host-owned `cgroup.kill` remains candidate architecture research only. No backend is implemented or verified. Do not claim containment from process-group scans or PID enumeration.
+- The PR #102 description and PR #106 specifications now explicitly state the weaker Unix guarantee. Issue #105 remains open until a non-escapable host boundary is implemented and verified, or the weaker per-platform guarantee is explicitly accepted with production evidence.
+
+### Completion and release acceptance
+
+- Current DoD checkbox count remains 3 checked / 10 unchecked / 13 total. E1–E6 acceptance rows remain unchecked; E1–E5 implementation subtotals are provisional only. E6 remains 0/4 and **NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED**.
+- The PR #103 ledger currently records exact PR #106 Linux/Windows PASS and exact PR #95 Windows verifier PASS. Neither result promotes E1–E6 acceptance or a 100% completion claim.
+- Final candidate SHA is not frozen; full E1–E6 exact-SHA acceptance and final release evidence are not complete. Do not claim ONE is 100% complete or ready for release.
+- No merge, release, force-push, history rewrite, repository visibility/default-branch, secrets, or billing change.
 
 ### Next executable work
-1. Continue Issue #105 with a genuine non-escapable Unix containment design or explicitly narrowed platform guarantee, plus production descendant termination proof; PR #106 alone is insufficient.
-2. Continue PR #95 CircleCI activation verification when authenticated CircleCI operational access is available; require exact-source Linux PASS and keep optional release-check NOT VERIFIED until actually run.
-3. Reconcile the product E1–E6 evidence matrix and release acceptance against live PRs and source, preserving all exact-SHA boundaries.
+
+1. Obtain authenticated CircleCI pipeline/job diagnostics for #643 and #657 through an authorized CircleCI connection; do not add duplicate config files or alter PR dependency structure merely to silence the error.
+2. Continue Issue #105 only with a verified host-owned non-escapable boundary or an explicitly accepted weaker per-platform contract, plus production tests for normal exit, timeout, and output overflow.
+3. Freeze a final integration candidate only after reconciling PR dependencies and CI migration; then run the complete required E1–E6 acceptance matrix and verify every artifact/pin against that exact SHA.
+4. Preserve the three checked / ten unchecked DoD count until the actual acceptance criteria are proven. No premature completion or release promotion.
 
 ---
 
