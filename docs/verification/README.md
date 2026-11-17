@@ -107,3 +107,14 @@ This addendum supersedes older PR #95 current-status statements above where they
 - PR #95, #97, #102, #103 and verifier PR #42 remain OPEN / DRAFT / UNMERGED. CircleCI is not active on main until the migration PR is separately authorized and merged. No merge/release is authorized.
 - Health scanner workflow provenance: verifier PR #39 targets ONE PR #91 SHA `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`; verifier PR #40 targets ONE PR #89 SHA `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`. Both exact source revisions contain the scanner files; current ONE main does not. These are branch-scoped historical/developer-tooling verifiers, not current main product dependencies. Preserve them unless their source PRs are explicitly superseded.
 - E6 remains NOT IMPLEMENTED / final release gate NOT PASSED. No completion points are promoted by these CI results alone.
+
+
+## Latest cross-PR verification checkpoint — 2026-11-17
+
+- Main remains PUBLIC at exact SHA `d35db95153f6ddd79885494c72f5aee16c899751`; no merge/release occurred.
+- PR #102 exact source `7e10e758d7e1ca70f450bfbb6cf397d805500e53`: GitHub Actions run #44019833034 terminal SUCCESS on Windows job `133826414765` and Ubuntu job `133826415064`. The Windows Job Object descendant-termination regression passed. This is not CircleCI migration evidence for PR #95.
+- PR #95 current source `5ba239ac3964dc147d1568dac2b819459f31b463` is a documentation-only descendant. CircleCI `ci/circleci: one-linux` is PENDING (workflow `5ec5c4c5-e6ab-4518-8d46-1178ba75333f`, job `59fcdba6-1647-4352-ad02-1add7eebae22`). Previous exact-SHA SUCCESS on `cef1f41...` is not automatically transferred.
+- Independent verifier PR #42 pin is synchronized to `5ba239...` (pin commit `764d197864b19181ba7a814bf93c56c596bf8600`; current verifier PR head `6fd76ed85189923a1c0f661638f8077f290955a1`). No Windows run for `5ba239...` is observed; status NOT VERIFIED. Historical run #32 applies only to `a10a69...`.
+- PR #97 remains OPEN / DRAFT / UNMERGED. PR #103 ledger and DoD were refreshed in commits `5b68887d4de4644c7e730171af2ff60c64ad0bd6` and `0930e5ad3aee496e88f1a76adf4cafaface3e440` respectively; its PR remains OPEN / DRAFT / UNMERGED.
+- The optional CircleCI `release-check` with `run_release_checks=true` is NOT VERIFIED. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release acceptance remains NOT PASSED.
+- No merge, release, default-branch mutation, or source-language behavior change occurred.
