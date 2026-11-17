@@ -241,3 +241,15 @@ A separate draft integration PR was opened rather than rewriting or merging PR #
 
 ### Exact-SHA guard correction — follow-up
 The initial preview shell wrapper incorrectly treated exit code 1 as report-only even though both scanners use that code for critical/high findings, including exact-SHA mismatch. This was corrected: Python report JSON is inspected for invalid/missing/mismatched checkout SHA; native output is checked for `expected-sha-mismatch` and `head-unavailable`. The correction was posted to Issue #90 comment `6953106805`. Latest config blob at this point is `750df015567cbba6927eb015e8d4054ffb8ca22d`. This is source readback only; no CircleCI job execution is evidenced.
+
+
+## 11. Native scanner CircleCI schema heuristic correction — 2026-11-17
+
+During static review of PR #109 native scanner code, the first CircleCI structural rule incorrectly required a top-level `workflows:` key. Official CircleCI documentation describes a valid implicit workflow for a single job named `build`; therefore absence of `workflows:` alone is not an error. The scanner was corrected on source commit `408b6c6adb57c935c34235c9316f8417a421b143`:
+- Removed `circleci-workflows-missing`.
+- Checks supported top-level versions `2`, `2.0`, `2.1` and required `jobs:` only.
+- Replaced the regression test with a valid implicit single-job build fixture, a quoted supported 2.0 fixture, and invalid version/missing jobs assertions.
+- Updated detector and scanner docs with the boundary: heuristic checks are not CircleCI config compilation.
+- Official reference: https://circleci.com/docs/guides/server/getting-started/introduction-to-yaml-configurations/.
+
+Current PR #109 HEAD after docs and PR-body synchronization: `d15a0aa321cc906d0bc989fe9b517c979631d362`. PR #109 remains OPEN/DRAFT/UNMERGED. This correction has not been compiled or executed locally or in CircleCI. Combined GitHub status/check-runs remain empty; no CircleCI terminal job evidence is available.
