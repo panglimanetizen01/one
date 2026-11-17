@@ -118,3 +118,12 @@ This addendum supersedes older PR #95 current-status statements above where they
 - PR #97 remains OPEN / DRAFT / UNMERGED. PR #103 ledger and DoD were refreshed in commits `5b68887d4de4644c7e730171af2ff60c64ad0bd6` and `0930e5ad3aee496e88f1a76adf4cafaface3e440` respectively; its PR remains OPEN / DRAFT / UNMERGED.
 - The optional CircleCI `release-check` with `run_release_checks=true` is NOT VERIFIED. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release acceptance remains NOT PASSED.
 - No merge, release, default-branch mutation, or source-language behavior change occurred.
+
+
+## Latest locked-dependency CI checkpoint — 2026-11-17
+
+- PR #95 current source SHA: `d42689718870236694f6cab841f8b7be1afccfcc`. CircleCI `ci/circleci: one-linux` is PENDING (workflow `6af2386b-dd8d-47c8-b414-4237e92130fd`, job `6cf4f8c5-7b2d-4876-a448-89dc0c596c68`). No status from an ancestor SHA is transferred.
+- Offline scripts `tools/verify_offline.sh` and `tools/verify_offline.ps1` now use `--locked` for every Cargo build, Clippy, test, and run command; `tools/check_contract.py` rejects any omission.
+- Independent verifier PR #42 pin matches `d426897...`; verifier workflow enforces `--locked` on all Cargo commands and includes a self-check for the rule. Verifier docs/current PR head: `9475956ae0ddccb969a5d14d1c9e803c7e44d097`.
+- Windows exact-SHA run for `d426897...` is NOT VERIFIED. Optional CircleCI `release-check` remains NOT VERIFIED.
+- No implementation score, verified score, DoD checkbox, or E6 status is promoted. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release acceptance remains NOT PASSED.
