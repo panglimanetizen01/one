@@ -107,3 +107,7 @@ Official sources:
 ## 13. Cargo cache identity
 
 CircleCI Cargo cache keys MUST include the architecture, workspace/package manifests, `Cargo.lock`, and `rust-toolchain.toml`. A lockfile change must produce a distinct primary cache key so dependency-resolution changes cannot silently reuse the same exact cache identity. A broader fallback cache may be used only as an optimization; Cargo remains authoritative for dependency integrity, and every CI Cargo build, Clippy, test, and run command MUST continue to use `--locked`. Cache hits are performance evidence only, never verification evidence.
+
+## 14. Release workflow deduplication
+
+The CircleCI release-check workflow MUST NOT rerun the ordinary baseline build, Clippy, workspace tests, documentation checks, toolchain bootstrap, or release CLI smoke test in a separate duplicate job when those gates are already executed by the canonical Linux job. The ordinary and release-check workflows MUST be mutually exclusive for a given pipeline parameter value so exactly one baseline Linux job is scheduled. Release-only gates (currently real-network runtime tests and the portable offline verifier) MUST execute conditionally within the selected release-check run and MUST NOT be removed or weakened. A refactor is accepted only after CircleCI schema validation and terminal job-level execution evidence on the resulting exact SHA; static YAML readback alone is not execution evidence.
