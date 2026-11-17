@@ -744,3 +744,12 @@ This section supersedes prior current-head statements where they conflict. Histo
 - The optional CircleCI `release-check` parameter `run_release_checks=true` has not been evidenced as executed. Release acceptance remains NOT PASSED.
 - No score, weight, or Definition of Done checkbox is promoted by these CI results. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; historical provisional implementation inventory remains 92/100 and exact-SHA verified score remains 0/100.
 - No merge, release, force-push, history rewrite, visibility change, secret change, billing change, or default-branch mutation occurred.
+
+
+## Latest locked-dependency CI checkpoint — 2026-11-17
+
+- PR #95 current source SHA: `d42689718870236694f6cab841f8b7be1afccfcc`. CircleCI `ci/circleci: one-linux` is PENDING (workflow `6af2386b-dd8d-47c8-b414-4237e92130fd`, job `6cf4f8c5-7b2d-4876-a448-89dc0c596c68`). No status from an ancestor SHA is transferred.
+- Offline scripts `tools/verify_offline.sh` and `tools/verify_offline.ps1` now use `--locked` for every Cargo build, Clippy, test, and run command; `tools/check_contract.py` rejects any omission.
+- Independent verifier PR #42 pin matches `d426897...`; verifier workflow enforces `--locked` on all Cargo commands and includes a self-check for the rule. Verifier docs/current PR head: `9475956ae0ddccb969a5d14d1c9e803c7e44d097`.
+- Windows exact-SHA run for `d426897...` is NOT VERIFIED. Optional CircleCI `release-check` remains NOT VERIFIED.
+- No implementation score, verified score, DoD checkbox, or E6 status is promoted. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release acceptance remains NOT PASSED.
