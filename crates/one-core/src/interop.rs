@@ -814,7 +814,7 @@ mod tests {
         // Closing the kill-on-close job must terminate it before run_process returns.
         let process = unsafe {
             OpenProcess(
-                PROCESS_QUERY_LIMITED_INFORMATION | 0x0010_0000,
+                PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE | 0x0010_0000,
                 0,
                 pid,
             )
