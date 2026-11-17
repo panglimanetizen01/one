@@ -38,7 +38,7 @@ Current disposition is deliberately fail-closed:
 - Historical implementation inventory: 92/100 provisional; current exact-SHA verified points: 0/100.
 - Historical DoD state: 3 checked / 10 unchecked; the checked items require revalidation against a frozen final source SHA.
 - Lockfile candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed GitHub Actions Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime (exit 0, output `Budi`). This is prior-SHA evidence and does not verify the newer process-hardening HEAD.
-- PR #102 current HEAD: `d6f7230de89fb70b6abb54a44d18f1c380b9a09b`; exact-SHA GitHub Actions run #44000173122 is in progress. Do not attribute parent-SHA results to this HEAD.
+- PR #102 current HEAD: `c498fc4d2a9f870b6fa06edfa4b04af9cef58217`; exact-SHA GitHub Actions run #44000805140 is in progress, including the newly added Windows descendant-cleanup regression. Prior run #44000173122 completed SUCCESS on parent SHA `d6f7230...`; it passed bounded timeout/output tests but did not yet include the descendant test. Do not attribute parent-SHA results to the current HEAD.
 - CircleCI migration PR #95 remains unmerged; `.circleci/config.yml` is absent from `main`. CircleCI ERROR contexts on product-fix branches are not proof that source tests failed.
 - No final candidate SHA is frozen. Release gate remains **NOT PASSED**. No merge or release is authorized by this checkpoint.
 
