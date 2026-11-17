@@ -168,17 +168,29 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         .take()
         .ok_or_else(|| "Subprocess stderr pipe was not created.".to_owned())?;
 
-    if let Err(error) = set_reader_nonblocking(&stdout).and_then(|()| set_reader_nonblocking(&stderr)) {
+    if let Err(error) =
+        set_reader_nonblocking(&stdout).and_then(|()| set_reader_nonblocking(&stderr))
+    {
         kill_process_group(process_group);
         let _ = child.kill();
         let _ = child.wait();
-        return Err(format!("Failed to configure bounded subprocess pipe readers: {error}"));
+        return Err(format!(
+            "Failed to configure bounded subprocess pipe readers: {error}"
+        ));
     }
 
     let output_limit_exceeded = Arc::new(AtomicBool::new(false));
     let reader_shutdown = Arc::new(AtomicBool::new(false));
-    let stdout_reader = spawn_bounded_reader(stdout, Arc::clone(&output_limit_exceeded), Arc::clone(&reader_shutdown));
-    let stderr_reader = spawn_bounded_reader(stderr, Arc::clone(&output_limit_exceeded), Arc::clone(&reader_shutdown));
+    let stdout_reader = spawn_bounded_reader(
+        stdout,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+    );
+    let stderr_reader = spawn_bounded_reader(
+        stderr,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+    );
     let deadline = Instant::now() + PROCESS_TIMEOUT;
     let mut timed_out = false;
 
@@ -685,8 +697,16 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     let stderr_file = unsafe { File::from_raw_handle(stderr_read.into_raw() as _) };
     let output_limit_exceeded = Arc::new(AtomicBool::new(false));
     let reader_shutdown = Arc::new(AtomicBool::new(false));
-    let stdout_reader = spawn_bounded_reader(stdout_file, Arc::clone(&output_limit_exceeded), Arc::clone(&reader_shutdown));
-    let stderr_reader = spawn_bounded_reader(stderr_file, Arc::clone(&output_limit_exceeded), Arc::clone(&reader_shutdown));
+    let stdout_reader = spawn_bounded_reader(
+        stdout_file,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+    );
+    let stderr_reader = spawn_bounded_reader(
+        stderr_file,
+        Arc::clone(&output_limit_exceeded),
+        Arc::clone(&reader_shutdown),
+    );
 
     let deadline = Instant::now() + PROCESS_TIMEOUT;
     let mut timed_out = false;
@@ -928,14 +948,22 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn escaped_session_descendant_cannot_hold_output_readers_open() {
-        let pid_file = std::env::temp_dir().join(format!("one-escaped-descendant-{}.pid", std::process::id()));
+        let pid_file = std::env::temp_dir().join(format!(
+            "one-escaped-descendant-{}.pid",
+            std::process::id()
+        ));
         let _ = std::fs::remove_file(&pid_file);
         let script = "setsid sh -c 'sleep 5' & echo $! > \"$1\"";
         let started = Instant::now();
         let result = run_process(
             &ProcessSpec {
                 program: "sh".into(),
-                args: vec!["-c".into(), script.into(), "one-test".into(), pid_file.to_string_lossy().into_owned()],
+                args: vec![
+                    "-c".into(),
+                    script.into(),
+                    "one-test".into(),
+                    pid_file.to_string_lossy().into_owned(),
+                ],
                 working_directory: None,
             },
             &CapabilitySet::none().allow(Capability::Process),
@@ -952,7 +980,10 @@ mod tests {
         unsafe { libc::kill(pid, libc::SIGKILL); }
         let _ = std::fs::remove_file(&pid_file);
         assert!(result.success, "helper shell should exit successfully");
-        assert!(elapsed < Duration::from_secs(3), "reader shutdown took {elapsed:?}; an escaped pipe writer must not hold run_process open");
+        assert!(
+            elapsed < Duration::from_secs(3),
+            "reader shutdown took {elapsed:?}; an escaped pipe writer must not hold run_process open"
+        );
     }
 
     #[test]
