@@ -48,6 +48,6 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 4. A later docs-only commit does not inherit test results unless the verification contract explicitly allows it and the exact source/code diff proves no relevant behavior changed.
 5. Never promote DoD checkboxes, E1–E6 points, or release approval based only on a scoped PASS.
 
-- PR #109 native CircleCI heuristic correction is recorded in forensic audit §11; source commit `408b6c6...`, latest docs/PR metadata HEAD `94aeb1a...`. It explicitly accepts the valid implicit single-job `build` workflow and remains untested pending CircleCI evidence.
+- PR #109 native CircleCI heuristic correction is recorded in forensic audit §11. It explicitly accepts the valid implicit single-job `build` workflow and remains untested pending CircleCI evidence. SHA values in older checkpoint notes are historical only; refresh PR metadata before treating any SHA as current.
 
 - Native integrity scanner is isolated as a separate developer-only `one-integrity` binary; it is not a subcommand of beginner-facing `one`. Contract checker enforces this boundary. Source/CI updates are static-readback only pending exact-SHA compile/test.
