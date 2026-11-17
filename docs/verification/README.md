@@ -25,3 +25,20 @@ GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No
 - Every platform result is bound to its exact canonical source SHA and stated host boundary.
 - Windows PASS requires terminal-success Windows workflow plus independent manifest and binary-hash verification.
 - A CircleCI Linux PASS does not imply Windows PASS; a Windows verifier PASS does not imply CircleCI Linux PASS.
+
+
+## Completion ledger and release gate — 2026-11-17
+
+The fixed-weight completion ledger and Definition of Done are restored in the canonical documentation surface by [PR #103](https://github.com/panglimanetizen01/one/pull/103):
+
+- [Fixed-weight completion ledger](one-completion-ledger.md) — F1–F6, C1–C6, and E1–E6; weights remain fixed at 100 points.
+- [Definition of Done](DEFINITION_OF_DONE.md) — release acceptance checklist.
+
+Current disposition is deliberately fail-closed:
+- Historical implementation inventory: 92/100 provisional; current exact-SHA verified points: 0/100.
+- Historical DoD state: 3 checked / 10 unchecked; the checked items require revalidation against a frozen final source SHA.
+- Lockfile candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed GitHub Actions Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime (exit 0, output `Budi`). This is prior-SHA evidence and does not verify the newer process-hardening HEAD.
+- PR #102 current HEAD: `d6f7230de89fb70b6abb54a44d18f1c380b9a09b`; exact-SHA GitHub Actions run #44000173122 is in progress. Do not attribute parent-SHA results to this HEAD.
+- CircleCI migration PR #95 remains unmerged; `.circleci/config.yml` is absent from `main`. CircleCI ERROR contexts on product-fix branches are not proof that source tests failed.
+- No final candidate SHA is frozen. Release gate remains **NOT PASSED**. No merge or release is authorized by this checkpoint.
+
