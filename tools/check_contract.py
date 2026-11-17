@@ -1,10 +1,11 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
 required = [
-    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
-    ".github/workflows/ci.yml", ".github/workflows/release-check.yml", ".github/workflows/windows-native-verification.yml",
+    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml",
+    ".circleci/config.yml",
     "docs/README.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
@@ -35,6 +36,17 @@ required = [
 missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
     raise SystemExit("MISSING CONTRACT ARTIFACTS:\n" + "\n".join(missing))
+
+# Every Cargo build/test/run command used by CI or the portable offline verifiers
+# must honor the committed lockfile. This prevents CI from silently resolving
+# a different dependency graph than the one reviewed in the repository.
+for script in (".circleci/config.yml", "tools/verify_offline.sh", "tools/verify_offline.ps1"):
+    for line_number, line in enumerate((ROOT / script).read_text(encoding="utf-8").splitlines(), start=1):
+        command = line.strip()
+        if command.startswith("command:"):
+            command = command[len("command:"):].strip()
+        if re.match(r"^cargo\s+(?:build|clippy|test|run)\b", command) and "--locked" not in command:
+            raise SystemExit(f"LOCKFILE CONTRACT: {script}:{line_number} Cargo command must include --locked")
 
 release = (ROOT / "docs/release/one-v0.1.md").read_text(encoding="utf-8")
 if "do not purchase an upgrade" not in release.lower():
