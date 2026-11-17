@@ -102,10 +102,10 @@ fn circleci_config_requires_version_jobs_and_workflows(){
  let root=std::env::temp_dir().join(format!("one-circleci-test-{}",std::process::id()));
  let _=fs::remove_dir_all(&root);
  fs::create_dir_all(root.join(".circleci")).unwrap();
- fs::write(root.join(".circleci/config.yml"),"version: 2.1\\njobs:\\n").unwrap();
+ fs::write(root.join(".circleci/config.yml"),"version: 2.1\njobs:\n").unwrap();
  let (findings,_,_)=scan(&root,"workflow",None).unwrap();
  assert!(findings.iter().any(|f|f.rule=="circleci-workflows-missing"));
- fs::write(root.join(".circleci/config.yml"),"version: 2.1\\njobs:\\nworkflows:\\n").unwrap();
+ fs::write(root.join(".circleci/config.yml"),"version: 2.1\njobs:\nworkflows:\n").unwrap();
  let (clean,_,_)=scan(&root,"workflow",None).unwrap();
  assert!(!clean.iter().any(|f|f.rule=="circleci-version-missing"||f.rule=="circleci-jobs-missing"||f.rule=="circleci-workflows-missing"));
  fs::remove_dir_all(root).unwrap();
