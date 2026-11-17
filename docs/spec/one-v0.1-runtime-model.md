@@ -94,7 +94,7 @@ Event registration is runtime state. An event handler executes only when a match
 
 ## 12. Resource limits
 
-The runtime may enforce explicit limits for stack depth, memory, execution steps, open resources, and effect payload sizes. Limits are configuration, not semantic coercion. Exceeding a limit produces a structured resource error.
+The runtime may enforce explicit limits for stack depth, memory, execution steps, open resources, and effect payload sizes. Limits are configuration, not semantic coercion. Exceeding a limit produces a structured resource error. The process adapter additionally enforces its fixed execution deadline, bounded stdout/stderr capture, and process-tree cleanup policy.
 
 ## 13. Host isolation
 
