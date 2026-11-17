@@ -97,3 +97,13 @@ This addendum supersedes older PR #95 current-status statements above where they
 - Independent Windows verifier PR #42 remains pinned to `9b233dfe75da8c0752c203af3711bf3da319dc02`, not the current PR #95 source SHA. No independent Windows run for `cef1f41...` is evidenced; classify that gate NOT VERIFIED.
 - PR #102 current HEAD `7e10e758d7e1ca70f450bfbb6cf397d805500e53` has exact-SHA GitHub Actions run #44019833034 terminal SUCCESS on Ubuntu job `133826415064` and Windows job `133826414765`. This is a separate source branch and must not be substituted for PR #95's Windows verifier gate.
 - Main remains PUBLIC and unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`; PR #95 is not merged. CircleCI migration is not yet active on main; no merge or release has occurred.
+
+
+## Latest exact-SHA status — 2026-11-17
+
+- PR #102 source SHA `7e10e758d7e1ca70f450bfbb6cf397d805500e53`: GitHub Actions One CI run #44019833034 terminal SUCCESS on Ubuntu job `133826415064` and Windows job `133826414765`; the Windows descendant Job Object regression passed.
+- PR #95 source SHA `cef1f41c97585b6e25bf91af6e8b4281efe299c4`: CircleCI `ci/circleci: one-linux` terminal SUCCESS, workflow `930378d8-49bb-416e-a42c-63e1797b991c`, job `0e2642b0-bd94-4892-baca-df5b6c8fa4ed`. This status is exact-SHA-bound; step-level logs are not exposed by the current integration.
+- PR #42 now pins `cef1f41...` in commit `f5113c084fa978f275bc8426a4ca1e4d74376549`; docs/pin branch HEAD is `44b36a1894382cc2508edf0166f60b06c9434d7a`. No independent Windows run exists for this exact source SHA. Same-SHA Windows verification remains NOT VERIFIED because the PR branch update does not trigger the base `verification` workflow and no workflow-dispatch action is available in the connected integration.
+- PR #95, #97, #102, #103 and verifier PR #42 remain OPEN / DRAFT / UNMERGED. CircleCI is not active on main until the migration PR is separately authorized and merged. No merge/release is authorized.
+- Health scanner workflow provenance: verifier PR #39 targets ONE PR #91 SHA `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`; verifier PR #40 targets ONE PR #89 SHA `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`. Both exact source revisions contain the scanner files; current ONE main does not. These are branch-scoped historical/developer-tooling verifiers, not current main product dependencies. Preserve them unless their source PRs are explicitly superseded.
+- E6 remains NOT IMPLEMENTED / final release gate NOT PASSED. No completion points are promoted by these CI results alone.
