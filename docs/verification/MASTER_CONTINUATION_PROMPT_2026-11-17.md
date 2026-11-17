@@ -234,3 +234,15 @@ This source change has only been read back through GitHub; no Cargo/Rust executi
 - PR #109 OPEN/DRAFT/UNMERGED; PR #108 OPEN/DRAFT/UNMERGED.
 - Main `one` CLI remains unchanged in vocabulary; native scanner is separate `one-integrity` binary.
 - Current SHA has no GitHub check-runs and no combined status. No local Rust compile/test or CircleCI terminal evidence. Do not reuse historical PR #89/#91 PASS results.
+
+
+## 14. Live PR #109 head refreshed — 2026-11-17
+
+- Live branch ref and PR metadata agree: `b66324a6cca8f72c52a9c2ec8d1af3e7ec8526fb`.
+- PR #109 remains OPEN/DRAFT/UNMERGED, base `ci/circleci-migration-rebased-20261117` (PR #108 branch).
+- This supersedes earlier PR #109 head references `94aeb1a...` and `d15a0aa...` in historical sections. Preserve those as historical checkpoints, not current pointers.
+- Exact-head tree has 217 tracked files; required native scanner root paths are present, including `AGENTS.md`.
+- Native scanner remains separate `one-integrity` binary; main `one` CLI has no scanner dispatch or help vocabulary.
+- No GitHub check runs/status contexts surfaced for the current SHA. CircleCI job logs and local Rust/Python execution remain unavailable; no test PASS is claimed.
+- The Python scanner regression suite contains 73 test methods; this is source inspection only. Native/Python parity remains unproven and documented gaps remain.
+- The following documentation synchronization commit will advance the branch head. Treat `b66324a...` as the code/source-review SHA and refresh live metadata again after the docs commit.

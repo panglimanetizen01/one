@@ -3,7 +3,7 @@
 ## Live integration checkpoint — 2026-11-17
 
 - PR #108 now integrates PR #98–#101 source/test changes; integration source commit `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. Normative specifications are synchronized in subsequent commits.
-- Draft PR #109 (`ci/scanner-restoration-20261117`) targets the PR #108 migration branch at exact head `94aeb1a336eae2348dfc2910b69f00bd6b00b156`; it restores native/Python integrity scanner previews, tests, ADR-0018, and CircleCI development-side scanner checks. Native code is isolated in a separate developer-only `one-integrity` binary, not the beginner-facing `one` CLI. No CircleCI check suite/run is surfaced and no compile/test has been executed for this head; do not treat the integration as validated.
+- Draft PR #109 (`ci/scanner-restoration-20261117`) targets PR #108's migration branch. Latest source HEAD verified for this checkpoint: `b66324a6cca8f72c52a9c2ec8d1af3e7ec8526fb`. It restores native/Python integrity scanner previews, tests, ADR-0018, and CircleCI development-side scanner checks. Native code is isolated in a separate developer-only `one-integrity` binary. No CircleCI check suite/run is surfaced and no compile/test has been executed for this head; do not treat the integration as validated.
 - Combined exact-SHA Ubuntu/Windows verification is NOT RUN. CircleCI job-level evidence is NOT AVAILABLE in this session. Historical parent-SHA PASS results are not transferable.
 - PR #108 remains OPEN/DRAFT; main remains unchanged. DoD remains 3/13 and E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
 

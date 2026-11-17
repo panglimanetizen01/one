@@ -273,3 +273,17 @@ The main `one` CLI help and dispatch are restored to the pre-scanner vocabulary.
 - PR #109 remains OPEN/DRAFT/UNMERGED; PR #108 remains OPEN/DRAFT/UNMERGED.
 - Changed-file set now includes explicit Cargo target `one-integrity`, its entrypoint, updated CircleCI invocation, and contract guard. Main CLI help/dispatch no longer includes scanner vocabulary.
 - GitHub check-runs: 0; combined status: empty. No local `cargo`/`rustc`, no CircleCI CLI/token, no CircleCI terminal logs. No compile/test PASS is claimed.
+
+
+## 13. Live-head reconciliation after scanner static review — 2026-11-17
+
+The current GitHub branch ref and PR #109 metadata were refreshed together. Both report exact HEAD `b66324a6cca8f72c52a9c2ec8d1af3e7ec8526fb`; PR #109 remains OPEN/DRAFT/UNMERGED and targets PR #108's branch. This supersedes the earlier `94aeb1a...` pointer in §12.
+
+Additional exact-HEAD readback:
+- The repository tree is complete (217 tracked blobs, not truncated); all native scanner required foundation paths exist, including `AGENTS.md`.
+- The native scanner is an explicit `one-integrity` Cargo binary; `crates/one-cli/src/main.rs` remains free of scanner imports/dispatch/help entries.
+- CircleCI runs Python scanner regression suites, Rust focused tests for `one-integrity`, and exact-SHA previews. The GitHub check-runs collection for this SHA is empty; no CircleCI terminal job logs are available.
+- Python scanner test file contains 73 test methods including CircleCI config script-path coverage. This is source inspection, not test execution.
+- Python and native scanners are not parity-equivalent; native gaps are documented in the parity matrix.
+
+No local Cargo/Python execution was available in this environment. Do not claim build/test success. Docs-only synchronization after this audit will advance the branch head; keep `b66324a...` as the implementation SHA and record the new docs commit separately.
