@@ -224,3 +224,12 @@ Run #44012805081 on PR #102 SHA `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubun
 - Documentation-only descendant PR #95 HEAD is `dd9960ff52d005c4c5bf02bc11fc3c8ef8482ab9`; its fresh CircleCI status is PENDING (workflow `e02ca4dd-a15a-4d44-a5bb-7c2a2db13629`, job `d7aaea88-f864-489d-b717-b95b60dc0078`). Do not attribute the older failure to the descendant or claim its pending run passed.
 - Independent verifier PR #42 now pins `dd9960f...`, but no Windows run is observed. Run #32 is PASS only for `a10a69...`.
 - PR #95 migration acceptance remains NOT PASSED; optional release-check NOT RUN; no merge/release.
+
+
+## PR #95 CircleCI first-failure diagnosis and APT mirror mitigation — 2026-11-17
+
+- User-retrieved authenticated CircleCI output identifies the first failure on source `c71d81a60f7792ed8536ba2b70464b9922f33c18`: cross-toolchain provisioning step 103, `apt-get install`, exit 100. Multiple MinGW package URLs from `us-east1.gce.archive.ubuntu.com` returned HTTP 404 while other packages downloaded. This establishes an Ubuntu regional APT mirror/index-to-pool inconsistency, not a Rust build/test failure.
+- Targeted CircleCI config mitigation committed as `481873f277cb8601fc8881f8e5cc3fb0383f9115`: rewrite the affected regional mirror hostname to `archive.ubuntu.com`, clean and refresh APT metadata, and install the same package set with Acquire retries.
+- CI documentation commit: `23bb9ef79df129edaa848aa3388d8dbe39309fa2`. PR #95 HEAD at the latest status check: `23bb9ef79df129edaa848aa3388d8dbe39309fa2`; CircleCI `ci/circleci: one-linux` PENDING (workflow `74af91bc-d622-4abf-8301-3c52575a2069`, job `29ae0085-428e-42ce-a4d6-80a37442870a`). The mitigation is not yet proven.
+- Independent Windows verifier PR #42 now pins the same SHA: pin commit `3a1e6fadcf9c72927186b3baebe61ab3cca2354a`; verification-doc commit `42ae8720f197aaf312867776984a4f8fce2cf5fd`. No Windows run for this SHA is yet claimed.
+- PR #95 remains OPEN / DRAFT / UNMERGED; CircleCI migration acceptance NOT PASSED. E6 remains NOT IMPLEMENTED / final release gate NOT PASSED. No merge or release.
