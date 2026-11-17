@@ -119,73 +119,29 @@ jobs:
             ONE
             output=$("$binary" jalankan "$temp_dir/halo.one")
             test "$output" = "Budi"
+      - when:
+          condition: << pipeline.parameters.run_release_checks >>
+          steps:
+            - run:
+                name: Real network runtime tests (release gate)
+                command: cargo test --locked -p one-core --features real-network --all-targets
+            - run:
+                name: Offline verification (release gate)
+                command: bash tools/verify_offline.sh
       - save_cache:
           key: one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
           paths:
             - ~/.cargo/registry
             - ~/.cargo/git
 
-  release-linux:
-    machine:
-      image: android:default
-    resource_class: large
-    steps:
-      - checkout
-      - setup-linux-cross-toolchains
-      - run:
-          name: Toolchain and contract artifacts
-          command: |
-            rustc --version
-            cargo --version
-            python3 --version
-            python3 tools/check_contract.py
-      - run:
-          name: User documentation consistency
-          command: python3 tools/check_user_docs.py
-      - run:
-          name: User documentation checker tests
-          command: python3 tools/check_user_docs_test.py
-      - run:
-          name: Build
-          command: cargo build --locked --workspace --all-targets
-      - run:
-          name: Clippy
-          command: cargo clippy --locked --workspace --all-targets -- -D warnings
-      - run:
-          name: Workspace tests
-          command: cargo test --locked --workspace --all-targets
-      - run:
-          name: Real network runtime tests
-          command: cargo test --locked -p one-core --features real-network --all-targets
-      - run:
-          name: Offline verification
-          command: bash tools/verify_offline.sh
-      - run:
-          name: Build release CLI
-          command: cargo build --release --locked -p one-cli --bin one
-      - run:
-          name: Smoke-test release CLI
-          command: |
-            set -euo pipefail
-            binary=target/release/one
-            test -x "$binary"
-            version=$("$binary" version)
-            test "$version" = "one 0.1.0"
-            temp_dir=$(mktemp -d)
-            trap 'rm -rf "$temp_dir"' EXIT
-            cat > "$temp_dir/halo.one" <<'ONE'
-            nama adalah "Budi"
-            tampilkan nama
-            ONE
-            output=$("$binary" jalankan "$temp_dir/halo.one")
-            test "$output" = "Budi"
-
 workflows:
   one-ci:
+    when:
+      not: << pipeline.parameters.run_release_checks >>
     jobs:
       - one-linux
 
   release-check:
     when: << pipeline.parameters.run_release_checks >>
     jobs:
-      - release-linux
+      - one-linux
