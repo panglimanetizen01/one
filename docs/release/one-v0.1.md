@@ -2,6 +2,21 @@
 
 Status: **EXACT-SHA CROSS-PLATFORM VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION; RELEASE APPROVAL REMAINS A SEPARATE GATE**.
 
+## Current forensic release gate — 2026-11-17
+
+This checkpoint supersedes earlier historical candidate/head statements below where they conflict with live PR metadata. It does not authorize merge or release.
+
+- Canonical `main`: `d35db95153f6ddd79885494c72f5aee16c899751`; repository visibility is PUBLIC. `main` still contains GitHub Actions workflows and has no `.circleci/config.yml`.
+- PR #98–#101 each have exact-SHA GitHub Actions Ubuntu + Windows Server 2025 PASS on their own candidate SHAs: #98 `a83321bc41b3d0d28378841e29a6169abed8ac15` run #2018; #99 `8800b885a4ffcb1931a7a3c71f3eaff888e9f5e9` run #2019; #100 `6375356c9c275ace5fd35cf4a81799a9546e1e1d` run #2020; #101 `cdf7bd5b8cff86e1ce271c8f03ef8c01ff61005f` run #2138. These fixes remain unmerged and their results do not combine into a single integrated source revision.
+- PR #102 source `6c72d8e548bbbc28d85be39b8de427614989a038`: GitHub Actions run #2229 / `44086429416` PASS on Ubuntu and Windows Server 2025.
+- PR #107 source `21e393157e52728d9510699ac6c9120987e3852c`: GitHub Actions run #2230 / `44088328030` PASS on Ubuntu and Windows Server 2025. It adds bounded Unix reader shutdown; it does not terminate escaped Unix descendants in production.
+- PR #103 ledger source `041b359b8504551c2c1705093050d9c467368bac`: GitHub Actions run #2231 / `44089449162` PASS on Ubuntu and Windows Server 2025.
+- PR #108 is the CircleCI migration candidate, based on PR #102 and carrying PR #107's verified bounded-reader implementation. It adds CircleCI config, updates contract checking/portable offline scripts for `--locked`, and removes the three repository GitHub Actions workflows on the candidate branch only. Its CircleCI schema/job execution has NOT been verified; no CircleCI status context is currently available.
+- CircleCI contexts #669/#671/#673 are errors on branches without `.circleci/config.yml`; they are not source-test failures. Pipeline #643 on old PR #106 explicitly reported missing config. Do not generalize that exact error to other pipelines without their logs.
+- Open security gates: Issue #104 (race-resistant filesystem root confinement), Issue #105 (strong Unix escaped-descendant containment), and Issue #82 (Android AArch64 runtime execution). Issue #81 remains open pending explicit reconciliation with the newer subprocess work.
+- The Definition of Done remains 3 checked / 10 unchecked / 13 total. E6 remains **NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED**. No 100% completion, merge, or release claim is made.
+
+
 ## Scope
 
 One v0.1 is the Indonesian-first reference implementation. Its purpose is to establish a deterministic language core and a usable command-line execution path without requiring an LLM or another programming language at runtime.
