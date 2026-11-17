@@ -321,4 +321,4 @@ The conformance suite must cover at least:
 
 The reference interpreter and future compiler must consume this semantic contract rather than independently reinterpreting the surface grammar.
 
-The next normative layer is the common semantic IR. The IR must preserve every observable semantic rule defined here and must not introduce platform-specific meaning into the language core.
+The common semantic IR is now separately specified in docs/spec/one-v0.1-semantic-ir.md. The IR must preserve every observable semantic rule defined here and must not introduce platform-specific meaning into the language core. This section records the original dependency order, not a pending gate.
