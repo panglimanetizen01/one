@@ -76,7 +76,7 @@ impl ToolAdapter for SqliteAdapter {
             _ => return Err(AdapterError::InvalidArguments),
         };
 
-        let connection = Connection::open(path).map_err(|_| AdapterError::BackendFailure)?;
+        let connection = if path == ":memory:" { Connection::open_in_memory() } else { Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY) }.map_err(|_| AdapterError::BackendFailure)?;
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
