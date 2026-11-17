@@ -198,3 +198,8 @@ The filesystem implementation on this candidate includes Unix descriptor-relativ
 ## 8. Android runtime evidence reconciliation — 2026-10-28
 
 The independent verification evidence index records the completed API 35 / AArch64 runtime acceptance above. The source SHA for that execution is the then-current candidate `0d0202a1405ae12aaaadf05c6916bacc70316126`. This Definition of Done edit creates a new source commit; therefore the runtime result remains valid evidence for the prior source SHA, and the required final-SHA matrix must rerun against the new HEAD before release acceptance. No E1/E2/E6 points or checkboxes are awarded by this documentation correction.
+
+
+## 10. Windows subprocess containment — Clippy correction checkpoint — 2026-11-17
+
+Run #44010448799 on PR #102 source `eaa7cf77bd9971f1fd9b5205cef975e6acad270f` completed with Ubuntu SUCCESS and Windows FAILURE. Windows build and contract validation passed; strict Clippy failed on one redundant `.into()` at `crates/one-core/src/interop.rs:894`. Tests were skipped, so this run provides no result for the stable process-object handle regression. The redundant conversion was removed in commit `da740c4f7f9c72e9b76e573d23651334272582c5`. This creates a new source SHA and requires fresh exact-SHA Windows verification. Keep subprocess containment unchecked until the new run passes Clippy and the descendant-handle test; do not infer a containment failure or pass from the skipped test.
