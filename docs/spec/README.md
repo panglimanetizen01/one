@@ -30,6 +30,8 @@ This index records the dependency order and review state of the language specifi
 
 ## Cross-cutting contracts
 
+- **CI and verification evidence:** [CI and verification evidence contract](./one-v0.1-ci-verification-contract.md) governs development-side CI outcomes, exact-SHA evidence, runner incidents, and provider migration. It does not alter ONE language semantics or user-facing behavior.
+
 These concerns must be designed and checked alongside the stages they constrain; they are not deferred until the end:
 
 - **Localization:** [Localization overview](./one-v0.1-localization.md) and [detailed localization contract](./one-v0.1-localization-contract.md). The overview is architectural guidance; the detailed contract remains a draft until explicitly approved. Locale-specific grammar must converge on the shared semantic model.
