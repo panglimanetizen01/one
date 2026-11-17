@@ -11,6 +11,8 @@
 - Historical DoD state was 3 checked / 10 unchecked. The checked items are not current-final-SHA acceptance; revalidate them before release.
 - Fixed-weight ledger remains 92/100 provisional implementation and 0/100 current-SHA verified points. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`.
 - PR #95 CircleCI migration remains OPEN / DRAFT / UNMERGED; `.circleci/config.yml` is absent from `main`. CircleCI is not yet active on main.
+- CircleCI ownership boundary: PR #95 exact HEAD `e50748a...` has `ci/circleci: one-linux = success` (workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54)). Current `main` and PR #102 refs do not contain `.circleci/config.yml`; the file exists only on unmerged PR #95. Their generic CircleCI Pipeline ERROR contexts are therefore consistent with the migration not yet being present on those refs, not evidence of a product test failure. PR #102 adds `Cargo.lock` and documents `--locked`, while PR #95's current config does not yet use `--locked`; integrate the two only after authorized PR sequencing, then add `--locked` to all CircleCI Cargo build/Clippy/test commands and require it in the contract checker.
+
 - Release gate remains **NOT PASSED**. No merge, release, protected E2 dispatch, secret/trust-store mutation, visibility change, or direct `main` edit is authorized.
 
 
