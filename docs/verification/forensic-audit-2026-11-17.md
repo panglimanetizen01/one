@@ -255,3 +255,16 @@ PR #80 exact head d75b2846465ba53281198693750f2e6ba39e2e33 was reviewed as refer
 ### Independent E4 verifier run diagnosis — 2026-11-18
 
 GitHub Actions run `43998206030` was inspected at job-log level. Unix job `133755415781` and Windows job `133755416047` both failed before executing the first filtered test because `cargo test --locked` could not create `source/Cargo.lock`. The verifier repository's `CANONICAL_COMMIT.txt` pointed to `e50748a1b25922d9090eba1f5fb90548d7c7d003`, which has no Cargo.lock. Current PR #108 candidate `c4bb4b690e698a83e4ddaf279596479d3dc282ca` does contain Cargo.lock. Classify the historical failure as stale verifier candidate/lockfile precondition, not as a source test failure or PASS. Do not update canonical candidate to current source until the Issue #104 test filters are actually implemented; otherwise the verifier will fail on zero matches. The verifier branch was not changed.
+### Issue #104 source integration map — 2026-11-18
+
+Static source readback on PR #108 base SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca`:
+- `adapter.rs`: filesystem adapters have metadata-only state, parameterless `new()`, and call `std::fs::read` / `std::fs::write` using `ExecutionScope::Target`. Write accepts one Text argument; read accepts none.
+- `interpreter.rs`: `with_orchestration_policy` is the central adapter registration point and currently constructs both filesystem adapters without authority.
+- `one-cli/src/main.rs`: CLI parses `--target` into the capability scope but does not independently capture/inject a trusted cwd root.
+- `lib.rs`: public adapter re-exports need deliberate exports for the new authority/limits.
+- `one-core/Cargo.toml`: libc and windows-sys 0.61 are already target dependencies; check exact API availability before adding dependencies.
+- Existing adapter unit tests and `filesystem_vertical_slice.rs` directly instantiate no-root adapters and must migrate to explicit temp roots while preserving policy/scope assertions. CLI build/package direct file operations remain separate host operations.
+
+Implementation order: shared immutable ProjectFilesystem + limits; Unix/Windows handle-relative primitives; adapters; dedicated interpreter constructor; host-owned CLI root injection; adversarial race/side-effect tests; same-SHA Unix/Windows validation. This is only a static integration map.
+
+Execution blocker: no authenticated CircleCI tool or GitHub Actions dispatch action is exposed in this session, and the local clone route previously failed DNS resolution. Do not write uncompiled security-sensitive platform code. No source code changed; Issue #104 remains OPEN.
