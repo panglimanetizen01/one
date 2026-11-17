@@ -49,7 +49,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
+            - one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
             - one-cargo-v1-{{ arch }}-
       - setup-linux-cross-toolchains
       - run:
@@ -120,7 +120,7 @@ jobs:
             output=$("$binary" jalankan "$temp_dir/halo.one")
             test "$output" = "Budi"
       - save_cache:
-          key: one-cargo-v1-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
+          key: one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
           paths:
             - ~/.cargo/registry
             - ~/.cargo/git
