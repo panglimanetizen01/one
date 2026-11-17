@@ -202,3 +202,12 @@ Scanner governance assets absent from PR #108:
 - ADR-0018 and native preview docs from PR #89.
 
 Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tools/verify-human-vnext.sh`. Restore only scanner assets and their required docs/tests, then add a development-only CircleCI job. PR #91 current head `9b38c246...` has no exact-head verification run surfaced; do not credit earlier scanner PASS evidence to it.
+
+## CircleCI cache-identity refinement — 2026-11-18
+
+- PR #108 branch: `ci/circleci-migration-rebased-20261117`.
+- Change: the `one-linux` Cargo cache primary key now includes the `Cargo.lock` checksum and uses a new `one-cargo-v2` namespace. The save key matches the restore primary key. The previous broad v1 fallback remains available only as a performance fallback; Cargo dependency integrity remains governed by Cargo and all Cargo commands remain `--locked`.
+- Normative update: Section 13 of `docs/spec/one-v0.1-ci-verification-contract.md` now requires architecture, workspace manifests, lockfile, and Rust toolchain file in the primary cache identity, and explicitly states that cache hits are not verification evidence.
+- Resulting commit: `c968c6a9dc067be85bc1160c95c0a91c555468ea` (documentation commit follows config commit `e91e092e5fca5b1e7ee2f8502b779dd5afd4888c`).
+- Validation boundary: GitHub readback confirms both restore/save primary keys include `Cargo.lock` and the same v2 key expression. CircleCI schema validation, pipeline provisioning, and job execution remain NOT VERIFIED because authenticated CircleCI job access is unavailable in this session. No CircleCI PASS is claimed.
+- Scope: cache identity only. No source semantics, Rust toolchain version, resource class, runner image, release gate, or provider cutover was changed.
