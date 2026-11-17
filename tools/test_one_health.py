@@ -83,7 +83,7 @@ class OneHealthScannerTests(unittest.TestCase):
         self.assertTrue(any(f["rule_id"] == "missing-command-file" for f in report["findings"]))
 
     def test_circleci_config_is_scanned_without_claiming_github_actions_security_coverage(self):
-        self.write(".circleci/config.yml", "version: 2.1\\njobs:\\n  one-linux:\\n    steps:\\n      - run: python3 tools/missing.py\\n")
+        self.write(".circleci/config.yml", "version: 2.1\njobs:\n  one-linux:\n    steps:\n      - run: python3 tools/missing.py\n")
         report = scan_repository(self.root)
         finding = next(f for f in report["findings"] if f["rule_id"] == "missing-command-file")
         self.assertEqual(".circleci/config.yml", finding["path"])
