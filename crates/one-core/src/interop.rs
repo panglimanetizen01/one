@@ -880,17 +880,19 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn windows_job_object_terminates_descendants_when_parent_exits() {
-        use windows_sys::Win32::Foundation::{CloseHandle, WAIT_OBJECT_0};
-        use windows_sys::Win32::System::Threading::{
-            OpenProcess, TerminateProcess, WaitForSingleObject, INFINITE,
-            PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE,
-        };
+        use windows_sys::Win32::Foundation::{HANDLE, WAIT_OBJECT_0};
+        use windows_sys::Win32::System::Threading::WaitForSingleObject;
 
-        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags); }'; $jobHandle = [IntPtr]::new([Int64]::Parse('__ONE_JOB_QUERY_HANDLE__')); if (-not [JobProbe]::SetHandleInformation($jobHandle, 1, 0)) { throw ('SetHandleInformation failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); try { $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, $jobHandle, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob(target job) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_IN_INVOCATION_JOB=' + $inJob.ToString().ToLowerInvariant())) } catch { try { if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit() } } catch {}; throw }";
+        let parent_pid = std::process::id();
+        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool DuplicateHandle(IntPtr sourceProcess, IntPtr sourceHandle, IntPtr targetProcess, out IntPtr targetHandle, uint access, bool inherit, uint options); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetCurrentProcess(); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool CloseHandle(IntPtr handle); }'; $jobHandle = [IntPtr]::new([Int64]::Parse('__ONE_JOB_QUERY_HANDLE__')); if (-not [JobProbe]::SetHandleInformation($jobHandle, 1, 0)) { throw ('SetHandleInformation failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); try { $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, $jobHandle, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob(target job) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_IN_INVOCATION_JOB=' + $inJob.ToString().ToLowerInvariant())); $parent = [JobProbe]::OpenProcess(0x0040, $false, [uint32]__ONE_PARENT_PID__); if ($parent -eq [IntPtr]::Zero) { throw ('OpenProcess(parent PROCESS_DUP_HANDLE) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $childWaitHandle = [IntPtr]::Zero; try { if (-not [JobProbe]::DuplicateHandle([JobProbe]::GetCurrentProcess(), $child.Handle, $parent, [ref]$childWaitHandle, 0x00100000, $false, 0)) { throw ('DuplicateHandle(child SYNCHRONIZE into parent) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) } } finally { [void][JobProbe]::CloseHandle($parent) }; [Console]::Out.WriteLine(('CHILD_WAIT_HANDLE=' + $childWaitHandle.ToInt64())) } catch { try { if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit() } } catch {}; throw }";
         let result = run_process(
             &ProcessSpec {
                 program: "powershell.exe".into(),
-                args: vec!["-NoProfile".into(), "-Command".into(), script.into()],
+                args: vec![
+                    "-NoProfile".into(),
+                    "-Command".into(),
+                    script.replace("__ONE_PARENT_PID__", &parent_pid.to_string()).into(),
+                ],
                 working_directory: None,
             },
             &CapabilitySet::none().allow(Capability::Process),
@@ -922,28 +924,22 @@ mod tests {
 
         // The child was created after the parent was assigned to the Job Object.
         // Closing the kill-on-close job must terminate it before run_process returns.
-        let process = unsafe {
-            OpenProcess(
-                PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE | 0x0010_0000,
-                0,
-                pid,
-            )
-        };
-        let wait = if !process.is_null() {
-            let wait = unsafe { WaitForSingleObject(process, 0) };
-            if wait != WAIT_OBJECT_0 {
-                // Keep the test self-cleaning when the containment assertion fails.
-                // Record the observed state first, then terminate the test-owned ping.
-                unsafe {
-                    TerminateProcess(process, 1);
-                    WaitForSingleObject(process, INFINITE);
-                }
-            }
-            unsafe { CloseHandle(process) };
-            wait
-        } else {
-            WAIT_OBJECT_0
-        };
+        let wait_handle = result
+            .stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("CHILD_WAIT_HANDLE="))
+            .unwrap_or_else(|| panic!(
+                "PowerShell did not duplicate the descendant wait handle into the test process; stdout={:?}, stderr={:?}",
+                result.stdout, result.stderr
+            ))
+            .trim()
+            .parse::<i64>()
+            .expect("PowerShell should report a numeric duplicated process handle") as usize as HANDLE;
+        assert!(!wait_handle.is_null(), "duplicated descendant process handle must be non-null");
+        // This handle is duplicated into this test process before the wrapper
+        // exits, so it remains bound to the original process object across PID reuse.
+        let wait = unsafe { WaitForSingleObject(wait_handle, 0) };
+        unsafe { windows_sys::Win32::Foundation::CloseHandle(wait_handle) };
 
         assert!(
             child_in_invocation_job,
