@@ -150,3 +150,11 @@ The Linux CircleCI job retains MinGW-w64 cross-compilation regression coverage f
 - Independent Windows run #35 / `44031205160` terminal SUCCESS for the same exact source SHA; verifier SHA `62f401db17e5bc2ff3ae4c53e02cc721ed1d191e`, job `133863311567`.
 - Windows native exit code 0 / output `Budi`; PE32+ AMD64 executable hash `7d9eaa745e561bafe4203404c9d6b0601b584ff93eec46a379e5fa1d0e9afd0a`; ZIP hash `0238718f261ba9f9840d26eb243ce3196931f1f9927c98e438b3077f7cf1a58b`; manifest hash `eace9930574e939e94a3f5d18c75901ffe883a43852ff43c281b236ece22543e`.
 - The optional CircleCI `release-check` remains NOT VERIFIED. Release acceptance remains NOT PASSED; no merge/release is authorized.
+
+
+## Windows release candidate verification — 2026-11-17
+
+- PR #95 candidate source SHA `876b83170af2e77adcc43e408901e99ea37f6b0f` passed independent Windows Server 2025 run #38 / `44045612644`, verifier SHA `564fd1e0853dd424eb8d451678faaa77aaa59d11`, job `133910422388`.
+- Full Windows verifier job terminal SUCCESS; native backend and release CLI both built and executed successfully. CLI version `one 0.1.0`; both native and CLI sample output `Budi`, exit code 0.
+- Artifact `14310959518` ZIP SHA-256 `8e10e35d04709eee8429f143ef8bde0ca358941b51a4785f49e934e94f9f163c`; manifest and executable hashes are recorded in `docs/CI.md` and `docs/verification/windows-native-verification.md`.
+- CircleCI Pipeline #558 reported pipeline-level ERROR without a visible `one-linux` job context. This does not constitute an observed source test failure; authenticated pipeline diagnostics are still required. Optional `release-check` is NOT VERIFIED; release acceptance remains NOT PASSED.

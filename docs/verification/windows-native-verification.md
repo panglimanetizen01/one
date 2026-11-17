@@ -179,3 +179,13 @@ Windows native verification for the current PR #95 source remains NOT VERIFIED u
 - Native runtime exit code 0, output `Budi`. Executable size 52,918 bytes, SHA-256 `7d9eaa745e561bafe4203404c9d6b0601b584ff93eec46a379e5fa1d0e9afd0a`; PE32+ AMD64.
 - Artifact ID `14304459543`, ZIP size 15,867 bytes, SHA-256 `0238718f261ba9f9840d26eb243ce3196931f1f9927c98e438b3077f7cf1a58b`; manifest size 563 bytes, SHA-256 `eace9930574e939e94a3f5d18c75901ffe883a43852ff43c281b236ece22543e`.
 - CircleCI Linux for the same source SHA: workflow `875e39ae-399d-4803-81f7-407c7dc3f0d3`, job `40fbbc41-4a32-4796-b817-d144f8186e46`, terminal SUCCESS. Historical run #34 remains bound to its own earlier SHA.
+
+
+### Independent Windows exact-SHA verification — 2026-11-17 — PASS
+
+- Exact ONE source: `876b83170af2e77adcc43e408901e99ea37f6b0f`.
+- Verifier run #38 / ID `44045612644`; verifier commit `564fd1e0853dd424eb8d451678faaa77aaa59d11`; Windows Server 2025 job `133910422388`; terminal SUCCESS.
+- All primary steps passed, including locked Cargo guard, source pin, source identity, user docs/contracts, workspace build/Clippy/tests, release CLI build/smoke, real-network/offline runtime tests, native backend build, PE32+ inspection, native execution, evidence manifest, and artifact upload.
+- Artifact ID `14310959518`; ZIP SHA-256 `8e10e35d04709eee8429f143ef8bde0ca358941b51a4785f49e934e94f9f163c`. Native EXE SHA-256 `11ed652bd05e09145c8ca304762b72391de952eb2f441344dd259efda38221c7`; release CLI EXE SHA-256 `61a5e8166831153c2b98f69e09ceeda84759cee53e8d060f406c5d8a7ea12dba`. Manifest SHA-256 `9844c92e89ed1ac805adbf757c8a111ba66163acf265f00f428ba587f090ba23`.
+- Manifest confirms native runtime exit 0/output `Budi`, CLI version `one 0.1.0`, CLI runtime exit 0/output `Budi`. Both executables independently inspected as PE32+ AMD64.
+- CircleCI Pipeline #558 is separately ERROR at pipeline level; no CircleCI job logs/status context available. Do not infer source test failure from that alone. Optional release-check remains NOT VERIFIED.
