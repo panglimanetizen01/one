@@ -16,11 +16,14 @@ GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No
 
 ## Current PR #95 migration candidate — 2026-11-17
 
-- PR #95 remains OPEN / DRAFT / UNMERGED on branch `ci/circleci-migration-20261113`; latest source HEAD is `e50748a1b25922d9090eba1f5fb90548d7c7d003`. The historical same-SHA Linux + Windows evidence for `07d8cbf...` remains valid only for that older source SHA.
-- CircleCI Linux reports SUCCESS for source SHA `e50748a...` (workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`).
-- Independent Windows native runtime run #32 passed on source SHA `a10a69afdf8675e703f38f1620abc935d8361897`, which is the PR #102 lockfile candidate, not PR #95 HEAD. Do not combine these results into same-SHA cross-platform parity.
-- The current PR #102 process-containment candidate is separate: source HEAD `5d92a17fcc34178c419e6817030058ee17cafc6c`; GitHub Actions run #44006414909 has Ubuntu SUCCESS and Windows still running at the last check. It is not release evidence yet.
-- CircleCI is not active on `main` while PR #95 remains unmerged. The release-check remains unproven; no merge/release is authorized.
+- PR #95 remains OPEN / DRAFT / UNMERGED on branch `ci/circleci-migration-20261113`. Latest branch head is `de71a54762b72f3347002cbe848467dc2d9b1f7a` (documentation-only evidence correction); the latest tested product/config candidate remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`.
+- CircleCI `ci/circleci: one-linux` was terminal SUCCESS on exact source/config SHA `e50748a...` (workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`).
+- Independent Windows native run #31 on exact `e50748a...` failed before compilation because the source did not track `Cargo.lock` while the verifier used `--locked`; no Windows artifact/runtime PASS exists for that SHA. Earlier run #28 PASS on `07d8cbf...` is historical and cannot replace run #31 on `e50748a...`.
+- Lockfile-only candidate `a10a69afdf8675e703f38f1620abc935d8361897` adds only `Cargo.lock`. GitHub Actions One CI run #43998641019 passed Linux+Windows on that SHA, and independent Windows native runtime run #32 passed (exit 0, output `Budi`). This is not CircleCI evidence and is not the same SHA as PR #95's CircleCI PASS; do not combine into same-SHA parity.
+- CircleCI on docs-only PR head `2f1c57e95c0d51725aa8aace3c00583b681025ad` reported FAILURE: workflow `0911b56a-7d38-4a5d-be9d-782793768efb`, job `893ca0cd-c780-46bb-be34-a93d34557508`. Logs are not accessible through the current integration, so the failing step/root cause is NOT VERIFIED. Newest docs-only PR head `de71a547...` has CircleCI pending at last check; latest branch status is not green until that run reaches terminal success.
+- PR #102 is a separate lockfile and Windows subprocess-containment change: latest source HEAD `87c80e2f21ebdc7dd3e4bd02744b30c4efd1a068`; exact-SHA GitHub Actions run #44008584799 remains IN_PROGRESS (Ubuntu and Windows jobs at toolchain setup at last check). This is not release evidence.
+- Integration requirement: after authorized PR sequencing brings the lockfile and CircleCI config together, add `--locked` to every CircleCI Cargo build/Clippy/test command and require it in `tools/check_contract.py` when `Cargo.lock` is tracked. Current PR #95 config does not yet use `--locked`.
+- CircleCI is not active on `main` while PR #95 remains unmerged. Optional `release-check` remains unproven; no merge/release is authorized.
 
 
 ## Independent verifier security hardening — 2026-11-17
