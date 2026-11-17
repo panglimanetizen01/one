@@ -87,3 +87,13 @@ Current disposition is deliberately fail-closed:
 - The test cleanup terminates the test-owned ping process through the same retained handle after capturing the failure.
 - Diagnostic follow-up commit `efc5422845927c2a46e08e61aeb6a497e2f9980b` adds `GetProcessId` and `GetExitCodeProcess` observations on that retained handle to validate identity and report its state.
 - Exact-SHA run #44018063886 on `efc5422...` is IN_PROGRESS. Do not call containment fixed or verified; inspect the diagnostic failure before changing the Job Object lifecycle.
+
+## Live CircleCI migration checkpoint — 2026-11-17 12:51 WIB
+
+This addendum supersedes older PR #95 current-status statements above where they conflict; all earlier run records remain historical.
+
+- PR #95 branch `ci/circleci-migration-20261113` current HEAD: `cef1f41c97585b6e25bf91af6e8b4281efe299c4`; PR remains OPEN / DRAFT / UNMERGED.
+- Exact current HEAD commit status `ci/circleci: one-linux` is SUCCESS. CircleCI workflow `930378d8-49bb-416e-a42c-63e1797b991c`, job `0e2642b0-bd94-4892-baca-df5b6c8fa4ed`, timestamp 2026-11-17 05:49:29 UTC. The status is terminal and exact-SHA-bound; step-level CircleCI logs are not exposed by the current connected integration.
+- Independent Windows verifier PR #42 remains pinned to `9b233dfe75da8c0752c203af3711bf3da319dc02`, not the current PR #95 source SHA. No independent Windows run for `cef1f41...` is evidenced; classify that gate NOT VERIFIED.
+- PR #102 current HEAD `7e10e758d7e1ca70f450bfbb6cf397d805500e53` has exact-SHA GitHub Actions run #44019833034 terminal SUCCESS on Ubuntu job `133826415064` and Windows job `133826414765`. This is a separate source branch and must not be substituted for PR #95's Windows verifier gate.
+- Main remains PUBLIC and unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`; PR #95 is not merged. CircleCI migration is not yet active on main; no merge or release has occurred.
