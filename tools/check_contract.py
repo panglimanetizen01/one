@@ -63,6 +63,20 @@ unlocked_commands = [command for command in cargo_commands if "--locked" not in 
 if unlocked_commands:
     raise SystemExit("CIRCLECI CONTRACT: every Cargo command must use --locked: " + "; ".join(unlocked_commands))
 
+offline_cargo_commands = []
+for relative in ("tools/verify_offline.sh", "tools/verify_offline.ps1"):
+    script = (ROOT / relative).read_text(encoding="utf-8")
+    for line in script.splitlines():
+        tokens = line.strip().split()
+        if len(tokens) >= 2 and tokens[0] == "cargo" and tokens[1] in ("build", "clippy", "test", "run"):
+            if "--locked" not in tokens:
+                offline_cargo_commands.append(f"{relative}: {line.strip()}")
+if offline_cargo_commands:
+    raise SystemExit(
+        "OFFLINE VERIFICATION CONTRACT: every Cargo build, Clippy, test, and run command must use --locked: "
+        + "; ".join(offline_cargo_commands)
+    )
+
 forbidden_circleci_windows = (
     "run_windows_native_verification",
     "setup-windows-cross-toolchains",
