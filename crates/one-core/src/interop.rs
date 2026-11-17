@@ -1,4 +1,5 @@
 use std::io::{self, Read};
+#[cfg(unix)]
 use std::process::{Command, Stdio};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -11,6 +12,7 @@ use crate::capability::{Capability, CapabilitySet};
 
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
+#[cfg(unix)]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
