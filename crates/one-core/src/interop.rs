@@ -206,6 +206,8 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
         JobObjectExtendedLimitInformation,
     };
+    #[cfg(test)]
+    use windows_sys::Win32::System::JobObjects::JOB_OBJECT_QUERY;
     use windows_sys::Win32::System::Pipes::CreatePipe;
     use windows_sys::Win32::System::Threading::{
         CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
@@ -214,6 +216,8 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         EXTENDED_STARTUPINFO_PRESENT, INFINITE, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
         PROC_THREAD_ATTRIBUTE_JOB_LIST, STARTF_USESTDHANDLES,
     };
+    #[cfg(test)]
+    use windows_sys::Win32::System::Threading::{DuplicateHandle, GetCurrentProcess};
 
     struct Handle(HANDLE);
     impl Handle {
@@ -356,13 +360,6 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
 
     let executable = resolve_executable(OsStr::new(&spec.program))?;
     let application_name = wide_null(&executable);
-    let mut command_line = Vec::new();
-    append_windows_argument(&mut command_line, &executable);
-    for argument in &spec.args {
-        command_line.push(0x20);
-        append_windows_argument(&mut command_line, OsStr::new(argument));
-    }
-    command_line.push(0);
 
     let security = SECURITY_ATTRIBUTES {
         nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
@@ -407,6 +404,54 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
             GetLastError()
         }));
     }
+
+    // The test-only query handle lets the contained parent ask whether its
+    // descendant belongs to this exact Job Object, not merely any outer job.
+    // It is narrowed to JOB_OBJECT_QUERY and its inherit flag is cleared by
+    // the PowerShell parent before that parent creates the ping descendant.
+    #[cfg(test)]
+    let job_query_handle = if spec.args.iter().any(|arg| arg.contains("__ONE_JOB_QUERY_HANDLE__")) {
+        let mut duplicated = null_mut();
+        // SAFETY: source and target are this process; the new handle is query-only
+        // and inheritable so it can be passed through the explicit handle list.
+        if unsafe {
+            DuplicateHandle(
+                GetCurrentProcess(),
+                job.raw(),
+                GetCurrentProcess(),
+                &mut duplicated,
+                JOB_OBJECT_QUERY,
+                1,
+                0,
+            )
+        } == 0
+        {
+            return Err(format!("DuplicateHandle(JOB_OBJECT_QUERY) failed (error {}).", unsafe {
+                GetLastError()
+            }));
+        }
+        Some(Handle::new(duplicated)?)
+    } else {
+        None
+    };
+    #[cfg(not(test))]
+    let job_query_handle: Option<Handle> = None;
+
+    let mut command_line = Vec::new();
+    append_windows_argument(&mut command_line, &executable);
+    for argument in &spec.args {
+        command_line.push(0x20);
+        let argument = if let Some(query_handle) = job_query_handle.as_ref() {
+            OsString::from(argument.replace(
+                "__ONE_JOB_QUERY_HANDLE__",
+                &(query_handle.raw() as usize).to_string(),
+            ))
+        } else {
+            OsString::from(argument)
+        };
+        append_windows_argument(&mut command_line, argument.as_os_str());
+    }
+    command_line.push(0);
 
     let mut attribute_size = 0usize;
     // SAFETY: the documented sizing call uses a null list and returns required bytes.
@@ -463,7 +508,10 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         ));
     }
 
-    let inherited_handles = [stdin.raw(), stdout_write.raw(), stderr_write.raw()];
+    let mut inherited_handles = vec![stdin.raw(), stdout_write.raw(), stderr_write.raw()];
+    if let Some(query_handle) = job_query_handle.as_ref() {
+        inherited_handles.push(query_handle.raw());
+    }
     // SAFETY: every handle in this list is inheritable and remains alive until
     // CreateProcessW returns; parent-side read handles are explicitly non-inheritable.
     if unsafe {
@@ -472,7 +520,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
             0,
             PROC_THREAD_ATTRIBUTE_HANDLE_LIST as usize,
             inherited_handles.as_ptr().cast(),
-            size_of_val(&inherited_handles),
+            (inherited_handles.len() * size_of::<HANDLE>()) as usize,
             null_mut(),
             null(),
         )
@@ -522,6 +570,10 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
             GetLastError()
         }));
     }
+
+    // The child now owns its inherited query-only handle; close our duplicate
+    // so only the PowerShell parent can hold it while running the probe.
+    drop(job_query_handle);
 
     let process = Handle::new(process_information.hProcess)?;
     let thread_handle = Handle::new(process_information.hThread)?;
@@ -776,7 +828,7 @@ mod tests {
             PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE,
         };
 
-        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); }'; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, [IntPtr]::Zero, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); [Console]::Out.WriteLine(('CHILD_IN_ANY_JOB=' + $inJob.ToString().ToLowerInvariant()))";
+        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags); }'; $jobHandle = [IntPtr]::new([Int64]::Parse('__ONE_JOB_QUERY_HANDLE__')); if (-not [JobProbe]::SetHandleInformation($jobHandle, 1, 0)) { throw ('SetHandleInformation failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); try { $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, $jobHandle, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob(target job) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_IN_INVOCATION_JOB=' + $inJob.ToString().ToLowerInvariant())) } catch { try { if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit() } } catch {}; throw }";
         let result = run_process(
             &ProcessSpec {
                 program: "powershell.exe".into(),
@@ -786,12 +838,12 @@ mod tests {
             &CapabilitySet::none().allow(Capability::Process),
         )
         .expect("PowerShell parent process should complete");
-        let child_in_any_job = result
+        let child_in_invocation_job = result
             .stdout
             .lines()
-            .find_map(|line| line.strip_prefix("CHILD_IN_ANY_JOB="))
+            .find_map(|line| line.strip_prefix("CHILD_IN_INVOCATION_JOB="))
             .unwrap_or_else(|| panic!(
-                "PowerShell did not report descendant Job membership; stdout={:?}, stderr={:?}",
+                "PowerShell did not report descendant membership in the invocation Job Object; stdout={:?}, stderr={:?}",
                 result.stdout, result.stderr
             ))
             .trim()
@@ -836,8 +888,8 @@ mod tests {
         };
 
         assert!(
-            child_in_any_job,
-            "descendant was not in any Windows Job Object; stdout={:?}, stderr={:?}",
+            child_in_invocation_job,
+            "descendant was not in the invocation's assigned Job Object; stdout={:?}, stderr={:?}",
             result.stdout, result.stderr
         );
         assert_eq!(
