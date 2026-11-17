@@ -24,7 +24,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `markdown-structure` | Fenced-code closure | Not a complete CommonMark validator |
 | `path-integrity` | File and directory symlinks resolving outside repository; directory symlinks are surfaced but never traversed | Does not validate every runtime path or filesystem race; behavior depends on platform permissions and filesystem semantics |
 | `file-integrity` | UTF-8 readability of scanned text files | Does not prove binary/artifact integrity |
-| `workflow-integrity` | Duplicate CI config names, missing local actions and targeted script paths in GitHub Actions YAML and `.circleci/config.yml` | Structural heuristics only; not a full GitHub Actions or CircleCI schema validator |
+| `workflow-integrity` | Duplicate CI config names, supported CircleCI config version and required `jobs:` section, missing local actions and targeted script paths in GitHub Actions YAML and `.circleci/config.yml` | Structural heuristics only; `workflows:` is optional for CircleCI's implicit single `build` job; not a full provider schema validator |
 | `workflow-overlap` | Identical single-line `run:` commands in multiple workflow files | Low-confidence review hint; intentional duplication is common |
 | `evidence-freshness` | Declared source SHA versus checkout SHA in JSON evidence | Only applies when both fields are present |
 | `contract-drift` | Required core CLI vocabulary plus high-value invariants in normative grammar, CLI, diagnostics, package/build, and platform contracts | Text presence does not prove implementation; a contract refactor may require updating detector fixtures |
@@ -141,3 +141,6 @@ Do not describe the scanners as parity-equivalent yet. For each shared capabilit
 The canonical CI provider for the migration candidate is CircleCI. The repository-health scanner includes `.circleci/config.yml` in generic workflow-integrity checks for duplicate configuration names and missing referenced scripts. GitHub Actions-specific security checks remain applicable only to legacy `.github/workflows/` files. A missing GitHub Actions workflow is not a CircleCI failure, and CircleCI config scanning does not claim full CircleCI schema validation.
 
 The historical `tools/collect_ci_health.py` collector reads GitHub Actions API metadata only. It is not a CircleCI collector and must never be used to claim CircleCI run/job status. CircleCI pipeline/job evidence is recorded separately against the exact checkout SHA.
+
+
+CircleCI's implicit single-job form is valid when the only job is named `build`; the scanner must not report a missing `workflows:` section as an error. Supported config version values are `2`, `2.0`, and `2.1`. The checks remain structural heuristics, not a substitute for CircleCI's config compiler.
