@@ -61,6 +61,12 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
             if retained < read {
                 output_limit_exceeded.store(true, Ordering::Release);
             }
+            // Once shutdown is requested, perform at most one final nonblocking
+            // read and then exit. An escaped descendant may continuously write
+            // to the pipe, so waiting for WouldBlock alone is not a bounded stop.
+            if shutdown_requested.load(Ordering::Acquire) {
+                break;
+            }
         }
         Ok(captured)
     })
