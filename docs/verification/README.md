@@ -269,3 +269,10 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - Previous exact source `ed2382...` passed full Windows run #39 / `44046670869`, artifact `14312311019`, ZIP SHA-256 `aa56f8275042969b18c12283eb152e0572b8970159e3df7db62e9aad9f109da1`; native and CLI output `Budi`, exit 0; CLI version `one 0.1.0`.
 - Correction: CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. PR #95 SHA `ed2382...` had no CircleCI status context visible in GitHub; current SHA `993f763...` likewise has no CircleCI status visible at last read. PR #102 GHA PASS and generic CircleCI ERROR are separate; root cause NOT VERIFIED. Optional release-check NOT VERIFIED.
 - PR #97 remains OPEN / DRAFT / UNMERGED; no merge/release.
+
+
+## PR #102 process-spec input validation review — 2026-11-17
+
+- Current PR #102 source candidate `fe3e4d0ae55a90a0b07deec124def54f7c79f041` adds cross-platform rejection of empty executable paths and embedded NUL in executable, args, and optional working directory before process spawn; capability authorization remains first. Four regression tests and `docs/spec/one-v0.1-interop.md` update included.
+- The prior exact-SHA GHA PASS `44044795819` applies only to predecessor `5ee645...`; it does not transfer to `fe3e4d0...`. Current exact-SHA GHA run #2159 / `44048756331` is IN_PROGRESS; intermediate run #2157 `790dd...` and #2158 `ac2ee...` also in progress at last poll. The `790dd...` intermediate contained an over-escaped literal, corrected in `ac2ee...`; current candidate is `fe3e4d0...`. Do not claim PASS until the exact current run is terminal on both platforms.
+- This is process interop input validation only; no grammar/semantics/CLI UX change. E4/DoD score remains unchanged until exact-SHA verification.
