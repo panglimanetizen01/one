@@ -47,3 +47,5 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 3. A CircleCI pipeline error without job logs is NOT VERIFIED as a source failure; distinguish config discovery, runner startup, toolchain bootstrap, and executed tests.
 4. A later docs-only commit does not inherit test results unless the verification contract explicitly allows it and the exact source/code diff proves no relevant behavior changed.
 5. Never promote DoD checkboxes, E1–E6 points, or release approval based only on a scoped PASS.
+
+- PR #109 native CircleCI heuristic correction is recorded in forensic audit §11; source commit `408b6c6...`, latest docs/PR metadata HEAD `d15a0aa...`. It explicitly accepts the valid implicit single-job `build` workflow and remains untested pending CircleCI evidence.
