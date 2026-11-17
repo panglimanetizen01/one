@@ -770,3 +770,11 @@ This section supersedes prior current-head statements where they conflict. Histo
 - Current PR #95 HEAD `048f87f5e9c14fdda33c7fa7a3d6dd77f469b9d4` is a docs-only descendant recording the run #34 evidence. CircleCI on this exact SHA is PENDING (workflow `875e39ae-399d-4803-81f7-407c7dc3f0d3`, job `40fbbc41-4a32-4796-b817-d144f8186e46`).
 - Independent verifier PR #42 pin matches `048f87...`; Windows run #35 / ID `44031205160` is IN_PROGRESS with verifier SHA `62f401db17e5bc2ff3ae4c53e02cc721ed1d191e`. Run #34 remains bound only to `c207fb...`.
 - Optional CircleCI `release-check` remains NOT VERIFIED. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; no score/DoD promotion or release acceptance.
+
+
+## Latest PR #95 exact-SHA candidate — 2026-11-17
+
+- Previous source `048f87f5e9c14fdda33c7fa7a3d6dd77f469b9d4` has CircleCI Linux PASS and independent Windows run #35 PASS; artifact ID `14304459543`, ZIP SHA-256 `0238718f261ba9f9840d26eb243ce3196931f1f9927c98e438b3077f7cf1a58b`, executable SHA-256 `7d9eaa745e561bafe4203404c9d6b0601b584ff93eec46a379e5fa1d0e9afd0a`, manifest SHA-256 `eace9930574e939e94a3f5d18c75901ffe883a43852ff43c281b236ece22543e`; exit 0 / `Budi`.
+- Current PR #95 HEAD `54bf0973f59c2705decd91a8457cf08d6bbb7f8e` is a docs-only descendant recording run #35. CircleCI is PENDING (workflow `4e04be28-3664-4842-a4c8-6844d1d45817`, job `cc67ef7a-1df1-4a31-a694-05725f702652`).
+- Verifier PR #42 pin matches `54bf097...`; Windows run #36 / `44031839506` is IN_PROGRESS with verifier SHA `c40752bd134c83a671e928a0a2aab25953e4ad6e`. Do not transfer run #35 to this descendant.
+- Optional CircleCI release-check remains NOT VERIFIED. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
