@@ -207,7 +207,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         JobObjectExtendedLimitInformation,
     };
     #[cfg(test)]
-    use windows_sys::Win32::System::JobObjects::JOB_OBJECT_QUERY;
+    use windows_sys::Win32::Foundation::DuplicateHandle;
     use windows_sys::Win32::System::Pipes::CreatePipe;
     use windows_sys::Win32::System::Threading::{
         CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
@@ -217,7 +217,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         PROC_THREAD_ATTRIBUTE_JOB_LIST, STARTF_USESTDHANDLES,
     };
     #[cfg(test)]
-    use windows_sys::Win32::System::Threading::{DuplicateHandle, GetCurrentProcess};
+    use windows_sys::Win32::System::Threading::GetCurrentProcess;
 
     struct Handle(HANDLE);
     impl Handle {
@@ -420,7 +420,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
                 job.raw(),
                 GetCurrentProcess(),
                 &mut duplicated,
-                JOB_OBJECT_QUERY,
+                0x0004, // JOB_OBJECT_QUERY: query-only access to a Job Object.
                 1,
                 0,
             )
