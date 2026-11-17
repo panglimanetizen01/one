@@ -239,3 +239,7 @@ The checked-in workflow `panglimanetizen01/one-windows-verification/.github/work
 - Unix: 2 `descriptor_relative_read_rejects_`, 1 `descriptor_relative_write_rejects_`, 1 `descriptor_relative_walk_rejects_`, plus exact race and mount-boundary tests `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink` and `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file`.
 - Windows: `filesystem_reader_rejects_directory_junction_escape`, `filesystem_adapter_reads_absolute_target_inside_project_root`, `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`, `filesystem_write_adapter_writes_text_target`, `filesystem_write_adapter_rejects_oversized_content`, and `filesystem_adapters_reject_parent_directory_traversal`.
 - Workflow asserts the named tests execute and pass; zero-match/filtered-only output fails. Preserve these names/counts or review any verifier update separately; do not weaken the checks.
+
+### Mount-boundary design correction — 2026-11-18
+
+A device-number-only check is insufficient to reject same-device bind mounts. The Issue #104 design and normative Section 20 now require mount identity as well as device identity; Linux should use statx STATX_MNT_ID (or a stronger identifier), and other Unix targets must use an equivalent primitive or fail closed. This is a design correction, not implementation evidence.
