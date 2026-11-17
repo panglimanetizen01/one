@@ -3,8 +3,8 @@
 ## Current continuation state — 2026-11-17 (live refresh)
 
 - Canonical repository: `panglimanetizen01/one`; `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`; visibility PUBLIC.
-- PR #102 branch HEAD `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`; exact-SHA GitHub Actions run [#44002493159](https://github.com/panglimanetizen01/one/actions/runs/44002493159) is terminal: Ubuntu job `133769724724` PASS; Windows job `133769724148` FAIL.
-- Windows build and Clippy passed, but test suite reported 119 passed / 1 failed. `windows_job_object_terminates_descendants_when_parent_exits` failed because descendant PID `8864` remained alive after the parent invocation returned (`WAIT_TIMEOUT=258`). Descendant containment is NOT VERIFIED / FAIL on this exact SHA; do not treat this as a harness-only parse error.
+- PR #102 latest source HEAD `5d92a17fcc34178c419e6817030058ee17cafc6c`. Exact-SHA GitHub Actions run [#44006414909](https://github.com/panglimanetizen01/one/actions/runs/44006414909): Ubuntu job `133782753335` SUCCESS; Windows job `133782753615` still IN_PROGRESS at Windows Android NDK installation during last check. Windows build and descendant tests have not started; latest HEAD remains NOT VERIFIED.
+- Previous source SHA `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`, run [#44002493159](https://github.com/panglimanetizen01/one/actions/runs/44002493159): Ubuntu PASS, Windows FAIL. Windows build/Clippy passed, but tests were 119 passed / 1 failed; descendant PID `8864` remained alive (`WAIT_TIMEOUT=258`). Keep this failure bound to the previous SHA.
 - Lockfile-only candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed prior Ubuntu+Windows workspace CI and independent Windows native PE32+ runtime. That evidence predates subprocess implementation changes and does not verify PR #102 current HEAD.
 - No final source SHA is frozen. All release acceptance must be evaluated against one exact final source SHA after implementation changes stop.
 - Historical DoD state was 3 checked / 10 unchecked. The checked items are not current-final-SHA acceptance; revalidate them before release.
