@@ -182,3 +182,23 @@ At previously verified candidate HEAD `039c7d70f3ccdde5c9fe91551e54595afb0dbd05`
 Do not close or de-scope Issue #90. Port the native preview and ADR-0018 from PR #89 onto a branch based on the current PR #108 candidate; restore the latest Python reference scanner and required test/collector/quality assets from PR #91; add development-side CircleCI jobs with exact checkout SHA, least privilege, and redacted findings; run both scanners on the same integrated checkout and adjudicate parity differences. Keep native scanner preview-only until parity and platform acceptance are established. No code port or current-candidate scanner validation has yet been performed.
 
 The earlier isolated PR #89/#91 PASS evidence remains tied to its exact historical source SHA and must not be attributed to PR #108 or any later integration SHA.
+
+
+### Scanner restoration inventory (exact paths; no bulk branch copy)
+
+The latest PR #91 branch head is `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`. Its scanner-specific Python assets absent from the PR #108 candidate are:
+- `tools/one_health.py` — `5e6b1b4fe25bdaac8dd7ef3d387fb3da7617dba2`
+- `tools/test_one_health.py` — `7795d9ed3ea4b4af2b9ad154f7759427c5f92679` (72 tests)
+- `tools/collect_ci_health.py` — `18134b37256009802b8ca0d1909225a88e10e2f7`
+- `tools/test_collect_ci_health.py` — `6b914399964d5c1b89712ec3515ed02390b38eb9`
+- `tools/health_quality.py` — `80955db25665ee25dbdbaf455289569d5b6b86b7`
+- `tools/test_health_quality.py` — `062bd422f8b353bbfdf90b3fdc54961a923663d4`
+
+Scanner governance assets absent from PR #108:
+- `docs/verification/health-detectors.md` — `4427cee8790520194b379530440ab390a11929b6`
+- `docs/verification/repository-health.md` — `777c13e89e576a055c1c215a20d73a3e4eb0a1fd`
+- `docs/verification/health-quality-ledger.md` — `aeb800e237d61b69aa258c5e50b64e6338605283`
+- `docs/verification/health-quality-ledger.example.json` — `9bc7f946c2cad51750e9174d58aab3f21ed295b7`
+- ADR-0018 and native preview docs from PR #89.
+
+Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tools/verify-human-vnext.sh`. Restore only scanner assets and their required docs/tests, then add a development-only CircleCI job. PR #91 current head `9b38c246...` has no exact-head verification run surfaced; do not credit earlier scanner PASS evidence to it.
