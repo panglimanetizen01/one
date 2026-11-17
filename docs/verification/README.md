@@ -49,3 +49,5 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 5. Never promote DoD checkboxes, E1–E6 points, or release approval based only on a scoped PASS.
 
 - PR #109 native CircleCI heuristic correction is recorded in forensic audit §11; source commit `408b6c6...`, latest docs/PR metadata HEAD `d15a0aa...`. It explicitly accepts the valid implicit single-job `build` workflow and remains untested pending CircleCI evidence.
+
+- Native integrity scanner is isolated as a separate developer-only `one-integrity` binary; it is not a subcommand of beginner-facing `one`. Contract checker enforces this boundary. Source/CI updates are static-readback only pending exact-SHA compile/test.
