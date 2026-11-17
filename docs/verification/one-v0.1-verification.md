@@ -1,5 +1,10 @@
 # One v0.1 Verification Record
 
+## Integrated P0 candidate — verification pending — 2026-11-17
+
+PR #108 now carries the source and regression-test changes from PR #98–#101. Integration source commit: `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. The normative CLI, package-build, reference-interpreter, and effect-capability specifications were synchronized afterward. This is an integration event, not verification evidence. No combined-source test has been executed or accepted. Required next evidence: exact final PR #108 HEAD, Ubuntu and Windows Server 2025 terminal job results, executed regression names, and CircleCI pipeline/job logs where applicable. Parent PR results must not be transferred.
+
+
 ## Current exact-SHA verification checkpoint — 2026-11-17
 
 - PR #98–#101 each passed GitHub Actions on both Ubuntu and Windows Server 2025 on their own exact candidate SHAs: runs #2018, #2019, #2020, and #2138 respectively. These changes remain unmerged and are not yet one integrated source revision.
