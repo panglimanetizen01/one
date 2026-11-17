@@ -4,7 +4,7 @@
 
 - Canonical repository: `panglimanetizen01/one`; current `main` SHA: `d35db95153f6ddd79885494c72f5aee16c899751`.
 - Active work remains in separate open/draft PRs: #95 CircleCI migration, #97 architecture/documentation, #98–#101 implementation fixes, and #102 Cargo.lock plus bounded subprocess hardening. No PR is merged.
-- PR #102 current HEAD: `47596f8e3f6c2b7a2c58abb12e2a52d673f90ece`. Its current exact-SHA GitHub Actions run #44002036948 is in progress; previous Ubuntu tests passed on parent SHA `b468282...`, while Windows exposed and corrected an import-location error. Do not assign PASS to the current HEAD until both jobs complete.
+- PR #102 current HEAD: `a472b3bd9e410f1d42f37f31cfcb4e5c11f399a8`. Its current exact-SHA GitHub Actions run #44002493159 is in progress; previous Ubuntu tests passed on parent SHA `b468282...`, while Windows exposed and corrected an import-location error. Do not assign PASS to the current HEAD until both jobs complete.
 - A lockfile-only source candidate `a10a69afdf8675e703f38f1620abc935d8361897` passed GitHub Actions One CI on Ubuntu and Windows and independent Windows native PE32+ build/runtime verification (exit 0, output `Budi`). This is prior-SHA evidence and does not verify the newer subprocess-hardening source.
 - Historical implementation inventory remains **92/100 provisional** from the 2026-11-05 ledger snapshot. It is a planning estimate, not a current-source acceptance score.
 - **Current exact-SHA verified points: 0/100.** The historical 60/100 verified subtotal belongs to an older candidate and is not carried forward. No final candidate SHA is frozen; E1–E6 acceptance must be re-established against one exact final SHA.
