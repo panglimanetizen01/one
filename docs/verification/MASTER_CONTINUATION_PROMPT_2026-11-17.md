@@ -256,3 +256,12 @@ This source change has only been read back through GitHub; no Cargo/Rust executi
 - GitHub combined status has zero status contexts and GitHub Actions workflow-runs are empty for this exact SHA. This does not establish CircleCI pipeline absence.
 - CircleCI pipeline/job logs and local Rust/Python test execution are still NOT AVAILABLE. No build/test/CI PASS or parity claim is permitted.
 - Continue from this exact live HEAD. Obtain authenticated CircleCI job evidence, inspect logs, fix confirmed defects, and rerun affected plus full validations. Do not repeat historical PR #89/#91 tests as substitutes.
+
+
+## 17. Final docs-sync SHA refresh — 2026-11-17
+
+- Current PR #109 exact HEAD after the three-file verification-document synchronization: `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`.
+- PR #109 remains OPEN/DRAFT/UNMERGED, mergeable=true at the latest metadata refresh; base remains PR #108 branch at `a6f91c07b04d7b9fafb9e99d0356954012ae3001`.
+- Compare confirms 53 commits ahead and zero behind the PR #108 base. No merge or main-branch write occurred.
+- GitHub status contexts and GitHub Actions workflow-runs are empty. CircleCI job logs, local Cargo/Python test execution, and exact-SHA platform validation remain NOT VERIFIED.
+- Continue from `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`; do not reuse the previous `0866a6d...` as the live HEAD.
