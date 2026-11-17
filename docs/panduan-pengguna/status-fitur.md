@@ -43,3 +43,21 @@ Post-merge `One CI` run `39371290853` tidak menghasilkan execution evidence: ked
 HTTP methods/HTTPS/API features yang lebih luas, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
 
 Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implementation-status.md` dan `docs/verification/one-v0.1-evidence-matrix.md`.
+
+## Catatan audit keamanan dan integrasi — 2026-11-17
+
+Status fitur harus dibaca bersama revisi source yang sedang digunakan. Beberapa perbaikan berikut telah lulus GitHub Actions pada branch kandidat masing-masing, tetapi belum digabung ke main:
+
+- PR #98: validasi manifest untuk one test dan validasi komponen nama/versi package — run #2018 PASS pada Ubuntu dan Windows.
+- PR #99: membuka file database query secara read-only agar path database yang hilang tidak dibuat otomatis — run #2019 PASS pada Ubuntu dan Windows.
+- PR #100: memastikan scope interpreter dipulihkan setelah runtime error — run #2020 PASS pada Ubuntu dan Windows.
+- PR #101: menerapkan denial dan approval filesystem yang diwariskan — run #2138 PASS pada Ubuntu dan Windows.
+- PR #102/#107: batas waktu proses, batas output, Job Object Windows, dan bounded Unix reader shutdown — run #2229/#2230 PASS pada Ubuntu dan Windows.
+
+Perbaikan tersebut masih branch-specific dan belum menjadi satu rilis terintegrasi. Karena itu:
+
+- Process execution tetap Eksperimental. Batasnya 10 detik untuk direct child, maksimum 1 MiB per stream, dan reader shutdown grace 100 ms pada Unix. Descendant yang membuat session/process group baru masih dapat bertahan; ini bukan jaminan process-tree containment (Issue #105).
+- Filesystem read/write tetap Eksperimental dan belum boleh dianggap sebagai sandbox project-root. Race-resistant path confinement dengan handle-relative open belum tersedia pada main (Issue #104).
+- Database query tetap Eksperimental. Perbaikan read-only file-open ada pada PR #99 dan belum terintegrasi ke main.
+- Issue #82 untuk eksekusi runtime Android AArch64 masih terbuka; build artifact saja bukan bukti runtime execution.
+- CircleCI belum aktif pada main. Migrasi masih draft pada PR #108 dan belum memiliki bukti job CircleCI terminal PASS.
