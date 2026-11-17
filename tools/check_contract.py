@@ -31,11 +31,23 @@ required = [
     "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
     "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
+    "tools/one_health.py", "tools/test_one_health.py", "tools/health_quality.py", "tools/test_health_quality.py",
+    "docs/verification/health-detectors.md", "docs/verification/repository-health.md", "docs/verification/health-quality-ledger.md",
+    "crates/one-cli/src/integrity.rs",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
     raise SystemExit("MISSING CONTRACT ARTIFACTS:\n" + "\n".join(missing))
+
+
+# The repository-integrity engine is developer tooling, not ONE language syntax.
+cli_source = (ROOT / "crates/one-cli/src/main.rs").read_text(encoding="utf-8")
+decisions = (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8")
+if "mod integrity;" not in cli_source or 'first == "pindai"' not in cli_source:
+    raise SystemExit("INTEGRITY CONTRACT: native preview module or CLI dispatch is missing")
+if "ADR-0018" not in decisions:
+    raise SystemExit("INTEGRITY CONTRACT: ADR-0018 governance is missing")
 
 legacy_workflows = [
     ".github/workflows/ci.yml",
