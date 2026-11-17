@@ -276,3 +276,11 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - Current PR #102 source candidate `fe3e4d0ae55a90a0b07deec124def54f7c79f041` adds cross-platform rejection of empty executable paths and embedded NUL in executable, args, and optional working directory before process spawn; capability authorization remains first. Four regression tests and `docs/spec/one-v0.1-interop.md` update included.
 - The prior exact-SHA GHA PASS `44044795819` applies only to predecessor `5ee645...`; it does not transfer to `fe3e4d0...`. Current exact-SHA GHA run #2159 / `44048756331` is IN_PROGRESS; intermediate run #2157 `790dd...` and #2158 `ac2ee...` also in progress at last poll. The `790dd...` intermediate contained an over-escaped literal, corrected in `ac2ee...`; current candidate is `fe3e4d0...`. Do not claim PASS until the exact current run is terminal on both platforms.
 - This is process interop input validation only; no grammar/semantics/CLI UX change. E4/DoD score remains unchanged until exact-SHA verification.
+
+
+## PR #95 exact-source Windows verification — run #42 — 2026-11-17
+
+- Current PR #95 source `993f76351c7a119bea2e66f7d9e5bca07f392fbc` passed independent Windows Server 2025 run #42 / GitHub Actions ID `44048174334`, verifier SHA `6070e2ec839cc10b49068a84733d301ec6375b58`, job `133919144866`; all 31 primary steps terminal SUCCESS.
+- Artifact `14312034494`, ZIP SHA-256 `0d86f4876414d032d4062554958f23d7308ae38c76ff3a4cf491292757df7ef0`; native EXE SHA `45ebf54262ab9d77ba14f63b79f7d0e80987df27659ea65311b078453dacdf9a`; release CLI EXE SHA `a53e5f5e41e493a3c98123a592321242f8efa2883f3d2ee8b538d4c6385c0a88`; manifest SHA `62297b0ea101d53fdcf93e610503d02e5ae803a2e1ec19f4680e6a7635f83834`. Artifact and manifest hashes match; both executables parse as PE32+ AMD64; native and CLI outputs `Budi`, exit 0; CLI `one 0.1.0`.
+- Verifier PR #42 docs current commit `56271be82645357c2feaa1134ae2dc1d2ceae734` records run #42; documentation-only verifier run #43 / `44049102193` is IN_PROGRESS on the same exact source pin. No product source change.
+- CircleCI status for PR #95 source `993f763...` is not visible through GitHub; optional `release-check` remains NOT VERIFIED. CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. No merge/release or DoD promotion.
