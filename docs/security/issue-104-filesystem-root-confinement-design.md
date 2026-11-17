@@ -159,3 +159,16 @@ Rejected as-is:
 - the API has no shared immutable root authority or host-supplied per-operation byte limits.
 
 The current implementation must be a fresh, narrowly scoped design that preserves only the reviewed Unix primitives and closes the listed gaps. Do not copy PR #80's adapter, path resolution, or Windows implementation wholesale.
+
+## 13. Independent verifier execution diagnosis — 2026-11-18
+
+Inspected GitHub Actions run `43998206030` in `panglimanetizen01/one-windows-verification`:
+
+- Unix job `133755415781` failed before running any filtered test because Cargo reported it could not create `source/Cargo.lock` while `--locked` was set.
+- Windows job `133755416047` failed for the same reason before the first named test.
+- The verifier's `CANONICAL_COMMIT.txt` at branch `verification` pointed to `e50748a1b25922d9090eba1f5fb90548d7c7d003`, and GitHub file readback confirms that exact source SHA has no `Cargo.lock`.
+- The current PR #108 base candidate `c4bb4b690e698a83e4ddaf279596479d3dc282ca` does contain `Cargo.lock` (content blob `3fd2cb2be6aa30afa54602c733b2ab192cc91d2b`). PR #110 inherits it.
+
+Classification: the historical E4 run is a verifier-input/lockfile precondition failure, not a filesystem test failure and not a security PASS. The current source candidate still lacks the required Issue #104 test implementations, so do not simply change the verifier canonical SHA to the current PR #108/PR #110 candidate: the filters would then execute zero tests. Update the verifier's canonical candidate only after a source implementation has landed on a candidate SHA containing all required test names and the lockfile. Then run the workflow and inspect both job logs.
+
+No verifier branch file was changed as part of this diagnosis.
