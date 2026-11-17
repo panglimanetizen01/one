@@ -358,3 +358,16 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - Windows Job Object containment evidence on PR #102 remains tied to exact source SHA `ac1bb214bc028395367cce7edc234a1909971e2a` and GHA run #2165 / `44049452639` (Windows job `133923280923`, Ubuntu job `133923281493`, both PASS).
 - Unix strong process-tree containment remains NOT VERIFIED / OPEN. Do not promote E4/E6 or release acceptance based on PR #106 reader-shutdown evidence.
 - PR #95 CircleCI migration remains NOT VERIFIED on its current candidate; CircleCI operational job details are not available in this session.
+
+
+## Health-scanner verifier provenance clarification — 2026-11-17 18:42 WIB
+
+The earlier stale-workflow concern has now been reconciled against the live verifier PRs and exact source pins:
+
+- Verifier PR #39 is OPEN / DRAFT / UNMERGED, branch `verify/one-health-pr91-20261029`, HEAD `6e2ce12eeb36ec2ffa0db38c9fce7e98faf2fbdd`, base `verification`. Its changed files include `.github/workflows/health-scanner-verification.yml`, `HEALTH_SCANNER_SOURCE_COMMIT.txt`, and separate Linux/Windows workflows.
+- The health-scanner workflow on PR #39 reads the dedicated `HEALTH_SCANNER_SOURCE_COMMIT.txt`, not the shared `CANONICAL_COMMIT.txt`. Dedicated source pin: `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`. At this exact ONE commit, both `tools/one_health.py` (blob `5e6b1b4fe25bdaac8dd7ef3d387fb3da7617dba2`) and `tools/test_one_health.py` (blob `7795d9ed3ea4b4af2b9ad154f7759427c5f92679`) exist.
+- Verifier base branch `verification` shared `CANONICAL_COMMIT.txt` is `e50748a1b25922d9090eba1f5fb90548d7c7d003`, which is the current ONE PR #95 candidate source pin, not the Python health-scanner source pin. The scanner files are absent at `e507...`, as expected. PR #39's dedicated pin prevents the shared source pin from retargeting its historical scanner test workflow.
+- The health-scanner workflow is absent from verifier `main` (GitHub contents API 404) and absent from verifier PR #42's changed-file list. It exists on the dedicated historical PR #39 branch only.
+- Verifier PR #40 is a separate native-scanner verification for ONE PR #89, pinned by its `CANONICAL_COMMIT.txt` to `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`; it is not the Python health-scanner workflow. PR #40 remains OPEN / DRAFT / UNMERGED.
+- PR #39 workflow triggers on pushes to verifier branch `verification` or manual dispatch. Since PR #39 remains draft/unmerged, its new workflow execution is NOT VERIFIED; do not claim it ran. No merge or dispatch was performed.
+- Conclusion: the workflow is historical PR #39 verification scope, not a stale workflow in verifier main or PR #42. Preserve it and its source pin; do not reintroduce developer scanner files into current ONE product branches.
