@@ -1094,7 +1094,7 @@ mod tests {
             std::process::id()
         ));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let script = "setsid sh -c 'echo $$ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
         let spec = ProcessSpec {
             program: "sh".into(),
             args: vec![
