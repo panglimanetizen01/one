@@ -209,8 +209,8 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     use windows_sys::Win32::System::Pipes::CreatePipe;
     use windows_sys::Win32::System::Threading::{
         CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
-        InitializeProcThreadAttributeList, UpdateProcThreadAttribute, WaitForSingleObject,
-        PROCESS_INFORMATION, STARTUPINFOEXW, STARTUPINFOW, CREATE_NO_WINDOW,
+        InitializeProcThreadAttributeList, TerminateProcess, UpdateProcThreadAttribute,
+        WaitForSingleObject, PROCESS_INFORMATION, STARTUPINFOEXW, STARTUPINFOW, CREATE_NO_WINDOW,
         EXTENDED_STARTUPINFO_PRESENT, INFINITE, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
         PROC_THREAD_ATTRIBUTE_JOB_LIST, STARTF_USESTDHANDLES,
     };
@@ -533,11 +533,22 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     // SAFETY: both handles are live; process has query rights and this job was
     // created by this function with query access.
     if unsafe { IsProcessInJob(process.raw(), job.raw(), &mut process_in_job) } == 0 {
-        return Err(format!("IsProcessInJob failed (error {}).", unsafe {
-            GetLastError()
-        }));
+        let error = unsafe { GetLastError() };
+        // Fail closed even if CreateProcessW returned a process that could not
+        // be proven to belong to this invocation's Job Object.
+        unsafe {
+            TerminateProcess(process.raw(), 1);
+            WaitForSingleObject(process.raw(), INFINITE);
+        }
+        return Err(format!("IsProcessInJob failed (error {error})."));
     }
     if process_in_job == 0 {
+        // A process outside the job would not be terminated by closing the job.
+        // Explicitly terminate and reap it before returning the containment error.
+        unsafe {
+            TerminateProcess(process.raw(), 1);
+            WaitForSingleObject(process.raw(), INFINITE);
+        }
         return Err("Windows subprocess was created outside its assigned Job Object.".into());
     }
     drop(thread_handle);
@@ -761,10 +772,11 @@ mod tests {
     fn windows_job_object_terminates_descendants_when_parent_exits() {
         use windows_sys::Win32::Foundation::{CloseHandle, WAIT_OBJECT_0};
         use windows_sys::Win32::System::Threading::{
-            OpenProcess, WaitForSingleObject, PROCESS_QUERY_LIMITED_INFORMATION,
+            OpenProcess, TerminateProcess, WaitForSingleObject, INFINITE,
+            PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE,
         };
 
-        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); }'; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, [IntPtr]::Zero, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); [Console]::Out.WriteLine(('CHILD_IN_ANY_JOB=' + $inJob))";
+        let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); }'; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, [IntPtr]::Zero, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); [Console]::Out.WriteLine(('CHILD_IN_ANY_JOB=' + $inJob.ToString().ToLowerInvariant()))";
         let result = run_process(
             &ProcessSpec {
                 program: "powershell.exe".into(),
@@ -784,12 +796,7 @@ mod tests {
             ))
             .trim()
             .parse::<bool>()
-            .expect("PowerShell should report a boolean Job membership result");
-        assert!(
-            child_in_any_job,
-            "descendant was not in any Windows Job Object; stdout={:?}, stderr={:?}",
-            result.stdout, result.stderr
-        );
+            .expect("PowerShell should report a lowercase boolean Job membership result");
 
         let pid = result
             .stdout
@@ -812,14 +819,31 @@ mod tests {
                 pid,
             )
         };
-        if !process.is_null() {
+        let wait = if !process.is_null() {
             let wait = unsafe { WaitForSingleObject(process, 0) };
+            if wait != WAIT_OBJECT_0 {
+                // Keep the test self-cleaning when the containment assertion fails.
+                // Record the observed state first, then terminate the test-owned ping.
+                unsafe {
+                    TerminateProcess(process, 1);
+                    WaitForSingleObject(process, INFINITE);
+                }
+            }
             unsafe { CloseHandle(process) };
-            assert_eq!(
-                wait, WAIT_OBJECT_0,
-                "descendant process {pid} survived the bounded process invocation"
-            );
-        }
+            wait
+        } else {
+            WAIT_OBJECT_0
+        };
+
+        assert!(
+            child_in_any_job,
+            "descendant was not in any Windows Job Object; stdout={:?}, stderr={:?}",
+            result.stdout, result.stderr
+        );
+        assert_eq!(
+            wait, WAIT_OBJECT_0,
+            "descendant process {pid} survived the bounded process invocation"
+        );
     }
 
 }
