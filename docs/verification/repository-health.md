@@ -180,3 +180,16 @@ Baseline comparison is currently opt-in and file-based; persistent cross-run his
 CircleCI is the canonical CI provider for the migration candidate. The Python scanner now treats `.circleci/config.yml` as a CI configuration for generic workflow-integrity checks (duplicate config names and referenced script paths). GitHub Actions-specific checks, such as mutable Action refs and `permissions: write-all`, remain scoped to legacy `.github/workflows/` files and must not be represented as CircleCI coverage.
 
 `tools/collect_ci_health.py` and its tests are retained as a historical GitHub Actions evidence collector only. They call the GitHub Actions API and do **not** collect CircleCI pipeline/job data. CircleCI exact-SHA execution must be verified from CircleCI pipeline/job evidence; the collector's output cannot substitute for it. The current CircleCI job runs scanner regression tests and records JSON/Markdown preview artifacts. High/critical findings are reported but do not become a release gate at this preview stage; execution errors and exact-SHA mismatches remain failures.
+
+
+## Native preview command
+
+The first-party Rust preview can be exercised without invoking the ONE language runtime:
+
+~~~sh
+cargo test --locked -p one-cli --bin one integrity::tests
+cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha <40-character-git-sha
+cargo run --locked -p one-cli --bin one -- pindai keamanan --root .
+~~~
+
+The command is read-only and reports the requested detector scopes. It is not feature-parity equivalent to the Python reference, not a malware verdict, and not a release gate. A non-zero finding status must be reviewed; it must not be hidden by treating the scanner's output as proof of compromise.
