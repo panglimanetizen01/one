@@ -101,7 +101,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
-- `../.circleci/config.yml` — canonical Linux product CI and opt-in Linux release checks.
+- [CircleCI config on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/.circleci/config.yml) — proposed canonical Linux product CI and opt-in Linux release checks; the config remains on the separate migration branch until that PR is authorized and merged.
 - [Independent Windows verification repository](https://github.com/panglimanetizen01/one-windows-verification) — Windows Server 2025 native build and exact-SHA execution evidence.
 
 ## CI and developer operations
