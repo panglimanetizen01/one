@@ -1,5 +1,10 @@
 # One v0.1 Release Contract
 
+## Integrated P0 candidate — release gate unchanged — 2026-11-17
+
+PR #108 now integrates the four independently passing fixes from PR #98–#101 in source and regression tests. Integration source commit: `e8cd41ec212c3224bdbecf85eaf18c5850096e16`; normative specification updates follow in later commits. The combined candidate has no exact-SHA execution evidence yet and is NOT RELEASE-ACCEPTED. No E1–E6 acceptance, DoD checkbox, release readiness, merge authorization, or distribution claim is promoted. Issue #104 filesystem root confinement, Issue #105 escaped Unix descendant containment, and Issue #82 real Android AArch64 execution remain blockers.
+
+
 Status: **EXACT-SHA CROSS-PLATFORM VERIFIED BASELINE WITH EXPERIMENTAL ORCHESTRATION; RELEASE APPROVAL REMAINS A SEPARATE GATE**.
 
 ## Current forensic release gate — 2026-11-17
