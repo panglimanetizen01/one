@@ -243,3 +243,7 @@ The checked-in workflow `panglimanetizen01/one-windows-verification/.github/work
 ### Mount-boundary design correction — 2026-11-18
 
 A device-number-only check is insufficient to reject same-device bind mounts. The Issue #104 design and normative Section 20 now require mount identity as well as device identity; Linux should use statx STATX_MNT_ID (or a stronger identifier), and other Unix targets must use an equivalent primitive or fail closed. This is a design correction, not implementation evidence.
+
+### Host-owned filesystem authority API contract — 2026-11-18
+
+The Issue #104 design and normative spec now specify a shared immutable authority injected into both filesystem adapters, explicit max read/write byte limits, and a dedicated interpreter constructor. The CLI may use current_dir as a trusted project root only when obtained independently from the program target. Library callers and tests must inject a root explicitly. No parameterless production adapter or legacy interpreter path may infer authority from the target, source, or ambient environment. This remains a design contract; source implementation and tests are not yet present.
