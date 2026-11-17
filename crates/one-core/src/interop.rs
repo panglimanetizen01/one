@@ -891,7 +891,7 @@ mod tests {
                 args: vec![
                     "-NoProfile".into(),
                     "-Command".into(),
-                    script.replace("__ONE_PARENT_PID__", &parent_pid.to_string()).into(),
+                    script.replace("__ONE_PARENT_PID__", &parent_pid.to_string()),
                 ],
                 working_directory: None,
             },
