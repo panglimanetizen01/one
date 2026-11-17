@@ -94,7 +94,7 @@ jobs:
             cat /tmp/one-native-health.txt
             set -e
             if [ "$scanner_status" -gt 1 ]; then exit "$scanner_status"; fi
-            if grep -Eq '\\[(CRITICAL|HIGH)\\] revision-integrity .*\\[(expected-sha-mismatch|head-unavailable)\\]' /tmp/one-native-health.txt; then
+            if grep -Eq '\[(CRITICAL|HIGH)\] revision-integrity .*\[(expected-sha-mismatch|head-unavailable)\]' /tmp/one-native-health.txt; then
               echo "Native scanner exact-SHA verification failed."
               exit 2
             fi
