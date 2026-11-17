@@ -692,3 +692,11 @@ Exact run #44012805081 on source `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubu
 - The current connected tools cannot retrieve the authenticated CircleCI job page/logs. The first failing step and root cause for `9b233d...` remain UNKNOWN. Do not attribute this failure to APT, docs, or product code without the first-failure output. Do not claim the current PR head is green.
 - Independent verifier PR #42 remains OPEN / DRAFT / UNMERGED and is pinned to `9b233d...`; no Windows run for this exact pin is observed. Historical Windows run #32 applies only to `a10a69...`.
 - Migration acceptance remains NOT PASSED. E6 remains NOT IMPLEMENTED / final release gate NOT PASSED. No merge or release.
+
+
+### PR #95 latest docs/CI checkpoint — 2026-11-17
+
+- Corrected stale current-status content in `docs/CI.md` on PR #95 branch. Commit `cef1f41c97585b6e25bf91af6e8b4281efe299c4`; exact new PR #95 HEAD `cef1f41c97585b6e25bf91af6e8b4281efe299c4`.
+- The new docs section records CircleCI SUCCESS on APT-fix code/config SHA `4db76fbaf651dd069c7000fb46a4dea61b11fbd8` and terminal FAILURE on docs-only descendant `9b233dfe75da8c0752c203af3711bf3da319dc02` (workflow `91d704b2-516e-4736-9fb2-d4c8504e001b`, job `948e41bd-2090-4708-8b1b-1dc142672580`; cause UNKNOWN due inaccessible authenticated logs).
+- New exact PR #95 HEAD `cef1f41...` currently has no status reported. Do not claim PASS; this exact docs descendant requires its own terminal CircleCI result.
+- Independent Windows verifier pin remains `9b233d...`; no run for `cef1f41...`. Migration acceptance NOT PASSED; E6 NOT IMPLEMENTED / release gate NOT PASSED; no merge/release.
