@@ -24,7 +24,7 @@ A new detector starts as informational or medium severity unless it can demonstr
 | `markdown-structure` | Fenced-code closure | Not a complete CommonMark validator |
 | `path-integrity` | File and directory symlinks resolving outside repository; directory symlinks are surfaced but never traversed | Does not validate every runtime path or filesystem race; behavior depends on platform permissions and filesystem semantics |
 | `file-integrity` | UTF-8 readability of scanned text files | Does not prove binary/artifact integrity |
-| `workflow-integrity` | Duplicate workflow names, missing local actions and targeted script paths | Not a full GitHub Actions YAML/schema validator |
+| `workflow-integrity` | Duplicate CI config names, missing local actions and targeted script paths in GitHub Actions YAML and `.circleci/config.yml` | Structural heuristics only; not a full GitHub Actions or CircleCI schema validator |
 | `workflow-overlap` | Identical single-line `run:` commands in multiple workflow files | Low-confidence review hint; intentional duplication is common |
 | `evidence-freshness` | Declared source SHA versus checkout SHA in JSON evidence | Only applies when both fields are present |
 | `contract-drift` | Required core CLI vocabulary plus high-value invariants in normative grammar, CLI, diagnostics, package/build, and platform contracts | Text presence does not prove implementation; a contract refactor may require updating detector fixtures |
