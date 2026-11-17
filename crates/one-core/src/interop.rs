@@ -60,6 +60,27 @@ fn join_reader(reader: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, Strin
         .map_err(|error| format!("Failed to read subprocess output: {error}"))
 }
 
+
+fn validate_process_spec(spec: &ProcessSpec) -> Result<(), String> {
+    if spec.program.is_empty() {
+        return Err("Process executable path must not be empty.".into());
+    }
+    if spec.program.contains('\\0') {
+        return Err("Process executable path must not contain an embedded NUL byte.".into());
+    }
+    if let Some((index, _)) = spec.args.iter().enumerate().find(|(_, arg)| arg.contains('\\0')) {
+        return Err(format!("Process argument {index} must not contain an embedded NUL byte."));
+    }
+    if spec
+        .working_directory
+        .as_deref()
+        .is_some_and(|directory| directory.contains('\\0'))
+    {
+        return Err("Process working directory must not contain an embedded NUL byte.".into());
+    }
+    Ok(())
+}
+
 pub fn run_process(
     spec: &ProcessSpec,
     capabilities: &CapabilitySet,
@@ -67,6 +88,7 @@ pub fn run_process(
     if !capabilities.permits(Capability::Process) {
         return Err("Kemampuan proses belum diberikan kepada program.".into());
     }
+    validate_process_spec(spec)?;
 
     #[cfg(unix)]
     {
@@ -761,6 +783,64 @@ mod tests {
         let error = run_process(&spec, &CapabilitySet::none())
             .expect_err("process must be denied");
         assert_eq!(error, "Kemampuan proses belum diberikan kepada program.");
+    }
+
+    #[test]
+    fn process_spec_rejects_empty_executable_path() {
+        let error = run_process(
+            &ProcessSpec {
+                program: String::new(),
+                args: vec![],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+        )
+        .expect_err("an empty executable path must be rejected before spawn");
+        assert!(error.contains("must not be empty"));
+    }
+
+    #[test]
+    fn process_spec_rejects_embedded_nul_in_executable_path() {
+        let error = run_process(
+            &ProcessSpec {
+                program: "tool\\0.exe".into(),
+                args: vec![],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+        )
+        .expect_err("an executable path with NUL must be rejected before spawn");
+        assert!(error.contains("embedded NUL"));
+    }
+
+    #[test]
+    fn process_spec_rejects_embedded_nul_in_arguments() {
+        let error = run_process(
+            &ProcessSpec {
+                program: "tool".into(),
+                args: vec!["safe\\0truncated".into()],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+        )
+        .expect_err("an argument with NUL must be rejected before spawn");
+        assert!(error.contains("argument 0"));
+        assert!(error.contains("embedded NUL"));
+    }
+
+    #[test]
+    fn process_spec_rejects_embedded_nul_in_working_directory() {
+        let error = run_process(
+            &ProcessSpec {
+                program: "tool".into(),
+                args: vec![],
+                working_directory: Some("safe\\0truncated".into()),
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+        )
+        .expect_err("a working directory with NUL must be rejected before spawn");
+        assert!(error.contains("working directory"));
+        assert!(error.contains("embedded NUL"));
     }
 
     #[test]
