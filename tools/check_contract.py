@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 required = [
-    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
+    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml",
     ".circleci/config.yml", "docs/CI.md", "docs/README.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
@@ -49,8 +49,19 @@ ci_contract_markers = [
     "mingw-w64",
     "ONE_WINDOWS_CLANG=clang",
 ]
-if not (ROOT / "Cargo.lock").is_file() and "--locked" in ci_config:
-    raise SystemExit("CIRCLECI CONTRACT: --locked requires a committed Cargo.lock; the current repository does not track one")
+if not (ROOT / "Cargo.lock").is_file():
+    raise SystemExit("CIRCLECI CONTRACT: canonical CircleCI candidate must track Cargo.lock")
+
+cargo_commands = [
+    line.strip()
+    for line in ci_config.splitlines()
+    if line.strip().startswith("cargo ")
+]
+if not cargo_commands:
+    raise SystemExit("CIRCLECI CONTRACT: no explicit Cargo build, Clippy, or test commands found")
+unlocked_commands = [command for command in cargo_commands if "--locked" not in command.split()]
+if unlocked_commands:
+    raise SystemExit("CIRCLECI CONTRACT: every Cargo command must use --locked: " + "; ".join(unlocked_commands))
 
 forbidden_circleci_windows = (
     "run_windows_native_verification",
