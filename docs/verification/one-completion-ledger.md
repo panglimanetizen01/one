@@ -1098,3 +1098,32 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - Independent Windows verifier run #44 / `44082635958`, job `134036849522`, artifact `14328017616`, is exact-source PASS for predecessor SHA `db859f24...` only. Do not transfer it to current docs-only SHA `3f0ddb...`. Current exact-HEAD workflow-run lookup returns no PR-triggered run and combined status has no contexts; current exact-HEAD verification is NOT VERIFIED.
 - CircleCI current PR #95 HEAD also has no visible status context; the config defines an unconditional `one-linux` workflow, but authenticated CircleCI pipeline/job diagnostics are unavailable. CircleCI execution and optional `release-check` remain NOT VERIFIED. Static config review is not execution evidence.
 - This is a docs-only source descendant and does not alter Cargo.lock, workspace manifests, or `.circleci/config.yml`. PR #95 remains unmerged, so CircleCI migration is not active on `main`.
+
+
+## Rebased integration candidates — exact-SHA evidence update — 2026-11-17
+
+### PR #102 base candidate
+
+- PR #102 HEAD `6c72d8e548bbbc28d85be39b8de427614989a038` completed GitHub Actions run #2229 / `44086429416`: Ubuntu and Windows Server 2025 both SUCCESS. Windows Job Object descendant-termination regression passed. This evidence belongs only to this exact SHA.
+
+### PR #107 — rebased bounded reader shutdown
+
+- PR #107 HEAD `21e393157e52728d9510699ac6c9120987e3852c`, based on PR #102 exact SHA `6c72d8e...`, completed GitHub Actions run #2230 / `44088328030`: Ubuntu job `134056601084` and Windows Server 2025 job `134056600732` both SUCCESS.
+- Both jobs passed Build, Clippy, full Tests, contract and documentation gates, deterministic artifact tests, DNS/orchestration/database/HTTP vertical slices, release CLI build, and platform smoke tests.
+- Windows log confirms `interop::tests::windows_job_object_terminates_descendants_when_parent_exits ... ok`. Linux test suite includes the escaped-session reader-shutdown, continuous escaped-writer, and non-idle reader grace regressions.
+- PR #107's exact-SHA PASS verifies bounded reader shutdown, not production termination of escaped Unix descendants. The tests clean up their own escaped fixture. Issue #105 remains OPEN; strong Unix descendant containment is not implemented or verified.
+- PR #106 remains OPEN/DRAFT at its older head `7da358abcd1e5e7d5e257db5eec0d1b4081aa7fc`, diverged 25 ahead / 3 behind PR #102's latest head. PR #107 is the rebased integration candidate; no force-push or merge occurred.
+
+### PR #108 — CircleCI migration recomposition
+
+- PR #108 HEAD `2b8a4651d6c05111bbfa627035e74b2fe6f75c70` is a draft based on PR #102 exact SHA `6c72d8e...`.
+- It adds CircleCI config blob `9d05f65badffae75e7e22bd1f0962e056b4960bd` and deletes `.github/workflows/ci.yml` only on the migration candidate branch. Its two-file diff preserves PR #102's source and documentation.
+- PR #95 remains OPEN/DRAFT at stale source snapshot `3f0ddb83b70d91b73aad3875d9eb1e4f5637064c`; PR #108 is the dependency-safe migration candidate. No merge or production CI cutover occurred.
+- At the latest exact-HEAD check, PR #108 had no CircleCI status context and no GitHub Actions workflow run. Config schema validation, CircleCI execution, and job-level test results remain NOT VERIFIED. The CircleCI CLI is not installed in the current execution environment and no CircleCI connector is exposed to this session. Do not mark migration complete based on config presence.
+
+### Completion gate
+
+- `docs/verification/DEFINITION_OF_DONE.md` remains 3 checked / 10 unchecked / 13 total.
+- E1–E6 verified points remain 0 pending full acceptance contracts on a frozen final exact SHA. E6 remains **NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED**.
+- PR #107's GHA success is scoped evidence only; it does not award E4/E6 acceptance points. PR #108 is still draft and unverified.
+- No merge, release, protected final SHA, or 100% completion claim is authorized.
