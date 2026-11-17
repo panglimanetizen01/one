@@ -34,6 +34,7 @@ pub struct ProcessResult {
     pub stderr: String,
 }
 
+#[cfg(unix)]
 fn spawn_bounded_reader<R: Read + Send + 'static>(
     mut reader: R,
     output_limit_exceeded: Arc<AtomicBool>,
