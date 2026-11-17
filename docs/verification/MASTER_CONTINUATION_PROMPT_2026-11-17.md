@@ -190,3 +190,17 @@ This addendum supersedes any older PR #108 head pointer above. Refresh live meta
 4. Perform native/Python same-checkout parity adjudication and update evidence matrix/ledger without promoting scores until acceptance is met.
 5. Merge PR #109 into PR #108 only after evidence/review and explicit owner authorization. Do not merge PR #108 to main or release without separate explicit authorization.
 6. Continue Issues #104 and #105 after scanner validation, preserving current root-confinement and non-escapable descendant requirements.
+
+
+## 11. Exact-SHA scanner wrapper correction — 2026-11-17
+
+The CircleCI preview wrapper was tightened after finding that scanner exit code 1 can mean either ordinary high/critical findings or exact-SHA mismatch. The current wrapper must fail closed on:
+- Python: `invalid-expected-sha`, `git-head-unavailable`, `checkout-sha-mismatch` in JSON output.
+- Native: `expected-sha-mismatch`, `head-unavailable` in captured output.
+Ordinary high/critical findings remain report-only while the scanner is a preview; operational errors and SHA mismatch are failures. Issue #90 comment: `6953106805`.
+
+Latest verified source/config checkpoint before this documentation-only synchronization:
+- PR #109 source HEAD: `be8683a233be61dec20c81cb25a8049c2a2df9be`.
+- CircleCI config blob: `750df015567cbba6927eb015e8d4054ffb8ca22d`.
+- Combined status empty; check-runs count 0; no terminal CircleCI execution evidence.
+Refresh live PR metadata before acting; this prompt update itself creates a later documentation-only HEAD.
