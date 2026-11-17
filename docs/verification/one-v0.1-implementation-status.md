@@ -1,5 +1,13 @@
 # One v0.1 Implementation Status
 
+## Live integration checkpoint — 2026-11-17
+
+- PR #108 now includes the six implementation/test paths carrying the independently verified PR #98–#101 fixes. Integration source commit: `e8cd41ec212c3224bdbecf85eaf18c5850096e16`; subsequent commits synchronize normative specifications.
+- Included: safe manifest name/version components and `one test` manifest validation (#98); SQLite read-only open and missing-file non-creation regression (#99); lexical-scope restoration after errors (#100); inherited filesystem denial/approval semantics (#101).
+- The integrated candidate has NOT been executed. No parent-branch PASS result is transferred. Combined Ubuntu/Windows exact-SHA validation is PENDING; CircleCI status/job evidence is unavailable in this session.
+- PR #108 remains OPEN/DRAFT and targets PR #102 branch `fix/commit-cargo-lockfile-20261117`. Main remains unchanged. Issue #104/#105/#82 remain open. DoD remains 3 checked / 10 unchecked; E6 remains NOT IMPLEMENTED.
+
+
 ## Current forensic status — 2026-11-17
 
 This live checkpoint supersedes older "current" SHA/status statements below. Historical evidence remains preserved but is not transferred to later source revisions.
