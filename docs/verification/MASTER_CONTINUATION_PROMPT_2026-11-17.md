@@ -185,3 +185,10 @@ After every successfully completed task:
 - The older `security/issue-104-filesystem-confinement-20261118` branch is stale (0 ahead, 8 behind PR #108 at the last compare); do not implement on it. Continue on PR #110's branch based on the current PR #108 candidate.
 - CircleCI provider validation and terminal job logs remain NOT VERIFIED. If access remains unavailable, continue engineering work rather than stalling.
 - Next: inventory every FileReadAdapter/FileWriteAdapter construction and interpreter/CLI host configuration call site; define and implement explicit trusted-root injection; implement Unix and Windows handle-relative primitives with no path fallback; add real race/side-effect/resource tests; then run exact-SHA Unix and Windows verification and update all derived docs/evidence.
+
+### Issue #104 verifier test names — 2026-11-18
+
+Before implementation is considered test-ready, preserve the exact nonzero-match filters in the independent verifier workflow:
+- Unix prefixes/counts: 2 `descriptor_relative_read_rejects_`, 1 `descriptor_relative_write_rejects_`, 1 `descriptor_relative_walk_rejects_`; exact tests `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink` and `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file`.
+- Windows exact tests: `filesystem_reader_rejects_directory_junction_escape`, `filesystem_adapter_reads_absolute_target_inside_project_root`, `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`, `filesystem_write_adapter_writes_text_target`, `filesystem_write_adapter_rejects_oversized_content`, `filesystem_adapters_reject_parent_directory_traversal`.
+The verifier fails if expected tests are filtered out or do not execute. Do not weaken these assertions. Refresh the workflow before the final run.
