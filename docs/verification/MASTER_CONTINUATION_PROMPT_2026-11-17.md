@@ -192,3 +192,7 @@ Before implementation is considered test-ready, preserve the exact nonzero-match
 - Unix prefixes/counts: 2 `descriptor_relative_read_rejects_`, 1 `descriptor_relative_write_rejects_`, 1 `descriptor_relative_walk_rejects_`; exact tests `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink` and `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file`.
 - Windows exact tests: `filesystem_reader_rejects_directory_junction_escape`, `filesystem_adapter_reads_absolute_target_inside_project_root`, `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`, `filesystem_write_adapter_writes_text_target`, `filesystem_write_adapter_rejects_oversized_content`, `filesystem_adapters_reject_parent_directory_traversal`.
 The verifier fails if expected tests are filtered out or do not execute. Do not weaken these assertions. Refresh the workflow before the final run.
+
+### Issue #104 mount identity requirement — 2026-11-18
+
+Do not rely on st_dev alone for mount confinement: same-device bind mounts can share the same device number. On Linux, use statx STATX_MNT_ID (or stronger mount identity) together with device identity. On other Unix platforms, require an equivalent verified mount-identity primitive or fail closed. Keep this requirement in adversarial tests.
