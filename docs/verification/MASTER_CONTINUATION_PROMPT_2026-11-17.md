@@ -89,15 +89,9 @@ CircleCI contexts #669/#671/#673 on refs without .circleci/config.yml are pipeli
 
 ## 5. Open blockers — actual next engineering work
 
-### P0 — integrate already-passing fixes into one candidate
+### P0 — PR #98–#101 integration checkpoint (completed in PR #108 candidate; validation pending)
 
-PR #98–#101 each fix a confirmed main-branch bug and pass on separate exact SHAs:
-- #98: one test manifest validation and safe package name/version components.
-- #99: database.query must open existing database files read-only; missing paths must not be created.
-- #100: interpreter lexical scopes must be popped/restored even after runtime errors.
-- #101: parent filesystem deny and approval policies must inherit to child filesystem read/write capabilities.
-
-Integrate these changes into one branch based on the refreshed PR #108 candidate without copying unrelated legacy milestone branches. Resolve conflicts against current PR #107/#102 source and normative contracts. Then run full Ubuntu + Windows exact-SHA CI once on the combined candidate.
+The live PR #108 candidate at `a6f91c07b04d7b9fafb9e99d0356954012ae3001` already contains the source fixes from PRs #98–#101 and PR #107, according to its current PR description and branch readback. Do not repeat cherry-picking or re-integrating those changes. Their historical PASS results remain bound to their original SHAs and do not validate the combined PR #108/#109 candidate. The remaining action is exact-SHA Linux/CircleCI and independent Windows validation when authorized execution access is available; reconcile any concrete failure on the relevant candidate branch.
 
 ### P0 — Issue #104 filesystem root confinement
 
@@ -159,7 +153,7 @@ After every successfully completed task:
 4. Read docs/verification/forensic-audit-2026-11-17.md and all listed canonical docs/links.
 5. Refresh live PR #108 HEAD/base, PR #102/#107/#103/#97/#95 states, Issues #104/#105/#82/#81/#90, and exact commit statuses.
 6. Do not repeat any successful run listed in Section 3.
-7. First seek authenticated CircleCI validation/log evidence for the updated PR #108 exact SHA. If unavailable, state the access limitation precisely and proceed to integrate PR #98–#101 fixes and implement Issue #104; do not stall or pretend CI results exist.
+7. First seek authenticated CircleCI validation/log evidence for the live PR #108/#109 exact SHAs. If unavailable, state the access limitation precisely; do not repeat the completed PR #98–#101 integration. Continue with static review and prepare/implement the next independent blocker (Issue #104) only on a non-main candidate branch, with adversarial tests and no unsupported security claims.
 8. Continue execution until a real blocker requiring owner action is reached. After every task that passes, synchronize all relevant docs, derivative artifacts, ledger, and Notion Skill immediately.
 
 **The purpose of this prompt is to prevent rediscovery and repeated successful audits. The next session must start from the current live PR #108 candidate and unresolved engineering gates, not restart the project or re-run completed checks.**
