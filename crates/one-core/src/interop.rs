@@ -365,7 +365,7 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     }
     command_line.push(0);
 
-    let mut security = SECURITY_ATTRIBUTES {
+    let security = SECURITY_ATTRIBUTES {
         nLength: size_of::<SECURITY_ATTRIBUTES>() as u32,
         lpSecurityDescriptor: null_mut(),
         bInheritHandle: 1,
