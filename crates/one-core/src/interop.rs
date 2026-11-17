@@ -224,8 +224,8 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         thread::sleep(PROCESS_POLL_INTERVAL);
     };
 
-    // A child may exit while leaving descendants holding the inherited pipes.
-    // They share this process group and must not outlive the bounded invocation.
+    // Terminate members of the original process group. This is best-effort
+    // cleanup only: a descendant may escape into a different session/group.
     kill_process_group(process_group);
     // Descendants may escape the process group while retaining inherited pipe
     // writers. Readers are nonblocking on Unix, so request shutdown after
