@@ -1029,3 +1029,12 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - PR #95 remains OPEN / DRAFT / UNMERGED at HEAD `993f76351c7a119bea2e66f7d9e5bca07f392fbc`; Windows exact-source verifier run #43 is PASS on this SHA, while CircleCI Linux and optional release-check are NOT VERIFIED on current HEAD. Earlier CircleCI PASS on `e50748a...` remains historical.
 - The verifier health-scanner mismatch is now documented accurately: current verifier `verification` branch workflow reads shared pin `e507...` where scanner files are absent; draft PR #39 corrects it with dedicated pin `9b38...`, where scanner and test files exist. PR #39 execution remains NOT VERIFIED.
 - Repository remains PUBLIC, default branch `main`, main SHA `d35db95153f6ddd79885494c72f5aee16c899751`. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED; DoD remains 3 checked / 10 unchecked. No merge or release.
+
+
+## PR #106 exact-head regression follow-up — 2026-11-17 19:03 WIB
+
+- Current PR #106 exact source SHA is now `63946bbeab4ae1ed29290a3d271d63e132198ace`, branch `fix/unix-reader-shutdown-deadline-20261117`, based on PR #102 branch SHA `ac1bb214bc028395367cce7edc234a1909971e2a`. Incremental PR diff remains four files (one Rust source file and three specifications), 22 commits ahead / 0 behind.
+- Added `non_idle_reader_stops_after_shutdown_grace`, a focused Unix test that keeps a reader continuously ready without reaching the 1 MiB output cap and asserts it returns within one second with the non-idle shutdown flag. This specifically exercises the 100 ms shutdown-grace error path; the escaped-session and continuous-writer integration regressions remain in place.
+- PR #106 description and Issue #105 comment `6947356451` now record the exact SHA and test. Issue #105 remains OPEN; no production descendant containment is claimed.
+- Exact-HEAD combined status reports CircleCI Pipeline ERROR for pipeline #633, but job-level details are inaccessible and cause is NOT VERIFIED. No GHA run is returned because `.github/workflows/ci.yml` only triggers PRs targeting `main`, whereas PR #106 targets PR #102's branch. Local Cargo/Rust is unavailable. The current candidate is NOT VERIFIED; do not reuse older PASS evidence.
+- No merge, release, or completion-ledger promotion.
