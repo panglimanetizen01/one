@@ -955,7 +955,7 @@ mod tests {
             std::process::id()
         ));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $ > \"$1\"; sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done";
+        let script = "setsid sh -c 'echo $ > \"$1\"; exec sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
         let started = Instant::now();
         let result = run_process(
             &ProcessSpec {
