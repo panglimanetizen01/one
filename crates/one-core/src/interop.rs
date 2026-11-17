@@ -660,12 +660,19 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         if unsafe { TerminateJobObject(job.raw(), 1) } == 0 {
             wait_failed = true;
         }
-    } else if accounting.ActiveProcesses > 0 {
-        // SAFETY: the job contains the direct process and all non-breakaway descendants.
-        if unsafe { TerminateJobObject(job.raw(), 1) } == 0 {
-            wait_failed = true;
-        }
     }
+
+    // Do not make termination conditional on the accounting snapshot. The
+    // snapshot is diagnostic, while TerminateJobObject is the authoritative
+    // operation for every process still associated with this invocation job.
+    // Calling it unconditionally also closes the race where a descendant is
+    // still alive but the accounting query reports no active members.
+    let terminate_error = if unsafe { TerminateJobObject(job.raw(), 1) } == 0 {
+        wait_failed = true;
+        Some(unsafe { GetLastError() })
+    } else {
+        None
+    };
 
     // Ensure the direct process is reaped even after timeout/output-limit/error,
     // but keep cleanup bounded if the termination request itself fails.
@@ -712,7 +719,12 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     let stdout = join_reader(stdout_reader)?;
     let stderr = join_reader(stderr_reader)?;
     if wait_failed {
-        return Err("Waiting for the Windows subprocess failed.".into());
+        return Err(match terminate_error {
+            Some(error) => format!(
+                "Windows subprocess cleanup failed (TerminateJobObject error {error})."
+            ),
+            None => "Waiting for the Windows subprocess failed.".into(),
+        });
     }
     if timed_out {
         return Err(format!(
