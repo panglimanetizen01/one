@@ -202,9 +202,10 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         CreateFileW, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING,
     };
     use windows_sys::Win32::System::JobObjects::{
-        CreateJobObjectW, IsProcessInJob, SetInformationJobObject, TerminateJobObject,
+        CreateJobObjectW, IsProcessInJob, QueryInformationJobObject, SetInformationJobObject,
+        TerminateJobObject, JOBOBJECT_BASIC_ACCOUNTING_INFORMATION,
         JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
-        JobObjectExtendedLimitInformation,
+        JobObjectBasicAccountingInformation, JobObjectExtendedLimitInformation,
     };
     #[cfg(test)]
     use windows_sys::Win32::Foundation::DuplicateHandle;
@@ -621,20 +622,10 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     let mut wait_failed = false;
     loop {
         if output_limit_exceeded.load(Ordering::Acquire) {
-            // SAFETY: the job contains this process and every descendant.
-            unsafe {
-                TerminateJobObject(job.raw(), 1);
-                WaitForSingleObject(process.raw(), INFINITE);
-            }
             break;
         }
         if Instant::now() >= deadline {
             timed_out = true;
-            // SAFETY: terminating the job also terminates all contained descendants.
-            unsafe {
-                TerminateJobObject(job.raw(), 1);
-                WaitForSingleObject(process.raw(), INFINITE);
-            }
             break;
         }
         // SAFETY: process is a valid process handle and the timeout is bounded.
@@ -643,18 +634,72 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
             WAIT_TIMEOUT => {}
             _ => {
                 wait_failed = true;
-                // SAFETY: fail closed and reap the process tree.
-                unsafe {
-                    TerminateJobObject(job.raw(), 1);
-                    WaitForSingleObject(process.raw(), INFINITE);
-                }
                 break;
             }
         }
     }
 
-    // KILL_ON_JOB_CLOSE prevents descendants from surviving even if the direct
-    // child exits before they do.
+    // A successful direct-child exit does not imply that its descendants have
+    // exited. Explicitly terminate any remaining job members, then wait for the
+    // job accounting to reach zero before returning. KILL_ON_JOB_CLOSE remains
+    // a fail-safe for every early-return path.
+    let mut accounting: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION =
+        unsafe { core::mem::zeroed() };
+    let query_ok = unsafe {
+        QueryInformationJobObject(
+            job.raw(),
+            JobObjectBasicAccountingInformation,
+            &mut accounting as *mut _ as *mut core::ffi::c_void,
+            size_of::<JOBOBJECT_BASIC_ACCOUNTING_INFORMATION>() as u32,
+            null_mut(),
+        )
+    };
+    if query_ok == 0 {
+        wait_failed = true;
+        // SAFETY: the job handle has termination rights and owns this invocation.
+        if unsafe { TerminateJobObject(job.raw(), 1) } == 0 {
+            wait_failed = true;
+        }
+    } else if accounting.ActiveProcesses > 0 {
+        // SAFETY: the job contains the direct process and all non-breakaway descendants.
+        if unsafe { TerminateJobObject(job.raw(), 1) } == 0 {
+            wait_failed = true;
+        }
+    }
+
+    // Ensure the direct process is reaped even after timeout/output-limit/error.
+    if unsafe { WaitForSingleObject(process.raw(), INFINITE) } != WAIT_OBJECT_0 {
+        wait_failed = true;
+    }
+
+    let cleanup_deadline = Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        let mut accounting: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION =
+            unsafe { core::mem::zeroed() };
+        if unsafe {
+            QueryInformationJobObject(
+                job.raw(),
+                JobObjectBasicAccountingInformation,
+                &mut accounting as *mut _ as *mut core::ffi::c_void,
+                size_of::<JOBOBJECT_BASIC_ACCOUNTING_INFORMATION>() as u32,
+                null_mut(),
+            )
+        } == 0
+        {
+            wait_failed = true;
+            break;
+        }
+        if accounting.ActiveProcesses == 0 {
+            break;
+        }
+        if Instant::now() >= cleanup_deadline {
+            wait_failed = true;
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+
+    // KILL_ON_JOB_CLOSE remains the final safety net after explicit cleanup.
     drop(job);
     let mut exit_code = 1u32;
     // SAFETY: the process has signaled or was terminated and remains open.
