@@ -953,7 +953,7 @@ mod tests {
             std::process::id()
         ));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'sleep 5' & echo $! > \"$1\"";
+        let script = "setsid sh -c 'echo $ > \"$1\"; sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done";
         let started = Instant::now();
         let result = run_process(
             &ProcessSpec {
@@ -977,7 +977,7 @@ mod tests {
             .expect("escaped descendant PID should be numeric");
         // The escaped process is test-owned; clean it up by its recorded PID.
         // SAFETY: the helper created this process exclusively for this test.
-        unsafe { libc::kill(pid, libc::SIGKILL); }
+        unsafe { libc::kill(-pid, libc::SIGKILL); }
         let _ = std::fs::remove_file(&pid_file);
         assert!(result.success, "helper shell should exit successfully");
         assert!(
