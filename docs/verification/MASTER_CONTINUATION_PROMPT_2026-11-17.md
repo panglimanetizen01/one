@@ -73,7 +73,7 @@ CircleCI is the intended canonical Linux CI provider, but migration is not activ
 - .github/workflows/windows-native-verification.yml
 
 PR #108 candidate removes those three files and adds .circleci/config.yml. It also fixes two static migration defects discovered during this audit:
-1. tools/check_contract.py formerly required the deleted GitHub Actions files; it now requires .circleci/config.yml, Cargo.lock, and the CI verification contract.
+1. tools/check_contract.py formerly required the deleted GitHub Actions files; it now requires .circleci/config.yml, Cargo.lock, and the CI verification contract, and fails closed if any of the three retired workflows reappear.
 2. tools/verify_offline.sh and tools/verify_offline.ps1 formerly omitted --locked on Cargo commands; all cargo build/clippy/test/run invocations now include --locked.
 
 Static readback on the pre-audit-doc candidate found:
