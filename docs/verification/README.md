@@ -3,7 +3,7 @@
 ## Live integration checkpoint — 2026-11-17
 
 - PR #108 now integrates PR #98–#101 source/test changes; integration source commit `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. Normative specifications are synchronized in subsequent commits.
-- Draft PR #109 (`ci/scanner-restoration-20261117`) targets PR #108's migration branch. Latest live PR HEAD after documentation reconciliation: `ad2af0441add7ae8ddd9c60701955f322cbb4a7f`. The scanner is isolated in a separate developer-only `one-integrity` binary; the beginner-facing `one` CLI has no scanner dispatch/help vocabulary. GitHub combined status and workflow-run collections are empty for this SHA. CircleCI terminal job logs and local Rust/Python execution remain unavailable; do not treat the integration as validated.
+- Draft PR #109 (`ci/scanner-restoration-20261117`) targets PR #108's migration branch. Refresh the live PR HEAD from GitHub before each session; documentation-only commits also advance this branch pointer, so an embedded SHA must never be treated as a permanent live pointer. The scanner is isolated in a separate developer-only `one-integrity` binary; the beginner-facing `one` CLI has no scanner dispatch/help vocabulary. GitHub combined status and workflow-run collections are empty for this SHA. CircleCI terminal job logs and local Rust/Python execution remain unavailable; do not treat the integration as validated.
 - Combined exact-SHA Ubuntu/Windows verification is NOT RUN. CircleCI job-level evidence is NOT AVAILABLE in this session. Historical parent-SHA PASS results are not transferable.
 - PR #108 remains OPEN/DRAFT; main remains unchanged. DoD remains 3/13 and E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
 
