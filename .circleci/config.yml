@@ -75,15 +75,29 @@ jobs:
             scanner_status=$?
             set -e
             if [ "$scanner_status" -gt 1 ]; then exit "$scanner_status"; fi
+            python3 - <<'PY'
+            import json
+            from pathlib import Path
+            report = json.loads(Path("/tmp/one-health.json").read_text(encoding="utf-8"))
+            fatal_revision_rules = {"invalid-expected-sha", "git-head-unavailable", "checkout-sha-mismatch"}
+            mismatches = [item for item in report.get("findings", []) if item.get("rule_id") in fatal_revision_rules]
+            if mismatches:
+                raise SystemExit("Python scanner exact-SHA verification failed: " + ", ".join(item["rule_id"] for item in mismatches))
+            PY
             echo "Python scanner completed; finding status=$scanner_status (preview only, not a release gate)."
       - run:
           name: Native integrity preview exact-SHA scan (non-gating findings)
           command: |
             set +e
-            cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha "$CIRCLE_SHA1"
+            cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha "$CIRCLE_SHA1" > /tmp/one-native-health.txt 2>&1
             scanner_status=$?
+            cat /tmp/one-native-health.txt
             set -e
             if [ "$scanner_status" -gt 1 ]; then exit "$scanner_status"; fi
+            if grep -Eq '\\[(CRITICAL|HIGH)\\] revision-integrity .*\\[(expected-sha-mismatch|head-unavailable)\\]' /tmp/one-native-health.txt; then
+              echo "Native scanner exact-SHA verification failed."
+              exit 2
+            fi
             echo "Native scanner completed; finding status=$scanner_status (preview only, not a release gate)."
       - store_artifacts:
           path: /tmp/one-health.json
