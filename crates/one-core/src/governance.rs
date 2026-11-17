@@ -221,8 +221,6 @@ mod tests {
         let en_request = request(ExecutionScope::target("server.example"));
         assert_eq!(policy.evaluate(&id_request), policy.evaluate(&en_request));
     }
-}
-
 
     #[test]
     fn coarse_filesystem_denial_overrides_inherited_read_and_write_grants() {
@@ -268,3 +266,4 @@ mod tests {
 
         assert_eq!(policy.evaluate(&request), PolicyDecision::RequireApproval);
     }
+}
