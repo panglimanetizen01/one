@@ -14,6 +14,10 @@ CLI adalah pintu masuk command-line One v0.1.
 | `one version` | — | melihat versi |
 | `one help` | — | melihat bantuan |
 
+## Validasi manifest project — kandidat integrasi
+
+Kandidat pengembangan PR #108 mengintegrasikan validasi `nama` dan `versi` dari `one.toml` untuk perintah `one test` dan `one package`. Nilai yang dipakai pada nama artefak `.onepkg` harus berupa komponen nama file portabel yang aman; pemisah path, karakter terlarang, control character, whitespace tepi, serta komponen `.` dan `..` ditolak. **Perubahan ini masih kandidat dan belum diverifikasi pada satu exact SHA gabungan atau dirilis ke main.**
+
 ## Menjalankan orchestration DNS
 
 Vertical slice orchestration pertama yang tersedia secara eksperimental adalah pencarian alamat DNS melalui source One `cari alamat`.
