@@ -120,7 +120,12 @@ These are separate draft branches. The PASS records do not prove that PR #98–#
 - PRs #95, #97, #102, #103, #106, #107, and #108 remain open/draft as applicable. No merge, release, branch rewrite, repository visibility change, paid plan/credit purchase, secret change, or billing change was performed.
 - No product grammar, semantics, compiler/runtime meaning, CLI vocabulary, or beginner-facing UX was changed to satisfy CI tooling.
 
-## 7. Immediate next actions
+## 7. Post-ledger-sync live delta
+
+- PR #103's previously verified ledger SHA `041b359b8504551c2c1705093050d9c467368bac` passed run #2231 / `44089449162` on Ubuntu and Windows.
+- The subsequent ledger/DoD synchronization advanced current PR #103 HEAD to `fde2b81b2f63743b990e9fbbade47ec8076e2151`. Its run #2232 / `44092982606` is IN_PROGRESS on Ubuntu and Windows; CircleCI pipeline #709 has a generic ERROR context. No terminal result or root cause is claimed for this newer head.
+
+## 8. Immediate next actions
 
 1. Read the updated Notion Skill and this audit record; open the architecture diagram on PR #97 and read the complete documentation map before editing.
 2. Refresh live metadata for PR #108, PR #102, PR #107, PR #103, PR #97, and Issues #104/#105. Do not rely on embedded historical head pointers.
