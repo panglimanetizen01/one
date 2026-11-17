@@ -102,7 +102,7 @@ The `jalankan proses "<program>"` source operation maps to semantic capability `
 one jalankan <file.one> --izinkan database.query --target <database>
 ```
 
-The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The intended query boundary is parameterized read-only SQLite `SELECT`. The core and CLI vertical-slice tests passed in PR #102 exact-SHA GitHub Actions run #2229 on Ubuntu and Windows Server 2025. However, main still has a known read-only effect-conformance gap: opening a missing path can create a database file. Issue #99 tracks this; its fix is in a separate unmerged candidate. Do not mark the read-only contract fully conformant until that fix is integrated and exact-SHA verified.
+The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The required query boundary is parameterized read-only SQLite `SELECT`; adapters must open existing database files in read-only mode, must not create a missing database path, and must not modify an existing database. The integrated PR #98–#101 candidate now includes the PR #99 adapter and regression tests. The combined candidate remains UNVERIFIED until its own exact-SHA Ubuntu and Windows matrix is terminal PASS; individual parent-branch PASS results are not transferable.
 
 Rules for current orchestration permission surfaces:
 
@@ -137,7 +137,7 @@ Human-readable output is localized. A future machine-readable mode must provide 
 
 ## 6. Project discovery
 
-Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably.
+Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably. Both `one test` and `one package` validate the required `nama` and `versi` manifest fields before compiling, executing, or packaging the project. Values used in `.onepkg` filenames must be single safe portable filename components; reject path separators, reserved filename characters, control characters, leading/trailing whitespace, and `.`/`..` components before writing an artifact.
 
 ## 7. Capability policy
 
