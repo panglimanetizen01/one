@@ -184,12 +184,12 @@ CircleCI is the canonical CI provider for the migration candidate. The Python sc
 
 ## Native preview command
 
-The first-party Rust preview can be exercised without invoking the ONE language runtime:
+The first-party Rust preview is a separate developer-only binary (`one-integrity`), not a subcommand of the beginner-facing `one` CLI. It can be exercised without invoking the ONE language runtime:
 
 ~~~sh
-cargo test --locked -p one-cli --bin one integrity::tests
-cargo run --locked -p one-cli --bin one -- pindai --scope all --root . --expected-sha <40-character-git-sha
-cargo run --locked -p one-cli --bin one -- pindai keamanan --root .
+cargo test --locked -p one-cli --bin one-integrity
+cargo run --locked -p one-cli --bin one-integrity -- --scope all --root . --expected-sha <40-character-git-sha
+cargo run --locked -p one-cli --bin one-integrity -- --scope security --root .
 ~~~
 
 The command is read-only and reports the requested detector scopes. It is not feature-parity equivalent to the Python reference, not a malware verdict, and not a release gate. A non-zero finding status must be reviewed; it must not be hidden by treating the scanner's output as proof of compromise.
