@@ -207,3 +207,7 @@ Implement the explicit root-injection contract from the Issue #104 design:
 - library callers and tests explicitly inject a trusted root; no deriving root from target or target parent;
 - existing interpreter construction without a root fails closed for filesystem adapters.
 Keep policy-first ordering and PR #101 inherited deny/approval behavior unchanged.
+
+### Historical PR #80 reuse boundary
+
+Use PR #80 only as a source of reviewed Unix primitives and test patterns. Do not copy its current_dir-derived root, per-operation root path walk, st_dev-only non-Linux fallback, non-atomic write path, or Windows canonicalize/check/open implementation. The current Issue #104 design and normative contract supersede those mechanisms.
