@@ -1,16 +1,18 @@
 # ONE v0.1 — Definition of Done and Release Gate
 
-## Current continuation state — 2026-11-17 16:30 WIB (superseding live refresh)
+## Current continuation state — 2026-11-17 16:55 WIB (superseding live refresh)
 
-- Main PUBLIC at exact SHA `d35db95153f6ddd79885494c72f5aee16c899751`; no merge/release.
-- PR #95 source `993f76351c7a119bea2e66f7d9e5bca07f392fbc`: exact-SHA Windows Server 2025 run #42 / `44048174334` terminal SUCCESS on verifier `6070e2ec839cc10b49068a84733d301ec6375b58`, job `133919144866`. All 31 primary steps pass. Artifact `14312034494`, ZIP SHA-256 `0d86f4876414d032d4062554958f23d7308ae38c76ff3a4cf491292757df7ef0`; native/CLI/manifest hashes recorded in ledger; both EXEs PE32+ AMD64; manifest output `Budi`, exit 0; CLI `one 0.1.0`. Current Windows gate PASS.
-- PR #42 pin matches `993f763...`; verifier docs commit `56271be...` triggers docs-only run #43 / `44049102193` IN_PROGRESS. This does not change source PASS.
-- PR #95 current SHA has no CircleCI status context visible in GitHub; optional release-check NOT VERIFIED. CircleCI Pipeline #558 is on PR #102 SHA `5ee645...`, not PR #95. PR #102 GHA run #44044795819 PASS on both platforms, separate generic CircleCI ERROR; root cause unknown without CircleCI logs.
-- PR #102 current source `fe3e4d0ae55a90a0b07deec124def54f7c79f041` adds empty-executable/NUL process-spec validation and four tests; GHA run #2159 `44048756331` is IN_PROGRESS on Ubuntu/Windows at last poll. Earlier intermediate #2157 `790dd...` has over-escaped literals and is superseded by #2158 `ac2ee...` / current formatted SHA `fe3e4d0...`. No current PASS until run #2159 completes.
-- PRs #98–#101 have exact-SHA GHA PASS on Ubuntu and Windows; details and hashes in ledger. PR #96 superseded historical CircleCI Windows/MSYS2 path; do not reintroduce retired Windows job.
-- PR #97 current docs head `d676637c43a1bd3232f419225eba2cd2bbdfb28f`; PR #103 current ledger/DoD head will be this commit; PR #42 current head `56271be...`. All remain OPEN / DRAFT / UNMERGED.
-- Implementation inventory 92/100 provisional; exact-SHA verified score 0/100. DoD 3 checked / 10 unchecked / 13 total; E6 NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No score/checkbox promotion.
-- No merge/release, force-push, history rewrite, secrets/trust-store/billing/visibility/default-branch change.
+- Main remains PUBLIC at exact SHA `d35db95153f6ddd79885494c72f5aee16c899751`; no merge/release.
+- PR #95 CircleCI migration remains OPEN / DRAFT / UNMERGED at exact source `993f76351c7a119bea2e66f7d9e5bca07f392fbc`. Its branch has zero `.github/workflows/*` files, one default CircleCI Linux workflow and optional release Linux workflow; no CircleCI Windows job. All Cargo commands use `--locked`; contract checker enforces it. `Cargo.lock` is tracked on this branch.
+- PR #95 exact-source Windows PASS: run #42 / `44048174334` and docs-only verifier run #43 / `44049102193`, both source `993f763...`; run #43 verifier SHA `56271be...`, job `133922119577`, terminal SUCCESS. Artifact #14313416141 ZIP SHA `4b5102dfdb1fcecc41a155f2b97fa3caf244986120c263f50bd5733888e7bbcd`; manifest/native/CLI hashes in the verification README; both PE32+ AMD64, output Budi/exit 0, CLI one 0.1.0. Current Windows gate PASS.
+- PR #42 verifier branch current HEAD `56271be82645357c2feaa1134ae2dc1d2ceae734`; exact pin matches PR #95 source `993f763...`.
+- PR #95 current SHA has no CircleCI status context visible in GitHub; optional release-check remains NOT VERIFIED. CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. PR #102 GHA run #44044795819 PASS while generic CircleCI Pipeline ERROR; root cause unknown without logs.
+- PR #102 current source `ac1bb214bc028395367cce7edc234a1909971e2a` passed GHA run #2165 / `44049452639`, Windows job `133923280923`, Ubuntu job `133923281493`; both SUCCESS. It includes NUL/empty ProcessSpec validation and installation-guide C/C++ prerequisites; docs consistency/checker tests, build, Clippy, full tests, artifact and platform CLI smoke passed. Four new ProcessSpec tests explicitly passed on both platforms in prior exact code run #2159 `fe3e4d0...`.
+- Intermediate PR #102 SHA `790dd...` failed compilation due over-escaped NUL literals; corrected in `ac2ee...` and current source `ac1bb...` passes. This intermediate failure is historical/superseded; current candidate is green.
+- PR #98–#101 remain OPEN / DRAFT / UNMERGED with exact-SHA GHA PASS on Ubuntu/Windows. PR #96 is superseded historical CircleCI Windows/MSYS2 fix; do not reintroduce retired Windows job.
+- PR #97 docs current HEAD `24a2d1be68ef4a42a02e35443d62245e6d02f448`; PR #103 ledger/DoD current head is this commit; PR #102 current `ac1bb...`. All remain OPEN / DRAFT / UNMERGED.
+- Historical implementation score 92/100 provisional; exact-SHA verified score 0/100. DoD 3 checked / 10 unchecked / 13 total. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No score/checkbox promotion.
+- No merge, release, force-push, history rewrite, secrets, visibility, billing, or default-branch change.
 
 ---
 
@@ -478,3 +480,12 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - Review of workspace dependency `rusqlite = { version = "0.40.2", features = ["bundled"] }` confirmed the build compiles bundled SQLite C source. The installation guide previously listed Git/Rust only and omitted the native compiler toolchain, which could cause first-time builds to fail on clean Linux/Windows machines.
 - Updated `docs/panduan-pengguna/instalasi.md`: Debian/Ubuntu installs `build-essential`; other Linux distributions need GCC/Clang and `make`; Windows requires Visual Studio Build Tools 2022+ with Desktop development with C++, MSVC x64/x86 build tools and Windows SDK, using Developer PowerShell. Added `cc`, `make`, `cl`, and `link` checks. The doc still accurately states no installer or official prebuilt release exists.
 - Current PR #102 source HEAD `ac1bb214bc028395367cce7edc234a1909971e2a` is a docs-only descendant of exact-SHA GHA PASS `fe3e4d0...`. Fresh current-SHA GHA run has not yet appeared; no PASS is transferred. PR remains OPEN / DRAFT / UNMERGED.
+
+
+## PR #95 and PR #102 exact-SHA verification checkpoint — 2026-11-17
+
+- PR #95 source `993f76351c7a119bea2e66f7d9e5bca07f392fbc` passed Windows Server 2025 run #42 / `44048174334` and verifier-doc revision run #43 / `44049102193`. Run #43 verifier SHA `56271be82645357c2feaa1134ae2dc1d2ceae734`, job `133922119577`, terminal SUCCESS.
+- Run #43 artifact ID `14313416141`, ZIP SHA-256 `4b5102dfdb1fcecc41a155f2b97fa3caf244986120c263f50bd5733888e7bbcd`; native EXE SHA `0706a1fb786283f673ca7f6bca4f596afcef1c70473f2bc1ac8f186bb1ddb5ed`; CLI EXE SHA `4b2115e3188380e1610290cb1e51336055fd22f54dbd3530ec138d0ecb568ed0`; manifest SHA `cedc87f7e982d9cc8837bb67b93a75efbc7ebbb22e6488422fac8801b7fcef2c`. ZIP/manifest hashes verified; both executables PE32+ AMD64; manifest source `993f...`, verifier `56271...`, native/CLI output `Budi`, exit 0, CLI `one 0.1.0`.
+- PR #102 current source `ac1bb214bc028395367cce7edc234a1909971e2a` passed GHA run #2165 / `44049452639`, Windows job `133923280923`, Ubuntu job `133923281493`; both SUCCESS. This includes the NUL/empty process-spec validation and the updated installation guide documenting bundled SQLite C/C++ build prerequisites. Both jobs passed docs consistency/checker tests, build, Clippy, tests, artifacts and platform CLI smoke.
+- Four new ProcessSpec regression tests were explicitly observed passing on Windows and Ubuntu in run #2159 exact code SHA `fe3e4d0...`; current docs-only descendant `ac1bb...` run #2165 also passed the full suite.
+- CircleCI Pipeline #558 is attributed to PR #102 predecessor SHA `5ee645...`, not PR #95. PR #95 current SHA has no CircleCI context visible in GitHub; optional release-check NOT VERIFIED. E6/release acceptance remain NOT PASSED.
