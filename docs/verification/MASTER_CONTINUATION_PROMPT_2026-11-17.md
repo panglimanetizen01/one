@@ -175,7 +175,7 @@ This addendum supersedes any older PR #108 head pointer above. Refresh live meta
   - Base branch `ci/circleci-migration-rebased-20261117` (PR #108 branch).
   - Current checkpoint head after docs index synchronization: `4aa0198d63db22258385cf6afc9d9f5f5446c6c2`; refresh live head.
   - PR #109 is OPEN/DRAFT/UNMERGED. Do not merge without explicit owner authorization.
-- PR #109 restores native integrity preview from PR #89 and Python reference scanner + regression/quality assets from PR #91, adds CircleCI config structural checks to both scanners, native CLI dispatch, ADR-0018, CircleCI development-side scanner steps, contract enforcement, and synchronized docs.
+- PR #109 restores native integrity preview from PR #89 and Python reference scanner + regression/quality assets from PR #91, adds CircleCI config structural checks to both scanners, a separate developer-only `one-integrity` binary (not main CLI dispatch), ADR-0018, CircleCI development-side scanner steps, contract enforcement, and synchronized docs.
 - Python `collect_ci_health.py` remains historical GitHub Actions API collector only. It does not collect CircleCI runs/jobs. Never cite it as CircleCI evidence.
 - Python scanner now scans `.circleci/config.yml` for generic workflow integrity and recognizes `CIRCLE_SHA1`. GitHub Actions-specific checks remain scoped to legacy `.github/workflows/`.
 - Native preview is read-only and developer-side; it is not a language semantic change, parity replacement, default gate, or release gate.
@@ -246,3 +246,13 @@ This source change has only been read back through GitHub; no Cargo/Rust executi
 - No GitHub check runs/status contexts surfaced for the current SHA. CircleCI job logs and local Rust/Python execution remain unavailable; no test PASS is claimed.
 - The Python scanner regression suite contains 73 test methods; this is source inspection only. Native/Python parity remains unproven and documented gaps remain.
 - The following documentation synchronization commit will advance the branch head. Treat `b66324a...` as the code/source-review SHA and refresh live metadata again after the docs commit.
+
+
+## 16. Live PR #109 exact-head checkpoint — 2026-11-17
+
+- Live PR #109 HEAD: `0866a6df8733df092ed287423b2e2d505aa464b2`; branch `ci/scanner-restoration-20261117`; base PR #108 branch `ci/circleci-migration-rebased-20261117`.
+- PR #109 is OPEN/DRAFT/UNMERGED. PR #108 remains OPEN/DRAFT/UNMERGED. Do not merge either and do not change `main` without explicit authorization.
+- The native scanner is a separate `one-integrity` Cargo binary. Do not describe it as native CLI dispatch; keep the beginner-facing `one` command surface unchanged.
+- GitHub combined status has zero status contexts and GitHub Actions workflow-runs are empty for this exact SHA. This does not establish CircleCI pipeline absence.
+- CircleCI pipeline/job logs and local Rust/Python test execution are still NOT AVAILABLE. No build/test/CI PASS or parity claim is permitted.
+- Continue from this exact live HEAD. Obtain authenticated CircleCI job evidence, inspect logs, fix confirmed defects, and rerun affected plus full validations. Do not repeat historical PR #89/#91 tests as substitutes.
