@@ -193,3 +193,8 @@ cargo run --locked -p one-cli --bin one -- pindai keamanan --root .
 ~~~
 
 The command is read-only and reports the requested detector scopes. It is not feature-parity equivalent to the Python reference, not a malware verdict, and not a release gate. A non-zero finding status must be reviewed; it must not be hidden by treating the scanner's output as proof of compromise.
+
+
+### CircleCI structural-check boundary
+
+The native preview checks that `.circleci/config.yml` declares a supported top-level version (`2`, `2.0`, or `2.1`) and a `jobs:` section. It deliberately does not require `workflows:`: CircleCI supports an implicit workflow for a single job named `build`. These checks are structural heuristics only; CircleCI's own config validation and pipeline execution remain authoritative.
