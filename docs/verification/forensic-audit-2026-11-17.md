@@ -5,6 +5,10 @@
 **Canonical main snapshot audited:** `d35db95153f6ddd79885494c72f5aee16c899751`  
 **Current migration candidate:** PR #108, branch `ci/circleci-migration-rebased-20261117`, based on PR #102 / PR #107 source lineage. Refresh its exact HEAD from live PR metadata before relying on this report.
 
+## Live continuation addendum — 2026-11-17
+
+PR #108 now includes the source/test changes from PR #98–#101. Integration source commit: `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. Normative contracts and verification/release records were synchronized in later commits. The candidate's live HEAD must be refreshed from PR metadata; the integrated source has NOT been executed as a combined exact-SHA candidate. No Ubuntu/Windows PASS or CircleCI PASS is claimed for it. Main remains unchanged. Issues #104, #105, and #82 remain open; DoD remains 3/13 and E6 remains NOT IMPLEMENTED.
+
 ## 1. Repository inventory and audit coverage
 
 The recursive Git tree for canonical `main` was complete (not truncated):
