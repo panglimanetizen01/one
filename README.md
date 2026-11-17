@@ -145,6 +145,18 @@ A SQLite-backed source-level database query path is executable-verified within i
 
 An explicit HTTP GET source-level path is executable-verified within its recorded Termux/Android boundary and its core/CLI loopback test suites passed in the exact-SHA Ubuntu/Windows Server 2025 matrix for source `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` (run [39554661451](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451)). The slice is bounded to explicit `http://` URLs, GET, exact target scope, and response-body normalization.
 
+
+## Architecture navigation
+
+- [ONE full architecture map](https://github.com/panglimanetizen01/one/blob/docs/system-architecture-diagram-20261115/docs/architecture/one-full-architecture-map.png) — visual navigation reference currently carried by draft PR #97.
+- [Written architecture contract](docs/ARCHITECTURE.md) — normative semantic and platform boundaries. The diagram is navigation only and never overrides contracts, implementation, or exact-SHA evidence.
+
+## CI execution provider
+
+CircleCI is the intended canonical Linux CI provider. The migration is still a draft: PR #108 (`ci/circleci-migration-rebased-20261117`) is the dependency-safe candidate based on PR #102 and includes the bounded Unix reader-shutdown implementation from PR #107. The candidate's CircleCI configuration and job execution are not yet verified; `main` still contains the GitHub Actions workflows. Do not claim a provider cutover until a terminal CircleCI run is inspected on the exact candidate SHA.
+
+Windows Server 2025 native execution remains independently verified in [one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Linux-host MinGW cross-compilation does not replace Windows-host execution.
+
 ## Documentation
 
 - `docs/panduan-pengguna/README.md`
@@ -159,4 +171,4 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## Verification boundary
 
-The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+The GitHub repository is currently PUBLIC and remains the canonical source of truth. Repository visibility is owner-controlled and must not be changed as part of routine development. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
