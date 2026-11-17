@@ -37,6 +37,15 @@ missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
     raise SystemExit("MISSING CONTRACT ARTIFACTS:\n" + "\n".join(missing))
 
+legacy_workflows = [
+    ".github/workflows/ci.yml",
+    ".github/workflows/release-check.yml",
+    ".github/workflows/windows-native-verification.yml",
+]
+present_legacy = [path for path in legacy_workflows if (ROOT / path).exists()]
+if present_legacy:
+    raise SystemExit("LEGACY GITHUB ACTIONS WORKFLOWS REMAIN:\n" + "\n".join(present_legacy))
+
 # Every Cargo build/test/run command used by CI or the portable offline verifiers
 # must honor the committed lockfile. This prevents CI from silently resolving
 # a different dependency graph than the one reviewed in the repository.
