@@ -33,7 +33,7 @@ required = [
     "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
     "tools/one_health.py", "tools/test_one_health.py", "tools/health_quality.py", "tools/test_health_quality.py",
     "docs/verification/health-detectors.md", "docs/verification/repository-health.md", "docs/verification/health-quality-ledger.md",
-    "crates/one-cli/src/integrity.rs",
+    "crates/one-cli/src/integrity.rs", "crates/one-cli/src/bin/one-integrity.rs",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -44,8 +44,9 @@ if missing:
 # The repository-integrity engine is developer tooling, not ONE language syntax.
 cli_source = (ROOT / "crates/one-cli/src/main.rs").read_text(encoding="utf-8")
 decisions = (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8")
-if "mod integrity;" not in cli_source or 'first == "pindai"' not in cli_source:
-    raise SystemExit("INTEGRITY CONTRACT: native preview module or CLI dispatch is missing")
+integrity_binary = (ROOT / "crates/one-cli/src/bin/one-integrity.rs").read_text(encoding="utf-8")
+if "mod integrity;" in cli_source or "pindai" in cli_source or "mod integrity;" not in integrity_binary or "integrity::run" not in integrity_binary:
+    raise SystemExit("INTEGRITY CONTRACT: developer-only native integrity binary is missing or leaked into the beginner CLI")
 if "ADR-0018" not in decisions:
     raise SystemExit("INTEGRITY CONTRACT: ADR-0018 governance is missing")
 
