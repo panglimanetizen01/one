@@ -1091,3 +1091,10 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - PR #106 remains OPEN / DRAFT / UNMERGED. No merge or release. PR #102 base SHA remains exact and separately GHA-verified; `main` was not changed.
 - Issue #105 remains OPEN. The 100 ms nonblocking reader shutdown bounds reader waiting but does not terminate escaped Unix descendants. The test cleans up its own fixture; production process-tree containment remains unresolved. Keep the issue open pending a host-owned non-escapable containment backend or an explicitly accepted narrower platform guarantee with production evidence.
 - E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED; DoD remains 3 checked / 10 unchecked. Do not promote project completion from this PR's GHA result.
+
+## PR #95 exact-head refresh — 2026-11-17
+
+- Live PR #95 remains OPEN / DRAFT / UNMERGED at HEAD `3f0ddb83b70d91b73aad3875d9eb1e4f5637064c`, base `main`. Compared with predecessor `db859f24aa4ad76bf16e55c6b1f2fb06f3c22ac8`, this is one docs-only commit changing `docs/CI.md` (9 additions, 0 deletions); `.circleci/config.yml` remains unchanged at blob `9d05f65badffae75e7e22bd1f0962e056b4960bd`.
+- Independent Windows verifier run #44 / `44082635958`, job `134036849522`, artifact `14328017616`, is exact-source PASS for predecessor SHA `db859f24...` only. Do not transfer it to current docs-only SHA `3f0ddb...`. Current exact-HEAD workflow-run lookup returns no PR-triggered run and combined status has no contexts; current exact-HEAD verification is NOT VERIFIED.
+- CircleCI current PR #95 HEAD also has no visible status context; the config defines an unconditional `one-linux` workflow, but authenticated CircleCI pipeline/job diagnostics are unavailable. CircleCI execution and optional `release-check` remain NOT VERIFIED. Static config review is not execution evidence.
+- This is a docs-only source descendant and does not alter Cargo.lock, workspace manifests, or `.circleci/config.yml`. PR #95 remains unmerged, so CircleCI migration is not active on `main`.
