@@ -54,7 +54,7 @@ Technical alias:
 one run <file.one> --allow network.connect --target <url>
 ```
 
-The `ambil dari "<url>"` source operation maps to semantic capability `network.connect`, effect `Connect`, and the governed `network.http.get` adapter. The current language-level boundary is an explicit `http://` URL, HTTP/1.1 GET, exact target scoping, and response-body normalization. HTTPS, arbitrary methods, custom request headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. The source implementation is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+The `ambil dari "<url>"` source operation maps to semantic capability `network.connect`, effect `Connect`, and the governed `network.http.get` adapter. The current language-level boundary is an explicit `http://` URL, HTTP/1.1 GET, exact target scoping, and response-body normalization. HTTPS, arbitrary methods, custom request headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. The HTTP GET source/runtime slice is **IMPLEMENTED / EXPERIMENTAL**. Its core and CLI vertical-slice tests passed in PR #102 exact-SHA GitHub Actions run #2229 on Ubuntu and Windows Server 2025. This is branch-bound test evidence, not release approval or support for HTTPS/other methods.
 
 ### Filesystem read
 
@@ -102,7 +102,7 @@ The `jalankan proses "<program>"` source operation maps to semantic capability `
 one jalankan <file.one> --izinkan database.query --target <database>
 ```
 
-The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The current implementation is limited to parameterized read-only SQLite `SELECT` statements and is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The intended query boundary is parameterized read-only SQLite `SELECT`. The core and CLI vertical-slice tests passed in PR #102 exact-SHA GitHub Actions run #2229 on Ubuntu and Windows Server 2025. However, main still has a known read-only effect-conformance gap: opening a missing path can create a database file. Issue #99 tracks this; its fix is in a separate unmerged candidate. Do not mark the read-only contract fully conformant until that fix is integrated and exact-SHA verified.
 
 Rules for current orchestration permission surfaces:
 
@@ -179,3 +179,15 @@ The command refuses to overwrite an existing folder.
 - offline validation for source-only operations;
 - Windows/Linux support through the platform abstraction contract;
 - no LLM or network dependency for command interpretation or language semantics.
+
+
+## Current implementation-conformance gaps — 2026-11-17
+
+- Project-level `one test` manifest validation is required by this contract; PR #98 fixes the current main implementation gap and passed exact-SHA GitHub Actions run #2018 on Ubuntu and Windows. It remains unmerged.
+- Read-only SQLite query must not create or modify a database file. PR #99 fixes the current main gap and passed run #2019 on Ubuntu and Windows; it remains unmerged.
+- Runtime scope restoration after errors is required; PR #100 fixes the current main gap and passed run #2020 on Ubuntu and Windows; it remains unmerged.
+- Parent filesystem denials and approval requirements must apply to inherited child capabilities; PR #101 fixes the current main gap and passed run #2138 on Ubuntu and Windows; it remains unmerged.
+- Filesystem adapter path confinement is a separate open security requirement (Issue #104). Capability scope alone is not a sandbox.
+- Process resource limits and bounded reader shutdown are documented in the effect-capability and interop contracts. Strong Unix escaped-descendant containment remains unresolved (Issue #105).
+
+These PRs are separate branch candidates. Their individual PASS results do not prove an integrated combined revision until a single candidate includes the changes and passes its own exact-SHA matrix.
