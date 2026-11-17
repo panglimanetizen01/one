@@ -403,3 +403,14 @@ A later documentation-only commit changes the PR head SHA. Treat the evidence ab
 - Independent verifier PR #42 pins this exact SHA. Its workflow uses `--locked` for all Cargo build/Clippy/test/run commands and self-checks that rule; verifier workflow commits include `19188f...`, `2ee373...`, and `ff3511...`. No Windows run is observed for this SHA; Windows remains NOT VERIFIED.
 - Optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED.
 - This evidence is bound to `d426897...`. Any later docs-only descendant must be recorded separately; do not silently transfer exact-SHA status.
+
+
+### Exact-SHA cross-platform gate PASS — 2026-11-17
+
+- Canonical PR #95 source SHA `c207fb15bc19889a8c8e60923581ef1b1f7a6374`: CircleCI `ci/circleci: one-linux` terminal SUCCESS, workflow `15aa40bb-0225-4ad6-a2ea-fdaa0f364b0b`, job `cdcc88bd-abdc-43b0-9885-1e696bd07ac8`.
+- Independent Windows Server 2025 exact-SHA run #34 / ID `44030597595` terminal SUCCESS for the same source SHA; verifier SHA `3f8e9b662805a89fd5145e8691a221218b098e11`, job `133861337521`.
+- Windows stages passed: source pin/identity, locked-command guard, toolchains, contracts/docs, workspace build, Clippy, full tests, deterministic artifacts, DNS, orchestration, database, HTTP GET/CLI, real-network, offline, native Windows build, PE32+ AMD64 inspection and execution.
+- Runtime exit code `0`, output `Budi`. Artifact ID `14305081962`, 15,867-byte ZIP, SHA-256 `7cbbf251efe2f56ba24965a76cd420ccddae8e84e8f0dcd727b09943014f3b8f`; executable 52,918 bytes, SHA-256 `0c79f06f37f793061884acf43c9ba419bb0fc4ccf48c4a487f511e462cf55af5`; manifest 563 bytes, SHA-256 `7ac05a71f1f5e5149f1dd721d2ca9c610bfe7504acb6b164938a51255c60b1d6`.
+- The artifact ZIP digest matches GitHub's artifact digest; the executable digest matches the manifest. Independent file inspection identifies PE32+ x86-64.
+- The optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED. Cross-platform CI PASS is not release acceptance or merge authorization.
+- These results are bound to source SHA `c207fb...`. This documentation update is a docs-only descendant; do not relabel the evidence as a run on the new descendant SHA.

@@ -158,3 +158,14 @@ Windows native verification for the current PR #95 source remains NOT VERIFIED u
 - The source contract checker now verifies that both offline scripts use `--locked` for every Cargo build, Clippy, test, and run command. The independent Windows verifier workflow applies the same lockfile rule and self-checks its own Cargo command list.
 - The verifier pin is exact `d426897...`; no matching Windows run is observed. Windows status remains NOT VERIFIED. Historical run #32 applies only to `a10a69...`.
 - The optional CircleCI `release-check` is still NOT VERIFIED. No release acceptance is inferred from the Linux CI result.
+
+
+### Independent Windows run #34 — terminal PASS — 2026-11-17
+
+- Canonical ONE source SHA `c207fb15bc19889a8c8e60923581ef1b1f7a6374`; independent verifier SHA `3f8e9b662805a89fd5145e8691a221218b098e11`.
+- Run #34 / ID `44030597595`, terminal SUCCESS, Windows job `133861337521`. Windows NT 10.0.26100.0, AMD64; target `x86_64-pc-windows-gnu`; rustc/cargo 1.100.0; clang 20.1.8; Android NDK r27c.
+- All reported job steps succeeded, including contract/docs, workspace build, Clippy, full workspace tests, deterministic artifacts, DNS/orchestration/database/HTTP slices, real-network, offline, native build, PE inspection, native execution, manifest, and artifact upload.
+- Native runtime exit code `0`, output `Budi`. PE32+ AMD64 executable size 52,918 bytes; SHA-256 `0c79f06f37f793061884acf43c9ba419bb0fc4ccf48c4a487f511e462cf55af5`.
+- Artifact ID `14305081962`, ZIP size 15,867 bytes, SHA-256 `7cbbf251efe2f56ba24965a76cd420ccddae8e84e8f0dcd727b09943014f3b8f`. Manifest size 563 bytes, SHA-256 `7ac05a71f1f5e5149f1dd721d2ca9c610bfe7504acb6b164938a51255c60b1d6`.
+- Matching CircleCI Linux result for source `c207fb...`: workflow `15aa40bb-0225-4ad6-a2ea-fdaa0f364b0b`, job `cdcc88bd-abdc-43b0-9885-1e696bd07ac8`, terminal SUCCESS.
+- The optional CircleCI release-check remains NOT VERIFIED; release acceptance is not passed. Historical Windows run #32 applies only to its own older source SHA and is not reused.
