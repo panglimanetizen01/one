@@ -524,3 +524,26 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - PR #102 current source `ac1bb214bc028395367cce7edc234a1909971e2a` passed GHA run #2165 / `44049452639`, Windows job `133923280923`, Ubuntu job `133923281493`; both SUCCESS. This includes the NUL/empty process-spec validation and the updated installation guide documenting bundled SQLite C/C++ build prerequisites. Both jobs passed docs consistency/checker tests, build, Clippy, tests, artifacts and platform CLI smoke.
 - Four new ProcessSpec regression tests were explicitly observed passing on Windows and Ubuntu in run #2159 exact code SHA `fe3e4d0...`; current docs-only descendant `ac1bb...` run #2165 also passed the full suite.
 - CircleCI Pipeline #558 is attributed to PR #102 predecessor SHA `5ee645...`, not PR #95. PR #95 current SHA has no CircleCI context visible in GitHub; optional release-check NOT VERIFIED. E6/release acceptance remain NOT PASSED.
+
+
+---
+
+## Follow-up addendum — 2026-11-17 18:42 WIB
+
+### PR #106 exact-SHA correction and latest test result
+- PR #106 remains OPEN / DRAFT / UNMERGED. Its base is now `fix/commit-cargo-lockfile-20261117` (PR #102 branch), and its current head is `3b5c245d615066a5e9a00d4039da53bf8fe664c9`. The compare against PR #102 is 16 commits ahead / 0 behind with four incremental files: `crates/one-core/src/interop.rs` and the three effect/interop/runtime specification files.
+- Previous head `4883c8b255c45bf9cec177d61fd02678dec24eca`, GHA run #2187 / `44075728210`: Ubuntu job `134013109795` FAIL; Windows job `134013109380` PASS. Ubuntu build and Clippy passed; 128/129 one-core tests passed. The failure was `escaped_session_writer_cannot_hold_output_readers_open`.
+- Root cause was an over-strong test assumption, not a compile failure: the continuous escaped writer may remain after the direct child exits, while the reader is deliberately told to stop after bounded draining. In that race, captured output can equal the 1 MiB cap without observing an additional read, so successful bounded capture is valid. The regression now verifies prompt return and both stream-size ceilings, accepting either bounded success or the explicit output-limit error. Fix commit: `3b5c245d615066a5e9a00d4039da53bf8fe664c9`.
+- Current exact-head GHA run has not yet been returned by the workflow-run lookup. Combined commit status currently shows CircleCI context `error` linking pipeline #608, but job-level details are unavailable in this session; cause remains NOT VERIFIED. Do not claim CI PASS.
+- Prior GHA run #2177 / `44067989787` remains SUCCESS only for predecessor SHA `060ce71c3bfb272c3d90c65e95b0982bf0d69020`; it does not verify current HEAD.
+
+### Issue #105 containment design review
+- Issue #105 remains OPEN. PR #106 only closes the unbounded reader-join subproblem; it does not terminate escaped descendants.
+- Linux cgroup v2 is a candidate, but “create nested cgroup + move PID + cgroup.kill” is not sufficient by itself. The kernel's delegation rule requires write access to both the destination `cgroup.procs` and the common ancestor's `cgroup.procs`; a same-UID workload may therefore be able to move itself out of a nested per-invocation cgroup if the ancestor is writable.
+- `clone3(CLONE_INTO_CGROUP)` can create a child directly in a cgroup (Linux 5.7+, cgroup v2), avoiding spawn-then-move race. `cgroup.kill` kills the cgroup and descendants and handles concurrent forks. A valid backend still needs a permission/namespace boundary preventing the workload from migrating out, plus a kill handle inaccessible for tampering. Otherwise fail closed for strong containment or explicitly narrow the platform guarantee.
+- References: Linux kernel cgroup v2 delegation and containment (<https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#delegation>); cgroup.kill (<https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html#core-interface-files>); clone3 (<https://man7.org/linux/man-pages/man2/clone3.2.html>).
+
+### Current acceptance boundary
+- Windows Job Object containment evidence on PR #102 remains tied to exact source SHA `ac1bb214bc028395367cce7edc234a1909971e2a` and GHA run #2165 / `44049452639` (Windows job `133923280923`, Ubuntu job `133923281493`, both PASS).
+- Unix strong process-tree containment remains NOT VERIFIED / OPEN. Do not promote E4/E6 or release acceptance based on PR #106 reader-shutdown evidence.
+- PR #95 CircleCI migration remains NOT VERIFIED on its current candidate; CircleCI operational job details are not available in this session.
