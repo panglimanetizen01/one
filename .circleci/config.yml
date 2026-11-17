@@ -19,8 +19,15 @@ commands:
             rustup toolchain install stable --profile minimal --component rustfmt --component clippy
             rustup default stable
             echo 'source "$HOME/.cargo/env"' >> "$BASH_ENV"
-            sudo apt-get update
-            sudo apt-get install -y clang mingw-w64 binutils-x86-64-linux-gnu
+            # The CircleCI Android machine image may point Noble at a regional
+            # GCE mirror whose package indexes and pool files briefly diverge.
+            # Use Ubuntu's canonical archive so apt does not request stale
+            # package versions from that regional mirror.
+            sudo find /etc/apt -type f \\( -name '*.sources' -o -name '*.list' \\) \\
+              -exec sed -i 's/us-east1.gce.archive.ubuntu.com/archive.ubuntu.com/g' {} +
+            sudo apt-get clean
+            sudo apt-get update -o Acquire::Retries=3
+            sudo apt-get install -y -o Acquire::Retries=3 clang mingw-w64 binutils-x86-64-linux-gnu
             sdkmanager --licenses < <(yes)
             sdkmanager --install "ndk;27.2.12479018"
             ndk_clang="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
