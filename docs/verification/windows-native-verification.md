@@ -131,3 +131,15 @@ The ZIP digest was independently recomputed from the downloaded artifact; the ex
 - PR #95 exact source SHA `c71d81a60f7792ed8536ba2b70464b9922f33c18` has CircleCI `ci/circleci: one-linux` terminal FAILURE (workflow `07e89069-4b33-49f6-b32c-8e70519f5221`, job `781e65c4-e43d-4e55-89d3-beaa61623629`). First failed step/root cause is NOT VERIFIED because CircleCI logs are unavailable in the current execution environment.
 - No Windows run has been observed for `c71d81a...`; verifier PR #42 is pinned to it but remains untriggered. Windows run #32 is PASS only for `a10a69...`.
 - Do not combine the older Windows PASS with the current CircleCI failure or claim cross-platform acceptance. Diagnose CircleCI from authenticated logs and run the Windows verifier on the same final source SHA.
+
+
+## Current PR #95 exact-SHA boundary — 2026-11-17
+
+- The current independent-verifier candidate before the latest documentation-only CI note was source SHA `cef1f41c97585b6e25bf91af6e8b4281efe299c4`.
+- CircleCI `ci/circleci: one-linux` is terminal SUCCESS for `cef1f41...` (workflow `930378d8-49bb-416e-a42c-63e1797b991c`, job `0e2642b0-bd94-4892-baca-df5b6c8fa4ed`). This does not establish Windows execution.
+- Verifier PR #42 pin commit `f5113c084fa978f275bc8426a4ca1e4d74376549` points to `cef1f41...`, but no Windows workflow run exists for that source SHA. Status: NOT VERIFIED.
+- Historical Windows run #32 remains PASS only for source `a10a69afdf8675e703f38f1620abc935d8361897`; it is not evidence for `cef1f41...` or later source descendants.
+- The PR #42 branch's updated workflow includes `workflow_dispatch`, but the base `verification` branch workflow does not expose a pull-request trigger for this pin path. The connected GitHub integration exposes no workflow-dispatch action. Do not merge PR #42 or mutate its base branch merely to trigger a run.
+- A subsequent docs-only update to PR #95 `docs/CI.md` is commit `75e934051fed648477f68301b7d8a5dd1bb02095`. That changes the PR head but not product/test inputs. Do not transfer exact-SHA status automatically; reconcile the current pin and check whether CircleCI published a status for the new head.
+
+Windows native verification for the current PR #95 source remains NOT VERIFIED until a matching exact-SHA run and artifact/manifest inspection are available.
