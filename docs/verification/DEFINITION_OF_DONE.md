@@ -1,17 +1,16 @@
 # ONE v0.1 — Definition of Done and Release Gate
 
-## Current continuation state — 2026-11-17 15:55 WIB (superseding live refresh)
+## Current continuation state — 2026-11-17 16:30 WIB (superseding live refresh)
 
-- Canonical repo remains PUBLIC at main SHA `d35db95153f6ddd79885494c72f5aee16c899751`; no merge/release.
-- PR #95 CircleCI migration remains OPEN / DRAFT / UNMERGED at source SHA `993f76351c7a119bea2e66f7d9e5bca07f392fbc`. `.circleci/config.yml` exists on PR #95 only; main and PR #102 do not contain it. CircleCI is not active on main.
-- Previous source `ed2382...` passed independent Windows run #39 / `44046670869`, verifier `a07c79d...`, job `133913951181`; all primary steps succeeded. Artifact `14312311019`, ZIP SHA-256 `aa56f8275042969b18c12283eb152e0572b8970159e3df7db62e9aad9f109da1`; native/CLI hashes and manifest SHA are recorded in the ledger. ZIP/manifest/binary hashes and PE32+ AMD64 headers were checked. Native and CLI output `Budi`, exit 0; CLI version `one 0.1.0`. This PASS is not transferred to `993f763...`.
-- PR #42 pin matches `993f763...`; current verifier PR head `f9185e84b5f136f1ba43946e358febaa204cb466`. Run #41 / `44047540578` was PENDING at last poll. Run #40 / `44046678525` remained IN_PROGRESS on prior source pin. Current-source Windows gate remains pending until exact-SHA run and artifact inspection.
-- PR #95 current SHA has no CircleCI status visible through GitHub at last read. Optional `release-check` remains NOT VERIFIED.
-- Correction: CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645507199bdd94955099f6633aa67bb697ee5`, not PR #95. PR #102 GHA run #44044795819 is PASS on Ubuntu/Windows, while generic CircleCI Pipeline status is ERROR. Main and PR #102 lack `.circleci/config.yml`, whereas PR #95 contains it. Pipeline root cause remains NOT VERIFIED without CircleCI logs.
-- PR #102 remains OPEN / DRAFT / UNMERGED at `5ee645...`; PR #98–#101 each have exact-SHA Ubuntu+Windows GHA PASS. These do not constitute final release acceptance. PR #96's old CircleCI Windows/MSYS2 fix is superseded; do not reintroduce retired Windows job.
-- PR #97 current docs head `e474f2d29c3b6fe2aaae3696d99b90c0b65613db`; PR #103 current ledger/DoD head will be this commit. All remain OPEN / DRAFT / UNMERGED.
-- Fixed-weight inventory remains 92/100 provisional implementation, 0/100 exact-SHA verified. Historical DoD count 3 checked / 10 unchecked / 13 total; revalidate all at final source SHA. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; release acceptance NOT PASSED.
-- No score, checkbox, E6, or release acceptance is promoted. No merge/release, protected dispatch, force-push, history rewrite, secrets, visibility, billing or default-branch changes.
+- Main PUBLIC at exact SHA `d35db95153f6ddd79885494c72f5aee16c899751`; no merge/release.
+- PR #95 source `993f76351c7a119bea2e66f7d9e5bca07f392fbc`: exact-SHA Windows Server 2025 run #42 / `44048174334` terminal SUCCESS on verifier `6070e2ec839cc10b49068a84733d301ec6375b58`, job `133919144866`. All 31 primary steps pass. Artifact `14312034494`, ZIP SHA-256 `0d86f4876414d032d4062554958f23d7308ae38c76ff3a4cf491292757df7ef0`; native/CLI/manifest hashes recorded in ledger; both EXEs PE32+ AMD64; manifest output `Budi`, exit 0; CLI `one 0.1.0`. Current Windows gate PASS.
+- PR #42 pin matches `993f763...`; verifier docs commit `56271be...` triggers docs-only run #43 / `44049102193` IN_PROGRESS. This does not change source PASS.
+- PR #95 current SHA has no CircleCI status context visible in GitHub; optional release-check NOT VERIFIED. CircleCI Pipeline #558 is on PR #102 SHA `5ee645...`, not PR #95. PR #102 GHA run #44044795819 PASS on both platforms, separate generic CircleCI ERROR; root cause unknown without CircleCI logs.
+- PR #102 current source `fe3e4d0ae55a90a0b07deec124def54f7c79f041` adds empty-executable/NUL process-spec validation and four tests; GHA run #2159 `44048756331` is IN_PROGRESS on Ubuntu/Windows at last poll. Earlier intermediate #2157 `790dd...` has over-escaped literals and is superseded by #2158 `ac2ee...` / current formatted SHA `fe3e4d0...`. No current PASS until run #2159 completes.
+- PRs #98–#101 have exact-SHA GHA PASS on Ubuntu and Windows; details and hashes in ledger. PR #96 superseded historical CircleCI Windows/MSYS2 path; do not reintroduce retired Windows job.
+- PR #97 current docs head `d676637c43a1bd3232f419225eba2cd2bbdfb28f`; PR #103 current ledger/DoD head will be this commit; PR #42 current head `56271be...`. All remain OPEN / DRAFT / UNMERGED.
+- Implementation inventory 92/100 provisional; exact-SHA verified score 0/100. DoD 3 checked / 10 unchecked / 13 total; E6 NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No score/checkbox promotion.
+- No merge/release, force-push, history rewrite, secrets/trust-store/billing/visibility/default-branch change.
 
 ---
 
