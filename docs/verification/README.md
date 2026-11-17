@@ -2,7 +2,7 @@
 
 GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No visibility change was made during this documentation work. Treat public source and build logs as a disclosure boundary; never place credentials or private data in tracked files or logs.
 
-## Current CI ownership split — 2026-11-16
+## Historical CI ownership snapshot — 2026-11-16
 
 - Canonical source: `panglimanetizen01/one`; candidate PR #95 branch `ci/circleci-migration-20261113`, exact SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`.
 - Canonical Linux product CI: CircleCI `one-linux`, terminal SUCCESS on this exact SHA (workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`, job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`, status ID `—`).
@@ -11,6 +11,16 @@ GitHub metadata currently reports the canonical ONE repository as **PUBLIC**. No
 - PR #95 remains OPEN / DRAFT / UNMERGED; canonical `main` remains unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`. The migration is not live on main until separately authorized merge.
 - The opt-in Linux release-check has not run. No merge, tag, or release is authorized by this CI checkpoint.
 
+
+
+
+## Current PR #95 migration candidate — 2026-11-17
+
+- PR #95 remains OPEN / DRAFT / UNMERGED on branch `ci/circleci-migration-20261113`; latest source HEAD is `e50748a1b25922d9090eba1f5fb90548d7c7d003`. The historical same-SHA Linux + Windows evidence for `07d8cbf...` remains valid only for that older source SHA.
+- CircleCI Linux reports SUCCESS for source SHA `e50748a...` (workflow `dc6f3660-328f-4016-8c01-72c3565d0321`, job `64a34e41-9759-4a5c-8e50-b77296730a54`).
+- Independent Windows native runtime run #32 passed on source SHA `a10a69afdf8675e703f38f1620abc935d8361897`, which is the PR #102 lockfile candidate, not PR #95 HEAD. Do not combine these results into same-SHA cross-platform parity.
+- The current PR #102 process-containment candidate is separate: source HEAD `5d92a17fcc34178c419e6817030058ee17cafc6c`; GitHub Actions run #44006414909 has Ubuntu SUCCESS and Windows still running at the last check. It is not release evidence yet.
+- CircleCI is not active on `main` while PR #95 remains unmerged. The release-check remains unproven; no merge/release is authorized.
 
 ## Canonical evidence locations
 
