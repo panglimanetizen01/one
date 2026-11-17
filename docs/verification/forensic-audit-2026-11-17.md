@@ -232,3 +232,10 @@ Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tool
 - The older branch `security/issue-104-filesystem-confinement-20261118` is stale relative to PR #108 (0 commits ahead, 8 behind at last comparison) and must not be used as the implementation base. PR #110 is based on current PR #108 instead.
 - CircleCI validation/log access remains unavailable; no CircleCI PASS is claimed.
 - Next implementation step: perform a complete adapter/interpreter/CLI call-site inventory, define the explicit host root configuration API, implement Unix and Windows handle-relative primitives without fallback, then add side-effect/race tests and run the independent Unix/Windows verifier on the same exact source SHA.
+
+### Independent verifier filter contract for Issue #104 — 2026-11-18
+
+The checked-in workflow `panglimanetizen01/one-windows-verification/.github/workflows/e4-adversarial-regression.yml` requires nonzero test execution for these names on the source candidate:
+- Unix: 2 `descriptor_relative_read_rejects_`, 1 `descriptor_relative_write_rejects_`, 1 `descriptor_relative_walk_rejects_`, plus exact race and mount-boundary tests `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink` and `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file`.
+- Windows: `filesystem_reader_rejects_directory_junction_escape`, `filesystem_adapter_reads_absolute_target_inside_project_root`, `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`, `filesystem_write_adapter_writes_text_target`, `filesystem_write_adapter_rejects_oversized_content`, and `filesystem_adapters_reject_parent_directory_traversal`.
+- Workflow asserts the named tests execute and pass; zero-match/filtered-only output fails. Preserve these names/counts or review any verifier update separately; do not weaken the checks.
