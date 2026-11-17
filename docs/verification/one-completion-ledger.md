@@ -10,7 +10,7 @@
 - PR #102 current source `ac1bb214bc028395367cce7edc234a1909971e2a` passed GHA run #2165 / `44049452639`, Windows job `133923280923`, Ubuntu job `133923281493`; both SUCCESS. It includes NUL/empty ProcessSpec validation and installation-guide C/C++ prerequisites; docs consistency/checker tests, build, Clippy, full tests, artifact and platform CLI smoke passed. Four new ProcessSpec tests explicitly passed on both platforms in prior exact code run #2159 `fe3e4d0...`.
 - Intermediate PR #102 SHA `790dd...` failed compilation due over-escaped NUL literals; corrected in `ac2ee...` and current source `ac1bb...` passes. This intermediate failure is historical/superseded; current candidate is green.
 - PR #98–#101 remain OPEN / DRAFT / UNMERGED with exact-SHA GHA PASS on Ubuntu/Windows. PR #96 is superseded historical CircleCI Windows/MSYS2 fix; do not reintroduce retired Windows job.
-- PR #97 docs current HEAD `24a2d1be68ef4a42a02e35443d62245e6d02f448`; PR #103 ledger/DoD current head is this commit; PR #102 current `ac1bb...`. All remain OPEN / DRAFT / UNMERGED.
+- PR #97 docs current HEAD `1429bcb48b61bbe81e6263399cfd4ca811feb5a3`; PR #103 ledger/DoD current HEAD is being refreshed in this commit; PR #102 current `ac1bb...`. All remain OPEN / DRAFT / UNMERGED.
 - Historical implementation score 92/100 provisional; exact-SHA verified score 0/100. DoD 3 checked / 10 unchecked / 13 total. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No score/checkbox promotion.
 - No merge, release, force-push, history rewrite, secrets, visibility, billing, or default-branch change.
 
