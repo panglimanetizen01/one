@@ -150,3 +150,11 @@ Windows native verification for the current PR #95 source remains NOT VERIFIED u
 - The independent verifier workflow now uses `--locked` for all Cargo build, Clippy, test, real-network, and native-backend build commands. Workflow change commit: `19188f888ba5e2c7d65f8e06069ba1b65bbb1917`.
 - The exact source checkout remains pinned by `WINDOWS_SOURCE_COMMIT.txt`; the source pin must be synchronized to the final PR #95 HEAD after the documentation commits below.
 - No Windows run is claimed for the new workflow revision or the latest PR #95 source. Exact-SHA Windows verification remains NOT VERIFIED until a matching run and artifact/manifest inspection complete.
+
+
+### Exact-SHA CircleCI result for locked-offline candidate — 2026-11-17
+
+- ONE source SHA `d42689718870236694f6cab841f8b7be1afccfcc` has CircleCI `ci/circleci: one-linux` terminal SUCCESS: workflow `6af2386b-dd8d-47c8-b414-4237e92130fd`, job `6cf4f8c5-7b2d-4876-a448-89dc0c596c68`.
+- The source contract checker now verifies that both offline scripts use `--locked` for every Cargo build, Clippy, test, and run command. The independent Windows verifier workflow applies the same lockfile rule and self-checks its own Cargo command list.
+- The verifier pin is exact `d426897...`; no matching Windows run is observed. Windows status remains NOT VERIFIED. Historical run #32 applies only to `a10a69...`.
+- The optional CircleCI `release-check` is still NOT VERIFIED. No release acceptance is inferred from the Linux CI result.

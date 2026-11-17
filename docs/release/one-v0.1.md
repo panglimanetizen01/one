@@ -124,3 +124,12 @@ The Linux CircleCI job retains MinGW-w64 cross-compilation regression coverage f
 - The independent Windows verifier workflow has been aligned to use `--locked` for its full workspace, real-network, and native backend Cargo commands. Its workflow change is present in verifier PR #42 but has not yet been executed on the current source pin.
 - The optional CircleCI `release-check` parameter `run_release_checks=true` remains NOT VERIFIED; no release-check execution evidence is available.
 - No release acceptance point is promoted. The v0.1 release gate remains NOT PASSED until the required exact-SHA platform checks, release checks, clean-install/use checks, and documented acceptance criteria are complete.
+
+
+## Locked-offline release candidate — exact-SHA status — 2026-11-17
+
+- PR #95 exact source SHA `d42689718870236694f6cab841f8b7be1afccfcc` has CircleCI `ci/circleci: one-linux` terminal SUCCESS (workflow `6af2386b-dd8d-47c8-b414-4237e92130fd`, job `6cf4f8c5-7b2d-4876-a448-89dc0c596c68`).
+- The offline verification scripts now enforce `--locked` for every Cargo build, Clippy, test, and CLI smoke invocation; the source contract checker enforces the same.
+- The independent Windows verifier is pinned to `d426897...` and has the same `--locked` policy plus a workflow self-check, but no matching Windows run has completed. Windows verification remains NOT VERIFIED.
+- The optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED. Release acceptance remains NOT PASSED.
+- No merge or release is authorized or performed.

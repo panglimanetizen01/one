@@ -394,3 +394,12 @@ A later documentation-only commit changes the PR head SHA. Treat the evidence ab
 - The independent Windows verifier workflow in PR #42 was also updated to use `--locked` for all Cargo build, Clippy, test, real-network, and native-backend build commands (verifier workflow commit `19188f888ba5e2c7d65f8e06069ba1b65bbb1917`).
 - These are CI/developer-tooling and verification-contract changes only; ONE grammar, semantics, compiler/runtime behavior, CLI, and user experience are unchanged.
 - The CircleCI status for the code/tooling source before this documentation-only addendum, SHA `a337c8f42f7914129faf9d281bda599c324c2db2`, is PENDING (workflow `deaa1f53-a0f5-4ad4-a500-7d4a41a53592`, job `7da760ac-4a9e-437b-aa83-06f629cec8ee`). The final documentation descendant must be checked independently; no result is transferred automatically.
+
+
+### Locked-offline candidate CircleCI result — 2026-11-17
+
+- Exact source SHA `d42689718870236694f6cab841f8b7be1afccfcc` includes explicit `--locked` across CircleCI jobs, offline scripts, and the offline-script contract checker.
+- CircleCI context `ci/circleci: one-linux` is terminal SUCCESS for this exact SHA: workflow `6af2386b-dd8d-47c8-b414-4237e92130fd`, job `6cf4f8c5-7b2d-4876-a448-89dc0c596c68`. The integration exposes commit-status evidence but not step-level logs.
+- Independent verifier PR #42 pins this exact SHA. Its workflow uses `--locked` for all Cargo build/Clippy/test/run commands and self-checks that rule; verifier workflow commits include `19188f...`, `2ee373...`, and `ff3511...`. No Windows run is observed for this SHA; Windows remains NOT VERIFIED.
+- Optional CircleCI `release-check` with `run_release_checks=true` remains NOT VERIFIED.
+- This evidence is bound to `d426897...`. Any later docs-only descendant must be recorded separately; do not silently transfer exact-SHA status.
