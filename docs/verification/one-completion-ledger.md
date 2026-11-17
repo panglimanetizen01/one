@@ -1127,3 +1127,17 @@ The earlier stale-workflow concern has now been reconciled against the live veri
 - E1–E6 verified points remain 0 pending full acceptance contracts on a frozen final exact SHA. E6 remains **NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED**.
 - PR #107's GHA success is scoped evidence only; it does not award E4/E6 acceptance points. PR #108 is still draft and unverified.
 - No merge, release, protected final SHA, or 100% completion claim is authorized.
+
+
+## Repository-wide forensic audit and PR #108 migration synchronization — 2026-11-17
+
+- Canonical main snapshot audited: `d35db95153f6ddd79885494c72f5aee16c899751`; complete recursive tree: 232 files, including 98 documentation files and 105 broader documentation/contract/CI/tooling artifacts. GitHub returned 200 branches, 25 open PRs, and 5 open issues at the audit snapshot.
+- Architecture map is present on draft PR #97 branch `docs/system-architecture-diagram-20261115`, source SHA `029471e0396504c030db60833fcda5b5baff24dd`, PNG blob `c3a24f010ed56886ec240ee1c9a38b450331b04d`. It is not yet present on main. Do not re-upload.
+- PR #108 migration candidate branch `ci/circleci-migration-rebased-20261117` current audited SHA `f7ca72d6bb25aa80629d909c03f2315bda749394`, based on PR #102 source `6c72d8e548bbbc28d85be39b8de427614989a038`.
+- PR #108 now includes PR #107 bounded-reader implementation from exact SHA `21e393157e52728d9510699ac6c9120987e3852c`, CircleCI config, removal of all three GitHub Actions workflows on the candidate branch, updated contract checker, and `--locked` in both offline verifier scripts.
+- Static readback: CircleCI config exists; no `.github/workflows/` files remain on PR #108; Cargo.lock exists; all 39 inspected Cargo build/Clippy/test/run commands in CircleCI/offline scripts include `--locked`. User docs link/status static audit: 17 files, zero broken internal links and zero invalid statuses. These are static checks only.
+- PR #108 has no CircleCI status context or job-level execution evidence at this checkpoint. Config schema validation and CircleCI execution remain NOT VERIFIED. Main remains on GitHub Actions; no provider cutover.
+- PR #98–#101 each passed their own exact-SHA Ubuntu + Windows GHA runs (#2018, #2019, #2020, #2138), but remain separate unmerged fixes and are not integrated together. PR #102 run #2229 and PR #107 run #2230 are PASS on their exact source SHAs. PR #103 ledger SHA `041b359b8504551c2c1705093050d9c467368bac` passed run #2231.
+- Open blockers: Issue #104 filesystem root confinement; Issue #105 strong Unix escaped-descendant containment; Issue #82 Android AArch64 runtime execution; Issue #81 E4 reconciliation; Issue #90 runner allocation history.
+- DoD remains 3 checked / 10 unchecked / 13 total. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. No score/checkbox promotion, merge, or release.
+
