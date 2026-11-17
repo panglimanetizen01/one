@@ -100,3 +100,7 @@ User documentation is intentionally separate from normative engineering contract
 ## Canonical rule
 
 GitHub `main` is the canonical source. Local/Termux copies are verification environments only. The current CircleCI migration candidate is PR #108; its config/job execution remains unverified until a terminal CircleCI result is inspected. The architecture image is currently on draft PR #97 and is linked from the repository README. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. Native Linux AArch64 is currently verified on the exact PR #64 SHA within the AArch64/Linux host boundary; Linux x86_64 and Windows x86_64 are currently build-proven but lack target execution evidence. The process/system and other source-level orchestration capabilities retain their separately recorded evidence boundaries.
+
+- `verification/health-detectors.md` — repository-health detector governance and CI provider coverage.
+- `verification/repository-health.md` — Python reference and native preview scanner usage, scope, and limitations.
+- `verification/health-quality-ledger.md` — reviewed detector adjudication and guarded-repair quality ledger.
