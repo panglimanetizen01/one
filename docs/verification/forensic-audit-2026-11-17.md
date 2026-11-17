@@ -247,3 +247,7 @@ A device-number-only check is insufficient to reject same-device bind mounts. Th
 ### Host-owned filesystem authority API contract — 2026-11-18
 
 The Issue #104 design and normative spec now specify a shared immutable authority injected into both filesystem adapters, explicit max read/write byte limits, and a dedicated interpreter constructor. The CLI may use current_dir as a trusted project root only when obtained independently from the program target. Library callers and tests must inject a root explicitly. No parameterless production adapter or legacy interpreter path may infer authority from the target, source, or ambient environment. This remains a design contract; source implementation and tests are not yet present.
+
+### Historical PR #80 filesystem implementation review — 2026-11-18
+
+PR #80 exact head d75b2846465ba53281198693750f2e6ba39e2e33 was reviewed as reference only. Its Unix code contains useful openat/O_NOFOLLOW, statx mount-id, regular-file and hard-link checks, and race-test patterns. It is not accepted as-is: root is recomputed from cwd rather than injected/retained; root traversal is reopened per operation; non-Linux Unix falls back to st_dev; writes are not atomic temp+rename; Windows remains path-based canonicalize/check/open. Current Issue #104 design explicitly rejects copying those gaps.
