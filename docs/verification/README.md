@@ -79,3 +79,11 @@ Current disposition is deliberately fail-closed:
 
 - PR #102 source `eaa7cf77bd9971f1fd9b5205cef975e6acad270f`, run #44010448799: Ubuntu SUCCESS; Windows FAILURE. Windows contract check and build passed; strict Clippy failed on redundant `.into()` at `crates/one-core/src/interop.rs:894`. Windows tests and all later gates were skipped; stable process-handle containment remains NOT VERIFIED.
 - Removed only the redundant conversion in commit `da740c4f7f9c72e9b76e573d23651334272582c5` on `fix/commit-cargo-lockfile-20261117`. The workflow-run lookup returned no run for this commit at the time of the checkpoint. Do not reuse run #44010448799 as evidence for the new SHA; poll for its exact-SHA run and inspect the retained process-handle wait result.
+
+
+### PR #102 — retained process object survives invocation — 2026-11-17
+
+- Exact run #44012805081 on source `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubuntu SUCCESS; Windows build SUCCESS; Windows Clippy SUCCESS; Windows tests 119 passed / 1 failed. The stable descendant handle returned `WAIT_TIMEOUT=258` after `run_process` completed. This proves the original descendant process object remained active; PID reuse is no longer a plausible explanation.
+- The test cleanup terminates the test-owned ping process through the same retained handle after capturing the failure.
+- Diagnostic follow-up commit `efc5422845927c2a46e08e61aeb6a497e2f9980b` adds `GetProcessId` and `GetExitCodeProcess` observations on that retained handle to validate identity and report its state.
+- Exact-SHA run #44018063886 on `efc5422...` is IN_PROGRESS. Do not call containment fixed or verified; inspect the diagnostic failure before changing the Job Object lifecycle.
