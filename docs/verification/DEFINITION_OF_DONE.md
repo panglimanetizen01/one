@@ -208,3 +208,11 @@ Run #44010448799 on PR #102 source `eaa7cf77bd9971f1fd9b5205cef975e6acad270f` co
 ## 11. Windows subprocess containment — retained process-object failure — 2026-11-17
 
 Run #44012805081 on PR #102 SHA `da740c4f7f9c72e9b76e573d23651334272582c5`: Ubuntu SUCCESS; Windows build and Clippy SUCCESS; Windows tests 119 passed / 1 failed. The failure is the stable retained-process-handle regression: `WaitForSingleObject` returned `WAIT_TIMEOUT=258` for descendant PID 3444 after `run_process` returned. Because the test holds the original process object handle duplicated before the wrapper exits, this is not PID reuse. The test then terminates the test-owned descendant through that same handle. A diagnostic follow-up at SHA `efc5422845927c2a46e08e61aeb6a497e2f9980b` adds a `GetProcessId` identity check and `GetExitCodeProcess` snapshot. Run #44018063886 is IN_PROGRESS on this exact SHA. Keep DoD containment unchecked until the next run identifies the handle's process ID/exit state and a subsequent implementation fix passes.
+
+## Current PR #95 CircleCI migration candidate — 2026-11-17
+
+- PR #95 current source HEAD: `c71d81a60f7792ed8536ba2b70464b9922f33c18`; OPEN / DRAFT / UNMERGED.
+- The candidate now tracks `Cargo.lock`, synchronizes the `one-core` Unix/Windows target dependencies, uses `--locked` for all CircleCI Cargo build/Clippy/test commands, and enforces the lockfile/locked-command contract in `tools/check_contract.py`.
+- CircleCI `ci/circleci: one-linux` is PENDING for this exact SHA (workflow `07e89069-4b33-49f6-b32c-8e70519f5221`, job `781e65c4-e43d-4e55-89d3-beaa61623629`). Earlier CircleCI failure root cause remains NOT VERIFIED because authenticated job logs are unavailable in the current tool context.
+- Independent verifier PR #42 now pins this exact SHA, but no workflow run has been observed. Windows run #32 is PASS only for older source SHA `a10a69afdf8675e703f38f1620abc935d8361897`; no Windows PASS is claimed for `c71d81a...`.
+- PR #95 migration acceptance remains NOT PASSED. The optional release-check remains NOT RUN. No merge or release.
