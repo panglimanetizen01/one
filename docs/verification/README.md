@@ -3,7 +3,7 @@
 ## Live integration checkpoint — 2026-11-17
 
 - PR #108 now integrates PR #98–#101 source/test changes; integration source commit `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. Normative specifications are synchronized in subsequent commits.
-- Draft PR #109 (`ci/scanner-restoration-20261117`) targets the PR #108 migration branch at exact head `3ce4c0f5821738c0c12a2670e54ab0a3a28edf3f`; it restores the native/Python integrity scanner previews, tests, ADR-0018, and CircleCI development-side scanner checks. No CircleCI check suite/run is surfaced for this head; do not treat the integration as validated.
+- Draft PR #109 (`ci/scanner-restoration-20261117`) targets the PR #108 migration branch at exact head `94aeb1a336eae2348dfc2910b69f00bd6b00b156`; it restores native/Python integrity scanner previews, tests, ADR-0018, and CircleCI development-side scanner checks. Native code is isolated in a separate developer-only `one-integrity` binary, not the beginner-facing `one` CLI. No CircleCI check suite/run is surfaced and no compile/test has been executed for this head; do not treat the integration as validated.
 - Combined exact-SHA Ubuntu/Windows verification is NOT RUN. CircleCI job-level evidence is NOT AVAILABLE in this session. Historical parent-SHA PASS results are not transferable.
 - PR #108 remains OPEN/DRAFT; main remains unchanged. DoD remains 3/13 and E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
 
@@ -48,6 +48,6 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 4. A later docs-only commit does not inherit test results unless the verification contract explicitly allows it and the exact source/code diff proves no relevant behavior changed.
 5. Never promote DoD checkboxes, E1–E6 points, or release approval based only on a scoped PASS.
 
-- PR #109 native CircleCI heuristic correction is recorded in forensic audit §11; source commit `408b6c6...`, latest docs/PR metadata HEAD `d15a0aa...`. It explicitly accepts the valid implicit single-job `build` workflow and remains untested pending CircleCI evidence.
+- PR #109 native CircleCI heuristic correction is recorded in forensic audit §11; source commit `408b6c6...`, latest docs/PR metadata HEAD `94aeb1a...`. It explicitly accepts the valid implicit single-job `build` workflow and remains untested pending CircleCI evidence.
 
 - Native integrity scanner is isolated as a separate developer-only `one-integrity` binary; it is not a subcommand of beginner-facing `one`. Contract checker enforces this boundary. Source/CI updates are static-readback only pending exact-SHA compile/test.
