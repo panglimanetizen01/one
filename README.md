@@ -165,7 +165,7 @@ The canonical GitHub repository is the source of truth. GitHub metadata currentl
 
 ## CI execution provider
 
-CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. The migration is reviewed on `ci/circleci-migration-20261113`; its proposed CircleCI configuration runs `one-linux` and `release-linux` only.
+CircleCI is the planned canonical CI execution provider for Project ONE's Linux product and Linux release checks. The migration is under review on `ci/circleci-migration-20261113`; its proposed CircleCI configuration runs `one-linux` and optional `release-linux`. CircleCI is not active on `main` until the migration is authorized and merged.
 
 Windows Server 2025 product/native verification is maintained separately in [`panglimanetizen01/one-windows-verification`](https://github.com/panglimanetizen01/one-windows-verification), using an explicit full-SHA source pin and a manifest that records both source and verifier identities. The Linux CircleCI job retains MinGW-w64 cross-compilation coverage for Windows-target backend tests; that does not claim Windows-host execution.
 
