@@ -809,3 +809,37 @@ This section supersedes prior current-head statements where they conflict. Histo
 - PR #102 remains GHA PASS on exact source `7e10e758d7e1ca70f450bfbb6cf397d805500e53`, including Windows Job Object descendant termination.
 - E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; no score or DoD checkbox is promoted. Optional release-check, clean installation/use acceptance and release authorization remain outstanding.
 - Main remains PUBLIC and unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`. No merge or release.
+
+
+## Product-PR reconciliation — terminal update — 2026-11-17
+
+### PR #101 is now PASS
+
+- Exact source `cdf7bd5b8cff86e1ce271c8f03ef8c01ff61005f`; GHA run #2138 / `44032422058` terminal SUCCESS on Ubuntu job `133867259381` and Windows job `133867259061`.
+- Root cause was the two filesystem-inheritance tests being outside the existing `#[cfg(test)] mod tests`; commit `cdf7bd5...` moved the module-closing brace after the tests. Build, Clippy, full tests and all listed vertical slices passed on both platforms. No tests weakened/deleted.
+- PR #101 remains OPEN / DRAFT / UNMERGED.
+
+### PR #98–#100 historical exact-SHA PASS
+
+- #98 `a83321bc41b3d0d28378841e29a6169abed8ac15`: GHA #2018 / `43923604400`, Ubuntu `133497053339` and Windows `133497052786` SUCCESS.
+- #99 `8800b885a4ffcb1931a7a3c71f3eaff888e9f5e9`: GHA #2019 / `43923948205`, Ubuntu `133498292797` and Windows `133498293201` SUCCESS.
+- #100 `6375356c9c275ace5fd35cf4a81799a9546e1e1d`: GHA #2020 / `43924465030`, Ubuntu `133500117683` and Windows `133500117243` SUCCESS.
+- Their CircleCI Pipeline errors reflect that main has not yet received the CircleCI config; GHA results remain valid historical evidence for those exact SHAs. Recheck CircleCI only when the migration is authorized and active.
+
+### Additional open-PR inventory and disposition
+
+- #96 MSYS2 keyring fix targets the retired CircleCI Windows executor path; current architecture is CircleCI Linux + independent Windows verifier. Superseded; keep open/unmerged, do not reintroduce the old Windows executor.
+- #80 is a 153-file milestone branch, head `d75b2846465ba53281198693750f2e6ba39e2e33`, with no exact-head executable CI evidence. It includes nine legacy GHA workflows, health scanner/developer tooling, experimental human-vNext code and broad product/runtime changes. Its own historical ledger records E1/E2/E4/E6 gaps and a NOT PASSED gate. It is not safe to merge as-is; decompose and compare product code against accepted v0.1 contracts before promotion.
+- #94 is based on #80 and contains repository-health scanner/tooling; out of current product scope. Do not reintroduce scanner files into ONE.
+- #92 main was scanned: no paths match `ci-local`/`ci_local`, and code search returned no content matches. However PR #92 is not a pure cleanup: its diff also changes product code and re-adds `.github/workflows/ci.yml`. Treat the extraction cleanup as already satisfied on main; do not merge #92 as a cleanup PR or reintroduce GitHub Actions. Review its product changes separately if still needed.
+- #93 and #84 are older exact-SHA evidence documentation corrections, now superseded by PR #103's completion ledger/DoD and current evidence index; preserve history, do not merge stale snapshots.
+- #85 adds legacy GitHub Actions user-documentation checks; current CircleCI source contract and docs checker supersede the old workflow path. Keep unmerged unless a missing check is proven.
+- #83 remains a WIP SEC-05 process-launch experiment on a non-main base; no current exact-SHA CI evidence. PR #102 is a separate, main-targeted Windows Job Object/resource-containment fix with its own PASS evidence; do not conflate the two.
+- #77 is a language-surface audit/proposal, not normative grammar acceptance. #78 is an older human-vNext implementation branch; PR #80 contains a broader milestone snapshot but is unverified and vNext remains non-normative until separately accepted.
+- #76 HTTP IPv6 authority parsing remains an open non-draft PR on a stale base (5 ahead / 3 behind main). Its only GHA run #39606316737 ended with zero steps on both platforms; status NOT VERIFIED, not a code failure. It has parser regression tests, but requires a current-base update and executable verification before any merge decision. PR #80 contains a more extensive parser implementation, but that branch is also unverified; do not treat it as evidence.
+
+### Current completion guard
+
+- PR #95 source `54bf097...`: CircleCI Linux + independent Windows run #36 PASS exact SHA; PR #102 exact SHA `7e10e...` GHA PASS; PR #101 exact SHA `cdf7bd5...` GHA PASS; PR #98–#100 exact SHA GHA PASS.
+- E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. Optional CircleCI release-check, clean installation/use acceptance and final release authorization remain outstanding.
+- No PR merge, branch deletion, release, visibility change, secret change, or history rewrite performed.
