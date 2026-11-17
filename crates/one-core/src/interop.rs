@@ -988,6 +988,58 @@ mod tests {
         );
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn escaped_session_writer_cannot_hold_output_readers_open() {
+        let pid_file = std::env::temp_dir().join(format!(
+            "one-escaped-writer-{}.pid",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&pid_file);
+        let script = "setsid sh -c 'echo $ > \"$1\"; while :; do printf x; done' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let spec = ProcessSpec {
+            program: "sh".into(),
+            args: vec![
+                "-c".into(),
+                script.into(),
+                "one-test".into(),
+                pid_file.to_string_lossy().into_owned(),
+            ],
+            working_directory: None,
+        };
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            let result = run_process(&spec, &CapabilitySet::none().allow(Capability::Process));
+            let _ = sender.send(result.clone());
+            result
+        });
+
+        let pid_deadline = Instant::now() + Duration::from_secs(2);
+        while !pid_file.exists() && Instant::now() < pid_deadline {
+            thread::sleep(Duration::from_millis(10));
+        }
+        let pid = std::fs::read_to_string(&pid_file)
+            .expect("escaped writer PID should be recorded")
+            .trim()
+            .parse::<libc::pid_t>()
+            .expect("escaped writer PID should be numeric");
+
+        // The reader must stop before this test kills the escaped test-owned writer.
+        let completed_before_cleanup = receiver.recv_timeout(Duration::from_secs(3)).is_ok();
+        // SAFETY: this process group was created exclusively by this regression test.
+        unsafe {
+            libc::kill(-pid, libc::SIGKILL);
+        }
+        let _ = std::fs::remove_file(&pid_file);
+        let result = worker.join().expect("run_process worker must not panic");
+        let error = result.expect_err("the continuous writer must exceed the output limit");
+        assert!(error.contains("output limit"));
+        assert!(
+            completed_before_cleanup,
+            "run_process reader shutdown waited for an escaped descendant that continuously writes"
+        );
+    }
+
     #[test]
     fn subprocess_execution_is_bounded_by_a_deadline() {
         let (program, args) = if cfg!(windows) {
