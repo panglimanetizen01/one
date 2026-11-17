@@ -195,12 +195,11 @@ fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
 
     use windows_sys::Win32::Foundation::{
         CloseHandle, GetLastError, SetHandleInformation, HANDLE, HANDLE_FLAG_INHERIT,
-        WAIT_OBJECT_0, WAIT_TIMEOUT,
+        GENERIC_READ, WAIT_OBJECT_0, WAIT_TIMEOUT,
     };
     use windows_sys::Win32::Security::SECURITY_ATTRIBUTES;
     use windows_sys::Win32::Storage::FileSystem::{
-        CreateFileW, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_SHARE_WRITE, GENERIC_READ,
-        OPEN_EXISTING,
+        CreateFileW, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING,
     };
     use windows_sys::Win32::System::JobObjects::{
         CreateJobObjectW, SetInformationJobObject, TerminateJobObject,
