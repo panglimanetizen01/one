@@ -196,3 +196,14 @@ The verifier fails if expected tests are filtered out or do not execute. Do not 
 ### Issue #104 mount identity requirement — 2026-11-18
 
 Do not rely on st_dev alone for mount confinement: same-device bind mounts can share the same device number. On Linux, use statx STATX_MNT_ID (or stronger mount identity) together with device identity. On other Unix platforms, require an equivalent verified mount-identity primitive or fail closed. Keep this requirement in adversarial tests.
+
+### Host-owned filesystem authority API — 2026-11-18
+
+Implement the explicit root-injection contract from the Issue #104 design:
+- one immutable ProjectFilesystem authority shared by read/write adapters;
+- explicit FilesystemLimits for max read/write bytes;
+- a dedicated interpreter constructor accepting the authority;
+- CLI obtains current_dir independently from --target and injects the root only for filesystem operations;
+- library callers and tests explicitly inject a trusted root; no deriving root from target or target parent;
+- existing interpreter construction without a root fails closed for filesystem adapters.
+Keep policy-first ordering and PR #101 inherited deny/approval behavior unchanged.
