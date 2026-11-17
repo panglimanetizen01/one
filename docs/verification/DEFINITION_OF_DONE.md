@@ -3,7 +3,8 @@
 ## Current continuation state — 2026-11-17 (live refresh)
 
 - Canonical repository: `panglimanetizen01/one`; `main` SHA `d35db95153f6ddd79885494c72f5aee16c899751`; visibility PUBLIC.
-- PR #102 latest source HEAD `b088bc49839ea093f2e1fa234baa23dcfe05465d`; no GitHub Actions run is visible yet. Current HEAD is NOT VERIFIED.
+- PR #102 latest source HEAD `87c80e2f21ebdc7dd3e4bd02744b30c4efd1a068`; exact-SHA run #44008584799 is IN_PROGRESS: Ubuntu job `133789810619` at cross-compiler installation, Windows job `133789810803` at Android SDK setup. Latest HEAD NOT VERIFIED.
+- Previous SHA `b088bc49839ea093f2e1fa234baa23dcfe05465d`, run [#44008055855](https://github.com/panglimanetizen01/one/actions/runs/44008055855): Ubuntu PASS; Windows build failed before tests due windows-sys 0.61.2 API imports. Corrected on `87c80e2...`.
 - Previous SHA `54a68a7673247c0fe23aba24c5e86f7f77372c60`, run [#44007422002](https://github.com/panglimanetizen01/one/actions/runs/44007422002): Ubuntu PASS; Windows build/Clippy PASS; tests 119 passed / 1 failed because descendant PID `9876` survived (`WAIT_TIMEOUT=258`). It belonged to some job, but exact membership in the invocation's job was not established; test cleanup reaped the child. Descendant containment remains FAIL on that SHA.
 - Previous SHA `385d8e0ab25d82dae8c15b2ae49ac491b3747458`, run [#44006867467](https://github.com/panglimanetizen01/one/actions/runs/44006867467): Ubuntu PASS; Windows build PASS; Clippy FAIL before tests due unused `PROCESS_TERMINATE` import. Corrected on `54a68a7...`.
 - Previous diagnostic SHA `5d92a17fcc34178c419e6817030058ee17cafc6c`, run [#44006414909](https://github.com/panglimanetizen01/one/actions/runs/44006414909): Ubuntu PASS; Windows build/Clippy PASS; tests 119 passed / 1 failed due PowerShell `True` case mismatch. Direct child was confirmed in the intended Job Object; descendant membership remains NOT VERIFIED.
