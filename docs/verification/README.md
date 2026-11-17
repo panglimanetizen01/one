@@ -262,3 +262,10 @@ The following open product PRs were rechecked against live GitHub Actions run me
 - CircleCI pipeline statuses for these PR branches are separately ERROR (pipeline numbers #369, #373, #377 and #550 respectively) while GitHub Actions is green. These are pipeline-level CircleCI statuses and are not enough to claim Rust test failures. The current PR #95 CircleCI migration candidate is separately being diagnosed; do not conflate CI providers.
 - PR #96 (`25ea36051eb6fb4cefc40c1867f5a6fc3e777bca`) modifies the historical CircleCI Windows/MSYS2 setup, but it is superseded by the current PR #95 design (CircleCI Linux + independent Windows verifier). Its exact status shows CircleCI Linux PASS and Windows FAIL on the old workflow; do not merge/reintroduce the retired CircleCI Windows job. Preserve as historical evidence.
 - These PRs remain implementation candidates until integrated through authorized review. No DoD checkbox, E6, verified score, or release acceptance is promoted solely by CI PASS.
+
+
+### Superseding PR #95 / Windows evidence correction — 2026-11-17
+- PR #95 current source SHA `993f76351c7a119bea2e66f7d9e5bca07f392fbc`; PR #42 verifier pin matches it. New Windows run #41 / `44047540578` is PENDING at last poll.
+- Previous exact source `ed2382...` passed full Windows run #39 / `44046670869`, artifact `14312311019`, ZIP SHA-256 `aa56f8275042969b18c12283eb152e0572b8970159e3df7db62e9aad9f109da1`; native and CLI output `Budi`, exit 0; CLI version `one 0.1.0`.
+- Correction: CircleCI Pipeline #558 belongs to PR #102 SHA `5ee645...`, not PR #95. PR #95 SHA `ed2382...` had no CircleCI status context visible in GitHub; current SHA `993f763...` likewise has no CircleCI status visible at last read. PR #102 GHA PASS and generic CircleCI ERROR are separate; root cause NOT VERIFIED. Optional release-check NOT VERIFIED.
+- PR #97 remains OPEN / DRAFT / UNMERGED; no merge/release.
