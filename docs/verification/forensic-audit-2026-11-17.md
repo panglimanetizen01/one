@@ -202,3 +202,38 @@ Scanner governance assets absent from PR #108:
 - ADR-0018 and native preview docs from PR #89.
 
 Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tools/verify-human-vnext.sh`. Restore only scanner assets and their required docs/tests, then add a development-only CircleCI job. PR #91 current head `9b38c246...` has no exact-head verification run surfaced; do not credit earlier scanner PASS evidence to it.
+
+
+## 10. Scanner restoration implementation — child PR #109 — 2026-11-17
+
+A separate draft integration PR was opened rather than rewriting or merging PR #108:
+- PR #109: https://github.com/panglimanetizen01/one/pull/109
+- Head branch: `ci/scanner-restoration-20261117`
+- Base branch: `ci/circleci-migration-rebased-20261117` (PR #108 source branch)
+- Current checkpoint head after the verification-index update: `4aa0198d63db22258385cf6afc9d9f5f5446c6c2`. Refresh live metadata before using it.
+- PR #109 remains OPEN/DRAFT/UNMERGED. PR #108 remains OPEN/DRAFT/UNMERGED at `a6f91c07b04d7b9fafb9e99d0356954012ae3001`.
+
+### Implemented on PR #109 branch
+- Restored native module `crates/one-cli/src/integrity.rs` from PR #89 exact blob `8f5f162b1ba19cc730df77fcbe83595f8d9e455d`; added CircleCI config structural checks and a Rust regression test.
+- Updated `crates/one-cli/src/main.rs` blob `f51b61da558fd1b539d6a90ede58e816d262958e` with developer-tool commands `one pindai` and `one pindai keamanan`. No beginner-facing command guide or language semantics changed.
+- Restored Python scanner and test suite from PR #91 latest branch head `9b38c246...`; updated `tools/one_health.py` blob `389aaf081ca053d65e668a294f3052397a4cecf8` to include generic `.circleci/config.yml` workflow integrity checks and recognize `CIRCLE_SHA1`.
+- Added Python CircleCI config regression test in `tools/test_one_health.py` blob `899caa80186277658973cb110011f1fe6dadcae0`.
+- Restored historical GitHub Actions collector/tests and health-quality ledger tools. Collector is explicitly Actions-only; it is not a CircleCI collector.
+- Restored ADR-0018; updated detector governance, health scanner docs, verification index, CONTRIBUTING, docs index, and `tools/check_contract.py`.
+- CircleCI config blob `6631ef2df82c69512417655a752493ffc8fe7d46` adds development-side Python regression tests, native focused tests, and exact-SHA preview scan commands. Findings remain non-gating at preview stage; execution errors and SHA mismatches fail.
+
+### Current evidence boundary
+- Combined GitHub status, check-runs, and check-suites for source SHA `3ce4c0f5821738c0c12a2670e54ab0a3a28edf3f` were empty. This does not prove a CircleCI run; no terminal CircleCI output has been inspected.
+- No local Rust/Python execution has been performed in this environment. The latest docs-only commit advanced PR #109 from `3ce4c0f...` to `4aa0198...`; neither SHA has test PASS evidence.
+- Historical PR #89/#91 results remain exact-source evidence for their original revisions only.
+- Native/Python parity is not claimed. Native scanner remains preview-only, not default/release gate.
+- Independent Linux/Windows verification must target the eventual exact integrated SHA.
+- Issue #90 remains OPEN; implementation is in child PR #109 and is not yet integrated into PR #108 until an authorized merge of PR #109.
+
+### Next actions without rework
+1. Refresh PR #109 and branch HEAD; do not repeat PR #89/#91 historical test runs.
+2. Obtain a CircleCI pipeline/job report for the current PR #109 head. If no status appears, verify the CircleCI project/VCS integration through an available authorized connector/CLI; do not ask for raw tokens in chat.
+3. Fix the first confirmed test/config/source failure on PR #109 and rerun only affected tests, then full required matrix once on the final integration SHA.
+4. Run independent Linux and Windows verification against that same exact SHA.
+5. Compare native and Python findings on that exact checkout; document detector coverage and differences.
+6. Only after successful review may PR #109 be merged into the PR #108 branch, and only with explicit owner authorization. Do not merge PR #108 to main or release without separate explicit authorization.
