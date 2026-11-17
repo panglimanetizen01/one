@@ -73,3 +73,9 @@ Current disposition is deliberately fail-closed:
 - PR #39's dedicated pin separates this scanner verification from the shared `CANONICAL_COMMIT.txt` used by other verifier workflows. Do not delete or redirect the workflow merely because current ONE main lacks the scanner.
 - Differential review found duplicate YAML mapping keys: `persist-credentials: false` appeared twice in each canonical-source checkout block. Removed the duplicate lines in PR #39 commit `6e2ce12eeb36ec2ffa0db38c9fce7e98faf2fbdd`; the workflow now has one credential-persistence setting per each of its three checkout steps. This is a static correction only; exact workflow execution remains NOT VERIFIED because the workflow triggers on pushes to the verifier base branch or manual dispatch, not pushes to the draft PR branch.
 - PR #39 remains OPEN / DRAFT / UNMERGED. Do not merge it just to trigger a run. The health scanner remains outside current ONE main and must not be reintroduced into the product for verifier convenience.
+
+
+### PR #102 — latest Windows Clippy correction — 2026-11-17
+
+- PR #102 source `eaa7cf77bd9971f1fd9b5205cef975e6acad270f`, run #44010448799: Ubuntu SUCCESS; Windows FAILURE. Windows contract check and build passed; strict Clippy failed on redundant `.into()` at `crates/one-core/src/interop.rs:894`. Windows tests and all later gates were skipped; stable process-handle containment remains NOT VERIFIED.
+- Removed only the redundant conversion in commit `da740c4f7f9c72e9b76e573d23651334272582c5` on `fix/commit-cargo-lockfile-20261117`. The workflow-run lookup returned no run for this commit at the time of the checkpoint. Do not reuse run #44010448799 as evidence for the new SHA; poll for its exact-SHA run and inspect the retained process-handle wait result.
