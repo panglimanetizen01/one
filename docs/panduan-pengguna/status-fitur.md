@@ -46,18 +46,12 @@ Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implem
 
 ## Catatan audit keamanan dan integrasi — 2026-11-17
 
-Status fitur harus dibaca bersama revisi source yang sedang digunakan. Beberapa perbaikan berikut telah lulus GitHub Actions pada branch kandidat masing-masing, tetapi belum digabung ke main:
+Status fitur harus dibaca bersama revisi source yang sedang digunakan. PR #108 kini mengintegrasikan source dan regression tests dari PR #98–#101 dalam satu kandidat; integration source commit `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. Hasil PASS historis masing-masing PR tetap berlaku hanya pada exact SHA asalnya dan tidak dipindahkan ke kandidat gabungan. Matriks Ubuntu/Windows pada exact SHA gabungan belum dijalankan; kandidat tetap UNVERIFIED.
 
-- PR #98: validasi manifest untuk one test dan validasi komponen nama/versi package — run #2018 PASS pada Ubuntu dan Windows.
-- PR #99: membuka file database query secara read-only agar path database yang hilang tidak dibuat otomatis — run #2019 PASS pada Ubuntu dan Windows.
-- PR #100: memastikan scope interpreter dipulihkan setelah runtime error — run #2020 PASS pada Ubuntu dan Windows.
-- PR #101: menerapkan denial dan approval filesystem yang diwariskan — run #2138 PASS pada Ubuntu dan Windows.
-- PR #102/#107: batas waktu proses, batas output, Job Object Windows, dan bounded Unix reader shutdown — run #2229/#2230 PASS pada Ubuntu dan Windows.
-
-Perbaikan tersebut masih branch-specific dan belum menjadi satu rilis terintegrasi. Karena itu:
+Perbaikan kandidat tersebut belum digabung ke main dan belum menjadi rilis. Karena itu:
 
 - Process execution tetap Eksperimental. Batasnya 10 detik untuk direct child, maksimum 1 MiB per stream, dan reader shutdown grace 100 ms pada Unix. Descendant yang membuat session/process group baru masih dapat bertahan; ini bukan jaminan process-tree containment (Issue #105).
 - Filesystem read/write tetap Eksperimental dan belum boleh dianggap sebagai sandbox project-root. Race-resistant path confinement dengan handle-relative open belum tersedia pada main (Issue #104).
-- Database query tetap Eksperimental. Perbaikan read-only file-open ada pada PR #99 dan belum terintegrasi ke main.
+- Database query tetap Eksperimental. Kandidat PR #108 kini mengintegrasikan read-only file-open dan regression test, tetapi exact-SHA gabungan belum diverifikasi; main belum berubah.
 - Issue #82 untuk eksekusi runtime Android AArch64 masih terbuka; build artifact saja bukan bukti runtime execution.
 - CircleCI belum aktif pada main. Migrasi masih draft pada PR #108 dan belum memiliki bukti job CircleCI terminal PASS.
