@@ -730,3 +730,17 @@ This addendum supersedes older current-state statements above where they conflic
 - Health-scanner provenance is branch-scoped: verifier PR #39 pins ONE PR #91 source `9b38c246f0ef18f6a39a79ff2be81c4ba06b63db`; verifier PR #40 pins ONE PR #89 source `242b88e4c8b6f2c2c2039f2bc95ebeab20ae96de`. Both exact source revisions contain the Python scanner and tests. The workflow is absent from current default branches and the scanner is absent from ONE main. Preserve these historical draft verifier paths; do not reintroduce the scanner into ONE main or delete the branch workflows without a supersession decision.
 - E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`. The provisional implementation inventory remains 92/100 and exact-SHA verified score remains 0/100; no score or DoD item is promoted by these CI results alone.
 - No merge, release, visibility change, force-push, history rewrite, secret, billing, or default-branch mutation was performed.
+
+
+## Superseding live checkpoint — 2026-11-17 (latest exact-SHA refresh)
+
+This section supersedes prior current-head statements where they conflict. Historical run outcomes remain preserved.
+
+- Main remains PUBLIC, default branch `main`, exact HEAD `d35db95153f6ddd79885494c72f5aee16c899751`; no main mutation occurred.
+- PR #102 current source SHA `7e10e758d7e1ca70f450bfbb6cf397d805500e53`: GitHub Actions run #44019833034 terminal SUCCESS. Windows job `133826414765` and Ubuntu job `133826415064` both succeeded; Windows test `windows_job_object_terminates_descendants_when_parent_exits` passed. The older Windows failure on SHA `a472b3b...` is historical and superseded for this newer source SHA. PR #102 remains OPEN / DRAFT / UNMERGED. CircleCI status for this branch is a separate error status and does not negate the GitHub Actions result or establish PR #95 migration acceptance.
+- PR #95 source SHA `5ba239ac3964dc147d1568dac2b819459f31b463` is a documentation-only descendant. CircleCI `ci/circleci: one-linux` is PENDING (workflow `5ec5c4c5-e6ab-4518-8d46-1178ba75333f`, job `59fcdba6-1647-4352-ad02-1add7eebae22`). Prior CircleCI SUCCESS on `cef1f41...` is not transferred to this new exact SHA.
+- Independent verifier PR #42 pin is synchronized to `5ba239...`; pin commit `764d197864b19181ba7a814bf93c56c596bf8600`, verifier docs/current head `6fd76ed85189923a1c0f661638f8077f290955a1`. No Windows run is observed for `5ba239...`; Windows status remains NOT VERIFIED. Historical Windows run #32 applies only to `a10a69...`.
+- PR #97 remains OPEN / DRAFT / UNMERGED at `02e6b0155d35e10e9d66e10278566df3e86faae2`. PR #103 remains OPEN / DRAFT / UNMERGED while this documentation update is being made.
+- The optional CircleCI `release-check` parameter `run_release_checks=true` has not been evidenced as executed. Release acceptance remains NOT PASSED.
+- No score, weight, or Definition of Done checkbox is promoted by these CI results. E6 remains `NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED`; historical provisional implementation inventory remains 92/100 and exact-SHA verified score remains 0/100.
+- No merge, release, force-push, history rewrite, visibility change, secret change, billing change, or default-branch mutation occurred.
