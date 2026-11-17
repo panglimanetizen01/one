@@ -104,7 +104,7 @@ The HTTP GET adapter currently accepts only explicit `http://` targets, performs
 
 ## 10. Process scope
 
-Process execution requires `process.spawn`. The capability may constrain executable identity, arguments, working directory, environment inheritance, and standard-stream routing. A denied process request must not start a process. The adapter bounds the direct child's execution to 10 seconds and captures at most 1 MiB per output stream. Unix cleanup kills the original process group and bounds reader shutdown, but descendants that create a new session or process group may survive; strong Unix process-tree containment is not claimed (Issue #105). Windows execution uses a Job Object assigned at process creation and terminates remaining job members during cleanup.
+Process execution requires `process.spawn`. The capability may constrain executable identity, arguments, working directory, environment inheritance, and standard-stream routing. A denied process request must not start a process. The adapter bounds the direct child's execution to 10 seconds and captures at most 1 MiB per output stream. Unix cleanup kills the original process group and bounds reader shutdown with a 100 ms drain grace; output overflow or a pipe that does not become idle produces an error. Descendants that create a new session or process group may still survive; strong Unix process-tree containment is not claimed (Issue #105). Windows execution uses a Job Object assigned at process creation and terminates remaining job members during cleanup.
 
 ## 11. Native calls
 
