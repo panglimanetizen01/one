@@ -172,3 +172,34 @@ Inspected GitHub Actions run `43998206030` in `panglimanetizen01/one-windows-ver
 Classification: the historical E4 run is a verifier-input/lockfile precondition failure, not a filesystem test failure and not a security PASS. The current source candidate still lacks the required Issue #104 test implementations, so do not simply change the verifier canonical SHA to the current PR #108/PR #110 candidate: the filters would then execute zero tests. Update the verifier's canonical candidate only after a source implementation has landed on a candidate SHA containing all required test names and the lockfile. Then run the workflow and inspect both job logs.
 
 No verifier branch file was changed as part of this diagnosis.
+## 14. Current-source integration map — exact PR #108 base candidate
+
+Static readback was performed on `c4bb4b690e698a83e4ddaf279596479d3dc282ca`. This is a source integration map, not implementation or test evidence.
+
+### Production call sites
+
+- `crates/one-core/src/adapter.rs`: `FileReadAdapter` and `FileWriteAdapter` each currently hold only `AdapterMetadata`; their public `new()` constructors take no authority. Read calls `std::fs::read(path)`; write calls `std::fs::write(path, content)`. Read rejects all adapter arguments; write accepts exactly one `AdapterArgument::Text`. Both extract the path from `ExecutionScope::Target`. These are the primary unsafe operations to replace.
+- `crates/one-core/src/interpreter.rs`: `Interpreter::with_orchestration_policy` is the single registration point and currently registers both filesystem adapters with parameterless constructors. Add a dedicated constructor taking the shared filesystem authority and register both adapters with clones of that same authority. Preserve policy-first request evaluation in `Orchestrator`; do not create a second policy path.
+- `crates/one-cli/src/main.rs`: the `run` command parses `--target` into `ExecutionScope::Target` and selects the interpreter constructor in one dispatch expression. It currently does not obtain a trusted current-directory handle for this operation. Capture the host working directory independently of `--target` and inject it only for filesystem capability dispatch. The target string must never choose the root. Non-filesystem capabilities retain their existing construction path.
+- `crates/one-core/src/lib.rs`: adapter types are publicly re-exported. Export the new filesystem authority and limits deliberately; do not expose internal platform handle types.
+- `crates/one-core/Cargo.toml`: `libc = "0.2"` is already present for Unix; `windows-sys = "0.61"` is already present with Foundation, Security, Storage/FileSystem, and process/job features. No new dependency is justified until a specific API gap is demonstrated and checked against Cargo.lock.
+
+### Existing tests that need migration or replacement
+
+- `crates/one-core/src/adapter.rs` contains unit tests using `FileReadAdapter::new()` and `FileWriteAdapter::new()`, including a write test using a fixed temp-directory filename. Convert these to explicitly injected temporary roots and unique fixtures; never infer root from the target.
+- `crates/one-core/tests/filesystem_vertical_slice.rs` directly constructs adapters and tests policy/scope behavior. Preserve those policy assertions while injecting a trusted root. Its current-directory target fixtures are not a confinement test.
+- `crates/one-core/tests/filesystem_write_runtime.rs` must be reviewed and migrated to explicit root injection; retain the existing runtime semantics.
+- Existing direct CLI file operations for build/package/project management are separate host operations. Do not claim this adapter remediation automatically confines all CLI project-management file operations.
+
+### Safe implementation order once a test runner is available
+
+1. Add `FilesystemLimits` and immutable `ProjectFilesystem` ownership/constructors; establish root-handle lifetime and fail-closed behavior first.
+2. Add platform-specific handle-relative resolution primitives with no path-based fallback. Validate root, every parent, leaf type, link count, mount/volume identity, and supported path syntax.
+3. Change adapters to require `Arc<ProjectFilesystem>`; enforce read/write byte limits and use atomic same-directory temporary writes.
+4. Add the dedicated interpreter constructor; preserve existing no-authority construction so filesystem adapter dispatch fails closed, while non-filesystem adapters continue working.
+5. Inject host-owned cwd from CLI independently of `--target`; preserve all current language and CLI vocabulary.
+6. Migrate tests, add adversarial side-effect/race tests with exact independent verifier names, then run compile + full relevant test suites on Unix and Windows at one exact SHA.
+
+### Execution gate
+
+This session has GitHub repository read/write access but no authenticated CircleCI tool, no GitHub Actions workflow-dispatch action, and no working local clone/network route to compile the Rust workspace. Therefore source implementation cannot currently be validated. Do not write unsafe platform code into the branch without a working compile/test path. The static source map above is complete enough to start implementation immediately when a runner becomes available; it is not a security fix.
