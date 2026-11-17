@@ -942,12 +942,16 @@ mod tests {
         let retained_pid = unsafe { GetProcessId(wait_handle) };
         let mut retained_exit_code = 0u32;
         let exit_code_ok = unsafe { GetExitCodeProcess(wait_handle, &mut retained_exit_code) } != 0;
-        // This handle is duplicated into this test process before the wrapper
-        // exits, so it remains bound to the original process object across PID reuse.
+        // A process that is still running must report STILL_ACTIVE (259).
+        // GetExitCodeProcess returning any other code is the authoritative
+        // process-object state; retain the zero-time wait result as a second
+        // diagnostic because this runner has reported WAIT_TIMEOUT even when
+        // the same handle already exposes a final exit code.
         let wait = unsafe { WaitForSingleObject(wait_handle, 0) };
-        if wait != WAIT_OBJECT_0 {
-            // Preserve the observed result, then reap only the test-owned ping
-            // process through the same retained handle (never reopen by PID).
+        let process_still_active = exit_code_ok && retained_exit_code == 259;
+        if !exit_code_ok || process_still_active {
+            // Reap only the test-owned ping process through the same retained
+            // handle (never reopen by PID).
             unsafe {
                 TerminateProcess(wait_handle, 1);
                 WaitForSingleObject(wait_handle, INFINITE);
@@ -964,9 +968,17 @@ mod tests {
             retained_pid, pid,
             "retained process handle identity mismatch: reported PID {pid}, handle PID {retained_pid}, exit-code query ok={exit_code_ok}, exit code={retained_exit_code}"
         );
-        assert_eq!(
-            wait, WAIT_OBJECT_0,
-            "descendant process {pid} survived the bounded process invocation; retained handle PID={retained_pid}, exit-code query ok={exit_code_ok}, exit code={retained_exit_code}"
+        assert!(
+            exit_code_ok,
+            "GetExitCodeProcess failed for retained descendant handle; PID={pid}, wait result={wait}"
+        );
+        assert!(
+            !process_still_active,
+            "descendant process {pid} remained active after the bounded process invocation; retained handle PID={retained_pid}, exit code={retained_exit_code}, wait result={wait}"
+        );
+        assert!(
+            wait == WAIT_OBJECT_0 || (wait == windows_sys::Win32::Foundation::WAIT_TIMEOUT && !process_still_active),
+            "unexpected wait result {wait} for terminated descendant {pid} (exit code {retained_exit_code})"
         );
     }
 
