@@ -68,8 +68,15 @@ fn validate_process_spec(spec: &ProcessSpec) -> Result<(), String> {
     if spec.program.contains('\0') {
         return Err("Process executable path must not contain an embedded NUL byte.".into());
     }
-    if let Some((index, _)) = spec.args.iter().enumerate().find(|(_, arg)| arg.contains('\0')) {
-        return Err(format!("Process argument {index} must not contain an embedded NUL byte."));
+    if let Some((index, _)) = spec
+        .args
+        .iter()
+        .enumerate()
+        .find(|(_, arg)| arg.contains('\0'))
+    {
+        return Err(format!(
+            "Process argument {index} must not contain an embedded NUL byte."
+        ));
     }
     if spec
         .working_directory
