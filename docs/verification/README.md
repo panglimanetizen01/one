@@ -90,3 +90,25 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 - The 11 diagnostic unit tests and `circleci config validate` remain NOT VERIFIED. Do not report PASS until both commands execute against an identified exact revision with captured output.
 - PR #44 remains OPEN / DRAFT / UNMERGED; protected verifier pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` unchanged. Issue #104 remains OPEN / NOT ACCEPTED. Do not merge, modify `main`, or change the protected pin.
 - This section supersedes older active-status statements in this index; earlier entries remain historical records.
+
+
+## Independent verifier evidence reconciliation — 2026-11-19
+
+### Diagnostic pin vs protected pin (do not conflate)
+
+- PR #44 uses the separate verifier branch `probe/windows-obj-dont-reparse-20261118`, whose `CANONICAL_COMMIT.txt` is `722d662e7a81711ba3607d26571f4048a292b3ed`.
+- The protected verifier branch `verification` still has `CANONICAL_COMMIT.txt` = `e50748a1b25922d9090eba1f5fb90548d7c7d003`. It was not changed. PR #44 remains OPEN / DRAFT / UNMERGED.
+
+### Exact-source evidence on diagnostic candidate 722d662...
+
+- E4 adversarial workflow [44335797344](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797344): success. Unix job [134912035794](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797344/job/134912035794) and Windows job [134912036561](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797344/job/134912036561) both checked out and printed exact `source_sha=722d662e7a81711ba3607d26571f4048a292b3ed`; each completed successfully.
+- Windows native API probe job [134912035140](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797344/job/134912035140) succeeded on Windows Server 2025 Datacenter build 26100 / PowerShell 7.6.9. Ordinary file opens with both flags; direct junction and intermediate-junction opens with `OBJ_DONT_REPARSE` returned `0xC000050B`; outside sentinel remained unchanged; terminal marker `OBJ_DONT_REPARSE_ROOT_DIRECTORY_JUNCTION_DENIAL_OK` was emitted.
+- Cross-platform workflow [44335797200](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797200) succeeded on Ubuntu and Windows jobs; distro workflow [44335797294](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797294) succeeded on Debian 12 and Ubuntu 24.04; Android AArch64 build [44335797320](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797320) and API 35 ARM64 runtime [44335797240](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797240) succeeded; SEC-05 workflow [44335797365](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797365) succeeded.
+- Candidate `722d662...` is an ancestor of current PR #113 HEAD. Compare reports 53 commits from `722d662...` to `c25d191...`; intervening changed paths are CI configuration, verification/docs, and CircleCI diagnostic tooling only, with no intervening runtime implementation path changes. This supports continued relevance of the scoped runtime evidence, but does NOT make later SHAs tested or grant them PASS status.
+
+### CircleCI exact-SHA reconciliation
+
+- Candidate `722d662...`: `ci/circleci: one-linux` FAILURE [job](https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94).
+- Code/config SHA `e8dab3a0ac2de6b09b374b692d740b9fb5630f00`: `ci/circleci: one-linux` FAILURE [job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e). Provider logs are still inaccessible; cause unknown.
+- PR #113 HEAD at the time of this readback `c25d191148091e7f62566d0290a6b71004fa798a`: `ci/circleci: one-linux` PENDING [job](https://app.circleci.com/workflow/35bda6e3-acf8-4232-9437-608467816602/job/90ae8601-d89f-4314-a346-d37089540363).
+- The 11 diagnostic unit tests and `circleci config validate` remain NOT VERIFIED. Do not infer the CircleCI failure cause or transfer status between SHAs.
