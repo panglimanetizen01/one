@@ -79,3 +79,9 @@ PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub C
 - GitHub compare against the base reports 2 commits ahead / 0 behind; 12 changed files. CircleCI `ci/circleci: one-linux` for this exact SHA is PENDING at the last status read. No Linux/Windows independent verifier result exists yet for this new candidate.
 - Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. Original PR #110 remains open/draft/unmerged and its source branch has not been changed.
 - Issue #104 remains OPEN / NOT IMPLEMENTED. The imported design/specification is not implementation evidence. Do not advance E4 or DoD.
+
+## Static review correction — 2026-11-18
+
+- Readback of candidate `f6cb9639683bab2cf17d9c068fb86ef782c4e18a` caught a double-escaped regular-expression literal in the newly merged toolchain checker before acceptance. The checker was corrected to validate exactly three numeric dot-separated version components using split-based validation, avoiding escape ambiguity.
+- Readback also confirms the base `.circleci/config.yml` retains the `printf` smoke fixture and all six focused test steps; an earlier automated string probe used an incorrectly escaped search string and did not reflect the file content.
+- The corrected commit must receive fresh exact-SHA CircleCI and independent Linux/Windows verification. No PASS is inferred from earlier candidate SHAs.
