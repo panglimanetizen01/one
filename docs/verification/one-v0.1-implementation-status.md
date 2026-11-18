@@ -145,3 +145,12 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Replaced the permission reset with a real Windows share-mode blocker that omits `FILE_SHARE_DELETE`, preserving the negative atomic replacement test's intended semantics.
 - Fix source SHA: `a79665056149bf1ff302de79a7b86a346e0353d8`. Diagnostic verifier pin now targets this SHA; E4 [#44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) is QUEUED. CircleCI `ci/circleci: one-linux` is PENDING on this SHA.
 - Classification: source fix IMPLEMENTED; latest SHA NOT VERIFIED pending E4 and cross-platform CI. Do not transfer the earlier `f6acb...` E4 PASS to `a796650...`. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Linux direct-child atomic write candidate — 2026-11-18
+
+- Source `cc54597b471493f4350d0dc0f3a2896babb33ea4` adds a Linux write backend for direct children of the retained trusted root. It validates the leaf through `openat2` with BENEATH / NO_SYMLINKS / NO_XDEV, creates an exclusive temporary sibling relative to the root fd, writes + syncs, and atomically replaces with `renameat`.
+- Nested Linux write paths return `UnsupportedPlatform` intentionally. Opening a nested directory and retaining its handle does not prevent an attacker from moving that directory outside the root; no nested write is attempted until that race is safely addressed.
+- New Linux tests cover relative and absolute in-root create/replace, symlink-leaf rejection with outside sentinel preservation, oversized-content preservation, nested-parent fail-closed behavior, and real `/dev/shm` mount-boundary read denial.
+- Independent E4 script now requires five Linux `descriptor_relative_write_*` tests and three Linux `descriptor_relative_read_rejects_*` tests. Diagnostic verifier pin is `cc54597...`; exact-SHA E4 run was queued at last inspection.
+- Classification: Linux direct-child atomic write IMPLEMENTED / PARTIAL; NOT VERIFIED on `cc54597...` pending exact-SHA E4 and cross-platform tests. Nested Linux write NOT IMPLEMENTED / fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
