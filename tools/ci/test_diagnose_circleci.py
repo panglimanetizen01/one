@@ -1,6 +1,13 @@
 import unittest
+from unittest.mock import patch
 
-from diagnose_circleci import classify_failure, extract_failed_steps, redact
+from diagnose_circleci import (
+    DiagnosticError,
+    classify_failure,
+    extract_failed_steps,
+    paged_v2_items,
+    redact,
+)
 
 
 class CircleCIDiagnosticTests(unittest.TestCase):
@@ -71,6 +78,26 @@ class CircleCIDiagnosticTests(unittest.TestCase):
             classify_failure("test result: FAILED. 1 failed"),
             "TEST FAILURE",
         )
+
+
+    def test_pagination_reads_all_pages(self):
+        responses = [
+            {"items": [{"id": "first"}], "next_page_token": "page-2"},
+            {"items": [{"id": "second"}], "next_page_token": None},
+        ]
+        with patch("diagnose_circleci.get_json", side_effect=responses) as get_json:
+            self.assertEqual(
+                list(paged_v2_items("https://circleci.example/pipelines", {})),
+                [{"id": "first"}, {"id": "second"}],
+            )
+        self.assertEqual(get_json.call_count, 2)
+
+    def test_pagination_fails_instead_of_silently_truncating(self):
+        response = {"items": [{"id": "page"}], "next_page_token": "next"}
+        with patch("diagnose_circleci.get_json", return_value=response) as get_json:
+            with self.assertRaisesRegex(DiagnosticError, "results are incomplete"):
+                list(paged_v2_items("https://circleci.example/pipelines", {}))
+        self.assertEqual(get_json.call_count, 10)
 
     def test_redacts_tokens_and_credentials(self):
         source = (
