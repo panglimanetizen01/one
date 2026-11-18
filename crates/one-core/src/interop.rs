@@ -785,7 +785,7 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
         Arc::clone(&reader_shutdown),
     );
 
-    let deadline = Instant::now() + PROCESS_TIMEOUT;
+    let deadline = Instant::now() + timeout;
     let mut timed_out = false;
     let mut wait_failed = false;
     loop {
@@ -898,7 +898,7 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
     if timed_out {
         return Err(format!(
             "Subprocess exceeded the {} second execution deadline.",
-            PROCESS_TIMEOUT.as_secs()
+            timeout.as_secs()
         ));
     }
     if output_limit_exceeded.load(Ordering::Acquire) {
