@@ -6,7 +6,9 @@
 //! configuration, never a request supplied by the language program.
 
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Read;
+#[cfg(target_os = "linux")]
+use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
