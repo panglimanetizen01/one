@@ -152,3 +152,9 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - Diagnostic suite now contains 13 test methods, including direct-job source identity warnings and exact-SHA identity output. Execution remains NOT VERIFIED.
 - CircleCI provider logs remain inaccessible; root cause unknown. `circleci config validate .circleci/config.yml` remains NOT VERIFIED.
 - PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains unchanged.
+
+## CircleCI pagination hardening — 2026-11-19
+
+- Removed the arbitrary 10-page cap from exact-SHA pipeline discovery. The diagnostic now follows all API v2 continuation tokens until the endpoint ends pagination and detects repeated tokens to prevent infinite loops.
+- Added regression coverage for a 12-page result and repeated-token cycle; diagnostic suite now has 14 test methods. The updated suite has not yet been executed on the new HEAD.
+- See `CIRCLECI_DIAGNOSTICS.md` for the implementation details and exact-SHA validation command. Previous CI/test evidence does not transfer to the new commits.
