@@ -101,3 +101,10 @@ The PR #113 candidate now contains a Linux atomic write backend for files that a
 **Nested Linux writes are intentionally unsupported for now.** A retained nested-directory handle can be moved outside the trusted root while an operation is in progress; this implementation refuses nested targets rather than risk writing through a moved parent directory. Windows candidate writes use a separate native handle-relative implementation.
 
 The Linux write implementation and new tests are committed in candidate source SHA `cc54597b471493f4350d0dc0f3a2896babb33ea4`. The independent E4 verifier pin now targets this SHA; fresh E4 and related workflows are queued. This is IMPLEMENTED but NOT VERIFIED until those exact-SHA jobs finish. PR #113 remains draft/unmerged; canonical `main` has not gained this feature. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Linux atomic writer compile correction — 18 November 2026
+
+The first Linux writer candidate `cc54597b471493f4350d0dc0f3a2896babb33ea4` failed the Android AArch64 cross-target build because four stale `parent_handle` references remained after the implementation was restricted to the retained root descriptor. No runtime test or artifact was produced by that failed job.
+
+Those references are now corrected to use the retained root file descriptor in source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`. The independent verifier pin targets this SHA. Fresh E4, cross-platform, Linux distro, Android artifact/runtime, and resource-guard jobs are queued or pending; CircleCI `ci/circleci: one-linux` is PENDING. The Linux direct-child writer remains IMPLEMENTED but NOT VERIFIED until the exact-SHA runs finish. Nested Linux writes remain fail-closed.
