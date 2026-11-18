@@ -408,6 +408,7 @@ mod filesystem_windows_tests {
 
         assert_eq!(result, Err(AdapterError::ResolutionFailed));
         assert_eq!(std::fs::read(&sentinel).unwrap(), b"OUTSIDE_SENTINEL");
+        drop(adapter);
         std::fs::remove_dir(&junction).unwrap();
         std::fs::remove_dir_all(&root).unwrap();
         std::fs::remove_dir_all(outside).unwrap();
@@ -425,6 +426,7 @@ mod filesystem_windows_tests {
 
         assert!(result.success);
         assert_eq!(result.output, b"INSIDE_SENTINEL");
+        drop(adapter);
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -450,6 +452,8 @@ mod filesystem_windows_tests {
         );
         assert_eq!(std::fs::read(&inside).unwrap(), b"INSIDE_UNCHANGED");
         assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_UNCHANGED");
+        drop(reader);
+        drop(writer);
         std::fs::remove_dir_all(root).unwrap();
         std::fs::remove_file(outside).unwrap();
     }
@@ -467,6 +471,7 @@ mod filesystem_windows_tests {
         assert!(result.success);
         assert_eq!(result.output, b"new text");
         assert_eq!(std::fs::read(&target).unwrap(), b"new text");
+        drop(adapter);
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -482,6 +487,7 @@ mod filesystem_windows_tests {
 
         assert_eq!(result, Err(AdapterError::BackendFailure));
         assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+        drop(adapter);
         std::fs::remove_dir_all(root).unwrap();
     }
 
@@ -499,6 +505,8 @@ mod filesystem_windows_tests {
         assert_eq!(reader.invoke(&read_request(traversal)), Err(AdapterError::ResolutionFailed));
         assert_eq!(writer.invoke(&write_request(traversal, "ATTACK")), Err(AdapterError::ResolutionFailed));
         assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_UNCHANGED");
+        drop(reader);
+        drop(writer);
         std::fs::remove_dir_all(root).unwrap();
         std::fs::remove_file(outside).unwrap();
     }
