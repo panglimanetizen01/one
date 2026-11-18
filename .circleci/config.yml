@@ -136,12 +136,11 @@ jobs:
 
 workflows:
   one-ci:
-    when:
-      not: << pipeline.parameters.run_release_checks >>
+    when: not pipeline.parameters.run_release_checks
     jobs:
       - one-linux
 
   release-check:
-    when: << pipeline.parameters.run_release_checks >>
+    when: pipeline.parameters.run_release_checks
     jobs:
       - one-linux
