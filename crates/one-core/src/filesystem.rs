@@ -297,6 +297,8 @@ mod windows_native {
     }
 
     fn status_error(status: i32) -> FilesystemError {
+        #[cfg(test)]
+        eprintln!("NtCreateFile returned NTSTATUS 0x{:08X}", status as u32);
         match status as u32 {
             STATUS_REPARSE_POINT_ENCOUNTERED => FilesystemError::ResolutionFailed,
             STATUS_OBJECT_NAME_INVALID | STATUS_OBJECT_PATH_SYNTAX_BAD => FilesystemError::InvalidTarget,
@@ -452,9 +454,13 @@ mod windows_native {
             )?;
             let info = file_info(&file)?;
             if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+                #[cfg(test)]
+                eprintln!("opened component is a reparse point: attrs=0x{:08X}", info.dwFileAttributes);
                 return Err(FilesystemError::ResolutionFailed);
             }
             if info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber {
+                #[cfg(test)]
+                eprintln!("opened component volume mismatch: root=0x{:08X} child=0x{:08X}", root_info.dwVolumeSerialNumber, info.dwVolumeSerialNumber);
                 return Err(FilesystemError::ResolutionFailed);
             }
 
