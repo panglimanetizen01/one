@@ -42,6 +42,7 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 
 ## API behavior
 
+- The Linux job installs the exact Rust release from rust-toolchain.toml in a dedicated step. Rustup bootstrap and toolchain installation have explicit wall-clock limits, separate from the cross-toolchain package provisioning step; the no-output timeout remains an independent inactivity guard.
 - CircleCI API v2 is used only for pipeline/workflow/job discovery because the project-scoped pipeline listing is available there.
 - CircleCI API v3 is used for job details and per-step stdout/stderr.
 - API v2 uses the Circle-Token header; API v3 uses Authorization: Bearer.
