@@ -11,14 +11,18 @@ fn valid_artifact_component(value: &str) -> bool { !value.is_empty() && value.tr
 fn project_metadata(root: &Path) -> Result<(String, String), String> { let manifest = root.join("one.toml"); let text = fs::read_to_string(&manifest).map_err(|e| format!("Tidak dapat membaca '{}': {}", manifest.display(), e))?; let mut seen = HashSet::new(); let mut name = None; let mut version = None; for (index, raw_line) in text.lines().enumerate() { let line = raw_line.trim(); if line.is_empty() || line.starts_with('#') { continue; } let Some((raw_key, raw_value)) = line.split_once('=') else { return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1)); }; let key = raw_key.trim(); let value = raw_value.trim(); if !matches!(key, "nama" | "versi") || !seen.insert(key) { return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1)); } let Some(value) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else { return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1)); }; if value.is_empty() { return Err(format!("Manifest '{}' memiliki nilai kosong pada baris {}.", manifest.display(), index + 1)); } if !valid_artifact_component(value) { return Err(format!("Manifest '{}' memiliki nilai tidak aman untuk nama artefak pada baris {}.", manifest.display(), index + 1)); } match key { "nama" => name = Some(value.to_owned()), "versi" => version = Some(value.to_owned()), _ => unreachable!() } } match (name, version) { (Some(name), Some(version)) => Ok((name, version)), _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())) } }
 fn filesystem_authority_for_target(target: &str) -> Result<(Arc<FilesystemAuthority>, String), String> {
  let path = Path::new(target);
- let file_name = path.file_name().ok_or_else(|| format!("Target filesystem '{}' harus menunjuk ke file.", target))?;
- let root = path.parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or_else(|| Path::new("."));
+ let root = if path.is_absolute() {
+  path.parent().filter(|parent| !parent.as_os_str().is_empty()).ok_or_else(|| format!("Target filesystem '{}' harus menunjuk ke file.", target))?
+ } else {
+  Path::new(".")
+ };
  let canonical_root = fs::canonicalize(root)
   .map_err(|error| format!("Tidak dapat menentukan direktori target '{}': {}", root.display(), error))?;
- let scoped_target = canonical_root.join(file_name).to_string_lossy().into_owned();
  let authority = FilesystemAuthority::open(&canonical_root, 1_048_576, 1_048_576)
   .map_err(|error| format!("Tidak dapat membangun otoritas filesystem untuk target '{}': {:?}", target, error))?;
- Ok((Arc::new(authority), scoped_target))
+ // The policy scope must match the exact target string in the ONE source.
+ // The retained authority independently canonicalizes and confines the path.
+ Ok((Arc::new(authority), target.to_owned()))
 }
 fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
 fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir() { return Ok(Vec::new()); } let mut files = fs::read_dir(root).map_err(|e| format!("Tidak dapat membaca '{}': {}", root.display(), e))?.map(|entry| entry.map(|e| e.path()).map_err(|e| format!("Tidak dapat membaca fixture: {}", e))).collect::<Result<Vec<_>, _>>()?; files.retain(|path| path.extension().and_then(|v| v.to_str()) == Some("one")); files.sort(); Ok(files) }
