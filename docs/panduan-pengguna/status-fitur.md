@@ -83,3 +83,12 @@ Kandidat PR #113 telah bergerak melewati implementasi atomic write awal. Source 
 - Canonical `main` tetap belum berisi PR #113; Issue #104 tetap OPEN.
 
 Jangan gunakan filesystem capability sebagai sandbox keamanan project sampai kandidat terbaru memenuhi seluruh acceptance criteria dan telah diterima serta dirilis.
+
+
+## Checkpoint regression-test cleanup — 18 November 2026
+
+A fresh Ubuntu/Windows candidate check at source `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` found Windows Clippy rejecting the test cleanup call `permissions.set_readonly(false)`. This was test-only code, not a production filesystem failure. The test now holds the destination open without `FILE_SHARE_DELETE` to cause a real Windows replacement denial, then verifies original bytes and temporary-file cleanup without changing permission attributes.
+
+The fix is committed at source SHA `a79665056149bf1ff302de79a7b86a346e0353d8`. The independent verifier diagnostic pin now targets this exact SHA. E4 run [#44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) is QUEUED; CircleCI `ci/circleci: one-linux` is PENDING at this SHA. Do not classify the updated test as verified until the new run completes.
+
+Filesystem root confinement remains in development in PR #113; canonical `main` remains unchanged and Issue #104 remains OPEN.
