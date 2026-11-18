@@ -490,6 +490,216 @@ mod windows_native {
         }
         Err(FilesystemError::InvalidTarget)
     }
+
+    #[repr(C)]
+    struct FileRenameInfo {
+        replace_if_exists: u8,
+        root_directory: HANDLE,
+        file_name_length: u32,
+        file_name: [u16; 1],
+    }
+
+    #[repr(C)]
+    struct FileDispositionInfo {
+        delete_file: u8,
+    }
+
+    fn mark_for_delete(file: &File) -> Result<(), FilesystemError> {
+        let mut info = FileDispositionInfo { delete_file: 1 };
+        let ok = unsafe {
+            SetFileInformationByHandle(
+                file.as_raw_handle() as HANDLE,
+                4 as _,
+                (&mut info as *mut FileDispositionInfo).cast::<c_void>(),
+                std::mem::size_of::<FileDispositionInfo>() as u32,
+            )
+        };
+        if ok == 0 { return Err(FilesystemError::IoFailure); }
+        Ok(())
+    }
+
+    struct TempFileGuard {
+        file: File,
+        committed: bool,
+    }
+
+    impl TempFileGuard {
+        fn cleanup(&mut self) -> Result<(), FilesystemError> {
+            if self.committed { return Ok(()); }
+            mark_for_delete(&self.file)?;
+            self.committed = true;
+            Ok(())
+        }
+    }
+
+    impl Drop for TempFileGuard {
+        fn drop(&mut self) {
+            if !self.committed {
+                let _ = mark_for_delete(&self.file);
+            }
+        }
+    }
+
+    fn rename_relative(file: &File, parent: HANDLE, leaf: &[u16]) -> Result<(), FilesystemError> {
+        if leaf.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        let name_bytes = leaf.len().checked_mul(2).ok_or(FilesystemError::InvalidTarget)?;
+        let name_offset = std::mem::offset_of!(FileRenameInfo, file_name);
+        let buffer_length = name_offset
+            .checked_add(name_bytes)
+            .and_then(|length| length.checked_add(2))
+            .ok_or(FilesystemError::InvalidTarget)?;
+        let buffer_length_u32 = u32::try_from(buffer_length).map_err(|_| FilesystemError::InvalidTarget)?;
+        let word_count = buffer_length.checked_add(7).ok_or(FilesystemError::InvalidTarget)? / 8;
+        let mut storage = vec![0u64; word_count];
+        let base = storage.as_mut_ptr().cast::<u8>();
+        let root_offset = std::mem::offset_of!(FileRenameInfo, root_directory);
+        let length_offset = std::mem::offset_of!(FileRenameInfo, file_name_length);
+
+        unsafe {
+            base.write(1); // ReplaceIfExists = TRUE.
+            std::ptr::write_unaligned(base.add(root_offset).cast::<HANDLE>(), parent);
+            std::ptr::write_unaligned(base.add(length_offset).cast::<u32>(), name_bytes as u32);
+            let destination = base.add(name_offset).cast::<u16>();
+            std::ptr::copy_nonoverlapping(leaf.as_ptr(), destination, leaf.len());
+            destination.add(leaf.len()).write(0);
+        }
+
+        let ok = unsafe {
+            SetFileInformationByHandle(file.as_raw_handle() as HANDLE, 3 as _, base.cast::<c_void>(), buffer_length_u32)
+        };
+        if ok == 0 { return Err(FilesystemError::IoFailure); }
+        Ok(())
+    }
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    pub fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
+        let root_info = file_info(root)?;
+        if root_info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
+            || root_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0
+        {
+            return Err(FilesystemError::InvalidRoot);
+        }
+
+        let components: Vec<_> = relative.components().collect();
+        if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        let mut parents: Vec<File> = Vec::new();
+        let mut parent_handle = root.as_raw_handle() as HANDLE;
+        let mut leaf_wide = None;
+
+        for (index, component) in components.iter().enumerate() {
+            let Component::Normal(part) = component else {
+                return Err(FilesystemError::OutsideRoot);
+            };
+            let wide: Vec<u16> = part.encode_wide().collect();
+            if wide.is_empty()
+                || wide.iter().any(|unit| *unit == 0 || *unit == 92 || *unit == 47)
+            {
+                return Err(FilesystemError::InvalidTarget);
+            }
+            if index + 1 == components.len() {
+                leaf_wide = Some(wide);
+                break;
+            }
+
+            let directory = open_named(
+                &wide,
+                parent_handle,
+                OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+                FILE_LIST_DIRECTORY | FILE_TRAVERSE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_OPEN,
+                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+            )?;
+            let info = file_info(&directory)?;
+            if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
+                || info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber
+                || info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0
+            {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+            parents.push(directory);
+            parent_handle = parents.last().expect("parent handle was just retained").as_raw_handle() as HANDLE;
+        }
+
+        let leaf_wide = leaf_wide.ok_or(FilesystemError::InvalidTarget)?;
+
+        // Inspect an existing leaf without following it. The handle is closed
+        // before replacement; the final rename itself is handle-relative and
+        // never writes through a path that may have become a reparse point.
+        match open_named(
+            &leaf_wide,
+            parent_handle,
+            OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+            FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            FILE_OPEN,
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+        ) {
+            Ok(existing) => {
+                let info = file_info(&existing)?;
+                if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+                    return Err(FilesystemError::ResolutionFailed);
+                }
+                if info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber {
+                    return Err(FilesystemError::ResolutionFailed);
+                }
+                if info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE) != 0 {
+                    return Err(FilesystemError::NotRegularFile);
+                }
+                if info.nNumberOfLinks != 1 {
+                    return Err(FilesystemError::HardLinkedFile);
+                }
+                drop(existing);
+            }
+            Err(FilesystemError::NotFound) => {}
+            Err(error) => return Err(error),
+        }
+
+        let mut created = None;
+        for _ in 0..8 {
+            let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
+            let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+            let name = format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id());
+            let wide: Vec<u16> = name.encode_utf16().collect();
+            match open_named(
+                &wide,
+                parent_handle,
+                OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+                FILE_WRITE_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE | DELETE_ACCESS,
+                FILE_SHARE_READ,
+                FILE_CREATE,
+                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+            ) {
+                Ok(file) => { created = Some(file); break; }
+                Err(FilesystemError::IoFailure) => continue,
+                Err(error) => return Err(error),
+            }
+        }
+        let file = created.ok_or(FilesystemError::IoFailure)?;
+        let mut temporary = TempFileGuard { file, committed: false };
+
+        let result = (|| {
+            let info = file_info(&temporary.file)?;
+            if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
+                || info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber
+                || info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE) != 0
+                || info.nNumberOfLinks != 1
+            {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+            temporary.file.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
+            temporary.file.flush().map_err(|_| FilesystemError::IoFailure)?;
+            rename_relative(&temporary.file, parent_handle, &leaf_wide)?;
+            temporary.committed = true;
+            Ok(())
+        })();
+
+        if result.is_err() && !temporary.committed {
+            temporary.cleanup()?;
+        }
+        result
+    }
 }
 
 #[cfg(all(test, target_os = "linux"))]
