@@ -3,8 +3,8 @@ use std::io::{self, Read};
 use std::os::fd::AsRawFd;
 #[cfg(unix)]
 use std::process::{Command, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
@@ -143,7 +143,6 @@ fn join_reader(reader: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, Strin
         .map_err(|error| format!("Failed to read subprocess output: {error}"))
 }
 
-
 fn validate_process_spec(spec: &ProcessSpec) -> Result<(), String> {
     if spec.program.is_empty() {
         return Err("Process executable path must not be empty.".into());
@@ -223,8 +222,9 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
     let mut child = command
         .spawn()
         .map_err(|error| format!("Gagal menjalankan proses '{}': {error}", spec.program))?;
-    let process_group = i32::try_from(child.id())
-        .map_err(|_| "Subprocess identifier exceeds the supported process-group range.".to_owned())?;
+    let process_group = i32::try_from(child.id()).map_err(|_| {
+        "Subprocess identifier exceeds the supported process-group range.".to_owned()
+    })?;
     let stdout = child
         .stdout
         .take()
@@ -350,40 +350,41 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
     use std::path::Path;
     use std::ptr::{null, null_mut};
 
+    #[cfg(test)]
+    use windows_sys::Win32::Foundation::DuplicateHandle;
     use windows_sys::Win32::Foundation::{
-        CloseHandle, GetLastError, SetHandleInformation, HANDLE, HANDLE_FLAG_INHERIT,
-        GENERIC_READ, WAIT_OBJECT_0, WAIT_TIMEOUT,
+        CloseHandle, GENERIC_READ, GetLastError, HANDLE, HANDLE_FLAG_INHERIT, SetHandleInformation,
+        WAIT_OBJECT_0, WAIT_TIMEOUT,
     };
     use windows_sys::Win32::Security::SECURITY_ATTRIBUTES;
     use windows_sys::Win32::Storage::FileSystem::{
         CreateFileW, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING,
     };
     use windows_sys::Win32::System::JobObjects::{
-        CreateJobObjectW, IsProcessInJob, QueryInformationJobObject, SetInformationJobObject,
-        TerminateJobObject, JOBOBJECT_BASIC_ACCOUNTING_INFORMATION,
-        JOBOBJECT_EXTENDED_LIMIT_INFORMATION, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+        CreateJobObjectW, IsProcessInJob, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE,
+        JOBOBJECT_BASIC_ACCOUNTING_INFORMATION, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
         JobObjectBasicAccountingInformation, JobObjectExtendedLimitInformation,
+        QueryInformationJobObject, SetInformationJobObject, TerminateJobObject,
     };
-    #[cfg(test)]
-    use windows_sys::Win32::Foundation::DuplicateHandle;
     use windows_sys::Win32::System::Pipes::CreatePipe;
-    use windows_sys::Win32::System::Threading::{
-        CreateProcessW, DeleteProcThreadAttributeList, GetExitCodeProcess,
-        InitializeProcThreadAttributeList, TerminateProcess, UpdateProcThreadAttribute,
-        WaitForSingleObject, PROCESS_INFORMATION, STARTUPINFOEXW, STARTUPINFOW, CREATE_NO_WINDOW,
-        EXTENDED_STARTUPINFO_PRESENT, INFINITE, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
-        PROC_THREAD_ATTRIBUTE_JOB_LIST, STARTF_USESTDHANDLES,
-    };
     #[cfg(test)]
     use windows_sys::Win32::System::Threading::GetCurrentProcess;
+    use windows_sys::Win32::System::Threading::{
+        CREATE_NO_WINDOW, CreateProcessW, DeleteProcThreadAttributeList,
+        EXTENDED_STARTUPINFO_PRESENT, GetExitCodeProcess, INFINITE,
+        InitializeProcThreadAttributeList, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+        PROC_THREAD_ATTRIBUTE_JOB_LIST, PROCESS_INFORMATION, STARTF_USESTDHANDLES, STARTUPINFOEXW,
+        STARTUPINFOW, TerminateProcess, UpdateProcThreadAttribute, WaitForSingleObject,
+    };
 
     struct Handle(HANDLE);
     impl Handle {
         fn new(handle: HANDLE) -> Result<Self, String> {
             if handle.is_null() || handle as isize == -1 {
-                Err(format!("Windows handle creation failed (error {}).", unsafe {
-                    GetLastError()
-                }))
+                Err(format!(
+                    "Windows handle creation failed (error {}).",
+                    unsafe { GetLastError() }
+                ))
             } else {
                 Ok(Self(handle))
             }
@@ -439,7 +440,11 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
         }
 
         let has_extension = path.extension().is_some();
-        let extensions: &[&str] = if has_extension { &[""] } else { &[".exe", ".com"] };
+        let extensions: &[&str] = if has_extension {
+            &[""]
+        } else {
+            &[".exe", ".com"]
+        };
         let search_path = std::env::var_os("PATH").unwrap_or_default();
         for directory in std::env::split_paths(&search_path) {
             for extension in extensions {
@@ -454,7 +459,10 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
                 }
             }
         }
-        Err(format!("Executable '{}' was not found in PATH.", path.display()))
+        Err(format!(
+            "Executable '{}' was not found in PATH.",
+            path.display()
+        ))
     }
 
     fn append_windows_argument(output: &mut Vec<u16>, argument: &OsStr) {
@@ -493,9 +501,7 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
         output.push(0x22);
     }
 
-    fn create_pipe_pair(
-        security: &SECURITY_ATTRIBUTES,
-    ) -> Result<(Handle, Handle), String> {
+    fn create_pipe_pair(security: &SECURITY_ATTRIBUTES) -> Result<(Handle, Handle), String> {
         let mut read = null_mut();
         let mut write = null_mut();
         // SAFETY: output pointers are valid and security describes inheritable
@@ -558,9 +564,10 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
         )
     } == 0
     {
-        return Err(format!("SetInformationJobObject failed (error {}).", unsafe {
-            GetLastError()
-        }));
+        return Err(format!(
+            "SetInformationJobObject failed (error {}).",
+            unsafe { GetLastError() }
+        ));
     }
 
     // The test-only query handle lets the contained parent ask whether its
@@ -568,7 +575,11 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
     // It is narrowed to JOB_OBJECT_QUERY and its inherit flag is cleared by
     // the PowerShell parent before that parent creates the ping descendant.
     #[cfg(test)]
-    let job_query_handle = if spec.args.iter().any(|arg| arg.contains("__ONE_JOB_QUERY_HANDLE__")) {
+    let job_query_handle = if spec
+        .args
+        .iter()
+        .any(|arg| arg.contains("__ONE_JOB_QUERY_HANDLE__"))
+    {
         let mut duplicated = null_mut();
         // SAFETY: source and target are this process; the new handle is query-only
         // and inheritable so it can be passed through the explicit handle list.
@@ -584,9 +595,10 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
             )
         } == 0
         {
-            return Err(format!("DuplicateHandle(JOB_OBJECT_QUERY) failed (error {}).", unsafe {
-                GetLastError()
-            }));
+            return Err(format!(
+                "DuplicateHandle(JOB_OBJECT_QUERY) failed (error {}).",
+                unsafe { GetLastError() }
+            ));
         }
         Some(Handle::new(duplicated)?)
     } else {
@@ -626,14 +638,8 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
         vec![0usize; (attribute_size + size_of::<usize>() - 1) / size_of::<usize>()];
     let attribute_pointer = attribute_storage.as_mut_ptr() as *mut core::ffi::c_void;
     // SAFETY: the buffer is sufficiently sized and pointer-aligned.
-    if unsafe {
-        InitializeProcThreadAttributeList(
-            attribute_pointer,
-            2,
-            0,
-            &mut attribute_size,
-        )
-    } == 0
+    if unsafe { InitializeProcThreadAttributeList(attribute_pointer, 2, 0, &mut attribute_size) }
+        == 0
     {
         return Err(format!(
             "InitializeProcThreadAttributeList failed (error {}).",
@@ -809,8 +815,7 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
     // exited. Explicitly terminate any remaining job members, then wait for the
     // job accounting to reach zero before returning. KILL_ON_JOB_CLOSE remains
     // a fail-safe for every early-return path.
-    let mut accounting: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION =
-        unsafe { core::mem::zeroed() };
+    let mut accounting: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION = unsafe { core::mem::zeroed() };
     let query_ok = unsafe {
         QueryInformationJobObject(
             job.raw(),
@@ -848,8 +853,7 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
 
     let cleanup_deadline = Instant::now() + std::time::Duration::from_secs(5);
     loop {
-        let mut accounting: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION =
-            unsafe { core::mem::zeroed() };
+        let mut accounting: JOBOBJECT_BASIC_ACCOUNTING_INFORMATION = unsafe { core::mem::zeroed() };
         if unsafe {
             QueryInformationJobObject(
                 job.raw(),
@@ -887,9 +891,9 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
     let stderr = join_reader(stderr_reader)?;
     if wait_failed {
         return Err(match terminate_error {
-            Some(error) => format!(
-                "Windows subprocess cleanup failed (TerminateJobObject error {error})."
-            ),
+            Some(error) => {
+                format!("Windows subprocess cleanup failed (TerminateJobObject error {error}).")
+            }
             None => "Waiting for the Windows subprocess failed.".into(),
         });
     }
@@ -925,8 +929,7 @@ mod tests {
             args: vec![],
             working_directory: None,
         };
-        let error = run_process(&spec, &CapabilitySet::none())
-            .expect_err("process must be denied");
+        let error = run_process(&spec, &CapabilitySet::none()).expect_err("process must be denied");
         assert_eq!(error, "Kemampuan proses belum diberikan kepada program.");
     }
 
@@ -1064,12 +1067,10 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn escaped_session_descendant_cannot_hold_output_readers_open() {
-        let pid_file = std::env::temp_dir().join(format!(
-            "one-escaped-descendant-{}.pid",
-            std::process::id()
-        ));
+        let pid_file =
+            std::env::temp_dir().join(format!("one-escaped-descendant-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \"$1\"; exec sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let script = "setsid sh -c 'echo $ > \"$1\"; exec sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
         let started = Instant::now();
         let result = run_process(
             &ProcessSpec {
@@ -1093,7 +1094,9 @@ mod tests {
             .expect("escaped descendant PID should be numeric");
         // The escaped process is test-owned; clean it up by its recorded PID.
         // SAFETY: the helper created this process exclusively for this test.
-        unsafe { libc::kill(-pid, libc::SIGKILL); }
+        unsafe {
+            libc::kill(-pid, libc::SIGKILL);
+        }
         let _ = std::fs::remove_file(&pid_file);
         assert!(result.success, "helper shell should exit successfully");
         assert!(
@@ -1105,12 +1108,10 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn escaped_session_writer_cannot_hold_output_readers_open() {
-        let pid_file = std::env::temp_dir().join(format!(
-            "one-escaped-writer-{}.pid",
-            std::process::id()
-        ));
+        let pid_file =
+            std::env::temp_dir().join(format!("one-escaped-writer-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let script = "setsid sh -c 'echo $ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
         let spec = ProcessSpec {
             program: "sh".into(),
             args: vec![
@@ -1150,9 +1151,8 @@ mod tests {
             completed_before_cleanup,
             "run_process reader shutdown waited for an escaped descendant that continuously writes"
         );
-        let error = result.expect_err(
-            "a continuously writing escaped descendant must not be silently accepted"
-        );
+        let error = result
+            .expect_err("a continuously writing escaped descendant must not be silently accepted");
         assert!(
             error.contains("output limit") || error.contains("reader did not become idle"),
             "unexpected bounded-reader error: {error}"
@@ -1202,12 +1202,23 @@ mod tests {
             )
         };
         let error = run_process_with_timeout(
-            &ProcessSpec { program, args, working_directory: None },
+            &ProcessSpec {
+                program,
+                args,
+                working_directory: None,
+            },
             &CapabilitySet::none().allow(Capability::Process),
-            if cfg!(windows) { Duration::from_secs(30) } else { PROCESS_TIMEOUT },
+            if cfg!(windows) {
+                Duration::from_secs(30)
+            } else {
+                PROCESS_TIMEOUT
+            },
         )
         .expect_err("stdout beyond the configured cap must be rejected");
-        assert!(error.contains("output limit"), "unexpected bounded stdout error: {error}");
+        assert!(
+            error.contains("output limit"),
+            "unexpected bounded stdout error: {error}"
+        );
     }
 
     #[test]
@@ -1229,19 +1240,32 @@ mod tests {
             )
         };
         let error = run_process_with_timeout(
-            &ProcessSpec { program, args, working_directory: None },
+            &ProcessSpec {
+                program,
+                args,
+                working_directory: None,
+            },
             &CapabilitySet::none().allow(Capability::Process),
-            if cfg!(windows) { Duration::from_secs(30) } else { PROCESS_TIMEOUT },
+            if cfg!(windows) {
+                Duration::from_secs(30)
+            } else {
+                PROCESS_TIMEOUT
+            },
         )
         .expect_err("stderr beyond the configured cap must be rejected");
-        assert!(error.contains("output limit"), "unexpected bounded stderr error: {error}");
+        assert!(
+            error.contains("output limit"),
+            "unexpected bounded stderr error: {error}"
+        );
     }
 
     #[cfg(windows)]
     #[test]
     fn windows_job_object_terminates_descendants_when_parent_exits() {
         use windows_sys::Win32::Foundation::{HANDLE, WAIT_OBJECT_0};
-        use windows_sys::Win32::System::Threading::{GetExitCodeProcess, GetProcessId, TerminateProcess, WaitForSingleObject, INFINITE};
+        use windows_sys::Win32::System::Threading::{
+            GetExitCodeProcess, GetProcessId, INFINITE, TerminateProcess, WaitForSingleObject,
+        };
 
         let parent_pid = std::process::id();
         let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool DuplicateHandle(IntPtr sourceProcess, IntPtr sourceHandle, IntPtr targetProcess, out IntPtr targetHandle, uint access, bool inherit, uint options); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetCurrentProcess(); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool CloseHandle(IntPtr handle); }'; $jobHandle = [IntPtr]::new([Int64]::Parse('__ONE_JOB_QUERY_HANDLE__')); if (-not [JobProbe]::SetHandleInformation($jobHandle, 1, 0)) { throw ('SetHandleInformation failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); try { $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, $jobHandle, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob(target job) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_IN_INVOCATION_JOB=' + $inJob.ToString().ToLowerInvariant())); $parent = [JobProbe]::OpenProcess(0x0040, $false, [uint32]__ONE_PARENT_PID__); if ($parent -eq [IntPtr]::Zero) { throw ('OpenProcess(parent PROCESS_DUP_HANDLE) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $childWaitHandle = [IntPtr]::Zero; try { if (-not [JobProbe]::DuplicateHandle([JobProbe]::GetCurrentProcess(), $child.Handle, $parent, [ref]$childWaitHandle, 0x00101001, $false, 0)) { throw ('DuplicateHandle(child TERMINATE|QUERY_LIMITED_INFORMATION|SYNCHRONIZE into parent) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) } } finally { [void][JobProbe]::CloseHandle($parent) }; [Console]::Out.WriteLine(('CHILD_WAIT_HANDLE=' + $childWaitHandle.ToInt64())) } catch { try { if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit() } } catch {}; throw }";
@@ -1275,10 +1299,12 @@ mod tests {
             .stdout
             .lines()
             .find_map(|line| line.strip_prefix("CHILD_PID="))
-            .unwrap_or_else(|| panic!(
-                "PowerShell did not report a child PID; stdout={:?}, stderr={:?}",
-                result.stdout, result.stderr
-            ))
+            .unwrap_or_else(|| {
+                panic!(
+                    "PowerShell did not report a child PID; stdout={:?}, stderr={:?}",
+                    result.stdout, result.stderr
+                )
+            })
             .trim()
             .parse::<u32>()
             .expect("PowerShell should report a numeric descendant PID");
@@ -1296,7 +1322,10 @@ mod tests {
             .trim()
             .parse::<i64>()
             .expect("PowerShell should report a numeric duplicated process handle") as usize as HANDLE;
-        assert!(!wait_handle.is_null(), "duplicated descendant process handle must be non-null");
+        assert!(
+            !wait_handle.is_null(),
+            "duplicated descendant process handle must be non-null"
+        );
         // Confirm that the retained handle still identifies the exact process
         // whose PID the wrapper reported; this validates the cross-process
         // DuplicateHandle direction and rules out a malformed or stale handle.
@@ -1338,9 +1367,9 @@ mod tests {
             "descendant process {pid} remained active after the bounded process invocation; retained handle PID={retained_pid}, exit code={retained_exit_code}, wait result={wait}"
         );
         assert!(
-            wait == WAIT_OBJECT_0 || (wait == windows_sys::Win32::Foundation::WAIT_TIMEOUT && !process_still_active),
+            wait == WAIT_OBJECT_0
+                || (wait == windows_sys::Win32::Foundation::WAIT_TIMEOUT && !process_still_active),
             "unexpected wait result {wait} for terminated descendant {pid} (exit code {retained_exit_code})"
         );
     }
-
 }
