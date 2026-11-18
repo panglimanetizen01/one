@@ -13,18 +13,6 @@ commands:
           no_output_timeout: 20m
           command: |
             set -euo pipefail
-            if ! command -v rustup >/dev/null 2>&1; then
-              curl --proto '=https' --tlsv1.2 --retry 10 --retry-all-errors --retry-delay 2 --connect-timeout 20 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
-            fi
-            source "$HOME/.cargo/env"
-            rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' rust-toolchain.toml)"
-            if [[ ! "$rust_toolchain" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
-              echo "rust-toolchain.toml must pin an exact x.y.z release" >&2
-              exit 1
-            fi
-            rustup toolchain install "$rust_toolchain" --profile minimal --component rustfmt --component clippy
-            rustup default "$rust_toolchain"
-            echo 'source "$HOME/.cargo/env"' >> "$BASH_ENV"
             # The CircleCI Android machine image may point Noble at a regional
             # GCE mirror whose package indexes and pool files briefly diverge.
             # Use Ubuntu's canonical archive so apt does not request stale
@@ -84,6 +72,27 @@ jobs:
           keys:
             - one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
             - one-cargo-v1-{{ arch }}-
+      - run:
+          name: Install pinned Rust toolchain
+          no_output_timeout: 10m
+          command: |
+            set -euo pipefail
+            if ! command -v rustup >/dev/null 2>&1; then
+              echo "Bootstrapping rustup..."
+              timeout 5m bash -o pipefail -c "curl --proto '=https' --tlsv1.2 --retry 10 --retry-all-errors --retry-delay 2 --connect-timeout 20 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal"
+            fi
+            source "$HOME/.cargo/env"
+            rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\\1/p' rust-toolchain.toml)"
+            if [[ ! "$rust_toolchain" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+              echo "rust-toolchain.toml must pin an exact x.y.z release" >&2
+              exit 1
+            fi
+            echo "Installing pinned Rust toolchain $rust_toolchain..."
+            timeout 10m rustup toolchain install "$rust_toolchain" --profile minimal --component rustfmt --component clippy
+            rustup default "$rust_toolchain"
+            echo 'source "$HOME/.cargo/env"' >> "$BASH_ENV"
+            echo "Pinned Rust toolchain installed."
+
       - setup-linux-cross-toolchains
       - run:
           name: Rust toolchain
