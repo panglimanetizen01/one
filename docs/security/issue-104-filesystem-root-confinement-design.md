@@ -567,3 +567,33 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - The current `one-core` Cargo target dependency already enables `Wdk_Foundation`, `Wdk_Storage_FileSystem`, `Win32_Foundation`, and `Win32_Storage_FileSystem`; this research alone does not justify another feature change.
 - No production code was changed by this research. No Windows backend, junction denial, parent-rename protection, volume identity check, or write operation is claimed implemented or verified.
 - The six required Windows E4 test names remain outstanding. Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED; do not advance the E4 verifier pin until the exact required tests exist and pass.
+
+## 31. Rust windows-sys implementation surface and compile constraints — 2026-11-18
+
+### Existing generated bindings in the pinned dependency
+
+- `windows-sys` is already pinned by the existing dependency resolution at the manifest's `0.61` requirement; `Cargo.toml` enables `Wdk_Foundation`, `Wdk_Storage_FileSystem`, `Win32_Foundation`, and `Win32_Storage_FileSystem`.
+- The generated `NtCreateFile` binding is `windows_sys::Wdk::Storage::FileSystem::NtCreateFile`; its signature accepts a `HANDLE`, `OBJECT_ATTRIBUTES`, `IO_STATUS_BLOCK`, access/share/disposition/options flags, and returns `NTSTATUS`: https://docs.rs/windows-sys/0.61.2/windows_sys/Wdk/Storage/FileSystem/fn.NtCreateFile.html
+- `OBJECT_ATTRIBUTES` is exposed under `windows_sys::Wdk::Foundation`; its generated layout includes `Length`, `RootDirectory`, `ObjectName`, `Attributes`, `SecurityDescriptor`, and `SecurityQualityOfService`: https://docs.rs/windows-sys/0.61.2/windows_sys/Wdk/Foundation/struct.OBJECT_ATTRIBUTES.html
+- The `IO_STATUS_BLOCK` used by this binding resolves to `windows_sys::Win32::System::IO::IO_STATUS_BLOCK`, already enabled by `Win32_System_IO`: https://docs.rs/windows-sys/0.61.2/windows_sys/Win32/System/IO/struct.IO_STATUS_BLOCK.html
+- Root handle acquisition is a separate operation from descendant resolution. The intended trusted-root opener can use `CreateFileW` with directory backup semantics, then transfer the owned HANDLE into `std::fs::File` only after validating it is a directory. Descendants must be opened as one path component at a time relative to retained parent handles; do not pass a multi-component untrusted path or use ambient `std::fs::File::open` as a fallback.
+
+### Metadata and stable-Rust constraint
+
+- `std::os::windows::fs::MetadataExt` exposes `file_attributes`, `file_size`, `volume_serial_number`, `number_of_links`, and `file_index`, but the latter three are documented as nightly-only experimental APIs in the current standard-library reference. Do not rely on them under this repository's pinned stable toolchain: https://doc.rust-lang.org/stable/std/os/windows/fs/trait.MetadataExt.html
+- Use stable handle-based Win32 `GetFileInformationByHandleEx` with `FileAttributeTagInfo`, `FileStandardInfo`, and `FileIdInfo` to obtain reparse attributes/tags, directory/link-count/size information, and volume/file identity. Reject missing/unsupported metadata rather than silently weakening the checks.
+
+### Required implementation shape before enabling Windows
+
+1. `FilesystemAuthority::open` on Windows must open the host-trusted canonical root as a directory handle (backup semantics), validate it, and store the owned handle. The existing non-Linux early return currently prevents this.
+2. `open_relative` must reject non-normal components and open each component relative to the retained parent handle using `NtCreateFile`, with `OBJ_DONT_REPARSE` and a directory-only option for intermediate components. Keep parent handles alive for the full walk and omit delete sharing while those handles protect the walk.
+3. Inspect each opened component from its handle; reject reparse attributes, unexpected object type, hard-linked leaf files, and volume identity changes. Use `FILE_OPEN_REPARSE_POINT` only when inspecting the leaf itself, never as permission to read/write through a reparse object.
+4. Read from the final owned handle only after all checks pass and enforce the byte limit while streaming, not only from a pre-read size.
+5. Implement writes as a separate design: no truncating existing target before all validation, no path-based fallback, and atomic handle-relative replacement or create-new semantics. The mount-boundary no-truncate and Windows tests must demonstrate no side effects on denial.
+6. Add compile-time Windows build coverage and run the six exact verifier tests on Windows Server 2025. A successful Linux build does not compile or validate this cfg(windows) implementation.
+
+### Explicit status
+
+- This section is an implementation map, not production code. No Windows implementation was added or compiled in this checkpoint.
+- The current stable toolchain is `1.100.0`; the proposed design deliberately avoids nightly-only `MetadataExt` accessors.
+- Keep Windows filesystem adapters fail-closed until the full handle walk, metadata checks, positive read/write cases, and six named Windows adversarial tests pass on the independent runner.
