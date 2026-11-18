@@ -304,3 +304,12 @@ Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local
 - Updated `docs/verification/CIRCLECI_DIAGNOSTICS.md` with 13-test coverage details and a distinct exact-SHA ledger row for PR #113 HEAD `f92a4795fc96b0d7780bda150249c5005d98505d` (PENDING at that exact readback; workflow `bf515c38-2b62-46e3-bf7e-cc2f07093f5f`, job `c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9`). That status is historical after this documentation commit.
 - `tools/ci/diagnose_circleci.py` now marks direct `--job-id` source SHA as UNVERIFIED; 2 regression tests cover direct and exact-SHA reporting. The suite has 13 test methods, not yet executed.
 - CircleCI logs and root cause remain unavailable/unknown; config validation remains NOT VERIFIED.
+
+## CircleCI pagination fix — 2026-11-19
+
+- The exact-SHA discovery attempt for `e7014092a01caebf201e43ca9a7ef3bf63e8270f` exposed an arbitrary 10-page cap in `paged_v2_items()`; no CircleCI pipeline/job failure was established by that incomplete search.
+- Removed the fixed page limit. Pagination now follows `next_page_token` until exhaustion and rejects repeated continuation tokens to prevent infinite loops.
+- Added tests for a 12-page result and repeated-token cycle. Suite count is now 14 methods; execution on the new HEAD is pending.
+- Updated `docs/verification/CIRCLECI_DIAGNOSTICS.md` and verification README. New commits require fresh exact-SHA CircleCI status; no previous status is transferred.
+- The next verification must run the 14-test suite, then rerun exact-SHA discovery against the new HEAD. Store the report under `$HOME` (not `/tmp`) on Termux.
+- PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. No merge, main modification, force-push, or pin change.
