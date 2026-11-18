@@ -107,3 +107,18 @@ Canonical hosted CI runs `39372356906` and `39381125667` failed on both matrix j
 
 - Current PR #110 HEAD `26d29c61944e51919161f5360bccfef4a09d370d`: CircleCI `ci/circleci: one-linux` SUCCESS; job `c153ba39-4073-4538-aaa6-6370e6bed6bf`.
 - This is a documentation-only commit; it does not change Issue #104 production source. The source assessment remains bound to parent `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`.
+
+
+## Issue #104 live implementation status — PR #113 candidate, 2026-11-18
+
+This addendum supersedes the older Issue #104 status bullets above where they describe PR #110 / pre-implementation source. It does not change canonical `main`, acceptance pins, or release status.
+
+- Canonical `main` remains unchanged and does not yet contain the PR #113 filesystem authority implementation.
+- PR #113 is OPEN / DRAFT / UNMERGED. Its latest documentation/source HEAD at this checkpoint is `02d552123e3cf33017e2066fe62e304e1573476b`; its latest code-bearing change is in ancestor `5c5bfb53e086222f89dc8178426a8c6b65b50a04`.
+- PR #113 candidate implements host-injected `FilesystemAuthority`, Linux handle-relative `openat2` reads, Windows handle-relative traversal, bounded I/O, and a Windows temporary-sibling + handle-relative rename write path. Linux write and unsupported platform writes remain fail-closed.
+- The atomic write path is IMPLEMENTED in the candidate source, with positive write and denied-replacement cleanup tests. It is NOT VERIFIED on the latest code-bearing SHA until Windows build/tests are run there. Failure injection for write/flush before rename and the full concurrent replacement/reparse test set remain required.
+- E4, Windows native reparse probe, full Ubuntu/Windows, SEC-05, Debian/Ubuntu, and Android artifact evidence passed on prior code SHA `4c3bccaf59d965ce8b446e0b84cb84c00ff2eed6`; those results do not transfer to the newer code SHA `5c5bfb53e086222f89dc8178426a8c6b65b50a04`.
+- Android API 35 AArch64 runtime run `44327291656` still has its emulator boot step IN_PROGRESS and pins the earlier SHA. It is not runtime evidence for the newer candidate.
+- CircleCI `ci/circleci: one-linux` is PENDING for latest HEAD `02d552123e3cf33017e2066fe62e304e1573476b`; job: https://app.circleci.com/workflow/a87975d6-b9c9-4fa4-b18a-bf92c2235045/job/49fb1abd-3870-4332-bcd0-eb370edc24ab. No CircleCI log access is available in this session; no root cause is inferred.
+- User documentation and the Issue #104 design have been updated on PR #113 to describe the candidate/main boundary and the unverified status. The source/rendered architecture diagram was not inspected and is not claimed updated.
+- Classification: filesystem root confinement is IMPLEMENTED / PARTIAL in the unmerged candidate; prior exact-SHA E4 checks are VERIFIED only for their recorded SHA; latest candidate is NOT VERIFIED; platform-wide support and acceptance remain NOT ACCEPTED. Keep Issue #104 OPEN.
