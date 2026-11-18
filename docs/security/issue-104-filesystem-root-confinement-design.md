@@ -512,3 +512,15 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - Independent candidate matrix run [44295933072](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44295933072) was in progress at checkpoint: Windows toolchain/test steps had not yet completed; Linux was at the bounded minimal-toolchain install. No matrix result claimed.
 - Earlier candidate `62c1a19a0c8bedcaf9e87be23ee082cc793c78c3` had Windows PASS (126 main tests, zero failures), but Linux remained at its MinGW installation step. That Windows result does not transfer to this new exact source SHA.
 - Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep E4 and ledger pins unchanged; PR #113 remains draft/unmerged; main remains untouched.
+
+
+## 28. Remove successful-run duplicate test execution in CircleCI — 2026-11-18
+
+- The full `cargo test --locked --workspace --all-targets` step already executes the deterministic CLI artifact, DNS, orchestration, database, and HTTP vertical-slice tests.
+- The six immediately following focused commands repeated subsets of those same targets on every successful run; they did not add a distinct test configuration or coverage boundary.
+- Consolidated them into one CircleCI `run` step with `when: on_fail`. The focused commands remain available as diagnostic reruns after a prior step fails, but no longer consume time on a fully successful pipeline.
+- This is based on command/target overlap in the checked-in config and Rust integration-test layout, not a measured duration claim. CircleCI duration/test insights are not available in this session.
+- The previous toolchain optimization is retained: use the x86_64 POSIX MinGW package instead of the all-architecture meta-package, with bounded apt/network/lock timeouts.
+- Exact source candidate with both CircleCI optimizations: `a2cc2fdaac4fb21220953aa67d98c7f80aa70a9c`.
+- Candidate matrix and CircleCI validation are pending for this exact SHA. No pass is claimed here.
+- Rollback is limited to reverting the two isolated `.circleci/config.yml` commits if CircleCI's validator or runtime rejects the step syntax/command sequence; no product code behavior is changed by these CI edits.
