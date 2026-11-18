@@ -128,3 +128,13 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 - PR #113 latest docs HEAD at this read: `5bfdd712fdbc6cb688908786758d9d262d190b40`; combined status returned no contexts yet. This is inconclusive, not PASS/FAIL.
 - Current validation state: 11 diagnostic unit tests NOT VERIFIED; `circleci config validate` NOT VERIFIED; provider failure logs not yet retrieved.
 
+
+## Direct CircleCI job lookup safety correction — 2026-11-19
+
+The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEAD pipeline discovery and does not itself assert the job's source SHA. Before attributing direct-ID logs to a commit, verify the workflow/pipeline revision in CircleCI and record that SHA with the report. Copy-ready UUIDs, the latest pending job, and validation commands are maintained in `CIRCLECI_DIAGNOSTICS.md`.
+
+- Latest previously observed PR #113 HEAD `bbe5d696ddfe5358932cd4351d5cd0af6070b4a1`: `ci/circleci: one-linux` PENDING, workflow `dc55d982-a016-44a9-8f74-116a8e2c77ff`, job `954d8930-d569-4b1e-9eab-87945b8b50c6`.
+- The diagnostic documentation code fences were corrected to render as actual Markdown code blocks.
+- Do not infer the latest status for a newer SHA from this prior readback. Poll the exact current PR HEAD.
+- Unit tests and CircleCI config validation remain NOT VERIFIED; no failure root cause is claimed without logs.
+
