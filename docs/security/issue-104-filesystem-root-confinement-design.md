@@ -662,3 +662,16 @@ The code shape now implements a temporary-file/rename strategy, but the followin
 8. Keep Issue #104 OPEN and the feature experimental until the entire acceptance set is met.
 
 **Classification:** Windows atomic replacement is now **IMPLEMENTED in the PR candidate**, but it is **NOT VERIFIED on the updated candidate SHA**, not yet SUPPORTED as a cross-platform feature, and not ACCEPTED. No claim is made that atomic rename alone resolves every race or the documented `NtCreateFile` contract limitation.
+
+
+## 34. Rename implementation correction and exact-SHA revalidation — 2026-11-18
+
+The initial Windows atomic replacement implementation at `5c5bfb53e086222f89dc8178426a8c6b65b50a04` failed its positive write test. The Windows job log for E4 run [#44329034647](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329034647) showed `filesystem_write_adapter_writes_text_target` returning `BackendFailure` during the Win32 `SetFileInformationByHandle(FileRenameInfo)` operation. The native cause recorded in the PR discussion was `ERROR_INVALID_PARAMETER (87)` for the non-null relative `RootDirectory` argument.
+
+The implementation was changed to call native `NtSetInformationFile(FileRenameInformation)` (information class 10). On exact source SHA `20ede9fb1d3e97c04f81d4fe8f79f642a8cc8e78`, independent E4 run [#44329905887](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329905887) passed the Windows reparse/handle job, all seven named Windows filesystem tests (including positive atomic write and denied replacement preservation), Unix no-follow/resource-bound tests, and the Windows Server 2025 native `OBJ_DONT_REPARSE` probe.
+
+A subsequent code-bearing change at current candidate SHA `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` changes the rename structure's `RootDirectory` to NULL and supplies only the target leaf name, describing the operation as a same-directory rename from the source handle. This change is NOT yet verified by the prior PASS run: the prior run checked out `20ede9...`, not `f6acb...`.
+
+The diagnostic verifier branch's temporary `CANONICAL_COMMIT.txt` now pins `f6acb...`; fresh E4, cross-platform, SEC-05, distro, Android artifact, and Android runtime workflows are queued. CircleCI `ci/circleci: one-linux` is PENDING for the latest candidate. Keep the feature NOT VERIFIED at `f6acb...` until those workflows complete and their source pins/logs are checked.
+
+The original Win32 rename failure is retained as historical evidence. Do not remove or weaken the positive write test, the denied replacement preservation test, or the exact-SHA verifier. Issue #104 remains OPEN and NOT ACCEPTED.
