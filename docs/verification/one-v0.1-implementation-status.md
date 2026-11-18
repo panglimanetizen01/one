@@ -1,5 +1,32 @@
 # One v0.1 Implementation Status
 
+## Live integration checkpoint — 2026-11-17
+
+- PR #108 now includes the six implementation/test paths carrying the independently verified PR #98–#101 fixes. Integration source commit: `e8cd41ec212c3224bdbecf85eaf18c5850096e16`; subsequent commits synchronize normative specifications.
+- Included: safe manifest name/version components and `one test` manifest validation (#98); SQLite read-only open and missing-file non-creation regression (#99); lexical-scope restoration after errors (#100); inherited filesystem denial/approval semantics (#101).
+- The integrated candidate has NOT been executed. No parent-branch PASS result is transferred. Combined Ubuntu/Windows exact-SHA validation is PENDING; CircleCI status/job evidence is unavailable in this session.
+- PR #108 remains OPEN/DRAFT and targets PR #102 branch `fix/commit-cargo-lockfile-20261117`. Main remains unchanged. Issue #104/#105/#82 remain open. DoD remains 3 checked / 10 unchecked; E6 remains NOT IMPLEMENTED.
+
+
+## Current forensic status — 2026-11-17
+
+This live checkpoint supersedes older "current" SHA/status statements below. Historical evidence remains preserved but is not transferred to later source revisions.
+
+### Exact-SHA evidence
+- PR #98: `a83321bc41b3d0d28378841e29a6169abed8ac15`, GitHub Actions run #2018 / `43923604400`: Ubuntu + Windows Server 2025 SUCCESS.
+- PR #99: `8800b885a4ffcb1931a7a3c71f3eaff888e9f5e9`, run #2019 / `43923948205`: Ubuntu + Windows Server 2025 SUCCESS.
+- PR #100: `6375356c9c275ace5fd35cf4a81799a9546e1e1d`, run #2020 / `43924465030`: Ubuntu + Windows Server 2025 SUCCESS.
+- PR #101: `cdf7bd5b8cff86e1ce271c8f03ef8c01ff61005f`, run #2138 / `44032422058`: Ubuntu + Windows Server 2025 SUCCESS.
+- PR #102: `6c72d8e548bbbc28d85be39b8de427614989a038`, run #2229 / `44086429416`: Ubuntu + Windows Server 2025 SUCCESS; bounded subprocess capture/deadline and Windows Job Object regression passed.
+- PR #107: `21e393157e52728d9510699ac6c9120987e3852c`, run #2230 / `44088328030`: Ubuntu + Windows Server 2025 SUCCESS; bounded Unix reader shutdown regression passed.
+- PR #103 ledger: `041b359b8504551c2c1705093050d9c467368bac`, run #2231 / `44089449162`: Ubuntu + Windows Server 2025 SUCCESS.
+
+### Integration and release boundaries
+- All PRs above remain OPEN/DRAFT/UNMERGED. Their passing results are branch/SHA-specific and do not prove that the separate fixes are integrated together.
+- PR #108 is the CircleCI migration candidate; its CircleCI job execution is NOT VERIFIED. GitHub `main` remains on the three GitHub Actions workflows and has no `.circleci/config.yml`.
+- Issue #104 filesystem root confinement and Issue #105 strong Unix descendant containment remain OPEN. The 100 ms reader shutdown bounds waiting but does not kill an escaped descendant. Issue #82 Android AArch64 execution remains OPEN.
+- E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED. DoD remains 3 checked / 10 unchecked / 13 total.
+
 | Area | State | Evidence in canonical repository |
 |---|---|---|
 | Foundation | ACCEPTED / NORMATIVE | `docs/foundation/one-v0.1-foundation.md` + accepted language invariants; implementation conformance is tracked separately |

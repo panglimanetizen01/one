@@ -8,7 +8,7 @@
 
 This document defines properties that must remain true throughout One v0.1 development. Later specifications may refine how an invariant is implemented, but may not silently weaken or contradict the invariant.
 
-This document does **not** define the complete lexical grammar, concrete grammar, AST schema, type system, or IR schema. Those are subsequent specification gates.
+This document does **not** duplicate the complete lexical grammar, concrete grammar, AST schema, type system, or IR schema. Those are maintained as separate normative contracts indexed in docs/spec/README.md. The initial specification gates have been authored; their implementation conformance and release acceptance remain separately evidence-gated.
 
 ## 2. Normative Language
 
@@ -311,9 +311,9 @@ The repository contains lexer, parser, AST, semantic, IR, interpreter, diagnosti
 
 The lexical, concrete grammar, and AST contracts have since been authored and reviewed as downstream specifications. Their implementation conformance must be established by targeted tests and exact-SHA evidence, not inferred from this document's status. In particular, source-span and localization obligations remain bounded by their respective contracts and recorded implementation limitations.
 
-## 7. Downstream Specification Gates
+## 7. Specification Dependency Order and Current State
 
-The downstream gate order is recorded in [`README.md`](./README.md): lexical rules, concrete grammar, AST, name/scope, types and semantics, IR, interpreter, conformance, backend, runtime/capabilities, tooling and release verification.
+The dependency order remains lexical rules, concrete grammar, AST, name/scope, types and semantics, IR, interpreter, conformance, backend, runtime/capabilities, tooling, and release verification. The current specification index is [docs/spec/README.md](README.md); it is an index, not a claim that every implementation or release gate has passed.
 
 - The lexical specification is normative for the Indonesian v0.1 implementation.
 - The concrete grammar is normative for the Indonesian v0.1 implementation.

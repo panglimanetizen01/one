@@ -109,3 +109,42 @@ fn database_query_requires_explicit_capability() {
     let capabilities = CapabilitySet::none();
     assert!(!capabilities.permits(Capability::DatabaseQuery));
 }
+
+
+#[test]
+fn sqlite_query_does_not_create_a_missing_database_file() {
+    let id = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!("one-read-only-missing-{id}.sqlite"));
+    assert!(!path.exists());
+    let adapter = SqliteAdapter::new();
+    let result = adapter.invoke(
+        &AdapterRequest::new(request(&path.display().to_string()))
+            .with_argument(AdapterArgument::Text("SELECT 1".into())),
+    );
+    assert_eq!(result, Err(one_core::AdapterError::BackendFailure));
+    assert!(!path.exists(), "read-only query must not create a database file");
+}
+
+#[test]
+fn sqlite_query_reads_an_existing_database_without_write_access() {
+    let id = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!("one-read-only-existing-{id}.sqlite"));
+    let setup = rusqlite::Connection::open(&path).expect("test database should be created");
+    setup.execute_batch("CREATE TABLE sample (value TEXT); INSERT INTO sample VALUES ('One');").unwrap();
+    drop(setup);
+
+    let adapter = SqliteAdapter::new();
+    let result = adapter.invoke(
+        &AdapterRequest::new(request(&path.display().to_string()))
+            .with_argument(AdapterArgument::Text("SELECT value FROM sample".into())),
+    ).expect("read-only query should read an existing database");
+    assert!(result.success);
+    assert_eq!(result.output, b"One\n");
+    let _ = std::fs::remove_file(&path);
+}

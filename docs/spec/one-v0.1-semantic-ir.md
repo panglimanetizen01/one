@@ -269,4 +269,4 @@ CSIR implementation may begin only after the semantic model, type system, name r
 
 The reference interpreter is the first consumer. Compiler backends must be implemented against CSIR rather than directly against localized AST syntax.
 
-The next contracts are runtime model and effect/capability model.
+The runtime model and effect/capability contracts are now separately documented in docs/spec/one-v0.1-runtime-model.md and docs/spec/one-v0.1-effect-capability.md. This original dependency note is historical; consult docs/spec/README.md and the current implementation-status record for live gate state.

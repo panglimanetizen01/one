@@ -1,5 +1,20 @@
 # One v0.1 Verification Record
 
+## Integrated P0 candidate — verification pending — 2026-11-17
+
+PR #108 now carries the source and regression-test changes from PR #98–#101. Integration source commit: `e8cd41ec212c3224bdbecf85eaf18c5850096e16`. The normative CLI, package-build, reference-interpreter, and effect-capability specifications were synchronized afterward. This is an integration event, not verification evidence. No combined-source test has been executed or accepted. Required next evidence: exact final PR #108 HEAD, Ubuntu and Windows Server 2025 terminal job results, executed regression names, and CircleCI pipeline/job logs where applicable. Parent PR results must not be transferred.
+
+
+## Current exact-SHA verification checkpoint — 2026-11-17
+
+- PR #98–#101 each passed GitHub Actions on both Ubuntu and Windows Server 2025 on their own exact candidate SHAs: runs #2018, #2019, #2020, and #2138 respectively. These changes remain unmerged and are not yet one integrated source revision.
+- PR #102 exact SHA `6c72d8e548bbbc28d85be39b8de427614989a038` passed run #2229 / `44086429416` on Ubuntu and Windows Server 2025.
+- PR #107 exact SHA `21e393157e52728d9510699ac6c9120987e3852c` passed run #2230 / `44088328030` on Ubuntu and Windows Server 2025.
+- PR #103 ledger exact SHA `041b359b8504551c2c1705093050d9c467368bac` passed run #2231 / `44089449162` on Ubuntu and Windows Server 2025.
+- PR #108 is the current CircleCI migration candidate. CircleCI has not returned a status context or job-level execution evidence for its current head. Its config and static integration fixes do not constitute CircleCI PASS.
+- GitHub `main` remains at `d35db95153f6ddd79885494c72f5aee16c899751`, still has GitHub Actions workflows, and has no CircleCI config.
+- Issues #104 (filesystem root confinement), #105 (Unix escaped-descendant containment), and #82 (Android AArch64 runtime execution) remain OPEN. E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
+
 ## Canonical repository
 
 `panglimanetizen01/one`, branch `main`.

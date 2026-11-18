@@ -54,7 +54,7 @@ Technical alias:
 one run <file.one> --allow network.connect --target <url>
 ```
 
-The `ambil dari "<url>"` source operation maps to semantic capability `network.connect`, effect `Connect`, and the governed `network.http.get` adapter. The current language-level boundary is an explicit `http://` URL, HTTP/1.1 GET, exact target scoping, and response-body normalization. HTTPS, arbitrary methods, custom request headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. The source implementation is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+The `ambil dari "<url>"` source operation maps to semantic capability `network.connect`, effect `Connect`, and the governed `network.http.get` adapter. The current language-level boundary is an explicit `http://` URL, HTTP/1.1 GET, exact target scoping, and response-body normalization. HTTPS, arbitrary methods, custom request headers/bodies, redirects, cookies, and API-specific authentication are outside this slice. The HTTP GET source/runtime slice is **IMPLEMENTED / EXPERIMENTAL**. Its core and CLI vertical-slice tests passed in PR #102 exact-SHA GitHub Actions run #2229 on Ubuntu and Windows Server 2025. This is branch-bound test evidence, not release approval or support for HTTPS/other methods.
 
 ### Filesystem read
 
@@ -102,7 +102,7 @@ The `jalankan proses "<program>"` source operation maps to semantic capability `
 one jalankan <file.one> --izinkan database.query --target <database>
 ```
 
-The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The current implementation is limited to parameterized read-only SQLite `SELECT` statements and is **IMPLEMENTED / UNVERIFIED** until exact-SHA executable evidence exists.
+The `kueri database "<database>" dengan "<SQL>"` source operation maps to semantic capability `database.query`, effect `Read`, resource-scoped governance, and `database.sqlite.query`. The required query boundary is parameterized read-only SQLite `SELECT`; adapters must open existing database files in read-only mode, must not create a missing database path, and must not modify an existing database. The integrated PR #98–#101 candidate now includes the PR #99 adapter and regression tests. The combined candidate remains UNVERIFIED until its own exact-SHA Ubuntu and Windows matrix is terminal PASS; individual parent-branch PASS results are not transferable.
 
 Rules for current orchestration permission surfaces:
 
@@ -137,7 +137,7 @@ Human-readable output is localized. A future machine-readable mode must provide 
 
 ## 6. Project discovery
 
-Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably.
+Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably. Both `one test` and `one package` validate the required `nama` and `versi` manifest fields before compiling, executing, or packaging the project. Values used in `.onepkg` filenames must be single safe portable filename components; reject path separators, reserved filename characters, control characters, leading/trailing whitespace, and `.`/`..` components before writing an artifact.
 
 ## 7. Capability policy
 
@@ -179,3 +179,15 @@ The command refuses to overwrite an existing folder.
 - offline validation for source-only operations;
 - Windows/Linux support through the platform abstraction contract;
 - no LLM or network dependency for command interpretation or language semantics.
+
+
+## Current implementation-conformance gaps — 2026-11-17
+
+- Project-level `one test` manifest validation is required by this contract; PR #98 fixes the current main implementation gap and passed exact-SHA GitHub Actions run #2018 on Ubuntu and Windows. It remains unmerged.
+- Read-only SQLite query must not create or modify a database file. PR #99 fixes the current main gap and passed run #2019 on Ubuntu and Windows; it remains unmerged.
+- Runtime scope restoration after errors is required; PR #100 fixes the current main gap and passed run #2020 on Ubuntu and Windows; it remains unmerged.
+- Parent filesystem denials and approval requirements must apply to inherited child capabilities; PR #101 fixes the current main gap and passed run #2138 on Ubuntu and Windows; it remains unmerged.
+- Filesystem adapter path confinement is a separate open security requirement (Issue #104). Capability scope alone is not a sandbox.
+- Process resource limits and bounded reader shutdown are documented in the effect-capability and interop contracts. Strong Unix escaped-descendant containment remains unresolved (Issue #105).
+
+These PRs are separate branch candidates. Their individual PASS results do not prove an integrated combined revision until a single candidate includes the changes and passes its own exact-SHA matrix.

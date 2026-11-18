@@ -104,7 +104,7 @@ The HTTP GET adapter currently accepts only explicit `http://` targets, performs
 
 ## 10. Process scope
 
-Process execution requires `process.spawn`. The capability may constrain executable identity, arguments, working directory, environment inheritance, and standard-stream routing. A denied process request must not start a process. The reference adapter enforces a 10-second deadline and a 1 MiB limit per captured output stream. On Windows, the process is assigned to a kill-on-close Job Object during process creation, and remaining job members are explicitly terminated during cleanup. On Unix, cleanup sends SIGKILL to the invocation's dedicated process group; this is best-effort and does not contain descendants that deliberately create a new session or process group.
+Process execution requires `process.spawn`. The capability may constrain executable identity, arguments, working directory, environment inheritance, and standard-stream routing. A denied process request must not start a process. The adapter bounds the direct child's execution to 10 seconds and captures at most 1 MiB per output stream. Unix cleanup kills the original process group and bounds reader shutdown with a 100 ms drain grace; output overflow or a pipe that does not become idle produces an error. Descendants that create a new session or process group may still survive; strong Unix process-tree containment is not claimed (Issue #105). Windows execution uses a Job Object assigned at process creation and terminates remaining job members during cleanup.
 
 ## 11. Native calls
 
@@ -122,7 +122,7 @@ Library composition must preserve the transitive effect requirements needed by e
 
 ## 14. Capability inheritance
 
-Child function calls inherit only the capabilities explicitly available to the executing runtime context. A function cannot manufacture a broader capability from an ordinary value or from another denied request.
+Child function calls inherit only the capabilities explicitly available to the executing runtime context. A function cannot manufacture a broader capability from an ordinary value or from another denied request. Where a policy explicitly supports coarse capability inheritance (for example, a `filesystem` grant covering `filesystem.read` and `filesystem.write`), parent-level denials and approval requirements apply to those inherited child requests as well. Explicit denial takes precedence over an inherited grant.
 
 Process children do not automatically receive all parent capabilities; inheritance must be explicitly configured by the process policy.
 

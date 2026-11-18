@@ -126,4 +126,4 @@ GitHub is the canonical source of truth for One. Local/Termux environments are v
 
 Development must follow technical dependencies. Later layers must not invent contracts that belong to earlier layers.
 
-The next design gate is the formal lexical and grammar specification, followed by AST, scope/name resolution, type system, semantic model, IR, reference interpreter, conformance tests, compiler, runtime, tooling, platforms, ecosystem, and interoperability.
+The initial lexical, grammar, AST, semantic, IR, runtime, capability, CLI, and conformance contracts have since been authored and are indexed in docs/spec/README.md. This foundation document records the original design sequence, not the current task queue. Current implementation gaps and release gates are tracked in docs/verification/one-v0.1-implementation-status.md and the live completion ledger.

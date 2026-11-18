@@ -94,7 +94,7 @@ Event registration is runtime state. An event handler executes only when a match
 
 ## 12. Resource limits
 
-The runtime may enforce explicit limits for stack depth, memory, execution steps, open resources, and effect payload sizes. Limits are configuration, not semantic coercion. Exceeding a limit produces a structured resource error. The process adapter additionally enforces its fixed execution deadline, bounded stdout/stderr capture, and process-tree cleanup policy.
+The runtime may enforce explicit limits for stack depth, memory, execution steps, open resources, and effect payload sizes. Limits are configuration, not semantic coercion. Exceeding a limit produces a structured resource error. The process adapter additionally bounds the direct-child deadline and stdout/stderr capture. On Unix, process-group cleanup is escapable by descendants that create a new session or group. Nonblocking readers drain for at most a 100 ms shutdown grace after direct-child cleanup; output overflow or a pipe that does not become idle produces an error. Reader shutdown is bounded, but escaped descendants may survive. Strong Unix process-tree containment remains an open security requirement (Issue #105). Windows uses Job Object containment.
 
 ## 13. Host isolation
 

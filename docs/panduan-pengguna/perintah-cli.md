@@ -14,6 +14,10 @@ CLI adalah pintu masuk command-line One v0.1.
 | `one version` | — | melihat versi |
 | `one help` | — | melihat bantuan |
 
+## Validasi manifest project — kandidat integrasi
+
+Kandidat pengembangan PR #108 mengintegrasikan validasi `nama` dan `versi` dari `one.toml` untuk perintah `one test` dan `one package`. Nilai yang dipakai pada nama artefak `.onepkg` harus berupa komponen nama file portabel yang aman; pemisah path, karakter terlarang, control character, whitespace tepi, serta komponen `.` dan `..` ditolak. **Perubahan ini masih kandidat dan belum diverifikasi pada satu exact SHA gabungan atau dirilis ke main.**
+
 ## Menjalankan orchestration DNS
 
 Vertical slice orchestration pertama yang tersedia secara eksperimental adalah pencarian alamat DNS melalui source One `cari alamat`.
@@ -147,3 +151,15 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 Latest exact-SHA executable evidence for filesystem write/CLI is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
 
 The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write, database, or HTTP changes.
+
+## Batas keamanan dan verifikasi terbaru — 2026-11-17
+
+Perintah dan capability di atas tetap bersifat eksperimental sesuai batasnya. Jangan menganggap izin capability sebagai sandbox filesystem atau jaminan bahwa semua descendant proses telah dihentikan.
+
+- Process execution: PR #102 dan PR #107 lulus GitHub Actions Ubuntu + Windows pada exact SHA masing-masing. Implementasi kandidat membatasi direct-child execution hingga 10 detik, output stdout/stderr masing-masing 1 MiB, dan Unix reader shutdown hingga 100 ms. Descendant Unix yang membuat session/process group baru masih dapat hidup setelah pemanggilan kembali; Issue #105 tetap OPEN. Hindari menggunakannya untuk menjalankan program yang tidak dipercaya sampai containment kuat tersedia.
+- Filesystem: Issue #104 masih OPEN. Adapter filesystem pada main belum memiliki race-resistant project-root confinement berbasis handle. Target path dan capability scope bukan pengganti sandbox.
+- Database: PR #99 memperbaiki pembukaan database agar query tidak membuat file baru; exact-SHA tests lulus pada kandidat PR tersebut, tetapi perubahan belum masuk main. Jangan mengandalkan jaminan ini pada main sebelum integrasi.
+- Project test/manifest: PR #98 menutup celah validasi manifest pada one test; masih branch-specific sampai integrasi.
+- Runtime scope dan policy: PR #100 dan #101 memperbaiki pemulihan scope setelah error serta inheritance deny/approval; keduanya lulus pada branch masing-masing tetapi belum terintegrasi ke main.
+
+Semua PASS tersebut adalah bukti GitHub Actions pada SHA kandidat masing-masing, bukan bukti CircleCI dan bukan persetujuan rilis. CircleCI migration masih draft pada PR #108; main belum berpindah provider.

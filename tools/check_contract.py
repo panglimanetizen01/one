@@ -1,10 +1,11 @@
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 
 required = [
-    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
-    ".github/workflows/ci.yml", ".github/workflows/release-check.yml", ".github/workflows/windows-native-verification.yml",
+    "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "Cargo.lock", "rust-toolchain.toml",
+    ".circleci/config.yml", "docs/spec/one-v0.1-ci-verification-contract.md",
     "docs/README.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
@@ -35,6 +36,26 @@ required = [
 missing = [path for path in required if not (ROOT / path).is_file()]
 if missing:
     raise SystemExit("MISSING CONTRACT ARTIFACTS:\n" + "\n".join(missing))
+
+legacy_workflows = [
+    ".github/workflows/ci.yml",
+    ".github/workflows/release-check.yml",
+    ".github/workflows/windows-native-verification.yml",
+]
+present_legacy = [path for path in legacy_workflows if (ROOT / path).exists()]
+if present_legacy:
+    raise SystemExit("LEGACY GITHUB ACTIONS WORKFLOWS REMAIN:\n" + "\n".join(present_legacy))
+
+# Every Cargo build/test/run command used by CI or the portable offline verifiers
+# must honor the committed lockfile. This prevents CI from silently resolving
+# a different dependency graph than the one reviewed in the repository.
+for script in (".circleci/config.yml", "tools/verify_offline.sh", "tools/verify_offline.ps1"):
+    for line_number, line in enumerate((ROOT / script).read_text(encoding="utf-8").splitlines(), start=1):
+        command = line.strip()
+        if command.startswith("command:"):
+            command = command[len("command:"):].strip()
+        if re.match(r"^cargo\s+(?:build|clippy|test|run)\b", command) and "--locked" not in command:
+            raise SystemExit(f"LOCKFILE CONTRACT: {script}:{line_number} Cargo command must include --locked")
 
 release = (ROOT / "docs/release/one-v0.1.md").read_text(encoding="utf-8")
 if "do not purchase an upgrade" not in release.lower():
@@ -68,6 +89,20 @@ fixture = (ROOT / "tests/spec/grammar_examples.one").read_text(encoding="utf-8")
 for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika "):
     if marker not in fixture:
         raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
+
+
+# Keep the repository toolchain reproducible and make CircleCI consume the same pin.
+toolchain_text = (ROOT / "rust-toolchain.toml").read_text(encoding="utf-8")
+channel_line = next((line.strip() for line in toolchain_text.splitlines() if line.strip().startswith("channel")), "")
+if not channel_line.startswith('channel = "') or not channel_line.endswith('"'):
+    raise SystemExit("TOOLCHAIN CONTRACT: rust-toolchain.toml must pin an exact x.y.z release")
+toolchain_version = channel_line[len('channel = "'):-1]
+version_parts = toolchain_version.split(".")
+if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
+    raise SystemExit("TOOLCHAIN CONTRACT: rust-toolchain.toml must pin an exact x.y.z release")
+circleci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
+if 'rustup toolchain install "$rust_toolchain"' not in circleci_config or 'rustup default "$rust_toolchain"' not in circleci_config or 'rust_toolchain="$(sed -nE' not in circleci_config:
+    raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the rust-toolchain.toml version")
 
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")

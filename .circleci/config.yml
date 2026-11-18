@@ -1,0 +1,145 @@
+version: 2.1
+
+parameters:
+  run_release_checks:
+    type: boolean
+    default: false
+
+commands:
+  setup-linux-cross-toolchains:
+    steps:
+      - run:
+          name: Install Linux, Android, and Windows-target cross-toolchains (Linux host)
+          command: |
+            set -euo pipefail
+            if ! command -v rustup >/dev/null 2>&1; then
+              curl --proto '=https' --tlsv1.2 --retry 10 --retry-all-errors --retry-delay 2 --connect-timeout 20 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
+            fi
+            source "$HOME/.cargo/env"
+            rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' rust-toolchain.toml)"
+            test -n "$rust_toolchain"
+            rustup toolchain install "$rust_toolchain" --profile minimal --component rustfmt --component clippy
+            rustup default "$rust_toolchain"
+            echo 'source "$HOME/.cargo/env"' >> "$BASH_ENV"
+            # The CircleCI Android machine image may point Noble at a regional
+            # GCE mirror whose package indexes and pool files briefly diverge.
+            # Use Ubuntu's canonical archive so apt does not request stale
+            # package versions from that regional mirror.
+            sudo find /etc/apt -type f \( -name '*.sources' -o -name '*.list' \) \
+              -exec sed -i 's/us-east1.gce.archive.ubuntu.com/archive.ubuntu.com/g' {} +
+            sudo apt-get clean
+            sudo apt-get update -o Acquire::Retries=3
+            sudo apt-get install -y -o Acquire::Retries=3 clang mingw-w64 binutils-x86-64-linux-gnu
+            sdkmanager --licenses < <(yes)
+            sdkmanager --install "ndk;27.2.12479018"
+            ndk_clang="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+            test -x "$ndk_clang"
+            {
+              echo "export ONE_ANDROID_CLANG=$ndk_clang"
+              echo "export ONE_WINDOWS_CLANG=clang"
+            } >> "$BASH_ENV"
+            echo "Android NDK clang: $ndk_clang"
+            clang --version
+            x86_64-w64-mingw32-gcc --version
+
+jobs:
+  one-linux:
+    machine:
+      image: android:default
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
+            - one-cargo-v1-{{ arch }}-
+      - setup-linux-cross-toolchains
+      - run:
+          name: Rust toolchain
+          command: |
+            rustc --version
+            cargo --version
+            python3 --version
+      - run:
+          name: Contract artifacts
+          command: python3 tools/check_contract.py
+      - run:
+          name: User documentation consistency
+          command: python3 tools/check_user_docs.py
+      - run:
+          name: User documentation checker tests
+          command: python3 tools/check_user_docs_test.py
+      - run:
+          name: Build
+          command: cargo build --locked --workspace --all-targets
+      - run:
+          name: Clippy
+          command: |
+            cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run:
+          name: Workspace tests
+          command: cargo test --locked --workspace --all-targets
+      - run:
+          name: Deterministic .oneir and .onepkg artifacts
+          command: cargo test --locked -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+      - run:
+          name: DNS success and failure classification
+          command: |
+            cargo test --locked -p one-core --all-targets dns_adapter
+      - run:
+          name: Orchestration policy deny and allow paths
+          command: |
+            cargo test --locked -p one-core --all-targets orchestrator
+      - run:
+          name: Database vertical slice
+          command: |
+            cargo test --locked -p one-core --test database_vertical_slice
+      - run:
+          name: HTTP GET vertical slice
+          command: |
+            cargo test --locked -p one-core --test http_get_vertical_slice
+      - run:
+          name: HTTP GET CLI vertical slice
+          command: |
+            cargo test --locked -p one-cli --test http_get_orchestration
+      - run:
+          name: Build release CLI
+          command: cargo build --release --locked -p one-cli --bin one
+      - run:
+          name: Smoke-test release CLI
+          command: |
+            set -euo pipefail
+            binary=target/release/one
+            test -x "$binary"
+            version=$("$binary" version)
+            test "$version" = "one 0.1.0"
+            temp_dir=$(mktemp -d)
+            trap 'rm -rf "$temp_dir"' EXIT
+            printf '%s\n' 'nama adalah "Budi"' 'tampilkan nama' > "$temp_dir/halo.one"
+            output=$("$binary" jalankan "$temp_dir/halo.one")
+            test "$output" = "Budi"
+      - when:
+          condition: << pipeline.parameters.run_release_checks >>
+          steps:
+            - run:
+                name: Real network runtime tests (release gate)
+                command: cargo test --locked -p one-core --features real-network --all-targets
+            - run:
+                name: Offline verification (release gate)
+                command: bash tools/verify_offline.sh
+      - save_cache:
+          key: one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
+          paths:
+            - ~/.cargo/registry
+            - ~/.cargo/git
+
+workflows:
+  one-ci:
+    when: not pipeline.parameters.run_release_checks
+    jobs:
+      - one-linux
+
+  release-check:
+    when: pipeline.parameters.run_release_checks
+    jobs:
+      - one-linux
