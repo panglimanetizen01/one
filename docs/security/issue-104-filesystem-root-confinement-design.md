@@ -759,3 +759,10 @@ Source implementation and tests: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; foc
 Added `run_command_uses_nearest_one_manifest_as_filesystem_root` to the CLI integration suite. It creates a temporary project with `one.toml`, places the source under `src/main.one`, and verifies a write to a direct child of the project root. This proves the host selects the nearest manifest ancestor rather than the source subdirectory or requested target parent.
 
 Test source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; verifier pin updated to the same exact SHA. Verification pending.
+
+
+## 43. Ancestor manifest search correction — 2026-11-18
+
+The CLI source-root resolver no longer stops manifest discovery at the current working directory. It now walks all ancestors of the canonical source parent and chooses the nearest `one.toml`, then falls back to the canonical working directory when the source is beneath it, or to the canonical source parent otherwise. This covers source files located directly under a subdirectory while the project manifest is above the working directory.
+
+Correction source SHA: `722d662e7a81711ba3607d26571f4048a292b3ed`; diagnostic verifier pin updated. Exact-SHA verification pending.
