@@ -183,3 +183,10 @@ On corrected source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`, Android AArc
 - Current code-bearing source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`.
 - Added cross-platform CLI regression proving the nearest `one.toml` ancestor is the authority root for a source under `src/main.one`; direct-child output under the project root succeeds.
 - Diagnostic verifier pin updated to `1b7c3bb...`; fresh exact-SHA runs must be inspected before host-root integration is marked VERIFIED.
+
+
+## Project-root ancestor lookup correction — 2026-11-18
+
+- Current code-bearing source SHA: `722d662e7a81711ba3607d26571f4048a292b3ed`.
+- CLI root resolver now searches all ancestors of the canonical source parent for the nearest `one.toml`, including ancestors above cwd, before falling back to cwd/source parent.
+- Diagnostic verifier pin updated to `722d662...`; exact-SHA E4/workspace verification pending.
