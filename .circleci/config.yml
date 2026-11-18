@@ -117,6 +117,10 @@ jobs:
           when: on_fail
           command: |
             set -uo pipefail
+            if [[ ! -f Cargo.toml ]] || ! command -v cargo >/dev/null 2>&1 || ! cargo --version >/dev/null 2>&1; then
+              echo "Skipping focused Rust diagnostics: the workspace or Cargo toolchain is unavailable after the earlier CI failure."
+              exit 0
+            fi
             status=0
             run_diagnostic() {
               label="$1"
