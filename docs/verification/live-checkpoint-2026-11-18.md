@@ -69,3 +69,13 @@ PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub C
 - The original matrix run's Linux job remains stale/in-progress at its old MinGW install step; do not wait on or rerun the already successful Windows job. The separate Linux-only run is the authoritative Linux result.
 - Issue #104 is still OPEN / NOT IMPLEMENTED. The production adapter source still calls `std::fs::read(path)` and `std::fs::write(path, ...)`. No filesystem root authority, race-resistant handle-relative operations, size limits, or Issue #104 adversarial tests are present in this candidate. E4 and DoD must not advance.
 - Next work: implement Issue #104 only on the current PR #110 branch after establishing a validated runner route for Rust + Unix + Windows native tests. Keep main untouched and all PRs draft/unmerged.
+
+## Reconciliation branch checkpoint — 2026-11-18
+
+- A non-destructive reconciliation branch was created from current base `ci/circleci-migration-rebased-20261117` at exact SHA `a20676be53e5f78c465832379d86c3675a2ed7c8`: `reconciliation/pr-110-base-sync-20261118`.
+- The first reconciliation commit imported only PR #110 files that were unchanged on the base since the common merge base, plus the two PR-added design/checkpoint documents. It preserved the base's newer CI migration and release workflow changes.
+- The next reconciliation commit starts from that branch and keeps the six dedicated focused test steps and the base printf smoke fixture, adds strict x.y.z toolchain validation, preserves the comprehensive contract checker, and appends PR #110's additive prompt/forensic sections to the newer base documents.
+- Current reconciliation candidate SHA: `42997e7ce0701796f045a6d130fa515c295f5971` (this SHA is superseded if a subsequent correction commit is made).
+- GitHub compare against the base reports 2 commits ahead / 0 behind; 12 changed files. CircleCI `ci/circleci: one-linux` for this exact SHA is PENDING at the last status read. No Linux/Windows independent verifier result exists yet for this new candidate.
+- Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. Original PR #110 remains open/draft/unmerged and its source branch has not been changed.
+- Issue #104 remains OPEN / NOT IMPLEMENTED. The imported design/specification is not implementation evidence. Do not advance E4 or DoD.

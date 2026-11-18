@@ -108,3 +108,10 @@ if (
     or "rust-toolchain.toml must pin an exact x.y.z release" not in circleci_config
 ):
     raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the exact pinned toolchain with no implicit default")
+
+print("CONTRACT CHECK: PASS")
+print(f"required artifacts: {len(required)}")
+print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
+print(f"valid fixtures: {len(valid)}")
+print(f"invalid fixtures: {len(invalid)}")
+print(f"golden fixtures: {len(golden)}")
