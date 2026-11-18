@@ -301,6 +301,13 @@ mod windows_native {
             ea_buffer: *const c_void,
             ea_length: u32,
         ) -> i32;
+        fn NtSetInformationFile(
+            file_handle: HANDLE,
+            io_status_block: *mut IoStatusBlock,
+            file_information: *const c_void,
+            length: u32,
+            file_information_class: i32,
+        ) -> i32;
     }
 
     fn status_error(status: i32) -> FilesystemError {
@@ -564,18 +571,28 @@ mod windows_native {
             destination.add(leaf.len()).write(0);
         }
 
-        let ok = unsafe {
-            SetFileInformationByHandle(file.as_raw_handle() as HANDLE, 3 as _, base.cast::<c_void>(), buffer_length_u32)
+        let mut io_status = IoStatusBlock {
+            value: IoStatusValue { status: 0 },
+            information: 0,
         };
-        if ok == 0 {
+        let status = unsafe {
+            NtSetInformationFile(
+                file.as_raw_handle() as HANDLE,
+                &mut io_status,
+                base.cast::<c_void>(),
+                buffer_length_u32,
+                10, // FileRenameInformation
+            )
+        };
+        if status < 0 {
             #[cfg(test)]
             eprintln!(
-                "SetFileInformationByHandle(FileRenameInfo) failed: win32={}, parent={:?}, leaf={:?}",
-                unsafe { windows_sys::Win32::Foundation::GetLastError() },
+                "NtSetInformationFile(FileRenameInformation) failed: NTSTATUS=0x{:08X}, parent={:?}, leaf={:?}",
+                status as u32,
                 parent,
                 String::from_utf16_lossy(leaf)
             );
-            return Err(FilesystemError::IoFailure);
+            return Err(status_error(status));
         }
         Ok(())
     }
