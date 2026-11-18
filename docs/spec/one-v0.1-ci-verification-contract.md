@@ -111,3 +111,12 @@ CircleCI Cargo cache keys MUST include the architecture, workspace/package manif
 ## 14. Release workflow deduplication
 
 The CircleCI release-check workflow MUST NOT rerun the ordinary baseline build, Clippy, workspace tests, documentation checks, toolchain bootstrap, or release CLI smoke test in a separate duplicate job when those gates are already executed by the canonical Linux job. The ordinary and release-check workflows MUST be mutually exclusive for a given pipeline parameter value so exactly one baseline Linux job is scheduled. Release-only gates (currently real-network runtime tests and the portable offline verifier) MUST execute conditionally within the selected release-check run and MUST NOT be removed or weakened. A refactor is accepted only after CircleCI schema validation and terminal job-level execution evidence on the resulting exact SHA; static YAML readback alone is not execution evidence.
+
+
+## 15. Rust toolchain reproducibility
+
+- The repository MUST pin an exact Rust release in `rust-toolchain.toml`; floating `stable` or `nightly` channels are not acceptable for the canonical verification contract.
+- CircleCI MUST read the pinned channel from `rust-toolchain.toml` and install/select that exact version. It MUST NOT bootstrap one floating toolchain and then separately install another.
+- The independent Windows/Linux verifier MUST use the same exact Rust release as the source repository.
+- A toolchain bump requires a fresh Linux/Windows matrix and a terminal CircleCI result on the resulting exact source SHA. Historical PASS evidence from another compiler version or SHA MUST NOT be transferred.
+- Current baseline for the 2026-11-18 toolchain pin: Rust `1.100.0` was observed on both Linux and Windows in independent verifier run `44243755612` for source SHA `bac3a2e6f3ba6db5b821b9eafa6c5576f9fa8554`. This is baseline evidence only; the new pinned source SHA still requires its own verification.

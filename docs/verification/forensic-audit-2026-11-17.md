@@ -221,3 +221,11 @@ Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tool
 - Normative contract update: Section 14 of `docs/spec/one-v0.1-ci-verification-contract.md` requires mutually exclusive workflow selection, one baseline job, and preservation of release-only gates. Contract commit: `d4152f1cf6b8f3b9300575f649824551b408f910`.
 - Static review intent: avoid duplicate baseline execution while retaining the same baseline checks and additional release-only gates. No runtime/source semantics changed.
 - Validation boundary: GitHub readback and structural inspection only. CircleCI CLI/schema validation and actual conditional workflow execution remain NOT VERIFIED because authenticated CircleCI access is unavailable in this session. No CircleCI PASS is claimed; the exact resulting HEAD must be refreshed after documentation synchronization.
+
+
+## CircleCI configuration review — Rust toolchain reproducibility — 2026-11-18
+
+- Review found that `.circleci/config.yml` and `rust-toolchain.toml` used floating `stable`, and the bootstrap path could install a default stable toolchain before explicitly installing it again. The rustup bootstrap also had no retry policy.
+- Baseline evidence: independent verifier run `44243755612` logs show Rust `1.100.0` on both Ubuntu 24.04 and Windows Server 2025, with 239 Linux tests and 232 Windows tests passing (one ignored on each platform) for source SHA `bac3a2e6f3ba6db5b821b9eafa6c5576f9fa8554`.
+- Remediation on the CircleCI candidate: pin `rust-toolchain.toml` to `1.100.0`; bootstrap rustup with bounded retries and no implicit default toolchain; derive the installed toolchain from the repository file; and enforce this contract in `tools/check_contract.py`.
+- Required follow-up: set the independent verifier action to the same exact version, advance only its non-acceptance candidate pin to the resulting source SHA, and require fresh Linux/Windows plus CircleCI terminal evidence. Do not transfer the baseline result to the new SHA.

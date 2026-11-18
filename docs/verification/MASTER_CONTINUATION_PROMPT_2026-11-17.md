@@ -175,3 +175,11 @@ After every successfully completed task:
 - Bootstrap review: `rust-toolchain.toml` specifies floating `stable`; do not claim reproducible Rust compiler version. Pinning requires an explicitly selected and tested Rust version. The runner uses `android:default` (mutable image tag); changing/pinning the image or removing cross-toolchains requires a measured exact-SHA trial and verification of all consumers. Do not weaken the acceptance matrix or alter release gates.
 - ci-local extraction is CLOSED as a mission: standalone ci-local PR #2 is merged; ONE main code search found no ci-local references. The older Notion scope-correction block that calls extraction the active mission is superseded by this current master prompt and CircleCI task history; preserve it as historical record, not current scope.
 - Next action: obtain CircleCI CLI validation and job-level logs in an authorized owner environment, then inspect actual execution. If unavailable, continue static config review only where evidence supports a safe change; never ask for a token in chat.
+
+
+## LIVE CI TOOLCHAIN PIN UPDATE — 2026-11-18
+
+- The CircleCI candidate pins the repository toolchain to Rust `1.100.0` in `rust-toolchain.toml` instead of floating `stable`.
+- CircleCI bootstraps rustup with retries and `--default-toolchain none`, then reads the exact channel from `rust-toolchain.toml` and installs/selects it once. `tools/check_contract.py` enforces an exact x.y.z pin and verifies CircleCI consumes that pin.
+- Independent verifier run `44243755612` previously observed Rust `1.100.0` on both Linux and Windows for source SHA `bac3a2e6f3ba6db5b821b9eafa6c5576f9fa8554`; this is a compatibility baseline, not evidence for the new commit.
+- The updated exact source SHA must receive a fresh CircleCI result and an independent Linux/Windows candidate matrix. Refresh the live PR head before recording the new SHA. Keep PRs draft/unmerged and do not move the E4 pin.

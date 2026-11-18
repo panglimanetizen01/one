@@ -90,6 +90,22 @@ for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika 
     if marker not in fixture:
         raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
 
+
+# Keep the repository toolchain reproducible and make CircleCI consume the same pin.
+toolchain_text = (ROOT / "rust-toolchain.toml").read_text(encoding="utf-8")
+toolchain_match = re.search(r'^channel\\s*=\\s*"([0-9]+\\.[0-9]+\\.[0-9]+)"\\s*
+print(f"required artifacts: {len(required)}")
+print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
+print(f"valid fixtures: {len(valid)}")
+print(f"invalid fixtures: {len(invalid)}")
+print(f"golden fixtures: {len(golden)}")
+, toolchain_text, re.MULTILINE)
+if not toolchain_match:
+    raise SystemExit("TOOLCHAIN CONTRACT: rust-toolchain.toml must pin an exact x.y.z release")
+circleci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
+if 'rustup toolchain install "$rust_toolchain"' not in circleci_config or 'rustup default "$rust_toolchain"' not in circleci_config:
+    raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the rust-toolchain.toml version")
+
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")
 print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
