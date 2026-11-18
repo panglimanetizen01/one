@@ -142,6 +142,60 @@ fn run_command_rejects_absolute_filesystem_target_outside_source_project_root() 
 }
 
 #[test]
+fn run_command_rejects_absolute_filesystem_read_outside_source_project_root() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let project_root = std::env::temp_dir().join(format!("one-filesystem-read-project-{id}"));
+    fs::create_dir(&project_root).unwrap();
+    let source = project_root.join("main.one");
+    let target = std::env::temp_dir().join(format!("one-filesystem-read-outside-{id}.txt"));
+    let target_arg = target.to_string_lossy().replace('\\', "/");
+    fs::write(&target, "OUTSIDE_READ_SENTINEL").unwrap();
+    fs::write(&source, format!("baca berkas \"{target_arg}\"\n")).unwrap();
+
+    let output = run(&[
+        "run",
+        source.to_str().unwrap(),
+        "--izinkan",
+        "filesystem.read",
+        "--target",
+        &target_arg,
+    ]);
+
+    assert!(!output.status.success(), "absolute read target outside the source project root unexpectedly succeeded");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ResolutionFailed"), "expected root-confinement diagnostic, got: {stderr}");
+    assert!(!String::from_utf8_lossy(&output.stdout).contains("OUTSIDE_READ_SENTINEL"));
+    assert_eq!(fs::read(&target).unwrap(), b"OUTSIDE_READ_SENTINEL");
+
+    let _ = fs::remove_file(&target);
+    let _ = fs::remove_file(&source);
+    let _ = fs::remove_dir(&project_root);
+}
+
+#[cfg(any(windows, target_os = "linux"))]
+#[test]
+fn run_command_resolves_relative_source_from_host_working_root() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let source_name = format!(".one-relative-source-{id}.one");
+    let target_name = format!(".one-relative-target-{id}.txt");
+    fs::write(&source_name, format!("tulis ke berkas \"{target_name}\" dengan \"RELATIVE_ROOT_OK\"\n")).unwrap();
+
+    let output = run(&[
+        "run",
+        &source_name,
+        "--izinkan",
+        "filesystem.write",
+        "--target",
+        &target_name,
+    ]);
+
+    assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+    assert_eq!(fs::read(&target_name).unwrap(), b"RELATIVE_ROOT_OK");
+    let _ = fs::remove_file(&target_name);
+    let _ = fs::remove_file(&source_name);
+}
+
+#[test]
 fn filesystem_write_permission_does_not_grant_filesystem_read() {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
     let target = std::env::temp_dir().join(format!("one-filesystem-read-target-{id}.txt"));
