@@ -317,3 +317,42 @@ The verifier input issue was bypassed safely with a dedicated Linux-only workflo
 - PR #110 HEAD `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c` is a separate stacked candidate and has its own CircleCI `ci/circleci: one-linux` SUCCESS. Do not conflate that status with the independent Windows run, which is pinned to `a20676be...`.
 - The old full matrix run `44263674485` still has its Linux job stuck at the original MinGW install step; the Windows job from that run is the success cited above. The separate Linux-only run is the successful Linux evidence.
 - Issue #104 remains OPEN / NOT IMPLEMENTED. This baseline suite contains no required root-handle confinement implementation or adversarial acceptance tests; it does not satisfy E4 or authorize a score/DoD promotion.
+
+
+## 22. Implementation branch and native API compile checkpoint — 2026-11-18
+
+### Branch and PR
+
+- Created isolated implementation branch `security/issue-104-root-confinement-20261118` from exact source SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`, the candidate that passed the independent Linux/Windows baseline matrix.
+- Opened draft PR #113: https://github.com/panglimanetizen01/one/pull/113.
+- PR #113 is stacked directly on PR #112 branch `fix/windows-process-verifier-timeouts-20261118`, whose base SHA is the same `181ad350...`. This keeps the Issue #104 work isolated from the Windows process-test remediation.
+- Current PR #113 head: `8b92038afb205e8f36353b34ce808dba1ce1d389`.
+- Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`; no merge or main update.
+
+### Changes in this first spike
+
+- `crates/one-core/Cargo.toml`: enabled `windows-sys 0.61` features `Wdk_Foundation` and `Wdk_Storage_FileSystem`.
+- Added `crates/one-core/src/filesystem.rs` with a compile-time-only Windows binding probe that references `Wdk::Foundation::OBJECT_ATTRIBUTES` and `Wdk::Storage::FileSystem::NtCreateFile`. The latter accepts an `OBJECT_ATTRIBUTES` structure with a `RootDirectory` handle, which is the native API surface needed for handle-relative opens.
+- Registered `pub mod filesystem` in `crates/one-core/src/lib.rs`.
+- No filesystem read/write operation, authority object, or path fallback was implemented by this spike.
+
+### Validation state
+
+- CircleCI `ci/circleci: one-linux` for exact head `8b92038...` is PENDING, job https://app.circleci.com/workflow/30362ce7-e263-4558-b8c8-fa0366b4052b/job/8e7fa151-00a3-4b77-a3a7-18868ed259d6. No compile PASS is claimed yet.
+- The prior independent baseline matrix run [44285138516](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44285138516) remains valid only for its exact source SHA `181ad350...`; it does not transfer to PR #113.
+- The next checkpoint is to compile this probe on Windows and Linux, then build the immutable host-owned root authority and platform-specific primitives only after compile evidence.
+
+### Security boundary remains unchanged
+
+Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Outstanding work includes:
+- retained root handle and host injection path;
+- safe absolute in-root mapping and traversal validation;
+- Unix descriptor-relative no-follow traversal and mount identity;
+- Windows NtCreateFile RootDirectory traversal, reparse-point rejection, and volume/file identity;
+- hard-link and regular-file validation;
+- bounded read/write I/O and atomic same-directory replacement;
+- policy-first and fail-closed no-authority tests;
+- required nonzero Unix/Windows adversarial test names from the independent verifier;
+- race tests and exact-SHA E4 verification.
+
+This is an API-surface feasibility spike, not an E4 implementation or security certification.
