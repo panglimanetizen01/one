@@ -1,11 +1,12 @@
 use one_core::{
     analyze, lower, normalize_result, parse, AdapterId, AdapterResult, Capability, CapabilityRequest,
     EffectClass, ExecutionPolicy, ExecutionScope, FileReadAdapter, FileWriteAdapter, Interpreter,
-    NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
+    FilesystemAuthority, NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
     ScopeRule, SemanticCapabilityId, ToolAdapter,
 };
 use one_core::adapter::AdapterError;
 use one_core::orchestration_audit::{AuditEvidence, AuditEvent};
+use std::sync::Arc;
 
 fn compile(source: &str) -> one_core::IrProgram {
     let program = parse(source).expect("source should parse");
@@ -22,15 +23,18 @@ fn filesystem_read_request(path: &str) -> CapabilityRequest {
     )
 }
 
+#[cfg(target_os = "linux")]
 #[test]
 fn source_to_runtime_filesystem_read_succeeds_with_explicit_capability_and_scope() {
     let path = std::env::current_dir().unwrap().join("Cargo.toml");
     let path = path.to_string_lossy().replace('\\', "/");
     let ir = compile(&format!("baca berkas \"{path}\"\n"));
-    let mut interpreter = Interpreter::with_orchestration_policy(
+    let authority = Arc::new(FilesystemAuthority::open(std::env::current_dir().unwrap(), 1024 * 1024, 1024 * 1024).unwrap());
+    let mut interpreter = Interpreter::with_orchestration_policy_and_filesystem_authority(
         ExecutionPolicy::default()
             .grant(Capability::FilesystemRead)
             .allow_scope(Capability::FilesystemRead, ScopeRule::Target(path.clone())),
+        authority,
     );
 
     let result = interpreter.execute(&ir).expect("filesystem read should execute");
@@ -107,7 +111,7 @@ fn filesystem_orchestrator_reports_adapter_failure_and_records_observed_failure(
         .execute_with_audit(&request, PlatformKind::Any, &mut audit)
         .expect_err("missing file must reach the adapter and fail");
 
-    assert_eq!(error, OrchestrationError::Adapter(AdapterError::BackendFailure));
+    assert_eq!(error, OrchestrationError::Adapter(AdapterError::UnsupportedPlatform));
     assert_eq!(audit.len(), 1);
     assert_eq!(audit[0].event(), AuditEvent::InvocationFinished);
     assert_eq!(audit[0].evidence(), AuditEvidence::ObservedFailure);
