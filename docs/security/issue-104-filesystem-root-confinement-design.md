@@ -752,3 +752,10 @@ The CLI host previously chose the authority root from the requested absolute tar
 The CLI applies the same host-root selection to filesystem.read and filesystem.write. Added integration tests verify outside-root absolute write rejection with the outside sentinel unchanged, outside-root read rejection without disclosure, and relative-source root resolution.
 
 Source implementation and tests: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; focused Mermaid diagram updated at `d4687325f4b1236509bfe484cae46b72649d839f`. Verifier pin is updated to the source SHA; exact-SHA workflows are pending.
+
+
+## 42. Manifest-root selection regression coverage — 2026-11-18
+
+Added `run_command_uses_nearest_one_manifest_as_filesystem_root` to the CLI integration suite. It creates a temporary project with `one.toml`, places the source under `src/main.one`, and verifies a write to a direct child of the project root. This proves the host selects the nearest manifest ancestor rather than the source subdirectory or requested target parent.
+
+Test source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; verifier pin updated to the same exact SHA. Verification pending.
