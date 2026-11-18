@@ -34,6 +34,17 @@ This directory contains exact-SHA verification records, release gates, incident 
 [Detailed live checkpoint](live-checkpoint-2026-11-18.md).
 
 
+
+
+## Live CircleCI diagnostics checkpoint — 2026-11-19
+
+- PR #113 is OPEN / DRAFT / UNMERGED at exact HEAD `e8dab3a0ac2de6b09b374b692d740b9fb5630f00`, base branch `fix/windows-process-verifier-timeouts-20261118` at base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Exact-HEAD GitHub commit status: `ci/circleci: one-linux` PENDING. Current job: [CircleCI exact-HEAD job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e). No job logs were retrievable through the available connectors; do not infer a failure cause or PASS.
+- CircleCI diagnostics utility now fails closed on pagination truncation and malformed pagination shapes, distinguishes an exact-SHA pipeline with no failed jobs from an API error, and has 11 unit-test methods. Test execution and `circleci config validate` are NOT VERIFIED.
+- Rust toolchain provisioning has explicit command deadlines (5m bootstrap / 10m install) and a 12m CircleCI no-output guard.
+- Independent Windows verifier PR #44 remains OPEN; its protected canonical pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. This is a separate evidence boundary from CircleCI.
+- Issue #104 remains OPEN / NOT ACCEPTED. Do not merge PR #113, modify `main`, or change the protected verifier pin.
+
 ## Canonical records
 
 - [CircleCI targeted diagnostics tool and usage](CIRCLECI_DIAGNOSTICS.md)
