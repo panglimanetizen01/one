@@ -737,3 +737,18 @@ The test now splits platform expectations:
 - Other non-Windows/non-Linux platforms: the unsupported-backend test remains.
 
 The update is source SHA `2fa1436daa102d3cf32125da6c440ae19cc83ba7`. This aligns integration expectations with the deliberately partial Linux writer; it does not expand nested write support. Fresh exact-SHA cross-platform and distro workflows are pending.
+
+
+## 41. Host-root selection must be independent of requested target — 2026-11-18
+
+The CLI host previously chose the authority root from the requested absolute target's parent. This is not acceptable for project-root confinement: an absolute target could effectively choose its own root. The host now selects the root from source/project context:
+
+1. Canonicalize the source parent.
+2. Prefer the nearest ancestor containing `one.toml`.
+3. If none is found and the source is beneath the process working directory, use the canonical working directory.
+4. Otherwise use the canonical source parent for a standalone source outside the working directory.
+5. Construct `FilesystemAuthority` from that root independently of the requested target. The authority then rejects absolute targets outside it.
+
+The CLI applies the same host-root selection to filesystem.read and filesystem.write. Added integration tests verify outside-root absolute write rejection with the outside sentinel unchanged, outside-root read rejection without disclosure, and relative-source root resolution.
+
+Source implementation and tests: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; focused Mermaid diagram updated at `d4687325f4b1236509bfe484cae46b72649d839f`. Verifier pin is updated to the source SHA; exact-SHA workflows are pending.
