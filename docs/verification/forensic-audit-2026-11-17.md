@@ -221,3 +221,50 @@ Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tool
 - Normative contract update: Section 14 of `docs/spec/one-v0.1-ci-verification-contract.md` requires mutually exclusive workflow selection, one baseline job, and preservation of release-only gates. Contract commit: `d4152f1cf6b8f3b9300575f649824551b408f910`.
 - Static review intent: avoid duplicate baseline execution while retaining the same baseline checks and additional release-only gates. No runtime/source semantics changed.
 - Validation boundary: GitHub readback and structural inspection only. CircleCI CLI/schema validation and actual conditional workflow execution remain NOT VERIFIED because authenticated CircleCI access is unavailable in this session. No CircleCI PASS is claimed; the exact resulting HEAD must be refreshed after documentation synchronization.
+
+## Issue #104 filesystem confinement design checkpoint — 2026-11-18
+
+- Created stacked draft PR #110 from current PR #108 exact parent SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca`; PR #110 head after documentation synchronization is to be refreshed from live metadata.
+- Design document: `docs/security/issue-104-filesystem-root-confinement-design.md`. It specifies explicit trusted-root configuration and retained handle authority, Unix descriptor-relative traversal, Windows native handle-relative traversal, no-follow/reparse rejection, device/volume boundaries, hard-link policy, bounded I/O, atomic same-directory writes, and a real-side-effect adversarial test matrix.
+- Normative effect/capability contract Section 20 added: path-based check-then-open and canonicalize-then-open are insufficient; policy-first ordering remains unchanged; unsupported platforms must fail closed; feature remains experimental until exact-SHA Unix and Windows tests pass.
+- Documentation index links the design checkpoint.
+- No product source code or tests were changed or executed. This is design/specification only, not remediation or a security PASS. Issue #104 remains OPEN; E4/DoD unchanged.
+- The older branch `security/issue-104-filesystem-confinement-20261118` is stale relative to PR #108 (0 commits ahead, 8 behind at last comparison) and must not be used as the implementation base. PR #110 is based on current PR #108 instead.
+- CircleCI validation/log access remains unavailable; no CircleCI PASS is claimed.
+- Next implementation step: perform a complete adapter/interpreter/CLI call-site inventory, define the explicit host root configuration API, implement Unix and Windows handle-relative primitives without fallback, then add side-effect/race tests and run the independent Unix/Windows verifier on the same exact source SHA.
+
+### Independent verifier filter contract for Issue #104 — 2026-11-18
+
+The checked-in workflow `panglimanetizen01/one-windows-verification/.github/workflows/e4-adversarial-regression.yml` requires nonzero test execution for these names on the source candidate:
+- Unix: 2 `descriptor_relative_read_rejects_`, 1 `descriptor_relative_write_rejects_`, 1 `descriptor_relative_walk_rejects_`, plus exact race and mount-boundary tests `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink` and `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file`.
+- Windows: `filesystem_reader_rejects_directory_junction_escape`, `filesystem_adapter_reads_absolute_target_inside_project_root`, `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`, `filesystem_write_adapter_writes_text_target`, `filesystem_write_adapter_rejects_oversized_content`, and `filesystem_adapters_reject_parent_directory_traversal`.
+- Workflow asserts the named tests execute and pass; zero-match/filtered-only output fails. Preserve these names/counts or review any verifier update separately; do not weaken the checks.
+
+### Mount-boundary design correction — 2026-11-18
+
+A device-number-only check is insufficient to reject same-device bind mounts. The Issue #104 design and normative Section 20 now require mount identity as well as device identity; Linux should use statx STATX_MNT_ID (or a stronger identifier), and other Unix targets must use an equivalent primitive or fail closed. This is a design correction, not implementation evidence.
+
+### Host-owned filesystem authority API contract — 2026-11-18
+
+The Issue #104 design and normative spec now specify a shared immutable authority injected into both filesystem adapters, explicit max read/write byte limits, and a dedicated interpreter constructor. The CLI may use current_dir as a trusted project root only when obtained independently from the program target. Library callers and tests must inject a root explicitly. No parameterless production adapter or legacy interpreter path may infer authority from the target, source, or ambient environment. This remains a design contract; source implementation and tests are not yet present.
+
+### Historical PR #80 filesystem implementation review — 2026-11-18
+
+PR #80 exact head d75b2846465ba53281198693750f2e6ba39e2e33 was reviewed as reference only. Its Unix code contains useful openat/O_NOFOLLOW, statx mount-id, regular-file and hard-link checks, and race-test patterns. It is not accepted as-is: root is recomputed from cwd rather than injected/retained; root traversal is reopened per operation; non-Linux Unix falls back to st_dev; writes are not atomic temp+rename; Windows remains path-based canonicalize/check/open. Current Issue #104 design explicitly rejects copying those gaps.
+
+### Independent E4 verifier run diagnosis — 2026-11-18
+
+GitHub Actions run `43998206030` was inspected at job-log level. Unix job `133755415781` and Windows job `133755416047` both failed before executing the first filtered test because `cargo test --locked` could not create `source/Cargo.lock`. The verifier repository's `CANONICAL_COMMIT.txt` pointed to `e50748a1b25922d9090eba1f5fb90548d7c7d003`, which has no Cargo.lock. Current PR #108 candidate `c4bb4b690e698a83e4ddaf279596479d3dc282ca` does contain Cargo.lock. Classify the historical failure as stale verifier candidate/lockfile precondition, not as a source test failure or PASS. Do not update canonical candidate to current source until the Issue #104 test filters are actually implemented; otherwise the verifier will fail on zero matches. The verifier branch was not changed.
+### Issue #104 source integration map — 2026-11-18
+
+Static source readback on PR #108 base SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca`:
+- `adapter.rs`: filesystem adapters have metadata-only state, parameterless `new()`, and call `std::fs::read` / `std::fs::write` using `ExecutionScope::Target`. Write accepts one Text argument; read accepts none.
+- `interpreter.rs`: `with_orchestration_policy` is the central adapter registration point and currently constructs both filesystem adapters without authority.
+- `one-cli/src/main.rs`: CLI parses `--target` into the capability scope but does not independently capture/inject a trusted cwd root.
+- `lib.rs`: public adapter re-exports need deliberate exports for the new authority/limits.
+- `one-core/Cargo.toml`: libc and windows-sys 0.61 are already target dependencies; check exact API availability before adding dependencies.
+- Existing adapter unit tests and `filesystem_vertical_slice.rs` directly instantiate no-root adapters and must migrate to explicit temp roots while preserving policy/scope assertions. CLI build/package direct file operations remain separate host operations.
+
+Implementation order: shared immutable ProjectFilesystem + limits; Unix/Windows handle-relative primitives; adapters; dedicated interpreter constructor; host-owned CLI root injection; adversarial race/side-effect tests; same-SHA Unix/Windows validation. This is only a static integration map.
+
+Execution blocker: no authenticated CircleCI tool or GitHub Actions dispatch action is exposed in this session, and the local clone route previously failed DNS resolution. Do not write uncompiled security-sensitive platform code. No source code changed; Issue #104 remains OPEN.

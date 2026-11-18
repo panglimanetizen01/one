@@ -172,3 +172,24 @@ The semantic analyzer may annotate required effects, but actual permission evalu
 - time/randomness are controllable for deterministic tests;
 - capability errors are stable and provenance-aware;
 - reference interpreter and compiled backends enforce equivalent capability semantics.
+
+## 20. Race-resistant project-root filesystem confinement (Issue #104)
+
+A filesystem adapter MUST operate beneath an explicitly configured trusted project root. The trusted root MUST be established by the host/runtime configuration boundary and retained as an open directory handle; it MUST NOT be inferred from the requested target or from an untrusted source value.
+
+The original capability request and policy scope MUST be evaluated unchanged before adapter invocation. Adapter confinement is defense in depth and MUST NOT replace or weaken capability-policy checks, inherited denials, or approval requirements.
+
+All filesystem access MUST use handle-relative component traversal from the retained root. String-prefix checks, canonicalize-then-open, check-then-open, or a path-based fallback are not security boundaries and MUST NOT be used for accepted operations.
+
+- Unix implementations MUST use directory-descriptor-relative traversal (for example, openat with O_DIRECTORY and O_NOFOLLOW), reject symlink components, verify mount identity (for example, Linux statx STATX_MNT_ID) as well as device identity to prevent mount crossing; st_dev alone is insufficient for same-device bind mounts, and validate the opened leaf handle as an allowed regular file.
+- Windows implementations MUST use a genuinely handle-relative open primitive, reject reparse-point traversal, and verify volume/file identity. Canonical path inspection followed by a second path-based open is insufficient.
+- Relative paths and supported absolute paths that identify an in-root target MUST preserve their documented behavior, but actual access MUST remain handle-relative. Parent traversal, out-of-root paths, unsupported device/UNC namespaces, and ambiguous forms MUST fail closed.
+- The initial strict policy MUST reject hard-linked leaf files unless a separately reviewed policy and adversarial tests establish a safe alternative.
+- Reads and writes MUST have explicit bounded sizes. Writes MUST use an exclusive temporary file in the already-open parent directory and an atomic handle-relative replacement protocol with cleanup on failure.
+- If a platform cannot provide the required race-resistant handle-relative behavior, its filesystem adapter MUST fail closed and the feature MUST remain experimental on that platform.
+
+Acceptance requires Unix and Windows adversarial tests on the same exact source SHA. Tests MUST prove real side effects: no outside read, creation, or modification; nonzero matches in the independent verifier; race tests against parent/leaf replacement; and unchanged policy-denial/approval precedence. Static path metadata checks alone are insufficient.
+
+The design and implementation checkpoint is tracked in [Issue #104 filesystem root-confinement design](../security/issue-104-filesystem-root-confinement-design.md). This section defines requirements only; it is not evidence that the implementation exists or has passed verification.
+
+The host API MUST inject one immutable filesystem authority shared by read and write adapters. The authority is opened from an explicit trusted host root and carries explicit read/write byte limits. The CLI host MAY use its current project working directory as the root, but it MUST obtain that root independently of the program target; the target, source text, and ambient environment overrides MUST NOT select or widen root authority. Library users MUST explicitly inject the authority. Existing interpreter construction without an injected root MUST fail closed for filesystem adapter invocation and MUST NOT infer a root. Tests MUST inject a temporary trusted project root with fixtures beneath it; deriving the root from the target's parent is prohibited.

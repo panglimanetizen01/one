@@ -20,6 +20,20 @@ This directory contains exact-SHA verification records, release gates, incident 
 - Issue #105: strong Unix escaped-descendant containment remains OPEN. Bounded reader shutdown is not process-tree containment.
 - Issue #82: Android AArch64 runtime execution acceptance remains OPEN.
 
+## Live checkpoint — 2026-11-18 (PR #110 exact-SHA reconciliation)
+
+- Canonical `main` remains unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`.
+- PR #108 is OPEN / DRAFT / UNMERGED at exact HEAD `286a0fd563e10611a3465cb6457ab069a0df8a52`; GitHub commit status `ci/circleci: one-linux` is SUCCESS, job [99216205-62aa-4e98-af42-d4b742a5feaa](https://app.circleci.com/workflow/a0e85852-848f-4c6b-8681-53438dea6bea/job/99216205-62aa-4e98-af42-d4b742a5feaa).
+- PR #110 is OPEN / DRAFT / UNMERGED at current exact HEAD `26d29c61944e51919161f5360bccfef4a09d370d`; GitHub commit status `ci/circleci: one-linux` is SUCCESS, job [c153ba39-4073-4548-aaa6-6370e6bed6bf](https://app.circleci.com/workflow/a15e7c3f-0492-4ac6-a025-d8d2fe31f054/job/c153ba39-4073-4548-aaa6-6370e6bed6bf), status updated 2026-11-18T04:42:11Z. Its parent code-bearing SHA is `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; source findings below refer to that parent and remain applicable because the child commit changes verification documentation only.
+- The CircleCI status context is verified from GitHub. Expanded CircleCI job logs were not retrieved in this session; do not claim step-level log inspection.
+- Issue #104 remains OPEN. At PR #110 HEAD, `crates/one-core/src/adapter.rs` still implements filesystem read/write through `std::fs::read(path)` and `std::fs::write(path, ...)`; production root-handle confinement is NOT IMPLEMENTED. A green CircleCI status is not Issue #104 acceptance.
+- The independent verifier repository's current `main` is `3d915528e7771d9443ccf0da7e4d7c9e25231537`; its current main tree lists three workflows (Linux distro, stdlib-focused, Windows). This is only the verifier main snapshot; do not infer other branches have the same workflow set.
+- Full docs inventory at PR #110 HEAD: 206 tracked files total, 103 documentation files including README. This is an inventory count, not proof that all 103 documents have been semantically reviewed.
+- The architecture PNG was not visually inspected in this session because the available GitHub file fetch returns text and cannot deliver the binary image to the visual inspection path. Do not claim visual inspection complete.
+
+[Detailed live checkpoint](live-checkpoint-2026-11-18.md).
+
+
 ## Canonical records
 
 - [Forensic repository audit — 2026-11-17](forensic-audit-2026-11-17.md)

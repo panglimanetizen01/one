@@ -93,3 +93,20 @@ Run `39554661451` verifies the exact code-bearing source SHA above on Ubuntu and
 - Filesystem write, database query, and HTTP GET retain their historical Termux/Android evidence; their source/core/CLI tests also passed in the Ubuntu/Windows Server 2025 exact-SHA matrix `39554661451` for `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. This does not imply every target architecture was executed.
 - Native Linux x86_64 and Windows x86_64 are build-proven on PR #64 but are not execution-verified until a real target executor succeeds.
 - The last code-bearing source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` has host-level Ubuntu/Windows exact-SHA verification in run `39554661451`. This does not certify every cross-compiled target artifact as executed, and does not by itself constitute release approval. Later evidence-sync commits changed documentation only.
+
+## Live evidence reconciliation — 2026-11-18
+
+| Item | Exact revision | Evidence | Classification |
+|---|---|---|---|
+| PR #108 CircleCI Linux | `286a0fd563e10611a3465cb6457ab069a0df8a52` | GitHub status `ci/circleci: one-linux` SUCCESS; job `99216205-62aa-4e98-af42-d4b742a5feaa` | Exact-SHA CircleCI status verified; expanded logs not inspected |
+| PR #110 CircleCI Linux | `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b` | GitHub status `ci/circleci: one-linux` SUCCESS; job `c9916871-9746-4c65-b8fb-615d9f96dc78` | Exact-SHA CircleCI status verified; expanded logs not inspected |
+| PR #110 filesystem confinement | `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b` | Direct source read: adapters still call `std::fs::read(path)` / `std::fs::write(path, ...)` | NOT IMPLEMENTED / acceptance OPEN |
+| ONE canonical main | `d35db95153f6ddd79885494c72f5aee16c899751` | Live GitHub commit read | Unchanged; do not modify |
+
+These CircleCI status results are specific to their listed exact SHAs and do not prove cross-platform Windows execution, adversarial filesystem confinement, or the complete release gate. Historical Ubuntu/Windows PASS results listed above remain bound to their original source SHAs.
+
+
+
+## Documentation HEAD verification — 2026-11-18
+
+PR #110 current documentation HEAD `26d29c61944e51919161f5360bccfef4a09d370d` has CircleCI `ci/circleci: one-linux` SUCCESS, job `c153ba39-4073-4548-aaa6-6370e6bed6bf`. Production filesystem source assessment remains bound to parent source SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; the child commit is documentation-only.
