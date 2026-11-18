@@ -56,3 +56,12 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 3. A CircleCI pipeline error without job logs is NOT VERIFIED as a source failure; distinguish config discovery, runner startup, toolchain bootstrap, and executed tests.
 4. A later docs-only commit does not inherit test results unless the verification contract explicitly allows it and the exact source/code diff proves no relevant behavior changed.
 5. Never promote DoD checkboxes, E1–E6 points, or release approval based only on a scoped PASS.
+
+## Live verification checkpoint — 2026-11-18 (Linux + Windows baseline PASS)
+
+- Independent verifier Linux-only run [44267886845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44267886845), job `134676844501`, passed on exact source SHA `a20676be53e5f78c465832379d86c3675a2ed7c8`: 239 passed, 0 failed, 1 ignored across 27 test-result summaries.
+- Independent verifier Windows job [44263674485](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44263674485/job/134662858839) passed on the same exact source SHA: 232 passed, 0 failed, 1 ignored across 27 test-result summaries.
+- This closes the Linux runner bootstrap blocker for the independent baseline candidate. The original matrix run's Linux job remains stale/in-progress at the original MinGW step; use the separate Linux-only run as the passing Linux evidence.
+- PR #110 remains OPEN/DRAFT/UNMERGED at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; its CircleCI `one-linux` status is independently SUCCESS. This is not the same SHA as the independent Windows/Linux candidate.
+- Issue #104 remains OPEN. Production `FileReadAdapter` and `FileWriteAdapter` still use ambient `std::fs::read/write`; root-handle confinement, resource limits, and adversarial tests remain unimplemented. E4, DoD, release and security acceptance remain unchanged.
+- Next: preserve this exact-SHA evidence; proceed with a compilable, narrowly scoped Issue #104 implementation using an available validated Rust runner. Do not copy the historical PR #80 Windows path-based approach or commit uncompiled OS-handle code.
