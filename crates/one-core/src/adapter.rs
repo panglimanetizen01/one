@@ -246,4 +246,87 @@ mod filesystem_nofollow_tests {
         let _ = std::fs::remove_dir_all(&root);
         let _ = std::fs::remove_dir_all(outside);
     }
+
+    #[test]
+    fn final_component_mount_boundary_denial_does_not_truncate_file() {
+        use std::ffi::CString;
+        use std::fs::File;
+        use std::os::fd::AsRawFd;
+        use std::os::unix::ffi::OsStrExt;
+        use std::os::unix::fs::MetadataExt;
+        use std::path::Path;
+
+        // /dev/shm is a separate tmpfs mount below /dev on the Ubuntu
+        // verification runner. The final file already contains a sentinel.
+        let root_path = Path::new("/dev");
+        let mount_path = Path::new("/dev/shm");
+        let root_metadata = std::fs::metadata(root_path).expect("/dev must exist");
+        let mount_metadata = std::fs::metadata(mount_path).expect("/dev/shm must exist");
+        assert_ne!(
+            root_metadata.dev(),
+            mount_metadata.dev(),
+            "/dev/shm must be a distinct mount for this regression"
+        );
+
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let file_name = format!("one-e4-mount-boundary-{}-{nonce}", std::process::id());
+        let sentinel = mount_path.join(&file_name);
+        let relative = PathBuf::from("shm").join(&file_name);
+        let original = b"DO_NOT_TRUNCATE_MOUNT_SENTINEL";
+        std::fs::write(&sentinel, original).unwrap();
+
+        // Exercise the kernel's exact final-component resolution boundary
+        // with O_TRUNC. RESOLVE_NO_XDEV must reject the mount crossing before
+        // the final file is opened or truncated.
+        #[repr(C)]
+        struct OpenHow {
+            flags: u64,
+            mode: u64,
+            resolve: u64,
+        }
+        const RESOLVE_NO_XDEV: u64 = 0x01;
+        const RESOLVE_NO_SYMLINKS: u64 = 0x04;
+        const RESOLVE_BENEATH: u64 = 0x08;
+
+        let root = File::open(root_path).unwrap();
+        let c_path = CString::new(relative.as_os_str().as_bytes()).unwrap();
+        let how = OpenHow {
+            flags: (libc::O_WRONLY | libc::O_TRUNC | libc::O_CLOEXEC) as u64,
+            mode: 0,
+            resolve: RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV,
+        };
+        let fd = unsafe {
+            libc::syscall(
+                libc::SYS_openat2,
+                root.as_raw_fd(),
+                c_path.as_ptr(),
+                &how as *const OpenHow,
+                std::mem::size_of::<OpenHow>(),
+            ) as libc::c_int
+        };
+        if fd >= 0 {
+            unsafe { libc::close(fd); }
+            let _ = std::fs::remove_file(&sentinel);
+            panic!("openat2 crossed /dev/shm with RESOLVE_NO_XDEV and O_TRUNC");
+        }
+        assert_eq!(
+            std::io::Error::last_os_error().raw_os_error(),
+            Some(libc::EXDEV),
+            "mount-boundary resolution must fail with EXDEV"
+        );
+
+        // The production adapter remains fail-closed until a race-resistant
+        // native write implementation exists. It must not alter the target.
+        let authority = Arc::new(FilesystemAuthority::open(root_path, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+        let result = adapter.invoke(&write_request(relative.to_str().unwrap(), "ATTACK"));
+        assert_eq!(result, Err(AdapterError::UnsupportedPlatform));
+        assert_eq!(std::fs::read(&sentinel).unwrap(), original);
+        assert_eq!(
+            std::fs::metadata(&sentinel).unwrap().len(),
+            original.len() as u64
+        );
+        std::fs::remove_file(sentinel).unwrap();
+    }
+
 }
