@@ -255,3 +255,12 @@ Verifier diagnostic pin now targets `1b7c3bb...`. Do not mark host-root integrat
 |---|---|---|---|
 | Nearest project manifest is searched above cwd | `722d662e7a81711ba3607d26571f4048a292b3ed` | Source resolver walks canonical source-parent ancestors without stopping at cwd | IMPLEMENTED; NOT VERIFIED |
 | Exact-SHA verifier pin | `722d662...` | Diagnostic branch `CANONICAL_COMMIT.txt` updated | PINNED; workflows pending |
+
+
+## Exact-SHA checkpoint refresh — 18 November 2026
+
+The latest code-bearing candidate remains `722d662e7a81711ba3607d26571f4048a292b3ed`. The current PR #113 HEAD is a documentation-only descendant `1eebed322c696fe4f958578a3c7947abce75e173`; the focused architecture diagram now explicitly shows retained Windows root/parent handles opened without `FILE_SHARE_DELETE` to prevent parent-directory rename races during the handle-relative walk and atomic replacement.
+
+The independent diagnostic verifier pin is confirmed as `722d662...`. Fresh exact-source verification is still incomplete: Ubuntu 24.04 distro job succeeded; Debian 12 distro job is in progress at base-tool installation; E4 #44335797344 is queued; cross-platform #44335797200 is pending; Android artifact #44335797320, Android runtime #44335797240, SEC-05 #44335797365, and resource guard #44335797191 are queued. CircleCI `ci/circleci: one-linux` is PENDING on source `722d662...`: https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94.
+
+Classification remains IMPLEMENTED / NOT VERIFIED for the CLI host-root resolver and Linux direct-child writer; Windows handle-relative atomic replacement has historical E4 evidence only on earlier exact source SHA and needs the current exact-SHA run. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 OPEN / DRAFT / UNMERGED; canonical main and protected verifier pin remain unchanged.
