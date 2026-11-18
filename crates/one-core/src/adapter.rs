@@ -62,7 +62,7 @@ impl ToolAdapter for FileWriteAdapter {
 fn map_filesystem_error(error: FilesystemError) -> AdapterError {
     match error {
         FilesystemError::UnsupportedPlatform => AdapterError::UnsupportedPlatform,
-        FilesystemError::InvalidTarget | FilesystemError::OutsideRoot => AdapterError::ResolutionFailed,
+        FilesystemError::InvalidTarget | FilesystemError::OutsideRoot | FilesystemError::ResolutionFailed => AdapterError::ResolutionFailed,
         _ => AdapterError::BackendFailure,
     }
 }
