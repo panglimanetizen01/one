@@ -129,14 +129,15 @@ impl FilesystemAuthority {
             normalized_target
                 .strip_prefix(&normalized_root)
                 .map_err(|_| FilesystemError::OutsideRoot)?
+                .to_path_buf()
         } else {
-            target
+            target.to_path_buf()
         };
         #[cfg(not(windows))]
         let relative = if target.is_absolute() {
-            target.strip_prefix(&self.canonical_root).map_err(|_| FilesystemError::OutsideRoot)?
+            target.strip_prefix(&self.canonical_root).map_err(|_| FilesystemError::OutsideRoot)?.to_path_buf()
         } else {
-            target
+            target.to_path_buf()
         };
         let mut normalized = PathBuf::new();
         for component in relative.components() {
