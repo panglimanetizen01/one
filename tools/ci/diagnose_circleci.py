@@ -146,12 +146,27 @@ def paged_v2_items(url: str, headers: Dict[str, str]) -> Iterable[Dict[str, Any]
             )
         payload = get_json(page_url, headers)
         pages += 1
-        for item in payload.get("items") or []:
-            if isinstance(item, dict):
-                yield item
+        items = payload.get("items")
+        if not isinstance(items, list):
+            raise DiagnosticError(
+                "CircleCI API pagination response has no valid 'items' array; "
+                "discovery was stopped."
+            )
+        for item in items:
+            if not isinstance(item, dict):
+                raise DiagnosticError(
+                    "CircleCI API pagination response contains a non-object item; "
+                    "discovery was stopped."
+                )
+            yield item
         next_token = payload.get("next_page_token")
-        if not next_token:
+        if next_token is None:
             return
+        if not isinstance(next_token, str) or not next_token:
+            raise DiagnosticError(
+                "CircleCI API pagination returned an invalid next_page_token; "
+                "discovery was stopped."
+            )
         separator = "&" if "?" in url else "?"
         page_url = url + separator + urllib.parse.urlencode({"page-token": next_token})
 
