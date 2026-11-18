@@ -1,3 +1,27 @@
+## Live exact-SHA continuation checkpoint — 2026-11-18 05:14Z
+
+This block supersedes older live-state summaries below where they conflict. Historical run evidence remains tied to its original SHA; no result is transferred.
+
+### Current repository and candidate state
+
+- Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`; no main changes, merges, or releases.
+- PR #108 remains OPEN / DRAFT / UNMERGED at exact HEAD `286a0fd563e10611a3465cb6457ab069a0df8a52`. CircleCI `ci/circleci: one-linux` is SUCCESS for that exact SHA only; job https://app.circleci.com/workflow/a0e85852-848f-4c6b-8681-53438dea6bea/job/99216205-62aa-4e98-af42-d4b742a5feaa.
+- PR #110 remains OPEN / DRAFT / UNMERGED at exact HEAD `005476dd8cf810fff2989cc03f22b59b9f26f644`. CircleCI `ci/circleci: one-linux` is PENDING for that exact SHA; job https://app.circleci.com/workflow/2f9eccab-8721-4cc6-981b-3ad50213eb8b/job/94ba22d0-cb36-49da-8445-37ca6891f30d. No terminal result is claimed.
+- PR #103 remains OPEN / DRAFT / UNMERGED on branch `docs/restore-completion-ledger-dod-20261117`, based on `main` at `d35db95153f6ddd79885494c72f5aee16c899751`. This branch owns the fixed-weight ledger and Definition of Done documents; it is a documentation source, not the latest integrated product-code candidate.
+
+### Security and acceptance state
+
+- Issue #104 remains OPEN / NOT IMPLEMENTED. Latest adapter/interpreter/CLI source audit snapshot `88e36dfef55cc11972b9bbc68a1883385d9f52e8` is documentation-only; production adapters still use path-based `std::fs::read(path)` and `std::fs::write(path, ...)`, constructors remain parameterless, and CLI does not inject an independent trusted root. The normative effect-capability spec requires a retained host-owned root handle and handle-relative traversal. No source fix or adversarial test evidence exists yet.
+- Issues #105, #82, #81, and #90 remain OPEN at last refresh. Do not promote their acceptance status.
+- DoD remains 3 checked / 10 unchecked / 13 total. The fixed-weight ledger remains 92/100 provisional implementation and 0/100 verified. E1–E6 acceptance remains unverified; E6 remains NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED.
+
+### Independent verifier ledger-gate evidence
+
+- Verifier run `44241595784` (verifier SHA `66af5cbc9805f95b5d13c192ce5989bfe8d2336c`): 15/15 Python unit tests PASS; gate then failed before ledger parsing because the shared E4 source pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` lacks the ledger/DoD documents.
+- The verifier now separates `CANONICAL_COMMIT.txt` (E4 candidate pin) from `LEDGER_SOURCE_COMMIT.txt` (ledger/DoD document pin). The latter checks out the exact PR #103 docs branch revision. The first attempt failed because the pin omitted one character; the next attempt failed because raw-template escaping left a backslash before the GitHub Actions expression. Both input/checkout defects were corrected.
+- Run `44242590734` on verifier SHA `237064c3ae7476db6b0cfab25c6d052baa37c40e` successfully checked out both exact source revisions and passed all 16 Python unit tests. The live ledger gate then evaluated correctly and returned NOT PASSED: implementation 92/100 provisional, verified 0/100, 10 unchecked DoD items, multiple required exact-SHA workflows failed on historical candidate `e50748a...`, and no protected package-provenance release run exists for that SHA.
+- This is now an actual acceptance evaluation rather than a missing-file or checkout failure. It does not promote points or checkboxes and does not validate the latest product candidate. Keep the shared E4 pin unchanged until Issue #104 implementation, committed Cargo.lock, and the required Unix/Windows adversarial tests exist.
+
 ## Live continuation checkpoint — 2026-11-17 18:30 WIB
 
 This checkpoint supersedes stale PR-head and run references below where they conflict. It records live GitHub state, not merge or release acceptance.
