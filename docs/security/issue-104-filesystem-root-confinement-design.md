@@ -675,3 +675,12 @@ A subsequent code-bearing change at current candidate SHA `f6acb23a2a0038281c613
 The diagnostic verifier branch's temporary `CANONICAL_COMMIT.txt` now pins `f6acb...`; fresh E4, cross-platform, SEC-05, distro, Android artifact, and Android runtime workflows are queued. CircleCI `ci/circleci: one-linux` is PENDING for the latest candidate. Keep the feature NOT VERIFIED at `f6acb...` until those workflows complete and their source pins/logs are checked.
 
 The original Win32 rename failure is retained as historical evidence. Do not remove or weaken the positive write test, the denied replacement preservation test, or the exact-SHA verifier. Issue #104 remains OPEN and NOT ACCEPTED.
+
+
+## 35. Windows atomic-denial test cleanup correction — 2026-11-18
+
+The first cross-platform run for `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` reached Windows Clippy and failed on test-only use of `Permissions::set_readonly(false)` (`clippy::permissions_set_readonly_false`). This was not a production backend error.
+
+The test `filesystem_write_adapter_preserves_target_when_atomic_replace_is_denied` now induces replacement denial using a real open destination handle created with Windows `OpenOptionsExt::share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE)`, deliberately omitting `FILE_SHARE_DELETE`. It verifies the original bytes and that no temporary sibling remains, then drops the blocker before deleting the test directory. It no longer resets the read-only attribute.
+
+This correction is committed at `a79665056149bf1ff302de79a7b86a346e0353d8`. The independent verifier diagnostic pin now targets that exact source SHA. Fresh E4 run [#44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) is QUEUED; CircleCI is PENDING. The earlier E4 PASS on `f6acb...` remains valid for that SHA but does not verify this new test change. Keep the current candidate NOT VERIFIED until the new exact-SHA runs complete.
