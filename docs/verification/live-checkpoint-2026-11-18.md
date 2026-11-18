@@ -265,3 +265,9 @@ A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is 
 - CircleCI exact statuses now read: `722d662...` FAILURE ([job](https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94)); `e8dab3a...` FAILURE ([job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e)); PR #113 HEAD `c25d191...` PENDING ([job](https://app.circleci.com/workflow/35bda6e3-acf8-4232-9437-608467816602/job/90ae8601-d89f-4314-a346-d37089540363)). Logs for CircleCI remain inaccessible and cause unknown.
 - The diagnostic test suite (11 methods) and `circleci config validate` remain NOT VERIFIED.
 - PR #113 and PR #44 remain OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. No merge, main-branch modification, or protected pin change.
+
+
+### Latest observed documentation HEAD — 2026-11-19
+
+- Exact PR #113 HEAD `2cfd73f9e54dac283fb5c07bb85f5992e88ef506`: `ci/circleci: one-linux` PENDING; workflow `e2e1cab5-28cf-4829-aafc-a1d385abace9`; job `7e872036-ca77-4f15-a66f-e97e5a058788` ([job](https://app.circleci.com/workflow/e2e1cab5-28cf-4829-aafc-a1d385abace9/job/7e872036-ca77-4f15-a66f-e97e5a058788)).
+- This exact-SHA status supersedes the earlier no-context read on `2cfd73f...`; it does not transfer to any later commit.
