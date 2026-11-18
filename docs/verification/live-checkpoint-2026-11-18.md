@@ -231,3 +231,15 @@ A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is 
 - CircleCI `ci/circleci: one-linux` on docs HEAD `a57a64ed8552e0fff8a8d78a97d34118cccadc06` has transitioned from PENDING to FAILURE: https://app.circleci.com/workflow/57a85d45-3b99-4eb7-887f-74e8a19b4380/job/9c378131-6ee0-48d7-962e-6581342d13ba.
 - CircleCI job logs are not accessible through current tools; failure root cause is UNKNOWN. No speculative fix or blind rerun was performed.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; canonical `main` and protected verifier pin remain unchanged.
+
+
+## CircleCI remediation follow-up — 2026-11-19
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Exact PR HEAD at this checkpoint: `e8dab3a0ac2de6b09b374b692d740b9fb5630f00`; base ref `fix/windows-process-verifier-timeouts-20261118`, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- GitHub combined commit status for exact HEAD: `ci/circleci: one-linux` PENDING. Current provider job: [exact-HEAD CircleCI job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e). The CircleCI UI/API log page could not be accessed with the currently connected tools; failure root cause is not known and must not be guessed.
+- The CircleCI diagnostic utility has been hardened against silent pagination truncation, malformed `items` payloads, non-object items, and invalid continuation tokens. An exact-SHA pipeline with no failed/timed-out jobs is now reported as inconclusive, not an API error and not a PASS.
+- The diagnostic test module contains 11 test methods. Their execution has not been verified in this session. CircleCI config validation has also not been verified.
+- Rust toolchain setup is isolated into a dedicated step. Rustup bootstrap has a 5-minute command timeout, toolchain installation has a 10-minute command timeout, and the step's no-output timeout is 12 minutes to avoid competing equal deadlines.
+- Documentation synchronized in `docs/verification/README.md` and `docs/verification/CIRCLECI_DIAGNOSTICS.md`; the latter records API v2/v3 lifecycle distinctions and strict pagination validation.
+- Independent verifier PR #44 remains OPEN / UNMERGED. Its protected pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. Issue #104 remains OPEN / NOT ACCEPTED. No merge, main modification, or protected pin change was made.
+- Next evidence gate: retrieve exact-HEAD CircleCI job logs and terminal status, then run the 11 tests and CircleCI config validation on the same revision. Do not reuse PASS evidence from parent or sibling SHAs.
