@@ -92,3 +92,12 @@ A fresh Ubuntu/Windows candidate check at source `f6acb23a2a0038281c613fb6fd187b
 The fix is committed at source SHA `a79665056149bf1ff302de79a7b86a346e0353d8`. The independent verifier diagnostic pin now targets this exact SHA. E4 run [#44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) is QUEUED; CircleCI `ci/circleci: one-linux` is PENDING at this SHA. Do not classify the updated test as verified until the new run completes.
 
 Filesystem root confinement remains in development in PR #113; canonical `main` remains unchanged and Issue #104 remains OPEN.
+
+
+## Linux filesystem write scope — 18 November 2026
+
+The PR #113 candidate now contains a Linux atomic write backend for files that are **direct children of the host-injected trusted project root**. It opens/validates the leaf with `openat2` using `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, creates an exclusive temporary sibling relative to the retained root directory descriptor, writes and syncs it, and atomically replaces the leaf with `renameat`. Oversized writes, symlink leaves, hard links, and mount-point crossings fail closed.
+
+**Nested Linux writes are intentionally unsupported for now.** A retained nested-directory handle can be moved outside the trusted root while an operation is in progress; this implementation refuses nested targets rather than risk writing through a moved parent directory. Windows candidate writes use a separate native handle-relative implementation.
+
+The Linux write implementation and new tests are committed in candidate source SHA `cc54597b471493f4350d0dc0f3a2896babb33ea4`. The independent E4 verifier pin now targets this SHA; fresh E4 and related workflows are queued. This is IMPLEMENTED but NOT VERIFIED until those exact-SHA jobs finish. PR #113 remains draft/unmerged; canonical `main` has not gained this feature. Issue #104 remains OPEN / NOT ACCEPTED.
