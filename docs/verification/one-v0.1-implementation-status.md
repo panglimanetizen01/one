@@ -163,3 +163,10 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Diagnostic verifier pin now targets `090c84d...`. E4 [#44332808624](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808624), cross-platform [#44332808543](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808543), Linux distro [#44332808528](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808528), Android artifact [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717), Android runtime [#44332808569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808569), SEC-05 [#44332808586](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808586), resource guard [#44332808575](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808575) are queued/pending.
 - CircleCI `ci/circleci: one-linux` PENDING on `090c84d...`: https://app.circleci.com/workflow/60cfc357-04fc-47e2-8a5c-6cd85784c6af/job/a3279063-9cb6-4c54-8125-9b1b3b89ad8e.
 - Classification: Linux direct-child atomic writer remains IMPLEMENTED / PARTIAL but NOT VERIFIED on `090c84d...`; nested writes remain NOT IMPLEMENTED / fail-closed. Issue #104 OPEN / NOT ACCEPTED.
+
+
+## Android AArch64 artifact evidence on corrected Linux-writer source — 2026-11-18
+
+- Android artifact run [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717) PASS on exact source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`.
+- Job verified source pin, built and inspected an ELF64 AArch64 executable using the Android linker `/system/bin/linker64`, and uploaded the artifact (artifact ID 14438938784; SHA-256 `5971ef900ead08e6f571327594625ba2856a1917d59196d095c785bdf51a0ea4`).
+- This is artifact/build evidence, not Android API 35 runtime verification or a platform support claim. Android runtime remains queued; E4/cross-platform/distro/SEC-05 and CircleCI remain pending.
