@@ -161,7 +161,7 @@ mod filesystem_nofollow_tests {
         let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
         let adapter = FileReadAdapter::with_authority(authority);
 
-        let result = adapter.invoke(&read_request("../".to_owned() + outside.file_name().unwrap().to_str().unwrap()));
+        let result = adapter.invoke(&read_request(&("../".to_owned() + outside.file_name().unwrap().to_str().unwrap())));
 
         assert_eq!(result, Err(AdapterError::ResolutionFailed));
         assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_SENTINEL");
@@ -211,7 +211,6 @@ mod filesystem_nofollow_tests {
     fn descriptor_relative_read_race_never_follows_swapped_parent_symlink() {
         let root = test_root("read-race");
         let parent = root.join("parent");
-        let held = root.join("parent-held");
         let outside = root.with_extension("outside");
         std::fs::create_dir(&parent).unwrap();
         std::fs::create_dir(&outside).unwrap();
