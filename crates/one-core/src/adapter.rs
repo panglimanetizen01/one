@@ -180,7 +180,7 @@ mod filesystem_nofollow_tests {
 
         let result = adapter.invoke(&write_request(outside.to_str().unwrap(), "ATTACK"));
 
-        assert_eq!(result, Err(AdapterError::UnsupportedPlatform));
+        assert_eq!(result, Err(AdapterError::ResolutionFailed));
         assert_eq!(std::fs::read(&outside).unwrap(), original);
         assert_eq!(std::fs::read_dir(&root).unwrap().count(), 0);
         let _ = std::fs::remove_dir_all(&root);
@@ -329,4 +329,167 @@ mod filesystem_nofollow_tests {
         std::fs::remove_file(sentinel).unwrap();
     }
 
+}
+
+
+#[cfg(all(test, target_os = "windows"))]
+mod filesystem_windows_tests {
+    use super::*;
+    use crate::orchestration::{EffectClass, SemanticCapabilityId};
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn test_root(label: &str) -> PathBuf {
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let root = std::env::temp_dir().join(format!(
+            "one-e4-win-{label}-{}-{nonce}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        root
+    }
+
+    fn read_request(path: &str) -> AdapterRequest {
+        AdapterRequest::new(CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target(path),
+            EffectClass::Read,
+        ))
+    }
+
+    fn write_request(path: &str, content: &str) -> AdapterRequest {
+        AdapterRequest::new(CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemWrite,
+            Capability::FilesystemWrite,
+            ExecutionScope::target(path),
+            EffectClass::Write,
+        ))
+        .with_argument(AdapterArgument::Text(content.to_owned()))
+    }
+
+    fn create_junction(link: &Path, target: &Path) {
+        let command = format!(
+            "mklink /J \"{}\" \"{}\"",
+            link.display(),
+            target.display()
+        );
+        let status = Command::new("cmd")
+            .args(["/C", &command])
+            .status()
+            .expect("cmd.exe must be available on Windows");
+        assert!(status.success(), "junction creation failed: {status}");
+    }
+
+    #[test]
+    fn filesystem_reader_rejects_directory_junction_escape() {
+        let root = test_root("junction-read");
+        let outside = root.with_extension("outside");
+        std::fs::create_dir_all(&outside).unwrap();
+        let sentinel = outside.join("sentinel.txt");
+        std::fs::write(&sentinel, b"OUTSIDE_SENTINEL").unwrap();
+        let junction = root.join("junction");
+        create_junction(&junction, &outside);
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileReadAdapter::with_authority(authority);
+        let result = adapter.invoke(&read_request("junction\\sentinel.txt"));
+
+        assert_eq!(result, Err(AdapterError::ResolutionFailed));
+        assert_eq!(std::fs::read(&sentinel).unwrap(), b"OUTSIDE_SENTINEL");
+        std::fs::remove_dir(&junction).unwrap();
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(outside).unwrap();
+    }
+
+    #[test]
+    fn filesystem_adapter_reads_absolute_target_inside_project_root() {
+        let root = test_root("absolute-read");
+        let target = root.join("inside.txt");
+        std::fs::write(&target, b"INSIDE_SENTINEL").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileReadAdapter::with_authority(authority);
+        let result = adapter.invoke(&read_request(target.to_str().unwrap())).unwrap();
+
+        assert!(result.success);
+        assert_eq!(result.output, b"INSIDE_SENTINEL");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects() {
+        let root = test_root("absolute-confine");
+        let inside = root.join("inside.txt");
+        let outside = root.with_extension("outside.txt");
+        std::fs::write(&inside, b"INSIDE_UNCHANGED").unwrap();
+        std::fs::write(&outside, b"OUTSIDE_UNCHANGED").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let reader = FileReadAdapter::with_authority(Arc::clone(&authority));
+        let writer = FileWriteAdapter::with_authority(authority);
+
+        assert_eq!(
+            reader.invoke(&read_request(outside.to_str().unwrap())),
+            Err(AdapterError::ResolutionFailed)
+        );
+        assert_eq!(
+            writer.invoke(&write_request(outside.to_str().unwrap(), "ATTACK")),
+            Err(AdapterError::ResolutionFailed)
+        );
+        assert_eq!(std::fs::read(&inside).unwrap(), b"INSIDE_UNCHANGED");
+        assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_UNCHANGED");
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
+    fn filesystem_write_adapter_writes_text_target() {
+        let root = test_root("write-text");
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"old").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+        let result = adapter.invoke(&write_request("target.txt", "new text")).unwrap();
+
+        assert!(result.success);
+        assert_eq!(result.output, b"new text");
+        assert_eq!(std::fs::read(&target).unwrap(), b"new text");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn filesystem_write_adapter_rejects_oversized_content() {
+        let root = test_root("write-limit");
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"KEEP_ORIGINAL").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+        let result = adapter.invoke(&write_request("target.txt", "content exceeds limit"));
+
+        assert_eq!(result, Err(AdapterError::BackendFailure));
+        assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn filesystem_adapters_reject_parent_directory_traversal() {
+        let root = test_root("parent-traversal");
+        let outside = root.with_extension("outside.txt");
+        std::fs::write(&outside, b"OUTSIDE_UNCHANGED").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let reader = FileReadAdapter::with_authority(Arc::clone(&authority));
+        let writer = FileWriteAdapter::with_authority(authority);
+        let traversal = "..\\outside.txt";
+
+        assert_eq!(reader.invoke(&read_request(traversal)), Err(AdapterError::ResolutionFailed));
+        assert_eq!(writer.invoke(&write_request(traversal, "ATTACK")), Err(AdapterError::ResolutionFailed));
+        assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_UNCHANGED");
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
 }
