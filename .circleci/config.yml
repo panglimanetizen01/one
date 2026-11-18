@@ -113,10 +113,7 @@ jobs:
             test "$version" = "one 0.1.0"
             temp_dir=$(mktemp -d)
             trap 'rm -rf "$temp_dir"' EXIT
-            cat > "$temp_dir/halo.one" \<<'ONE'
-            nama adalah "Budi"
-            tampilkan nama
-            ONE
+            printf '%s\n' 'nama adalah "Budi"' 'tampilkan nama' > "$temp_dir/halo.one"
             output=$("$binary" jalankan "$temp_dir/halo.one")
             test "$output" = "Budi"
       - when:
