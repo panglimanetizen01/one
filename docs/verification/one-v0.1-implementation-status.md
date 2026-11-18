@@ -179,3 +179,13 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Fixed with field shorthand in source SHA `3d8e0d0e3af54310837eb06d442d30a02df821d0`. Diagnostic verifier pin now targets this SHA; E4 [#44333965599](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333965599) is QUEUED. Fresh exact-SHA artifact/platform checks remain pending.
 - Focused filesystem architecture Mermaid source is now present at `docs/architecture/filesystem-root-confinement.md`, linked from `docs/ARCHITECTURE.md` and `docs/README.md`. Full PR #97 overview image remains visually NOT VERIFIED.
 - Classification: Linux direct-child atomic writer IMPLEMENTED / PARTIAL; current source NOT VERIFIED. Nested Linux writes remain fail-closed. Issue #104 OPEN / NOT ACCEPTED.
+
+
+## CLI integration alignment for Linux write scope — 2026-11-18
+
+- Debian 12 workspace run [#44333980452](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333980452) failed in `one-cli/tests/filesystem_write.rs` because a `cfg(not(windows))` test still expected all Linux writes to be unsupported. The Linux backend now supports direct-child writes, so that expectation was obsolete.
+- Updated CLI tests: Linux direct-child absolute target must succeed; Linux nested relative target must fail closed and preserve the original file; other non-Windows/non-Linux targets remain unsupported.
+- Source SHA: `2fa1436daa102d3cf32125da6c440ae19cc83ba7`. Diagnostic verifier pin now targets this SHA.
+- Fresh E4 [#44334598268](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598268), cross-platform [#44334598774](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598774), distro [#44334598316](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598316), Android artifact [#44334598355](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598355), Android runtime [#44334598284](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598284), SEC-05 [#44334598278](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598278), and resource guard [#44334598250](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598250) are queued/pending.
+- CircleCI `ci/circleci: one-linux` PENDING on `2fa1436...`: https://app.circleci.com/workflow/8f351193-5da8-4b6a-ad2f-75075c6a51e7/job/604385cb-7f5f-4c2f-8a38-92cc8330b83f.
+- Classification: CLI test alignment IMPLEMENTED; current source NOT VERIFIED pending exact-SHA tests. Issue #104 remains OPEN / NOT ACCEPTED.
