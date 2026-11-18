@@ -12,7 +12,7 @@ fn project_metadata(root: &Path) -> Result<(String, String), String> { let manif
 fn project_root_for_source(source: &Path) -> Result<PathBuf, String> {
  let current_dir = fs::canonicalize(".")
   .map_err(|error| format!("Tidak dapat menentukan direktori kerja proyek: {}", error))?;
- let source_parent = source.parent().unwrap_or_else(|| Path::new("."));
+ let source_parent = source.parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or(Path::new("."));
  let canonical_parent = fs::canonicalize(source_parent)
   .map_err(|error| format!("Tidak dapat menentukan direktori sumber '{}': {}", source_parent.display(), error))?;
 
