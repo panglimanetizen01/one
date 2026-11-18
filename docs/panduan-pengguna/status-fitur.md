@@ -55,3 +55,17 @@ Perbaikan kandidat tersebut belum digabung ke main dan belum menjadi rilis. Kare
 - Database query tetap Eksperimental. Kandidat PR #108 kini mengintegrasikan read-only file-open dan regression test, tetapi exact-SHA gabungan belum diverifikasi; main belum berubah.
 - Issue #82 untuk eksekusi runtime Android AArch64 masih terbuka; build artifact saja bukan bukti runtime execution.
 - CircleCI belum aktif pada main. Migrasi masih draft pada PR #108 dan belum memiliki bukti job CircleCI terminal PASS.
+
+
+## Pembaruan filesystem project-root — kandidat PR #113 (18 November 2026)
+
+Status canonical `main` dan kandidat PR harus dibaca terpisah:
+
+- **Canonical `main`:** filesystem read/write belum boleh dianggap sebagai sandbox project-root yang terkonfinesi. PR #113 belum digabung dan tidak mengubah status rilis `main`.
+- **Kandidat eksperimental PR #113:** implementasi `FilesystemAuthority` menggunakan root handle yang dibuat host, pembacaan Linux relatif terhadap root handle melalui `openat2`, dan backend Windows berbasis handle relatif. Kandidat ini juga menambahkan jalur write Windows dengan temporary sibling file, pemeriksaan handle, dan handle-relative rename untuk mengganti target; Linux write tetap fail-closed.
+- **Verifikasi kandidat:** E4, Windows native reparse probe, full Ubuntu/Windows matrix, SEC-05, Debian/Ubuntu, dan Android AArch64 artifact build telah lulus pada source SHA `4c3bccaf59d965ce8b446e0b84cb84c00ff2eed6`. Setelah bukti tersebut, source kandidat berubah menjadi `5c5bfb53e086222f89dc8178426a8c6b65b50a04` dengan perubahan tambahan pada filesystem write. Hasil PASS dari SHA sebelumnya **tidak** membuktikan perubahan baru ini.
+- **Status saat dokumentasi ini diperbarui:** verifikasi Windows/Linux exact-SHA untuk perubahan terbaru belum dibuktikan di sini; Android API 35 AArch64 runtime masih berjalan pada run yang mem-pin SHA sebelumnya; CircleCI `ci/circleci: one-linux` masih PENDING pada SHA terbaru. Karena itu fitur tetap **Dalam pengembangan / NOT VERIFIED pada kandidat terbaru**, bukan Didukung atau Accepted.
+- **Batas keamanan Windows:** penggunaan `NtCreateFile`, `OBJ_DONT_REPARSE`, pemeriksaan reparse, dan handle-relative rename adalah implementasi kandidat yang masih harus divalidasi pada runner Windows dan terhadap batas kontrak API yang terdokumentasi. Satu probe pada Windows Server 2025 tidak membuktikan dukungan universal semua versi Windows.
+- **Issue #104** tetap OPEN. Jangan mengandalkan kandidat PR #113 sebagai kemampuan yang sudah tersedia pada rilis atau canonical `main`.
+
+Pengguna sebaiknya tidak mengandalkan filesystem capability sebagai sandbox keamanan project sampai issue ini diterima dan dirilis setelah seluruh acceptance criteria, verifikasi exact-SHA, serta dokumentasi final terpenuhi.
