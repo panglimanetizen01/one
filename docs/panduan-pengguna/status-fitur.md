@@ -156,3 +156,10 @@ Source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; focused diagram updated 
 Added a cross-platform CLI integration test proving that the nearest ancestor containing `one.toml` is selected as the filesystem authority root for a source under `src/`. The test writes to a direct-child target under that project root. This complements outside-root read/write rejection and relative-source tests.
 
 Test source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; diagnostic verifier pin updated to this SHA. Exact-SHA workflows are pending.
+
+
+## Project-root ancestor lookup correction — 18 November 2026
+
+The source-context resolver now continues searching ancestors above the process working directory for the nearest `one.toml` manifest before falling back to the working directory or standalone source parent. This avoids selecting a subdirectory as root when the source itself is directly beneath a project subdirectory.
+
+Source SHA: `722d662e7a81711ba3607d26571f4048a292b3ed`; diagnostic verifier pin updated. Exact-SHA verification is pending.
