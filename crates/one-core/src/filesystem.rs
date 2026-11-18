@@ -7,14 +7,12 @@
 
 use std::fs::File;
 use std::io::Read;
-#[cfg(windows)]
-use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FilesystemError {
     InvalidRoot, InvalidTarget, OutsideRoot, UnsupportedPlatform,
-    ResolutionFailed, NotRegularFile, HardLinkedFile, ReadLimitExceeded,
+    ResolutionFailed, NotRegularFile, HardLinkedFile, NotFound, ReadLimitExceeded,
     WriteLimitExceeded, IoFailure,
 }
 
@@ -108,11 +106,7 @@ impl FilesystemAuthority {
         }
         #[cfg(windows)]
         {
-            let mut file = windows_native::open_relative(&self.root, &relative, true)?;
-            file.set_len(0).map_err(|_| FilesystemError::IoFailure)?;
-            file.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
-            file.flush().map_err(|_| FilesystemError::IoFailure)?;
-            Ok(())
+            windows_native::write_relative(&self.root, &relative, bytes)
         }
         #[cfg(not(windows))]
         {
@@ -219,13 +213,16 @@ mod windows_native {
     use super::FilesystemError;
     use std::ffi::c_void;
     use std::fs::File;
+    use std::io::Write;
     use std::os::windows::ffi::OsStrExt;
     use std::os::windows::io::{AsRawHandle, FromRawHandle};
     use std::path::{Component, Path};
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     use windows_sys::Win32::Foundation::HANDLE;
     use windows_sys::Win32::Storage::FileSystem::{
-        GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION,
+        GetFileInformationByHandle, SetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION,
     };
 
     const OBJ_CASE_INSENSITIVE: u32 = 0x0000_0040;
@@ -242,7 +239,9 @@ mod windows_native {
     const FILE_SHARE_WRITE: u32 = 0x0000_0002;
 
     const FILE_OPEN: u32 = 1;
+    const FILE_CREATE: u32 = 2;
     const FILE_OPEN_IF: u32 = 3;
+    const DELETE_ACCESS: u32 = 0x0001_0000;
     const FILE_DIRECTORY_FILE: u32 = 0x0000_0001;
     const FILE_SYNCHRONOUS_IO_NONALERT: u32 = 0x0000_0020;
     const FILE_NON_DIRECTORY_FILE: u32 = 0x0000_0040;
@@ -254,6 +253,7 @@ mod windows_native {
     const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
 
     const STATUS_REPARSE_POINT_ENCOUNTERED: u32 = 0xC000_050B;
+    const STATUS_OBJECT_NAME_NOT_FOUND: u32 = 0xC000_0034;
     const STATUS_OBJECT_NAME_INVALID: u32 = 0xC000_0033;
     const STATUS_OBJECT_PATH_SYNTAX_BAD: u32 = 0xC000_003B;
 
@@ -308,6 +308,7 @@ mod windows_native {
         eprintln!("NtCreateFile returned NTSTATUS 0x{:08X}", status as u32);
         match status as u32 {
             STATUS_REPARSE_POINT_ENCOUNTERED => FilesystemError::ResolutionFailed,
+            STATUS_OBJECT_NAME_NOT_FOUND => FilesystemError::NotFound,
             STATUS_OBJECT_NAME_INVALID | STATUS_OBJECT_PATH_SYNTAX_BAD => FilesystemError::InvalidTarget,
             _ => FilesystemError::IoFailure,
         }
