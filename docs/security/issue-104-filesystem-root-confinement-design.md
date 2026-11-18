@@ -1,8 +1,8 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Design checkpoint only — implementation and security acceptance NOT VERIFIED  
-**Latest adapter/interpreter/CLI source audit:** `871a39967db315c695a642f527c41c7172922201`  
-**Current PR #110 HEAD:** `871a39967db315c695a642f527c41c7172922201` (documentation-only; CircleCI pending at last refresh)  
+**Latest adapter source recheck:** `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549`  
+**Current PR #110 HEAD at previous checkpoint:** `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549` (documentation-only; CircleCI pending at last refresh)  
 **Branch:** security/issue-104-root-handle-design-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
@@ -273,3 +273,11 @@ This audit is source inspection only; no compiler, unit test, adversarial test, 
 - Read `crates/one-cli/src/main.rs` at the same SHA (blob `6ff60189eabb19886d8d4636645aea17cf9997e2`); the CLI does not directly inject a trusted project filesystem authority into those adapters.
 - PR #110 remains OPEN / DRAFT / UNMERGED. CircleCI `ci/circleci: one-linux` for this exact HEAD was PENDING at `2026-11-18T05:01:55Z`, job `07d035f3-cac0-4a75-a4f8-0eaaa3f19a4b`; no CircleCI log inspection or terminal result is claimed.
 - This is source inspection only. No production source or test was changed; Issue #104 remains NOT IMPLEMENTED / NOT ACCEPTED.
+
+
+## 17. Recheck and verifier-ledger boundary — 2026-11-18
+
+- Rechecked `crates/one-core/src/adapter.rs` at PR #110 SHA `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549`. `FileReadAdapter::invoke` still calls `std::fs::read(path)` and `FileWriteAdapter::invoke` still calls `std::fs::write(path, &content)`; both constructors remain parameterless. Issue #104 remains unimplemented in production source.
+- PR #110 SHA `4a1dbdf...` has CircleCI `ci/circleci: one-linux` PENDING at last refresh; job `54d76c6c-e85d-4a91-984f-20dec0a0f701`, workflow `524e7b1e-de00-49fd-9a25-69266a2c5fd5`. This is not a test result yet.
+- The independent verifier's `ONE Fixed-Weight Ledger Gate` currently fails closed because the pinned source SHA `e50748a1b25922d9090eba1f5fb90548d7c7d003` does not contain `docs/verification/one-completion-ledger.md` or `docs/verification/DEFINITION_OF_DONE.md`. Its unit tests pass (15/15) on run `44241595784` and `44241822346`; the subsequent live-input step fails with `FileNotFoundError` for `one-source/docs/verification/one-completion-ledger.md`. Historical copies exist at `2ead9dba45db4ce4105deaa81720aacc8fcadd6c`, but must not be silently reused as current acceptance inputs. The verifier branch's `LEDGER_GATE.md` explicitly records this root cause and calls for a versioned current-source ledger/DoD plus separation of the ledger documentation pin from the E4 security pin.
+- No ledger scores, DoD checks, source pins, or security acceptance were changed in this checkpoint. The evidence matrix and implementation-status documents are not format-equivalent substitutes for the fixed-weight ledger.
