@@ -57,7 +57,7 @@ fn run_command_executes_filesystem_write_for_direct_child_on_linux() {
 fn run_command_rejects_nested_linux_filesystem_write_without_side_effects() {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
     let nested_name = format!(".one-filesystem-write-nested-{id}");
-    let nested = std::env::current_dir().unwrap().join(&nested_name);
+    let nested = std::env::temp_dir().join(&nested_name);
     fs::create_dir(&nested).unwrap();
     let target = nested.join("target.txt");
     fs::write(&target, "KEEP_ORIGINAL").unwrap();
@@ -109,6 +109,36 @@ fn run_command_rejects_filesystem_write_when_backend_is_unsupported() {
     );
     assert!(!target.exists(), "unsupported filesystem write created or changed a target");
     let _ = fs::remove_file(&source);
+}
+
+#[test]
+fn run_command_rejects_absolute_filesystem_target_outside_source_project_root() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let project_root = std::env::temp_dir().join(format!("one-filesystem-project-{id}"));
+    fs::create_dir(&project_root).unwrap();
+    let source = project_root.join("main.one");
+    let target = std::env::temp_dir().join(format!("one-filesystem-outside-{id}.txt"));
+    let target_arg = target.to_string_lossy().replace('\\', "/");
+    fs::write(&target, "KEEP_OUTSIDE_SENTINEL").unwrap();
+    fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"ATTACK\"\n")).unwrap();
+
+    let output = run(&[
+        "run",
+        source.to_str().unwrap(),
+        "--izinkan",
+        "filesystem.write",
+        "--target",
+        &target_arg,
+    ]);
+
+    assert!(!output.status.success(), "absolute target outside the source project root unexpectedly succeeded");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("ResolutionFailed"), "expected root-confinement diagnostic, got: {stderr}");
+    assert_eq!(fs::read(&target).unwrap(), b"KEEP_OUTSIDE_SENTINEL");
+
+    let _ = fs::remove_file(&target);
+    let _ = fs::remove_file(&source);
+    let _ = fs::remove_dir(&project_root);
 }
 
 #[test]
