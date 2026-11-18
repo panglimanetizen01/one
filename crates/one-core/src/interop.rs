@@ -1187,61 +1187,55 @@ mod tests {
 
     #[test]
     fn subprocess_stdout_capture_has_a_hard_limit() {
-        let (program, args, fixture) = if cfg!(windows) {
-            let path = std::env::temp_dir().join(format!(
-                "one-process-stdout-limit-{}.txt",
-                std::process::id()
-            ));
-            std::fs::write(&path, vec![b'A'; MAX_OUTPUT_BYTES_PER_STREAM + 1])
-                .expect("stdout fixture should be created");
+        let (program, args) = if cfg!(windows) {
             (
-                "cmd.exe".to_owned(),
-                vec!["/D".into(), "/C".into(), format!("type \"{}\"", path.display())],
-                Some(path),
+                "powershell.exe".to_owned(),
+                vec![
+                    "-NoProfile".into(),
+                    "-NonInteractive".into(),
+                    "-Command".into(),
+                    "$b = New-Object byte[] 1048577; [Console]::OpenStandardOutput().Write($b,0,$b.Length)".into(),
+                ],
             )
         } else {
             (
                 "sh".to_owned(),
                 vec!["-c".into(), "head -c 1048577 /dev/zero".into()],
-                None,
             )
         };
-        let result = run_process(
+        let error = run_process_with_timeout(
             &ProcessSpec { program, args, working_directory: None },
             &CapabilitySet::none().allow(Capability::Process),
-        );
-        if let Some(path) = fixture { let _ = std::fs::remove_file(path); }
-        let error = result.expect_err("stdout beyond the configured cap must be rejected");
+            if cfg!(windows) { Duration::from_secs(30) } else { PROCESS_TIMEOUT },
+        )
+        .expect_err("stdout beyond the configured cap must be rejected");
         assert!(error.contains("output limit"), "unexpected bounded stdout error: {error}");
     }
 
     #[test]
     fn subprocess_stderr_capture_has_a_hard_limit() {
-        let (program, args, fixture) = if cfg!(windows) {
-            let path = std::env::temp_dir().join(format!(
-                "one-process-stderr-limit-{}.txt",
-                std::process::id()
-            ));
-            std::fs::write(&path, vec![b'A'; MAX_OUTPUT_BYTES_PER_STREAM + 1])
-                .expect("stderr fixture should be created");
+        let (program, args) = if cfg!(windows) {
             (
-                "cmd.exe".to_owned(),
-                vec!["/D".into(), "/C".into(), format!("type \"{}\" 1>&2", path.display())],
-                Some(path),
+                "powershell.exe".to_owned(),
+                vec![
+                    "-NoProfile".into(),
+                    "-NonInteractive".into(),
+                    "-Command".into(),
+                    "$b = New-Object byte[] 1048577; [Console]::OpenStandardError().Write($b,0,$b.Length)".into(),
+                ],
             )
         } else {
             (
                 "sh".to_owned(),
                 vec!["-c".into(), "head -c 1048577 /dev/zero >&2".into()],
-                None,
             )
         };
-        let result = run_process(
+        let error = run_process_with_timeout(
             &ProcessSpec { program, args, working_directory: None },
             &CapabilitySet::none().allow(Capability::Process),
-        );
-        if let Some(path) = fixture { let _ = std::fs::remove_file(path); }
-        let error = result.expect_err("stderr beyond the configured cap must be rejected");
+            if cfg!(windows) { Duration::from_secs(30) } else { PROCESS_TIMEOUT },
+        )
+        .expect_err("stderr beyond the configured cap must be rejected");
         assert!(error.contains("output limit"), "unexpected bounded stderr error: {error}");
     }
 
