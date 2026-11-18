@@ -327,6 +327,37 @@ mod filesystem_nofollow_tests {
     }
 
     #[test]
+    fn descriptor_relative_read_rejects_mount_boundary_without_reading_outside() {
+        use std::os::unix::fs::MetadataExt;
+
+        let root_path = PathBuf::from("/dev");
+        let mount_path = PathBuf::from("/dev/shm");
+        let root_metadata = std::fs::metadata(&root_path).expect("/dev must exist");
+        let mount_metadata = std::fs::metadata(&mount_path).expect("/dev/shm must exist");
+        assert_ne!(
+            root_metadata.dev(),
+            mount_metadata.dev(),
+            "/dev/shm must be a distinct mount for this regression"
+        );
+
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let file_name = format!("one-e4-read-mount-{}-{nonce}", std::process::id());
+        let outside = mount_path.join(&file_name);
+        std::fs::write(&outside, b"OUTSIDE_MOUNT_SENTINEL").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root_path, 4096, 4096).unwrap());
+        let adapter = FileReadAdapter::with_authority(authority);
+        let relative = format!("shm/{file_name}");
+        let result = adapter.invoke(&read_request(&relative));
+
+        assert_eq!(result, Err(AdapterError::ResolutionFailed));
+        assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_MOUNT_SENTINEL");
+
+        drop(adapter);
+        std::fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
     fn final_component_mount_boundary_denial_does_not_truncate_file() {
         use std::ffi::CString;
         use std::fs::File;
