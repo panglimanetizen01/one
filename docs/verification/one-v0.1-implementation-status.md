@@ -91,3 +91,13 @@ Canonical hosted CI runs `39372356906` and `39381125667` failed on both matrix j
 ## Release interpretation
 
 `IMPLEMENTED` means the canonical source contains the implementation and associated tests. `VERIFIED` means executable evidence exists for the exact recorded source revision and stated platform boundary. `EXPERIMENTAL` means the declared vertical slice is executable and verified but intentionally limited in scope. `BUILD TERBUKTI` means the native artifact was produced and structurally validated but target execution evidence is still missing. `Supported` is reserved for a stronger support claim.
+
+## Live security and CI checkpoint — 2026-11-18
+
+- PR #110 HEAD `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b` has GitHub CircleCI status `ci/circleci: one-linux` = SUCCESS (job `c9916871-9746-4c65-b8fb-615d9f96dc78`). This is a Linux CircleCI status only; expanded job logs were not inspected in this checkpoint.
+- Issue #104 remains OPEN and its required production behavior is NOT IMPLEMENTED at this SHA: `FileReadAdapter` still calls `std::fs::read(path)`; `FileWriteAdapter` still calls `std::fs::write(path, ...)`; both constructors remain parameterless. Do not label filesystem root confinement IMPLEMENTED, TESTED, VERIFIED, or SUPPORTED.
+- PR #108 HEAD `286a0fd563e10611a3465cb6457ab069a0df8a52` has GitHub CircleCI status `ci/circleci: one-linux` = SUCCESS (job `99216205-62aa-4e98-af42-d4b742a5feaa`).
+- PR #108 and #110 remain OPEN / DRAFT / UNMERGED. Canonical `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`.
+- The independent verifier repository main SHA is `3d915528e7771d9443ccf0da7e4d7c9e25231537`; no verifier workflow or source-pinning changes were made in this checkpoint.
+- DoD/E1–E6 and release status are not promoted by these scoped CircleCI statuses. E6 remains NOT IMPLEMENTED unless a newer authoritative ledger proves otherwise.
+
