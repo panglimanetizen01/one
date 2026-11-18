@@ -78,29 +78,6 @@ jobs:
           name: Workspace tests
           command: cargo test --locked --workspace --all-targets
       - run:
-          name: Deterministic .oneir and .onepkg artifacts
-          command: cargo test --locked -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
-      - run:
-          name: DNS success and failure classification
-          command: |
-            cargo test --locked -p one-core --all-targets dns_adapter
-      - run:
-          name: Orchestration policy deny and allow paths
-          command: |
-            cargo test --locked -p one-core --all-targets orchestrator
-      - run:
-          name: Database vertical slice
-          command: |
-            cargo test --locked -p one-core --test database_vertical_slice
-      - run:
-          name: HTTP GET vertical slice
-          command: |
-            cargo test --locked -p one-core --test http_get_vertical_slice
-      - run:
-          name: HTTP GET CLI vertical slice
-          command: |
-            cargo test --locked -p one-cli --test http_get_orchestration
-      - run:
           name: Build release CLI
           command: cargo build --release --locked -p one-cli --bin one
       - run:
