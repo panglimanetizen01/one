@@ -356,3 +356,42 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Outstanding work inclu
 - race tests and exact-SHA E4 verification.
 
 This is an API-surface feasibility spike, not an E4 implementation or security certification.
+
+
+## 23. Platform backend decision and latest CI checkpoint — 2026-11-18
+
+### Exact candidate validation
+
+- PR #113 current source candidate: `14d81a93a60ea2bba1ebfd2ddf7d85baf0893e24`.
+- Independent verifier run [44286988623](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44286988623) completed SUCCESS on that exact source SHA:
+  - Ubuntu 24.04 job `134742079698`: 239 passed, 0 failed, 1 ignored.
+  - Windows Server 2025 job `134742079233`: 232 passed, 0 failed, 1 ignored.
+- CircleCI `ci/circleci: one-linux` for exact source SHA `14d81a93...` is now SUCCESS (was pending at the previous checkpoint).
+- These are compile/test baseline results only. The filesystem module remains a compile-time API probe and does not perform reads or writes.
+
+### Capability-library evaluation: cap-std 4.0.3
+
+Reviewed the current `cap-std 4.0.3` API and its upstream documentation/source before considering adoption.
+
+- Positive: `cap_std::fs::Dir` is backed by an open directory handle; `Dir::open` and `Dir::open_with` resolve relative to that handle. Its documentation explicitly requires a Windows root file handle opened without `FILE_SHARE_DELETE` to prevent rename races.
+- Blocking mismatch: the documented `Dir::open` model permits symlink traversal when the resolved destination remains beneath the capability root. Issue #104's selected strict policy requires rejecting symlink/reparse-point components, not merely preventing escape through them.
+- The public `OpenOptions` API does not expose a portable no-follow-all-components contract. Adding a separate metadata precheck would reintroduce a TOCTOU race and is rejected.
+- The public API evidence inspected does not establish the required no-cross-mount / bind-mount policy and mount identity check for this project's strict contract.
+- Security hygiene: do not use cap-std/cap-primitives versions `<=4.0.2`; upstream advisory GHSA-hp8f-xmx4-4qrg documents a critical trailing-slash symlink-follow bypass, patched in 4.0.3. The existence of the patched version does not resolve the policy/API mismatch above.
+
+Decision: do NOT add cap-std as the Issue #104 enforcement boundary. Do not wrap it with path metadata prechecks. Keep the native implementation explicit and platform-specific.
+
+### Native implementation sequence
+
+1. Introduce an immutable host-owned `FilesystemAuthority` that retains an opened root handle and explicit read/write byte limits. No authority supplied means fail closed.
+2. Linux/Android: use a single root-handle-relative `openat2` operation with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`; unsupported kernel/syscall or unsupported path form fails closed. Verify leaf type, mount identity, link count and bounded size on the opened handle.
+3. Windows: use `NtCreateFile` with `OBJECT_ATTRIBUTES.RootDirectory`, no-follow/reparse-point open semantics, and root/parent handles opened without delete sharing while resolving. Validate volume/file identity, leaf type and link count. A compile-only binding probe is not sufficient.
+4. macOS and other Unix targets: remain unavailable/fail closed until a race-resistant primitive meeting the same strict contract is implemented and independently tested. Do not silently substitute ordinary `openat` component loops where rename-out-of-root races are unresolved.
+5. Integrate the authority into both direct adapters and the interpreter/CLI host boundary. Preserve policy-first evaluation and approval/explicit-deny precedence.
+6. Add exact-name nonzero adversarial tests to the independent E4 filters; test actual outside-file side effects, symlink/reparse-point races, parent rename, mount crossing, hard links, regular-file checks, bounded I/O and atomic replacement.
+
+### Threat-boundary note
+
+A retained directory handle alone does not prove that a descendant remains in the original namespace if an attacker can rename an opened parent outside the root while traversal continues. Linux/Android implementation therefore uses one kernel-enforced beneath/no-symlink/no-cross-mount resolution operation rather than a sequence of individually safe-looking `openat` calls. Windows must hold relevant directory handles without delete sharing during traversal and verify the opened object identities. If a platform cannot establish these invariants, its adapter remains unavailable.
+
+Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. No E4 or ledger acceptance pin is changed by this design decision.
