@@ -69,3 +69,17 @@ Status canonical `main` dan kandidat PR harus dibaca terpisah:
 - **Issue #104** tetap OPEN. Jangan mengandalkan kandidat PR #113 sebagai kemampuan yang sudah tersedia pada rilis atau canonical `main`.
 
 Pengguna sebaiknya tidak mengandalkan filesystem capability sebagai sandbox keamanan project sampai issue ini diterima dan dirilis setelah seluruh acceptance criteria, verifikasi exact-SHA, serta dokumentasi final terpenuhi.
+
+
+## Checkpoint terbaru kandidat filesystem confinement — 18 November 2026
+
+Kandidat PR #113 telah bergerak melewati implementasi atomic write awal. Source HEAD terbaru yang diperiksa adalah `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9`; PR tetap OPEN / DRAFT / UNMERGED dan `main` tidak berubah.
+
+- Pada source SHA `20ede9fb1d3e97c04f81d4fe8f79f642a8cc8e78`, independent E4 run [#44329905887](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329905887) PASS, termasuk tujuh Windows filesystem regression checks (positive write, size limit, dan denied atomic replacement preservation), Unix adversarial checks, dan Windows Server 2025 native reparse contract probe.
+- Setelah itu, source berubah pada SHA `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9`: rename staged sibling diubah menjadi operasi nama sederhana dari source handle dengan `RootDirectory = NULL`. Ini perubahan code-bearing; hasil PASS pada `20ede9...` tidak otomatis memverifikasi `f6acb...`.
+- Independent verifier diagnostic pin sekarang menunjuk ke `f6acb...`; E4, cross-platform, SEC-05, Linux distro, Android artifact, dan Android runtime workflow baru sedang queued/in progress. Belum ada hasil final untuk SHA tersebut.
+- CircleCI `ci/circleci: one-linux` PENDING pada SHA `f6acb...`.
+- Status fitur tetap **Dalam pengembangan / NOT VERIFIED pada HEAD terbaru**. Implementasi atomic write telah lulus pada SHA sebelumnya, tetapi perubahan rename terbaru menunggu verifikasi exact-SHA. Jangan menyebut filesystem root confinement Didukung atau Accepted.
+- Canonical `main` tetap belum berisi PR #113; Issue #104 tetap OPEN.
+
+Jangan gunakan filesystem capability sebagai sandbox keamanan project sampai kandidat terbaru memenuhi seluruh acceptance criteria dan telah diterima serta dirilis.
