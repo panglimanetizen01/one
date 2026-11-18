@@ -237,3 +237,13 @@ This test-only correction does not broaden Linux writes beyond direct children o
 | Relative source root resolution | `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca` | CLI integration test executes a relative source and writes to a relative direct-child target | IMPLEMENTED; NOT VERIFIED |
 
 Do not claim project-root confinement until these host integration tests and the full filesystem E4 contract pass on the exact source SHA.
+
+
+## Manifest-root CLI evidence — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Nearest `one.toml` ancestor is selected as authority root | `1b7c3bb1dbc29a33c086b4df21a9996025c1e075` | CLI integration test places source under `src/main.one` and writes a direct-child file under project root | IMPLEMENTED; NOT VERIFIED |
+| Outside-root absolute read/write denied | `79a9886...` and descendants | CLI integration tests preserve outside write sentinel and prevent outside read disclosure | IMPLEMENTED; latest SHA pending verification |
+
+Verifier diagnostic pin now targets `1b7c3bb...`. Do not mark host-root integration VERIFIED until the exact-SHA cross-platform workflow passes.
