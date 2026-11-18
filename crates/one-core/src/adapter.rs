@@ -477,12 +477,22 @@ mod filesystem_windows_tests {
 
     #[test]
     fn filesystem_write_adapter_preserves_target_when_atomic_replace_is_denied() {
+        use std::fs::OpenOptions;
+        use std::os::windows::fs::OpenOptionsExt;
+
         let root = test_root("atomic-write-denied");
         let target = root.join("target.txt");
         std::fs::write(&target, b"KEEP_ORIGINAL").unwrap();
-        let mut permissions = std::fs::metadata(&target).unwrap().permissions();
-        permissions.set_readonly(true);
-        std::fs::set_permissions(&target, permissions).unwrap();
+
+        // Keep the existing destination open without FILE_SHARE_DELETE.
+        // The adapter may inspect/read it, but Windows must deny replacement
+        // while this independent handle remains open.
+        let blocker = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .share_mode(0x0000_0001 | 0x0000_0002) // FILE_SHARE_READ | FILE_SHARE_WRITE
+            .open(&target)
+            .unwrap();
 
         let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
         let adapter = FileWriteAdapter::with_authority(authority);
@@ -494,11 +504,13 @@ mod filesystem_windows_tests {
             .unwrap()
             .map(|entry| entry.unwrap().file_name())
             .collect::<Vec<_>>();
-        assert_eq!(entries, vec![std::ffi::OsString::from("target.txt")], "temporary sibling must be removed after a denied atomic replace");
+        assert_eq!(
+            entries,
+            vec![std::ffi::OsString::from("target.txt")],
+            "temporary sibling must be removed after a denied atomic replace"
+        );
 
-        let mut permissions = std::fs::metadata(&target).unwrap().permissions();
-        permissions.set_readonly(false);
-        std::fs::set_permissions(&target, permissions).unwrap();
+        drop(blocker);
         drop(adapter);
         std::fs::remove_dir_all(root).unwrap();
     }
