@@ -190,3 +190,13 @@ Nested Linux writes remain fail-closed because retained subdirectory handles can
 | CircleCI Linux | `090c84d...` | `ci/circleci: one-linux` PENDING; [job](https://app.circleci.com/workflow/60cfc357-04fc-47e2-8a5c-6cd85784c6af/job/a3279063-9cb6-4c54-8125-9b1b3b89ad8e) | PENDING |
 
 The Android compile failure at `cc54597...` is retained as evidence and is not misclassified as a runtime or security-test failure. The corrected source must be tested on its own exact SHA.
+
+
+## Android AArch64 artifact evidence — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Android AArch64 device artifact build | `090c84dbab02e48af0a493faeb8d4fe0ff80a876` | [Run #44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717), ELF64 AArch64 inspected, Android linker `/system/bin/linker64`, artifact uploaded (ID 14438938784) | PASS / VERIFIED for artifact build only |
+| Android API 35 runtime | `090c84d...` | [Run #44332808569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808569) | QUEUED; runtime NOT VERIFIED |
+
+Artifact build PASS does not imply runtime execution or full Android filesystem capability support.
