@@ -126,8 +126,17 @@ impl FilesystemAuthority {
         let relative = if target.is_absolute() {
             let normalized_root = normalize_windows_verbatim_prefix(&self.canonical_root);
             let normalized_target = normalize_windows_verbatim_prefix(target);
-            normalized_target
-                .strip_prefix(&normalized_root)
+            #[cfg(test)]
+            eprintln!(
+                "filesystem absolute target: root={:?}, target={:?}, normalized_root={:?}, normalized_target={:?}",
+                self.canonical_root, target, normalized_root, normalized_target
+            );
+            let stripped = normalized_target.strip_prefix(&normalized_root);
+            #[cfg(test)]
+            if stripped.is_none() {
+                eprintln!("filesystem absolute target prefix mismatch");
+            }
+            stripped
                 .map_err(|_| FilesystemError::OutsideRoot)?
                 .to_path_buf()
         } else {
