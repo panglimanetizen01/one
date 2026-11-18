@@ -36,12 +36,13 @@ fn project_root_for_source(source: &Path) -> Result<PathBuf, String> {
   candidate = parent.to_path_buf();
  }
 
- // Standalone relative source files belong to the current working directory;
- // standalone absolute source files use their canonical containing directory.
- if source.is_absolute() {
-  Ok(canonical_parent)
- } else {
+ // If the source is beneath the process working directory, that
+ // directory is the host-selected root. Otherwise a standalone source file
+ // uses its canonical containing directory.
+ if canonical_parent.starts_with(&current_dir) {
   Ok(current_dir)
+ } else {
+  Ok(canonical_parent)
  }
 }
 
