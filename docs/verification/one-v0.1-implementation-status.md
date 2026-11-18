@@ -136,3 +136,12 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Android runtime remains unverified for latest HEAD; the new artifact/runtime workflows are queued. The older Android runtime run pinned an earlier candidate and is not transferable.
 - User guide and Issue #104 design addenda distinguish canonical main from the draft candidate and explicitly record the source-SHA boundary.
 - Classification: candidate implementation PARTIAL / IMPLEMENTED; E4 VERIFIED on `20ede9...` only; latest candidate NOT VERIFIED; platform support and Issue #104 acceptance NOT ACCEPTED. Keep Issue #104 OPEN and preserve verifier protected pin.
+
+
+## Windows atomic-denial regression cleanup — 2026-11-18
+
+- Source SHA `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` passed E4 (run #44330374509) for its code at that revision, including the Windows atomic write success and denied replacement tests.
+- The cross-platform Windows Clippy job then exposed a test-only lint: `permissions.set_readonly(false)` triggered `clippy::permissions_set_readonly_false`.
+- Replaced the permission reset with a real Windows share-mode blocker that omits `FILE_SHARE_DELETE`, preserving the negative atomic replacement test's intended semantics.
+- Fix source SHA: `a79665056149bf1ff302de79a7b86a346e0353d8`. Diagnostic verifier pin now targets this SHA; E4 [#44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) is QUEUED. CircleCI `ci/circleci: one-linux` is PENDING on this SHA.
+- Classification: source fix IMPLEMENTED; latest SHA NOT VERIFIED pending E4 and cross-platform CI. Do not transfer the earlier `f6acb...` E4 PASS to `a796650...`. Issue #104 remains OPEN / NOT ACCEPTED.
