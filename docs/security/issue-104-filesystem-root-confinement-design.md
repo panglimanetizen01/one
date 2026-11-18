@@ -468,3 +468,28 @@ Current inventory status: **0 of 5 Unix filter groups and 0 of 6 Windows named t
 - Candidate `955e1841adf79ae400395feef86186482276818d` changes that write test to assert fail-closed behavior and no file creation. Its new exact-SHA matrix is still in progress; no pass is claimed here.
 
 Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and do not modify E4 or ledger acceptance pins.
+
+
+## 26. Exact candidate matrix completed; CircleCI failure remains unresolved — 2026-11-18
+
+### Independent verifier result
+
+- Exact ONE code candidate tested: `955e1841adf79ae400395feef86186482276818d`.
+- Independent run [44292290308](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44292290308) completed SUCCESS.
+- Linux job `134760262324`: SUCCESS; full `one-core` suite passed. Main test binary reported 137 passed, 0 failed; additional integration binaries also passed, including 5/5, 6/6, 9/9, 1/1, 7/7, and remaining suites with no failures. One test remains ignored in a separate suite.
+- Windows job `134760262885`: SUCCESS; full `one-core` suite passed. Main test binary reported 126 passed, 0 failed; all remaining integration binaries reported zero failures, with one ignored test in a separate suite.
+- This verifies the exact candidate code SHA on the independent Linux and Windows matrix. It does not verify Android/macOS and does not constitute E4 security acceptance.
+
+### CircleCI result on the same code candidate
+
+- GitHub commit status `ci/circleci: one-linux` is FAILURE for exact SHA `955e1841adf79ae400395feef86186482276818d`.
+- Status description: `Job failed. To see why, run the CircleCI CLI: circleci run get cb880159-7100-4893-b863-3bfe2f717b0b --failure-report`.
+- CircleCI job URL: [one-linux job](https://app.circleci.com/workflow/b0b95c25-c8d8-4afb-b4c3-6d0b18866a78/job/4ed659a7-2816-4c3f-a5bf-af018431f051).
+- CircleCI's job log is not accessible through the connected GitHub Actions interface in this session; no root cause is asserted. Do not modify the CircleCI config or add retries based on a guess. Obtain the CircleCI failure report/logs through an authenticated CircleCI CLI/API session, then classify and fix the first failing step.
+- Thus candidate has independent Linux/Windows PASS, but overall CI is NOT GREEN until CircleCI is diagnosed and passes.
+
+### Acceptance boundary unchanged
+
+- E4 remains 0/5 Unix filter groups and 0/6 Windows named tests implemented/accepted.
+- Writes remain fail-closed; Windows/macOS/Android authority backends remain unavailable.
+- Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft/unmerged and do not change acceptance pins.
