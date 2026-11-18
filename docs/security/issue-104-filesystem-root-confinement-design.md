@@ -275,7 +275,7 @@ This audit is source inspection only; no compiler, unit test, adversarial test, 
 - This is source inspection only. No production source or test was changed; Issue #104 remains NOT IMPLEMENTED / NOT ACCEPTED.
 
 
-## 17. Recheck and verifier-ledger boundary — 2026-11-18
+## 20. Recheck and verifier-ledger boundary — 2026-11-18
 
 - Rechecked `crates/one-core/src/adapter.rs` at PR #110 SHA `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549`. `FileReadAdapter::invoke` still calls `std::fs::read(path)` and `FileWriteAdapter::invoke` still calls `std::fs::write(path, &content)`; both constructors remain parameterless. Issue #104 remains unimplemented in production source.
 - PR #110 SHA `4a1dbdf...` has CircleCI `ci/circleci: one-linux` PENDING at last refresh; job `54d76c6c-e85d-4a91-984f-20dec0a0f701`, workflow `524e7b1e-de00-49fd-9a25-69266a2c5fd5`. This is not a test result yet.
