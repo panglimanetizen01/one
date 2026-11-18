@@ -708,3 +708,10 @@ The independent verifier E4 contract was expanded to require five Linux `descrip
 The first Linux direct-child writer candidate `cc54597b471493f4350d0dc0f3a2896babb33ea4` failed the Android AArch64 artifact build at compile time with four `E0425` errors: stale references to `parent_handle` remained in temp creation, cleanup guard setup, and rename calls after the implementation was restricted to the retained root descriptor. The failure occurred before any runtime test; no artifact was uploaded.
 
 The correction replaces those references with the retained `root.as_raw_fd()` value in source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`. The verifier diagnostic pin now targets this SHA. New E4 and cross-platform verification are queued/pending; CircleCI is PENDING. Do not treat the earlier compile failure as a runtime security failure, and do not treat the correction as verified until the new exact-SHA build/tests finish.
+
+
+## 38. Android artifact build evidence on corrected source — 2026-11-18
+
+The Android AArch64 artifact build now passes on exact source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`: [run #44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717). The job verified the exact source pin, built and inspected an ELF64 AArch64 executable with Android linker `/system/bin/linker64`, and uploaded artifact ID `14438938784` (SHA-256 `5971ef900ead08e6f571327594625ba2856a1917d59196d095c785bdf51a0ea4`).
+
+This is only artifact/build evidence. Android API 35 runtime execution remains queued and is not VERIFIED. E4 and full cross-platform verification for the current candidate remain queued/pending; CircleCI remains pending. Do not promote Android to SUPPORTED or Issue #104 to ACCEPTED from an ELF build alone.
