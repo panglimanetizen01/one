@@ -205,3 +205,10 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Added cross-platform CLI test `run_command_uses_nearest_one_manifest_as_filesystem_root`: source under `src/main.one`, nearest `one.toml` ancestor chosen as root, direct-child output written under that root.
 - Source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; verifier pin updated. Exact-SHA E4, cross-platform, distro, and Android workflows remain pending.
 - Host-root integration remains IMPLEMENTED / NOT VERIFIED until the latest SHA's CI completes.
+
+
+## Project-root ancestor lookup correction — 2026-11-18
+
+- Source `722d662e7a81711ba3607d26571f4048a292b3ed` removes the premature stop at current working directory while searching for the nearest ancestor `one.toml`.
+- This ensures a source located directly under a project subdirectory still resolves to a manifest above cwd when present.
+- Diagnostic verifier pin targets `722d662...`; fresh E4 and workspace verification pending. Host-root integration remains IMPLEMENTED / NOT VERIFIED.
