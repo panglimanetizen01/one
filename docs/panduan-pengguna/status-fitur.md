@@ -108,3 +108,10 @@ The Linux write implementation and new tests are committed in candidate source S
 The first Linux writer candidate `cc54597b471493f4350d0dc0f3a2896babb33ea4` failed the Android AArch64 cross-target build because four stale `parent_handle` references remained after the implementation was restricted to the retained root descriptor. No runtime test or artifact was produced by that failed job.
 
 Those references are now corrected to use the retained root file descriptor in source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`. The independent verifier pin targets this SHA. Fresh E4, cross-platform, Linux distro, Android artifact/runtime, and resource-guard jobs are queued or pending; CircleCI `ci/circleci: one-linux` is PENDING. The Linux direct-child writer remains IMPLEMENTED but NOT VERIFIED until the exact-SHA runs finish. Nested Linux writes remain fail-closed.
+
+
+## Android AArch64 artifact revalidation — 18 November 2026
+
+The Android AArch64 device-artifact build now passes on exact source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`: [independent build run #44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717). The job verified the source pin, generated and linked the Android AArch64 executable, inspected the ELF header (`ELF64`, `AArch64`, Android linker `/system/bin/linker64`), and uploaded the artifact.
+
+This is artifact/build evidence only. It does not establish Android API 35 runtime execution or full filesystem support on Android. The Android runtime, E4, cross-platform, distro, SEC-05, and CircleCI checks remain pending for the current candidate.
