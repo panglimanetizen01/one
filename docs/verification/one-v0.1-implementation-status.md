@@ -198,3 +198,10 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Added integration tests for outside-root absolute write rejection with sentinel preservation, outside-root read rejection without disclosure, relative source path handling, Linux direct-child success, and nested Linux fail-closed behavior.
 - Source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; verifier pin updated to this exact SHA. Current exact-SHA workflows are pending.
 - Classification: host-root integration IMPLEMENTED; NOT VERIFIED pending CI. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Manifest-root selection regression coverage — 2026-11-18
+
+- Added cross-platform CLI test `run_command_uses_nearest_one_manifest_as_filesystem_root`: source under `src/main.one`, nearest `one.toml` ancestor chosen as root, direct-child output written under that root.
+- Source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; verifier pin updated. Exact-SHA E4, cross-platform, distro, and Android workflows remain pending.
+- Host-root integration remains IMPLEMENTED / NOT VERIFIED until the latest SHA's CI completes.
