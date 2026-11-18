@@ -3,10 +3,9 @@ use std::io::{self, Read};
 use std::os::fd::AsRawFd;
 #[cfg(unix)]
 use std::process::{Command, Stdio};
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
+#[cfg(unix)]
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
