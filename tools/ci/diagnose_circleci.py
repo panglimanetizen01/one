@@ -65,11 +65,11 @@ def classify_failure(text: str) -> str:
     lowered = text.lower()
     if any(term in lowered for term in (
         "too long with no output", "context deadline exceeded",
-        "timed out", "timeout", "operation timed out",
+        "timed out", "timed_out", "timeout", "operation timed out",
     )):
         return "TIMEOUT / NO-OUTPUT"
     if any(term in lowered for term in (
-        "error[e", "could not compile", "rustc", "clang: error",
+        "error[e", "could not compile", "clang: error",
         "gcc: error", "linker", "undefined reference",
     )):
         return "COMPILER / LINKER"
@@ -354,7 +354,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if commit_sha:
             report.append("Exact commit: " + commit_sha)
             report.append("Branch: " + str(branch))
-        report.append("Failed jobs found: {}".format(len(jobs)))
+        report.append("Jobs selected for inspection: {}".format(len(jobs)))
         for job in jobs:
             report.extend(inspect_job(token, job, args.max_lines))
 
