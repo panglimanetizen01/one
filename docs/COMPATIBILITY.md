@@ -122,3 +122,8 @@ Filesystem root confinement is an experimental capability under Issue #104, not 
 - Canonical `main` does not yet contain the unmerged PR #113 candidate. Do not treat the candidate as a released or broadly SUPPORTED feature.
 
 Compatibility status must be recorded per exact source revision and tested environment. Passing one Windows Server 2025 runner does not establish support for all Windows versions or filesystems.
+
+
+### CLI filesystem root selection
+
+The CLI's filesystem authority root is selected from source/project context, not the requested target. It prefers the nearest `one.toml` ancestor; otherwise it uses the working directory for sources beneath it or the canonical source parent for standalone sources outside it. Absolute targets outside this root are rejected for both reads and writes. This host integration is still a draft PR #113 candidate pending exact-SHA verification.
