@@ -16,29 +16,31 @@ Do not paste the token into chat, save it in the repository, or print it in term
 
 From the root of the ONE repository:
 
-\`\`\`bash
+```bash
 python3 tools/ci/diagnose_circleci.py
-\`\`\`
+```
 
 The default mode reads the current branch and exact git rev-parse HEAD, finds the CircleCI pipeline for that exact revision, discovers failed/timed-out jobs, and prints only their failed-step logs.
 
 Inspect a known job UUID directly:
 
-\`\`\`bash
-python3 tools/ci/diagnose_circleci.py --job-id 94f53464-44ae-40e1-8768-65e6a5e7014c
-\`\`\`
+```bash
+python3 tools/ci/diagnose_circleci.py --job-id 9f3acc50-11b9-47e5-b841-6a943300be94
+```
+
+**Important:** `--job-id` bypasses exact-HEAD pipeline discovery. Before treating its output as evidence for a particular source revision, independently verify the job's workflow/pipeline source SHA in the CircleCI UI and record that SHA beside the report. The utility currently does not assert an expected SHA in direct-ID mode.
 
 Save a redacted report:
 
-\`\`\`bash
+```bash
 python3 tools/ci/diagnose_circleci.py --output /tmp/one-circleci-diagnostic.txt
-\`\`\`
+```
 
 Override the exact revision or branch when diagnosing a historical run:
 
-\`\`\`bash
+```bash
 python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
-\`\`\`
+```
 
 ## API behavior
 
@@ -59,9 +61,9 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 
 Run the standard-library unit tests:
 
-\`\`\`bash
+```bash
 python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
-\`\`\`
+```
 
 The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, secret redaction, complete multi-page discovery, and explicit failure when the ten-page safety limit would truncate results.
 
@@ -71,13 +73,14 @@ The classification is a log-based hint, not a guaranteed root-cause analysis. Th
 
 ## Known Project ONE job IDs — 2026-11-19
 
-The following CircleCI UUIDs are already resolved. Use `--job-id` to inspect the exact job directly; this avoids pipeline/branch discovery and cannot silently select a different commit.
+The following CircleCI UUIDs are already resolved. Use `--job-id` to inspect a job directly without pipeline/branch discovery. Direct-ID mode does not validate the source SHA; cross-check the job's workflow/pipeline revision in CircleCI before attributing logs to a commit.
 
 | Source SHA | Workflow UUID | Job UUID | Last observed status |
 | --- | --- | --- | --- |
 | `722d662e7a81711ba3607d26571f4048a292b3ed` | `9fb2893b-4373-4ef1-ad97-60b804ebedda` | `9f3acc50-11b9-47e5-b841-6a943300be94` | FAILURE |
 | `e8dab3a0ac2de6b09b374b692d740b9fb5630f00` | `e55fc480-62fb-469f-8351-deff706595ac` | `69d31382-c676-47f8-92b3-98c0dd8cbf1e` | FAILURE |
-| `424f7bbc73901c5e4342eb04444eaabb526b711a` | `141f741c-74b9-4b36-96e4-9f81d76143cb` | `09b422cb-8c1a-47c5-a252-3974c649022c` | PENDING at last readback; inspect after terminal status |
+| `424f7bbc73901c5e4342eb04444eaabb526b711a` | `141f741c-74b9-4b36-96e4-9f81d76143cb` | `09b422cb-8c1a-47c5-a252-3974c649022c` | PENDING at last readback (historical) |
+| `bbe5d696ddfe5358932cd4351d5cd0af6070b4a1` | `dc55d982-a016-44a9-8f74-116a8e2c77ff` | `954d8930-d569-4b1e-9eab-87945b8b50c6` | PENDING at latest readback (2026-11-19) |
 
 Run the two known failed jobs directly (after setting `CIRCLECI_TOKEN` locally):
 
@@ -90,13 +93,6 @@ The latest pending job can be inspected directly once it reaches a terminal stat
 
 ```bash
 python3 tools/ci/diagnose_circleci.py --job-id 09b422cb-8c1a-47c5-a252-3974c649022c --output /tmp/one-circleci-current-head.txt
-```
-
-If the CLI is installed and authenticated, the equivalent low-level inspection path is:
-
-```bash
-circleci job get JOB_UUID --json
-circleci job output get JOB_UUID --step-num STEP_NUMBER
 ```
 
 Use the step number from the job metadata and inspect only the first failed step before interpreting downstream failures. Do not enable blanket reruns or add retries until the logs establish a transient failure mode. A successful rerun of the same exact SHA without code/config changes is evidence of a potentially transient failure; a repeatable failure requires a targeted fix.
