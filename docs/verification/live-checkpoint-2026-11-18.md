@@ -157,3 +157,12 @@ On corrected source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`, Android AArc
 - Diagnostic verifier pin is `3d8e0d0...`; E4 [#44333965599](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333965599) QUEUED. Prior Android artifact PASS on `090c84d...` is not evidence for the new SHA. Fresh exact-SHA artifact/runtime and platform checks are required.
 - A focused Mermaid diagram source now exists at `docs/architecture/filesystem-root-confinement.md`, linked from `docs/ARCHITECTURE.md` and `docs/README.md`. It covers host authority, Linux direct-child writes/nested fail-closed, Windows atomic replacement, and failure cleanup.
 - The full overview PNG in PR #97 remains non-normative and visually NOT VERIFIED because the binary image could not be retrieved through the current connector.
+
+
+## Linux CLI integration alignment checkpoint — 2026-11-18
+
+- Current code-bearing source SHA: `2fa1436daa102d3cf32125da6c440ae19cc83ba7`.
+- Debian 12 workspace run #44333980452 on `3d8e0d0...` failed because a stale non-Windows CLI test still expected all Linux writes to be unsupported. Updated test expectations now require direct-child absolute target success and nested relative target fail-closed with original bytes preserved.
+- Fresh E4 #44334598268, cross-platform #44334598774, distro #44334598316, Android artifact #44334598355, Android runtime #44334598284, SEC-05 #44334598278, resource guard #44334598250 are queued/pending on the diagnostic pin `2fa1436...`.
+- CircleCI one-linux PENDING on `2fa1436...`: [job](https://app.circleci.com/workflow/8f351193-5da8-4b6a-ad2f-75075c6a51e7/job/604385cb-7f5f-4c2f-8a38-92cc8330b83f).
+- Focused Mermaid source is present and indexed. Root README now explicitly warns that the source-level filesystem.write slice is not a project-root sandbox; candidate confinement remains unmerged and unaccepted.
