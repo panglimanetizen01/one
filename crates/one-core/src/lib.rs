@@ -44,6 +44,7 @@ pub use capability::{Capability, CapabilitySet};
 pub use database::SqliteAdapter;
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
 pub use governance::{DenyReason, ExecutionPolicy, PolicyDecision, ScopeRule};
+pub use filesystem::{FilesystemAuthority, FilesystemError};
 pub use interop::{ProcessResult, ProcessSpec, run_process};
 pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, RuntimeError};
 pub use ir::{
