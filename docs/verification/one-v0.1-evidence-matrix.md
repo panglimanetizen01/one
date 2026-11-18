@@ -247,3 +247,11 @@ Do not claim project-root confinement until these host integration tests and the
 | Outside-root absolute read/write denied | `79a9886...` and descendants | CLI integration tests preserve outside write sentinel and prevent outside read disclosure | IMPLEMENTED; latest SHA pending verification |
 
 Verifier diagnostic pin now targets `1b7c3bb...`. Do not mark host-root integration VERIFIED until the exact-SHA cross-platform workflow passes.
+
+
+## Ancestor manifest lookup correction — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Nearest project manifest is searched above cwd | `722d662e7a81711ba3607d26571f4048a292b3ed` | Source resolver walks canonical source-parent ancestors without stopping at cwd | IMPLEMENTED; NOT VERIFIED |
+| Exact-SHA verifier pin | `722d662...` | Diagnostic branch `CANONICAL_COMMIT.txt` updated | PINNED; workflows pending |
