@@ -146,3 +146,14 @@ This addendum supersedes the PR #110 status above for the current Issue #104 wor
 ## Android artifact status update — 2026-11-18
 
 On corrected source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`, Android AArch64 artifact build [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717) is PASS. It verified the exact source pin, generated and inspected ELF64 AArch64 output using `/system/bin/linker64`, and uploaded artifact ID `14438938784` (SHA-256 `5971ef900ead08e6f571327594625ba2856a1917d59196d095c785bdf51a0ea4`). This is not runtime evidence. Android API 35 runtime [#44332808569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808569) remains queued.
+
+
+## Strict Clippy correction and diagram source checkpoint — 2026-11-18
+
+- Current code-bearing source SHA: `3d8e0d0e3af54310837eb06d442d30a02df821d0`.
+- Latest docs HEAD before this addendum: `7bcd225720e48d03318c745638ac3c494468ebf3`.
+- PR #113 remains OPEN / DRAFT / UNMERGED; main unchanged; Issue #104 OPEN.
+- Ubuntu distro run #44332808528 failed Clippy only on `clippy::redundant_field_names` in the Linux temp cleanup guard. Fixed by field shorthand in `3d8e0d0...`.
+- Diagnostic verifier pin is `3d8e0d0...`; E4 [#44333965599](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333965599) QUEUED. Prior Android artifact PASS on `090c84d...` is not evidence for the new SHA. Fresh exact-SHA artifact/runtime and platform checks are required.
+- A focused Mermaid diagram source now exists at `docs/architecture/filesystem-root-confinement.md`, linked from `docs/ARCHITECTURE.md` and `docs/README.md`. It covers host authority, Linux direct-child writes/nested fail-closed, Windows atomic replacement, and failure cleanup.
+- The full overview PNG in PR #97 remains non-normative and visually NOT VERIFIED because the binary image could not be retrieved through the current connector.
