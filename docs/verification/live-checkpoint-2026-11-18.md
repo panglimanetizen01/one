@@ -50,3 +50,13 @@ Historical exact-SHA Ubuntu/Windows PASS results for PR #98, #99, #100, #101, #1
 ## Exact-SHA status update — 2026-11-18 04:42:11Z
 
 PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub CircleCI context `ci/circleci: one-linux` SUCCESS, job `c153ba39-4073-4538-aaa6-6370e6bed6bf`. This result applies to this exact documentation commit only. Expanded CircleCI job logs were not retrieved. Issue #104 remains OPEN; the source finding is from parent code SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`.
+
+
+## Current continuation refresh — 2026-11-18 05:xxZ
+
+- PR #110 exact HEAD at the start of this refresh: `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549` (docs-only commit); branch remains OPEN / DRAFT / UNMERGED. Its CircleCI `ci/circleci: one-linux` status was PENDING at job `54d76c6c-e85d-4a91-984f-20dec0a0f701` (workflow `524e7b1e-de00-49fd-9a25-69266a2c5fd5`).
+- Rechecked `crates/one-core/src/adapter.rs` at `4a1dbdf...`: production file reads/writes still use `std::fs::read` / `std::fs::write`; root-handle confinement is NOT IMPLEMENTED.
+- The independent verifier workflow `ONE Fixed-Weight Ledger Gate` has a deterministic input-integrity failure: the canonical pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` lacks `docs/verification/one-completion-ledger.md` and `docs/verification/DEFINITION_OF_DONE.md`. On run `44241822346`, all 15 verifier unit tests passed, then the live gate exited 2 because the ledger file was absent. Run `44241595784` failed at the same missing input after the same 15/15 tests. This is not a Rust source failure and not a valid completion-gate pass.
+- Historical versions of the two missing docs exist at source SHA `2ead9dba45db4ce4105deaa81720aacc8fcadd6c`; verifier documentation explicitly prohibits silently substituting those stale copies. The appropriate repair is a reviewed, versioned current-source ledger/DoD and a separate documentation pin from the E4/security candidate pin. No historical scores or acceptance checks were copied, promoted, or altered here.
+- The verifier branch current HEAD at refresh was `8e73ff8218b03dde73ad460bcd7745232b8c8a41`; its `LEDGER_GATE.md` records this root cause. No verifier pin or workflow was modified in this continuation.
+- This source checkpoint commit is documentation-only. It does not implement Issue #104 or add test evidence.
