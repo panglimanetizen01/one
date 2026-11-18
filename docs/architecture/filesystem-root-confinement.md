@@ -60,7 +60,7 @@ flowchart TB
 | Windows handle-relative traversal and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
-| Exact-SHA adversarial test contract | `../one-windows-verification/.github/workflows/e4-adversarial-regression.yml` in the independent verifier repository |
+| Exact-SHA adversarial test contract | [`.github/workflows/e4-adversarial-regression.yml`](https://github.com/panglimanetizen01/one-windows-verification/blob/probe/windows-obj-dont-reparse-20261118/.github/workflows/e4-adversarial-regression.yml) in the independent verifier repository |
 
 ## Explicit limitations
 
