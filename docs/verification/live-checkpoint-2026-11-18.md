@@ -52,7 +52,7 @@ Historical exact-SHA Ubuntu/Windows PASS results for PR #98, #99, #100, #101, #1
 PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub CircleCI context `ci/circleci: one-linux` SUCCESS, job `c153ba39-4073-4538-aaa6-6370e6bed6bf`. This result applies to this exact documentation commit only. Expanded CircleCI job logs were not retrieved. Issue #104 remains OPEN; the source finding is from parent code SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`.
 
 
-## Current continuation refresh — 2026-11-18 05:xxZ
+## Current continuation refresh — 2026-11-18
 
 - PR #110 exact HEAD at the start of this refresh: `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549` (docs-only commit); branch remains OPEN / DRAFT / UNMERGED. Its CircleCI `ci/circleci: one-linux` status was PENDING at job `54d76c6c-e85d-4a91-984f-20dec0a0f701` (workflow `524e7b1e-de00-49fd-9a25-69266a2c5fd5`).
 - Rechecked `crates/one-core/src/adapter.rs` at `4a1dbdf...`: production file reads/writes still use `std::fs::read` / `std::fs::write`; root-handle confinement is NOT IMPLEMENTED.
