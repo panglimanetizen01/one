@@ -628,3 +628,37 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - No production Windows code was changed or compiled in this checkpoint.
 - The Windows backend is still NOT IMPLEMENTED / NOT ACCEPTED. The six current E4 Windows test names remain required; this section adds race and side-effect expectations needed to make their assertions meaningful.
 - Do not advance `CANONICAL_COMMIT.txt` until the six exact Windows tests, the Unix mount-boundary no-truncate test, and all other nonzero-count E4 checks pass on one exact candidate SHA.
+
+
+## 33. Implementation status correction — 2026-11-18 (PR #113 candidate)
+
+This dated addendum supersedes earlier status statements in sections 31–32 that said no Windows implementation had been added. Those statements remain historical descriptions of their original checkpoints.
+
+At candidate source SHA `5c5bfb53e086222f89dc8178426a8c6b65b50a04`, the Windows implementation now includes:
+
+- Root and intermediate directory handles retained during component traversal.
+- Handle-relative component opens using `NtCreateFile`, with reparse-point and volume checks.
+- Existing final leaf inspection without following the leaf reparse point.
+- A unique sibling temporary file created relative to the retained parent handle.
+- Bounded content supplied by the caller, write and flush through the temporary file handle, followed by a handle-relative `SetFileInformationByHandle(FileRenameInfo)` replacement.
+- A temporary-file guard that requests deletion on failure.
+- A Windows regression test for successful replacement and a denied-replacement test asserting original bytes and no leftover temporary sibling.
+
+Linux continues to use `openat2` for reads and fails closed for writes. Other unsupported platform backends remain fail-closed.
+
+### Verification status for this implementation update
+
+The E4, native Windows reparse probe, full Ubuntu/Windows, SEC-05, distro, and Android artifact results previously recorded apply to source SHA `4c3bccaf59d965ce8b446e0b84cb84c00ff2eed6`. They do **not** transfer to `5c5bfb53e086222f89dc8178426a8c6b65b50a04` or later documentation commits.
+
+The code shape now implements a temporary-file/rename strategy, but the following remain required before acceptance:
+
+1. Compile and run the updated Windows code and all relevant E4 tests on the exact new candidate SHA.
+2. Add or demonstrate failure-injection coverage for write/flush failure before rename, and verify original target bytes plus absence of temporary siblings.
+3. Validate replacement behavior for a missing target, existing target, read-only target, target reparse point, and concurrent target replacement.
+4. Review the rename information structure, information class, parent-handle semantics, and cleanup behavior against supported Windows/filesystem versions; preserve the unresolved published-contract caveat in section 32.
+5. Run exact-SHA Linux and Windows regression suites; rerun only the necessary suites affected by the source change.
+6. Complete the real Linux mount-boundary no-truncate test and the required race/side-effect checks.
+7. Obtain terminal CircleCI evidence on the final exact SHA and complete Android API 35 runtime evidence against the candidate SHA actually being accepted.
+8. Keep Issue #104 OPEN and the feature experimental until the entire acceptance set is met.
+
+**Classification:** Windows atomic replacement is now **IMPLEMENTED in the PR candidate**, but it is **NOT VERIFIED on the updated candidate SHA**, not yet SUPPORTED as a cross-platform feature, and not ACCEPTED. No claim is made that atomic rename alone resolves every race or the documented `NtCreateFile` contract limitation.
