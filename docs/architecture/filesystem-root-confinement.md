@@ -4,10 +4,13 @@ This focused architecture view documents the filesystem authority and adapter bo
 
 ```mermaid
 flowchart TB
-    Host["Host startup / trusted project configuration"] --> Authority["FilesystemAuthority::open(root, limits)"]
+    Host["Host startup"] --> ProjectRoot["Project root from source context: nearest one.toml ancestor; otherwise cwd/source parent"]
+    ProjectRoot --> Authority["FilesystemAuthority::open(project_root, limits)"]
     Authority --> Root["Retained trusted root directory handle"]
-    Authority --> ReadAdapter["FileReadAdapter"]
-    Authority --> WriteAdapter["FileWriteAdapter"]
+    RequestedTarget["Requested target"] --> Confine["Resolve against fixed root; reject outside-root absolute targets"]
+    Authority --> Confine
+    Confine --> ReadAdapter["FileReadAdapter"]
+    Confine --> WriteAdapter["FileWriteAdapter"]
 
     ReadAdapter --> LinuxRead["Linux read backend"]
     LinuxRead --> Openat2Read["openat2(root_fd, relative)"]
@@ -46,7 +49,7 @@ flowchart TB
     classDef trust fill:#e7f0ff,stroke:#315a9b,color:#17345d
     classDef guard fill:#fff3d6,stroke:#a66b00,color:#5c3b00
     classDef blocked fill:#ffe3e3,stroke:#a33,color:#641b1b
-    class Host,Authority,Root trust
+    class Host,ProjectRoot,Authority,Root trust
     class ReadPolicy,WindowsPolicy,LinuxPolicy,LinuxType,WinPolicy guard
     class FailClosed,Nested blocked
 ```
@@ -55,7 +58,8 @@ flowchart TB
 
 | Diagram component | Source |
 |---|---|
-| Host-injected authority, root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
+| Host-selected project root (source context / nearest `one.toml`), authority injection, and target scope | `crates/one-cli/src/main.rs` |
+| Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
