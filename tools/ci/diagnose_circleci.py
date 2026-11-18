@@ -135,19 +135,25 @@ def v3_headers(token: str) -> Dict[str, str]:
 
 
 def paged_v2_items(url: str, headers: Dict[str, str]) -> Iterable[Dict[str, Any]]:
+    """Yield every page, failing explicitly rather than silently truncating results."""
     page_url = url
     pages = 0
-    while page_url and pages < 10:
+    while page_url:
+        if pages >= 10:
+            raise DiagnosticError(
+                "CircleCI API pagination exceeded the 10-page safety limit; "
+                "results are incomplete and discovery was stopped."
+            )
         payload = get_json(page_url, headers)
+        pages += 1
         for item in payload.get("items") or []:
             if isinstance(item, dict):
                 yield item
         next_token = payload.get("next_page_token")
         if not next_token:
-            break
+            return
         separator = "&" if "?" in url else "?"
         page_url = url + separator + urllib.parse.urlencode({"page-token": next_token})
-        pages += 1
 
 
 def git_value(*args: str) -> str:
