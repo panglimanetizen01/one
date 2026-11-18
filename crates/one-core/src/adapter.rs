@@ -370,18 +370,28 @@ mod filesystem_windows_tests {
     }
 
     fn create_junction(link: &Path, target: &Path) {
+        use std::os::windows::process::CommandExt;
+
+        // Pass the complete command line verbatim to cmd.exe. Normal Rust
+        // argument quoting around a command string makes cmd.exe parse the
+        // nested path quotes incorrectly on Windows runners.
         let command = format!(
-            "mklink /J \"{}\" \"{}\"",
+            "/C mklink /J \"{}\" \"{}\"", 
             link.display(),
             target.display()
         );
-        let status = Command::new("cmd")
-            .args(["/C", &command])
-            .status()
+        let output = Command::new("cmd.exe")
+            .raw_arg(command)
+            .output()
             .expect("cmd.exe must be available on Windows");
-        assert!(status.success(), "junction creation failed: {status}");
+        assert!(
+            output.status.success(),
+            "junction creation failed: {}; stdout={}; stderr={}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
-
     #[test]
     fn filesystem_reader_rejects_directory_junction_escape() {
         let root = test_root("junction-read");
