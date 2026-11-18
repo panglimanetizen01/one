@@ -85,3 +85,48 @@ PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub C
 - Readback of candidate `f6cb9639683bab2cf17d9c068fb86ef782c4e18a` caught a double-escaped regular-expression literal in the newly merged toolchain checker before acceptance. The checker was corrected to validate exactly three numeric dot-separated version components using split-based validation, avoiding escape ambiguity.
 - Readback also confirms the base `.circleci/config.yml` retains the `printf` smoke fixture and all six focused test steps; an earlier automated string probe used an incorrectly escaped search string and did not reflect the file content.
 - The corrected commit must receive fresh exact-SHA CircleCI and independent Linux/Windows verification. No PASS is inferred from earlier candidate SHAs.
+
+
+## Live checkpoint addendum — PR #113, 2026-11-18 22:xx WIB
+
+This addendum supersedes the PR #110 status above for the current Issue #104 workstream. Historical PR #110 facts remain unchanged.
+
+### Current repositories and source identity
+
+- Main repo: PR #113, branch `security/issue-104-root-confinement-20261118`, OPEN / DRAFT / UNMERGED.
+- Latest code-bearing source SHA: `cc54597b471493f4350d0dc0f3a2896babb33ea4`.
+- Latest documentation HEAD: `211f6c5283296afc033bd7e7fa1f56e63c84e6c6`.
+- PR #113 base remains PR #112 SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Canonical main is unchanged. Issue #104 remains OPEN.
+- Independent verifier diagnostic PR #44 branch `probe/windows-obj-dont-reparse-20261118` pins `cc54597...`; protected `verification` branch accepted pin remains unchanged.
+
+### Filesystem implementation state
+
+- Linux reads: retained root descriptor + `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`.
+- Linux writes: direct children of retained root only; exclusive temporary sibling, write + sync, root-dirfd-relative `renameat`. Existing symlink/hard-link/non-regular leaf and oversize writes fail closed. Nested writes explicitly return UnsupportedPlatform because a nested directory handle can be moved outside the root after open; no nested write is attempted.
+- Windows writes: retained native handles, exclusive temp sibling, native `NtSetInformationFile(FileRenameInformation)` same-directory rename; exact E4 PASS at source `f6acb...`. Latest Windows test cleanup fix is source `a796650...`.
+- Other platforms: fail closed / NOT IMPLEMENTED.
+- Issue #104 is not ACCEPTED; full nested Linux writes, parent/leaf race coverage, failure-injection, and remaining acceptance gates are outstanding.
+
+### Exact-SHA evidence
+
+- Windows/Unix E4 on `20ede9...`: PASS, [run #44329905887](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329905887).
+- E4 on `f6acb...`: PASS, [run #44330374509](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374509), including Windows atomic write positive/denied replacement and Unix adversarial suite.
+- The full cross-platform run on `f6acb...` found Windows Clippy failure only in test cleanup (`permissions.set_readonly(false)`). Fixed in `a796650...` by using a Windows sharing blocker without `FILE_SHARE_DELETE`; the production backend was not the Clippy failure.
+- Linux direct-child write implementation + additional Linux tests are now at `cc54597...`. The verifier E4 contract now expects five Linux `descriptor_relative_write_*` tests and three Linux `descriptor_relative_read_rejects_*` tests, including actual `/dev/shm` mount-boundary read denial.
+- Fresh verifier runs pinned to `cc54597...`: E4 [#44332316080](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332316080), cross-platform [#44332316009](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332316009), SEC-05 [#44332315829](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332315829), distro [#44332315865](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332315865), Android artifact [#44332315952](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332315952), Android runtime [#44332316141](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332316141), resource guard [#44332316209](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332316209) were queued/pending at last inspection.
+- CircleCI `ci/circleci: one-linux` PENDING for `cc54597...`: [job](https://app.circleci.com/workflow/faea4025-82ee-456f-9848-5b4c903e1838/job/36627b08-5916-445b-bd4a-71bd489c94e1). No CircleCI log connector is exposed; do not infer cause.
+
+### Documentation and architecture
+
+- User guide, Issue #104 design, implementation status, evidence matrix, compatibility contract, security contract, and this live checkpoint have current addenda.
+- The full architecture PNG is tracked in still-open PR #97, branch `docs/system-architecture-diagram-20261115`, path `docs/architecture/one-full-architecture-map.png`. PR #97 remains OPEN / UNMERGED. The architecture contract says the image is a non-normative navigation reference. The binary image could not be retrieved through the current GitHub connector, so visual inspection and image-to-code reconciliation remain NOT VERIFIED. Do not claim the diagram has been reviewed or updated.
+
+### Next actions
+
+1. Inspect E4 run #44332316080 logs on exact source `cc54597...`; fix any failures without removing tests.
+2. Confirm Linux direct-child positive write, symlink denial, oversize preservation, nested fail-closed, and actual mount-boundary read test results.
+3. Inspect cross-platform Clippy and Windows test results on the same exact SHA.
+4. Complete Android API 35 runtime, Linux distro matrix, SEC-05, and resource guard on the current candidate.
+5. Obtain CircleCI terminal status/logs through a supported authenticated route; no speculative diagnosis.
+6. Reconcile remaining parent/leaf race and failure-injection acceptance, then update the normative contract/evidence and user documentation. Keep PR #113 draft and main/protected verifier pin unchanged.
