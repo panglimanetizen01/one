@@ -235,6 +235,18 @@ def discover_failed_jobs(
     return failures
 
 
+
+def source_identity_line(job: Dict[str, Any]) -> str:
+    """Make the source-SHA evidence boundary visible in every job report."""
+    commit_sha = job.get("commit_sha")
+    if commit_sha:
+        return "SOURCE SHA: {}".format(commit_sha)
+    return (
+        "SOURCE SHA: UNVERIFIED — direct --job-id lookup bypasses exact-SHA "
+        "pipeline discovery. Verify the workflow/pipeline revision in CircleCI "
+        "before attributing these logs to a commit."
+    )
+
 def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
     report: List[str] = []
     job_id = str(job["id"])
@@ -255,6 +267,7 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         "PIPELINE UUID: {}".format(job.get("pipeline_id") or "not resolved"),
         "=" * 78,
     ])
+    report.append(source_identity_line(job))
     steps = extract_failed_steps(payload)
     if not steps:
         report.append(
