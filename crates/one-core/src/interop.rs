@@ -18,6 +18,8 @@ const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 #[cfg(unix)]
 const READER_SHUTDOWN_GRACE: Duration = Duration::from_millis(100);
+#[cfg(unix)]
+const READER_IDLE_GRACE: Duration = Duration::from_millis(20);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProcessSpec {
@@ -45,6 +47,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
         let mut captured = Vec::with_capacity(MAX_OUTPUT_BYTES_PER_STREAM.min(16 * 1024));
         let mut buffer = [0_u8; 8192];
         let mut shutdown_deadline = None;
+        let mut shutdown_idle_since = None;
         loop {
             let shutdown = shutdown_requested.load(Ordering::Acquire);
             if shutdown && shutdown_deadline.is_none() {
@@ -61,7 +64,10 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
                 Ok(read) => read,
                 Err(error) if error.kind() == io::ErrorKind::WouldBlock => {
                     if shutdown {
-                        break;
+                        let idle_since = shutdown_idle_since.get_or_insert_with(Instant::now);
+                        if idle_since.elapsed() >= READER_IDLE_GRACE {
+                            break;
+                        }
                     }
                     thread::sleep(Duration::from_millis(5));
                     continue;
@@ -71,6 +77,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
             if read == 0 {
                 break;
             }
+            shutdown_idle_since = None;
             let remaining = MAX_OUTPUT_BYTES_PER_STREAM.saturating_sub(captured.len());
             let retained = read.min(remaining);
             captured.extend_from_slice(&buffer[..retained]);

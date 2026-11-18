@@ -101,8 +101,14 @@ version_parts = toolchain_version.split(".")
 if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
     raise SystemExit("TOOLCHAIN CONTRACT: rust-toolchain.toml must pin an exact x.y.z release")
 circleci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
-if 'rustup toolchain install "$rust_toolchain"' not in circleci_config or 'rustup default "$rust_toolchain"' not in circleci_config or 'rust_toolchain="$(sed -nE' not in circleci_config:
-    raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the rust-toolchain.toml version")
+if (
+    'rustup toolchain install "$rust_toolchain"' not in circleci_config
+    or 'rustup default "$rust_toolchain"' not in circleci_config
+    or 'rust_toolchain="$(sed -nE' not in circleci_config
+    or "--default-toolchain none" not in circleci_config
+    or "rust-toolchain.toml must pin an exact x.y.z release" not in circleci_config
+):
+    raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the exact pinned toolchain with no implicit default")
 
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")

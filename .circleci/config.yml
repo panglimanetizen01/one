@@ -17,7 +17,10 @@ commands:
             fi
             source "$HOME/.cargo/env"
             rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' rust-toolchain.toml)"
-            test -n "$rust_toolchain"
+            if [[ ! "$rust_toolchain" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+              echo "rust-toolchain.toml must pin an exact x.y.z release" >&2
+              exit 1
+            fi
             rustup toolchain install "$rust_toolchain" --profile minimal --component rustfmt --component clippy
             rustup default "$rust_toolchain"
             echo 'source "$HOME/.cargo/env"' >> "$BASH_ENV"
