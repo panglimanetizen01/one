@@ -6,7 +6,7 @@
 //! configuration, never a request supplied by the language program.
 
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -96,9 +96,9 @@ impl FilesystemAuthority {
         Ok(bytes)
     }
 
-    /// Write through a retained native handle. Windows opens every path
-    /// component relative to a retained parent handle and validates the final
-    /// object before truncating it. Other platforms remain fail-closed.
+    /// Atomically replace a regular, single-link file beneath the retained
+    /// root handle. Linux and Windows use platform-native handle-relative
+    /// operations; unsupported platforms remain fail-closed.
     pub fn write(&self, target: impl AsRef<Path>, bytes: &[u8]) -> Result<(), FilesystemError> {
         let relative = self.relative_target(target.as_ref())?;
         if bytes.len() as u64 > self.max_write_bytes {
@@ -108,7 +108,11 @@ impl FilesystemAuthority {
         {
             windows_native::write_relative(&self.root, &relative, bytes)
         }
-        #[cfg(not(windows))]
+        #[cfg(target_os = "linux")]
+        {
+            linux_write_relative(&self.root, &relative, bytes)
+        }
+        #[cfg(not(any(target_os = "linux", windows)))]
         {
             let _ = relative;
             Err(FilesystemError::UnsupportedPlatform)
@@ -207,6 +211,237 @@ impl FilesystemAuthority {
     }
 }
 
+
+
+#[cfg(target_os = "linux")]
+struct LinuxTempFileGuard {
+    parent_fd: std::os::fd::RawFd,
+    name: std::ffi::CString,
+    committed: bool,
+}
+
+#[cfg(target_os = "linux")]
+impl LinuxTempFileGuard {
+    fn cleanup(&mut self) -> Result<(), FilesystemError> {
+        if self.committed {
+            return Ok(());
+        }
+        let result = unsafe { libc::unlinkat(self.parent_fd, self.name.as_ptr(), 0) };
+        if result != 0 {
+            let error = std::io::Error::last_os_error();
+            if error.raw_os_error() != Some(libc::ENOENT) {
+                return Err(FilesystemError::IoFailure);
+            }
+        }
+        self.committed = true;
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl Drop for LinuxTempFileGuard {
+    fn drop(&mut self) {
+        if !self.committed {
+            unsafe {
+                libc::unlinkat(self.parent_fd, self.name.as_ptr(), 0);
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_openat2(
+    directory_fd: std::os::fd::RawFd,
+    path: &std::ffi::CString,
+    flags: i32,
+    mode: u64,
+    resolve: u64,
+) -> Result<File, std::io::Error> {
+    use std::os::fd::FromRawFd;
+
+    #[repr(C)]
+    struct OpenHow {
+        flags: u64,
+        mode: u64,
+        resolve: u64,
+    }
+
+    let how = OpenHow {
+        flags: flags as u64,
+        mode,
+        resolve,
+    };
+    let fd = unsafe {
+        libc::syscall(
+            libc::SYS_openat2,
+            directory_fd,
+            path.as_ptr(),
+            &how as *const OpenHow,
+            std::mem::size_of::<OpenHow>(),
+        ) as libc::c_int
+    };
+    if fd < 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(unsafe { File::from_raw_fd(fd) })
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
+    match error.raw_os_error() {
+        Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) | Some(libc::EBUSY) => {
+            FilesystemError::ResolutionFailed
+        }
+        Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => {
+            FilesystemError::UnsupportedPlatform
+        }
+        Some(libc::ENOENT) => FilesystemError::NotFound,
+        _ => FilesystemError::IoFailure,
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_write_relative(
+    root: &File,
+    relative: &Path,
+    bytes: &[u8],
+) -> Result<(), FilesystemError> {
+    use std::ffi::CString;
+    use std::os::fd::AsRawFd;
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::MetadataExt;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    const RESOLVE_NO_XDEV: u64 = 0x01;
+    const RESOLVE_NO_SYMLINKS: u64 = 0x04;
+    const RESOLVE_BENEATH: u64 = 0x08;
+    const RESOLVE: u64 = RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV;
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    let parent = relative
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let leaf = relative.file_name().ok_or(FilesystemError::InvalidTarget)?;
+    let parent_name = CString::new(parent.as_os_str().as_bytes())
+        .map_err(|_| FilesystemError::InvalidTarget)?;
+    let leaf_name = CString::new(leaf.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+
+    // Resolve and retain the destination directory beneath the trusted root.
+    // RESOLVE_NO_XDEV rejects mount and bind-mount crossings even when st_dev
+    // would be identical.
+    let parent_handle = linux_openat2(
+        root.as_raw_fd(),
+        &parent_name,
+        libc::O_PATH | libc::O_DIRECTORY | libc::O_CLOEXEC,
+        0,
+        RESOLVE,
+    )
+    .map_err(linux_filesystem_error)?;
+    let root_metadata = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
+    let parent_metadata = parent_handle
+        .metadata()
+        .map_err(|_| FilesystemError::IoFailure)?;
+    if !parent_metadata.is_dir() || parent_metadata.dev() != root_metadata.dev() {
+        return Err(FilesystemError::ResolutionFailed);
+    }
+
+    // Reject an existing symlink, mount point, non-regular file, or hard link.
+    // The later rename is directory-handle-relative and never follows the
+    // destination leaf; a raced leaf replacement cannot redirect the write.
+    match linux_openat2(
+        parent_handle.as_raw_fd(),
+        &leaf_name,
+        libc::O_PATH | libc::O_CLOEXEC,
+        0,
+        RESOLVE,
+    ) {
+        Ok(existing) => {
+            let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
+            if !metadata.is_file() {
+                return Err(FilesystemError::NotRegularFile);
+            }
+            if metadata.nlink() != 1 {
+                return Err(FilesystemError::HardLinkedFile);
+            }
+            if metadata.dev() != root_metadata.dev() {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+        }
+        Err(error) if error.raw_os_error() == Some(libc::ENOENT) => {}
+        Err(error) => return Err(linux_filesystem_error(error)),
+    }
+
+    let mut created = None;
+    for _ in 0..16 {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let name = format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id());
+        let temp_name = CString::new(name).map_err(|_| FilesystemError::InvalidTarget)?;
+        if temp_name.as_bytes() == leaf_name.as_bytes() {
+            continue;
+        }
+        match linux_openat2(
+            parent_handle.as_raw_fd(),
+            &temp_name,
+            libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+            0o600,
+            RESOLVE,
+        ) {
+            Ok(file) => {
+                created = Some((file, temp_name));
+                break;
+            }
+            Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
+            Err(error) => return Err(linux_filesystem_error(error)),
+        }
+    }
+    let (mut temporary_file, temporary_name) = created.ok_or(FilesystemError::IoFailure)?;
+    let mut guard = LinuxTempFileGuard {
+        parent_fd: parent_handle.as_raw_fd(),
+        name: temporary_name,
+        committed: false,
+    };
+
+    let result = (|| {
+        let metadata = temporary_file
+            .metadata()
+            .map_err(|_| FilesystemError::IoFailure)?;
+        if !metadata.is_file() || metadata.nlink() != 1 || metadata.dev() != root_metadata.dev() {
+            return Err(FilesystemError::ResolutionFailed);
+        }
+        temporary_file
+            .write_all(bytes)
+            .map_err(|_| FilesystemError::IoFailure)?;
+        temporary_file
+            .sync_all()
+            .map_err(|_| FilesystemError::IoFailure)?;
+
+        let rename_result = unsafe {
+            libc::renameat(
+                parent_handle.as_raw_fd(),
+                guard.name.as_ptr(),
+                parent_handle.as_raw_fd(),
+                leaf_name.as_ptr(),
+            )
+        };
+        if rename_result != 0 {
+            return Err(linux_filesystem_error(std::io::Error::last_os_error()));
+        }
+        guard.committed = true;
+        Ok(())
+    })();
+
+    if result.is_err() {
+        guard.cleanup()?;
+    }
+    result
+}
 
 #[cfg(windows)]
 mod windows_native {
