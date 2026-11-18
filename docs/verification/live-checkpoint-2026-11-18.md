@@ -271,3 +271,14 @@ A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is 
 
 - Exact PR #113 HEAD `2cfd73f9e54dac283fb5c07bb85f5992e88ef506`: `ci/circleci: one-linux` PENDING; workflow `e2e1cab5-28cf-4829-aafc-a1d385abace9`; job `7e872036-ca77-4f15-a66f-e97e5a058788` ([job](https://app.circleci.com/workflow/e2e1cab5-28cf-4829-aafc-a1d385abace9/job/7e872036-ca77-4f15-a66f-e97e5a058788)).
 - This exact-SHA status supersedes the earlier no-context read on `2cfd73f...`; it does not transfer to any later commit.
+
+## Direct failed-job diagnostic handoff — 2026-11-19
+
+Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local `CIRCLECI_TOKEN`; exact failed job UUIDs and copy-ready commands are in `docs/verification/CIRCLECI_DIAGNOSTICS.md`. Do not ask for or paste the token in chat.
+
+- Failed candidate `722d662...`: job `9f3acc50-11b9-47e5-b841-6a943300be94`.
+- Failed code/config candidate `e8dab3a...`: job `69d31382-c676-47f8-92b3-98c0dd8cbf1e`.
+- Latest PR #113 docs HEAD at this read: `5bfdd712fdbc6cb688908786758d9d262d190b40`; no combined-status contexts returned yet.
+- The latest known pending job on preceding SHA `424f7bbc73901c5e4342eb04444eaabb526b711a` was `09b422cb-8c1a-47c5-a252-3974c649022c`; do not transfer its status to newer HEAD.
+- Diagnostic tests and config validation remain NOT VERIFIED; no CircleCI root cause inferred.
+
