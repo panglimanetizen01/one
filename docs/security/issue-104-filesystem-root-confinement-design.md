@@ -432,3 +432,39 @@ The verifier workflow `.github/workflows/e4-adversarial-regression.yml` is the a
 - Keep the verifier's expected counts/filter names unchanged unless both verifier and source contract are reviewed together.
 
 Current inventory status: **0 of 5 Unix filter groups and 0 of 6 Windows named tests are implemented/accepted on this candidate**. The existing generic filesystem smoke tests do not count toward these filters.
+
+
+## 25. First host-authority implementation checkpoint — 2026-11-18
+
+### Exact candidate
+
+- Latest implementation candidate: `955e1841adf79ae400395feef86186482276818d`.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Canonical `main` remains unchanged.
+- Independent verifier run [44292290308](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44292290308) is IN_PROGRESS for this exact source SHA. Do not claim Linux or Windows PASS until the run reaches a terminal result and both jobs are inspected.
+- CircleCI `ci/circleci: one-linux` is PENDING for this exact source SHA: [job](https://app.circleci.com/workflow/b0b95c25-c8d8-4afb-b4c3-6d0b18866a78/job/4ed659a7-2816-4c3f-a5bf-af018431f051).
+
+### Implemented slice
+
+- Added `FilesystemAuthority`, created only from host-selected root configuration. It retains the root directory file handle and explicit read/write byte limits.
+- Linux file reads use one `openat2` call relative to the retained root descriptor with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`. There is no ordinary path fallback.
+- Read validation requires a regular file, rejects link counts other than one, and enforces the configured maximum while reading.
+- Requested relative paths reject parent traversal. Absolute targets are accepted only when lexically beneath the canonical host root, then converted to relative paths before descriptor-relative resolution.
+- Direct file adapters require injected authority and no longer call ambient `std::fs::read(target)` or `std::fs::write(target)`.
+- Interpreter exposes `with_orchestration_policy_and_filesystem_authority`; the Linux source-to-runtime read integration test now injects the authority.
+- Policy denial remains prior to adapter invocation. An allowed write request currently reaches the adapter and fails closed; its runtime test asserts no destination file is created.
+
+### Explicit limitations
+
+- Write/create/replace remains unavailable. No atomic write, pre-mutation size enforcement, or race-resistant write boundary is implemented.
+- Windows, macOS, and Android authority backends remain unavailable/fail-closed. The current `openat2` implementation is compiled only for Linux; Android syscall availability is not assumed.
+- CLI/application host-root configuration and full integration-test migration remain outstanding.
+- This implementation has not yet proven resistance to all parent-directory rename-out-of-root races. The exact E4 race and mount tests remain mandatory before acceptance.
+- E4 inventory remains 0/5 Unix filter groups and 0/6 Windows named tests implemented/accepted. The initial authority unit tests are not substitutes for the exact E4 filters.
+
+### Validation corrections retained as evidence
+
+- Candidate `a077dcc27512669d4d8b5cff7602b459c86d01e2` failed two Linux integration tests because the old runtime test still constructed the interpreter without host authority and expected the old adapter failure classification.
+- Candidate `d20bac50f25e4660d662d69d704daff9a4dc95ee` fixed those read integration tests, then the Linux matrix exposed one remaining legacy write runtime test that expected a successful ambient write.
+- Candidate `955e1841adf79ae400395feef86186482276818d` changes that write test to assert fail-closed behavior and no file creation. Its new exact-SHA matrix is still in progress; no pass is claimed here.
+
+Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and do not modify E4 or ledger acceptance pins.
