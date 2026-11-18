@@ -137,3 +137,17 @@ The first two rows are independent cross-platform tests of the same PR #108 cand
 The verifier results on `4c3bcc...` are historical valid evidence for that exact SHA. They must not be reused as verification of the Windows atomic write implementation introduced in `5c5bfb...`. The later documentation commits do not change production source, but the candidate's final PR HEAD still requires exact-SHA policy/contract checks and a clear distinction between source SHA and documentation HEAD.
 
 Issue #104 remains OPEN and NOT ACCEPTED. The independent verifier pin and canonical `main` are unchanged. Do not promote acceptance ledgers or pins until the latest candidate source and every acceptance criterion are verified.
+
+
+## Issue #104 latest candidate evidence — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| E4 Windows + Unix, including atomic replacement positive and denied-replacement tests | `20ede9fb1d3e97c04f81d4fe8f79f642a8cc8e78` | [Independent E4 run #44329905887](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329905887); Windows and Unix jobs PASS, Windows probe PASS | VERIFIED for this SHA only |
+| Initial Win32 atomic rename attempt | `5c5bfb53e086222f89dc8178426a8c6b65b50a04` | [E4 run #44329034647](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329034647); positive write test failed with BackendFailure; diagnostic identified ERROR_INVALID_PARAMETER (87) for Win32 relative RootDirectory | FAILED; retained as historical evidence |
+| Latest same-directory rename implementation | `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` | Source changes rename to `NtSetInformationFile` with `RootDirectory = NULL` and a same-directory leaf name | IMPLEMENTED; NOT VERIFIED pending new runs |
+| E4 rerun for latest candidate | `f6acb...` pinned by diagnostic verifier branch | [Run #44330374509](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374509) | QUEUED at last inspection |
+| Full cross-platform, SEC-05, distro, Android artifact/runtime | `f6acb...` pinned by diagnostic verifier branch | [Cross-platform #44330374474](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374474), [SEC-05 #44330374539](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374539), [Distro #44330374537](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374537), [Android artifact #44330374446](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374446), [Android runtime #44330374580](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374580) | QUEUED at last inspection |
+| CircleCI Linux | `f6acb...` | GitHub status `ci/circleci: one-linux` PENDING; [job](https://app.circleci.com/workflow/a040bfd4-9db5-4fb4-9b33-4c1cda53e6c6/job/7931ea7a-5f7b-4d85-b8fa-ab26c7188273) | PENDING |
+
+The independent verifier's diagnostic pin is branch-local to PR #44 on `one-windows-verification`; protected `verification` branch accepted pin remains unchanged. The current main repository PR #113 remains draft/unmerged. No evidence from `20ede9...` is transferred to `f6acb...`.
