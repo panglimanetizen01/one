@@ -524,3 +524,15 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - Exact source candidate with both CircleCI optimizations: `a2cc2fdaac4fb21220953aa67d98c7f80aa70a9c`.
 - Candidate matrix and CircleCI validation are pending for this exact SHA. No pass is claimed here.
 - Rollback is limited to reverting the two isolated `.circleci/config.yml` commits if CircleCI's validator or runtime rejects the step syntax/command sequence; no product code behavior is changed by these CI edits.
+
+
+## 29. Exact candidate matrix after CircleCI config optimizations — 2026-11-18
+
+- Exact ONE source SHA: `59f856fbe695fb514a4d894c880840bea3f57866`.
+- Independent verifier run [44297294679](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44297294679) completed SUCCESS on that exact SHA.
+- Linux job `134777549091`: SUCCESS; main `one-core` binary 142 passed / 0 failed. All integration binaries had zero failures; one existing ignored test remains in a separate suite. The four new Linux adapter-path rejection tests and the parent-symlink swap race test all passed.
+- Windows job `134777548731`: SUCCESS; main `one-core` binary 126 passed / 0 failed. All additional test binaries reported zero failures; one existing ignored test remains in a separate suite.
+- This is exact-SHA Linux/Windows baseline verification, not E4 acceptance, not Android/macOS verification, and not a release gate.
+- CircleCI `ci/circleci: one-linux` for this SHA was still PENDING at checkpoint: [job](https://app.circleci.com/workflow/badb07eb-447c-43d0-bc1b-93415ffc077b/job/886fcdd8-3bef-4302-b869-3cfe63893a03). CircleCI job page is not accessible through the current web/connector session. Do not claim CircleCI success or infer failure cause.
+- The CircleCI config now avoids successful-run duplicate focused tests while retaining them under `when: on_fail`, and uses a targeted x86_64 POSIX MinGW package with bounded APT operations. No measured runtime delta is claimed.
+- Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED: mount-boundary no-truncate test and all six Windows E4 tests are outstanding; safe write remains fail-closed; Windows/macOS/Android filesystem backends remain unavailable. Keep E4 and ledger pins unchanged; PR #113 draft/unmerged; main unchanged.
