@@ -113,7 +113,7 @@ jobs:
             test "$version" = "one 0.1.0"
             temp_dir=$(mktemp -d)
             trap 'rm -rf "$temp_dir"' EXIT
-            cat > "$temp_dir/halo.one" \<<'ONE'
+            cat > "$temp_dir/halo.one" <<'ONE'
             nama adalah "Budi"
             tampilkan nama
             ONE
