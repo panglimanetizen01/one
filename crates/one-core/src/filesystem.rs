@@ -53,7 +53,7 @@ impl FilesystemAuthority {
     /// Absolute targets are accepted only when beneath the trusted root.
     pub fn read(&self, target: impl AsRef<Path>) -> Result<Vec<u8>, FilesystemError> {
         let relative = self.relative_target(target.as_ref())?;
-        let mut file = self.open_relative(&relative)?;
+        let file = self.open_relative(&relative)?;
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         #[cfg(unix)]
