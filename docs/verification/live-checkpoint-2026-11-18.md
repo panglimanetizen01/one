@@ -166,3 +166,13 @@ On corrected source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`, Android AArc
 - Fresh E4 #44334598268, cross-platform #44334598774, distro #44334598316, Android artifact #44334598355, Android runtime #44334598284, SEC-05 #44334598278, resource guard #44334598250 are queued/pending on the diagnostic pin `2fa1436...`.
 - CircleCI one-linux PENDING on `2fa1436...`: [job](https://app.circleci.com/workflow/8f351193-5da8-4b6a-ad2f-75075c6a51e7/job/604385cb-7f5f-4c2f-8a38-92cc8330b83f).
 - Focused Mermaid source is present and indexed. Root README now explicitly warns that the source-level filesystem.write slice is not a project-root sandbox; candidate confinement remains unmerged and unaccepted.
+
+
+## CLI host-root boundary correction — 2026-11-18
+
+- Current code-bearing source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`.
+- The CLI no longer derives filesystem authority from the requested target's parent. It selects root from source/project context (nearest `one.toml`, otherwise working directory for sources beneath it or canonical source parent for standalone sources outside cwd).
+- Both filesystem.read and filesystem.write use this fixed root. Absolute targets outside root are rejected.
+- New tests cover outside-root write (outside sentinel preserved), outside-root read (no disclosure), relative source path, Linux direct-child write, and nested Linux fail-closed behavior.
+- Focused Mermaid source updated at `docs/architecture/filesystem-root-confinement.md` to show project-root selection and target-independent confinement.
+- Verifier diagnostic pin is `79a9886...`; exact-SHA workflow status must be checked before claiming VERIFIED.
