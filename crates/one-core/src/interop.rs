@@ -177,6 +177,17 @@ pub fn run_process(
     spec: &ProcessSpec,
     capabilities: &CapabilitySet,
 ) -> Result<ProcessResult, String> {
+    run_process_with_timeout(spec, capabilities, PROCESS_TIMEOUT)
+}
+
+// The timeout override is private and exists for integration probes whose
+// host-side setup (for example, Windows PowerShell Add-Type) is slower than
+// the production process budget. Public callers always use PROCESS_TIMEOUT.
+fn run_process_with_timeout(
+    spec: &ProcessSpec,
+    capabilities: &CapabilitySet,
+    timeout: Duration,
+) -> Result<ProcessResult, String> {
     if !capabilities.permits(Capability::Process) {
         return Err("Kemampuan proses belum diberikan kepada program.".into());
     }
@@ -184,21 +195,21 @@ pub fn run_process(
 
     #[cfg(unix)]
     {
-        run_process_unix(spec)
+        run_process_unix(spec, timeout)
     }
     #[cfg(windows)]
     {
-        run_process_windows(spec)
+        run_process_windows(spec, timeout)
     }
     #[cfg(not(any(unix, windows)))]
     {
-        let _ = spec;
+        let _ = (spec, timeout);
         Err("Bounded process execution is unsupported on this platform.".into())
     }
 }
 
 #[cfg(unix)]
-fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
+fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResult, String> {
     use std::os::unix::process::CommandExt;
 
     let mut command = Command::new(&spec.program);
@@ -251,7 +262,7 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
         Arc::clone(&reader_shutdown),
         Arc::clone(&reader_shutdown_incomplete),
     );
-    let deadline = Instant::now() + PROCESS_TIMEOUT;
+    let deadline = Instant::now() + timeout;
     let mut timed_out = false;
 
     let status = loop {
@@ -298,7 +309,7 @@ fn run_process_unix(spec: &ProcessSpec) -> Result<ProcessResult, String> {
     if timed_out {
         return Err(format!(
             "Subprocess exceeded the {} second execution deadline.",
-            PROCESS_TIMEOUT.as_secs()
+            timeout.as_secs()
         ));
     }
     if output_limit_exceeded.load(Ordering::Acquire) {
@@ -332,7 +343,7 @@ fn kill_process_group(process_group: i32) {
 }
 
 #[cfg(windows)]
-fn run_process_windows(spec: &ProcessSpec) -> Result<ProcessResult, String> {
+fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResult, String> {
     use std::ffi::{OsStr, OsString};
     use std::fs::File;
     use std::mem::{size_of, size_of_val};
@@ -1176,60 +1187,62 @@ mod tests {
 
     #[test]
     fn subprocess_stdout_capture_has_a_hard_limit() {
-        let (program, args) = if cfg!(windows) {
+        let (program, args, fixture) = if cfg!(windows) {
+            let path = std::env::temp_dir().join(format!(
+                "one-process-stdout-limit-{}.txt",
+                std::process::id()
+            ));
+            std::fs::write(&path, vec![b'A'; MAX_OUTPUT_BYTES_PER_STREAM + 1])
+                .expect("stdout fixture should be created");
             (
-                "powershell.exe".to_owned(),
-                vec![
-                    "-NoProfile".into(),
-                    "-Command".into(),
-                    "$b = New-Object byte[] 1048577; [Console]::OpenStandardOutput().Write($b,0,$b.Length)".into(),
-                ],
+                "cmd.exe".to_owned(),
+                vec!["/D".into(), "/C".into(), format!("type \"{}\"", path.display())],
+                Some(path),
             )
         } else {
             (
                 "sh".to_owned(),
                 vec!["-c".into(), "head -c 1048577 /dev/zero".into()],
+                None,
             )
         };
-        let error = run_process(
-            &ProcessSpec {
-                program,
-                args,
-                working_directory: None,
-            },
+        let result = run_process(
+            &ProcessSpec { program, args, working_directory: None },
             &CapabilitySet::none().allow(Capability::Process),
-        )
-        .expect_err("stdout beyond the configured cap must be rejected");
-        assert!(error.contains("output limit"));
+        );
+        if let Some(path) = fixture { let _ = std::fs::remove_file(path); }
+        let error = result.expect_err("stdout beyond the configured cap must be rejected");
+        assert!(error.contains("output limit"), "unexpected bounded stdout error: {error}");
     }
 
     #[test]
     fn subprocess_stderr_capture_has_a_hard_limit() {
-        let (program, args) = if cfg!(windows) {
+        let (program, args, fixture) = if cfg!(windows) {
+            let path = std::env::temp_dir().join(format!(
+                "one-process-stderr-limit-{}.txt",
+                std::process::id()
+            ));
+            std::fs::write(&path, vec![b'A'; MAX_OUTPUT_BYTES_PER_STREAM + 1])
+                .expect("stderr fixture should be created");
             (
-                "powershell.exe".to_owned(),
-                vec![
-                    "-NoProfile".into(),
-                    "-Command".into(),
-                    "$b = New-Object byte[] 1048577; [Console]::OpenStandardError().Write($b,0,$b.Length)".into(),
-                ],
+                "cmd.exe".to_owned(),
+                vec!["/D".into(), "/C".into(), format!("type \"{}\" 1>&2", path.display())],
+                Some(path),
             )
         } else {
             (
                 "sh".to_owned(),
                 vec!["-c".into(), "head -c 1048577 /dev/zero >&2".into()],
+                None,
             )
         };
-        let error = run_process(
-            &ProcessSpec {
-                program,
-                args,
-                working_directory: None,
-            },
+        let result = run_process(
+            &ProcessSpec { program, args, working_directory: None },
             &CapabilitySet::none().allow(Capability::Process),
-        )
-        .expect_err("stderr beyond the configured cap must be rejected");
-        assert!(error.contains("output limit"));
+        );
+        if let Some(path) = fixture { let _ = std::fs::remove_file(path); }
+        let error = result.expect_err("stderr beyond the configured cap must be rejected");
+        assert!(error.contains("output limit"), "unexpected bounded stderr error: {error}");
     }
 
     #[cfg(windows)]
@@ -1240,7 +1253,7 @@ mod tests {
 
         let parent_pid = std::process::id();
         let script = "$ErrorActionPreference = 'Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class JobProbe { [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool IsProcessInJob(IntPtr process, IntPtr job, out bool result); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool SetHandleInformation(IntPtr handle, uint mask, uint flags); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern IntPtr OpenProcess(uint access, bool inherit, uint pid); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool DuplicateHandle(IntPtr sourceProcess, IntPtr sourceHandle, IntPtr targetProcess, out IntPtr targetHandle, uint access, bool inherit, uint options); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetCurrentProcess(); [DllImport(\"kernel32.dll\", SetLastError=true)] public static extern bool CloseHandle(IntPtr handle); }'; $jobHandle = [IntPtr]::new([Int64]::Parse('__ONE_JOB_QUERY_HANDLE__')); if (-not [JobProbe]::SetHandleInformation($jobHandle, 1, 0)) { throw ('SetHandleInformation failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $psi = [System.Diagnostics.ProcessStartInfo]::new(); $psi.FileName = 'ping.exe'; $psi.Arguments = '-n 30 127.0.0.1'; $psi.UseShellExecute = $false; $child = [System.Diagnostics.Process]::Start($psi); if ($null -eq $child) { throw 'Process.Start returned null' }; [Console]::Out.WriteLine(('CHILD_PID=' + $child.Id)); try { $inJob = $false; $queryOk = [JobProbe]::IsProcessInJob($child.Handle, $jobHandle, [ref]$inJob); if (-not $queryOk) { throw ('IsProcessInJob(target job) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; [Console]::Out.WriteLine(('CHILD_IN_INVOCATION_JOB=' + $inJob.ToString().ToLowerInvariant())); $parent = [JobProbe]::OpenProcess(0x0040, $false, [uint32]__ONE_PARENT_PID__); if ($parent -eq [IntPtr]::Zero) { throw ('OpenProcess(parent PROCESS_DUP_HANDLE) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) }; $childWaitHandle = [IntPtr]::Zero; try { if (-not [JobProbe]::DuplicateHandle([JobProbe]::GetCurrentProcess(), $child.Handle, $parent, [ref]$childWaitHandle, 0x00101001, $false, 0)) { throw ('DuplicateHandle(child TERMINATE|QUERY_LIMITED_INFORMATION|SYNCHRONIZE into parent) failed: ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error()) } } finally { [void][JobProbe]::CloseHandle($parent) }; [Console]::Out.WriteLine(('CHILD_WAIT_HANDLE=' + $childWaitHandle.ToInt64())) } catch { try { if (-not $child.HasExited) { $child.Kill(); $child.WaitForExit() } } catch {}; throw }";
-        let result = run_process(
+        let result = run_process_with_timeout(
             &ProcessSpec {
                 program: "powershell.exe".into(),
                 args: vec![
@@ -1251,8 +1264,9 @@ mod tests {
                 working_directory: None,
             },
             &CapabilitySet::none().allow(Capability::Process),
+            Duration::from_secs(30),
         )
-        .expect("PowerShell parent process should complete");
+        .expect("PowerShell parent process should complete within its test-only setup budget");
         let child_in_invocation_job = result
             .stdout
             .lines()
