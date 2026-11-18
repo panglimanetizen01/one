@@ -4,6 +4,7 @@ from unittest.mock import patch
 from diagnose_circleci import (
     DiagnosticError,
     classify_failure,
+    discover_failed_jobs,
     extract_failed_steps,
     paged_v2_items,
     redact,
@@ -98,6 +99,37 @@ class CircleCIDiagnosticTests(unittest.TestCase):
             with self.assertRaisesRegex(DiagnosticError, "results are incomplete"):
                 list(paged_v2_items("https://circleci.example/pipelines", {}))
         self.assertEqual(get_json.call_count, 10)
+
+    def test_exact_sha_pipeline_without_failed_jobs_is_not_an_error(self):
+        responses = [
+            {
+                "items": [
+                    {
+                        "id": "pipeline-uuid",
+                        "vcs": {"revision": "a" * 40},
+                        "created_at": "2026-11-19T00:00:00Z",
+                    }
+                ],
+                "next_page_token": None,
+            },
+            {
+                "items": [
+                    {"id": "workflow-uuid", "name": "one-ci", "status": "running"}
+                ],
+                "next_page_token": None,
+            },
+            {
+                "items": [
+                    {"id": "job-uuid", "name": "one-linux", "status": "running"}
+                ],
+                "next_page_token": None,
+            },
+        ]
+        with patch("diagnose_circleci.get_json", side_effect=responses):
+            self.assertEqual(
+                discover_failed_jobs("token", "gh/example/one", "feature", "a" * 40),
+                [],
+            )
 
     def test_redacts_tokens_and_credentials(self):
         source = (
