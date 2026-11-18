@@ -395,7 +395,7 @@ fn linux_write_relative(
     }
     let (mut temporary_file, temporary_name) = created.ok_or(FilesystemError::IoFailure)?;
     let mut guard = LinuxTempFileGuard {
-        parent_fd: parent_fd,
+        parent_fd,
         name: temporary_name,
         committed: false,
     };
