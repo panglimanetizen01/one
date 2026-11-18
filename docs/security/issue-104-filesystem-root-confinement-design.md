@@ -395,3 +395,40 @@ Decision: do NOT add cap-std as the Issue #104 enforcement boundary. Do not wrap
 A retained directory handle alone does not prove that a descendant remains in the original namespace if an attacker can rename an opened parent outside the root while traversal continues. Linux/Android implementation therefore uses one kernel-enforced beneath/no-symlink/no-cross-mount resolution operation rather than a sequence of individually safe-looking `openat` calls. Windows must hold relevant directory handles without delete sharing during traversal and verify the opened object identities. If a platform cannot establish these invariants, its adapter remains unavailable.
 
 Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. No E4 or ledger acceptance pin is changed by this design decision.
+
+
+## 24. Independent E4 adversarial test-name contract — 2026-11-18
+
+The verifier workflow `.github/workflows/e4-adversarial-regression.yml` is the authoritative test-name contract. The current source candidate does not yet contain these tests; a successful generic `cargo test -p one-core` run is not a substitute.
+
+### Unix filters (must execute nonzero exact counts)
+
+| Verifier filter | Required passing matches | Required evidence |
+|---|---:|---|
+| `descriptor_relative_read_rejects_` | 2 | Two distinct read traversal/symlink rejection cases with no outside read |
+| `descriptor_relative_write_rejects_` | 1 | Write through hostile path rejected with no outside create/modify |
+| `descriptor_relative_walk_rejects_` | 1 | Parent traversal rejected before any external side effect |
+| `adapter::filesystem_nofollow_tests::descriptor_relative_read_race_never_follows_swapped_parent_symlink` (`--exact`) | 1 | Concurrent parent-component swap cannot redirect read outside root |
+| `adapter::filesystem_nofollow_tests::final_component_mount_boundary_denial_does_not_truncate_file` (`--exact`) | 1 | Mount-boundary denial leaves pre-existing outside/target file bytes unchanged |
+
+### Windows filters (each must execute exactly once)
+
+- `filesystem_reader_rejects_directory_junction_escape`
+- `filesystem_adapter_reads_absolute_target_inside_project_root`
+- `filesystem_adapters_confine_absolute_targets_to_project_root_without_side_effects`
+- `filesystem_write_adapter_writes_text_target`
+- `filesystem_write_adapter_rejects_oversized_content`
+- `filesystem_adapters_reject_parent_directory_traversal`
+
+### Test construction rules
+
+- Positive absolute-path control must prove an absolute target inside the configured project root still works; do not implement blanket absolute-path rejection.
+- Every negative case must assert actual outside-file bytes and directory entries before/after, not only an error value.
+- Race test must coordinate concurrent parent-component replacement and assert no external target was opened/read.
+- Mount test must assert denial happens before truncation and compare the exact original bytes.
+- Windows junction test must create a real directory junction/reparse point and assert the outside sentinel remains untouched.
+- Oversized write test must assert the existing destination remains byte-identical and no temp artifact leaks.
+- Tests must use the same public adapter/host injection path as production. A helper-only unit test that bypasses adapter construction is insufficient.
+- Keep the verifier's expected counts/filter names unchanged unless both verifier and source contract are reviewed together.
+
+Current inventory status: **0 of 5 Unix filter groups and 0 of 6 Windows named tests are implemented/accepted on this candidate**. The existing generic filesystem smoke tests do not count toward these filters.
