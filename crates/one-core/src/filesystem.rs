@@ -133,7 +133,7 @@ impl FilesystemAuthority {
             );
             let stripped = normalized_target.strip_prefix(&normalized_root);
             #[cfg(test)]
-            if stripped.is_none() {
+            if stripped.is_err() {
                 eprintln!("filesystem absolute target prefix mismatch");
             }
             stripped
