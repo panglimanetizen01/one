@@ -26,6 +26,26 @@ pub struct FilesystemAuthority {
     max_write_bytes: u64,
 }
 
+#[cfg(windows)]
+fn normalize_windows_verbatim_prefix(path: &Path) -> PathBuf {
+    use std::ffi::OsString;
+    use std::os::windows::ffi::{OsStrExt, OsStringExt};
+
+    let wide: Vec<u16> = path.as_os_str().encode_wide().collect();
+    const VERBATIM_PREFIX: [u16; 4] = [92, 92, 63, 92];
+    const VERBATIM_UNC_PREFIX: [u16; 8] = [92, 92, 63, 92, 85, 78, 67, 92];
+
+    if wide.starts_with(&VERBATIM_UNC_PREFIX) {
+        let mut normalized = vec![92, 92];
+        normalized.extend_from_slice(&wide[VERBATIM_UNC_PREFIX.len()..]);
+        PathBuf::from(OsString::from_wide(&normalized))
+    } else if wide.starts_with(&VERBATIM_PREFIX) {
+        PathBuf::from(OsString::from_wide(&wide[VERBATIM_PREFIX.len()..]))
+    } else {
+        path.to_path_buf()
+    }
+}
+
 impl FilesystemAuthority {
     /// Open and retain the host-selected project root. The root is trusted
     /// host configuration; never pass a program-controlled target here.
@@ -102,9 +122,22 @@ impl FilesystemAuthority {
     }
 
     fn relative_target(&self, target: &Path) -> Result<PathBuf, FilesystemError> {
+        #[cfg(windows)]
+        let relative = if target.is_absolute() {
+            let normalized_root = normalize_windows_verbatim_prefix(&self.canonical_root);
+            let normalized_target = normalize_windows_verbatim_prefix(target);
+            normalized_target
+                .strip_prefix(&normalized_root)
+                .map_err(|_| FilesystemError::OutsideRoot)?
+        } else {
+            target
+        };
+        #[cfg(not(windows))]
         let relative = if target.is_absolute() {
             target.strip_prefix(&self.canonical_root).map_err(|_| FilesystemError::OutsideRoot)?
-        } else { target };
+        } else {
+            target
+        };
         let mut normalized = PathBuf::new();
         for component in relative.components() {
             match component {
