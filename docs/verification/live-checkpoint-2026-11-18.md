@@ -255,3 +255,13 @@ A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is 
 - The diagnostic suite has 11 test methods, but execution is NOT VERIFIED. `circleci config validate` is also NOT VERIFIED. No PASS/FAIL is claimed.
 - PR #44 remains OPEN / DRAFT / UNMERGED. Protected verifier pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` unchanged. Issue #104 remains OPEN / NOT ACCEPTED. No merge or main-branch modification.
 - This status refresh supersedes the earlier 2026-11-19 entry that recorded the PR HEAD as having no combined status contexts.
+
+
+## Independent verifier and CircleCI evidence reconciliation — 2026-11-19
+
+- PR #44 diagnostic branch `probe/windows-obj-dont-reparse-20261118` pins candidate `722d662e7a81711ba3607d26571f4048a292b3ed`. This is separate from protected branch `verification`, whose canonical pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`; protected pin unchanged.
+- Exact candidate `722d662...` passed independent verifier E4 Unix + Windows jobs, Windows Server 2025 build 26100 native `NtCreateFile + RootDirectory + OBJ_DONT_REPARSE` probe, cross-platform Linux/Windows, Debian 12/Ubuntu 24.04, Android AArch64 artifact + API 35 ARM64 runtime, and SEC-05 workflows. Probe logs: ordinary file accepted; direct and intermediate junctions rejected with `STATUS_REPARSE_POINT_ENCOUNTERED (0xC000050B)`; outside sentinel unchanged. See [E4 run](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797344) and [probe job logs](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44335797344/job/134912035140).
+- `722d662...` is an ancestor of PR #113 HEAD; compare shows 53 intervening commits to `c25d191...` with no runtime implementation files changed after that candidate. This preserves relevance of narrowly scoped runtime evidence but does not transfer exact-SHA PASS status.
+- CircleCI exact statuses now read: `722d662...` FAILURE ([job](https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94)); `e8dab3a...` FAILURE ([job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e)); PR #113 HEAD `c25d191...` PENDING ([job](https://app.circleci.com/workflow/35bda6e3-acf8-4232-9437-608467816602/job/90ae8601-d89f-4314-a346-d37089540363)). Logs for CircleCI remain inaccessible and cause unknown.
+- The diagnostic test suite (11 methods) and `circleci config validate` remain NOT VERIFIED.
+- PR #113 and PR #44 remain OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. No merge, main-branch modification, or protected pin change.
