@@ -225,3 +225,15 @@ Do not transfer Android artifact PASS on `090c84d...` to source `3d8e0d...`. Iss
 | Fresh exact-SHA cross-platform and distro | `2fa1436...` | [Cross-platform #44334598774](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598774), [Distro #44334598316](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598316) | QUEUED/PENDING |
 
 This test-only correction does not broaden Linux writes beyond direct children of the retained root. Nested Linux writes remain fail-closed.
+
+
+## CLI host-root integration evidence — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Root derived from source/project context, not target | `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca` | `project_root_for_source` selects nearest `one.toml` ancestor or host working/source context; authority construction no longer inspects target parent | IMPLEMENTED; NOT VERIFIED |
+| Absolute write outside root rejected | `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca` | CLI integration test asserts failure and preserves outside sentinel | IMPLEMENTED; NOT VERIFIED |
+| Absolute read outside root rejected | `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca` | CLI integration test asserts failure, no sentinel disclosure, outside file unchanged | IMPLEMENTED; NOT VERIFIED |
+| Relative source root resolution | `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca` | CLI integration test executes a relative source and writes to a relative direct-child target | IMPLEMENTED; NOT VERIFIED |
+
+Do not claim project-root confinement until these host integration tests and the full filesystem E4 contract pass on the exact source SHA.
