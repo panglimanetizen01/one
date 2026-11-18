@@ -100,6 +100,19 @@ class CircleCIDiagnosticTests(unittest.TestCase):
                 list(paged_v2_items("https://circleci.example/pipelines", {}))
         self.assertEqual(get_json.call_count, 10)
 
+    def test_pagination_rejects_missing_items_array(self):
+        with patch("diagnose_circleci.get_json", return_value={"next_page_token": None}):
+            with self.assertRaisesRegex(DiagnosticError, "no valid 'items' array"):
+                list(paged_v2_items("https://circleci.example/pipelines", {}))
+
+    def test_pagination_rejects_non_object_items(self):
+        with patch(
+            "diagnose_circleci.get_json",
+            return_value={"items": ["unexpected"], "next_page_token": None},
+        ):
+            with self.assertRaisesRegex(DiagnosticError, "non-object item"):
+                list(paged_v2_items("https://circleci.example/pipelines", {}))
+
     def test_exact_sha_pipeline_without_failed_jobs_is_not_an_error(self):
         responses = [
             {
