@@ -88,27 +88,6 @@ jobs:
           name: Workspace tests
           command: cargo test --locked --workspace --all-targets
       - run:
-          name: Focused test diagnostics (only after an earlier CI failure)
-          when: on_fail
-          command: |
-            set -uo pipefail
-            status=0
-            run_diagnostic() {
-              label="$1"
-              shift
-              echo "=== $label ==="
-              "$@" || status=1
-            }
-            # These exact tests already run in the successful full workspace
-            # suite above. Re-run them only after a failure, for focused logs.
-            run_diagnostic "Deterministic .oneir and .onepkg artifacts" cargo test --locked -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
-            run_diagnostic "DNS success and failure classification" cargo test --locked -p one-core --all-targets dns_adapter
-            run_diagnostic "Orchestration policy deny and allow paths" cargo test --locked -p one-core --all-targets orchestrator
-            run_diagnostic "Database vertical slice" cargo test --locked -p one-core --test database_vertical_slice
-            run_diagnostic "HTTP GET vertical slice" cargo test --locked -p one-core --test http_get_vertical_slice
-            run_diagnostic "HTTP GET CLI vertical slice" cargo test --locked -p one-cli --test http_get_orchestration
-            exit "$status"
-      - run:
           name: Build release CLI
           command: cargo build --release --locked -p one-cli --bin one
       - run:
@@ -133,6 +112,27 @@ jobs:
             - run:
                 name: Offline verification (release gate)
                 command: bash tools/verify_offline.sh
+      - run:
+          name: Focused test diagnostics (only after an earlier CI failure)
+          when: on_fail
+          command: |
+            set -uo pipefail
+            status=0
+            run_diagnostic() {
+              label="$1"
+              shift
+              echo "=== $label ==="
+              "$@" || status=1
+            }
+            # These exact tests already run in the successful full workspace
+            # suite above. Re-run them only after a failure, for focused logs.
+            run_diagnostic "Deterministic .oneir and .onepkg artifacts" cargo test --locked -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+            run_diagnostic "DNS success and failure classification" cargo test --locked -p one-core --all-targets dns_adapter
+            run_diagnostic "Orchestration policy deny and allow paths" cargo test --locked -p one-core --all-targets orchestrator
+            run_diagnostic "Database vertical slice" cargo test --locked -p one-core --test database_vertical_slice
+            run_diagnostic "HTTP GET vertical slice" cargo test --locked -p one-core --test http_get_vertical_slice
+            run_diagnostic "HTTP GET CLI vertical slice" cargo test --locked -p one-cli --test http_get_orchestration
+            exit "$status"
       - save_cache:
           key: one-cargo-v2-{{ arch }}-{{ checksum "Cargo.toml" }}-{{ checksum "Cargo.lock" }}-{{ checksum "crates/one-core/Cargo.toml" }}-{{ checksum "crates/one-cli/Cargo.toml" }}-{{ checksum "rust-toolchain.toml" }}
           paths:
