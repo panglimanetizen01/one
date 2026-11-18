@@ -200,3 +200,16 @@ The Android compile failure at `cc54597...` is retained as evidence and is not m
 | Android API 35 runtime | `090c84d...` | [Run #44332808569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808569) | QUEUED; runtime NOT VERIFIED |
 
 Artifact build PASS does not imply runtime execution or full Android filesystem capability support.
+
+
+## Strict Clippy correction and focused architecture diagram — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Android AArch64 artifact build | `090c84dbab02e48af0a493faeb8d4fe0ff80a876` | [Run #44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717), ELF64 AArch64, Android linker, artifact uploaded | PASS for `090c84d...` only |
+| Ubuntu Clippy | `090c84d...` | [Distro run #44332808528](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808528), failed `clippy::redundant_field_names` in Linux cleanup-guard initializer | FAILED / lint only |
+| Strict Clippy correction | `3d8e0d0e3af54310837eb06d442d30a02df821d0` | Field initializer changed to shorthand; no production behavior change | IMPLEMENTED; NOT VERIFIED |
+| Fresh E4 | `3d8e0d...` diagnostic pin | [Run #44333965599](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333965599) | QUEUED |
+| Focused architecture diagram | PR documentation HEAD | `docs/architecture/filesystem-root-confinement.md` Mermaid source linked from architecture and docs indexes | SOURCE PRESENT / rendered by GitHub Markdown; full PR #97 PNG still NOT VERIFIED |
+
+Do not transfer Android artifact PASS on `090c84d...` to source `3d8e0d...`. Issue #104 remains OPEN / NOT ACCEPTED.
