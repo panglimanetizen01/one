@@ -149,3 +149,10 @@ New CLI tests cover:
 - Linux nested relative write: fails closed and preserves original bytes.
 
 Source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; focused diagram updated in `d4687325f4b1236509bfe484cae46b72649d839f`. Diagnostic verifier pin now targets the latest source SHA. Fresh exact-SHA workflows are pending; do not mark host-root integration VERIFIED until they complete.
+
+
+## Manifest-root CLI regression test — 18 November 2026
+
+Added a cross-platform CLI integration test proving that the nearest ancestor containing `one.toml` is selected as the filesystem authority root for a source under `src/`. The test writes to a direct-child target under that project root. This complements outside-root read/write rejection and relative-source tests.
+
+Test source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; diagnostic verifier pin updated to this SHA. Exact-SHA workflows are pending.
