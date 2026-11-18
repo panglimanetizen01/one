@@ -48,6 +48,7 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 - The script prints step numbers, execution indexes, outcome, and a bounded tail of each failed step's logs.
 - Secret-like values are redacted before display and before writing an optional report.
 - A missing stderr stream is normal; CircleCI returns no content when a step has no stderr.
+- Pagination is limited to ten pages as a safety boundary. If CircleCI advertises another page after the tenth, the utility raises a diagnostic error and marks discovery incomplete; it never silently treats truncated results as complete.
 - If no pipeline exists for the exact local SHA, the script stops rather than selecting a nearby or newer commit.
 
 ## Tests
@@ -58,7 +59,7 @@ Run the standard-library unit tests:
 python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
 \`\`\`
 
-The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, and secret redaction.
+The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, secret redaction, complete multi-page discovery, and explicit failure when the ten-page safety limit would truncate results.
 
 ## Limitations
 
