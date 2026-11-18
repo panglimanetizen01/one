@@ -1,8 +1,8 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Design checkpoint only — implementation and security acceptance NOT VERIFIED  
-**Latest code-bearing source reviewed:** `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`  
-**Current PR #110 HEAD at this checkpoint:** `a566fbc54349af9eaf0589939b0837a6ea08c02f` (documentation-only; CircleCI pending)  
+**Latest adapter/interpreter/CLI source audit:** `88e36dfef55cc11972b9bbc68a1883385d9f52e8`  
+**Current PR #110 HEAD:** `88e36dfef55cc11972b9bbc68a1883385d9f52e8` (documentation-only; CircleCI pending at last refresh)  
 **Branch:** security/issue-104-root-handle-design-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
@@ -255,3 +255,12 @@ The code change must inventory every `FileReadAdapter::new`, `FileWriteAdapter::
 10. Tests run on Unix and Windows from a committed lockfile and assert named test execution rather than treating a successful compile or empty test filter as acceptance.
 
 This audit is source inspection only; no compiler, unit test, adversarial test, or platform verification was run for this checkpoint.
+
+
+## 18. Latest exact-HEAD refresh — 2026-11-18
+
+- Live PR #110 HEAD is `88e36dfef55cc11972b9bbc68a1883385d9f52e8`; PR remains OPEN / DRAFT / UNMERGED.
+- CircleCI `ci/circleci: one-linux` for this exact SHA was PENDING at last status refresh (`2026-11-18T04:59:48Z`), job `cfcaee95-6a29-4254-ad62-11c2c997238d`, workflow `e6d1cd32-da3c-404b-9ef9-a7ef209a4af9`. The preceding documentation commit `a566fbc54349af9eaf0589939b0837a6ea08c02f` later reached SUCCESS, but that result does not transfer to this newer SHA.
+- Re-read `crates/one-core/src/adapter.rs`, `crates/one-core/src/interpreter.rs`, and `crates/one-cli/src/main.rs` at exact SHA `88e36df...`. Adapter still calls `std::fs::read(path)` and `std::fs::write(path, ...)`; constructors remain parameterless; interpreter still constructs both with `new()`; CLI source does not establish/inject a trusted filesystem root. Issue #104 remains NOT IMPLEMENTED.
+- Commit `88e36df...` is documentation-only (`docs/security/issue-104-filesystem-root-confinement-design.md`); no production filesystem code or test evidence was added by that commit.
+- This refresh supersedes earlier statements in sections 16–17 that described `a566fbc...` as the latest HEAD. Those sections remain historical audit checkpoints, not current branch metadata.
