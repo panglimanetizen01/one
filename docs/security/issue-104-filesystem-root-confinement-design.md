@@ -281,3 +281,28 @@ This audit is source inspection only; no compiler, unit test, adversarial test, 
 - PR #110 SHA `4a1dbdf...` has CircleCI `ci/circleci: one-linux` PENDING at last refresh; job `54d76c6c-e85d-4a91-984f-20dec0a0f701`, workflow `524e7b1e-de00-49fd-9a25-69266a2c5fd5`. This is not a test result yet.
 - The independent verifier's `ONE Fixed-Weight Ledger Gate` currently fails closed because the pinned source SHA `e50748a1b25922d9090eba1f5fb90548d7c7d003` does not contain `docs/verification/one-completion-ledger.md` or `docs/verification/DEFINITION_OF_DONE.md`. Its unit tests pass (15/15) on run `44241595784` and `44241822346`; the subsequent live-input step fails with `FileNotFoundError` for `one-source/docs/verification/one-completion-ledger.md`. Historical copies exist at `2ead9dba45db4ce4105deaa81720aacc8fcadd6c`, but must not be silently reused as current acceptance inputs. The verifier branch's `LEDGER_GATE.md` explicitly records this root cause and calls for a versioned current-source ledger/DoD plus separation of the ledger documentation pin from the E4 security pin.
 - No ledger scores, DoD checks, source pins, or security acceptance were changed in this checkpoint. The evidence matrix and implementation-status documents are not format-equivalent substitutes for the fixed-weight ledger.
+
+
+## 21. Remote verification route and native Windows API availability — 2026-11-18
+
+This section supersedes the older execution-gate statements above where they say no remote compile/test route exists, and supersedes section 20's statement that the independent ledger gate still fails on missing input files.
+
+### Current exact candidate and remote CI path
+
+- PR #110 remains OPEN / DRAFT / UNMERGED at exact HEAD `005476dd8cf810fff2989cc03f22b59b9f26f644` (documentation-only). CircleCI `ci/circleci: one-linux` is PENDING for that exact SHA: job https://app.circleci.com/workflow/2f9eccab-8721-4cc6-981b-3ad50213eb8b/job/94ba22d0-cb36-49da-8445-37ca6891f30d. No terminal result or expanded CircleCI logs are available here.
+- The current PR #110 tree contains the committed `Cargo.lock` (blob `3fd2cb2be6aa30afa54602c733b2ab192cc91d2b`). The historical E4 pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` does not contain `Cargo.lock`; historical E4 run `43998206030` failed before any named test because Cargo `--locked` could not find it.
+- A remote validation route therefore exists: PR #110 CircleCI `one-linux` for Linux build/test; the independent verifier's E4 workflow can compile and execute the named Unix and Windows adversarial tests once a candidate SHA contains the committed lockfile, implementation, and exact test inventory. The E4 pin MUST remain unchanged until those code and tests are committed. There is no local Rust compiler/clone in this session, so CI must be the actual execution evidence.
+
+### Ledger gate input repair is complete; acceptance remains blocked
+
+- The independent verifier now keeps `CANONICAL_COMMIT.txt` (E4 candidate pin) separate from `LEDGER_SOURCE_COMMIT.txt` (ledger/DoD documentation pin). The latter points to exact PR #103 docs commit `d6c382a245c49a028bc60809f22ca956c7f894cc`.
+- Verifier run `44242751457` on verifier SHA `074e9f06b96f8569662b957c1b95f884a89eaebe` successfully checked out both source revisions and passed all 16 Python unit tests. It then correctly returned NOT PASSED from the actual acceptance gate: 18 ledger rows, fixed weights 100, provisional implementation 92/100, verified 0/100, 10 unchecked DoD items, required exact-SHA workflow failures on historical candidate `e50748a...`, and no protected package-provenance release run for that SHA.
+- This resolves the verifier's missing-file precondition; it does not establish E1–E6 acceptance, alter any score, or validate PR #110 product code.
+
+### Windows native handle-relative API feasibility finding
+
+- The pinned dependency is `windows-sys 0.61.2`. Its documented `NtCreateFile` binding is exported under `windows_sys::Wdk::Storage::FileSystem`; the signature accepts `OBJECT_ATTRIBUTES`, enabling a `RootDirectory` handle-relative open. `OBJECT_ATTRIBUTES` is exposed under `windows_sys::Wdk::Foundation` and contains `RootDirectory` and `ObjectName` fields.
+- Official API references inspected: [windows-sys 0.61.2 NtCreateFile](https://docs.rs/windows-sys/0.61.2/windows_sys/Wdk/Storage/FileSystem/fn.NtCreateFile.html) and [OBJECT_ATTRIBUTES](https://docs.rs/windows-sys/0.61.2/windows_sys/Wdk/Foundation/struct.OBJECT_ATTRIBUTES.html).
+- Current `crates/one-core/Cargo.toml` enables Win32 Foundation/Security/Storage/FileSystem and process features, but does not yet enable the required WDK feature modules. Before Windows implementation, add only the exact feature gates required for `Wdk::Foundation`, `Wdk::Storage::FileSystem`, and the relevant I/O status structure, then validate compile on the independent Windows runner. Do not substitute path canonicalization followed by a second open.
+- This API discovery is feasibility research only. No production source or test was changed; Issue #104 remains OPEN / NOT IMPLEMENTED.
+
