@@ -110,3 +110,15 @@ OS / distro / architecture
         ↓
 CLI / terminal / IDE / container / device
 ```
+
+
+## Filesystem project-root confinement status — 2026-11-18
+
+Filesystem root confinement is an experimental capability under Issue #104, not a general platform-support claim.
+
+- Linux candidate: reads use `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`. Candidate atomic writes are limited to direct children of the retained host root; nested write paths fail closed.
+- Windows candidate: handle-relative traversal and temporary-sibling atomic replacement are implemented in the open PR candidate and require exact-SHA Windows verification for the latest change set.
+- Other platforms: fail closed / NOT IMPLEMENTED for this capability.
+- Canonical `main` does not yet contain the unmerged PR #113 candidate. Do not treat the candidate as a released or broadly SUPPORTED feature.
+
+Compatibility status must be recorded per exact source revision and tested environment. Passing one Windows Server 2025 runner does not establish support for all Windows versions or filesystems.
