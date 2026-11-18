@@ -170,3 +170,12 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Android artifact run [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717) PASS on exact source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`.
 - Job verified source pin, built and inspected an ELF64 AArch64 executable using the Android linker `/system/bin/linker64`, and uploaded the artifact (artifact ID 14438938784; SHA-256 `5971ef900ead08e6f571327594625ba2856a1917d59196d095c785bdf51a0ea4`).
 - This is artifact/build evidence, not Android API 35 runtime verification or a platform support claim. Android runtime remains queued; E4/cross-platform/distro/SEC-05 and CircleCI remain pending.
+
+
+## Strict Clippy correction — 2026-11-18
+
+- Source `090c84dbab02e48af0a493faeb8d4fe0ff80a876` compiled and passed Android AArch64 artifact build [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717).
+- Ubuntu 24.04 distro job [#44332808528](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808528) then failed Clippy with `clippy::redundant_field_names` in the Linux cleanup-guard initializer.
+- Fixed with field shorthand in source SHA `3d8e0d0e3af54310837eb06d442d30a02df821d0`. Diagnostic verifier pin now targets this SHA; E4 [#44333965599](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333965599) is QUEUED. Fresh exact-SHA artifact/platform checks remain pending.
+- Focused filesystem architecture Mermaid source is now present at `docs/architecture/filesystem-root-confinement.md`, linked from `docs/ARCHITECTURE.md` and `docs/README.md`. Full PR #97 overview image remains visually NOT VERIFIED.
+- Classification: Linux direct-child atomic writer IMPLEMENTED / PARTIAL; current source NOT VERIFIED. Nested Linux writes remain fail-closed. Issue #104 OPEN / NOT ACCEPTED.
