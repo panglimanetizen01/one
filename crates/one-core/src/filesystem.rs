@@ -567,7 +567,16 @@ mod windows_native {
         let ok = unsafe {
             SetFileInformationByHandle(file.as_raw_handle() as HANDLE, 3 as _, base.cast::<c_void>(), buffer_length_u32)
         };
-        if ok == 0 { return Err(FilesystemError::IoFailure); }
+        if ok == 0 {
+            #[cfg(test)]
+            eprintln!(
+                "SetFileInformationByHandle(FileRenameInfo) failed: win32={}, parent={:?}, leaf={:?}",
+                unsafe { windows_sys::Win32::Foundation::GetLastError() },
+                parent,
+                String::from_utf16_lossy(leaf)
+            );
+            return Err(FilesystemError::IoFailure);
+        }
         Ok(())
     }
 
