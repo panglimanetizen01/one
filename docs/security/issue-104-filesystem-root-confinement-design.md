@@ -536,3 +536,34 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - CircleCI `ci/circleci: one-linux` for this SHA was still PENDING at checkpoint: [job](https://app.circleci.com/workflow/badb07eb-447c-43d0-bc1b-93415ffc077b/job/886fcdd8-3bef-4302-b869-3cfe63893a03). CircleCI job page is not accessible through the current web/connector session. Do not claim CircleCI success or infer failure cause.
 - The CircleCI config now avoids successful-run duplicate focused tests while retaining them under `when: on_fail`, and uses a targeted x86_64 POSIX MinGW package with bounded APT operations. No measured runtime delta is claimed.
 - Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED: mount-boundary no-truncate test and all six Windows E4 tests are outstanding; safe write remains fail-closed; Windows/macOS/Android filesystem backends remain unavailable. Keep E4 and ledger pins unchanged; PR #113 draft/unmerged; main unchanged.
+
+
+## 30. Windows reparse and handle-relative API research — 2026-11-18
+
+### API facts confirmed from Microsoft documentation
+
+- `OBJECT_ATTRIBUTES.RootDirectory` may reference a filesystem directory handle. When non-NULL, `ObjectName` is resolved relative to that handle: https://learn.microsoft.com/en-us/windows/win32/api/ntdef/ns-ntdef-_object_attributes
+- The same `OBJECT_ATTRIBUTES` reference documents `OBJ_DONT_REPARSE`: if a reparse point is encountered while parsing the object name, the operation fails with `STATUS_REPARSE_POINT_ENCOUNTERED`. This is the strongest documented candidate guard for rejecting reparse traversal during handle-relative opens.
+- `NtCreateFile` documents RootDirectory-relative opens and `FILE_OPEN_REPARSE_POINT`. The latter opens the reparse point itself rather than following it; the resulting handle still requires attribute/tag inspection and rejection before data I/O: https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntcreatefile
+- `NtCreateFile` documents `FILE_SHARE_DELETE` as allowing other opens for delete access. Omitting delete sharing on retained directory handles is therefore part of the intended parent-rename defense while descendants are resolved. The handles must remain alive throughout the complete operation.
+- `FILE_ID_INFO` supplies both `VolumeSerialNumber` and a 128-bit `FileId`; compare volume identity across opened components to reject volume/mount transitions and compare object identity where needed: https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_info
+- `FILE_ATTRIBUTE_TAG_INFO` supplies file attributes and reparse tag; `GetFileInformationByHandleEx` supports FileAttributeTagInfo and FileIdInfo: https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_attribute_tag_info and https://learn.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getfileinformationbyhandleex
+
+### Documentation discrepancy and verification requirement
+
+- The general `OBJECT_ATTRIBUTES` page documents `OBJ_DONT_REPARSE`, while the user-mode `NtCreateFile` page describes its Attributes argument more narrowly as zero or `OBJ_CASE_INSENSITIVE`. Microsoft Q&A discussion dated 2026-10-19 reports that the user-mode SDK header lists `OBJ_DONT_REPARSE` among valid attributes, but explicitly notes that the function page does not confirm its support/scope. Treat this as an unresolved documentation discrepancy, not as a platform-wide guarantee: https://learn.microsoft.com/en-us/questions/6042974/is-obj-dont-reparse-supported-in-object-attributes
+- A separate Microsoft Q&A runtime report says `OBJ_DONT_REPARSE` was honored for a RootDirectory-relative single-component `NtCreateFile` open on Windows 11 build 26200. This is useful observed behavior, but does not replace execution on the project's Windows Server 2025 independent runner: https://learn.microsoft.com/answers/a/12957558
+
+### Implementation direction (proposed; not yet implemented)
+
+1. Acquire the initial project root only from trusted host configuration. The root-acquisition boundary and its ancestor path remain a separate trust decision.
+2. Open each descendant as a single component relative to the already-open parent handle, with `OBJ_DONT_REPARSE`; retain each parent handle for the full operation and omit `FILE_SHARE_DELETE` so concurrent delete/rename opens are denied while resolution is in progress.
+3. Use `FILE_OPEN_REPARSE_POINT` where needed to inspect a leaf object itself; query and reject reparse attributes/tags before reading or writing. If the native call returns a reparse-related or unsupported status, fail closed.
+4. Query volume serial/file ID, link count, directory/regular-file type, and size from the opened handle—not from a pre-open path lookup. Reject volume changes and hard-linked leaves under the selected policy.
+5. Validate `OBJ_DONT_REPARSE` behavior and status mapping with real junction/reparse-point tests on the exact Windows runner before enabling the backend. Do not silently fall back to Win32 path-based open calls.
+
+### Current dependency and status
+
+- The current `one-core` Cargo target dependency already enables `Wdk_Foundation`, `Wdk_Storage_FileSystem`, `Win32_Foundation`, and `Win32_Storage_FileSystem`; this research alone does not justify another feature change.
+- No production code was changed by this research. No Windows backend, junction denial, parent-rename protection, volume identity check, or write operation is claimed implemented or verified.
+- The six required Windows E4 test names remain outstanding. Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED; do not advance the E4 verifier pin until the exact required tests exist and pass.
