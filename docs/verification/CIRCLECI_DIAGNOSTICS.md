@@ -65,7 +65,7 @@ Run the standard-library unit tests:
 python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
 ```
 
-The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, secret redaction, complete multi-page discovery, and explicit failure when the ten-page safety limit would truncate results.
+The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, secret redaction, complete and malformed multi-page discovery, explicit failure when the ten-page safety limit would truncate results, exact-SHA pipeline discovery with no failed jobs, and source-identity reporting for direct job-ID versus exact-SHA lookup. The current suite contains 13 test methods.
 
 ## Limitations
 
@@ -82,6 +82,7 @@ The following CircleCI UUIDs are already resolved. Use `--job-id` to inspect a j
 | `424f7bbc73901c5e4342eb04444eaabb526b711a` | `141f741c-74b9-4b36-96e4-9f81d76143cb` | `09b422cb-8c1a-47c5-a252-3974c649022c` | PENDING at last readback (historical) |
 | `bbe5d696ddfe5358932cd4351d5cd0af6070b4a1` | `dc55d982-a016-44a9-8f74-116a8e2c77ff` | `954d8930-d569-4b1e-9eab-87945b8b50c6` | PENDING at historical readback (2026-11-19) |
 | `9965ce53f816662d52074d81c9fcab4ba70e7d5f` | `72f890ca-d9c2-4441-b743-49b7ad24cd90` | `cd298634-331a-4032-9540-a05e688245b2` | PENDING at latest readback (2026-11-19) |
+| `f92a4795fc96b0d7780bda150249c5005d98505d` | `bf515c38-2b62-46e3-bf7e-cc2f07093f5f` | `c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9` | PENDING at latest exact-HEAD readback (2026-11-19) |
 
 Run the two known failed jobs directly (after setting `CIRCLECI_TOKEN` locally):
 
@@ -116,3 +117,11 @@ Record `git rev-parse HEAD` alongside both command outputs. Do not report either
 - Updated `tools/ci/diagnose_circleci.py` to print `SOURCE SHA: UNVERIFIED` for direct-ID inspection, with an explicit instruction to verify the workflow/pipeline revision before attributing logs. Exact-SHA discovery mode prints the resolved commit SHA.
 - Added two regression tests for the direct-ID and exact-SHA report identity lines. Test count is now 13 methods; execution remains NOT VERIFIED until run on the exact candidate SHA.
 - Updated this guide's purpose, known-job ledger, and current pending job command. Latest pre-change source SHA was `9965ce53f816662d52074d81c9fcab4ba70e7d5f`; the new commit will require its own CircleCI status.
+
+
+## Latest exact-HEAD refresh — 2026-11-19
+
+- PR #113 HEAD `f92a4795fc96b0d7780bda150249c5005d98505d` remains OPEN / DRAFT / UNMERGED. Its base SHA remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Exact-HEAD status `ci/circleci: one-linux` = PENDING; workflow `bf515c38-2b62-46e3-bf7e-cc2f07093f5f`; job `c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9`: https://app.circleci.com/workflow/bf515c38-2b62-46e3-bf7e-cc2f07093f5f/job/c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9.
+- The previous `9965ce53...` status is historical and must not be transferred to this SHA.
+- Unit tests and CircleCI config validation remain NOT VERIFIED; CircleCI provider logs remain inaccessible and failure root cause unknown.
