@@ -115,3 +115,10 @@ Those references are now corrected to use the retained root file descriptor in s
 The Android AArch64 device-artifact build now passes on exact source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`: [independent build run #44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717). The job verified the source pin, generated and linked the Android AArch64 executable, inspected the ELF header (`ELF64`, `AArch64`, Android linker `/system/bin/linker64`), and uploaded the artifact.
 
 This is artifact/build evidence only. It does not establish Android API 35 runtime execution or full filesystem support on Android. The Android runtime, E4, cross-platform, distro, SEC-05, and CircleCI checks remain pending for the current candidate.
+
+
+## Strict Clippy correction after Linux writer compile fix — 18 November 2026
+
+The first compiling Linux writer candidate `090c84dbab02e48af0a493faeb8d4fe0ff80a876` built the Android AArch64 artifact successfully, but the Ubuntu distro Clippy step rejected one redundant field initializer in the Linux temporary-file cleanup guard. The code now uses Rust field shorthand in source SHA `3d8e0d0e3af54310837eb06d442d30a02df821d0`.
+
+The earlier Android artifact PASS applies to `090c84d...`, not the new source `3d8e0d...`. The diagnostic verifier pin now targets `3d8e0d...`; fresh E4, cross-platform, distro, Android artifact/runtime, SEC-05, resource-guard, and CircleCI results must be checked on the new SHA before the updated candidate is considered verified.
