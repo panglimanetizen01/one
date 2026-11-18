@@ -476,6 +476,34 @@ mod filesystem_windows_tests {
     }
 
     #[test]
+    fn filesystem_write_adapter_preserves_target_when_atomic_replace_is_denied() {
+        let root = test_root("atomic-write-denied");
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"KEEP_ORIGINAL").unwrap();
+        let mut permissions = std::fs::metadata(&target).unwrap().permissions();
+        permissions.set_readonly(true);
+        std::fs::set_permissions(&target, permissions).unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+        let result = adapter.invoke(&write_request("target.txt", "REPLACEMENT"));
+
+        assert_eq!(result, Err(AdapterError::BackendFailure));
+        assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+        let entries = std::fs::read_dir(&root)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<Vec<_>>();
+        assert_eq!(entries, vec![std::ffi::OsString::from("target.txt")], "temporary sibling must be removed after a denied atomic replace");
+
+        let mut permissions = std::fs::metadata(&target).unwrap().permissions();
+        permissions.set_readonly(false);
+        std::fs::set_permissions(&target, permissions).unwrap();
+        drop(adapter);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn filesystem_write_adapter_rejects_oversized_content() {
         let root = test_root("write-limit");
         let target = root.join("target.txt");
