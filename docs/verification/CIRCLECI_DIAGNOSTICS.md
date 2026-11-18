@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use the CircleCI API to identify the failed job and retrieve only the failed step's stdout/stderr. The utility deliberately matches the current local Git HEAD to the pipeline revision before selecting jobs, so it will not silently diagnose a different commit.
+Use the CircleCI API to identify the failed job and retrieve only the failed step's stdout/stderr. The default mode matches the current local Git HEAD to the pipeline revision before selecting jobs. Direct `--job-id` mode bypasses that discovery and now prints `SOURCE SHA: UNVERIFIED` in the report until the workflow/pipeline revision is independently checked.
 
 ## Prerequisites
 
@@ -80,7 +80,8 @@ The following CircleCI UUIDs are already resolved. Use `--job-id` to inspect a j
 | `722d662e7a81711ba3607d26571f4048a292b3ed` | `9fb2893b-4373-4ef1-ad97-60b804ebedda` | `9f3acc50-11b9-47e5-b841-6a943300be94` | FAILURE |
 | `e8dab3a0ac2de6b09b374b692d740b9fb5630f00` | `e55fc480-62fb-469f-8351-deff706595ac` | `69d31382-c676-47f8-92b3-98c0dd8cbf1e` | FAILURE |
 | `424f7bbc73901c5e4342eb04444eaabb526b711a` | `141f741c-74b9-4b36-96e4-9f81d76143cb` | `09b422cb-8c1a-47c5-a252-3974c649022c` | PENDING at last readback (historical) |
-| `bbe5d696ddfe5358932cd4351d5cd0af6070b4a1` | `dc55d982-a016-44a9-8f74-116a8e2c77ff` | `954d8930-d569-4b1e-9eab-87945b8b50c6` | PENDING at latest readback (2026-11-19) |
+| `bbe5d696ddfe5358932cd4351d5cd0af6070b4a1` | `dc55d982-a016-44a9-8f74-116a8e2c77ff` | `954d8930-d569-4b1e-9eab-87945b8b50c6` | PENDING at historical readback (2026-11-19) |
+| `9965ce53f816662d52074d81c9fcab4ba70e7d5f` | `72f890ca-d9c2-4441-b743-49b7ad24cd90` | `cd298634-331a-4032-9540-a05e688245b2` | PENDING at latest readback (2026-11-19) |
 
 Run the two known failed jobs directly (after setting `CIRCLECI_TOKEN` locally):
 
@@ -92,7 +93,7 @@ python3 tools/ci/diagnose_circleci.py --job-id 69d31382-c676-47f8-92b3-98c0dd8cb
 The latest pending job can be inspected directly once it reaches a terminal state:
 
 ```bash
-python3 tools/ci/diagnose_circleci.py --job-id 09b422cb-8c1a-47c5-a252-3974c649022c --output /tmp/one-circleci-current-head.txt
+python3 tools/ci/diagnose_circleci.py --job-id cd298634-331a-4032-9540-a05e688245b2 --output /tmp/one-circleci-current-head.txt
 ```
 
 Use the step number from the job metadata and inspect only the first failed step before interpreting downstream failures. Do not enable blanket reruns or add retries until the logs establish a transient failure mode. A successful rerun of the same exact SHA without code/config changes is evidence of a potentially transient failure; a repeatable failure requires a targeted fix.
@@ -107,3 +108,11 @@ circleci config validate .circleci/config.yml
 ```
 
 Record `git rev-parse HEAD` alongside both command outputs. Do not report either validation as passed unless the commands actually execute and exit successfully.
+
+
+## Direct job source-identity output hardening — 2026-11-19
+
+- Static review found that direct `--job-id` mode correctly bypasses exact-SHA discovery but did not surface that evidence limitation in the generated report itself.
+- Updated `tools/ci/diagnose_circleci.py` to print `SOURCE SHA: UNVERIFIED` for direct-ID inspection, with an explicit instruction to verify the workflow/pipeline revision before attributing logs. Exact-SHA discovery mode prints the resolved commit SHA.
+- Added two regression tests for the direct-ID and exact-SHA report identity lines. Test count is now 13 methods; execution remains NOT VERIFIED until run on the exact candidate SHA.
+- Updated this guide's purpose, known-job ledger, and current pending job command. Latest pre-change source SHA was `9965ce53f816662d52074d81c9fcab4ba70e7d5f`; the new commit will require its own CircleCI status.
