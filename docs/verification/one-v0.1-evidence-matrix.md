@@ -110,3 +110,13 @@ These CircleCI status results are specific to their listed exact SHAs and do not
 ## Documentation HEAD verification — 2026-11-18
 
 PR #110 current documentation HEAD `26d29c61944e51919161f5360bccfef4a09d370d` has CircleCI `ci/circleci: one-linux` SUCCESS, job `c153ba39-4073-4548-aaa6-6370e6bed6bf`. Production filesystem source assessment remains bound to parent source SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; the child commit is documentation-only.
+
+## Independent baseline cross-platform verification — 2026-11-18
+
+| Source SHA | Platform / provider | Run / job | Result |
+|---|---|---|---|
+| `a20676be53e5f78c465832379d86c3675a2ed7c8` | Ubuntu 24.04.5 / GitHub Actions | [44267886845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44267886845), job `134676844501` | 239 passed, 0 failed, 1 ignored; 27 result summaries |
+| `a20676be53e5f78c465832379d86c3675a2ed7c8` | Windows / GitHub Actions | [44263674485](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44263674485/job/134662858839) | 232 passed, 0 failed, 1 ignored; 27 result summaries |
+| `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c` | CircleCI one-linux | PR #110 commit status | SUCCESS; status context `ci/circleci: one-linux` |
+
+The first two rows are independent cross-platform tests of the same PR #108 candidate SHA. The CircleCI row is a separate PR #110 source SHA and is Linux-only. None of these results implement or accept Issue #104 filesystem confinement. The adapters still require explicit trusted-root authority and adversarial tests before E4/DoD changes.
