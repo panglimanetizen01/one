@@ -24,9 +24,6 @@ fn project_root_for_source(source: &Path) -> Result<PathBuf, String> {
   if candidate.join("one.toml").is_file() {
    return Ok(candidate);
   }
-  if candidate == current_dir {
-   break;
-  }
   let Some(parent) = candidate.parent() else {
    break;
   };
