@@ -203,3 +203,14 @@ Static readback was performed on `c4bb4b690e698a83e4ddaf279596479d3dc282ca`. Thi
 ### Execution gate
 
 This session has GitHub repository read/write access but no authenticated CircleCI tool, no GitHub Actions workflow-dispatch action, and no working local clone/network route to compile the Rust workspace. Therefore source implementation cannot currently be validated. Do not write unsafe platform code into the branch without a working compile/test path. The static source map above is complete enough to start implementation immediately when a runner becomes available; it is not a security fix.
+
+
+## 15. Follow-up: expanded E4 verifier logs retrieved — 2026-11-18
+
+The expanded GitHub Actions logs for verifier run `43998206030` were subsequently retrieved (the earlier log-access limitation is superseded for this run):
+
+- Unix job `133755415781`, job name `Unix no-follow and SQLite resource bounds`, fails at the first filtered Cargo invocation before any test executes. Exact Cargo error: `cannot create the lock file .../source/Cargo.lock because --locked was passed to prevent this`; process exit code `101`.
+- Windows job `133755416047`, job name `Windows reparse-point and handle checks`, fails at the first expected test invocation for the same missing `source/Cargo.lock` under `--locked`; Cargo exit code `101`, PowerShell job exit code `1`.
+- The workflow had already checked out the exact verifier branch commit `9cf1bb3071c56497118ad9c9e532abfee3fd60ee` and source pin `e50748a1b25922d9090eba1f5fb90548d7c7d003`. The source checkout does not contain `Cargo.lock`.
+
+Classification: verifier input/precondition failure. No named filesystem test ran, so this run is neither a filesystem test failure nor a security PASS. Do not remove `--locked`, generate an ephemeral lockfile, or weaken nonzero-test assertions to make this run green. Keep the historical pin unchanged until a source candidate both contains the committed lockfile and implements every required exact-match adversarial test. Then advance the pin and run the full Unix/Windows matrix against that exact source SHA.
