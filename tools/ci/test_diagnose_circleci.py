@@ -94,12 +94,30 @@ class CircleCIDiagnosticTests(unittest.TestCase):
             )
         self.assertEqual(get_json.call_count, 2)
 
-    def test_pagination_fails_instead_of_silently_truncating(self):
-        response = {"items": [{"id": "page"}], "next_page_token": "next"}
-        with patch("diagnose_circleci.get_json", return_value=response) as get_json:
-            with self.assertRaisesRegex(DiagnosticError, "results are incomplete"):
+    def test_pagination_reads_more_than_ten_pages(self):
+        responses = [
+            {
+                "items": [{"id": "page-{}".format(index)}],
+                "next_page_token": "page-{}".format(index + 1),
+            }
+            for index in range(1, 12)
+        ]
+        responses.append({"items": [{"id": "page-12"}], "next_page_token": None})
+        with patch("diagnose_circleci.get_json", side_effect=responses) as get_json:
+            items = list(paged_v2_items("https://circleci.example/pipelines", {}))
+        self.assertEqual(len(items), 12)
+        self.assertEqual(items[-1], {"id": "page-12"})
+        self.assertEqual(get_json.call_count, 12)
+
+    def test_pagination_rejects_repeated_page_token(self):
+        responses = [
+            {"items": [{"id": "first"}], "next_page_token": "repeat"},
+            {"items": [{"id": "second"}], "next_page_token": "repeat"},
+        ]
+        with patch("diagnose_circleci.get_json", side_effect=responses) as get_json:
+            with self.assertRaisesRegex(DiagnosticError, "repeated a next_page_token"):
                 list(paged_v2_items("https://circleci.example/pipelines", {}))
-        self.assertEqual(get_json.call_count, 10)
+        self.assertEqual(get_json.call_count, 2)
 
     def test_pagination_rejects_missing_items_array(self):
         with patch("diagnose_circleci.get_json", return_value={"next_page_token": None}):
