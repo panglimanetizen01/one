@@ -1,7 +1,8 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Design checkpoint only — implementation and security acceptance NOT VERIFIED  
-**Parent source SHA:** c4bb4b690e698a83e4ddaf279596479d3dc282ca  
+**Latest code-bearing source reviewed:** `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`  
+**Current PR #110 documentation HEAD at this checkpoint:** `73c705f3581cf26414b4e4d69616fee9886396e4` (documentation-only; CircleCI pending)  
 **Branch:** security/issue-104-root-handle-design-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
@@ -214,3 +215,11 @@ The expanded GitHub Actions logs for verifier run `43998206030` were subsequentl
 - The workflow had already checked out the exact verifier branch commit `9cf1bb3071c56497118ad9c9e532abfee3fd60ee` and source pin `e50748a1b25922d9090eba1f5fb90548d7c7d003`. The source checkout does not contain `Cargo.lock`.
 
 Classification: verifier input/precondition failure. No named filesystem test ran, so this run is neither a filesystem test failure nor a security PASS. Do not remove `--locked`, generate an ephemeral lockfile, or weaken nonzero-test assertions to make this run green. Keep the historical pin unchanged until a source candidate both contains the committed lockfile and implements every required exact-match adversarial test. Then advance the pin and run the full Unix/Windows matrix against that exact source SHA.
+
+
+## 16. Current checkpoint metadata — 2026-11-18
+
+- PR #110 current branch HEAD: `73c705f3581cf26414b4e4d69616fee9886396e4` (documentation-only).
+- CircleCI context `ci/circleci: one-linux` for this exact SHA remains PENDING at last refresh; job [8b851d97-57f9-4043-af0e-49c5b357413e](https://app.circleci.com/workflow/7b17fb55-4deb-4256-b820-a9adca6cf606/job/8b851d97-57f9-4043-af0e-49c5b357413e), status timestamp `2026-11-18T04:52:08Z`.
+- The most recently reviewed code-bearing source SHA is `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; the intervening PR #110 commits are documentation-only. The implementation status remains unchanged: path-based `std::fs::read` / `std::fs::write` are present and Issue #104 acceptance is not met.
+- This checkpoint updates source/branch metadata only. It adds no implementation or test evidence.
