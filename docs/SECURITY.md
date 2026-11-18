@@ -61,3 +61,12 @@ Security-sensitive execution should record observed runtime facts such as capabi
 ## Safe project principle
 
 The project should not artificially cripple the language merely because it can express security tooling. Instead, it should make authorization, scope, and execution boundaries explicit and testable.
+
+
+## Project-root filesystem boundary — Issue #104
+
+Filesystem effects are not a security sandbox merely because they pass through a capability adapter. Before any release can claim project-root confinement, the host must inject an immutable trusted root authority, all accepted operations must remain handle-relative, and symlink/reparse, mount, hard-link, traversal, race, side-effect, and size-limit tests must pass on the exact source revision.
+
+The current implementation candidate is tracked in [Issue #104](https://github.com/panglimanetizen01/one/issues/104) and its [design record](security/issue-104-filesystem-root-confinement-design.md). PR #113 remains unmerged. Linux candidate writes are limited to direct children of the retained root; nested writes fail closed. Windows native atomic replacement is under exact-SHA verification. Other platform backends remain unsupported.
+
+Do not advertise or rely on this capability as a released project sandbox until Issue #104 is ACCEPTED and the release contract is satisfied.
