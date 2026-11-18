@@ -104,3 +104,9 @@ GitHub `main` is the canonical source. Local/Termux copies are verification envi
 ## Security design checkpoints
 
 - `security/issue-104-filesystem-root-confinement-design.md` — design-only checkpoint for trusted-root handle authority, Unix/Windows handle-relative traversal, bounded I/O, atomic writes, and the Issue #104 adversarial acceptance matrix. It is not an implementation or security PASS.
+
+
+## Architecture diagrams
+
+- [Filesystem root-confinement candidate diagram](architecture/filesystem-root-confinement.md) — source Mermaid view for the host-injected filesystem authority and platform-specific read/write boundaries in draft PR #113.
+- [Full architecture map](https://github.com/panglimanetizen01/one/blob/docs/system-architecture-diagram-20261115/docs/architecture/one-full-architecture-map.png) — non-normative overview image in still-open PR #97. Its binary image has not been visually inspected in this session.
