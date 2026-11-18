@@ -118,3 +118,8 @@ This pattern is the preferred template for future real-world capabilities.
 The focused [filesystem root-confinement architecture diagram](architecture/filesystem-root-confinement.md) documents the host-injected authority, adapter boundary, Linux and Windows candidate backends, fail-closed platform behavior, and atomic-write failure cleanup for Issue #104. It is a candidate implementation view for draft PR #113, not a claim of release support.
 
 The full architecture map in PR #97 remains a non-normative overview. The focused diagram is based on inspected source files and the normative Issue #104 design record. Update it whenever the filesystem authority or platform backend changes.
+
+
+## Host-selected filesystem authority root
+
+The CLI selects the filesystem authority root from the source/project context, not from the requested target. It prefers the nearest ancestor containing `one.toml`; otherwise it uses the process working directory when the source is beneath it, or the canonical source parent for a standalone source outside the working directory. Absolute targets are then resolved against that fixed root and rejected when outside it. See `crates/one-cli/src/main.rs` and the focused Mermaid diagram.
