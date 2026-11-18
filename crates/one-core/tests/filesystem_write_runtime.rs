@@ -14,7 +14,7 @@ fn unique_temp_path() -> String {
 }
 
 #[test]
-fn filesystem_write_requires_explicit_capability_and_writes_target() {
+fn filesystem_write_requires_capability_but_fails_closed_without_verified_write_backend() {
     let path = unique_temp_path();
     let source = format!("tulis ke berkas \"{path}\" dengan \"halo dari One\"\n");
     let program = parse(&source).expect("filesystem write grammar should parse");
@@ -29,7 +29,9 @@ fn filesystem_write_requires_explicit_capability_and_writes_target() {
         .grant(Capability::Filesystem)
         .allow_scope(Capability::Filesystem, ScopeRule::Target(path.clone()));
     let mut allowed = Interpreter::with_orchestration_policy(policy);
-    allowed.execute(&ir).expect("filesystem write should execute with explicit filesystem capability and target scope");
-    assert_eq!(fs::read_to_string(&path).unwrap(), "halo dari One");
+    let error = allowed.execute(&ir).expect_err("filesystem write must remain unavailable until a race-resistant backend is verified");
+    assert_eq!(error.code, "N3212");
+    assert!(error.message.contains("UnsupportedPlatform"));
+    assert!(!std::path::Path::new(&path).exists(), "fail-closed write must not create an outside file");
     let _ = fs::remove_file(path);
 }
