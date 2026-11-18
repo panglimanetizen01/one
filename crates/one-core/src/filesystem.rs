@@ -28,13 +28,21 @@ impl FilesystemAuthority {
     /// Open and retain the host-selected project root. The root is trusted
     /// host configuration; never pass a program-controlled target here.
     pub fn open(root: impl AsRef<Path>, max_read_bytes: u64, max_write_bytes: u64) -> Result<Self, FilesystemError> {
-        if max_read_bytes == 0 || max_write_bytes == 0 { return Err(FilesystemError::InvalidRoot); }
-        let canonical_root = std::fs::canonicalize(root).map_err(|_| FilesystemError::InvalidRoot)?;
-        let root = File::open(&canonical_root).map_err(|_| FilesystemError::InvalidRoot)?;
-        if !root.metadata().map_err(|_| FilesystemError::InvalidRoot)?.is_dir() {
-            return Err(FilesystemError::InvalidRoot);
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = (root, max_read_bytes, max_write_bytes);
+            return Err(FilesystemError::UnsupportedPlatform);
         }
-        Ok(Self { root, canonical_root, max_read_bytes, max_write_bytes })
+        #[cfg(target_os = "linux")]
+        {
+            if max_read_bytes == 0 || max_write_bytes == 0 { return Err(FilesystemError::InvalidRoot); }
+            let canonical_root = std::fs::canonicalize(root).map_err(|_| FilesystemError::InvalidRoot)?;
+            let root = File::open(&canonical_root).map_err(|_| FilesystemError::InvalidRoot)?;
+            if !root.metadata().map_err(|_| FilesystemError::InvalidRoot)?.is_dir() {
+                return Err(FilesystemError::InvalidRoot);
+            }
+            Ok(Self { root, canonical_root, max_read_bytes, max_write_bytes })
+        }
     }
 
     pub fn root(&self) -> &Path { &self.canonical_root }
@@ -122,6 +130,7 @@ impl FilesystemAuthority {
 mod tests {
     use super::*;
 
+    #[cfg(target_os = "linux")]
     #[test]
     fn authority_rejects_zero_limits_and_non_directory_roots() {
         assert_eq!(FilesystemAuthority::open(std::env::temp_dir(), 0, 1).err(), Some(FilesystemError::InvalidRoot));
@@ -131,6 +140,7 @@ mod tests {
         let _ = std::fs::remove_file(file);
     }
 
+    #[cfg(target_os = "linux")]
     #[test]
     fn authority_rejects_parent_traversal_and_outside_absolute_targets() {
         let root = std::env::temp_dir();
