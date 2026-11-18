@@ -118,3 +118,13 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 
 - After the evidence-reconciliation documentation commits, PR #113 HEAD `2cfd73f9e54dac283fb5c07bb85f5992e88ef506` received `ci/circleci: one-linux` = PENDING; workflow `e2e1cab5-28cf-4829-aafc-a1d385abace9`; job `7e872036-ca77-4f15-a66f-e97e5a058788`: [exact-HEAD job](https://app.circleci.com/workflow/e2e1cab5-28cf-4829-aafc-a1d385abace9/job/7e872036-ca77-4f15-a66f-e97e5a058788).
 - This status belongs only to exact SHA `2cfd73f...`; subsequent documentation commits require a new status read. CircleCI provider logs remain inaccessible.
+
+## Direct CircleCI job-log retrieval — 2026-11-19
+
+`tools/ci/diagnose_circleci.py` already supports direct API v3 inspection by CircleCI job UUID. The exact known failed jobs are documented in `CIRCLECI_DIAGNOSTICS.md`; the direct commands are recorded there to avoid re-discovery. Local `CIRCLECI_TOKEN` is required and must never be pasted into chat or committed.
+
+- `722d662...` failed job UUID: `9f3acc50-11b9-47e5-b841-6a943300be94`.
+- `e8dab3a...` failed job UUID: `69d31382-c676-47f8-92b3-98c0dd8cbf1e`.
+- PR #113 latest docs HEAD at this read: `5bfdd712fdbc6cb688908786758d9d262d190b40`; combined status returned no contexts yet. This is inconclusive, not PASS/FAIL.
+- Current validation state: 11 diagnostic unit tests NOT VERIFIED; `circleci config validate` NOT VERIFIED; provider failure logs not yet retrieved.
+
