@@ -298,3 +298,9 @@ Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local
 - Static review found direct `--job-id` reports did not display the known source-revision limitation. Tool output is being hardened to show `SOURCE SHA: UNVERIFIED` for direct lookup and to show the SHA for exact-discovery mode; two regression tests cover these cases.
 - Test suite now contains 13 methods; execution remains NOT VERIFIED. CircleCI config validation remains NOT VERIFIED; provider logs remain inaccessible and root cause unknown.
 - PR #113 and PR #44 remain OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains unchanged.
+
+## Documentation synchronization — 2026-11-19
+
+- Updated `docs/verification/CIRCLECI_DIAGNOSTICS.md` with 13-test coverage details and a distinct exact-SHA ledger row for PR #113 HEAD `f92a4795fc96b0d7780bda150249c5005d98505d` (PENDING at that exact readback; workflow `bf515c38-2b62-46e3-bf7e-cc2f07093f5f`, job `c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9`). That status is historical after this documentation commit.
+- `tools/ci/diagnose_circleci.py` now marks direct `--job-id` source SHA as UNVERIFIED; 2 regression tests cover direct and exact-SHA reporting. The suite has 13 test methods, not yet executed.
+- CircleCI logs and root cause remain unavailable/unknown; config validation remains NOT VERIFIED.
