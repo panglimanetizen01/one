@@ -145,3 +145,10 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - The diagnostic tool now prints `SOURCE SHA: UNVERIFIED` when `--job-id` is used, because that path bypasses exact-SHA pipeline discovery. The normal exact-SHA path prints its resolved source SHA. Two regression tests were added; suite now contains 13 test methods.
 - Test execution and `circleci config validate .circleci/config.yml` remain NOT VERIFIED. CircleCI provider logs remain inaccessible; root cause unknown.
 - PR #113 and PR #44 remain OPEN / DRAFT / UNMERGED; Issue #104 OPEN / NOT ACCEPTED; protected verifier pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. No merge, main change, force-push, or pin change.
+
+## Latest exact-HEAD refresh — 2026-11-19
+
+- Previously observed PR #113 HEAD `f92a4795fc96b0d7780bda150249c5005d98505d` had `ci/circleci: one-linux` PENDING (workflow `bf515c38-2b62-46e3-bf7e-cc2f07093f5f`, job `c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9`). This is historical after the documentation synchronization commit; never transfer this status to another SHA.
+- Diagnostic suite now contains 13 test methods, including direct-job source identity warnings and exact-SHA identity output. Execution remains NOT VERIFIED.
+- CircleCI provider logs remain inaccessible; root cause unknown. `circleci config validate .circleci/config.yml` remains NOT VERIFIED.
+- PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains unchanged.
