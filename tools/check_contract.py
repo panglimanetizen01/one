@@ -97,16 +97,14 @@ channel_line = next((line.strip() for line in toolchain_text.splitlines() if lin
 if not channel_line.startswith('channel = "') or not channel_line.endswith('"'):
     raise SystemExit("TOOLCHAIN CONTRACT: rust-toolchain.toml must pin an exact x.y.z release")
 toolchain_version = channel_line[len('channel = "'):-1]
-version_parts = toolchain_version.split(".")
-if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
+if re.fullmatch(r"[0-9]+\\.[0-9]+\\.[0-9]+", toolchain_version) is None:
     raise SystemExit("TOOLCHAIN CONTRACT: rust-toolchain.toml must pin an exact x.y.z release")
 circleci_config = (ROOT / ".circleci/config.yml").read_text(encoding="utf-8")
-if 'rustup toolchain install "$rust_toolchain"' not in circleci_config or 'rustup default "$rust_toolchain"' not in circleci_config or 'rust_toolchain="$(sed -nE' not in circleci_config:
-    raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the rust-toolchain.toml version")
-
-print("CONTRACT CHECK: PASS")
-print(f"required artifacts: {len(required)}")
-print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
-print(f"valid fixtures: {len(valid)}")
-print(f"invalid fixtures: {len(invalid)}")
-print(f"golden fixtures: {len(golden)}")
+if (
+    'rustup toolchain install "$rust_toolchain"' not in circleci_config
+    or 'rustup default "$rust_toolchain"' not in circleci_config
+    or 'rust_toolchain="$(sed -nE' not in circleci_config
+    or "--default-toolchain none" not in circleci_config
+    or "rust-toolchain.toml must pin an exact x.y.z release" not in circleci_config
+):
+    raise SystemExit("TOOLCHAIN CONTRACT: CircleCI must install and select the exact pinned toolchain with no implicit default")
