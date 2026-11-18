@@ -222,3 +222,12 @@ Classification: host-root resolver, Linux direct-child writer, Windows adapter r
 ## CircleCI status correction — 2026-11-18
 
 A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is FAILURE on the code-bearing source `722d662e7a81711ba3607d26571f4048a292b3ed` (job https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94). The previously recorded documentation HEAD `b94e85db5d83c9a4bec582609405d9c65e4db841` is PENDING, and its descendant documentation HEAD `add130412cf42088ca9171fa2660295f7c30ae65` is also PENDING (job https://app.circleci.com/workflow/bfe4df8d-85a8-49bc-b7f2-21910a4692cd/job/d2aa7f1d-0c7a-4e7b-8ba4-ecaf595674c2). The failure cause on the code SHA remains UNKNOWN because CircleCI logs are inaccessible through the current tools. This correction does not change the exact-source independent verification results or Issue #104 acceptance classification.
+
+
+## Latest CI/runtime observation — 2026-11-18 23:08 WIB
+
+- Android API 35 ARM64 runtime workflow #44335797240 remains IN_PROGRESS. Build job passed; the runtime job is still in `Boot Android API 35 AArch64 on ARM64 host`; artifact/evidence upload has not started. Runtime is NOT VERIFIED yet.
+- CircleCI `ci/circleci: one-linux` on code source `722d662e7a81711ba3607d26571f4048a292b3ed` is FAILURE: https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94.
+- CircleCI `ci/circleci: one-linux` on docs HEAD `a57a64ed8552e0fff8a8d78a97d34118cccadc06` has transitioned from PENDING to FAILURE: https://app.circleci.com/workflow/57a85d45-3b99-4eb7-887f-74e8a19b4380/job/9c378131-6ee0-48d7-962e-6581342d13ba.
+- CircleCI job logs are not accessible through current tools; failure root cause is UNKNOWN. No speculative fix or blind rerun was performed.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; canonical `main` and protected verifier pin remain unchanged.
