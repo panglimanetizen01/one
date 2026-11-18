@@ -493,3 +493,22 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - E4 remains 0/5 Unix filter groups and 0/6 Windows named tests implemented/accepted.
 - Writes remain fail-closed; Windows/macOS/Android authority backends remain unavailable.
 - Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft/unmerged and do not change acceptance pins.
+
+
+## 27. CircleCI Linux cross-toolchain footprint reduction — 2026-11-18
+
+### Change
+
+- Updated `.circleci/config.yml` to replace the broad Ubuntu `mingw-w64` meta-package with the targeted `gcc-mingw-w64-x86-64-posix` package required by the x86_64 Windows GNU artifact test.
+- Retained Clang and `binutils-x86-64-linux-gnu`; the latter supports the Linux x86_64 linker test.
+- Updated the compiler probe to invoke the package's explicit `x86_64-w64-mingw32-gcc-posix` executable.
+- Added bounded apt update/install timeouts, HTTP(S) timeouts, retry policy, and dpkg lock timeout.
+- Rationale is grounded in `crates/one-core/tests/native_backend_linux_windows.rs`: Linux CI runs `NativeWindowsX86_64Backend::build` and requires a Windows GNU x86_64 toolchain. It does not require every MinGW architecture and threading variant included by the broad meta-package.
+
+### Validation boundary
+
+- This is a CI footprint/reliability optimization, not a proven root-cause fix for the earlier CircleCI failures. CircleCI job logs are still required to identify those failures.
+- Exact ONE source candidate with the config change: `2c3d9e75ad94cff25728c783b675d8e492499d2d`.
+- Independent candidate matrix run [44295933072](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44295933072) was in progress at checkpoint: Windows toolchain/test steps had not yet completed; Linux was at the bounded minimal-toolchain install. No matrix result claimed.
+- Earlier candidate `62c1a19a0c8bedcaf9e87be23ee082cc793c78c3` had Windows PASS (126 main tests, zero failures), but Linux remained at its MinGW installation step. That Windows result does not transfer to this new exact source SHA.
+- Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep E4 and ledger pins unchanged; PR #113 remains draft/unmerged; main remains untouched.
