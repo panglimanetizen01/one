@@ -51,6 +51,7 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 - Secret-like values are redacted before display and before writing an optional report.
 - A missing stderr stream is normal; CircleCI returns no content when a step has no stderr.
 - Pagination is limited to ten pages as a safety boundary. If CircleCI advertises another page after the tenth, the utility raises a diagnostic error and marks discovery incomplete; it never silently treats truncated results as complete.
+- Pagination responses are schema-checked: `items` must be an array of objects and `next_page_token` must be null or a non-empty string. Malformed responses stop discovery as API/shape errors rather than being treated as an empty result.
 - If no pipeline exists for the exact local SHA, the script stops rather than selecting a nearby or newer commit.
 - If an exact-SHA pipeline exists but no failed/timed-out job is listed, the utility reports that state as inconclusive (running, successful, or no-job workflow); it does not label it a diagnostic/API error or claim PASS. Confirm workflow status in CircleCI.
 
