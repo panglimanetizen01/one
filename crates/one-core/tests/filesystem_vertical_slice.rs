@@ -1,11 +1,14 @@
 use one_core::{
     analyze, lower, normalize_result, parse, AdapterId, AdapterResult, Capability, CapabilityRequest,
     EffectClass, ExecutionPolicy, ExecutionScope, FileReadAdapter, FileWriteAdapter, Interpreter,
-    FilesystemAuthority, NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
+    NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
     ScopeRule, SemanticCapabilityId, ToolAdapter,
 };
 use one_core::adapter::AdapterError;
 use one_core::orchestration_audit::{AuditEvidence, AuditEvent};
+#[cfg(target_os = "linux")]
+use one_core::FilesystemAuthority;
+#[cfg(target_os = "linux")]
 use std::sync::Arc;
 
 fn compile(source: &str) -> one_core::IrProgram {
