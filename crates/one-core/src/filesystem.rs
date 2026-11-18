@@ -325,34 +325,24 @@ fn linux_write_relative(
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
     let leaf = relative.file_name().ok_or(FilesystemError::InvalidTarget)?;
-    let parent_name = CString::new(parent.as_os_str().as_bytes())
-        .map_err(|_| FilesystemError::InvalidTarget)?;
     let leaf_name = CString::new(leaf.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
 
-    // Resolve and retain the destination directory beneath the trusted root.
-    // RESOLVE_NO_XDEV rejects mount and bind-mount crossings even when st_dev
-    // would be identical.
-    let parent_handle = linux_openat2(
-        root.as_raw_fd(),
-        &parent_name,
-        libc::O_PATH | libc::O_DIRECTORY | libc::O_CLOEXEC,
-        0,
-        RESOLVE,
-    )
-    .map_err(linux_filesystem_error)?;
-    let root_metadata = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
-    let parent_metadata = parent_handle
-        .metadata()
-        .map_err(|_| FilesystemError::IoFailure)?;
-    if !parent_metadata.is_dir() || parent_metadata.dev() != root_metadata.dev() {
-        return Err(FilesystemError::ResolutionFailed);
+    // The current Linux write backend deliberately supports only direct
+    // children of the retained root. A nested directory can be renamed out of
+    // the root after its handle is opened; ordinary dirfd-relative rename
+    // would then write into that moved directory. Until a stronger parent
+    // movement boundary is available, nested writes fail closed.
+    if parent != Path::new(".") {
+        return Err(FilesystemError::UnsupportedPlatform);
     }
+    let parent_fd = root.as_raw_fd();
+    let root_metadata = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
 
     // Reject an existing symlink, mount point, non-regular file, or hard link.
     // The later rename is directory-handle-relative and never follows the
     // destination leaf; a raced leaf replacement cannot redirect the write.
     match linux_openat2(
-        parent_handle.as_raw_fd(),
+        parent_fd,
         &leaf_name,
         libc::O_PATH | libc::O_CLOEXEC,
         0,
