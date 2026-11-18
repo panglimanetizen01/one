@@ -5,19 +5,19 @@
 - Main repository: `panglimanetizen01/one`.
 - Canonical main SHA: `d35db95153f6ddd79885494c72f5aee16c899751` (read live; unchanged).
 - PR #108: OPEN / DRAFT / UNMERGED; branch `ci/circleci-migration-rebased-20261117`; exact HEAD `286a0fd563e10611a3465cb6457ab069a0df8a52`; base SHA `6c72d8e548bbbc28d85be39b8de427614989a038`.
-- PR #110: OPEN / DRAFT / UNMERGED; branch `security/issue-104-root-handle-design-20261118`; exact HEAD `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; base SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca`.
+- PR #110: OPEN / DRAFT / UNMERGED; branch `security/issue-104-root-handle-design-20261118`; current exact HEAD `26d29c61944e51919161f5360bccfef4a09d370d`; code-bearing parent SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; base SHA `c4bb4b690e698a83e4ddaf279596479d3dc282ca`.
 - Issue #104: OPEN.
 - Independent verifier `panglimanetizen01/one-windows-verification` main SHA: `3d915528e7771d9443ccf0da7e4d7c9e25231537`.
 
 ## Exact-SHA CI status
 
 - PR #108: GitHub status context `ci/circleci: one-linux` SUCCESS, status timestamp `2026-11-18T02:00:42Z`, job [99216205-62aa-4e98-af42-d4b742a5feaa](https://app.circleci.com/workflow/a0e85852-848f-4c6b-8681-53438dea6bea/job/99216205-62aa-4e98-af42-d4b742a5feaa).
-- PR #110: GitHub status context `ci/circleci: one-linux` SUCCESS, status timestamp `2026-11-18T03:40:55Z`, job [c9916871-9746-4c65-b8fb-615d9f96dc78](https://app.circleci.com/workflow/476d8936-1898-4406-a0b5-0fc1a61a27c9/job/c9916871-9746-4c65-b8fb-615d9f96dc78).
+- PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d`: GitHub status context `ci/circleci: one-linux` SUCCESS, status timestamp `2026-11-18T04:42:11Z`, job [c153ba39-4073-4548-aaa6-6370e6bed6bf](https://app.circleci.com/workflow/a15e7c3f-0492-4ac6-a025-d8d2fe31f054/job/c153ba39-4073-4548-aaa6-6370e6bed6bf). Parent code-bearing SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b` has the earlier SUCCESS job `c9916871-9746-4c65-b8fb-615d9f96dc78`. The child commit changes docs only; the production source finding remains valid.
 - These are GitHub commit-status observations. This session has no CircleCI connector/action, so expanded CircleCI job logs and step-level execution were not retrieved. Do not claim those logs were inspected.
 
 ## Issue #104 — confirmed implementation gap
 
-Direct source inspection at PR #110 HEAD:
+Direct source inspection at PR #110 code-bearing parent SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b` (current HEAD `26d29c6...` is documentation-only):
 
 - `crates/one-core/src/adapter.rs`: `FileReadAdapter::invoke` still calls `std::fs::read(path)`.
 - `FileWriteAdapter::invoke` still calls `std::fs::write(path, &content)`.
@@ -45,3 +45,8 @@ Historical exact-SHA Ubuntu/Windows PASS results for PR #98, #99, #100, #101, #1
 - No merge, main modification, force-push, branch deletion, release, secret change, or verifier pin change was performed.
 - Next action: establish a working Unix + Windows source execution route and inspect the current active verifier branch/pinning before implementing Issue #104. Do not commit speculative platform-specific security code without compile/test evidence.
 - After implementation, update the normative spec, architecture/security docs, implementation status, evidence matrix, verification record, user feature status, completion ledger/DoD, verifier filters/pin as justified, and this Notion Skill with the exact new source and verifier SHAs.
+
+
+## Exact-SHA status update — 2026-11-18 04:42:11Z
+
+PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub CircleCI context `ci/circleci: one-linux` SUCCESS, job `c153ba39-4073-4538-aaa6-6370e6bed6bf`. This result applies to this exact documentation commit only. Expanded CircleCI job logs were not retrieved. Issue #104 remains OPEN; the source finding is from parent code SHA `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`.
