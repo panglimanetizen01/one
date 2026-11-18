@@ -188,6 +188,66 @@ mod filesystem_nofollow_tests {
     }
 
     #[test]
+    fn descriptor_relative_write_creates_and_atomically_replaces_in_root() {
+        let root = test_root("write-atomic");
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+
+        let created = adapter.invoke(&write_request("created.txt", "FIRST"));
+        assert!(created.as_ref().is_ok_and(|result| result.success));
+        assert_eq!(std::fs::read(root.join("created.txt")).unwrap(), b"FIRST");
+
+        let replaced = adapter.invoke(&write_request("created.txt", "SECOND"));
+        assert!(replaced.as_ref().is_ok_and(|result| result.success));
+        assert_eq!(std::fs::read(root.join("created.txt")).unwrap(), b"SECOND");
+        assert_eq!(std::fs::read_dir(&root).unwrap().count(), 1);
+
+        drop(adapter);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn descriptor_relative_write_rejects_symlink_target_without_side_effects() {
+        let root = test_root("write-symlink");
+        let outside = root.with_extension("outside");
+        std::fs::write(&outside, b"OUTSIDE_SENTINEL").unwrap();
+        symlink(&outside, root.join("escape.txt")).unwrap();
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+
+        let result = adapter.invoke(&write_request("escape.txt", "ATTACK"));
+
+        assert_eq!(result, Err(AdapterError::ResolutionFailed));
+        assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_SENTINEL");
+        assert_eq!(std::fs::read_link(root.join("escape.txt")).unwrap(), outside);
+        assert_eq!(std::fs::read_dir(&root).unwrap().count(), 1);
+
+        drop(adapter);
+        std::fs::remove_file(root.join("escape.txt")).unwrap();
+        std::fs::remove_dir(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
+    fn descriptor_relative_write_fails_closed_for_nested_parent() {
+        let root = test_root("write-nested");
+        let nested = root.join("nested");
+        std::fs::create_dir(&nested).unwrap();
+        std::fs::write(nested.join("target.txt"), b"KEEP_ORIGINAL").unwrap();
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+
+        let result = adapter.invoke(&write_request("nested/target.txt", "ATTACK"));
+
+        assert_eq!(result, Err(AdapterError::UnsupportedPlatform));
+        assert_eq!(std::fs::read(nested.join("target.txt")).unwrap(), b"KEEP_ORIGINAL");
+        assert_eq!(std::fs::read_dir(&nested).unwrap().count(), 1);
+
+        drop(adapter);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn descriptor_relative_walk_rejects_parent_traversal_without_side_effects() {
         let root = test_root("walk-parent");
         let outside_dir = root.parent().unwrap().join(format!("one-e4-outside-dir-{}", std::process::id()));
@@ -315,8 +375,9 @@ mod filesystem_nofollow_tests {
             "mount-boundary resolution must fail with EXDEV"
         );
 
-        // The production adapter remains fail-closed until a race-resistant
-        // native write implementation exists. It must not alter the target.
+        // Nested Linux writes remain fail-closed until the implementation
+        // can prevent a retained subdirectory handle from being moved outside
+        // the trusted root. The target must remain unchanged.
         let authority = Arc::new(FilesystemAuthority::open(root_path, 4096, 4096).unwrap());
         let adapter = FileWriteAdapter::with_authority(authority);
         let result = adapter.invoke(&write_request(relative.to_str().unwrap(), "ATTACK"));
