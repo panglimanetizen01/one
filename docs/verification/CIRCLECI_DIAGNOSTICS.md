@@ -125,3 +125,20 @@ Record `git rev-parse HEAD` alongside both command outputs. Do not report either
 - Exact-HEAD status `ci/circleci: one-linux` = PENDING; workflow `bf515c38-2b62-46e3-bf7e-cc2f07093f5f`; job `c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9`: https://app.circleci.com/workflow/bf515c38-2b62-46e3-bf7e-cc2f07093f5f/job/c6e87d6e-5f3c-4f61-8ab2-4e7b9b58b1f9.
 - The previous `9965ce53...` status is historical and must not be transferred to this SHA.
 - Unit tests and CircleCI config validation remain NOT VERIFIED; CircleCI provider logs remain inaccessible and failure root cause unknown.
+
+## Pagination completeness fix — 2026-11-19
+
+- Exact-SHA pipeline discovery now follows CircleCI API v2 `next_page_token` values until the API returns no next token; the former arbitrary 10-page stop has been removed.
+- The paginator tracks previously used continuation tokens and fails closed if CircleCI repeats a token, preventing an infinite loop without silently truncating a valid result set.
+- Regression coverage now includes a 12-page response and a repeated-token cycle.
+- Validate on the exact branch HEAD with:
+
+```bash
+python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
+python3 tools/ci/diagnose_circleci.py \
+  --sha e7014092a01caebf201e43ca9a7ef3bf63e8270f \
+  --branch security/issue-104-root-confinement-20261118 \
+  --output "$HOME/one-circleci-exact-sha.txt"
+```
+
+The SHA above is the diagnostic target that exposed the pagination limit, not the new code HEAD. After this fix is committed, use the new exact HEAD SHA for any CI attribution. Store reports under `$HOME` on Termux; `/tmp` may be unavailable or read-only.
