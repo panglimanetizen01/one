@@ -120,3 +120,20 @@ PR #110 current documentation HEAD `26d29c61944e51919161f5360bccfef4a09d370d` ha
 | `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c` | CircleCI one-linux | PR #110 commit status | SUCCESS; status context `ci/circleci: one-linux` |
 
 The first two rows are independent cross-platform tests of the same PR #108 candidate SHA. The CircleCI row is a separate PR #110 source SHA and is Linux-only. None of these results implement or accept Issue #104 filesystem confinement. The adapters still require explicit trusted-root authority and adversarial tests before E4/DoD changes.
+
+
+## Issue #104 candidate evidence reconciliation — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| PR #113 E4 Unix + Windows filesystem adversarial suite | `4c3bccaf59d965ce8b446e0b84cb84c00ff2eed6` | [Verifier run #44327291926](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44327291926) | PASS / VERIFIED for this SHA only |
+| PR #113 full Ubuntu + Windows Server 2025 matrix | `4c3bccaf59d965ce8b446e0b84cb84c00ff2eed6` | [Verifier run #44327291454](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44327291454) | PASS / VERIFIED for this SHA only |
+| SEC-05, distro matrix, Android artifact | `4c3bccaf59d965ce8b446e0b84cb84c00ff2eed6` | [#44327291414](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44327291414), [#44327292023](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44327292023), [#44327291459](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44327291459) | PASS / VERIFIED for this SHA only |
+| Android API 35 AArch64 runtime | Earlier pinned candidate SHA; run #44327291656 | [Runtime workflow #44327291656](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44327291656); emulator boot step remained IN_PROGRESS at last inspection | IN PROGRESS; not runtime VERIFIED |
+| Windows atomic write implementation | `5c5bfb53e086222f89dc8178426a8c6b65b50a04` | Source includes exclusive sibling temp creation, handle-relative rename, cleanup guard, positive write test, and denied-replacement preservation test | IMPLEMENTED; NOT VERIFIED on this SHA |
+| Latest PR #113 HEAD after documentation synchronization | `360b673256a09182150eeb2cc396b1bdb19be2c8` | User guide, Issue #104 design, and implementation-status documentation updates only after code-bearing SHA `5c5bfb5...` | Documentation HEAD; does not replace required source-code verification |
+| CircleCI Linux | `02d552123e3cf33017e2066fe62e304e1573476b` | GitHub commit status `ci/circleci: one-linux` PENDING; [job](https://app.circleci.com/workflow/a87975d6-b9c9-4fa4-b18a-bf92c2235045/job/49fb1abd-3870-4332-bcd0-eb370edc24ab) | PENDING; no job-log/root-cause claim |
+
+The verifier results on `4c3bcc...` are historical valid evidence for that exact SHA. They must not be reused as verification of the Windows atomic write implementation introduced in `5c5bfb...`. The later documentation commits do not change production source, but the candidate's final PR HEAD still requires exact-SHA policy/contract checks and a clear distinction between source SHA and documentation HEAD.
+
+Issue #104 remains OPEN and NOT ACCEPTED. The independent verifier pin and canonical `main` are unchanged. Do not promote acceptance ledgers or pins until the latest candidate source and every acceptance criterion are verified.
