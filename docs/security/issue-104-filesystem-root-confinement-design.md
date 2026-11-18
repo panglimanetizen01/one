@@ -715,3 +715,12 @@ The correction replaces those references with the retained `root.as_raw_fd()` va
 The Android AArch64 artifact build now passes on exact source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`: [run #44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717). The job verified the exact source pin, built and inspected an ELF64 AArch64 executable with Android linker `/system/bin/linker64`, and uploaded artifact ID `14438938784` (SHA-256 `5971ef900ead08e6f571327594625ba2856a1917d59196d095c785bdf51a0ea4`).
 
 This is only artifact/build evidence. Android API 35 runtime execution remains queued and is not VERIFIED. E4 and full cross-platform verification for the current candidate remain queued/pending; CircleCI remains pending. Do not promote Android to SUPPORTED or Issue #104 to ACCEPTED from an ELF build alone.
+
+
+## 39. Strict Clippy correction and diagram source — 2026-11-18
+
+The Linux direct-child writer candidate `090c84dbab02e48af0a493faeb8d4fe0ff80a876` compiled and passed Android AArch64 artifact build, but Ubuntu distro Clippy failed on a redundant field initializer in the temporary-file cleanup guard (`clippy::redundant_field_names`). The initializer now uses Rust field shorthand in source SHA `3d8e0d0e3af54310837eb06d442d30a02df821d0`.
+
+The Android artifact PASS at `090c84d...` does not transfer to `3d8e0d...`; exact-SHA artifact and platform checks must be rerun. The verifier pin now targets `3d8e0d...`.
+
+A focused Mermaid source/rendered Markdown diagram was added at `docs/architecture/filesystem-root-confinement.md` and linked from `docs/ARCHITECTURE.md` and `docs/README.md`. It maps the host authority, Linux direct-child write boundary, Windows atomic replacement, fail-closed paths, and cleanup behavior to inspected source files. The separate full architecture overview image in PR #97 remains uninspected because the binary cannot be retrieved through the current connector; do not claim that image has been reviewed.
