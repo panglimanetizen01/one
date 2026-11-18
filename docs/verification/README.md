@@ -36,6 +36,8 @@ This directory contains exact-SHA verification records, release gates, incident 
 
 ## Canonical records
 
+- [CircleCI targeted diagnostics tool and usage](CIRCLECI_DIAGNOSTICS.md)
+
 - [Forensic repository audit — 2026-11-17](forensic-audit-2026-11-17.md)
 - [Master continuation prompt — 2026-11-17](MASTER_CONTINUATION_PROMPT_2026-11-17.md)
 
