@@ -213,3 +213,15 @@ Artifact build PASS does not imply runtime execution or full Android filesystem 
 | Focused architecture diagram | PR documentation HEAD | `docs/architecture/filesystem-root-confinement.md` Mermaid source linked from architecture and docs indexes | SOURCE PRESENT / rendered by GitHub Markdown; full PR #97 PNG still NOT VERIFIED |
 
 Do not transfer Android artifact PASS on `090c84d...` to source `3d8e0d...`. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Linux CLI integration expectation correction — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Linux CLI direct-child write | `2fa1436daa102d3cf32125da6c440ae19cc83ba7` | Updated integration test expects absolute direct-child target to succeed | IMPLEMENTED; NOT VERIFIED |
+| Linux CLI nested write | `2fa1436...` | Updated integration test expects `UnsupportedPlatform`, preserves original bytes, and checks no extra directory entry | IMPLEMENTED; NOT VERIFIED |
+| Previous Debian workspace failure | `3d8e0d0...` | [Run #44333980452](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44333980452) failed only at stale CLI test expectation after earlier lint stage | FAILED / test expectation stale |
+| Fresh exact-SHA cross-platform and distro | `2fa1436...` | [Cross-platform #44334598774](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598774), [Distro #44334598316](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598316) | QUEUED/PENDING |
+
+This test-only correction does not broaden Linux writes beyond direct children of the retained root. Nested Linux writes remain fail-closed.
