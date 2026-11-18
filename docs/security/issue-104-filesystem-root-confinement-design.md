@@ -1,8 +1,8 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Design checkpoint only — implementation and security acceptance NOT VERIFIED  
-**Latest adapter/interpreter/CLI source audit:** `88e36dfef55cc11972b9bbc68a1883385d9f52e8`  
-**Current PR #110 HEAD:** `88e36dfef55cc11972b9bbc68a1883385d9f52e8` (documentation-only; CircleCI pending at last refresh)  
+**Latest adapter/interpreter/CLI source audit:** `871a39967db315c695a642f527c41c7172922201`  
+**Current PR #110 HEAD:** `871a39967db315c695a642f527c41c7172922201` (documentation-only; CircleCI pending at last refresh)  
 **Branch:** security/issue-104-root-handle-design-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
@@ -264,3 +264,12 @@ This audit is source inspection only; no compiler, unit test, adversarial test, 
 - Re-read `crates/one-core/src/adapter.rs`, `crates/one-core/src/interpreter.rs`, and `crates/one-cli/src/main.rs` at exact SHA `88e36df...`. Adapter still calls `std::fs::read(path)` and `std::fs::write(path, ...)`; constructors remain parameterless; interpreter still constructs both with `new()`; CLI source does not establish/inject a trusted filesystem root. Issue #104 remains NOT IMPLEMENTED.
 - Commit `88e36df...` is documentation-only (`docs/security/issue-104-filesystem-root-confinement-design.md`); no production filesystem code or test evidence was added by that commit.
 - This refresh supersedes earlier statements in sections 16–17 that described `a566fbc...` as the latest HEAD. Those sections remain historical audit checkpoints, not current branch metadata.
+
+
+## 19. Exact source re-audit — 2026-11-18 — HEAD 871a399
+
+- Read `crates/one-core/src/adapter.rs` at exact PR #110 HEAD `871a39967db315c695a642f527c41c7172922201` (blob `c5abaf9178eae81bea7c80402990f2adae130e2d`). `FileReadAdapter::invoke` still calls `std::fs::read(path)`; `FileWriteAdapter::invoke` still calls `std::fs::write(path, &content)`. Both constructors remain parameterless `new()`; this is a direct source confirmation that root-handle authority is not implemented.
+- Read `crates/one-core/src/interpreter.rs` at the same source SHA (blob `db1f421133e2c4f866c05e91c55b2ce2b5016369`); it still constructs `FileReadAdapter::new()` and `FileWriteAdapter::new()`.
+- Read `crates/one-cli/src/main.rs` at the same SHA (blob `6ff60189eabb19886d8d4636645aea17cf9997e2`); the CLI does not directly inject a trusted project filesystem authority into those adapters.
+- PR #110 remains OPEN / DRAFT / UNMERGED. CircleCI `ci/circleci: one-linux` for this exact HEAD was PENDING at `2026-11-18T05:01:55Z`, job `07d035f3-cac0-4a75-a4f8-0eaaa3f19a4b`; no CircleCI log inspection or terminal result is claimed.
+- This is source inspection only. No production source or test was changed; Issue #104 remains NOT IMPLEMENTED / NOT ACCEPTED.
