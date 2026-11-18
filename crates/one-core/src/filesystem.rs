@@ -115,7 +115,22 @@ impl FilesystemAuthority {
             libc::syscall(libc::SYS_openat2, self.root.as_raw_fd(), path.as_ptr(),
                 &how as *const OpenHow, std::mem::size_of::<OpenHow>()) as libc::c_int
         };
-        if fd < 0 { return Err(FilesystemError::ResolutionFailed); }
+        if fd < 0 {
+            // Preserve the distinction between an ordinary missing/unreadable
+            // file and a kernel-enforced confinement denial. In particular,
+            // ELOOP/EXDEV/EAGAIN are fail-closed path-resolution outcomes;
+            // ENOSYS/EPERM/EINVAL mean this kernel/security profile cannot
+            // provide the required openat2 contract.
+            return match std::io::Error::last_os_error().raw_os_error() {
+                Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) => {
+                    Err(FilesystemError::ResolutionFailed)
+                }
+                Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => {
+                    Err(FilesystemError::UnsupportedPlatform)
+                }
+                _ => Err(FilesystemError::IoFailure),
+            };
+        }
         // SAFETY: successful openat2 returns a new owned descriptor.
         Ok(unsafe { File::from_raw_fd(fd) })
     }
