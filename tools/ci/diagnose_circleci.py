@@ -213,16 +213,10 @@ def discover_failed_jobs(
                     "branch": branch,
                 })
     if not failures:
-        states = [
-            "{}={}".format(w.get("name") or w.get("id"), w.get("status"))
-            for w in workflows
-        ]
-        raise DiagnosticError(
-            "Pipeline {} matches the exact commit, but no failed/timed-out job was "
-            "listed. Workflow states: {}".format(
-                pipeline_id, ", ".join(states) if states else "no workflows returned"
-            )
-        )
+        # An exact-SHA pipeline with no failed job is not a diagnostic/API error:
+        # it may still be running, may have succeeded, or may have no jobs.
+        # The caller must not report this as a build failure or as a PASS.
+        return []
     return failures
 
 
@@ -361,6 +355,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             report.append("Exact commit: " + commit_sha)
             report.append("Branch: " + str(branch))
         report.append("Jobs selected for inspection: {}".format(len(jobs)))
+        if not jobs and not args.job_id:
+            report.append(
+                "No failed or timed-out jobs were listed for the exact-SHA pipeline. "
+                "This is NOT a PASS: the pipeline may still be running, may have "
+                "succeeded, or may contain no jobs. Check workflow status in CircleCI."
+            )
         for job in jobs:
             report.extend(inspect_job(token, job, args.max_lines))
 
