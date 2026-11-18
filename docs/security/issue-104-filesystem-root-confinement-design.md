@@ -306,3 +306,14 @@ This section supersedes the older execution-gate statements above where they say
 - Current `crates/one-core/Cargo.toml` enables Win32 Foundation/Security/Storage/FileSystem and process features, but does not yet enable the required WDK feature modules. Before Windows implementation, add only the exact feature gates required for `Wdk::Foundation`, `Wdk::Storage::FileSystem`, and the relevant I/O status structure, then validate compile on the independent Windows runner. Do not substitute path canonicalization followed by a second open.
 - This API discovery is feasibility research only. No production source or test was changed; Issue #104 remains OPEN / NOT IMPLEMENTED.
 
+## 15. Independent Linux + Windows baseline verification — 2026-11-18
+
+The verifier input issue was bypassed safely with a dedicated Linux-only workflow; the successful evidence below is bound to the pinned source candidate, not to the verifier workflow commit:
+
+- Candidate source SHA: `a20676be53e5f78c465832379d86c3675a2ed7c8` (PR #108 head at verification time; also recorded in `CANDIDATE_BUILD_COMMIT.txt`).
+- Linux-only run: [44267886845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44267886845), job `134676844501`, Ubuntu 24.04.5, SUCCESS. The job validated the candidate pin, checked out the exact source SHA, installed Rust 1.100.0 and MinGW, then completed `cargo test --locked -p one-core -- --nocapture`. Decoded job log contains 27 test-result summaries: 239 passed, 0 failed, 1 ignored.
+- Windows job: run [44263674485](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44263674485), job `134662858839`, SUCCESS. It checked out the same exact candidate SHA and completed the full `one-core` test suite. Decoded job log contains 27 test-result summaries: 232 passed, 0 failed, 1 ignored.
+- These are matching cross-platform baseline results for the same exact source candidate. The platform-specific test totals differ by seven due to target-specific compilation/test selection; both report zero failures.
+- PR #110 HEAD `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c` is a separate stacked candidate and has its own CircleCI `ci/circleci: one-linux` SUCCESS. Do not conflate that status with the independent Windows run, which is pinned to `a20676be...`.
+- The old full matrix run `44263674485` still has its Linux job stuck at the original MinGW install step; the Windows job from that run is the success cited above. The separate Linux-only run is the successful Linux evidence.
+- Issue #104 remains OPEN / NOT IMPLEMENTED. This baseline suite contains no required root-handle confinement implementation or adversarial acceptance tests; it does not satisfy E4 or authorize a score/DoD promotion.
