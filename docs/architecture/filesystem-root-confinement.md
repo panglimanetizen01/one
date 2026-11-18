@@ -36,7 +36,8 @@ flowchart TB
 
     WriteAdapter --> WindowsWrite["Windows write backend"]
     WindowsWrite --> WinWalk["Handle-relative parent traversal"]
-    WinWalk --> WinPolicy["OBJ_DONT_REPARSE · reparse / volume / link checks"]
+    WinWalk --> WinShare["Retained root/parent handles omit FILE_SHARE_DELETE"]
+    WinShare --> WinPolicy["OBJ_DONT_REPARSE · reparse / volume / link checks"]
     WinPolicy --> WinTemp["Exclusive temp sibling under parent handle"]
     WinTemp --> WinSync["write + flush"]
     WinSync --> WinRename["NtSetInformationFile(FileRenameInformation)"]
@@ -50,7 +51,7 @@ flowchart TB
     classDef guard fill:#fff3d6,stroke:#a66b00,color:#5c3b00
     classDef blocked fill:#ffe3e3,stroke:#a33,color:#641b1b
     class Host,ProjectRoot,Authority,Root trust
-    class ReadPolicy,WindowsPolicy,LinuxPolicy,LinuxType,WinPolicy guard
+    class ReadPolicy,WindowsPolicy,LinuxPolicy,LinuxType,WinPolicy,WinShare guard
     class FailClosed,Nested blocked
 ```
 
@@ -61,7 +62,7 @@ flowchart TB
 | Host-selected project root (source context / nearest `one.toml`), authority injection, and target scope | `crates/one-cli/src/main.rs` |
 | Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
-| Windows handle-relative traversal and atomic replacement | `crates/one-core/src/filesystem.rs` |
+| Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
 | Exact-SHA adversarial test contract | [`.github/workflows/e4-adversarial-regression.yml`](https://github.com/panglimanetizen01/one-windows-verification/blob/probe/windows-obj-dont-reparse-20261118/.github/workflows/e4-adversarial-regression.yml) in the independent verifier repository |
