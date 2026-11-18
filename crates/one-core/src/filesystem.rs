@@ -379,7 +379,7 @@ fn linux_write_relative(
             continue;
         }
         match linux_openat2(
-            parent_handle.as_raw_fd(),
+            parent_fd,
             &temp_name,
             libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW,
             0o600,
@@ -395,7 +395,7 @@ fn linux_write_relative(
     }
     let (mut temporary_file, temporary_name) = created.ok_or(FilesystemError::IoFailure)?;
     let mut guard = LinuxTempFileGuard {
-        parent_fd: parent_handle.as_raw_fd(),
+        parent_fd: parent_fd,
         name: temporary_name,
         committed: false,
     };
@@ -416,9 +416,9 @@ fn linux_write_relative(
 
         let rename_result = unsafe {
             libc::renameat(
-                parent_handle.as_raw_fd(),
+                parent_fd,
                 guard.name.as_ptr(),
-                parent_handle.as_raw_fd(),
+                parent_fd,
                 leaf_name.as_ptr(),
             )
         };
