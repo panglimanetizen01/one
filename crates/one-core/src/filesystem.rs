@@ -124,21 +124,19 @@ impl FilesystemAuthority {
     fn relative_target(&self, target: &Path) -> Result<PathBuf, FilesystemError> {
         #[cfg(windows)]
         let relative = if target.is_absolute() {
+            // Canonicalize only the parent directory, then retain the final
+            // component as a name. This normalizes Windows 8.3 aliases and
+            // casing without resolving a final-component reparse point.
+            let parent = target.parent().ok_or(FilesystemError::InvalidTarget)?;
+            let file_name = target.file_name().ok_or(FilesystemError::InvalidTarget)?;
+            let canonical_parent = std::fs::canonicalize(parent)
+                .map_err(|_| FilesystemError::InvalidTarget)?;
             let normalized_root = normalize_windows_verbatim_prefix(&self.canonical_root);
-            let normalized_target = normalize_windows_verbatim_prefix(target);
-            #[cfg(test)]
-            eprintln!(
-                "filesystem absolute target: root={:?}, target={:?}, normalized_root={:?}, normalized_target={:?}",
-                self.canonical_root, target, normalized_root, normalized_target
-            );
-            let stripped = normalized_target.strip_prefix(&normalized_root);
-            #[cfg(test)]
-            if stripped.is_err() {
-                eprintln!("filesystem absolute target prefix mismatch");
-            }
-            stripped
-                .map_err(|_| FilesystemError::OutsideRoot)?
-                .to_path_buf()
+            let normalized_parent = normalize_windows_verbatim_prefix(&canonical_parent);
+            let relative_parent = normalized_parent
+                .strip_prefix(&normalized_root)
+                .map_err(|_| FilesystemError::OutsideRoot)?;
+            relative_parent.join(file_name)
         } else {
             target.to_path_buf()
         };
