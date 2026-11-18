@@ -189,3 +189,12 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - Fresh E4 [#44334598268](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598268), cross-platform [#44334598774](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598774), distro [#44334598316](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598316), Android artifact [#44334598355](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598355), Android runtime [#44334598284](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598284), SEC-05 [#44334598278](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598278), and resource guard [#44334598250](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44334598250) are queued/pending.
 - CircleCI `ci/circleci: one-linux` PENDING on `2fa1436...`: https://app.circleci.com/workflow/8f351193-5da8-4b6a-ad2f-75075c6a51e7/job/604385cb-7f5f-4c2f-8a38-92cc8330b83f.
 - Classification: CLI test alignment IMPLEMENTED; current source NOT VERIFIED pending exact-SHA tests. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## CLI host-root integration — 2026-11-18
+
+- Found and fixed a security mismatch: `filesystem_authority_for_target` previously derived the root from the requested absolute target's parent, allowing the target to influence its own authority boundary.
+- CLI now derives root from source/project context (nearest `one.toml` ancestor; otherwise working directory for sources beneath it, or canonical source parent for standalone sources outside cwd). Requested targets are checked against this fixed root for both read and write.
+- Added integration tests for outside-root absolute write rejection with sentinel preservation, outside-root read rejection without disclosure, relative source path handling, Linux direct-child success, and nested Linux fail-closed behavior.
+- Source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; verifier pin updated to this exact SHA. Current exact-SHA workflows are pending.
+- Classification: host-root integration IMPLEMENTED; NOT VERIFIED pending CI. Issue #104 remains OPEN / NOT ACCEPTED.
