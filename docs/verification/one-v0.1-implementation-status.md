@@ -154,3 +154,12 @@ The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd
 - New Linux tests cover relative and absolute in-root create/replace, symlink-leaf rejection with outside sentinel preservation, oversized-content preservation, nested-parent fail-closed behavior, and real `/dev/shm` mount-boundary read denial.
 - Independent E4 script now requires five Linux `descriptor_relative_write_*` tests and three Linux `descriptor_relative_read_rejects_*` tests. Diagnostic verifier pin is `cc54597...`; exact-SHA E4 run was queued at last inspection.
 - Classification: Linux direct-child atomic write IMPLEMENTED / PARTIAL; NOT VERIFIED on `cc54597...` pending exact-SHA E4 and cross-platform tests. Nested Linux write NOT IMPLEMENTED / fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Linux writer compile correction — 2026-11-18
+
+- Candidate `cc54597...` failed the Android AArch64 artifact build at compile time with four stale `parent_handle` references in the new Linux writer. No artifact was uploaded and no runtime test ran.
+- Corrected the Linux temp creation, cleanup guard, and rename calls to use the retained root fd in source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`.
+- Diagnostic verifier pin now targets `090c84d...`. E4 [#44332808624](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808624), cross-platform [#44332808543](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808543), Linux distro [#44332808528](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808528), Android artifact [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717), Android runtime [#44332808569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808569), SEC-05 [#44332808586](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808586), resource guard [#44332808575](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808575) are queued/pending.
+- CircleCI `ci/circleci: one-linux` PENDING on `090c84d...`: https://app.circleci.com/workflow/60cfc357-04fc-47e2-8a5c-6cd85784c6af/job/a3279063-9cb6-4c54-8125-9b1b3b89ad8e.
+- Classification: Linux direct-child atomic writer remains IMPLEMENTED / PARTIAL but NOT VERIFIED on `090c84d...`; nested writes remain NOT IMPLEMENTED / fail-closed. Issue #104 OPEN / NOT ACCEPTED.
