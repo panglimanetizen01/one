@@ -243,3 +243,15 @@ A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is 
 - Documentation synchronized in `docs/verification/README.md` and `docs/verification/CIRCLECI_DIAGNOSTICS.md`; the latter records API v2/v3 lifecycle distinctions and strict pagination validation.
 - Independent verifier PR #44 remains OPEN / UNMERGED. Its protected pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. Issue #104 remains OPEN / NOT ACCEPTED. No merge, main modification, or protected pin change was made.
 - Next evidence gate: retrieve exact-HEAD CircleCI job logs and terminal status, then run the 11 tests and CircleCI config validation on the same revision. Do not reuse PASS evidence from parent or sibling SHAs.
+
+
+## CircleCI exact-SHA status refresh — 2026-11-19 (latest readback)
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Exact PR HEAD at this readback: `6f1c2fe41fcd101349f31275340ad58a7a7a78e1`; base SHA: `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Code/config SHA `e8dab3a0ac2de6b09b374b692d740b9fb5630f00`: `ci/circleci: one-linux` PENDING; workflow `e55fc480-62fb-469f-8351-deff706595ac`; job `69d31382-c676-47f8-92b3-98c0dd8cbf1e` ([job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e)).
+- PR HEAD `6f1c2fe41fcd101349f31275340ad58a7a7a78e1`: `ci/circleci: one-linux` PENDING; workflow `67615aef-2786-409c-a60e-b95f8d3a5360`; job `4eae19a5-f0bc-47e5-95a6-0e24f1074558` ([job](https://app.circleci.com/workflow/67615aef-2786-409c-a60e-b95f8d3a5360/job/4eae19a5-f0bc-47e5-95a6-0e24f1074558)).
+- Distinct exact-SHA executions: no result transfers between these commits. The newer PR HEAD has its own pending run.
+- CircleCI provider logs remain inaccessible through the current connected tools; no CircleCI connector/CLI/log reader is exposed. Do not infer root cause.
+- The diagnostic suite has 11 test methods, but execution is NOT VERIFIED. `circleci config validate` is also NOT VERIFIED. No PASS/FAIL is claimed.
+- PR #44 remains OPEN / DRAFT / UNMERGED. Protected verifier pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` unchanged. Issue #104 remains OPEN / NOT ACCEPTED. No merge or main-branch modification.
+- This status refresh supersedes the earlier 2026-11-19 entry that recorded the PR HEAD as having no combined status contexts.
