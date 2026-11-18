@@ -597,3 +597,34 @@ Issue #104 remains OPEN / NOT IMPLEMENTED / NOT ACCEPTED. Keep PR #113 draft and
 - This section is an implementation map, not production code. No Windows implementation was added or compiled in this checkpoint.
 - The current stable toolchain is `1.100.0`; the proposed design deliberately avoids nightly-only `MetadataExt` accessors.
 - Keep Windows filesystem adapters fail-closed until the full handle walk, metadata checks, positive read/write cases, and six named Windows adversarial tests pass on the independent runner.
+
+## 32. User-mode NtCreateFile reparse contract: unresolved security gate — 2026-11-18
+
+### Authoritative documentation reconciliation
+
+- Microsoft Learn documents that `NtCreateFile` accepts a non-NULL `OBJECT_ATTRIBUTES.RootDirectory` and interprets `ObjectName` relative to that directory handle: https://learn.microsoft.com/windows/win32/api/winternl/nf-winternl-ntcreatefile
+- The general `OBJECT_ATTRIBUTES` reference defines `OBJ_DONT_REPARSE` and says parsing fails with `STATUS_REPARSE_POINT_ENCOUNTERED` if a reparse is encountered: https://learn.microsoft.com/windows/win32/api/ntdef/ns-ntdef-_object_attributes
+- However, the user-mode `NtCreateFile` page's function-specific `Attributes` description says the value can be zero or `OBJ_CASE_INSENSITIVE`; it does not list `OBJ_DONT_REPARSE`. Microsoft Q&A moderator responses dated 2026-10-19 and 2026-11-02 explicitly distinguish these two published contracts and conclude that the exact user-mode combination `NtCreateFile + filesystem RootDirectory + OBJ_DONT_REPARSE` is not established as a fully documented, version-stable security contract: https://learn.microsoft.com/en-us/questions/6042974/is-obj-dont-reparse-supported-in-object-attributes and https://learn.microsoft.com/en-us/answers/questions/6056645/does-user-mode-ntcreatefile-support-obj-dont-repar
+- The latest Microsoft Q&A security analysis further states that the public documentation does not define an atomic object/effect boundary for a final-component reparse point inserted before or during a `FILE_CREATE` directory request; it therefore does not establish a guarantee that failure always precedes any foreign mutation: https://learn.microsoft.com/en-us/answers/a/13042905
+
+### Binding implementation consequence
+
+- `OBJ_DONT_REPARSE` remains a candidate defense and must be tested, but it MUST NOT be the sole documented security premise for enabling Windows filesystem reads or writes. The previous section 31 implementation map is a proposed direction only; this section adds a hard verification gate and supersedes any interpretation that the exact user-mode contract is already guaranteed.
+- `FILE_OPEN_REPARSE_POINT` opens the reparse-point object itself and bypasses normal reparse processing for that open. This is useful for inspecting a leaf handle and rejecting it before data I/O; it does not by itself prove that intermediate components were not followed: https://learn.microsoft.com/windows/win32/api/winternl/nf-winternl-ntcreatefile
+- Windows backend remains fail-closed until tests on the exact Windows Server 2025 runner demonstrate intermediate junction/symlink rejection, final-component reparse rejection, concurrent reparse insertion/replacement behavior, parent rename behavior, and no side effects on every denied write. Tests must verify sentinel bytes and directory contents after each denial.
+- If the exact contract cannot be established on the supported Windows/filesystem matrix, do not ship the backend as supported. Keep `UnsupportedPlatform` and report Windows filesystem authority unavailable rather than weakening the boundary or falling back to `CreateFileW` on an untrusted multi-component path.
+
+### Required adversarial validation additions
+
+1. Test intermediate directory junction and symlink escape with a target sentinel outside the root.
+2. Test final-component junction/symlink and assert the outside sentinel remains byte-identical.
+3. Race creation/replacement of an intermediate reparse point while resolving one-component relative opens; no successful result may expose outside bytes.
+4. Race parent directory rename/replacement during resolution and assert no outside directory/file is read or modified.
+5. For every denied write, assert the target's original bytes, length, timestamps where stable, and relevant directory entries remain unchanged.
+6. Run the exact tests on Windows Server 2025 and record OS build, filesystem type, toolchain, exact candidate SHA, and test output. Passing one Windows build is evidence for that environment, not a universal guarantee.
+
+### Status
+
+- No production Windows code was changed or compiled in this checkpoint.
+- The Windows backend is still NOT IMPLEMENTED / NOT ACCEPTED. The six current E4 Windows test names remain required; this section adds race and side-effect expectations needed to make their assertions meaningful.
+- Do not advance `CANONICAL_COMMIT.txt` until the six exact Windows tests, the Unix mount-boundary no-truncate test, and all other nonzero-count E4 checks pass on one exact candidate SHA.
