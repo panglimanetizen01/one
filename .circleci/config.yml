@@ -16,7 +16,7 @@ commands:
               curl --proto '=https' --tlsv1.2 --retry 10 --retry-all-errors --retry-delay 2 --connect-timeout 20 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
             fi
             source "$HOME/.cargo/env"
-            rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\\1/p' rust-toolchain.toml)"
+            rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' rust-toolchain.toml)"
             test -n "$rust_toolchain"
             rustup toolchain install "$rust_toolchain" --profile minimal --component rustfmt --component clippy
             rustup default "$rust_toolchain"

@@ -229,3 +229,8 @@ Do not bulk-copy unrelated milestone files `tools/milestone1-e1-lab.sh` or `tool
 - Baseline evidence: independent verifier run `44243755612` logs show Rust `1.100.0` on both Ubuntu 24.04 and Windows Server 2025, with 239 Linux tests and 232 Windows tests passing (one ignored on each platform) for source SHA `bac3a2e6f3ba6db5b821b9eafa6c5576f9fa8554`.
 - Remediation on the CircleCI candidate: pin `rust-toolchain.toml` to `1.100.0`; bootstrap rustup with bounded retries and no implicit default toolchain; derive the installed toolchain from the repository file; and enforce this contract in `tools/check_contract.py`.
 - Required follow-up: set the independent verifier action to the same exact version, advance only its non-acceptance candidate pin to the resulting source SHA, and require fresh Linux/Windows plus CircleCI terminal evidence. Do not transfer the baseline result to the new SHA.
+
+
+## Toolchain pin fix-up — 2026-11-18
+
+Static readback after the initial toolchain-pin commit found an over-escaped `sed` capture reference and a malformed insertion boundary in the contract checker. Both are corrected in the immediate fix-up commit. The initial commit is not an accepted CI result; only the fix-up SHA may be used for fresh CircleCI and independent matrix evidence.

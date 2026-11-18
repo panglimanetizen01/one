@@ -183,3 +183,9 @@ After every successfully completed task:
 - CircleCI bootstraps rustup with retries and `--default-toolchain none`, then reads the exact channel from `rust-toolchain.toml` and installs/selects it once. `tools/check_contract.py` enforces an exact x.y.z pin and verifies CircleCI consumes that pin.
 - Independent verifier run `44243755612` previously observed Rust `1.100.0` on both Linux and Windows for source SHA `bac3a2e6f3ba6db5b821b9eafa6c5576f9fa8554`; this is a compatibility baseline, not evidence for the new commit.
 - The updated exact source SHA must receive a fresh CircleCI result and an independent Linux/Windows candidate matrix. Refresh the live PR head before recording the new SHA. Keep PRs draft/unmerged and do not move the E4 pin.
+
+
+## CI pin follow-up correction — 2026-11-18
+
+- Static readback of the initial Rust pin commit exposed two formatting defects in the newly added shell backreference and contract-checker insertion before that candidate was accepted.
+- The fix-up commit corrects the `sed` backreference to a single capture reference and rebuilds the contract-checker block as line-oriented parsing. The new exact SHA must be used for all follow-up validation; do not treat the initial pin commit as accepted evidence.
