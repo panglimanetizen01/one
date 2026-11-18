@@ -9,7 +9,7 @@ commands:
   setup-linux-cross-toolchains:
     steps:
       - run:
-          name: Install Linux, Android, and Windows-target cross-toolchains (Linux host)
+          name: Install Linux and Windows-target cross-toolchains (Linux host)
           command: |
             set -euo pipefail
             if ! command -v rustup >/dev/null 2>&1; then
@@ -38,17 +38,36 @@ commands:
             # pulls unrelated architectures and thread models, increasing
             # install time and the chance of CI timeout/package-mirror failures.
             timeout 15m sudo apt-get "${apt_opts[@]}" install -y --no-install-recommends clang gcc-mingw-w64-x86-64-posix binutils-x86-64-linux-gnu
-            sdkmanager --licenses < <(yes)
-            sdkmanager --install "ndk;27.2.12479018"
+            {
+              echo "export ONE_WINDOWS_CLANG=clang"
+            } >> "$BASH_ENV"
+            echo "Linux and Windows cross-toolchains installed."
+            clang --version
+            x86_64-w64-mingw32-gcc-posix --version
+
+      - run:
+          name: Accept Android SDK licenses
+          no_output_timeout: 6m
+          command: |
+            set -euo pipefail
+            echo "Accepting Android SDK licenses..."
+            timeout 5m sdkmanager --licenses < <(yes)
+            echo "Android SDK licenses accepted."
+
+      - run:
+          name: Install Android NDK 27.2.12479018
+          no_output_timeout: 20m
+          command: |
+            set -euo pipefail
+            echo "Installing Android NDK 27.2.12479018 (verbose progress enabled)..."
+            timeout 15m sdkmanager --install --verbose "ndk;27.2.12479018"
             ndk_clang="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
             test -x "$ndk_clang"
             {
               echo "export ONE_ANDROID_CLANG=$ndk_clang"
-              echo "export ONE_WINDOWS_CLANG=clang"
             } >> "$BASH_ENV"
             echo "Android NDK clang: $ndk_clang"
             clang --version
-            x86_64-w64-mingw32-gcc-posix --version
 
 jobs:
   one-linux:
