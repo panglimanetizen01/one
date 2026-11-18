@@ -60,3 +60,12 @@ PR #110 current HEAD `26d29c61944e51919161f5360bccfef4a09d370d` now has GitHub C
 - Historical versions of the two missing docs exist at source SHA `2ead9dba45db4ce4105deaa81720aacc8fcadd6c`; verifier documentation explicitly prohibits silently substituting those stale copies. The appropriate repair is a reviewed, versioned current-source ledger/DoD and a separate documentation pin from the E4/security candidate pin. No historical scores or acceptance checks were copied, promoted, or altered here.
 - The verifier branch current HEAD at refresh was `8e73ff8218b03dde73ad460bcd7745232b8c8a41`; its `LEDGER_GATE.md` records this root cause. No verifier pin or workflow was modified in this continuation.
 - This source checkpoint commit is documentation-only. It does not implement Issue #104 or add test evidence.
+
+## Continuation update — 2026-11-18 — independent Linux and Windows baseline PASS
+
+- The Linux-only retry workflow completed successfully on candidate SHA `a20676be53e5f78c465832379d86c3675a2ed7c8`: run [44267886845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44267886845), job `134676844501`, 239 passed, 0 failed, 1 ignored across 27 test-result summaries.
+- The Windows verifier job completed successfully on the exact same candidate SHA: [run 44263674485 / job 134662858839](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44263674485/job/134662858839), 232 passed, 0 failed, 1 ignored across 27 result summaries.
+- The successful baseline candidate is PR #108 HEAD at verification time. PR #110 is a distinct stacked branch at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; its CircleCI `one-linux` status is SUCCESS. Keep evidence tied to its actual source SHA/provider.
+- The original matrix run's Linux job remains stale/in-progress at its old MinGW install step; do not wait on or rerun the already successful Windows job. The separate Linux-only run is the authoritative Linux result.
+- Issue #104 is still OPEN / NOT IMPLEMENTED. The production adapter source still calls `std::fs::read(path)` and `std::fs::write(path, ...)`. No filesystem root authority, race-resistant handle-relative operations, size limits, or Issue #104 adversarial tests are present in this candidate. E4 and DoD must not advance.
+- Next work: implement Issue #104 only on the current PR #110 branch after establishing a validated runner route for Rust + Unix + Windows native tests. Keep main untouched and all PRs draft/unmerged.
