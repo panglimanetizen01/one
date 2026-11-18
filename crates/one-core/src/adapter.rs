@@ -197,9 +197,10 @@ mod filesystem_nofollow_tests {
         assert!(created.as_ref().is_ok_and(|result| result.success));
         assert_eq!(std::fs::read(root.join("created.txt")).unwrap(), b"FIRST");
 
-        let replaced = adapter.invoke(&write_request("created.txt", "SECOND"));
+        let absolute_target = root.join("created.txt");
+        let replaced = adapter.invoke(&write_request(absolute_target.to_str().unwrap(), "SECOND"));
         assert!(replaced.as_ref().is_ok_and(|result| result.success));
-        assert_eq!(std::fs::read(root.join("created.txt")).unwrap(), b"SECOND");
+        assert_eq!(std::fs::read(&absolute_target).unwrap(), b"SECOND");
         assert_eq!(std::fs::read_dir(&root).unwrap().count(), 1);
 
         drop(adapter);
@@ -226,6 +227,24 @@ mod filesystem_nofollow_tests {
         std::fs::remove_file(root.join("escape.txt")).unwrap();
         std::fs::remove_dir(root).unwrap();
         std::fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
+    fn descriptor_relative_write_rejects_oversized_content_without_side_effects() {
+        let root = test_root("write-limit");
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"KEEP_ORIGINAL").unwrap();
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+
+        let result = adapter.invoke(&write_request("target.txt", "TOO_LONG"));
+
+        assert_eq!(result, Err(AdapterError::BackendFailure));
+        assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+        assert_eq!(std::fs::read_dir(&root).unwrap().count(), 1);
+
+        drop(adapter);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
