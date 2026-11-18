@@ -2,7 +2,7 @@
 
 **Status:** Design checkpoint only — implementation and security acceptance NOT VERIFIED  
 **Latest code-bearing source reviewed:** `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`  
-**Current PR #110 documentation HEAD at this checkpoint:** `73c705f3581cf26414b4e4d69616fee9886396e4` (documentation-only; CircleCI pending)  
+**Current PR #110 HEAD at this checkpoint:** `a566fbc54349af9eaf0589939b0837a6ea08c02f` (documentation-only; CircleCI pending)  
 **Branch:** security/issue-104-root-handle-design-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
@@ -223,3 +223,35 @@ Classification: verifier input/precondition failure. No named filesystem test ra
 - CircleCI context `ci/circleci: one-linux` for this exact SHA remains PENDING at last refresh; job [8b851d97-57f9-4043-af0e-49c5b357413e](https://app.circleci.com/workflow/7b17fb55-4deb-4256-b820-a9adca6cf606/job/8b851d97-57f9-4043-af0e-49c5b357413e), status timestamp `2026-11-18T04:52:08Z`.
 - The most recently reviewed code-bearing source SHA is `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; the intervening PR #110 commits are documentation-only. The implementation status remains unchanged: path-based `std::fs::read` / `std::fs::write` are present and Issue #104 acceptance is not met.
 - This checkpoint updates source/branch metadata only. It adds no implementation or test evidence.
+
+
+## 17. Adapter boundary source audit — exact SHA `a566fbc54349af9eaf0589939b0837a6ea08c02f`
+
+Direct readback of `crates/one-core/src/adapter.rs` at the exact PR #110 HEAD confirms the following implementation facts:
+
+- `FileReadAdapter` and `FileWriteAdapter` each retain only `AdapterMetadata`; neither retains a root directory handle or a `ProjectFilesystem` authority.
+- Both public constructors are parameterless (`new()`), and `Default` delegates to those constructors. There is no trusted-root injection boundary in these adapters.
+- `FileReadAdapter::invoke` passes the requested target directly to `std::fs::read(path)`.
+- `FileWriteAdapter::invoke` passes the requested target directly to `std::fs::write(path, ...)`.
+- Existing unit tests exercise a repository-relative read, a missing-path error, and a temporary-directory write. They do not establish root confinement, symlink/reparse-point rejection, mount/volume confinement, race resistance, bounded file size, or atomic replacement.
+- The metadata currently labels both adapters `AdapterStatus::Implemented`; that status is not evidence that the Issue #104 security contract is implemented. Do not change the public status semantics as part of a narrow filesystem patch without auditing all consumers and documentation.
+- `crates/one-core/Cargo.toml` already has target-specific `libc` on Unix and `windows-sys` features for Foundation, Security, Storage/FileSystem, and Threading. The Windows dependency feature list must be checked against the exact native APIs selected; do not assume required NT declarations are exposed by the current feature set.
+
+### Required call-site migration before implementation can be considered complete
+
+The code change must inventory every `FileReadAdapter::new`, `FileWriteAdapter::new`, `Default` construction, and interpreter/adapter registry construction. A safe API migration must ensure no production call site can construct a filesystem adapter without an explicit trusted `ProjectFilesystem` authority. A compatibility constructor that silently grants an inferred root, or derives the root from the request target, is prohibited. If source compatibility is required, preserve it only as a fail-closed constructor that cannot perform filesystem access without authority.
+
+### Test gaps that must become executable acceptance cases
+
+1. Relative in-root read/write succeeds; absolute in-root read/write succeeds only when the root-relative mapping is unambiguous.
+2. Outside-root absolute targets, `..`, prefix-confusion siblings, empty/ambiguous components, device paths and unsupported UNC paths fail closed.
+3. Symlink/reparse-point traversal at every parent depth and at the leaf is rejected.
+4. Mount/bind-mount or volume crossing is rejected, including same-device bind-mount cases on Linux where mount identity differs.
+5. Hard-link policy is enforced on read and write.
+6. Non-regular leaves (directory, FIFO, socket, device) are rejected without blocking.
+7. Oversized reads and writes stop at configured limits without unbounded allocation or partial unsafe mutation.
+8. Concurrent parent replacement, symlink swap, leaf replacement, and rename races never read or modify an outside sentinel.
+9. Failed writes clean temporary entries; successful writes publish atomically and preserve the documented durability semantics.
+10. Tests run on Unix and Windows from a committed lockfile and assert named test execution rather than treating a successful compile or empty test filter as acceptance.
+
+This audit is source inspection only; no compiler, unit test, adversarial test, or platform verification was run for this checkpoint.
