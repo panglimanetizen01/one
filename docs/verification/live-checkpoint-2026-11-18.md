@@ -282,3 +282,12 @@ Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local
 - The latest known pending job on preceding SHA `424f7bbc73901c5e4342eb04444eaabb526b711a` was `09b422cb-8c1a-47c5-a252-3974c649022c`; do not transfer its status to newer HEAD.
 - Diagnostic tests and config validation remain NOT VERIFIED; no CircleCI root cause inferred.
 
+
+## Direct job lookup safety correction — 2026-11-19
+
+`--job-id` mode bypasses exact-HEAD pipeline discovery and does not assert the source SHA itself. Cross-check the workflow/pipeline revision in CircleCI before treating its output as evidence for a particular commit. This limitation is now explicit in `docs/verification/CIRCLECI_DIAGNOSTICS.md`; Markdown code fences were also repaired and the current known pending job UUID was added.
+
+- Prior exact HEAD `bbe5d696ddfe5358932cd4351d5cd0af6070b4a1`: `ci/circleci: one-linux` PENDING; workflow `dc55d982-a016-44a9-8f74-116a8e2c77ff`; job `954d8930-d569-4b1e-9eab-87945b8b50c6`.
+- Do not transfer this status to any later commit SHA.
+- Tests and config validation remain NOT VERIFIED; no CircleCI failure logs/root cause have been confirmed.
+
