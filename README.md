@@ -186,3 +186,8 @@ The source-level `filesystem.write` slice described above is distinct from a sec
 - The latest candidate's E4, full cross-platform, Android runtime, and CircleCI checks are not yet all complete.
 
 Do not rely on the current released `filesystem.write` slice to confine hostile paths or treat it as a project sandbox. Read the [user-facing feature status](docs/panduan-pengguna/status-fitur.md), [security contract](docs/SECURITY.md), and [Issue #104 design](docs/security/issue-104-filesystem-root-confinement-design.md) before enabling filesystem write in an untrusted environment.
+
+
+### Host-selected filesystem root
+
+The CLI does not derive filesystem authority from the requested target. It selects the root from the source/project context (nearest ancestor with `one.toml`, otherwise working directory or standalone source parent), then rejects absolute targets outside that root. This is separate from the exact target capability scope and is covered by CLI regression tests.
