@@ -78,3 +78,15 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 - PR #110 remains OPEN/DRAFT/UNMERGED at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; its CircleCI `one-linux` status is independently SUCCESS. This is not the same SHA as the independent Windows/Linux candidate.
 - Issue #104 remains OPEN. Production `FileReadAdapter` and `FileWriteAdapter` still use ambient `std::fs::read/write`; root-handle confinement, resource limits, and adversarial tests remain unimplemented. E4, DoD, release and security acceptance remain unchanged.
 - Next: preserve this exact-SHA evidence; proceed with a compilable, narrowly scoped Issue #104 implementation using an available validated Rust runner. Do not copy the historical PR #80 Windows path-based approach or commit uncompiled OS-handle code.
+
+
+## Live CircleCI checkpoint — 2026-11-19 (status refresh)
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Exact PR HEAD at this readback: `6f1c2fe41fcd101349f31275340ad58a7a7a78e1`; base SHA: `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- The preceding code/config SHA `e8dab3a0ac2de6b09b374b692d740b9fb5630f00` has `ci/circleci: one-linux` = PENDING, workflow `e55fc480-62fb-469f-8351-deff706595ac`, job `69d31382-c676-47f8-92b3-98c0dd8cbf1e`: [CircleCI job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e).
+- The exact PR HEAD `6f1c2fe41fcd101349f31275340ad58a7a7a78e1` independently has `ci/circleci: one-linux` = PENDING, workflow `67615aef-2786-409c-a60e-b95f8d3a5360`, job `4eae19a5-f0bc-47e5-95a6-0e24f1074558`: [CircleCI job](https://app.circleci.com/workflow/67615aef-2786-409c-a60e-b95f8d3a5360/job/4eae19a5-f0bc-47e5-95a6-0e24f1074558).
+- These are separate exact-SHA executions. Do not transfer status between code/config and documentation commits.
+- Current connected tools expose no CircleCI-specific connector, CLI action, or provider job-log reader. The actual job logs remain inaccessible; no failure cause is inferred.
+- The 11 diagnostic unit tests and `circleci config validate` remain NOT VERIFIED. Do not report PASS until both commands execute against an identified exact revision with captured output.
+- PR #44 remains OPEN / DRAFT / UNMERGED; protected verifier pin `e50748a1b25922d9090eba1f5fb90548d7c7d003` unchanged. Issue #104 remains OPEN / NOT ACCEPTED. Do not merge, modify `main`, or change the protected pin.
+- This section supersedes older active-status statements in this index; earlier entries remain historical records.
