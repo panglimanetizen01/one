@@ -6,7 +6,9 @@
 //! configuration, never a request supplied by the language program.
 
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Read;
+#[cfg(windows)]
+use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -174,7 +176,7 @@ impl FilesystemAuthority {
 #[cfg(windows)]
 mod windows_native {
     use super::FilesystemError;
-    use std::ffi::{c_void, OsStr};
+    use std::ffi::c_void;
     use std::fs::File;
     use std::os::windows::ffi::OsStrExt;
     use std::os::windows::io::{AsRawHandle, FromRawHandle};
