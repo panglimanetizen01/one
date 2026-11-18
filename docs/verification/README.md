@@ -112,3 +112,9 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 - Code/config SHA `e8dab3a0ac2de6b09b374b692d740b9fb5630f00`: `ci/circleci: one-linux` FAILURE [job](https://app.circleci.com/workflow/e55fc480-62fb-469f-8351-deff706595ac/job/69d31382-c676-47f8-92b3-98c0dd8cbf1e). Provider logs are still inaccessible; cause unknown.
 - PR #113 HEAD at the time of this readback `c25d191148091e7f62566d0290a6b71004fa798a`: `ci/circleci: one-linux` PENDING [job](https://app.circleci.com/workflow/35bda6e3-acf8-4232-9437-608467816602/job/90ae8601-d89f-4314-a346-d37089540363).
 - The 11 diagnostic unit tests and `circleci config validate` remain NOT VERIFIED. Do not infer the CircleCI failure cause or transfer status between SHAs.
+
+
+### Post-reconciliation documentation HEAD status — 2026-11-19
+
+- After the evidence-reconciliation documentation commits, PR #113 HEAD `2cfd73f9e54dac283fb5c07bb85f5992e88ef506` received `ci/circleci: one-linux` = PENDING; workflow `e2e1cab5-28cf-4829-aafc-a1d385abace9`; job `7e872036-ca77-4f15-a66f-e97e5a058788`: [exact-HEAD job](https://app.circleci.com/workflow/e2e1cab5-28cf-4829-aafc-a1d385abace9/job/7e872036-ca77-4f15-a66f-e97e5a058788).
+- This status belongs only to exact SHA `2cfd73f...`; subsequent documentation commits require a new status read. CircleCI provider logs remain inaccessible.
