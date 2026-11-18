@@ -151,3 +151,16 @@ Issue #104 remains OPEN and NOT ACCEPTED. The independent verifier pin and canon
 | CircleCI Linux | `f6acb...` | GitHub status `ci/circleci: one-linux` PENDING; [job](https://app.circleci.com/workflow/a040bfd4-9db5-4fb4-9b33-4c1cda53e6c6/job/7931ea7a-5f7b-4d85-b8fa-ab26c7188273) | PENDING |
 
 The independent verifier's diagnostic pin is branch-local to PR #44 on `one-windows-verification`; protected `verification` branch accepted pin remains unchanged. The current main repository PR #113 remains draft/unmerged. No evidence from `20ede9...` is transferred to `f6acb...`.
+
+
+## Latest test-only correction — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| E4 atomic rename + Windows/Unix adversarial tests | `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` | [Run #44330374509](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374509), Windows and Unix jobs PASS | VERIFIED for this SHA only |
+| Cross-platform Windows Clippy | `f6acb...` | [Run #44330374474](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374474), Windows Clippy failed on test-only `permissions_set_readonly_false`; later Windows tests were skipped | FAILED; test-only lint |
+| Test cleanup correction | `a79665056149bf1ff302de79a7b86a346e0353d8` | Replaces readonly attribute reset with a real share-mode lock omitting `FILE_SHARE_DELETE` | IMPLEMENTED; NOT VERIFIED pending new exact-SHA runs |
+| New E4 verification | `a796650...` diagnostic pin | [Run #44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) | QUEUED |
+| CircleCI Linux | `a796650...` | GitHub status `ci/circleci: one-linux` PENDING; job https://app.circleci.com/workflow/ed36bb6b-0da1-4569-aa15-94835802af12/job/f6e4f563-1608-40d8-9842-1aea1c573585 | PENDING |
+
+Do not transfer the E4 PASS on `f6acb...` to the changed test source `a796650...`. Keep the PR draft and issue open until exact-SHA verification and the remaining acceptance criteria are complete.
