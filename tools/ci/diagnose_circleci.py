@@ -135,17 +135,11 @@ def v3_headers(token: str) -> Dict[str, str]:
 
 
 def paged_v2_items(url: str, headers: Dict[str, str]) -> Iterable[Dict[str, Any]]:
-    """Yield every page, failing explicitly rather than silently truncating results."""
+    """Yield every page without truncation and reject pagination-token cycles."""
     page_url = url
-    pages = 0
+    seen_tokens = set()
     while page_url:
-        if pages >= 10:
-            raise DiagnosticError(
-                "CircleCI API pagination exceeded the 10-page safety limit; "
-                "results are incomplete and discovery was stopped."
-            )
         payload = get_json(page_url, headers)
-        pages += 1
         items = payload.get("items")
         if not isinstance(items, list):
             raise DiagnosticError(
@@ -167,6 +161,12 @@ def paged_v2_items(url: str, headers: Dict[str, str]) -> Iterable[Dict[str, Any]
                 "CircleCI API pagination returned an invalid next_page_token; "
                 "discovery was stopped."
             )
+        if next_token in seen_tokens:
+            raise DiagnosticError(
+                "CircleCI API pagination repeated a next_page_token; "
+                "discovery was stopped to prevent an infinite loop."
+            )
+        seen_tokens.add(next_token)
         separator = "&" if "?" in url else "?"
         page_url = url + separator + urllib.parse.urlencode({"page-token": next_token})
 
