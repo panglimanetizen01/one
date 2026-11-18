@@ -130,3 +130,14 @@ This addendum supersedes the PR #110 status above for the current Issue #104 wor
 4. Complete Android API 35 runtime, Linux distro matrix, SEC-05, and resource guard on the current candidate.
 5. Obtain CircleCI terminal status/logs through a supported authenticated route; no speculative diagnosis.
 6. Reconcile remaining parent/leaf race and failure-injection acceptance, then update the normative contract/evidence and user documentation. Keep PR #113 draft and main/protected verifier pin unchanged.
+
+
+## Live checkpoint addendum — Linux writer compile fix, 2026-11-18
+
+- Current code-bearing source SHA: `090c84dbab02e48af0a493faeb8d4fe0ff80a876`.
+- Latest documentation HEAD before this addendum: `5902e130844bd7d1f824fea53e8ec920361b083b`.
+- PR #113 remains OPEN / DRAFT / UNMERGED; canonical `main` unchanged; Issue #104 OPEN.
+- Linux writer candidate `cc54597...` failed Android AArch64 compile with four unresolved `parent_handle` references. No artifact uploaded. Fixed in `090c84d...` by using the retained root fd consistently. This is a compile failure, not a runtime security failure.
+- Diagnostic verifier pin is `090c84d...`; exact-SHA E4 [#44332808624](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808624), cross-platform [#44332808543](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808543), Linux distro [#44332808528](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808528), Android artifact [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717), Android runtime [#44332808569](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808569), SEC-05 [#44332808586](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808586), and resource guard [#44332808575](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808575) are queued/pending.
+- CircleCI `ci/circleci: one-linux` PENDING on source `090c84d...`: [job](https://app.circleci.com/workflow/60cfc357-04fc-47e2-8a5c-6cd85784c6af/job/a3279063-9cb6-4c54-8125-9b1b3b89ad8e). No CircleCI logs were inspected.
+- Linux write scope remains direct children of root only; nested writes fail closed to avoid a parent-directory move race. Exact-SHA verification is pending.
