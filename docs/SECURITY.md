@@ -70,3 +70,10 @@ Filesystem effects are not a security sandbox merely because they pass through a
 The current implementation candidate is tracked in [Issue #104](https://github.com/panglimanetizen01/one/issues/104) and its [design record](security/issue-104-filesystem-root-confinement-design.md). PR #113 remains unmerged. Linux candidate writes are limited to direct children of the retained root; nested writes fail closed. Windows native atomic replacement is under exact-SHA verification. Other platform backends remain unsupported.
 
 Do not advertise or rely on this capability as a released project sandbox until Issue #104 is ACCEPTED and the release contract is satisfied.
+
+
+## CLI authority-root selection
+
+The CLI must derive the filesystem authority root from the source/project context, never from the requested target. It prefers the nearest ancestor containing `one.toml`; otherwise it uses the working directory for sources beneath it or the canonical source parent for standalone sources outside it. The requested target is independently checked against that fixed root. Absolute targets outside the root are rejected for both read and write operations.
+
+Regression tests cover outside-root read/write attempts and verify that outside data is neither disclosed nor modified. This remains a draft PR #113 candidate pending exact-SHA verification.
