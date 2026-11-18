@@ -684,3 +684,20 @@ The first cross-platform run for `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` reac
 The test `filesystem_write_adapter_preserves_target_when_atomic_replace_is_denied` now induces replacement denial using a real open destination handle created with Windows `OpenOptionsExt::share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE)`, deliberately omitting `FILE_SHARE_DELETE`. It verifies the original bytes and that no temporary sibling remains, then drops the blocker before deleting the test directory. It no longer resets the read-only attribute.
 
 This correction is committed at `a79665056149bf1ff302de79a7b86a346e0353d8`. The independent verifier diagnostic pin now targets that exact source SHA. Fresh E4 run [#44331243475](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44331243475) is QUEUED; CircleCI is PENDING. The earlier E4 PASS on `f6acb...` remains valid for that SHA but does not verify this new test change. Keep the current candidate NOT VERIFIED until the new exact-SHA runs complete.
+
+
+## 36. Linux direct-child atomic writes and nested-parent fail-closed boundary — 2026-11-18
+
+The Linux backend previously failed closed for all writes. Candidate source `cc54597b471493f4350d0dc0f3a2896babb33ea4` now implements atomic writes for **direct children of the retained trusted root only**:
+
+1. The requested target is normalized relative to the host-injected root.
+2. The implementation rejects nested parent paths with `UnsupportedPlatform`. This is deliberate: a nested directory can be renamed outside the root after its directory handle is opened; a later dirfd-relative create/rename would then operate on that moved directory.
+3. For direct children, the retained root directory descriptor is the parent authority. The existing leaf is opened with `openat2` and `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, then checked for regular-file type, same device, and single link.
+4. An exclusive temporary sibling is created relative to the root descriptor with `O_CREAT | O_EXCL | O_NOFOLLOW`, written, and `sync_all`ed.
+5. `renameat(root_fd, temp_name, root_fd, leaf_name)` atomically replaces the directory entry. It does not follow a raced destination symlink. On failure, the temporary sibling is removed.
+
+Regression coverage added on the Linux adapter includes: create + replace an in-root file (relative and absolute target forms), reject a symlink leaf without modifying its outside target, reject oversized content without side effects, fail closed for nested parent paths, and a real `/dev/shm` mount-boundary read denial. The existing mount-boundary write test still proves no truncation and no side effect for a nested mount target; the raw `openat2` probe checks `RESOLVE_NO_XDEV` behavior.
+
+**Important limitation:** nested Linux writes are NOT IMPLEMENTED / fail-closed. This is a security boundary, not a temporary test workaround. Do not remove it or replace it with path-based fallback. A stronger parent-movement defense and adversarial write race proof are still required before nested writes can be supported.
+
+The independent verifier E4 contract was expanded to require five Linux `descriptor_relative_write_*` tests and three Linux `descriptor_relative_read_rejects_*` tests. The diagnostic verifier pin is updated to source SHA `cc54597b471493f4350d0dc0f3a2896babb33ea4`; fresh exact-source runs are pending. This implementation is NOT VERIFIED until those jobs complete.
