@@ -724,3 +724,16 @@ The Linux direct-child writer candidate `090c84dbab02e48af0a493faeb8d4fe0ff80a87
 The Android artifact PASS at `090c84d...` does not transfer to `3d8e0d...`; exact-SHA artifact and platform checks must be rerun. The verifier pin now targets `3d8e0d...`.
 
 A focused Mermaid source/rendered Markdown diagram was added at `docs/architecture/filesystem-root-confinement.md` and linked from `docs/ARCHITECTURE.md` and `docs/README.md`. It maps the host authority, Linux direct-child write boundary, Windows atomic replacement, fail-closed paths, and cleanup behavior to inspected source files. The separate full architecture overview image in PR #97 remains uninspected because the binary cannot be retrieved through the current connector; do not claim that image has been reviewed.
+
+
+## 40. CLI test alignment for Linux direct-child writes — 2026-11-18
+
+The Debian 12 workspace suite on source `3d8e0d0...` exposed a stale CLI integration test named `run_command_rejects_filesystem_write_when_backend_is_unsupported`. It was guarded by `not(windows)` and therefore incorrectly asserted that Linux direct-child writes remain unsupported.
+
+The test now splits platform expectations:
+
+- Linux absolute direct-child target: the CLI must successfully write under the target's host-injected parent root.
+- Linux nested relative target: the CLI must fail closed with `UnsupportedPlatform`, preserve the original target bytes, and leave no extra directory entry.
+- Other non-Windows/non-Linux platforms: the unsupported-backend test remains.
+
+The update is source SHA `2fa1436daa102d3cf32125da6c440ae19cc83ba7`. This aligns integration expectations with the deliberately partial Linux writer; it does not expand nested write support. Fresh exact-SHA cross-platform and distro workflows are pending.
