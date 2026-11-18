@@ -701,3 +701,10 @@ Regression coverage added on the Linux adapter includes: create + replace an in-
 **Important limitation:** nested Linux writes are NOT IMPLEMENTED / fail-closed. This is a security boundary, not a temporary test workaround. Do not remove it or replace it with path-based fallback. A stronger parent-movement defense and adversarial write race proof are still required before nested writes can be supported.
 
 The independent verifier E4 contract was expanded to require five Linux `descriptor_relative_write_*` tests and three Linux `descriptor_relative_read_rejects_*` tests. The diagnostic verifier pin is updated to source SHA `cc54597b471493f4350d0dc0f3a2896babb33ea4`; fresh exact-source runs are pending. This implementation is NOT VERIFIED until those jobs complete.
+
+
+## 37. Linux writer root-descriptor compile correction — 2026-11-18
+
+The first Linux direct-child writer candidate `cc54597b471493f4350d0dc0f3a2896babb33ea4` failed the Android AArch64 artifact build at compile time with four `E0425` errors: stale references to `parent_handle` remained in temp creation, cleanup guard setup, and rename calls after the implementation was restricted to the retained root descriptor. The failure occurred before any runtime test; no artifact was uploaded.
+
+The correction replaces those references with the retained `root.as_raw_fd()` value in source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`. The verifier diagnostic pin now targets this SHA. New E4 and cross-platform verification are queued/pending; CircleCI is PENDING. Do not treat the earlier compile failure as a runtime security failure, and do not treat the correction as verified until the new exact-SHA build/tests finish.
