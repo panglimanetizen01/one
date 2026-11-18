@@ -178,3 +178,15 @@ Do not transfer the E4 PASS on `f6acb...` to the changed test source `a796650...
 | CircleCI Linux | `cc54597...` and docs descendants | Prior GitHub status for source `a796650...` was PENDING; a new exact-source status must be checked | NOT VERIFIED until terminal |
 
 Nested Linux writes remain fail-closed because retained subdirectory handles can be moved outside the root. Do not claim Linux full filesystem-write support or Issue #104 acceptance from direct-child coverage.
+
+
+## Linux writer compile failure and correction — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Initial Linux writer | `cc54597b471493f4350d0dc0f3a2896babb33ea4` | Android artifact run [#44332315952](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332315952) failed at compile time with four E0425 unresolved `parent_handle` references; no artifact uploaded | FAILED / compile-only |
+| Root-fd correction | `090c84dbab02e48af0a493faeb8d4fe0ff80a876` | Replaced stale `parent_handle.as_raw_fd()` references with retained `parent_fd` | IMPLEMENTED; NOT VERIFIED |
+| E4 / cross-platform / Android revalidation | `090c84d...` diagnostic pin | E4 [#44332808624](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808624), cross-platform [#44332808543](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808543), Android artifact [#44332808717](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44332808717) | QUEUED/PENDING at last inspection |
+| CircleCI Linux | `090c84d...` | `ci/circleci: one-linux` PENDING; [job](https://app.circleci.com/workflow/60cfc357-04fc-47e2-8a5c-6cd85784c6af/job/a3279063-9cb6-4c54-8125-9b1b3b89ad8e) | PENDING |
+
+The Android compile failure at `cc54597...` is retained as evidence and is not misclassified as a runtime or security-test failure. The corrected source must be tested on its own exact SHA.
