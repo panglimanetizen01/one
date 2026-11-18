@@ -174,3 +174,15 @@ Windows Server 2025 native execution remains independently verified in [one-wind
 ## Verification boundary
 
 The GitHub repository is currently PUBLIC and remains the canonical source of truth. Repository visibility is owner-controlled and must not be changed as part of routine development. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+
+
+## Project-root filesystem confinement status
+
+The source-level `filesystem.write` slice described above is distinct from a security sandbox. The stronger project-root confinement capability is still experimental in draft PR #113 / Issue #104 and is **not part of canonical `main`**.
+
+- Linux candidate writes are limited to direct children of the host-injected root; nested paths fail closed.
+- Windows candidate writes use native handle-relative temporary-file replacement and still require the latest exact-SHA verification.
+- Other platform backends remain unsupported/fail-closed.
+- The latest candidate's E4, full cross-platform, Android runtime, and CircleCI checks are not yet all complete.
+
+Do not rely on the current released `filesystem.write` slice to confine hostile paths or treat it as a project sandbox. Read the [user-facing feature status](docs/panduan-pengguna/status-fitur.md), [security contract](docs/SECURITY.md), and [Issue #104 design](docs/security/issue-104-filesystem-root-confinement-design.md) before enabling filesystem write in an untrusted environment.
