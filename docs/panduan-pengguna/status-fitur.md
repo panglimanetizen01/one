@@ -122,3 +122,14 @@ This is artifact/build evidence only. It does not establish Android API 35 runti
 The first compiling Linux writer candidate `090c84dbab02e48af0a493faeb8d4fe0ff80a876` built the Android AArch64 artifact successfully, but the Ubuntu distro Clippy step rejected one redundant field initializer in the Linux temporary-file cleanup guard. The code now uses Rust field shorthand in source SHA `3d8e0d0e3af54310837eb06d442d30a02df821d0`.
 
 The earlier Android artifact PASS applies to `090c84d...`, not the new source `3d8e0d...`. The diagnostic verifier pin now targets `3d8e0d...`; fresh E4, cross-platform, distro, Android artifact/runtime, SEC-05, resource-guard, and CircleCI results must be checked on the new SHA before the updated candidate is considered verified.
+
+
+## CLI integration update for Linux filesystem writes — 18 November 2026
+
+The Debian 12 workspace suite found an outdated CLI regression test that still expected all non-Windows filesystem writes to fail. The CLI test now distinguishes the supported Linux direct-child case from nested Linux paths:
+
+- Absolute direct-child target: expected to write successfully beneath the host-injected target parent.
+- Nested relative target: expected to fail closed with `UnsupportedPlatform`, preserve original bytes, and create no temporary sibling.
+- Other non-Windows/non-Linux platforms: remain expected to fail closed.
+
+The test correction is source SHA `2fa1436daa102d3cf32125da6c440ae19cc83ba7`. The diagnostic verifier pin now targets this SHA. Fresh cross-platform, distro, E4, Android, SEC-05, and resource-guard runs are queued/pending; CircleCI is pending. This source remains NOT VERIFIED until those checks complete.
