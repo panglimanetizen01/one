@@ -229,3 +229,13 @@ Exact PR #108 base source SHA: `c4bb4b690e698a83e4ddaf279596479d3dc282ca`.
 Implementation sequence: authority + limits; Unix/Windows handle-relative primitives; adapters; interpreter; CLI; adversarial tests; Unix + Windows same-SHA validation.
 
 Runner gate: no authenticated CircleCI tool or GitHub Actions workflow-dispatch action is exposed in this session, and the local clone route previously failed DNS resolution. Do not write uncompiled security-sensitive platform code. Static map only; no production source edits or test execution.
+
+## Mandatory continuation update — 2026-11-18 (independent baseline verification completed)
+
+- The previous note that no GitHub Actions workflow-dispatch route was available is superseded for this verifier task: a branch-scoped push-triggered Linux-only workflow was added to `one-windows-verification` and completed successfully.
+- Verifier workflow file: `.github/workflows/linux-candidate-only.yml`; latest verifier branch commit `9e4b961af96ca51741355257cdc1710c999f20ee`. It validates the candidate pin, checks out its exact SHA, installs Rust 1.100.0, verifies source identity, installs MinGW with bounded retries, and runs the full `one-core` suite.
+- Linux result: run `44267886845`, job `134676844501`, candidate `a20676be53e5f78c465832379d86c3675a2ed7c8`, SUCCESS, 239 passed / 0 failed / 1 ignored (27 result summaries).
+- Windows result: run `44263674485`, job `134662858839`, same candidate SHA, SUCCESS, 232 passed / 0 failed / 1 ignored (27 result summaries).
+- Do not repeat these unchanged-SHA baseline runs. The old matrix run's Linux job is stale; its Windows success is still valid. The separate Linux-only run is the passing Linux evidence.
+- PR #110 remains OPEN/DRAFT/UNMERGED at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; CircleCI `one-linux` SUCCESS applies to that exact SHA. The independent Windows run above is pinned to PR #108 SHA `a20676be...`, not PR #110 SHA.
+- Issue #104 remains OPEN / NOT IMPLEMENTED. Do not claim root confinement, E4 acceptance, DoD completion, or release readiness. Continue with the next source implementation step only when the exact Rust runner and cross-platform validation path are available; retain fail-closed design requirements.
