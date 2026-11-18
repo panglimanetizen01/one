@@ -164,3 +164,17 @@ The independent verifier's diagnostic pin is branch-local to PR #44 on `one-wind
 | CircleCI Linux | `a796650...` | GitHub status `ci/circleci: one-linux` PENDING; job https://app.circleci.com/workflow/ed36bb6b-0da1-4569-aa15-94835802af12/job/f6e4f563-1608-40d8-9842-1aea1c573585 | PENDING |
 
 Do not transfer the E4 PASS on `f6acb...` to the changed test source `a796650...`. Keep the PR draft and issue open until exact-SHA verification and the remaining acceptance criteria are complete.
+
+
+## Linux atomic write candidate evidence — 2026-11-18
+
+| Claim | Exact source SHA | Evidence | Classification |
+|---|---|---|---|
+| Linux direct-child atomic write implementation | `cc54597b471493f4350d0dc0f3a2896babb33ea4` | `openat2` leaf validation, exclusive temp sibling under retained root fd, write + sync, dirfd-relative `renameat`; nested parent writes fail closed | IMPLEMENTED / PARTIAL; NOT VERIFIED |
+| Linux direct-child write regression coverage | `cc54597...` | Five tests required by verifier: create/replace (relative + absolute), symlink rejection, oversized content, nested parent fail-closed, and outside-path rejection | Queued pending exact-SHA E4 |
+| Linux mount-boundary read regression | `cc54597...` | Three `descriptor_relative_read_rejects_*` tests, including actual `/dev/shm` mount boundary with outside sentinel | Queued pending exact-SHA E4 |
+| Windows atomic replacement | `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9` | [E4 run #44330374509](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44330374509) PASS on that exact SHA | VERIFIED for prior SHA only; latest test cleanup changes not yet verified |
+| Windows Clippy test cleanup fix | `a79665056149bf1ff302de79a7b86a346e0353d8` | Uses a Windows share-mode blocker instead of clearing readonly permission | Implemented; new exact-SHA runs pending |
+| CircleCI Linux | `cc54597...` and docs descendants | Prior GitHub status for source `a796650...` was PENDING; a new exact-source status must be checked | NOT VERIFIED until terminal |
+
+Nested Linux writes remain fail-closed because retained subdirectory handles can be moved outside the root. Do not claim Linux full filesystem-write support or Issue #104 acceptance from direct-child coverage.
