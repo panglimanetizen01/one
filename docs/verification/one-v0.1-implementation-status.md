@@ -122,3 +122,17 @@ This addendum supersedes the older Issue #104 status bullets above where they de
 - CircleCI `ci/circleci: one-linux` is PENDING for latest HEAD `02d552123e3cf33017e2066fe62e304e1573476b`; job: https://app.circleci.com/workflow/a87975d6-b9c9-4fa4-b18a-bf92c2235045/job/49fb1abd-3870-4332-bcd0-eb370edc24ab. No CircleCI log access is available in this session; no root cause is inferred.
 - User documentation and the Issue #104 design have been updated on PR #113 to describe the candidate/main boundary and the unverified status. The source/rendered architecture diagram was not inspected and is not claimed updated.
 - Classification: filesystem root confinement is IMPLEMENTED / PARTIAL in the unmerged candidate; prior exact-SHA E4 checks are VERIFIED only for their recorded SHA; latest candidate is NOT VERIFIED; platform-wide support and acceptance remain NOT ACCEPTED. Keep Issue #104 OPEN.
+
+
+## Issue #104 latest candidate checkpoint — 2026-11-18
+
+The latest PR #113 source HEAD at this checkpoint is `f6acb23a2a0038281c613fb6fd187bc04d2f3dc9`. PR #113 remains OPEN / DRAFT / UNMERGED; canonical `main` is unchanged.
+
+- Candidate implementation includes host-injected `FilesystemAuthority`, Linux root-handle-relative `openat2` reads, Windows handle-relative traversal, bounded I/O, and a Windows temporary-sibling atomic replacement path.
+- The first Win32 rename form failed on Windows Server 2025 at source `5c5bfb...`; it was replaced with `NtSetInformationFile(FileRenameInformation)`.
+- E4 run [#44329905887](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44329905887) PASS on exact source SHA `20ede9fb1d3e97c04f81d4fe8f79f642a8cc8e78`, including the positive write, size limit, denied replacement cleanup, Unix adversarial checks, and Windows native reparse probe.
+- Latest code-bearing source `f6acb...` changes the rename target to a same-directory leaf name with `RootDirectory = NULL`. This code change has not yet been covered by the previous PASS. Fresh diagnostic verifier workflows are queued against `f6acb...`; do not classify latest HEAD as VERIFIED yet.
+- CircleCI `ci/circleci: one-linux` is PENDING for `f6acb...`; job: https://app.circleci.com/workflow/a040bfd4-9db5-4fb4-9b33-4c1cda53e6c6/job/7931ea7a-5f7b-4d85-b8fa-ab26c7188273.
+- Android runtime remains unverified for latest HEAD; the new artifact/runtime workflows are queued. The older Android runtime run pinned an earlier candidate and is not transferable.
+- User guide and Issue #104 design addenda distinguish canonical main from the draft candidate and explicitly record the source-SHA boundary.
+- Classification: candidate implementation PARTIAL / IMPLEMENTED; E4 VERIFIED on `20ede9...` only; latest candidate NOT VERIFIED; platform support and Issue #104 acceptance NOT ACCEPTED. Keep Issue #104 OPEN and preserve verifier protected pin.
