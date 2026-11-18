@@ -133,3 +133,19 @@ The Debian 12 workspace suite found an outdated CLI regression test that still e
 - Other non-Windows/non-Linux platforms: remain expected to fail closed.
 
 The test correction is source SHA `2fa1436daa102d3cf32125da6c440ae19cc83ba7`. The diagnostic verifier pin now targets this SHA. Fresh cross-platform, distro, E4, Android, SEC-05, and resource-guard runs are queued/pending; CircleCI is pending. This source remains NOT VERIFIED until those checks complete.
+
+
+## CLI host-root selection and absolute-target confinement — 18 November 2026
+
+The CLI previously derived the filesystem authority root from the requested absolute target's parent. That could let the target choose its own root and did not satisfy project-root confinement. It has been corrected.
+
+The host now selects the root from the source/project context: nearest ancestor containing `one.toml`; otherwise the process working directory when the source is beneath it, or the canonical source parent for a standalone source outside the working directory. The requested target no longer influences root selection. Absolute targets outside the selected root are rejected.
+
+New CLI tests cover:
+- Absolute write target outside source project root: rejected, outside sentinel unchanged.
+- Absolute read target outside source project root: rejected, sentinel is not disclosed.
+- Relative source path: root resolves from host working context.
+- Linux direct-child write: succeeds.
+- Linux nested relative write: fails closed and preserves original bytes.
+
+Source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; focused diagram updated in `d4687325f4b1236509bfe484cae46b72649d839f`. Diagnostic verifier pin now targets the latest source SHA. Fresh exact-SHA workflows are pending; do not mark host-root integration VERIFIED until they complete.
