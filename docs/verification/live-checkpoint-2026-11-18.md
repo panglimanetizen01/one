@@ -176,3 +176,10 @@ On corrected source SHA `090c84dbab02e48af0a493faeb8d4fe0ff80a876`, Android AArc
 - New tests cover outside-root write (outside sentinel preserved), outside-root read (no disclosure), relative source path, Linux direct-child write, and nested Linux fail-closed behavior.
 - Focused Mermaid source updated at `docs/architecture/filesystem-root-confinement.md` to show project-root selection and target-independent confinement.
 - Verifier diagnostic pin is `79a9886...`; exact-SHA workflow status must be checked before claiming VERIFIED.
+
+
+## Manifest-root integration test update — 2026-11-18
+
+- Current code-bearing source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`.
+- Added cross-platform CLI regression proving the nearest `one.toml` ancestor is the authority root for a source under `src/main.one`; direct-child output under the project root succeeds.
+- Diagnostic verifier pin updated to `1b7c3bb...`; fresh exact-SHA runs must be inspected before host-root integration is marked VERIFIED.
