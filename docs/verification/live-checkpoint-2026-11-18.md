@@ -291,3 +291,10 @@ Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local
 - Do not transfer this status to any later commit SHA.
 - Tests and config validation remain NOT VERIFIED; no CircleCI failure logs/root cause have been confirmed.
 
+
+## Direct job source-identity guard — 2026-11-19
+
+- On pre-change PR #113 HEAD `9965ce53f816662d52074d81c9fcab4ba70e7d5f`, CircleCI `ci/circleci: one-linux` was PENDING (workflow `72f890ca-d9c2-4441-b743-49b7ad24cd90`, job `cd298634-331a-4032-9540-a05e688245b2`). This evidence belongs only to that exact SHA.
+- Static review found direct `--job-id` reports did not display the known source-revision limitation. Tool output is being hardened to show `SOURCE SHA: UNVERIFIED` for direct lookup and to show the SHA for exact-discovery mode; two regression tests cover these cases.
+- Test suite now contains 13 methods; execution remains NOT VERIFIED. CircleCI config validation remains NOT VERIFIED; provider logs remain inaccessible and root cause unknown.
+- PR #113 and PR #44 remain OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains unchanged.
