@@ -20,6 +20,20 @@ This directory contains exact-SHA verification records, release gates, incident 
 - Issue #105: strong Unix escaped-descendant containment remains OPEN. Bounded reader shutdown is not process-tree containment.
 - Issue #82: Android AArch64 runtime execution acceptance remains OPEN.
 
+## Live checkpoint — 2026-11-18 (PR #110 exact-SHA reconciliation)
+
+- Canonical `main` remains unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`.
+- PR #108 is OPEN / DRAFT / UNMERGED at exact HEAD `286a0fd563e10611a3465cb6457ab069a0df8a52`; GitHub commit status `ci/circleci: one-linux` is SUCCESS, job [99216205-62aa-4e98-af42-d4b742a5feaa](https://app.circleci.com/workflow/a0e85852-848f-4c6b-8681-53438dea6bea/job/99216205-62aa-4e98-af42-d4b742a5feaa).
+- PR #110 is OPEN / DRAFT / UNMERGED at current exact HEAD `26d29c61944e51919161f5360bccfef4a09d370d`; GitHub commit status `ci/circleci: one-linux` is SUCCESS, job [c153ba39-4073-4548-aaa6-6370e6bed6bf](https://app.circleci.com/workflow/a15e7c3f-0492-4ac6-a025-d8d2fe31f054/job/c153ba39-4073-4548-aaa6-6370e6bed6bf), status updated 2026-11-18T04:42:11Z. Its parent code-bearing SHA is `19ef80d0ff4fa41ebfc96e9a3164ec96a6ae645b`; source findings below refer to that parent and remain applicable because the child commit changes verification documentation only.
+- The CircleCI status context is verified from GitHub. Expanded CircleCI job logs were not retrieved in this session; do not claim step-level log inspection.
+- Issue #104 remains OPEN. At PR #110 HEAD, `crates/one-core/src/adapter.rs` still implements filesystem read/write through `std::fs::read(path)` and `std::fs::write(path, ...)`; production root-handle confinement is NOT IMPLEMENTED. A green CircleCI status is not Issue #104 acceptance.
+- The independent verifier repository's current `main` is `3d915528e7771d9443ccf0da7e4d7c9e25231537`; its current main tree lists three workflows (Linux distro, stdlib-focused, Windows). This is only the verifier main snapshot; do not infer other branches have the same workflow set.
+- Full docs inventory at PR #110 HEAD: 206 tracked files total, 103 documentation files including README. This is an inventory count, not proof that all 103 documents have been semantically reviewed.
+- The architecture PNG was not visually inspected in this session because the available GitHub file fetch returns text and cannot deliver the binary image to the visual inspection path. Do not claim visual inspection complete.
+
+[Detailed live checkpoint](live-checkpoint-2026-11-18.md).
+
+
 ## Canonical records
 
 - [Forensic repository audit — 2026-11-17](forensic-audit-2026-11-17.md)
@@ -42,3 +56,12 @@ The fixed-weight completion ledger and Definition of Done are maintained in [PR 
 3. A CircleCI pipeline error without job logs is NOT VERIFIED as a source failure; distinguish config discovery, runner startup, toolchain bootstrap, and executed tests.
 4. A later docs-only commit does not inherit test results unless the verification contract explicitly allows it and the exact source/code diff proves no relevant behavior changed.
 5. Never promote DoD checkboxes, E1–E6 points, or release approval based only on a scoped PASS.
+
+## Live verification checkpoint — 2026-11-18 (Linux + Windows baseline PASS)
+
+- Independent verifier Linux-only run [44267886845](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44267886845), job `134676844501`, passed on exact source SHA `a20676be53e5f78c465832379d86c3675a2ed7c8`: 239 passed, 0 failed, 1 ignored across 27 test-result summaries.
+- Independent verifier Windows job [44263674485](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44263674485/job/134662858839) passed on the same exact source SHA: 232 passed, 0 failed, 1 ignored across 27 test-result summaries.
+- This closes the Linux runner bootstrap blocker for the independent baseline candidate. The original matrix run's Linux job remains stale/in-progress at the original MinGW step; use the separate Linux-only run as the passing Linux evidence.
+- PR #110 remains OPEN/DRAFT/UNMERGED at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; its CircleCI `one-linux` status is independently SUCCESS. This is not the same SHA as the independent Windows/Linux candidate.
+- Issue #104 remains OPEN. Production `FileReadAdapter` and `FileWriteAdapter` still use ambient `std::fs::read/write`; root-handle confinement, resource limits, and adversarial tests remain unimplemented. E4, DoD, release and security acceptance remain unchanged.
+- Next: preserve this exact-SHA evidence; proceed with a compilable, narrowly scoped Issue #104 implementation using an available validated Rust runner. Do not copy the historical PR #80 Windows path-based approach or commit uncompiled OS-handle code.
