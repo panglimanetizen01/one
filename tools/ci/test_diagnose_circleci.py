@@ -8,6 +8,7 @@ from diagnose_circleci import (
     extract_failed_steps,
     paged_v2_items,
     redact,
+    source_identity_line,
 )
 
 
@@ -143,6 +144,15 @@ class CircleCIDiagnosticTests(unittest.TestCase):
                 discover_failed_jobs("token", "gh/example/one", "feature", "a" * 40),
                 [],
             )
+
+    def test_direct_job_lookup_marks_source_sha_unverified(self):
+        line = source_identity_line({"id": "job-uuid"})
+        self.assertIn("SOURCE SHA: UNVERIFIED", line)
+        self.assertIn("bypasses exact-SHA", line)
+
+    def test_exact_sha_discovery_prints_source_sha(self):
+        line = source_identity_line({"commit_sha": "a" * 40})
+        self.assertEqual(line, "SOURCE SHA: " + "a" * 40)
 
     def test_redacts_tokens_and_credentials(self):
         source = (
