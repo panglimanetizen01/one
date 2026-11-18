@@ -547,7 +547,7 @@ mod windows_native {
         }
     }
 
-    fn rename_relative(file: &File, parent: HANDLE, leaf: &[u16]) -> Result<(), FilesystemError> {
+    fn rename_relative(file: &File, leaf: &[u16]) -> Result<(), FilesystemError> {
         if leaf.is_empty() { return Err(FilesystemError::InvalidTarget); }
         let name_bytes = leaf.len().checked_mul(2).ok_or(FilesystemError::InvalidTarget)?;
         let name_offset = std::mem::offset_of!(FileRenameInfo, file_name);
@@ -564,7 +564,7 @@ mod windows_native {
 
         unsafe {
             base.write(1); // ReplaceIfExists = TRUE.
-            std::ptr::write_unaligned(base.add(root_offset).cast::<HANDLE>(), parent);
+            std::ptr::write_unaligned(base.add(root_offset).cast::<HANDLE>(), std::ptr::null_mut());
             std::ptr::write_unaligned(base.add(length_offset).cast::<u32>(), name_bytes as u32);
             let destination = base.add(name_offset).cast::<u16>();
             std::ptr::copy_nonoverlapping(leaf.as_ptr(), destination, leaf.len());
@@ -587,9 +587,8 @@ mod windows_native {
         if status < 0 {
             #[cfg(test)]
             eprintln!(
-                "NtSetInformationFile(FileRenameInformation) failed: NTSTATUS=0x{:08X}, parent={:?}, leaf={:?}",
+                "NtSetInformationFile(FileRenameInformation) failed: NTSTATUS=0x{:08X}, leaf={:?}",
                 status as u32,
-                parent,
                 String::from_utf16_lossy(leaf)
             );
             return Err(status_error(status));
@@ -651,8 +650,8 @@ mod windows_native {
         let leaf_wide = leaf_wide.ok_or(FilesystemError::InvalidTarget)?;
 
         // Inspect an existing leaf without following it. The handle is closed
-        // before replacement; the final rename itself is handle-relative and
-        // never writes through a path that may have become a reparse point.
+        // before replacement; the final rename uses a simple same-directory
+        // name relative to the source handle, with RootDirectory = NULL.
         match open_named(
             &leaf_wide,
             parent_handle,
@@ -716,7 +715,7 @@ mod windows_native {
             }
             temporary.file.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             temporary.file.flush().map_err(|_| FilesystemError::IoFailure)?;
-            rename_relative(&temporary.file, parent_handle, &leaf_wide)?;
+            rename_relative(&temporary.file, &leaf_wide)?;
             temporary.committed = true;
             Ok(())
         })();
