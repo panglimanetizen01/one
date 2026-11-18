@@ -43,7 +43,8 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 ## API behavior
 
 - The Linux job installs the exact Rust release from rust-toolchain.toml in a dedicated step. Rustup bootstrap and toolchain installation have explicit wall-clock limits, separate from the cross-toolchain package provisioning step; the no-output timeout remains an independent inactivity guard.
-- CircleCI API v2 is used only for pipeline/workflow/job discovery because the project-scoped pipeline listing is available there.
+- CircleCI API v2 is currently documented by CircleCI as legacy but supported; the pipeline/workflow/job discovery endpoints used here are not part of the announced February 1, 2027 retirement, which targets nine API v1/v1.1 trigger and rerun endpoints only. Do not perform a speculative v2-to-v3 migration based on that v1/v1.1 deadline. Reassess v3 endpoint coverage for exact project + revision discovery separately; use v3 where the required semantics are documented and tested, and retain v2 where v3 does not yet provide an equivalent.
+- CircleCI API v3 is current and recommended for new integrations; it is Cloud-only, uses UUID resource IDs and opaque cursor pagination. API v2 remains the supported fallback for existing integrations and CircleCI Server.
 - CircleCI API v3 is used for job details and per-step stdout/stderr.
 - API v2 uses the Circle-Token header; API v3 uses Authorization: Bearer.
 - The script prints step numbers, execution indexes, outcome, and a bounded tail of each failed step's logs.
@@ -51,6 +52,7 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 - A missing stderr stream is normal; CircleCI returns no content when a step has no stderr.
 - Pagination is limited to ten pages as a safety boundary. If CircleCI advertises another page after the tenth, the utility raises a diagnostic error and marks discovery incomplete; it never silently treats truncated results as complete.
 - If no pipeline exists for the exact local SHA, the script stops rather than selecting a nearby or newer commit.
+- If an exact-SHA pipeline exists but no failed/timed-out job is listed, the utility reports that state as inconclusive (running, successful, or no-job workflow); it does not label it a diagnostic/API error or claim PASS. Confirm workflow status in CircleCI.
 
 ## Tests
 
