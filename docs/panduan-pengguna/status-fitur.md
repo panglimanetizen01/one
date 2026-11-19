@@ -223,3 +223,7 @@ Enam workflow verifikasi independen setelah integrasi perbaikan telah selesai de
 Hasil ini merupakan bukti untuk cakupan pengujian yang disebutkan, bukan pernyataan bahwa seluruh proyek sudah diterima. Issue #104 tentang pembatasan akses filesystem masih OPEN / NOT ACCEPTED. Penulisan nested pada Linux dan adapter platform yang belum didukung tetap ditolak secara aman. Project ONE belum dinyatakan siap rilis atau 100% selesai.
 
 PR #113 tetap draft dan belum digabung. Branch utama ONE tidak berubah. CircleCI SUCCESS sebelumnya pada SHA 64c490e berlaku hanya untuk SHA itu; status untuk commit dokumentasi berikutnya harus diperiksa secara terpisah.
+
+## CircleCI status update — 19 November 2026
+
+CircleCI now reports SUCCESS for the exact PR #113 documentation SHA eeafcab579cebb762af34d1daf4830f95cba87e7 (workflow 0621c480-6054-4fc1-8c82-b9028f105735). This result applies only to that SHA. It does not change the draft status of PR #113 or mean Issue #104 is accepted. CircleCI step logs were not separately available for detailed test-count claims.
