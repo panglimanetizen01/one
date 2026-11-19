@@ -110,3 +110,6 @@ Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74
 - Follow-up config commit `60a8a20ca92dd4d55ce062f08708250eb1cb6317` preserves package selection and deadline but records live process state every 120 seconds and captures APT terminal/history logs on failure. This is additional instrumentation, not a proven root-cause fix.
 - Validation: CircleCI config validation and the diagnostic unit tests on the new commit remain NOT VERIFIED. The 14/14 diagnostic test result on parent SHA `26fcd96...` does not transfer.
 - Detailed incident record: [CIRCLECI_FAILURE_69E668_2026-11-19.md](CIRCLECI_FAILURE_69E668_2026-11-19.md).
+
+
+- Instrumentation refinement commit: `5c0b45a9dd8cbab4814f7935eacd08cecea17c88`. The live process snapshot now filters on the process `comm` field (avoids matching the enclosing shell's embedded script text) and emits a real newline after each captured command line. This is a logging-quality correction only; no package, timeout, or compiler behavior changed.
