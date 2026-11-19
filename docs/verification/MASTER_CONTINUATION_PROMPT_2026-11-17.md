@@ -319,3 +319,41 @@ This block supersedes older active PR/branch/pin/status instructions above. Pres
 2. SEC-05 protected-verifier run `44519577571`, attempt 2: Linux job `135581237093` remains IN_PROGRESS at step 5 `Install Linux native cross-compilers`; Windows job `135581239271` is SUCCESS. Linux job logs are unavailable until completion. Poll for terminal evidence before classifying the rerun.
 3. If the rerun fails, inspect exact logs and confirm whether Azure Ubuntu mirror connectivity recurred. If it passes, document a successful same-candidate retry only; do not claim a durable fix without a configuration change and repeatable validation.
 4. No protected verifier workflow change was made. Keep Issue #104 OPEN / NOT ACCEPTED, PR #113 OPEN / DRAFT / UNMERGED, and `main` untouched. Preserve full cross-compiler architecture coverage and fail-closed platform behavior.
+
+
+## Protected verifier multi-workflow failure reconciliation — 2026-11-19 13:30Z
+
+### PR #113 exact-SHA CircleCI
+
+- PR #113 remains OPEN / DRAFT / UNMERGED; exact HEAD at this checkpoint: `d3924152f2536492a3117e288f60572f3e97814a`; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Exact-HEAD CircleCI `ci/circleci: one-linux` = SUCCESS (workflow `21bd7a8f-d992-4b62-8250-a46295ca2ea6`, job `328ed531-0e4a-4160-a0bf-3fb50bbf2478`). This success applies only to `d3924152...`.
+
+### SEC-05 Linux rerun attempt 2 — failure reproduced
+
+- Protected verifier run #44519577571 attempt 2; Linux job `135581237093` FAILED at step 5 `Install Linux native cross-compilers`; Windows job `135581239271` SUCCESS.
+- Attempt 2 downloaded 277 MB in 15m19s, then received HTTP 503 Service Unavailable from `security.ubuntu.com` for two remaining MinGW packages. APT ended with exit code 100. This differs from attempt 1's connection/timeouts to Azure backend `azure.archive.ubuntu.com` / `52.252.75.106:80`, but both are package-fetch failures before Rust setup or Linux tests.
+- Classification remains hosted Ubuntu mirror/package-service availability failure, not a SEC-05 source/test failure. Two attempts now reproduce the package-fetch problem across distinct endpoints; no Linux test result exists for either attempt.
+- Draft PR #46: [SEC-05 bounded APT retry mitigation](https://github.com/panglimanetizen01/one-windows-verification/pull/46), head `8a880ad00225ed8a78a3fd58adfbc329f0df5b11`, base protected merge `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`. It records configured APT sources, applies bounded `Acquire::Retries=3` and 30-second HTTP/HTTPS timeouts to update/install, records package policy, and raises Linux job timeout 30→45 minutes. Full compiler set remains unchanged. No protected branch modification or merge.
+- PR #46 pull-request workflow run #44533999931 is IN_PROGRESS: Linux job `135594520678` at bounded APT installation step 5; Windows job `135594521270` at Windows toolchain installation step 2. Do not claim validation until terminal results and logs are read.
+
+### Package provenance verifier — false-positive probe corrected in PR #45
+
+- Original run #44519577562 / job `135544438096`: exact-SHA provenance/CLI tests passed 19/19, then the stale-lockfile probe failed because its `sed -i '/^sha2 = /a regex = "1"'` insertion matched no line in the pinned `crates/one-cli/Cargo.toml` (the manifest has only `one-core` under dependencies). Cargo therefore correctly accepted the unchanged lockfile; the probe had not mutated the manifest.
+- Draft PR #45: [fix package provenance and artifact verifier assumptions](https://github.com/panglimanetizen01/one-windows-verification/pull/45), head `dabccd46bb6549e36761a4fa3b02da5d7c84a42e`. The probe now inserts `regex = "1"` after the `[dependencies]` header and asserts that the mutation occurred. Workflow execution is NOT RUN; the workflow is push-triggered on protected `verification`, so PR remains draft pending review/authorized promotion.
+
+### Artifact integrity verifier — stale Rust version expectation corrected in PR #45
+
+- Original run #44519577533 / job `135544437263`: artifact discovery and archive digest verification passed, then embedded metadata validation rejected Rust/Cargo `1.100.0` because the verifier hardcoded `1.99.0`.
+- Exact pinned ONE source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` has `rust-toolchain.toml` channel `1.100.0`; actual artifact metadata reports Rust/Cargo `1.100.0`. PR #45 updates the expectation to match the exact source toolchain. Workflow execution remains NOT RUN until authorized promotion to protected branch.
+
+### Health scanner workflow — implementation absent, not a scanner defect proven
+
+- Run #44519577289: Linux job `135544437333` and Windows job `135544437821` both failed at final outcome aggregation.
+- Each of three unittest discovery commands reported `Ran 0 tests` / `NO TESTS RAN` (exit code 5). The self-scan command could not open `one-source/tools/one_health.py`; recursive source-tree inspection at the pinned SHA found no health/scanner/collector/quality implementation paths.
+- The verifier repository's `docs/CONTINUOUS_REPOSITORY_HEALTH_AND_REPAIR_SYSTEM.md` explicitly labels the system a proposal / implementation plan, not an implemented tool. Do not fabricate implementation, change the workflow to green, or claim scanner tests passed. This is an unimplemented-scope / workflow-fixture alignment blocker requiring a separate design and implementation decision.
+
+### Final release gate
+
+- Fixed-weight ledger gate run #44519577312 / job `135544436703` remains IN_PROGRESS at the exact-SHA ledger/DoD enforcement step. It is not PASS or FAIL. Preserve ledger scores and unchecked DoD items; do not manufacture acceptance.
+- Protected E4 run #44519577693 remains independently SUCCESS. Do not call the entire protected verifier push green; E1/stdlib, SEC-05 Linux, provenance, artifact, health scanner, and release gate are distinct workflows/findings.
+- Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Protected branch `verification` and `main` remain unchanged absent explicit authorization.
