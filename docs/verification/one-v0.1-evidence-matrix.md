@@ -307,3 +307,14 @@ This checkpoint supersedes earlier statements in this matrix that the protected 
 - E1 Windows run #44519577311 / job `135544437394`, Milestone 1 E1 Linux run #44519577315 / job `135544437616`, and focused stdlib run #44519577640 / job `135544438572` all failed before intended integration tests: Cargo reports no test target `stdlib_builtins` in `one-core`. Source tree `722d662...` has no corresponding integration test file; do not treat these as assertion failures or passes.
 - The intended E1 test inventory must be mapped to real source tests or implemented explicitly before updating workflow commands. Do not blindly substitute an unrelated test target.
 - These independent workflow failures do not change protected E4 run #44519577693, whose three jobs all passed. Full repository push remains NOT GREEN; Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## E4 log-level execution audit — 2026-11-19
+
+Protected run #44519577693 was checked beyond its green summary:
+
+- Unix workflow helper enforces exact expected passing-line counts (3 read rejection, 5 write, 1 walk, 1 parent-symlink race, 1 mount-boundary no-truncate). All 11 required named tests appear as passing in the Unix job log.
+- Windows helper requires each named test to appear, exactly one test to run, and exactly one pass. All seven required filesystem tests appear as passing in the Windows job log.
+- Native probe log confirms ordinary files open successfully while direct and intermediate junction traversal with OBJ_DONT_REPARSE returns STATUS_REPARSE_POINT_ENCOUNTERED (0xC000050B); success sentinel is present.
+- Cargo emits zero-test summaries for unrelated binaries while a filter is active; these are expected and are not false-positive passes because the workflow helper separately validates the exact matched test count.
+- E4 protected verification remains CONFIRMED for the source SHA and stated OS environments. This does not make the separate SEC-05/E1/stdlib failures green.
