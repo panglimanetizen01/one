@@ -385,3 +385,62 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 
 - PRs #45–#48 remain OPEN / DRAFT / UNMERGED. No protected verification branch or main change has been made. No merge authorization inferred.
 - Preserve exact-SHA evidence, fixed ledger weights, unchecked DoD, fail-closed behavior, and full compiler target coverage.
+
+
+## Final validation checkpoint — 2026-11-19 14:03Z
+
+
+
+### Exact PR #113 / CircleCI state before this documentation refresh
+
+
+
+- PR #113 OPEN / DRAFT / UNMERGED; exact HEAD 2adb4308585e3815a5596e98feb2231a4dfaf80d; base 181ad350d8f0db53cda654c4d378425fbdd6ab24.
+
+- CircleCI ci/circleci: one-linux SUCCESS for exact SHA 2adb4308585e3815a5596e98feb2231a4dfaf80d; workflow 8a3f0ff9-a54b-4624-8b9a-d073d2c01c07; job 752530ca-1f13-413e-aed0-05f730fe0d54. This result does not transfer to the next docs SHA.
+
+
+
+### Remediation PRs current final validation
+
+
+
+- PR #45 artifact-only: https://github.com/panglimanetizen01/one-windows-verification/pull/45, head 9a72e04b7e2992d655f8e3fc4e478892e91b7ae5, OPEN / DRAFT. Exact-head run #44538012071 SUCCESS, job 135608513172; verified source SHA 722d662, archive digests, Rust/Cargo 1.100.0, Linux ELF64 x86-64 and Windows PE32+ x86-64. Package-provenance signing lab excluded; v0.1 package spec explicitly says full provenance envelope not implemented.
+
+- PR #46 SEC-05 APT mitigation: https://github.com/panglimanetizen01/one-windows-verification/pull/46, head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11, OPEN / DRAFT. Run #44533999931 SUCCESS on Linux and Windows. Bounded APT retries/source diagnostics and complete compiler set passed; subprocess contracts, full one-core suites, and static guards passed.
+
+- PR #47 Windows native canonical pin: https://github.com/panglimanetizen01/one-windows-verification/pull/47, head bd100d10c12c7b0849f01e9481111b0b0c859dd1, OPEN / DRAFT. Run #44535174043 SUCCESS on Windows Server 2025; exact source SHA 722d662; Rust 1.100.0; PE32+ AMD64; native execution exit 0/output Budi. This is PR-branch evidence, not protected-branch evidence.
+
+- PR #48 E1 workflow alignment: https://github.com/panglimanetizen01/one-windows-verification/pull/48, current head 06bf1d7cbd10adadb74c79d7296f951244ae9839, OPEN / DRAFT. Latest cross-platform run #44538540682 COMPLETED / SUCCESS: Linux job 135610376664 and Windows job 135610376991 SUCCESS. Linux bounded APT retries, full compiler set, Android API 35 clang, Rust 1.100.0, stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core lib 148/148, workspace integration suites, contract checker and Clippy passed. Windows toolchain/Android NDK, Rust 1.100.0, stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core lib 133/133, workspace integration suites, contract checker and Clippy passed. E1 Windows run #44538540631 also SUCCESS. Focused Linux run #44536641377 on prior head 0fcbbd60... passed stdlib/database non-zero tests; its workflow file and source pin were unchanged by the later APT-only commit.
+
+
+
+### E1 / standard-library scope correction
+
+
+
+- Normative docs/spec/one-v0.1-stdlib.md defines v0.1 operations as display, greeting, empty-list creation, list append/remove, arithmetic, and comparisons. UTC/JSON/text-prefix/suffix/checked-remainder are not required v0.1 APIs. Old E1 workflows incorrectly targeted nonexistent stdlib_builtins and had filters that matched zero tests.
+
+- PR #48 corrects the workflows to execute existing, documented targets. Do not implement unapproved future APIs just to satisfy stale verifier commands.
+
+
+
+### Package provenance lab scope
+
+
+
+- The package-provenance synthetic signing lab is not an Issue #104 gate and is outside executable v0.1 package/build scope. docs/spec/one-v0.1-package-build.md states the full provenance envelope is not implemented. The lab references missing examples/package-release and unsupported sign-package/verify-package commands. PR #45 restores this lab workflow to base content and only changes artifact integrity metadata validation.
+
+
+
+### Protected ledger gate / acceptance boundary
+
+
+
+- Fixed-weight gate #44519577312 remains IN_PROGRESS. It waits for a protected exact-SHA Windows Native Backend run; PR #47 has a successful PR-branch run but is not included in branch=verification until authorized promotion. Other protected workflow failures have candidate fixes in PRs #45, #46, and #48, but none has been merged.
+
+- Protected E4 #44519577693 remains independently SUCCESS. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Main and protected verification remain unchanged.
+
+- All PRs #45–#48 remain OPEN / DRAFT / UNMERGED. No merge or protected-branch promotion was performed; no authorization inferred.
+
+- Preserve exact-SHA evidence, fixed ledger weights, unchecked DoD, fail-closed platform behavior, and full compiler target coverage.
