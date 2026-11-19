@@ -100,3 +100,13 @@ Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74
 - Compiler package selection and required Linux-host Windows cross-compilation capability are preserved.
 - This is diagnostic isolation, not proof of a package-specific fix. The config has not yet been validated by `circleci config validate`; diagnostic tests have not yet been executed on the new config commit.
 - The next CircleCI run must show which package group completes or times out. Do not transfer the failed status from source SHA `69e668...`.
+
+
+## Exact-SHA follow-up — Clang group reaches timeout — 2026-11-19
+
+- Source SHA `26fcd96d53e19b4218e5b1e5926020a8326fb09b`; CircleCI job #747 / `9666c56b-20cc-4be8-b08c-6547c4a467ab`; failed step #105.
+- The first package group (Clang + Linux binutils) started at 08:47:02 UTC. All five Clang packages and the man-db/libc-bin triggers reached installed state by 08:47:09 UTC. The group wrapper did not return and was terminated at 09:12:02 UTC by its 25-minute GNU timeout (exit 124).
+- The MinGW group never started. The post-timeout dpkg audit showed no pending package output. Because the process snapshot was taken after timeout cleanup, the blocking process/wait state remains UNKNOWN.
+- Follow-up config commit `60a8a20ca92dd4d55ce062f08708250eb1cb6317` preserves package selection and deadline but records live process state every 120 seconds and captures APT terminal/history logs on failure. This is additional instrumentation, not a proven root-cause fix.
+- Validation: CircleCI config validation and the diagnostic unit tests on the new commit remain NOT VERIFIED. The 14/14 diagnostic test result on parent SHA `26fcd96...` does not transfer.
+- Detailed incident record: [CIRCLECI_FAILURE_69E668_2026-11-19.md](CIRCLECI_FAILURE_69E668_2026-11-19.md).
