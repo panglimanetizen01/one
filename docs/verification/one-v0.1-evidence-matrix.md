@@ -287,3 +287,15 @@ Classification: host-root resolver, Linux direct-child writer, Windows adapter r
 ## CircleCI status correction — 2026-11-18
 
 A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is FAILURE on the code-bearing source `722d662e7a81711ba3607d26571f4048a292b3ed` (job https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94). The previously recorded documentation HEAD `b94e85db5d83c9a4bec582609405d9c65e4db841` is PENDING, and its descendant documentation HEAD `add130412cf42088ca9171fa2660295f7c30ae65` is also PENDING (job https://app.circleci.com/workflow/bfe4df8d-85a8-49bc-b7f2-21910a4692cd/job/d2aa7f1d-0c7a-4e7b-8ba4-ecaf595674c2). The failure cause on the code SHA remains UNKNOWN because CircleCI logs are inaccessible through the current tools. This correction does not change the exact-source independent verification results or Issue #104 acceptance classification.
+
+
+## Issue #104 protected-verifier reconciliation — 2026-11-19
+
+This checkpoint supersedes earlier statements in this matrix that the protected verifier pin was still `e50748a...`, PR #44 remained unmerged, or protected E4 execution was still queued. Historical per-SHA entries remain historical; do not silently rewrite their original scope.
+
+- Code-bearing source and protected canonical pin: `722d662e7a81711ba3607d26571f4048a292b3ed`.
+- PR #44 was explicitly authorized and merged into protected branch `verification`; merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`.
+- Post-merge protected E4 run #44519577693: SUCCESS. Jobs: Unix no-follow/resource bounds (135544438313), Windows reparse/handle checks (135544438225), Windows native `NtCreateFile + OBJ_DONT_REPARSE` contract probe (135544437734), all SUCCESS.
+- Windows native probe is evidenced only on Windows Server 2025 build 26100. Linux nested writes remain fail-closed; unsupported platforms remain fail-closed; Android runtime evidence is API 35 ARM64 only.
+- Same-push SEC-05 run #44519577571: Windows job SUCCESS; Linux job FAILED at `Install Linux native cross-compilers` (step 5). Exact failing command/log not yet retrieved; root cause UNKNOWN. Separate E1, stdlib/database, package provenance, health scanner, and candidate-artifact workflows also failed; these do not negate the E4 job result but remain distinct verification failures.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED pending remaining acceptance/ledger gates. Latest PR #113 HEAD at this checkpoint: `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07`; CircleCI status on that exact SHA was PENDING.
