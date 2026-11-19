@@ -10,7 +10,7 @@ commands:
     steps:
       - run:
           name: Install Linux and Windows-target cross-toolchains (Linux host)
-          no_output_timeout: 20m
+          no_output_timeout: 30m
           command: |
             set -euo pipefail
             # The CircleCI Android machine image may point Noble at a regional
@@ -26,7 +26,10 @@ commands:
             # native_backend_linux_windows.rs. The mingw-w64 meta-package also
             # pulls unrelated architectures and thread models, increasing
             # install time and the chance of CI timeout/package-mirror failures.
-            timeout 15m sudo apt-get "${apt_opts[@]}" install -y --no-install-recommends clang gcc-mingw-w64-x86-64-posix binutils-x86-64-linux-gnu
+            # Exact-SHA job 730 reached dpkg package setup and trigger processing
+            # but hit the 15-minute command deadline (exit 124). Keep the
+            # install bounded while allowing more time for dpkg configuration.
+            timeout 25m sudo apt-get "${apt_opts[@]}" install -y --no-install-recommends clang gcc-mingw-w64-x86-64-posix binutils-x86-64-linux-gnu
             {
               echo "export ONE_WINDOWS_CLANG=clang"
             } >> "$BASH_ENV"
