@@ -14,6 +14,22 @@ pub enum PlatformKind { Any, Linux, Windows, Android, Macos }
 pub struct AdapterMetadata { id: AdapterId, status: AdapterStatus, capabilities: Vec<Capability>, platforms: Vec<PlatformKind> }
 impl AdapterMetadata { pub fn new(id: AdapterId, status: AdapterStatus, capabilities: Vec<Capability>, platforms: Vec<PlatformKind>) -> Self { Self { id, status, capabilities, platforms } } pub fn id(&self) -> &AdapterId { &self.id } pub const fn status(&self) -> AdapterStatus { self.status } pub fn declares(&self, capability: Capability) -> bool { self.capabilities.contains(&capability) } pub fn available_on(&self, platform: PlatformKind) -> bool { self.platforms.contains(&PlatformKind::Any) || self.platforms.contains(&platform) } pub fn validate_request(&self, request: &CapabilityRequest) -> Result<(), AdapterError> { request.validate().map_err(AdapterError::InvalidRequest)?; if !self.declares(request.capability) { return Err(AdapterError::UndeclaredCapability); } Ok(()) } }
 
+fn filesystem_platforms() -> Vec<PlatformKind> {
+    #[cfg(target_os = "linux")]
+    {
+        vec![PlatformKind::Linux]
+    }
+    #[cfg(windows)]
+    {
+        vec![PlatformKind::Windows]
+    }
+    #[cfg(not(any(target_os = "linux", windows)))]
+    {
+        Vec::new()
+    }
+}
+
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AdapterArgument { Text(String), Integer(i64), Boolean(bool), Bytes(Vec<u8>), TextList(Vec<String>) }
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,7 +43,7 @@ pub trait ToolAdapter { fn metadata(&self) -> &AdapterMetadata; fn invoke(&self,
 
 pub struct FileReadAdapter { metadata: AdapterMetadata, authority: Option<Arc<FilesystemAuthority>> }
 impl FileReadAdapter {
-    pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.read"), AdapterStatus::Implemented, vec![Capability::FilesystemRead], vec![PlatformKind::Any]), authority: None } }
+    pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.read"), AdapterStatus::Implemented, vec![Capability::FilesystemRead], filesystem_platforms()), authority: None } }
     pub fn with_authority(authority: Arc<FilesystemAuthority>) -> Self { Self { authority: Some(authority), ..Self::new() } }
 }
 impl Default for FileReadAdapter { fn default() -> Self { Self::new() } }
@@ -44,7 +60,7 @@ impl ToolAdapter for FileReadAdapter {
 
 pub struct FileWriteAdapter { metadata: AdapterMetadata, authority: Option<Arc<FilesystemAuthority>> }
 impl FileWriteAdapter {
-    pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.write"), AdapterStatus::Implemented, vec![Capability::FilesystemWrite], vec![PlatformKind::Any]), authority: None } }
+    pub fn new() -> Self { Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.write"), AdapterStatus::Implemented, vec![Capability::FilesystemWrite], filesystem_platforms()), authority: None } }
     pub fn with_authority(authority: Arc<FilesystemAuthority>) -> Self { Self { authority: Some(authority), ..Self::new() } }
 }
 impl Default for FileWriteAdapter { fn default() -> Self { Self::new() } }
