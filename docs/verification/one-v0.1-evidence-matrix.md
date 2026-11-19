@@ -299,3 +299,11 @@ This checkpoint supersedes earlier statements in this matrix that the protected 
 - Windows native probe is evidenced only on Windows Server 2025 build 26100. Linux nested writes remain fail-closed; unsupported platforms remain fail-closed; Android runtime evidence is API 35 ARM64 only.
 - Same-push SEC-05 run #44519577571: Windows job SUCCESS; Linux job FAILED at `Install Linux native cross-compilers` (step 5). Exact failing command/log not yet retrieved; root cause UNKNOWN. Separate E1, stdlib/database, package provenance, health scanner, and candidate-artifact workflows also failed; these do not negate the E4 job result but remain distinct verification failures.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED pending remaining acceptance/ledger gates. Latest PR #113 HEAD at this checkpoint: `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07`; CircleCI status on that exact SHA was PENDING.
+
+
+## Protected push failure classification — 2026-11-19
+
+- SEC-05 Linux run #44519577571 / job `135544437757`: apt update succeeded, but installation of the 277 MB cross-toolchain package set failed after 194 MB downloaded because Azure Ubuntu mirror backend `azure.archive.ubuntu.com` (`52.252.75.106:80`) became unreachable. APT exit 100. This is an infrastructure/package retrieval failure before tests, not a source regression. SEC-05 Windows passed.
+- E1 Windows run #44519577311 / job `135544437394`, Milestone 1 E1 Linux run #44519577315 / job `135544437616`, and focused stdlib run #44519577640 / job `135544438572` all failed before intended integration tests: Cargo reports no test target `stdlib_builtins` in `one-core`. Source tree `722d662...` has no corresponding integration test file; do not treat these as assertion failures or passes.
+- The intended E1 test inventory must be mapped to real source tests or implemented explicitly before updating workflow commands. Do not blindly substitute an unrelated test target.
+- These independent workflow failures do not change protected E4 run #44519577693, whose three jobs all passed. Full repository push remains NOT GREEN; Issue #104 remains OPEN / NOT ACCEPTED.
