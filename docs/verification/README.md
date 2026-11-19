@@ -185,3 +185,12 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - APT downloads and package setup output completed, but the parent install command did not return before its deadline. The precise blocking package hook/process remains unknown.
 - Instrumented split-install config was committed as `84028a01fff08325db365a131a26a34c32690d62`; it separates Clang and MinGW installs and captures dpkg/process diagnostics on failure. Validation is pending on the new exact SHA.
 - Full incident evidence and follow-up: [CIRCLECI_FAILURE_69E668_2026-11-19.md](CIRCLECI_FAILURE_69E668_2026-11-19.md) and [CircleCI config review](CIRCLECI_CONFIG_REVIEW_2026-11-19.md).
+
+
+## Clang package-group timeout — exact SHA 26fcd96 — 2026-11-19
+
+- CircleCI job #747 / `9666c56b-20cc-4be8-b08c-6547c4a467ab`, source SHA `26fcd96d53e19b4218e5b1e5926020a8326fb09b`, failed step #105.
+- The Clang/binutils APT group ran for exactly 1,500 seconds and exited 124. Package configuration and man-db/libc-bin triggers completed within seven seconds of the group start; the parent apt command then remained alive until the 25-minute deadline. MinGW did not start.
+- The exact blocking wait point remains UNKNOWN. The post-timeout process listing is not evidence of the pre-timeout process state.
+- Follow-up instrumentation commit `60a8a20ca92dd4d55ce062f08708250eb1cb6317` captures live process state every 120 seconds and APT terminal/history logs while preserving all compiler packages. It is not yet validated; inspect the new exact-SHA CircleCI run before claiming resolution.
+- See [the detailed failure report](CIRCLECI_FAILURE_69E668_2026-11-19.md).
