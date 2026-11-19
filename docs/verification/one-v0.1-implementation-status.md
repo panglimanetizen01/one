@@ -257,3 +257,11 @@ This dated checkpoint supersedes earlier status summaries that predate code-bear
 - Separate SEC-05 run #44519577571 has Windows SUCCESS and Linux FAILED at native cross-compiler installation step 5. Exact failure logs are not yet available; do not classify root cause. Other independent E1/stdlib/provenance/health/artifact workflows also failed on the same push.
 - Classification: E4 protected verification CONFIRMED for the recorded source and environments; Issue #104 remains OPEN / NOT ACCEPTED until remaining acceptance/ledger requirements are reconciled. PR #113 remains OPEN / DRAFT / UNMERGED.
 - Latest PR #113 docs HEAD at this checkpoint: `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07`; CircleCI exact-SHA status PENDING. Do not claim CI success based on the preceding SHA.
+
+
+## Protected verifier auxiliary workflow classification — 2026-11-19
+
+- E4 protected post-merge run #44519577693: SUCCESS across Unix no-follow/resource bounds, Windows reparse/handle checks, and Windows native `NtCreateFile + OBJ_DONT_REPARSE` probe.
+- SEC-05 Linux run #44519577571 / job `135544437757`: failed before tests in native cross-compiler installation. APT update succeeded, but 194 MB of a 277 MB package set was downloaded before the Azure Ubuntu mirror backend `52.252.75.106:80` became unreachable; APT exit 100. Windows SEC-05 passed.
+- E1 Windows job `135544437394`, E1 Linux job `135544437616`, and focused stdlib job `135544438572` all fail before executing tests because the configured Cargo target `stdlib_builtins` does not exist in `one-core`. The candidate has no `tests/stdlib_builtins.rs`; the workflow test inventory must be reconciled to actual source tests.
+- These are separate verifier setup/harness defects, not E4 failures. Issue #104 remains OPEN / NOT ACCEPTED; no E1 acceptance is inferred.
