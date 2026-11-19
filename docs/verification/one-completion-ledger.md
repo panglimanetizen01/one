@@ -1,3 +1,19 @@
+## Live exact-SHA ledger checkpoint — 2026-11-19 16:40Z
+
+This block is the active status and supersedes older live summaries below where they conflict. Historical evidence remains tied to its original source SHA.
+
+- ONE main: d35db95153f6ddd79885494c72f5aee16c899751; unchanged. PR #113 remains OPEN / DRAFT / UNMERGED. Code-bearing source candidate: 722d662e7a81711ba3607d26571f4048a292b3ed; subsequent PR #113 commits are documentation-only.
+- Protected verifier branch verification: b14abf0020472dc45842be30854e0a09317d6cb4. CANONICAL_COMMIT.txt at both a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd and b14abf0 contains the same exact ONE source SHA 722d662e7a81711ba3607d26571f4048a292b3ed.
+- E3 is now VERIFIED 8/8 on source SHA 722d662. Exact protected evidence: cross-platform #44519577496 (Ubuntu + Windows); Linux distro #44519577570 (Ubuntu 24.04 + Debian 12); candidate artifact integrity #44566172841; Android API 35 AArch64 native ARM64 runtime #44519577666. Android log confirms API 35 arm64-v8a emulator boot, AArch64 ELF execution, exit 0 and exact-source artifact. Follow-up E1 cross-platform #44566212975, E1 Windows #44566212997 and focused stdlib/database #44566212982 are also terminal SUCCESS on verifier HEAD b14abf0.
+- Ledger totals: 92/100 implementation, 8/100 verified. Fixed weights unchanged. E3 row is the only row promoted in this update; E1, E2, E4, E5, E6 remain 0 verified. E4 is not promoted because Issue #104 remains OPEN / NOT ACCEPTED and full filesystem acceptance inventory remains incomplete.
+- DoD: 4 checked / 9 unchecked / 13 total. Only the E3 item was newly checked, with exact-source evidence. Final SHA freeze, E1, E2 provenance, E4 full security acceptance, E5, and E6 remain incomplete.
+- All 12 required verifier workflow groups now have terminal SUCCESS on the exact pinned source SHA 722d662. This satisfies the current required CI matrix but does not automatically award points or release acceptance.
+- Historical fixed-weight gate #44519577312 remains FAILURE; it ran before the completed protected matrix and before E3 promotion. Do not overwrite historical evidence. A new gate evaluation should occur only after draft evidence-index and ledger-source updates are reviewed and integrated; it will remain NOT PASSED until every remaining row, DoD and protected provenance-release requirement is fulfilled.
+- Issue #104 remains OPEN / NOT ACCEPTED. No universal filesystem sandbox is claimed. No E4 pin, canonical source pin, fixed weight, protected release, or ONE main was changed.
+- ONE PR #113 latest docs HEAD eeafcab579cebb762af34d1daf4830f95cba87e7 has CircleCI ci/circleci: one-linux PENDING (workflow 0621c480-6054-4fc1-8c82-b9028f105735, job 49178c86-d311-49ac-835a-6fa49985a980). No CircleCI CLI/provider connector is available in this session; no job logs are claimed.
+
+---
+
 ## Live exact-SHA continuation checkpoint — 2026-11-18 05:14Z
 
 This block supersedes older live-state summaries below where they conflict. Historical run evidence remains tied to its original SHA; no result is transferred.
