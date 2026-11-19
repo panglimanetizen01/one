@@ -215,3 +215,11 @@ Perbaikan workflow verifikasi independen untuk pemeriksaan paket, instalasi comp
 **Batas penting:** hasil verifikasi workflow bukan berarti seluruh fitur keamanan filesystem telah diterima atau aplikasi siap dirilis. Issue #104 masih OPEN / NOT ACCEPTED. Penulisan nested pada Linux dan adapter platform yang belum didukung tetap ditolak secara aman. Project ONE belum dinyatakan selesai atau 100% diterima.
 
 PR #113 tetap draft dan belum digabung; branch utama ONE tidak berubah. Hasil CircleCI SUCCESS pada SHA 64c490e9045aa29506772f74e3697a63a66b9695 berlaku hanya untuk SHA tersebut. Commit dokumentasi berikutnya memerlukan hasil CircleCI baru.
+
+## Hasil verifikasi terbaru — 19 November 2026
+
+Enam workflow verifikasi independen setelah integrasi perbaikan telah selesai dengan status SUCCESS. Cakupannya meliputi integritas paket, pemeriksaan subprocess SEC-05, runtime native Windows, pengujian bahasa ONE v0.1 pada Linux dan Windows, serta regresi standard library dan database.
+
+Hasil ini merupakan bukti untuk cakupan pengujian yang disebutkan, bukan pernyataan bahwa seluruh proyek sudah diterima. Issue #104 tentang pembatasan akses filesystem masih OPEN / NOT ACCEPTED. Penulisan nested pada Linux dan adapter platform yang belum didukung tetap ditolak secara aman. Project ONE belum dinyatakan siap rilis atau 100% selesai.
+
+PR #113 tetap draft dan belum digabung. Branch utama ONE tidak berubah. CircleCI SUCCESS sebelumnya pada SHA 64c490e berlaku hanya untuk SHA itu; status untuk commit dokumentasi berikutnya harus diperiksa secara terpisah.
