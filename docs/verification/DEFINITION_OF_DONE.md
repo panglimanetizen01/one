@@ -1,3 +1,38 @@
+## Live exact-SHA checkpoint — 2026-11-19 16:38Z
+
+This block supersedes prior live-state summaries below where they conflict. Historical run evidence remains tied to its original SHA; no result is transferred.
+
+### Source and protected verifier identity
+
+- ONE canonical main remains d35db95153f6ddd79885494c72f5aee16c899751; no main merge/release.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Code-bearing source candidate pinned by verifier: 722d662e7a81711ba3607d26571f4048a292b3ed. Later PR #113 commits eeafcab579cebb762af34d1daf4830f95cba87e7 and preceding docs commits are documentation-only; runtime source/test paths are unchanged from the code-bearing source SHA.
+- Independent verifier protected branch verification is b14abf0020472dc45842be30854e0a09317d6cb4. CANONICAL_COMMIT.txt at both a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd and b14abf0020472dc45842be30854e0a09317d6cb4 contains the same exact ONE source SHA 722d662e7a81711ba3607d26571f4048a292b3ed.
+
+### Exact-source E3 evidence and promotion
+
+E3's complete stated criteria are now verified on the exact pinned source SHA:
+
+- One Cross-Platform Verification #44519577496: Ubuntu + Windows SUCCESS.
+- ONE Linux Distro Verification #44519577570: Ubuntu 24.04 + Debian 12 SUCCESS.
+- Candidate Artifact Integrity #44566172841: Linux + Windows metadata/integrity SUCCESS.
+- Android API 35 AArch64 native ARM64 runtime #44519577666: actual arm64-v8a emulator boot, AArch64 ELF pushed/executed, exit code 0; exact-source artifact uploaded.
+
+The follow-up protected E1 cross-platform #44566212975, E1 Windows #44566212997, and focused stdlib/database #44566212982 also completed SUCCESS on verifier HEAD b14abf0 and the same pinned source SHA. Logs show Linux one-core 148/148, Windows 133/133, standard library 6/6, core pipeline 6/6, conformance 5/5, database tests 1/1 and 9/9 where applicable, warnings-denied Clippy, and repository contract checks.
+
+E3 row is therefore updated from 0/8 to 8/8 VERIFIED; its matching DoD item is checked. This is a scoped row-level promotion only, not full E1–E6 or final-release acceptance. The ledger total is now 92/100 implementation and 8/100 verified. Fixed weights remain unchanged. DoD is 4 checked / 9 unchecked / 13 total.
+
+### Remaining acceptance state
+
+- E1: NOT VERIFIED as a complete 10-point row; recent test results are scoped evidence, not all API contract acceptance.
+- E2: NOT VERIFIED; protected source-bound package provenance signature/trusted publisher store and release path remain absent.
+- E3: VERIFIED 8/8 on source SHA 722d662.
+- E4: NOT VERIFIED as a complete 6-point row. Protected E4 tests passed, but Issue #104 remains OPEN / NOT ACCEPTED and the complete filesystem acceptance inventory is not yet met; no universal sandbox claim.
+- E5: NOT VERIFIED as a complete 4-point row.
+- E6: NOT IMPLEMENTED; final forensic audit and release evidence not complete.
+- Historical fixed-weight gate #44519577312 remains FAILURE; it ran before the newly completed protected matrix and before this E3 documentation promotion. Do not overwrite that historical result. A new gate evaluation is only appropriate after the updated ledger source and evidence index pins are integrated and reviewed; it will still fail until remaining row/DoD/provenance requirements are genuinely met.
+- ONE CircleCI on latest PR #113 HEAD eeafcab579cebb762af34d1daf4830f95cba87e7 is PENDING (workflow 0621c480-6054-4fc1-8c82-b9028f105735, job 49178c86-d311-49ac-835a-6fa49985a980). Prior SHA SUCCESS does not transfer. No CircleCI CLI/provider connector is available in this session.
+- No main, E4 source pin, fixed weight, package release, or protected verifier state was changed by this ledger-document draft update.
+
 ## Live exact-SHA continuation checkpoint — 2026-11-18 05:14Z
 
 This block supersedes older live-state summaries below where they conflict. Historical run evidence remains tied to its original SHA; no result is transferred.
@@ -171,7 +206,7 @@ Keep the existing weights unchanged. Mark a row verified only after its acceptan
 
 - [ ] **E1 — standard library (10 points):** complete the scope-defined public reusable API contracts; tests cover valid/invalid inputs, deterministic behavior, diagnostics, and cross-platform behavior. Existing focused UTC/JSON/text/list/map/integer tests are partial evidence, not automatic full-row credit.
 - [ ] **E2 — packaging and provenance (8 points):** deterministic package/lock behavior and stale-lock rejection pass; v2 source-bound provenance signature verifies against an independently configured trusted-publisher store; source tree is rechecked; protected `one-release` release path is exercised without exposing signing seeds or trust secrets.
-- [ ] **E3 — conformance and platforms (8 points; historical prior-SHA evidence only; current candidate NOT VERIFIED):** pre-reconciliation candidate `53220eeb4bae9138b3a46b469004f8eac4a11420` passed Linux/Windows, Linux distro, artifact-integrity, and actual Android API 35 arm64-v8a ELF runtime checks ([cross-platform](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40631564946), [Linux distro](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40631564950), [artifact integrity](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40631564901), [native ARM64 Android runtime](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40631564953)). The live gate must reconfirm all required runs on the new pin before final PASS.
+- [x] **E3 — conformance and platforms (8 points):** VERIFIED on exact ONE source SHA `722d662e7a81711ba3607d26571f4048a292b3ed`. Protected verifier evidence: [Linux/Windows cross-platform](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577496), [Ubuntu 24.04 + Debian 12 distro matrix](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577570), [candidate artifact integrity](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44566172841), and [actual Android API 35 arm64-v8a runtime](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577666). The Android log confirms native ARM64 emulator boot, AArch64 ELF execution, exit code 0, and exact-source artifact. Follow-up [E1 cross-platform](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44566212975), [E1 Windows](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44566212997), and [focused stdlib/database](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44566212982) are additional exact-source checks. This verifies E3's stated platform/conformance scope only; it does not imply E1, E2, E4, E5, E6 or final-release acceptance.
 - [ ] **E4 — security, resource bounds, recovery (6 points; historical prior-SHA evidence only; current candidate NOT VERIFIED):** Scoped acceptance recorded for candidate SHA `28d1384588662cc93f405dc9dd5f3012183d249f` based on [E4 adversarial filesystem/resource bounds 40669813282](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813282), [SEC-05 timeout/output 40669813337](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813337), [resource guard 40669813307](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813307), and [cross-platform Linux/Windows 40669813367](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40669813367). The threat review accepts the tested controls within the current Linux/Windows first-class and Android/Linux integration scope, while retaining explicit limitations: macOS/additional Unix are planned expansion; non-Linux Unix mount identity is best-effort; Windows filesystem-provider races are not universally disproven; named quotas do not cap all heap/caller-retained memory. This is not a complete-sandbox claim. This documentation update changes the source SHA, so E4 must be revalidated on the new exact pin before final gate acceptance.
 - [ ] **E5 — docs and developer tooling (4 points; historical prior-SHA evidence only; current candidate NOT VERIFIED):** on pre-reconciliation SHA `53220eeb4bae9138b3a46b469004f8eac4a11420`, Ubuntu and Windows passed contract checking, user-doc consistency and regression tests, CLI create/check/run/build/test/package smoke, and offline verification ([cross-platform run 40631564946](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40631564946)). The current-pin gate must reconfirm these checks after the ledger update before final PASS.
 - [ ] **E6 — final forensic audit (4 points):** E1–E5 acceptance is reconciled; required docs, specs, plans, completion ledger, checkpoints, CI evidence, PR metadata, and release provenance are mutually consistent; no mandatory gate remains open.

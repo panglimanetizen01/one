@@ -178,11 +178,11 @@ For each row, **implemented points** are provisional progress based on code actu
 | C6 | Milestone 60 evidence and checkpoint — **0** | Documentation-only reporting; earns no points by itself | 0/0 | 0/0 | NOT APPLICABLE |
 | E1 | Required standard library and reusable APIs — **10** | Scope-defined API contracts and executable tests | 7/10 | 0/10 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E2 | Packaging, dependency and project/build tooling for vNext — **8** | Deterministic artifacts, version metadata, supported project workflow | 7/8 | 0/8 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
-| E3 | Native backends and conformance across Linux, Windows, and Android AArch64 — **8** | Exact-SHA Linux/Windows builds and tests, Linux distro matrix, artifact integrity, and actual Android API 35 arm64-v8a ELF execution | 8/8 | 0/8 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
+| E3 | Native backends and conformance across Linux, Windows, and Android AArch64 — **8** | Exact source SHA 722d662e7a81711ba3607d26571f4048a292b3ed: cross-platform #44519577496; Linux distro #44519577570; artifact integrity #44566172841; Android API 35 AArch64 runtime #44519577666; E1/focused follow-up #44566212975/#44566212982/#44566212997 | 8/8 | 8/8 | VERIFIED — exact-source Linux/Windows, distro, artifact and Android runtime evidence |
 | E4 | Security, resource bounds, and recovery — **6** | Threat review and tested security/resource controls within declared Linux/Windows first-class targets and Android/Linux integration boundary; broader platform expansion remains out of scope | 6/6 | 0/6 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E5 | Documentation and developer tooling — **4** | Contract checker, documentation consistency and relative links, examples, CLI create/check/run/build/test/package smoke tests, and developer workflow instructions | 4/4 | 0/4 | IMPLEMENTED — PROVISIONAL; CURRENT SHA NOT VERIFIED |
 | E6 | Final forensic audit, release evidence and checkpoint — **4** | Definition-of-Done audit at release SHA; no unresolved required gates | 0/4 | 0/4 | NOT IMPLEMENTED — FINAL RELEASE GATE NOT PASSED |
-| | **TOTAL** | | **92/100** | **0/100** | **NOT PASSED — CURRENT SHA NOT VERIFIED** |
+| | **TOTAL** | | **92/100** | **8/100** | **NOT PASSED — E3 VERIFIED; OTHER ACCEPTANCE ROWS INCOMPLETE** |
 
 ## Baseline and evidence
 
