@@ -1,3 +1,16 @@
+## Exact-head correction — 2026-11-19 16:53Z
+
+This correction supersedes the 16:51Z block immediately below where the values differ. The 16:51Z note was written while the prior commit was HEAD; the following re-read observed these exact values:
+
+- PR #103 parent HEAD `7d421e7558e4ba60e1a70c13586158ce6131524f` reported CircleCI `CircleCI Pipeline: error`, pipeline 1165 (updated 16:51:20Z). The latest ledger docs commit in this correction is a new descendant; its own CircleCI status has not yet been reported. Root cause of pipeline 1165 remains UNKNOWN / NOT DIAGNOSED because provider logs are not available.
+- PR #113 HEAD `b0d854124191587882705c832e1825ad2a46cc8f` is OPEN / DRAFT / UNMERGED and CircleCI `ci/circleci: one-linux` is SUCCESS, workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`, updated 16:50:40Z.
+- Verifier PR #50 HEAD `9aaaaeeec6884fddcde94588e95cb7f9ef494044` is OPEN / DRAFT / UNMERGED; commit status is PENDING with no status contexts/check runs reported.
+- The source ledger remains 92/100 implementation and 8/100 verified; E3 8/8 VERIFIED; DoD 4 checked / 9 unchecked / 13 total. Main remains `d35db95153f6ddd79885494c72f5aee16c899751`. Canonical code source remains `722d662e7a81711ba3607d26571f4048a292b3ed`.
+
+No inference is made about current PR #103 CircleCI until its new exact HEAD reports a status. Do not transfer the prior pipeline error to the new commit or treat it as success.
+
+---
+
 ## Live PR/CI revalidation — 2026-11-19 16:51Z
 
 Supersedes earlier live PR status notes below. These states are exact-HEAD observations.
