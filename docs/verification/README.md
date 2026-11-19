@@ -240,3 +240,11 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - Windows SEC-05 job passed. E4 protected run #44519577693 also passed independently.
 - Failed Linux job rerun attempt 2 is in progress as a transient-network confirmation; job 135581237093. Do not claim it passed until terminal.
 - Detailed timestamps, exact evidence, and safe remediation boundary are in [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
+
+
+## Live continuation refresh — 2026-11-19 13:20Z
+
+- PR #113 exact HEAD `bc0070cbe6ea23b97ff814c145d68c24585a83c5` is CircleCI `ci/circleci: one-linux` SUCCESS (workflow `3d609b9a-fadc-4451-97fd-daf371ae0d4f`, job `8973d4dd-f38f-4bd1-9aa5-f098cfa3c7b0`). This is exact-SHA evidence only.
+- SEC-05 rerun attempt 2 Linux job `135581237093` is still IN_PROGRESS at `Install Linux native cross-compilers`; Windows job `135581239271` is SUCCESS. Linux logs are unavailable while the job is active. No SEC-05 Linux pass/fix is established.
+- Continue by polling run `44519577571` attempt 2. If it fails, retrieve the terminal logs and determine whether the Azure Ubuntu mirror failure recurred. If it succeeds, record a successful retry on the same pinned candidate, not a permanent remediation.
+- Keep PR #113 OPEN / DRAFT / UNMERGED, Issue #104 OPEN / NOT ACCEPTED, and `main` untouched. Do not change protected verifier branch without explicit authorization.
