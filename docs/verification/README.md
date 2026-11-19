@@ -194,3 +194,6 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - The exact blocking wait point remains UNKNOWN. The post-timeout process listing is not evidence of the pre-timeout process state.
 - Follow-up instrumentation commit `60a8a20ca92dd4d55ce062f08708250eb1cb6317` captures live process state every 120 seconds and APT terminal/history logs while preserving all compiler packages. It is not yet validated; inspect the new exact-SHA CircleCI run before claiming resolution.
 - See [the detailed failure report](CIRCLECI_FAILURE_69E668_2026-11-19.md).
+
+
+- Instrumentation refinement commit: `5c0b45a9dd8cbab4814f7935eacd08cecea17c88`. The live process snapshot now filters on the process `comm` field (avoids matching the enclosing shell's embedded script text) and emits a real newline after each captured command line. This is a logging-quality correction only; no package, timeout, or compiler behavior changed.
