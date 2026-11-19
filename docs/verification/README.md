@@ -197,3 +197,11 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 
 
 - Instrumentation refinement commit: `5c0b45a9dd8cbab4814f7935eacd08cecea17c88`. The live process snapshot now filters on the process `comm` field (avoids matching the enclosing shell's embedded script text) and emits a real newline after each captured command line. This is a logging-quality correction only; no package, timeout, or compiler behavior changed.
+
+
+## Latest Issue #104 evidence reconciliation — 2026-11-19
+
+- Current PR #113 exact HEAD `70ae27cd9dab4429c528d6f01a42377f474c725c`: CircleCI `ci/circleci: one-linux` SUCCESS (workflow `44163dc3-9fe7-41d1-a199-f1327b7d4055`, job `5a6562fb-9501-40fa-a49c-05966cf2a66b`).
+- Independent E4 and platform runs on code-bearing source `722d662e7a81711ba3607d26571f4048a292b3ed` are terminal SUCCESS. GitHub compare confirms the 103-commit range to `70ae27c...` changed only CircleCI configuration, docs, and diagnostic tooling—not runtime implementation or runtime tests. Exact run IDs, platform limits, and acceptance boundaries are recorded in [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
+- The APT timeout was not reproduced in the successful run; its root cause remains undetermined because the success path deletes the monitor log. Do not claim a root-cause fix.
+- Issue #104 remains OPEN / NOT ACCEPTED; PR #113 and PR #44 remain OPEN / DRAFT / UNMERGED; protected verifier pin remains unchanged. Linux nested writes and unsupported platforms remain fail-closed.
