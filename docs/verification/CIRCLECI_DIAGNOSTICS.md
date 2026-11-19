@@ -52,7 +52,7 @@ python3 tools/ci/diagnose_circleci.py --sha COMMIT_SHA --branch BRANCH_NAME
 - The script prints step numbers, execution indexes, outcome, and a bounded tail of each failed step's logs.
 - Secret-like values are redacted before display and before writing an optional report.
 - A missing stderr stream is normal; CircleCI returns no content when a step has no stderr.
-- Pagination is limited to ten pages as a safety boundary. If CircleCI advertises another page after the tenth, the utility raises a diagnostic error and marks discovery incomplete; it never silently treats truncated results as complete.
+- Pagination follows CircleCI API v2 `next_page_token` values until the API returns no next token. Previously seen continuation tokens are rejected to prevent an infinite loop; valid result sets are not truncated by an arbitrary page-count cap.
 - Pagination responses are schema-checked: `items` must be an array of objects and `next_page_token` must be null or a non-empty string. Malformed responses stop discovery as API/shape errors rather than being treated as an empty result.
 - If no pipeline exists for the exact local SHA, the script stops rather than selecting a nearby or newer commit.
 - If an exact-SHA pipeline exists but no failed/timed-out job is listed, the utility reports that state as inconclusive (running, successful, or no-job workflow); it does not label it a diagnostic/API error or claim PASS. Confirm workflow status in CircleCI.
@@ -65,7 +65,7 @@ Run the standard-library unit tests:
 python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
 ```
 
-The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, secret redaction, complete and malformed multi-page discovery, explicit failure when the ten-page safety limit would truncate results, exact-SHA pipeline discovery with no failed jobs, and source-identity reporting for direct job-ID versus exact-SHA lookup. The current suite contains 13 test methods.
+The tests cover failed-step extraction (including parallel executions), timeout/compiler/test classification, secret redaction, complete and malformed multi-page discovery (including 12+ pages and repeated-token rejection), exact-SHA pipeline discovery with no failed jobs, and source-identity reporting for direct job-ID versus exact-SHA lookup. The current suite contains 14 test methods.
 
 ## Limitations
 
@@ -142,3 +142,14 @@ python3 tools/ci/diagnose_circleci.py \
 ```
 
 The SHA above is the diagnostic target that exposed the pagination limit, not the new code HEAD. After this fix is committed, use the new exact HEAD SHA for any CI attribution. Store reports under `$HOME` on Termux; `/tmp` may be unavailable or read-only.
+
+
+## Linux cross-toolchain provisioning timeout — 2026-11-19
+
+- Exact source SHA: `72bd068e33045c95d042c225c0bdfd27ea4df57f`.
+- Failed job: `one-linux`, job number `730`, UUID `a693b817-a36a-45fa-b7da-1fd0a31b95ac`; failed step `#105`, “Install Linux and Windows-target cross-toolchains (Linux host)”.
+- The failed step's stderr ends with `Exited with code exit status 124`. Its command used `timeout 15m` for `apt-get install`, while CircleCI's inactivity guard was `20m`. Exit 124 is consistent with the explicit GNU `timeout` deadline expiring.
+- The supplied log shows 66.1 MB fetched successfully in 3 seconds and package unpack/setup progressing through man-db and libc-bin trigger processing. This does not indicate a package download or dependency-resolution failure; apt did not return successfully before its command deadline.
+- Remediation committed on the existing PR #113 branch: raise the bounded install deadline from 15m to 25m and the step's no-output timeout from 20m to 30m. The package selection and Linux-host Windows cross-compilation capability are unchanged.
+- This is an evidence-based timeout adjustment, not proof that the next execution will pass. The new exact SHA requires its own CI result and log inspection.
+
