@@ -63,7 +63,7 @@ impl Interpreter {
    let request = CapabilityRequest::new(*semantic, *capability, scope, *effect); let mut audit = Vec::<AuditRecord>::new();
    let mut adapter_request = crate::adapter::AdapterRequest::new(request);
    for argument in arguments { adapter_request = adapter_request.with_argument(argument); }
-   let (adapter_id, result) = orchestrator.execute_request_with_audit_for_adapter(&adapter_request, PlatformKind::Any, Some(&AdapterId::new(adapter)), &mut audit).map_err(Self::orchestration_error)?;
+   let (adapter_id, result) = orchestrator.execute_request_with_audit_for_adapter(&adapter_request, PlatformKind::current_host(), Some(&AdapterId::new(adapter)), &mut audit).map_err(Self::orchestration_error)?;
    let normalized = normalize_result(adapter_id, result, *expectation).map_err(|error| RuntimeError { code: "N3206", message: format!("Hasil orchestration tidak dapat dinormalisasi: {:?}", error) })?;
    match normalized.value() { NormalizedValue::Text(value) => output.extend(value.lines().map(ToOwned::to_owned)), NormalizedValue::Bytes(value) => match std::str::from_utf8(value) { Ok(text) => output.extend(text.lines().map(ToOwned::to_owned)), Err(_) => return Err(RuntimeError { code: "N3207", message: "Hasil orchestration berupa bytes yang bukan UTF-8.".into() }) } }
   }

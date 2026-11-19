@@ -10,6 +10,24 @@ use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, Executio
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum PlatformKind { Any, Linux, Windows, Android, Macos }
 
+impl PlatformKind {
+    /// Identify the actual host platform for adapter selection.
+    /// Unknown targets remain `Any` and therefore cannot select adapters
+    /// that require a specific native backend.
+    pub(crate) const fn current_host() -> Self {
+        #[cfg(target_os = "linux")]
+        { Self::Linux }
+        #[cfg(windows)]
+        { Self::Windows }
+        #[cfg(target_os = "android")]
+        { Self::Android }
+        #[cfg(target_os = "macos")]
+        { Self::Macos }
+        #[cfg(not(any(target_os = "linux", windows, target_os = "android", target_os = "macos")))]
+        { Self::Any }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdapterMetadata { id: AdapterId, status: AdapterStatus, capabilities: Vec<Capability>, platforms: Vec<PlatformKind> }
 impl AdapterMetadata { pub fn new(id: AdapterId, status: AdapterStatus, capabilities: Vec<Capability>, platforms: Vec<PlatformKind>) -> Self { Self { id, status, capabilities, platforms } } pub fn id(&self) -> &AdapterId { &self.id } pub const fn status(&self) -> AdapterStatus { self.status } pub fn declares(&self, capability: Capability) -> bool { self.capabilities.contains(&capability) } pub fn available_on(&self, platform: PlatformKind) -> bool { self.platforms.contains(&PlatformKind::Any) || self.platforms.contains(&platform) } pub fn validate_request(&self, request: &CapabilityRequest) -> Result<(), AdapterError> { request.validate().map_err(AdapterError::InvalidRequest)?; if !self.declares(request.capability) { return Err(AdapterError::UndeclaredCapability); } Ok(()) } }
@@ -691,6 +709,9 @@ mod filesystem_platform_metadata_tests {
 
         #[cfg(target_os = "linux")]
         {
+            assert_eq!(PlatformKind::current_host(), PlatformKind::Linux);
+            assert!(reader.metadata().available_on(PlatformKind::current_host()));
+            assert!(writer.metadata().available_on(PlatformKind::current_host()));
             for (platform, expected) in [
                 (PlatformKind::Linux, true),
                 (PlatformKind::Windows, false),
@@ -704,6 +725,9 @@ mod filesystem_platform_metadata_tests {
 
         #[cfg(windows)]
         {
+            assert_eq!(PlatformKind::current_host(), PlatformKind::Windows);
+            assert!(reader.metadata().available_on(PlatformKind::current_host()));
+            assert!(writer.metadata().available_on(PlatformKind::current_host()));
             for (platform, expected) in [
                 (PlatformKind::Linux, false),
                 (PlatformKind::Windows, true),
@@ -717,6 +741,8 @@ mod filesystem_platform_metadata_tests {
 
         #[cfg(not(any(target_os = "linux", windows)))]
         {
+            assert!(!reader.metadata().available_on(PlatformKind::current_host()));
+            assert!(!writer.metadata().available_on(PlatformKind::current_host()));
             for platform in [PlatformKind::Linux, PlatformKind::Windows, PlatformKind::Android, PlatformKind::Macos] {
                 assert!(!reader.metadata().available_on(platform), "unsupported reader platform {platform:?} must not be advertised");
                 assert!(!writer.metadata().available_on(platform), "unsupported writer platform {platform:?} must not be advertised");
