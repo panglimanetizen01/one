@@ -662,3 +662,49 @@ mod filesystem_windows_tests {
         std::fs::remove_file(outside).unwrap();
     }
 }
+
+
+#[cfg(test)]
+mod filesystem_platform_metadata_tests {
+    use super::*;
+
+    #[test]
+    fn filesystem_adapters_advertise_only_platforms_with_native_backends() {
+        let reader = FileReadAdapter::new();
+        let writer = FileWriteAdapter::new();
+
+        #[cfg(target_os = "linux")]
+        {
+            for (platform, expected) in [
+                (PlatformKind::Linux, true),
+                (PlatformKind::Windows, false),
+                (PlatformKind::Android, false),
+                (PlatformKind::Macos, false),
+            ] {
+                assert_eq!(reader.metadata().available_on(platform), expected, "reader metadata for {platform:?}");
+                assert_eq!(writer.metadata().available_on(platform), expected, "writer metadata for {platform:?}");
+            }
+        }
+
+        #[cfg(windows)]
+        {
+            for (platform, expected) in [
+                (PlatformKind::Linux, false),
+                (PlatformKind::Windows, true),
+                (PlatformKind::Android, false),
+                (PlatformKind::Macos, false),
+            ] {
+                assert_eq!(reader.metadata().available_on(platform), expected, "reader metadata for {platform:?}");
+                assert_eq!(writer.metadata().available_on(platform), expected, "writer metadata for {platform:?}");
+            }
+        }
+
+        #[cfg(not(any(target_os = "linux", windows)))]
+        {
+            for platform in [PlatformKind::Linux, PlatformKind::Windows, PlatformKind::Android, PlatformKind::Macos] {
+                assert!(!reader.metadata().available_on(platform), "unsupported reader platform {platform:?} must not be advertised");
+                assert!(!writer.metadata().available_on(platform), "unsupported writer platform {platform:?} must not be advertised");
+            }
+        }
+    }
+}
