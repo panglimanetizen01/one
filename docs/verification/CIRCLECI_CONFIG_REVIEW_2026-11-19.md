@@ -71,7 +71,6 @@ The setup command rewrites matching mirror hostnames across all APT source files
 
 Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74ab90` and independently confirm the pipeline revision is `7d4268d8cf713a6d6c3bd5ac533b7396d22b7361`. Use the existing `tools/ci/diagnose_circleci.py` utility with a locally configured `CIRCLECI_TOKEN`; never paste the token into chat. Once the first failing step is known, apply a minimal fix, validate the config and diagnostic tests on the resulting exact SHA, then inspect the new CircleCI run.
 
-
 ## Follow-up status refresh — 2026-11-19
 
 - Latest PR #113 HEAD after adding this review artifact: `5f21f24603410dedbe51b11a62ca196ebfdddf26`.
@@ -79,4 +78,15 @@ Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74
 - This PENDING result supersedes the prior statement that the documentation commit had no status contexts. It is not PASS and not FAIL. Do not transfer the FAILURE status from parent source SHA `7d4268d8cf713a6d6c3bd5ac533b7396d22b7361`.
 - PR #113 remains OPEN / DRAFT / UNMERGED; base branch remains `fix/windows-process-verifier-timeouts-20261118`; no merge or main change.
 - The diagnostic script and 13-test suite were read from this exact HEAD. No execution environment or CircleCI provider log reader is available through the connected tools in this session. Diagnostic tests and `circleci config validate` remain NOT VERIFIED.
-- Next external dependency: run the local diagnostic utility with `CIRCLECI_TOKEN` and the exact job UUID above; verify the job's pipeline revision equals `5f21f24603410dedbe51b11a62ca196ebfdddf26` before attributing the report. The previous failed job for parent SHA `7d4268d...` is a separate run.
+- The local diagnostic utility requires the user's local `CIRCLECI_TOKEN`; never paste it into chat. Verify the job's pipeline revision before attributing direct job-ID output. The previous failed job for parent SHA `7d4268d...` is a separate run.
+
+## Exact-SHA failed-step evidence — 2026-11-19
+
+- The user supplied the redacted diagnostic report for source SHA `69e66846a67f5d79044329ccf407838f454d24bf`. The report identifies pipeline `7a83d247-df67-4a07-a844-2b3c907f5f64`, workflow `one-ci`, job `one-linux` #740 / `5c42627c-b911-45d1-a32a-7cb72826af53`, and failed step #105.
+- The failed step is `Install Linux and Windows-target cross-toolchains (Linux host)`. The exact config uses `timeout 40m sudo apt-get ... install` and `no_output_timeout: 45m`. The final stderr line is `Exited with code exit status 124`, consistent with the explicit 40-minute GNU timeout expiring before APT returned.
+- Stdout shows APT update completed, 66.1 MB of packages fetched, all 11 selected packages unpacked/configured, and man-db/libc-bin triggers reached. No download, dependency-resolution, compiler, or test error appears in the supplied output.
+- This is the third observed timeout at this same provisioning stage: 15m on source `72bd068...`, 25m on `bb35f1e...`, and now 40m on `69e668...`. Raising the timeout again without identifying the slow/hung post-install operation is not justified.
+- Created [the exact-SHA failure report](CIRCLECI_FAILURE_69E668_2026-11-19.md) with evidence, confidence, and a diagnostic remediation plan.
+- No CircleCI config change, retry, or test rerun was made. Diagnostic unit tests and `circleci config validate` remain NOT VERIFIED on source SHA `69e668...`.
+- PR #113 was OPEN / DRAFT / UNMERGED at readback; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. No merge, main modification, force-push, or protected verifier pin change.
+- Next safe change: instrument and split the provisioning stage, capture dpkg/process state on failure, and retain the same required compiler capabilities. Apply a package-specific fix only after the instrumentation identifies the blocking operation.
