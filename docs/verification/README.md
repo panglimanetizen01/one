@@ -286,3 +286,72 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - Fixed-weight ledger gate run #44519577312 / job `135544436703` remains IN_PROGRESS at the exact-SHA ledger/DoD enforcement step. It is not PASS or FAIL. Preserve ledger scores and unchecked DoD items; do not manufacture acceptance.
 - Protected E4 run #44519577693 remains independently SUCCESS. Do not call the entire protected verifier push green; E1/stdlib, SEC-05 Linux, provenance, artifact, health scanner, and release gate are distinct workflows/findings.
 - Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Protected branch `verification` and `main` remain unchanged absent explicit authorization.
+
+
+## Exact-SHA continuation refresh — 2026-11-19 13:40Z
+
+
+
+### PR #113 and CircleCI
+
+
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Exact HEAD before this documentation refresh: 09f043d44099c77ed2cb2d3496190571ab47795e; base 181ad350d8f0db53cda654c4d378425fbdd6ab24.
+
+- CircleCI ci/circleci: one-linux = SUCCESS for exact SHA 09f043d; workflow cffa57d9-b339-432c-8d3f-61a592fc531c; job 25e62c16-b0e2-4282-ae75-eb1f6810c234. This does not transfer to the next docs SHA.
+
+
+
+### Draft verifier remediation PRs
+
+
+
+- PR #45 — https://github.com/panglimanetizen01/one-windows-verification/pull/45, head dabccd46bb6549e36761a4fa3b02da5d7c84a42e, OPEN / DRAFT. Static diff/readback only; workflow execution NOT RUN. Corrects stale-lock probe that previously inserted after nonexistent sha2 dependency line, and aligns artifact Rust/Cargo expectation from 1.99.0 to exact source pin 1.100.0.
+
+- PR #46 — https://github.com/panglimanetizen01/one-windows-verification/pull/46, head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11, OPEN / DRAFT. Pull-request run #44533999931 COMPLETED / SUCCESS on exact PR head. Linux job 135594520678 SUCCESS; Windows job 135594521270 SUCCESS. Linux APT source diagnostics, bounded retries, complete compiler set, subprocess contract tests, full one-core suite, and static SEC-05 guards passed. Windows toolchain, exact source checkout, Rust 1.100.0, 10 subprocess contract tests, full one-core suite, and Windows descendant guard passed. This validates the mitigation on that runner run only; no permanent upstream mirror guarantee. Whole-repo fmt remains a non-blocking diagnostic with pre-existing diffs.
+
+- PR #47 — https://github.com/panglimanetizen01/one-windows-verification/pull/47, head bd100d10c12c7b0849f01e9481111b0b0c859dd1, OPEN / DRAFT. Pull-request run #44535174043 COMPLETED / SUCCESS. Windows Server 2025 job 135598544938 checked out exact source SHA 722d662e7a81711ba3607d26571f4048a292b3ed, read Rust 1.100.0 from source rust-toolchain.toml, installed MinGW clang, passed PE compiler probe, built and inspected PE32+ AMD64, executed with exit code 0 / output Budi, and wrote exact-SHA manifest. PR branch run is not yet protected-branch evidence.
+
+- All three PRs target protected branch verification but remain draft/unmerged. No protected branch mutation or merge was performed.
+
+
+
+### E1 / standard-library failure classification
+
+
+
+- E1 Windows run #44519577311, job 135544437394: failed at cargo --locked test -p one-core --test stdlib_builtins; Cargo reports no test target named stdlib_builtins and lists actual targets (conformance, core_pipeline, database_vertical_slice, etc.).
+
+- E1 cross-platform run #44519577315: Linux job 135544437616 and Windows job 135544437995 failed at the same nonexistent stdlib_builtins test target.
+
+- Focused standard-library/database run #44519577640, job 135544438572: several filtered --lib invocations returned success with 0 passed / 148 filtered out (no matching tests), then the UTC integration step failed because stdlib_builtins does not exist.
+
+- Exact source tree at 722d662 has no crates/one-core/tests/stdlib_builtins.rs target. crates/one-core/src/stdlib.rs currently implements only display/list append/list remove; expected UTC/JSON/text/integer standard-library tests and features are not present in that file/tree.
+
+- Do not change these workflows to --lib merely to make them green; that would mask missing acceptance coverage. The correct next step is to implement the required E1 APIs and tests in a separately scoped ONE source change, then update verifier tests to target real, named tests. Until then E1 is NOT accepted.
+
+
+
+### Windows native runtime exact-SHA gate blocker
+
+
+
+- Fixed-weight ledger gate run #44519577312 remains IN_PROGRESS at job 135544436703, timeout budget 180 minutes; its live evidence poll waits up to 10,200 seconds (170 minutes).
+
+- The required workflow ONE Windows Native Backend Runtime — Windows Server 2025 had no run for canonical source SHA 722d662: its old workflow read WINDOWS_SOURCE_COMMIT.txt = a10a69afdf8675e703f38f1620abc935d8361897 and triggered only on that file or its own workflow. The gate resolves evidence through CANONICAL_COMMIT.txt = 722d662, so this workflow could not satisfy the exact-SHA requirement and remained pending.
+
+- PR #47 changes the workflow to trigger/read CANONICAL_COMMIT.txt, adds PR validation, and derives Rust toolchain from the exact checked-out source. Its PR-run SUCCESS validates the fix but is not included in the protected branch's branch=verification run list. After authorized merge, the protected push should generate the exact-SHA run; then the gate must be rerun/evaluated on terminal evidence.
+
+- Other required exact-SHA mirror workflows on verifier commit a44c32e are terminal: E1 Windows #44519577311 FAILURE, E1 cross-platform #44519577315 FAILURE, focused stdlib #44519577640 FAILURE, artifact #44519577533 FAILURE, SEC-05 #44519577571 FAILURE; Linux distro #44519577570, Cargo lockfile #44519577555, subprocess resource guard #44519577526, E4 #44519577693, cross-platform #44519577496, and native ARM64 runtime #44519577666 SUCCESS. Thus even after the missing Windows native run becomes terminal, the gate cannot pass while the above failures and other acceptance requirements remain unresolved.
+
+
+
+### Unchanged acceptance boundaries
+
+
+
+- Protected E4 run #44519577693 remains SUCCESS, scoped to its stated threat boundary.
+
+- Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Main and protected verifier branch remain unchanged absent explicit authorization.
+
+- Preserve exact-SHA claims, fixed ledger weights, DoD unchecked items, fail-closed platform behavior, and full compiler architecture coverage. Do not transfer PR-branch success into protected-branch acceptance.
