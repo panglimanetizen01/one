@@ -327,3 +327,24 @@ Protected run #44519577693 was checked beyond its green summary:
 - Protected fixed-weight gate #44519577312 FAILED after 10,200s waiting for terminal exact-SHA matrix; five protected workflows were reported failed (SEC-05, artifact, E1 Windows, focused stdlib/database, E1 cross-platform). The individual candidate fixes are validated only on their respective draft PR branches.
 - PR #113 exact HEAD `519f0f6856e0ae6242746581b9579cce33fca8cd` has CircleCI `ci/circleci: one-linux` SUCCESS. This is not a verifier release-gate PASS.
 - Issue #104 remains OPEN / NOT ACCEPTED; do not promote E4 or release acceptance from scoped evidence.
+
+
+## Fixed-weight gate log detail — 2026-11-19
+
+The complete GitHub Actions job log for run #44519577312 / job 135544436703 has now been retrieved. The failure is not an E4 regression. The verifier reported:
+
+- Exact candidate source SHA: 722d662e7a81711ba3607d26571f4048a292b3ed.
+- Fixed weights: 100 total; implementation 92/100; verified 0/100; 18 ledger rows checked.
+- Definition of Done: 10 unchecked acceptance items.
+- The independent evidence index did not contain the exact candidate SHA.
+- Every non-zero fixed-weight ledger row was still recorded as 0 verified points (F1–F6, C1–C5, E1–E6); no row acceptance points were promoted.
+- Exact-SHA matrix wait timed out after 10,200 seconds. The protected run list had failed SEC-05 #44519577571, artifact #44519577533, E1 Windows #44519577311, focused stdlib/database #44519577640, and E1 cross-platform #44519577315; no exact-source protected Windows Native Backend Runtime run was found.
+- No protected ONE Package Provenance Release run existed for the exact source SHA, so E2 could not be accepted from candidate bundles.
+
+This is the actual logged gate output, not a hypothesis. PR #45–#48 each validate a narrow fix on its own draft branch, but none is merged into protected verification; their successes cannot retroactively satisfy the failed protected run. Do not edit fixed weights, mark rows VERIFIED, check DoD items, or dispatch protected release merely to make the gate green. Issue #104 remains OPEN / NOT ACCEPTED and the overall release gate remains NOT PASSED.
+
+## Current PR #113 status after documentation sync
+
+- PR #113 HEAD: 3ebb877c5e2f5b97e2154a7b4643b478af940879, OPEN / DRAFT / UNMERGED.
+- CircleCI ci/circleci: one-linux on this exact SHA: PENDING at 2026-11-19T16:21:13Z; workflow abe252f3-c181-441c-a5f8-732d3bf9b785; job b233706c-6421-491b-8730-603443e4b196. Parent SHA 519f0f6856e0ae6242746581b9579cce33fca8cd had SUCCESS, which does not transfer.
+- ONE main remains d35db95153f6ddd79885494c72f5aee16c899751. No merge or protected-branch change was made.
