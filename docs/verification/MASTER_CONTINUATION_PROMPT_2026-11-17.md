@@ -426,3 +426,33 @@ This block supersedes older active PR/branch/pin/status instructions above. Pres
 - Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Main and protected verifier branch remain unchanged absent explicit authorization.
 
 - Preserve exact-SHA claims, fixed ledger weights, DoD unchecked items, fail-closed platform behavior, and full compiler architecture coverage. Do not transfer PR-branch success into protected-branch acceptance.
+
+
+## Correction and final scope reconciliation — 2026-11-19 13:52Z
+
+### Corrected E1 classification
+
+- The prior note that expected UTC/JSON/text/integer standard-library APIs were missing required E1 features is superseded. The normative docs/spec/one-v0.1-stdlib.md explicitly scopes v0.1 to display, greeting, empty-list creation, list append/remove, arithmetic, and comparison phrases; it warns against adding operations based only on helper signatures. UTC/JSON/text-prefix/suffix/checked-remainder are not required v0.1 APIs.
+- E1 verifier failures were stale test assumptions: stdlib_builtins target does not exist; focused --lib filters returned 0 tests matched. Correct action is align workflows to documented v0.1 behavior and existing test targets, not implement unapproved language features.
+- Draft PR #48 https://github.com/panglimanetizen01/one-windows-verification/pull/48 head 0fcbbd60e7c97a64cdcb1931b50e16c7cc00ff79. Focused Linux run #44536641377 SUCCESS: stdlib 6/6, core pipeline 6/6, conformance 5/5, DB unit 1/1, DB vertical slice 9/9, full one-core lib 148/148, contract checker PASS. E1 Windows run #44536641371 SUCCESS: stdlib 6/6, core pipeline 6/6, conformance 5/5, full one-core lib 133/133, contract checker and Clippy PASS. Cross-platform run #44536641375: Windows job 135603697996 SUCCESS; Ubuntu job 135603697243 still IN_PROGRESS at native cross-compiler installation. Keep PR draft until Linux terminal result.
+
+### Corrected PR #45 scope
+
+- PR #45 https://github.com/panglimanetizen01/one-windows-verification/pull/45 head 9a72e04b7e2992d655f8e3fc4e478892e91b7ae5 is artifact-integrity-only; current diff changes only candidate-artifact-inspection.yml. Exact-head run #44538012071 SUCCESS; job 135608513172 verified source SHA 722d662, Linux/Windows archive digests, embedded Rust/Cargo 1.100.0, ELF64 x86-64 and PE32+ x86-64.
+- The package-provenance signing lab is explicitly excluded from PR #45. The normative v0.1 package/build spec states the full provenance envelope is not implemented. The lab references nonexistent examples/package-release fixture and unsupported sign-package/verify-package commands; it is a future/experimental workflow and not an Issue #104 gate. The attempted stale-lock probe modification was reverted from PR #45. Do not claim package signing/provenance is implemented or validated.
+
+### PR #46 and PR #47 validation
+
+- PR #46 https://github.com/panglimanetizen01/one-windows-verification/pull/46 head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11: run #44533999931 SUCCESS on Linux and Windows; bounded APT retries, full compiler set, subprocess contract tests, full one-core suites, and static guards passed. Draft/unmerged.
+- PR #47 https://github.com/panglimanetizen01/one-windows-verification/pull/47 head bd100d10c12c7b0849f01e9481111b0b0c859dd1: run #44535174043 SUCCESS; exact canonical source SHA 722d662, Rust 1.100.0, MinGW clang, PE32+ AMD64, native Windows runtime exit 0/output Budi. Draft/unmerged; PR-branch run is not protected-branch evidence.
+
+### PR #113 and ledger gate
+
+- PR #113 remains OPEN / DRAFT / UNMERGED at pre-refresh HEAD f68246eefed45a45f78f0c43a29d9a55ca7dce99; CircleCI was PENDING immediately after that docs SHA and must be polled again after this documentation update.
+- Fixed-weight gate #44519577312 remains IN_PROGRESS waiting for a protected exact-SHA Windows Native Backend run. PR #47 fixes the trigger/source-pin mismatch, but its PR-branch SUCCESS is not visible to the gate's branch=verification query until authorized protected promotion. Other required workflows still include the SEC-05 and artifact/E1 failures addressed by PRs #45/#46/#48.
+- Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 #44519577693 is independently SUCCESS; do not claim the entire verifier push is green.
+
+### Current safe boundary
+
+- PRs #45–#48 remain OPEN / DRAFT / UNMERGED. No protected verification branch or main change has been made. No merge authorization inferred.
+- Preserve exact-SHA evidence, fixed ledger weights, unchecked DoD, fail-closed behavior, and full compiler target coverage.
