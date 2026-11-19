@@ -90,3 +90,13 @@ Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74
 - No CircleCI config change, retry, or test rerun was made. Diagnostic unit tests and `circleci config validate` remain NOT VERIFIED on source SHA `69e668...`.
 - PR #113 was OPEN / DRAFT / UNMERGED at readback; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. No merge, main modification, force-push, or protected verifier pin change.
 - Next safe change: instrument and split the provisioning stage, capture dpkg/process state on failure, and retain the same required compiler capabilities. Apply a package-specific fix only after the instrumentation identifies the blocking operation.
+
+
+## Instrumented provisioning change — 2026-11-19
+
+- Implemented in `.circleci/config.yml`, commit `84028a01fff08325db365a131a26a34c32690d62`.
+- The combined apt install is split into independently timed Clang/Linux-binutils and x86_64 POSIX MinGW groups. Each has a 25-minute GNU timeout; the CircleCI step no-output guard is 30 minutes.
+- Added `DEBIAN_FRONTEND=noninteractive`, UTC start/completion markers, elapsed seconds, and failure diagnostics (`dpkg --audit`, apt/dpkg/debconf process snapshot, and the last 100 lines of `/var/log/dpkg.log`).
+- Compiler package selection and required Linux-host Windows cross-compilation capability are preserved.
+- This is diagnostic isolation, not proof of a package-specific fix. The config has not yet been validated by `circleci config validate`; diagnostic tests have not yet been executed on the new config commit.
+- The next CircleCI run must show which package group completes or times out. Do not transfer the failed status from source SHA `69e668...`.
