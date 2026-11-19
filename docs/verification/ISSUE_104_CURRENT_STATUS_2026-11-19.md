@@ -4,14 +4,15 @@
 
 - Repository: `panglimanetizen01/one`.
 - PR #113: OPEN / DRAFT / UNMERGED.
-- Exact PR HEAD at this checkpoint: `3c77d753281ce117cb0c1951ca368c1ade575994`.
+- Latest exact PR HEAD readback: `8829ca5e9fcb8d7412bdaee0714d48e6b7a894e3`.
 - Base branch: `fix/windows-process-verifier-timeouts-20261118`; exact base SHA: `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
-- GitHub combined status on exact HEAD `3c77d753...`: `ci/circleci: one-linux` = SUCCESS; status updated `2026-11-19T12:05:50Z`.
-- CircleCI workflow: `ca61ca33-e0ef-4df1-b048-821c26dcbb81`; job: `586c97ac-1d4e-4d14-a9cf-c092f942023d`.
-- Job URL: https://app.circleci.com/workflow/ca61ca33-e0ef-4df1-b048-821c26dcbb81/job/586c97ac-1d4e-4d14-a9cf-c092f942023d
-- The prior exact SHA `70ae27c...` CircleCI success and user-supplied job summary remain historical evidence for that SHA only. The 14/14 diagnostic utility unit tests were run on `70ae27c...`; do not claim they were rerun on this later documentation SHA.
+- GitHub combined status on exact HEAD `8829ca5...`: `ci/circleci: one-linux` = PENDING at `2026-11-19T12:59:38Z`.
+- CircleCI workflow: `be01c3a0-3088-454d-b687-0fc71dc02a49`; job: `289e257e-c387-402b-a277-cee762af3493`.
+- Job URL: https://app.circleci.com/workflow/be01c3a0-3088-454d-b687-0fc71dc02a49/job/289e257e-c387-402b-a277-cee762af3493
+- Immediately preceding exact SHA `3c77d753281ce117cb0c1951ca368c1ade575994` had CircleCI `ci/circleci: one-linux` SUCCESS (workflow `ca61ca33-e0ef-4df1-b048-821c26dcbb81`, job `586c97ac-1d4e-4d14-a9cf-c092f942023d`). Do not transfer that success to the later documentation SHA.
+- The 14/14 diagnostic utility unit tests were run on `70ae27c...`; do not claim they were rerun on later documentation SHAs.
 - APT timeout was not reproduced in the successful run; root cause remains UNDETERMINED. Do not claim a root-cause fix.
-- Current exact HEAD has a terminal CircleCI SUCCESS status. Any further commit to PR #113 creates a new exact SHA requiring its own CI status check.
+- Any further commit to PR #113 creates a new exact SHA requiring its own status check.
 
 ## Runtime-source identity and independent E4 evidence
 
