@@ -231,3 +231,12 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - The pinned ledger records 92/100 provisional implementation, 0/100 verified, E6 0/4; 10 Definition of Done items remain unchecked. The gate also requires exact-SHA mirror workflows and a protected package-provenance release run.
 - This is a broader final-release gate, not the E4 result. Do not claim final release acceptance while it is in progress.
 - Detailed evidence: [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
+
+
+## SEC-05 Linux package-install failure classified — 2026-11-19
+
+- SEC-05 run #44519577571, Linux job 135544437757, failed at `Install Linux native cross-compilers`, not in Rust or SEC-05 tests.
+- APT update succeeded, but package installation downloaded 194 MB over 11m 9s then failed to fetch remaining packages because the Azure Ubuntu mirror backend `azure.archive.ubuntu.com` (`52.252.75.106:80`) repeatedly timed out/unreachable; APT exit code 100.
+- Windows SEC-05 job passed. E4 protected run #44519577693 also passed independently.
+- Failed Linux job rerun attempt 2 is in progress as a transient-network confirmation; job 135581237093. Do not claim it passed until terminal.
+- Detailed timestamps, exact evidence, and safe remediation boundary are in [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
