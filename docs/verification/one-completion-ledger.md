@@ -1,3 +1,17 @@
+## PR and ledger status revalidation — 2026-11-19 16:48Z
+
+This block supersedes earlier PR/CI status statements below where they conflict. All status statements are exact-HEAD only.
+
+- ONE main remains `d35db95153f6ddd79885494c72f5aee16c899751`.
+- PR #113 is OPEN / DRAFT / UNMERGED, HEAD `54b92ab9703b9c3450cb33f5eb4f34861aae107b`; exact-head CircleCI `ci/circleci: one-linux` is SUCCESS, workflow `f9bd8ac7-a741-4bf6-8536-37af4798f3a1`, job `77951c98-1242-4c47-b45b-90011ecebfd6`, updated 16:43:57Z. No provider step logs were available to inspect.
+- PR #103 is OPEN / DRAFT / UNMERGED, HEAD `36bba2e45a629c4fa39677b0ea07a2489d37bc99`. GitHub Actions run #44568548119 Windows and Ubuntu jobs are SUCCESS. GitHub commit status separately reports `CircleCI Pipeline: error`, target pipeline 1161. No CircleCI step logs/provider connector are available, so root cause is UNKNOWN / NOT DIAGNOSED. It is not a pass.
+- Verifier PR #50 is OPEN / DRAFT / UNMERGED, HEAD `622637766b9fe7b673182e21faf6b2d8ce0a8767`, base protected verification `b14abf0020472dc45842be30854e0a09317d6cb4`. No status context or check runs are reported for this exact HEAD; classify NOT REPORTED.
+- ONE ledger at this checkpoint: 92/100 IMPLEMENTED, 8/100 VERIFIED; E3 is 8/8 VERIFIED on canonical code source `722d662e7a81711ba3607d26571f4048a292b3ed`. DoD count 4 checked / 9 unchecked / 13 total. Fixed weights unchanged.
+- PR #103's draft commit is not the canonical runtime source SHA. The verifier PR #50 ledger source pointer is intended to point to the exact ledger commit, while CANONICAL_COMMIT.txt remains the code-bearing source SHA. Keep these two pins distinct.
+- No PR merged, no branch force-pushed, no protected verifier branch changed, no main change, and no release/acceptance promotion beyond E3.
+
+---
+
 ## Live exact-SHA ledger checkpoint — 2026-11-19 16:40Z
 
 This block is the active status and supersedes older live summaries below where they conflict. Historical evidence remains tied to its original source SHA.
