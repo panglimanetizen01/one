@@ -5,12 +5,18 @@ This focused architecture view documents the filesystem authority and adapter bo
 ```mermaid
 flowchart TB
     Host["Host startup"] --> ProjectRoot["Project root from source context: nearest one.toml ancestor; otherwise cwd/source parent"]
+    Host --> HostPlatform["PlatformKind::current_host()"]
+    HostPlatform --> SelectAdapter["Orchestrator selects using actual host platform"]
+    SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux on Linux; Windows on Windows; none on Android/macOS"]
     ProjectRoot --> Authority["FilesystemAuthority::open(project_root, limits)"]
     Authority --> Root["Retained trusted root directory handle"]
     RequestedTarget["Requested target"] --> Confine["Resolve against fixed root; reject outside-root absolute targets"]
     Authority --> Confine
     Confine --> ReadAdapter["FileReadAdapter"]
     Confine --> WriteAdapter["FileWriteAdapter"]
+    AdapterMetadata --> ReadAdapter
+    AdapterMetadata --> WriteAdapter
+    SelectAdapter -->|No matching native backend| FailClosed
 
     ReadAdapter --> LinuxRead["Linux read backend"]
     LinuxRead --> Openat2Read["openat2(root_fd, relative)"]
@@ -65,7 +71,7 @@ flowchart TB
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
-| Exact-SHA adversarial test contract | [`.github/workflows/e4-adversarial-regression.yml`](https://github.com/panglimanetizen01/one-windows-verification/blob/probe/windows-obj-dont-reparse-20261118/.github/workflows/e4-adversarial-regression.yml) in the independent verifier repository |
+| Exact-SHA adversarial test contract | [`.github/workflows/e4-adversarial-regression.yml`](https://github.com/panglimanetizen01/one-windows-verification/blob/probe/issue-104-platform-metadata-20261120/.github/workflows/e4-adversarial-regression.yml) in the independent verifier repository |
 
 ## Explicit limitations
 
@@ -83,3 +89,8 @@ When the authority boundary, path resolution, platform backend, write transactio
 ## Protected verifier reconciliation — 2026-11-19
 
 PR #44 merged as `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected branch `verification` now pins `722d662e7a81711ba3607d26571f4048a292b3ed`. Protected E4 run #44519577693 succeeded for the Windows native OBJ_DONT_REPARSE probe, Windows reparse/handle checks, and Unix no-follow/resource-bound checks. The native Windows probe evidence is limited to Windows Server 2025 build 26100. Linux nested writes and unsupported platforms remain fail-closed; Issue #104 remains OPEN / NOT ACCEPTED because the fixed-weight release gate has not passed.
+
+
+## Host-platform selection reconciliation — 2026-11-20
+
+The diagram now includes `PlatformKind::current_host()` and host-specific filesystem adapter metadata. Implementation: `crates/one-core/src/adapter.rs` (`filesystem_platforms`, `PlatformKind::current_host`) and `crates/one-core/src/interpreter.rs` (actual host passed to orchestration). Linux/Windows E4 metadata test and Linux distro integration evidence are recorded above. Android/macOS filesystem adapters remain unsupported; the separate Android runtime proof does not imply filesystem support.

@@ -844,3 +844,10 @@ This dated addendum supersedes earlier status statements in this design that des
 - Issue #82 is CLOSED / COMPLETED for Android API 35 AArch64 runtime evidence; artifact #14553867982 was downloaded and its metadata/ELF digest inspected. This does not establish Android filesystem adapter support.
 - Issue #104 remains OPEN / NOT ACCEPTED; fixed-weight gate #44519577312 remains historical FAILURE. Linux nested writes and unsupported platform filesystem adapters remain fail-closed.
 - This documentation-only synchronization creates a new PR #113 HEAD; check that resulting SHA independently before transferring any CI status.
+
+
+## Platform metadata and host selection — 2026-11-20
+
+The filesystem adapters no longer advertise `PlatformKind::Any`. Their metadata is compiled as Linux-only on Linux, Windows-only on Windows, and empty on Android/macOS/other unsupported targets. The interpreter now supplies `PlatformKind::current_host()` to orchestration. This aligns adapter selection with the implemented backend and ensures unsupported filesystem platforms are rejected before invocation.
+
+Candidate source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: E4 run #44585270928 passed the metadata regression on Linux and Windows; Linux distro run #44585282690 passed the corrected filesystem CLI integration tests on Ubuntu 24.04 and Debian 12. CircleCI on this source remains PENDING; Windows full-workspace and remaining aggregate verification were still in progress at this checkpoint. Issue #104 remains OPEN / NOT ACCEPTED.

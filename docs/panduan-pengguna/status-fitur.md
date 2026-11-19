@@ -253,3 +253,9 @@ Bukti runtime native Android API 35 arm64-v8a kini juga memiliki artifact metada
 CircleCI `ci/circleci: one-linux` telah SUCCESS pada exact HEAD PR #113 `26a34efb6d0908bd02738a7b05090f96051a6dc7` (workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Ini membuktikan status job untuk kandidat draft tersebut; konfigurasi belum masuk ke `main` dan PR belum digabung.
 
 Bukti runtime Android API 35 arm64-v8a memiliki metadata artifact yang sudah diperiksa dan Issue #82 telah ditutup untuk cakupan runtime tersebut. Adapter filesystem Android tetap tidak dinyatakan didukung. Issue #104 masih OPEN / NOT ACCEPTED dan proyek belum siap rilis.
+
+## Pembaruan dukungan filesystem — 20 November 2026
+
+Adapter filesystem kini hanya mengiklankan backend native pada platform yang benar-benar tersedia: Linux pada build Linux dan Windows pada build Windows. Android, macOS, dan platform lain belum memiliki backend filesystem dan tetap fail-closed. Pemilihan adapter memakai identitas platform host sebenarnya, bukan nilai generik.
+
+Bukti kandidat source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: test metadata lulus pada Linux dan Windows melalui E4 run #44585270928; workspace test lulus pada Ubuntu 24.04 dan Debian 12 melalui run #44585282690. CircleCI untuk source ini masih PENDING. Issue #104 tetap OPEN / NOT ACCEPTED dan fitur belum dirilis ke `main`. Bukti runtime Android API 35 adalah bukti runtime native yang terpisah, bukan dukungan adapter filesystem Android.

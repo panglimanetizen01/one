@@ -182,8 +182,9 @@ The source-level `filesystem.write` slice described above is distinct from a sec
 
 - Linux candidate writes are limited to direct children of the host-injected root; nested paths fail closed.
 - Windows candidate writes use native handle-relative temporary-file replacement. Protected E4 verification passed for the canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed` (verifier run [#44519577693](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577693)); the Windows native probe is limited to Windows Server 2025 build 26100.
-- Linux and Windows E4 adversarial checks, the independent cross-platform/distro checks, and Android API 35 ARM64 runtime evidence are recorded for source pin `722d662...`; the retained metadata artifact was inspected and Issue #82 is closed for this runtime-evidence scope. The PR #113 source/test tree has no net source/test path changes from that pin; its current HEAD is a documentation/CI-tooling descendant. Do not relabel those runs as executions on the documentation HEAD.
-- CircleCI `one-linux` is SUCCESS on PR #113 documentation HEAD `b0d854124191587882705c832e1825ad2a46cc8f`; this does not mean the independent release gate passed.
+- Protected E4 and Android API 35 ARM64 runtime evidence remain tied to source pin `722d662...`; Issue #82 is closed only for the Android runtime-evidence scope.
+- Current PR #113 code candidate `c7f460a4e38be61de635ad5af9f7ff987a941f01` adds truthful filesystem adapter platform metadata and actual host-platform selection. E4 run #44585270928 passed the metadata regression on Linux and Windows; Linux distro run #44585282690 passed Ubuntu 24.04 and Debian 12 workspace tests, including the CLI regression.
+- CircleCI on exact source `c7f460a...` is PENDING; last terminal SUCCESS was on documentation parent `26a34ef...` and does not transfer. The independent release gate has not passed.
 - Other platform backends remain unsupported/fail-closed.
 
 Do not rely on the current released `filesystem.write` slice to confine hostile paths or treat it as a project sandbox. Read the [user-facing feature status](docs/panduan-pengguna/status-fitur.md), [security contract](docs/SECURITY.md), and [Issue #104 design](docs/security/issue-104-filesystem-root-confinement-design.md) before enabling filesystem write in an untrusted environment.

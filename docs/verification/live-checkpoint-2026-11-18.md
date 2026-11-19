@@ -485,3 +485,12 @@ Issue #104 remains OPEN / NOT ACCEPTED. E1, E2, E4, E5 and E6 are not fully veri
 - Issue #82 is CLOSED / COMPLETED for Android API 35 AArch64 runtime evidence; artifact #14553867982 was downloaded and its metadata/ELF digest inspected. This does not establish Android filesystem adapter support.
 - Issue #104 remains OPEN / NOT ACCEPTED; fixed-weight gate #44519577312 remains historical FAILURE. Linux nested writes and unsupported platform filesystem adapters remain fail-closed.
 - This documentation-only synchronization creates a new PR #113 HEAD; check that resulting SHA independently before transferring any CI status.
+
+
+## Exact-SHA platform metadata and host-selection verification — 20 November 2026
+
+- Candidate source: `c7f460a4e38be61de635ad5af9f7ff987a941f01`. The code/test delta from protected E4 pin `722d662e7a81711ba3607d26571f4048a292b3ed` includes `adapter.rs`, `interpreter.rs`, and `filesystem_vertical_slice.rs`.
+- Filesystem adapter metadata now advertises Linux only on Linux and Windows only on Windows; Android/macOS/other unsupported targets advertise no filesystem backend. `PlatformKind::current_host()` supplies actual host identity to orchestration.
+- E4 run #44585270928 SUCCESS; the metadata regression explicitly passed on Linux and Windows. Linux distro run #44585282690 SUCCESS on Ubuntu 24.04 and Debian 12, including the corrected CLI integration test. E1 Windows acceptance #44585282432 SUCCESS.
+- Aggregate cross-platform, Windows native runtime, Android runtime, SEC-05, E1 milestone, and artifact integrity workflows remained in progress/pending. CircleCI on exact source `c7f460a...` remained PENDING; last terminal CircleCI SUCCESS was on parent docs SHA `26a34ef...` and does not transfer.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Verifier PR #51 remains OPEN / DRAFT with branch-local pin `c7f460a...`; protected verifier branch and pins remain unchanged. Issue #104 remains OPEN / NOT ACCEPTED; Issue #82 is CLOSED only for Android runtime evidence. No merge, main update, pin promotion, or release.

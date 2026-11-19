@@ -127,3 +127,10 @@ Compatibility status must be recorded per exact source revision and tested envir
 ### CLI filesystem root selection
 
 The CLI's filesystem authority root is selected from source/project context, not the requested target. It prefers the nearest `one.toml` ancestor; otherwise it uses the working directory for sources beneath it or the canonical source parent for standalone sources outside it. Absolute targets outside this root are rejected for both reads and writes. This host integration is still a draft PR #113 candidate pending exact-SHA verification.
+
+
+## Filesystem adapter platform metadata and host selection — 2026-11-20
+
+The Issue #104 candidate now uses `PlatformKind::current_host()` for orchestrator selection. `FileReadAdapter` and `FileWriteAdapter` advertise only the compiled native backend: Linux builds advertise Linux; Windows builds advertise Windows; Android, macOS, and other unsupported targets advertise no filesystem backend and fail closed. This prevents a generic `PlatformKind::Any` declaration from overstating filesystem support.
+
+Exact candidate evidence: source `c7f460a4e38be61de635ad5af9f7ff987a941f01`; E4 run #44585270928 passed the metadata regression on Linux and Windows; Linux distro run #44585282690 passed Ubuntu 24.04 and Debian 12 workspace tests. CircleCI on this source remained PENDING at this checkpoint. Issue #104 remains OPEN / NOT ACCEPTED and this candidate is not in `main`.
