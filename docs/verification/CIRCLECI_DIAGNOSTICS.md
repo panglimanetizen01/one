@@ -184,3 +184,11 @@ The SHA above is the diagnostic target that exposed the pagination limit, not th
 
 
 - Instrumentation refinement commit: `5c0b45a9dd8cbab4814f7935eacd08cecea17c88`. The live process snapshot now filters on the process `comm` field (avoids matching the enclosing shell's embedded script text) and emits a real newline after each captured command line. This is a logging-quality correction only; no package, timeout, or compiler behavior changed.
+
+
+## Current exact-HEAD checkpoint — 2026-11-19 16:14Z
+
+- PR #113 HEAD `519f0f6856e0ae6242746581b9579cce33fca8cd`: `ci/circleci: one-linux` SUCCESS; workflow `a3e98250-83bd-4c4a-a72c-cc15b596267b`; job `8ef8576f-999c-4b09-954f-b52aa82f0dd3`.
+- The status is verified from GitHub's exact-commit status context. CircleCI provider stdout/stderr is not available through the connected session; do not claim provider-log inspection.
+- The configured job includes `python3 -m unittest discover -s tools/ci -p 'test_*.py' -v`. Job-level SUCCESS means no reported job failure, but the exact discovered test count/output is not independently visible.
+- Separate `circleci config validate .circleci/config.yml` remains NOT VERIFIED. Do not infer it from the job status.

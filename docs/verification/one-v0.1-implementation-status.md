@@ -265,3 +265,12 @@ This dated checkpoint supersedes earlier status summaries that predate code-bear
 - SEC-05 Linux run #44519577571 / job `135544437757`: failed before tests in native cross-compiler installation. APT update succeeded, but 194 MB of a 277 MB package set was downloaded before the Azure Ubuntu mirror backend `52.252.75.106:80` became unreachable; APT exit 100. Windows SEC-05 passed.
 - E1 Windows job `135544437394`, E1 Linux job `135544437616`, and focused stdlib job `135544438572` all fail before executing tests because the configured Cargo target `stdlib_builtins` does not exist in `one-core`. The candidate has no `tests/stdlib_builtins.rs`; the workflow test inventory must be reconciled to actual source tests.
 - These are separate verifier setup/harness defects, not E4 failures. Issue #104 remains OPEN / NOT ACCEPTED; no E1 acceptance is inferred.
+
+
+## Live implementation and acceptance status — 2026-11-19
+
+- Filesystem root-confinement implementation source: `722d662e7a81711ba3607d26571f4048a292b3ed` (candidate source in PR #113 ancestry; protected verifier pin now matches it after PR #44 merge).
+- Protected E4: VERIFIED / PASS on run #44519577693 for its stated Unix and Windows checks. Windows native probe is specifically Windows Server 2025 build 26100.
+- Linux nested writes and unsupported-platform filesystem operations remain fail-closed. Android API 35 ARM64 runtime evidence does not establish Android filesystem adapter support.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED because protected release gate #44519577312 failed and the full acceptance matrix is not complete.
+- PR #45–#48 remediation workflows passed on their respective draft branches; they are not yet protected-branch evidence.

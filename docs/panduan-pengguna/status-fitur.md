@@ -195,3 +195,15 @@ Classification: host-root resolver, Linux direct-child writer, Windows adapter r
 ## CircleCI status correction — 2026-11-18
 
 A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is FAILURE on the code-bearing source `722d662e7a81711ba3607d26571f4048a292b3ed` (job https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94). The previously recorded documentation HEAD `b94e85db5d83c9a4bec582609405d9c65e4db841` is PENDING, and its descendant documentation HEAD `add130412cf42088ca9171fa2660295f7c30ae65` is also PENDING (job https://app.circleci.com/workflow/bfe4df8d-85a8-49bc-b7f2-21910a4692cd/job/d2aa7f1d-0c7a-4e7b-8ba4-ecaf595674c2). The failure cause on the code SHA remains UNKNOWN because CircleCI logs are inaccessible through the current tools. This correction does not change the exact-source independent verification results or Issue #104 acceptance classification.
+
+
+## Pembaruan status pengguna — 19 November 2026
+
+Pembatasan akses filesystem masih **eksperimental dan belum diterima sebagai fitur rilis**.
+- Linux: pembacaan memakai root directory handle; penulisan hanya untuk anak langsung root. Penulisan bertingkat tetap fail-closed.
+- Windows: traversal dan atomic replacement memakai handle-relative backend. Bukti native junction/reparse-point terbatas pada Windows Server 2025 build 26100.
+- Platform lain tetap fail-closed. Keberhasilan build dan runtime Android API 35 ARM64 tidak berarti adapter filesystem Android sudah didukung.
+- Protected E4 pada source `722d662e7a81711ba3607d26571f4048a292b3ed` lulus, tetapi fixed-weight release gate masih gagal karena beberapa workflow verifier lain perlu integrasi dan verifikasi ulang pada protected branch.
+- PR #113 tetap OPEN / DRAFT / UNMERGED; Issue #104 tetap OPEN / NOT ACCEPTED.
+
+Jangan menyimpulkan fitur aman untuk semua platform atau siap rilis hanya dari satu kelompok test yang lulus.

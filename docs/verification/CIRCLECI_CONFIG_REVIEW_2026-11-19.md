@@ -113,3 +113,11 @@ Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74
 
 
 - Instrumentation refinement commit: `5c0b45a9dd8cbab4814f7935eacd08cecea17c88`. The live process snapshot now filters on the process `comm` field (avoids matching the enclosing shell's embedded script text) and emits a real newline after each captured command line. This is a logging-quality correction only; no package, timeout, or compiler behavior changed.
+
+
+## Exact-HEAD CircleCI refresh — 2026-11-19 16:14Z
+
+- PR #113 exact HEAD `519f0f6856e0ae6242746581b9579cce33fca8cd` has GitHub commit status `ci/circleci: one-linux` SUCCESS (workflow `a3e98250-83bd-4c4a-a72c-cc15b596267b`, job `8ef8576f-999c-4b09-954f-b52aa82f0dd3`). This is terminal job-level evidence for this SHA only.
+- CircleCI provider logs are not exposed in this session. No claim is made about individual step logs, timings, or a separately observed unit-test count. The configured job includes `python3 -m unittest discover -s tools/ci -p 'test_*.py' -v`; overall job SUCCESS indicates the job completed without a reported failure.
+- `circleci config validate .circleci/config.yml` remains NOT VERIFIED as a separate command. The job-level SUCCESS does not independently establish that this CLI validation was executed.
+- This does not resolve protected verifier gate #44519577312, which is terminal FAILURE on its own protected run. Do not transfer the PR #113 CircleCI status to the protected verifier.

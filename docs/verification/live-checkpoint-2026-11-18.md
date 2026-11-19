@@ -350,3 +350,31 @@ Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local
 - The 14 diagnostic unit tests passed on the pre-remediation exact SHA `bb35f1e...`; they do not verify the changed CircleCI configuration. The local CircleCI CLI validator remains unusable on Termux due its previously observed SIGSYS/faccessat2 crash; config validation is NOT VERIFIED.
 - Next gate: sync the new config/docs HEAD in Termux, run the 14 tests on that exact HEAD, then inspect its own CircleCI status and logs. Do not transfer results from `bb35f1e...`.
 - PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains unchanged. No merge, main modification, force-push, or protected-pin change.
+
+
+## Live continuation reconciliation — 2026-11-19 16:14Z
+
+### Exact source and CircleCI
+- PR #113 remains OPEN / DRAFT / UNMERGED at exact HEAD `519f0f6856e0ae6242746581b9579cce33fca8cd`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`, branch `security/issue-104-root-confinement-20261118`.
+- GitHub combined status on this exact HEAD: `ci/circleci: one-linux` = SUCCESS; workflow `a3e98250-83bd-4c4a-a72c-cc15b596267b`, job `8ef8576f-999c-4b09-954f-b52aa82f0dd3`. Job-level status only: provider logs are not exposed here, so no individual step output is claimed. Separate `circleci config validate .circleci/config.yml` remains NOT VERIFIED.
+- ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`, unchanged.
+
+### Protected verifier reconciliation
+- PR #44 merged at 2026-11-19T11:58:30Z as `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`. Protected `verification` now points to that merge commit; `CANONICAL_COMMIT.txt` pins `722d662e7a81711ba3607d26571f4048a292b3ed`. This supersedes older notes claiming PR #44 was draft and pin `e50748a...` was protected; preserve those as historical only.
+- Protected E4 run #44519577693 on source `722d662...` SUCCESS: Windows native OBJ_DONT_REPARSE probe, Windows reparse/handle checks, and Unix no-follow/resource-bound jobs all passed. Native Windows probe evidence is limited to Windows Server 2025 build 26100.
+
+### Draft verifier remediation PRs
+All remain OPEN / DRAFT / UNMERGED; their successful branch workflows are not protected-branch acceptance evidence:
+- PR #45 artifact integrity, head `9a72e04b7e2992d655f8e3fc4e478892e91b7ae5`, run #44538012071 SUCCESS.
+- PR #46 SEC-05 APT retry/diagnostics, head `8a880ad00225ed8a78a3fd58adfbc329f0df5b11`, run #44533999931 Linux + Windows SUCCESS.
+- PR #47 Windows native runtime pin alignment, head `bd100d10c12c7b0849f01e9481111b0b0c859dd1`, run #44535174043 SUCCESS; source `722d662...`, Rust 1.100.0, PE32+ AMD64, native output Budi / exit 0.
+- PR #48 E1 workflow alignment, head `06bf1d7cbd10adadb74c79d7296f951244ae9839`, run #44538540682 Ubuntu + Windows SUCCESS; stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core 148/148 Linux and 133/133 Windows, workspace tests, Clippy and contract checker passed.
+
+### Protected release gate
+- Fixed-weight gate #44519577312 is terminal FAILURE (job `135544436703`): timed out waiting 10,200 seconds for the exact-SHA verifier matrix and listed five failed protected workflows: SEC-05 #44519577571, artifact #44519577533, E1 Windows #44519577311, focused stdlib/database #44519577640, and E1 cross-platform #44519577315.
+- SEC-05 retry #44519577571 attempt 2: Linux APT install failed after 277 MB / 15m19s with HTTP 503 from `security.ubuntu.com`; Windows passed. Linux failed before Rust setup/tests. PR #46 is the separately validated branch mitigation, not yet promoted.
+- PR #45/#46/#48 provide branch-validated candidate corrections for the artifact, SEC-05 and E1 failures; PR #47 fixes the Windows native runtime canonical-pin trigger. Protected revalidation is still required after authorized integration.
+- Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 SUCCESS does not make the fixed-weight release gate pass.
+
+### Safety / next action
+Do not merge PR #113 or PR #45–#48, change ONE `main`, force-push, or alter protected verification without explicit authorization. After authorized verifier integration, rerun the protected exact-SHA matrix and fixed-weight gate. Until then preserve the current fail-closed behavior and all evidence boundaries.

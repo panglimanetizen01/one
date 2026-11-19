@@ -318,3 +318,12 @@ Protected run #44519577693 was checked beyond its green summary:
 - Native probe log confirms ordinary files open successfully while direct and intermediate junction traversal with OBJ_DONT_REPARSE returns STATUS_REPARSE_POINT_ENCOUNTERED (0xC000050B); success sentinel is present.
 - Cargo emits zero-test summaries for unrelated binaries while a filter is active; these are expected and are not false-positive passes because the workflow helper separately validates the exact matched test count.
 - E4 protected verification remains CONFIRMED for the source SHA and stated OS environments. This does not make the separate SEC-05/E1/stdlib failures green.
+
+
+## Live evidence reconciliation — 2026-11-19 16:14Z
+
+- Protected source pin after merged verifier PR #44: `722d662e7a81711ba3607d26571f4048a292b3ed`; protected E4 run #44519577693 SUCCESS across three jobs.
+- Draft verifier PR branch evidence: #45 run #44538012071 SUCCESS; #46 run #44533999931 SUCCESS Linux + Windows; #47 run #44535174043 SUCCESS Windows native runtime; #48 run #44538540682 SUCCESS Ubuntu + Windows. All remain OPEN / DRAFT / UNMERGED and do not satisfy protected-branch evidence rows until integrated and rerun.
+- Protected fixed-weight gate #44519577312 FAILED after 10,200s waiting for terminal exact-SHA matrix; five protected workflows were reported failed (SEC-05, artifact, E1 Windows, focused stdlib/database, E1 cross-platform). The individual candidate fixes are validated only on their respective draft PR branches.
+- PR #113 exact HEAD `519f0f6856e0ae6242746581b9579cce33fca8cd` has CircleCI `ci/circleci: one-linux` SUCCESS. This is not a verifier release-gate PASS.
+- Issue #104 remains OPEN / NOT ACCEPTED; do not promote E4 or release acceptance from scoped evidence.
