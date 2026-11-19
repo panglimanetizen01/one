@@ -77,3 +77,12 @@ Do not advertise or rely on this capability as a released project sandbox until 
 The CLI must derive the filesystem authority root from the source/project context, never from the requested target. It prefers the nearest ancestor containing `one.toml`; otherwise it uses the working directory for sources beneath it or the canonical source parent for standalone sources outside it. The requested target is independently checked against that fixed root. Absolute targets outside the root are rejected for both read and write operations.
 
 Regression tests cover outside-root read/write attempts and verify that outside data is neither disclosed nor modified. This remains a draft PR #113 candidate pending exact-SHA verification.
+
+
+## Process execution containment boundary — Issue #105 — 20 November 2026
+
+The current process adapter enforces a 10-second direct-child deadline and 1 MiB capture limit per output stream. On Unix, stdout/stderr readers are nonblocking and have a 100 ms shutdown grace (20 ms idle grace); this prevents an escaped pipe writer from keeping the caller blocked indefinitely. However, cleanup still kills only the original process group. A descendant that calls `setsid()` or creates a new process group can survive after the invocation returns. Bounded reader shutdown is **not** process-tree containment or a sandbox.
+
+Windows uses a Job Object assigned during process creation and terminates remaining job members during cleanup. The cross-platform guarantee is therefore not identical.
+
+Evidence boundary: SEC-05 run #44566187162 passed on its pinned source `722d662...` for the bounded timeout/output contract, but does not prove escaped-session cleanup. On candidate source `c7f460a4e38be61de635ad5af9f7ff987a941f01`, the Windows SEC-05 job #135776430245 is SUCCESS while the Linux job #135776429279 remains IN_PROGRESS at native cross-compiler installation. Issue #105 remains OPEN; no process-tree containment claim is made.
