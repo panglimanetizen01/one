@@ -1,3 +1,17 @@
+## Live PR/CI revalidation — 2026-11-19 16:51Z
+
+Supersedes earlier live PR status notes below. These states are exact-HEAD observations.
+
+- ONE main remains `d35db95153f6ddd79885494c72f5aee16c899751`.
+- PR #103 remains OPEN / DRAFT / UNMERGED, HEAD `22bb23d740fbd1011435e9b04b55655e2681a16f`. GitHub Actions run #44570379987 has Ubuntu and Windows jobs IN_PROGRESS. GitHub commit status reports `CircleCI Pipeline: error` on pipeline 1164. CircleCI provider step logs are unavailable; root cause UNKNOWN / NOT DIAGNOSED.
+- PR #113 remains OPEN / DRAFT / UNMERGED, HEAD `b0d854124191587882705c832e1825ad2a46cc8f`. CircleCI `ci/circleci: one-linux` is PENDING (workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`, status updated 16:47:03Z). Prior SHA `54b92ab...` SUCCESS does not transfer to this newer HEAD.
+- Verifier PR #50 remains OPEN / DRAFT / UNMERGED, HEAD `881554662906538a34ba26af4d34fbc1a5d27723`, base protected branch SHA `b14abf0020472dc45842be30854e0a09317d6cb4`. GitHub check runs are empty and no status context is reported; classify NOT REPORTED, not pass/fail.
+- Ledger remains 92/100 IMPLEMENTED and 8/100 VERIFIED; E3 8/8 VERIFIED on code source `722d662e7a81711ba3607d26571f4048a292b3ed`. DoD remains 4 checked / 9 unchecked / 13 total. Fixed weights unchanged.
+- Draft verifier `LEDGER_SOURCE_COMMIT.txt` currently points to ledger commit `22bb23d740fbd1011435e9b04b55655e2681a16f`; this is the ledger-document pin. `CANONICAL_COMMIT.txt` remains the code-source pin `722d662e7a81711ba3607d26571f4048a292b3ed`. Keep them distinct.
+- No merge, force-push, main change, protected verifier branch change, E4 promotion, or release action occurred. Issue #104 remains OPEN / NOT ACCEPTED.
+
+---
+
 ## PR and ledger status revalidation — 2026-11-19 16:48Z
 
 This block supersedes earlier PR/CI status statements below where they conflict. All status statements are exact-HEAD only.
