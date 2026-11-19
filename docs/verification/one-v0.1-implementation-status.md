@@ -244,3 +244,16 @@ Classification: host-root resolver, Linux direct-child writer, Windows adapter r
 ## CircleCI status correction — 2026-11-18
 
 A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is FAILURE on the code-bearing source `722d662e7a81711ba3607d26571f4048a292b3ed` (job https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94). The previously recorded documentation HEAD `b94e85db5d83c9a4bec582609405d9c65e4db841` is PENDING, and its descendant documentation HEAD `add130412cf42088ca9171fa2660295f7c30ae65` is also PENDING (job https://app.circleci.com/workflow/bfe4df8d-85a8-49bc-b7f2-21910a4692cd/job/d2aa7f1d-0c7a-4e7b-8ba4-ecaf595674c2). The failure cause on the code SHA remains UNKNOWN because CircleCI logs are inaccessible through the current tools. This correction does not change the exact-source independent verification results or Issue #104 acceptance classification.
+
+
+## Issue #104 current implementation and verification override — 2026-11-19
+
+This dated checkpoint supersedes earlier status summaries that predate code-bearing candidate SHA `722d662...` or say E4 is queued. Preserve historical test results as exact-SHA records.
+
+- Host-root resolver, Linux direct-child writer, and Windows adapter regressions are implemented in the candidate source at `722d662e7a81711ba3607d26571f4048a292b3ed`; the candidate's exact test inventory was executed by the protected E4 workflow after promotion.
+- Protected verifier PR #44 is CLOSED / MERGED into branch `verification` at merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected canonical pin is `722d662...`.
+- Protected post-merge E4 run #44519577693 is SUCCESS for all three jobs: Unix no-follow/resource bounds; Windows reparse/handle checks; Windows native `NtCreateFile + OBJ_DONT_REPARSE` contract probe.
+- Scope limits remain: Linux nested writes fail closed; macOS/unsupported platforms fail closed; Windows native probe is only Windows Server 2025 build 26100; Android runtime evidence is API 35 ARM64 only.
+- Separate SEC-05 run #44519577571 has Windows SUCCESS and Linux FAILED at native cross-compiler installation step 5. Exact failure logs are not yet available; do not classify root cause. Other independent E1/stdlib/provenance/health/artifact workflows also failed on the same push.
+- Classification: E4 protected verification CONFIRMED for the recorded source and environments; Issue #104 remains OPEN / NOT ACCEPTED until remaining acceptance/ledger requirements are reconciled. PR #113 remains OPEN / DRAFT / UNMERGED.
+- Latest PR #113 docs HEAD at this checkpoint: `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07`; CircleCI exact-SHA status PENDING. Do not claim CI success based on the preceding SHA.
