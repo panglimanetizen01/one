@@ -153,3 +153,12 @@ Exact evidence: protected-verifier workflow run #44519577571, attempt 1; Linux j
 - Rerun Linux job: `135581237093`; at last readback it was still executing `Install Linux native cross-compilers`. Do not claim rerun success until terminal completion.
 - No protected workflow or source change was made as part of this diagnosis. If the same failure recurs, a narrowly scoped remediation should first make the package source deterministic (avoid the failing Azure mirror path where possible), add bounded retries for transient archive fetch failures, and emit mirror/source diagnostics. Do not blindly reduce the compiler set or remove x86_64 target capability without inspecting actual downstream compiler requirements.
 - Keep the Windows job's successful result distinct from Linux. E4 run #44519577693 remains independently successful; this SEC-05 failure does not negate E4.
+
+
+## Exact live checkpoint refresh — 2026-11-19 13:20Z
+
+- PR #113 was re-read from GitHub: OPEN / DRAFT / UNMERGED; HEAD `bc0070cbe6ea23b97ff814c145d68c24585a83c5`; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- GitHub commit status for that exact HEAD now reports `ci/circleci: one-linux` = SUCCESS at `2026-11-19T13:11:51Z`; workflow `3d609b9a-fadc-4451-97fd-daf371ae0d4f`; job `8973d4dd-f38f-4bd1-9aa5-f098cfa3c7b0`. This result applies only to SHA `bc0070c...`.
+- Protected verifier SEC-05 rerun attempt 2 remains IN_PROGRESS at the latest API read. Linux job `135581237093` is still in step 5, `Install Linux native cross-compilers`; steps 6–15 remain pending. Windows job `135581239271` is SUCCESS. Job logs for the in-progress Linux attempt are not yet available (GitHub log endpoint returned 404 BlobNotFound).
+- No evidence yet that the Azure mirror failure is transient or resolved. Do not alter protected `verification` branch, reduce compiler targets, or claim SEC-05 Linux pass until terminal job evidence is available.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; `main` remains untouched. Protected E4 run #44519577693 remains independently SUCCESS; unrelated verifier workflow failures remain separate.
