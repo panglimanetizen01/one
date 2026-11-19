@@ -47,7 +47,7 @@ commands:
                 while kill -0 "$install_pid" 2>/dev/null; do
                   {
                     echo "=== LIVE APT PROCESS SNAPSHOT (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
-                    ps -eo pid,ppid,stat,wchan:32,etime,comm,args | grep -E '(^|[[:space:]])(apt-get|dpkg|debconf|needrestart|unattended-upgrade|sudo|timeout)([[:space:]]|$)' || true
+                    ps -eo pid,ppid,stat,wchan:32,etime,comm,args | awk '$6 ~ /^(apt-get|dpkg|debconf|needrestart|unattended-upgrade|sudo|timeout)$/ { print }'
                     for proc in /proc/[0-9]*; do
                       [[ -r "$proc/comm" ]] || continue
                       comm="$(cat "$proc/comm" 2>/dev/null || true)"
