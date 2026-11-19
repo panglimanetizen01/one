@@ -282,3 +282,11 @@ This block supersedes older active PR/branch/pin/status instructions above. Pres
 3. Reconcile the remaining Issue #104 acceptance/ledger gates and update derived artifacts; do not repeat the completed 14/14 diagnostic utility unit suite unless its source changes.
 4. Preserve fail-closed behavior and platform limits. Do not mark Issue #104 accepted based on E4 alone.
 5. Keep PR #113 draft/unmerged and `main` untouched.
+
+
+## FOLLOW-UP OVERRIDE — EXACT PROTECTED PUSH LOGS CLASSIFIED — 2026-11-19
+
+- Protected E4 run #44519577693 is PASS on merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; all three jobs passed. Do not re-audit those unchanged jobs.
+- SEC-05 Linux run #44519577571 / job `135544437757` failed before tests during APT install. The runner fetched 194 MB of a 277 MB MinGW/LLD package set, then failed to connect to `azure.archive.ubuntu.com` at `52.252.75.106:80`; APT exit 100. Windows job passed. Next: inspect runner apt mirror configuration and design a bounded, evidence-preserving mirror workaround. Do not change protected branch directly; use a reviewed PR.
+- E1 Windows job `135544437394`, E1 Linux job `135544437616`, and focused stdlib job `135544438572` all fail before tests because the workflow requests Cargo target `stdlib_builtins`, which does not exist in source SHA `722d662...`. Actual `one-core` integration targets include `conformance`, `core_pipeline`, `security`, `target_backend_foundation`, and `target_toolchain_foundation`. Do not substitute targets blindly: map intended cases or add the missing dedicated test target first.
+- These are separate harness/setup failures and do not invalidate E4. Do not claim the full verifier push green. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
