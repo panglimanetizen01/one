@@ -70,7 +70,7 @@ flowchart TB
 ## Explicit limitations
 
 - Linux nested writes fail closed because a retained nested-directory handle can be moved outside the root after opening. Direct-child writes use the retained root handle as their parent authority.
-- Linux and Windows write paths are candidate implementations; the latest exact-SHA verification remains pending.
+- Linux direct-child and Windows write paths have protected E4 evidence on code-bearing source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` (protected push run #44519577693). Linux nested writes remain fail-closed. The native Windows probe is limited to Windows Server 2025 build 26100.
 - Other platforms fail closed.
 - A successful artifact build or one passing platform job does not imply full platform support or Issue #104 acceptance.
 - The full architecture map in PR #97 is a separate non-normative overview image. This focused source diagram supplements it; it does not claim that the image itself has been visually inspected or reconciled.
