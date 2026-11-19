@@ -1,10 +1,11 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
-**Status:** Design checkpoint only — implementation and security acceptance NOT VERIFIED  
-**Latest adapter source recheck:** `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549`  
-**Current PR #110 HEAD at previous checkpoint:** `4a1dbdf08e9235bb070e970dfb59c33cc9a6c549` (documentation-only; CircleCI pending at last refresh)  
-**Branch:** security/issue-104-root-handle-design-20261118  
+**Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
+**Latest code-bearing source:** `722d662e7a81711ba3607d26571f4048a292b3ed`  
+**Current PR #113 HEAD (documentation descendants):** `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07` (CircleCI pending at last exact-SHA read)  
+**Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
+
 
 ## 1. Security objective
 
@@ -798,3 +799,15 @@ Classification: host-root resolver, Linux direct-child writer, Windows adapter r
 ## CircleCI status correction — 2026-11-18
 
 A fresh combined-status read confirms that CircleCI `ci/circleci: one-linux` is FAILURE on the code-bearing source `722d662e7a81711ba3607d26571f4048a292b3ed` (job https://app.circleci.com/workflow/9fb2893b-4373-4ef1-ad97-60b804ebedda/job/9f3acc50-11b9-47e5-b841-6a943300be94). The previously recorded documentation HEAD `b94e85db5d83c9a4bec582609405d9c65e4db841` is PENDING, and its descendant documentation HEAD `add130412cf42088ca9171fa2660295f7c30ae65` is also PENDING (job https://app.circleci.com/workflow/bfe4df8d-85a8-49bc-b7f2-21910a4692cd/job/d2aa7f1d-0c7a-4e7b-8ba4-ecaf595674c2). The failure cause on the code SHA remains UNKNOWN because CircleCI logs are inaccessible through the current tools. This correction does not change the exact-source independent verification results or Issue #104 acceptance classification.
+
+
+## AUTHORITATIVE STATUS OVERRIDE — 2026-11-19 (protected E4 verification)
+
+This dated addendum supersedes earlier status statements in this design that describe PR #110, the pre-implementation candidate, the old protected verifier pin, or E4 as still queued. Earlier entries remain historical records.
+
+- Current implementation candidate code-bearing SHA: `722d662e7a81711ba3607d26571f4048a292b3ed`. Subsequent PR #113 commits through `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07` are documentation/CI-diagnostic descendants; do not transfer a CircleCI result across exact SHAs.
+- PR #44 was explicitly authorized and merged into protected verifier branch `verification`; merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected `CANONICAL_COMMIT.txt` now pins `722d662...`.
+- Protected post-merge E4 run #44519577693 is terminal SUCCESS: Unix no-follow/resource bounds, Windows reparse/handle checks, and Windows native `NtCreateFile + OBJ_DONT_REPARSE` probe all passed. Native probe scope remains Windows Server 2025 build 26100 only.
+- Linux nested writes remain deliberately fail-closed. macOS and other unsupported platforms remain fail-closed. Android runtime evidence is API 35 ARM64 only.
+- Same-push SEC-05 Linux failed at the native cross-compiler installation step while its Windows job passed; this is separate from E4. Its failing command/log has not yet been retrieved, so root cause is unclassified. Other E1/stdlib/provenance/health/artifact workflows also failed separately; do not describe the whole verifier push as green.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED pending remaining acceptance/ledger gates. CircleCI on latest recorded PR HEAD `67d3c14...` was PENDING; verify the exact current SHA before any CI claim.
