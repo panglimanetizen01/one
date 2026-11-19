@@ -247,3 +247,9 @@ Verifikasi E4 filesystem independen tetap terikat pada source pin `722d662e7a817
 CircleCI `ci/circleci: one-linux` telah lulus pada exact HEAD PR #113 `051c7815cc5cf3dbca840ac8cbb38e3e663da6b7` (workflow `3b89115a-ff07-41ac-940e-fb78baccd7ac`, job `241f1d78-0aaf-4f47-8ea2-57fbd3b35a1c`). PR #113 tetap draft dan konfigurasi belum masuk ke `main`.
 
 Bukti runtime native Android API 35 arm64-v8a kini juga memiliki artifact metadata yang telah diperiksa pada source pin `722d662e7a81711ba3607d26571f4048a292b3ed`; Issue #82 ditutup untuk tugas bukti runtime tersebut. Ini tidak berarti adapter filesystem Android sudah didukung. Issue #104 tetap OPEN / NOT ACCEPTED, penulisan nested Linux tetap fail-closed, dan proyek belum siap rilis.
+
+## Pembaruan CI — 20 November 2026
+
+CircleCI `ci/circleci: one-linux` telah SUCCESS pada exact HEAD PR #113 `26a34efb6d0908bd02738a7b05090f96051a6dc7` (workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Ini membuktikan status job untuk kandidat draft tersebut; konfigurasi belum masuk ke `main` dan PR belum digabung.
+
+Bukti runtime Android API 35 arm64-v8a memiliki metadata artifact yang sudah diperiksa dan Issue #82 telah ditutup untuk cakupan runtime tersebut. Adapter filesystem Android tetap tidak dinyatakan didukung. Issue #104 masih OPEN / NOT ACCEPTED dan proyek belum siap rilis.

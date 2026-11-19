@@ -663,3 +663,15 @@ Issue #104 remains OPEN / NOT ACCEPTED. E1, E2, E4, E5 and E6 are not fully veri
 - Protected verifier branch `verification` remains `b14abf0020472dc45842be30854e0a09317d6cb4`; canonical source pin remains `722d662...`; protected ledger source pin remains `d6c382a245c49a028bc60809f22ca956c7f894cc`. No protected pin or ledger weight changed.
 - The fixed-weight gate #44519577312 remains historical FAILURE. Issue #104 remains OPEN / NOT ACCEPTED; Linux nested writes and unsupported platform filesystem adapters remain fail-closed. Issue #105 and the broader E1/E2/E4/E5/E6 release work remain unresolved.
 - This documentation synchronization itself creates a new PR #113 HEAD. Do not transfer the SUCCESS above to the new SHA; inspect the exact resulting commit status before any subsequent CircleCI claim.
+
+
+## CircleCI exact-HEAD terminal confirmation — 20 November 2026
+
+- Current PR #113 HEAD at this checkpoint: `26a34efb6d0908bd02738a7b05090f96051a6dc7`.
+- GitHub combined status: `ci/circleci: one-linux` = terminal SUCCESS.
+- Workflow: `a7016ead-ed2d-467f-9f1b-4d20c60a966f`; job: `6cc9778c-307c-48fc-9111-39c97d288393`.
+- This is a direct exact-SHA status read for `26a34efb6d0908bd02738a7b05090f96051a6dc7`; it is not transferred from parent commits. Provider step logs were not inspected, so no per-step or test-count claim is made.
+- PR #113 remains OPEN / DRAFT / UNMERGED; ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. The CircleCI candidate has not been integrated into `main`.
+- Issue #82 is CLOSED / COMPLETED for Android API 35 AArch64 runtime evidence; artifact #14553867982 was downloaded and its metadata/ELF digest inspected. This does not establish Android filesystem adapter support.
+- Issue #104 remains OPEN / NOT ACCEPTED; fixed-weight gate #44519577312 remains historical FAILURE. Linux nested writes and unsupported platform filesystem adapters remain fail-closed.
+- This documentation-only synchronization creates a new PR #113 HEAD; check that resulting SHA independently before transferring any CI status.

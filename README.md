@@ -153,7 +153,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## CI execution provider
 
-CircleCI is the intended canonical Linux CI provider. The draft PR #113 candidate now contains `.circleci/config.yml`, and CircleCI `ci/circleci: one-linux` reports terminal SUCCESS on exact PR HEAD `051c7815cc5cf3dbca840ac8cbb38e3e663da6b7` (workflow `3b89115a-ff07-41ac-940e-fb78baccd7ac`, job `241f1d78-0aaf-4f47-8ea2-57fbd3b35a1c`). This is job-level exact-SHA evidence; provider step logs were not separately inspected. The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and still has no `.circleci/config.yml`. Therefore no canonical CI-provider cutover is claimed.
+CircleCI is the intended canonical Linux CI provider. The draft PR #113 candidate now contains `.circleci/config.yml`, and CircleCI `ci/circleci: one-linux` reports terminal SUCCESS on exact PR HEAD `26a34efb6d0908bd02738a7b05090f96051a6dc7` (workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). This is job-level exact-SHA evidence; provider step logs were not separately inspected. The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and still has no `.circleci/config.yml`. Therefore no canonical CI-provider cutover is claimed.
 
 Windows Server 2025 native execution remains independently verified in [one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Linux-host MinGW cross-compilation does not replace Windows-host execution.
 
