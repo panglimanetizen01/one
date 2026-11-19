@@ -254,3 +254,31 @@ Runner gate: no authenticated CircleCI tool or GitHub Actions workflow-dispatch 
 - PR #110 remains OPEN/DRAFT/UNMERGED at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; CircleCI `one-linux` SUCCESS applies to that exact SHA. The independent Windows run above is pinned to PR #108 SHA `a20676be...`, not PR #110 SHA.
 - Issue #104 remains OPEN / NOT IMPLEMENTED. Do not claim root confinement, E4 acceptance, DoD completion, or release readiness. Continue with the next source implementation step only when the exact Rust runner and cross-platform validation path are available; retain fail-closed design requirements.
 
+
+
+## AUTHORITATIVE CONTINUATION OVERRIDE — 2026-11-19 (PR #44 promoted; E4 verified)
+
+This block supersedes older active PR/branch/pin/status instructions above. Preserve historical entries but never use their old PR #110, pre-promotion pin, or stale CircleCI SHA as current state.
+
+### Current project identity and boundaries
+
+- Main repo: `panglimanetizen01/one`.
+- Active PR #113: OPEN / DRAFT / UNMERGED; branch `security/issue-104-root-confinement-20261118`; base branch `fix/windows-process-verifier-timeouts-20261118`, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Latest known PR #113 HEAD at this checkpoint: `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07`; CircleCI `ci/circleci: one-linux` PENDING (workflow `b3e62c78-3825-41a4-bfb5-b0f498bffcf0`, job `11de1f0c-6382-4f65-825c-d78adf5b4dbf`). Refresh PR metadata and status before continuing.
+- Issue #104 remains OPEN / NOT ACCEPTED. Do not merge PR #113, modify `main`, force-push, delete branches, or close the issue without explicit authorization.
+- Verifier repo: `panglimanetizen01/one-windows-verification`. PR #44 is CLOSED / MERGED into protected branch `verification`; merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected pin `722d662e7a81711ba3607d26571f4048a292b3ed`.
+
+### Verified protected E4 result
+
+- Post-merge protected push run #44519577693 is terminal SUCCESS: Unix no-follow/resource bounds, Windows reparse/handle checks, and Windows native `NtCreateFile + OBJ_DONT_REPARSE` probe all passed.
+- Windows native probe scope is Windows Server 2025 build 26100 only.
+- Linux nested writes remain fail-closed; unsupported platforms remain fail-closed; Android runtime evidence is API 35 ARM64 only.
+- Do not call the entire verifier push green: SEC-05 Linux failed at native cross-compiler installation step 5 (Windows passed), and separate E1/stdlib/provenance/health/artifact workflows also failed. Retrieve exact failing step logs before changing the Linux toolchain configuration.
+
+### Next execution order
+
+1. Refresh exact PR #113 HEAD and poll CircleCI for that SHA. Never transfer prior SHA status.
+2. Retrieve and classify the SEC-05 Linux cross-compiler install failure logs. Keep this separate from the passing E4 jobs.
+3. Reconcile the remaining Issue #104 acceptance/ledger gates and update derived artifacts; do not repeat the completed 14/14 diagnostic utility unit suite unless its source changes.
+4. Preserve fail-closed behavior and platform limits. Do not mark Issue #104 accepted based on E4 alone.
+5. Keep PR #113 draft/unmerged and `main` untouched.
