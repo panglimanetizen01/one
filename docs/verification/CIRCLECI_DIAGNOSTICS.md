@@ -181,3 +181,6 @@ The SHA above is the diagnostic target that exposed the pagination limit, not th
 - MinGW was never reached. The post-timeout dpkg audit showed no pending package output; the process snapshot was after timeout cleanup and therefore cannot identify what APT was waiting on.
 - New config commit `60a8a20ca92dd4d55ce062f08708250eb1cb6317` adds a background process-state recorder every 120 seconds (process IDs, parent IDs, state, wait channel, command) and captures `/var/log/apt/term.log` and `history.log` on failure. Package selection and timeout values are unchanged.
 - This is instrumentation only. CircleCI execution, config validation, and the 14 diagnostic unit tests on the new commit remain NOT VERIFIED.
+
+
+- Instrumentation refinement commit: `5c0b45a9dd8cbab4814f7935eacd08cecea17c88`. The live process snapshot now filters on the process `comm` field (avoids matching the enclosing shell's embedded script text) and emits a real newline after each captured command line. This is a logging-quality correction only; no package, timeout, or compiler behavior changed.
