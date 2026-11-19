@@ -173,3 +173,11 @@ The SHA above is the diagnostic target that exposed the pagination limit, not th
 - New config commit `84028a01fff08325db365a131a26a34c32690d62` splits Clang/Linux-binutils and x86_64 POSIX MinGW into separate 25-minute installs, with a 30-minute step no-output guard. It sets `DEBIAN_FRONTEND=noninteractive`, emits UTC timestamps and elapsed seconds, and captures dpkg audit, apt/dpkg/debconf processes, and dpkg log tail on failure.
 - New exact-SHA config validation and diagnostic test execution are NOT VERIFIED. Read the resulting CircleCI log to identify the package group/process; do not transfer failure or pending status from parent SHA `69e668...`.
 - Detailed evidence: [CIRCLECI_FAILURE_69E668_2026-11-19.md](CIRCLECI_FAILURE_69E668_2026-11-19.md).
+
+
+## Exact-SHA live APT diagnosis — 2026-11-19
+
+- Source SHA `26fcd96d53e19b4218e5b1e5926020a8326fb09b`, job #747, step #105: Clang/binutils install began at 08:47:02 UTC and the package/trigger log ended at 08:47:09 UTC. The wrapper timed out at 09:12:02 UTC with exit 124 after exactly 1,500 seconds.
+- MinGW was never reached. The post-timeout dpkg audit showed no pending package output; the process snapshot was after timeout cleanup and therefore cannot identify what APT was waiting on.
+- New config commit `60a8a20ca92dd4d55ce062f08708250eb1cb6317` adds a background process-state recorder every 120 seconds (process IDs, parent IDs, state, wait channel, command) and captures `/var/log/apt/term.log` and `history.log` on failure. Package selection and timeout values are unchanged.
+- This is instrumentation only. CircleCI execution, config validation, and the 14 diagnostic unit tests on the new commit remain NOT VERIFIED.
