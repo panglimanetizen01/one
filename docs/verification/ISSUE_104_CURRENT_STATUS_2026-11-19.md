@@ -119,3 +119,12 @@ The full Unix and Windows E4 job logs and workflow helper were inspected. The "0
 - Windows job log contains all seven required passing tests: directory-junction escape; absolute in-root read; outside-root absolute confinement/no-side-effect; successful write; oversized write rejection; denied atomic replacement preserving target; parent-directory traversal rejection.
 - Native Windows job log records ordinary-file open success and both direct/intermediate junction opens rejected with STATUS_REPARSE_POINT_ENCOUNTERED (0xC000050B), ending with OBJ_DONT_REPARSE_ROOT_DIRECTORY_JUNCTION_DENIAL_OK.
 - Therefore protected E4 run #44519577693 is supported by actual exact test execution, not merely green job conclusions or filtered-only output. Platform limits remain as stated above.
+
+
+## Fixed-weight final release ledger gate — pending — 2026-11-19
+
+- Protected verifier run #44519577312 is still IN_PROGRESS on verifier merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; job `135544436703` is executing `Enforce fixed weights, exact-SHA workflow evidence, protected release, and Definition of Done`.
+- The workflow pins the implementation source separately (`CANONICAL_COMMIT.txt` = `722d662...`) and the ledger/DoD document source separately (`LEDGER_SOURCE_COMMIT.txt` = `d6c382a245c49a028bc60809f22ca956c7f894cc`).
+- The ledger at the pinned documentation SHA records implementation 92/100 provisional, verified 0/100, and E6 0/4; the Definition of Done has 10 unchecked items. The gate's verifier requires all positive-weight rows fully verified, zero unchecked DoD items, all required exact-SHA mirror workflows terminal-success, and a protected package-provenance release run for the exact source SHA.
+- This is a final Project ONE release gate, broader than the Issue #104 E4 subtask. Do not treat its current IN_PROGRESS state as PASS or FAIL, and do not update ledger scores/checkboxes to manufacture acceptance.
+- The gate is expected to report its own terminal evaluation after its live-workflow polling. Keep Issue #104 OPEN / NOT ACCEPTED and PR #113 OPEN / DRAFT / UNMERGED meanwhile.
