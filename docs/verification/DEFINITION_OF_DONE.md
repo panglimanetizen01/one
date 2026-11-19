@@ -1,3 +1,17 @@
+## Exact-SHA CI completion checkpoint — 2026-11-20
+
+This checkpoint supersedes the earlier PR #103 run #44570989114 status recorded as IN_PROGRESS. It records CI execution only; it does not change implementation/verification weights, acceptance rows, or DoD completion checkboxes.
+
+- ONE PR #103 remains OPEN / DRAFT / UNMERGED at the previously verified ledger-source commit `e053b5ffae46a7e1d696bea5eb5a13999c722ee0` for this evidence snapshot. GitHub Actions run #44570989114 (workflow run #2238) is now COMPLETED / SUCCESS on that exact SHA.
+- Ubuntu job `135725650325` (`test (ubuntu-latest)`) is COMPLETED / SUCCESS. Its full log shows Toolchain, Contract artifacts, Build, Clippy, Tests, deterministic .oneir/.onepkg artifacts, DNS classification, orchestration policy, database vertical slice, HTTP GET vertical slice, and HTTP GET CLI vertical slice all succeeded. Focused tests include orchestrator 5/5, filesystem vertical slice 2/2, orchestration audit 2/2, process vertical slice 1/1, database vertical slice 7/7, HTTP GET vertical slice 3/3, and CLI HTTP GET 3/3.
+- Windows job `135725650808` (`test (windows-2025)`) is COMPLETED / SUCCESS. Its full log confirms Toolchain, Contract artifacts, Build, Clippy, Tests, deterministic artifacts, DNS/orchestration, database, HTTP GET, and CLI HTTP GET steps succeeded. No error annotations were found.
+- Non-blocking warnings: GitHub Actions reports Node.js 20 deprecation for `actions/checkout@v4` and `android-actions/setup-android@v3` (forced to Node.js 24); Windows also reports MSYS2 `MINGW64` deprecation. These warnings did not fail either job. Do not conflate them with CircleCI's separate pipeline error.
+- CircleCI combined status for the same SHA remains ERROR, target pipeline 1166. The CircleCI UI pipeline URL is inaccessible to this session and no authenticated CircleCI connector is exposed. Failed-step details and root cause remain UNKNOWN / NOT DIAGNOSED. GitHub Actions success does not override or prove CircleCI success.
+- PR #113 exact SHA `b0d854124191587882705c832e1825ad2a46cc8f` still reports CircleCI `ci/circleci: one-linux` SUCCESS (workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`).
+- Verifier PR #50 draft branch remains at its previously recorded docs head `5f2441ad628074ef3c881701a9569d27fdadb79b`; no status context is reported for that exact SHA. Classify as NOT REPORTED, not PASS.
+- Ledger values remain 92/100 IMPLEMENTED and 8/100 VERIFIED; E3 remains 8/8 VERIFIED against canonical code source `722d662e7a81711ba3607d26571f4048a292b3ed`. E1, E2, E4, E5, and E6 remain 0 verified; E6 remains NOT IMPLEMENTED. DoD remains 4 checked / 9 unchecked / 13 total. Issue #104 remains OPEN / NOT ACCEPTED. Fixed weights unchanged.
+- The GHA result above is a documentation-branch CI result for exact source SHA `e053b5f...`; it does not award project acceptance points, alter the canonical code-source pin, or establish final release readiness.
+
 ## Exact-head correction — 2026-11-19 16:53Z
 
 This correction supersedes the 16:51Z block immediately below where the values differ. The 16:51Z note was written while the prior commit was HEAD; the following re-read observed these exact values:
