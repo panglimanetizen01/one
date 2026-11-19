@@ -2,7 +2,7 @@
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
 **Latest code-bearing source:** `722d662e7a81711ba3607d26571f4048a292b3ed`  
-**Current PR #113 HEAD at this design refresh:** `0e89bea05f6eee30caee241b93c9a0ac1d1168f8` (documentation-only synchronization commit; CircleCI PENDING at last exact-SHA read)  
+**Latest CircleCI-confirmed PR #113 HEAD:** `b0d854124191587882705c832e1825ad2a46cc8f` (`ci/circleci: one-linux` SUCCESS; workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`). Later documentation-only commits are not credited with this result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
