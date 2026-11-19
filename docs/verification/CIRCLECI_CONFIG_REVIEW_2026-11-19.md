@@ -121,3 +121,14 @@ Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74
 - CircleCI provider logs are not exposed in this session. No claim is made about individual step logs, timings, or a separately observed unit-test count. The configured job includes `python3 -m unittest discover -s tools/ci -p 'test_*.py' -v`; overall job SUCCESS indicates the job completed without a reported failure.
 - `circleci config validate .circleci/config.yml` remains NOT VERIFIED as a separate command. The job-level SUCCESS does not independently establish that this CLI validation was executed.
 - This does not resolve protected verifier gate #44519577312, which is terminal FAILURE on its own protected run. Do not transfer the PR #113 CircleCI status to the protected verifier.
+
+
+## Current checkpoint correction — 2026-11-19 16:44Z
+
+- PR #113 exact HEAD `54b92ab9703b9c3450cb33f5eb4f34861aae107b` now has CircleCI `ci/circleci: one-linux` terminal SUCCESS (workflow `f9bd8ac7-a741-4bf6-8536-37af4798f3a1`, job `77951c98-1242-4c47-b45b-90011ecebfd6`). This supersedes the earlier PENDING observation for the same SHA. CircleCI provider logs are not exposed; this is job-level exact-SHA evidence only. No separate CLI config-validation or per-step test-count claim is made.
+- Protected verifier branch `verification` remains `b14abf0020472dc45842be30854e0a09317d6cb4`, canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed`. All 12 required exact-source verifier workflow names plus Android runtime alternative have terminal SUCCESS.
+- Draft ONE ledger/DoD PR #103 head `36bba2e45a629c4fa39677b0ea07a2489d37bc99` records E3 VERIFIED 8/8; ledger totals 92/100 implementation and 8/100 verified; DoD 4 checked / 9 unchecked / 13. This is still a draft source.
+- Draft verifier PR #50 head `622637766b9fe7b673182e21faf6b2d8ce0a8767` proposes the exact-source evidence index and ledger source pointer to PR #103. It remains OPEN / DRAFT / UNMERGED. Protected `LEDGER_SOURCE_COMMIT.txt` remains `d6c382a245c49a028bc60809f22ca956c7f894cc`; the proposed pointer has not been applied.
+- Historical fixed-weight gate #44519577312 remains FAILURE on the old protected ledger source: 92/100 implementation, 0/100 verified, 18 rows checked, 10 DoD unchecked, and no protected source-bound ONE Package Provenance Release. No new gate run has been triggered. Do not alter fixed weights/DoD or merge PR #50 without explicit authorization.
+- Issue #104 remains OPEN / NOT ACCEPTED: Linux nested writes and unsupported filesystem adapters remain fail-closed. Issue #82 protected Android runtime #44519577666 succeeded (API 35 arm64-v8a, ELF exit 0), but PR #49 metadata runtime job #135708475823 remains IN_PROGRESS. Issue #105 escaped-descendant containment remains unresolved.
+- ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`; PR #113 remains OPEN / DRAFT / UNMERGED.

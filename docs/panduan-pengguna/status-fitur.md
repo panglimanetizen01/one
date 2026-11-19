@@ -227,3 +227,10 @@ PR #113 tetap draft dan belum digabung. Branch utama ONE tidak berubah. CircleCI
 ## CircleCI status update — 19 November 2026
 
 CircleCI now reports SUCCESS for the exact PR #113 documentation SHA eeafcab579cebb762af34d1daf4830f95cba87e7 (workflow 0621c480-6054-4fc1-8c82-b9028f105735). This result applies only to that SHA. It does not change the draft status of PR #113 or mean Issue #104 is accepted. CircleCI step logs were not separately available for detailed test-count claims.
+
+
+## Pembaruan bukti platform — 19 November 2026
+
+Runtime native ONE pada Android API 35 arm64-v8a telah berhasil dijalankan pada exact source SHA `722d662e7a81711ba3607d26571f4048a292b3ed`; hasil ELF exit code 0 dengan marker `ONE_NATIVE_BACKEND_OK`. Ini memverifikasi cakupan runtime Android AArch64 untuk backend native.
+
+Bukti tersebut **tidak berarti adapter filesystem Android sudah didukung**. Pembatasan filesystem tetap eksperimental: penulisan nested Linux dan adapter platform yang belum tersedia tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED. Project ONE belum dinyatakan selesai atau siap rilis.
