@@ -33,20 +33,69 @@ commands:
               local started="$SECONDS"
               local status=0
               echo "=== APT INSTALL START: $label (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
-              if timeout 25m sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_opts[@]}" install -y --no-install-recommends "$@"; then
-                echo "=== APT INSTALL COMPLETE: $label; elapsed $((SECONDS - started))s (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
-                return 0
+              local monitor_log
+              local install_pid
+              local monitor_pid
+              monitor_log="$(mktemp "/tmp/one-apt-monitor.XXXXXX")"
+
+              # Keep a low-noise process-state history while APT runs. The
+              # post-timeout snapshot alone cannot show what APT was waiting
+              # on because GNU timeout has already terminated its process.
+              timeout 25m sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_opts[@]}" install -y --no-install-recommends "$@" &
+              install_pid=$!
+              (
+                while kill -0 "$install_pid" 2>/dev/null; do
+                  {
+                    echo "=== LIVE APT PROCESS SNAPSHOT (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+                    ps -eo pid,ppid,stat,wchan:32,etime,comm,args | grep -E '(^|[[:space:]])(apt-get|dpkg|debconf|needrestart|unattended-upgrade|sudo|timeout)([[:space:]]|$)' || true
+                    for proc in /proc/[0-9]*; do
+                      [[ -r "$proc/comm" ]] || continue
+                      comm="$(cat "$proc/comm" 2>/dev/null || true)"
+                      case "$comm" in
+                        apt-get|dpkg|debconf|needrestart|unattended-upgrade|sudo|timeout)
+                          printf 'PID %s COMM %s WCHAN ' "${proc##*/}" "$comm"
+                          cat "$proc/wchan" 2>/dev/null || true
+                          printf 'CMD '
+                          tr '\0' ' ' < "$proc/cmdline" 2>/dev/null || true
+                          printf '\\n'
+                          ;;
+                      esac
+                    done
+                  } >> "$monitor_log" 2>&1
+                  sleep 120
+                done
+              ) &
+              monitor_pid=$!
+
+              if wait "$install_pid"; then
+                status=0
               else
                 status=$?
-                echo "=== APT INSTALL FAILED: $label; exit $status; elapsed $((SECONDS - started))s (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
-                echo "=== dpkg audit ==="
-                sudo dpkg --audit || true
-                echo "=== apt/dpkg/debconf process snapshot ==="
-                ps -eo pid,ppid,stat,etime,args | grep -E '[a]pt-get|[d]pkg|[d]ebconf' || true
-                echo "=== dpkg log tail ==="
-                sudo tail -n 100 /var/log/dpkg.log || true
-                return "$status"
               fi
+              kill "$monitor_pid" 2>/dev/null || true
+              wait "$monitor_pid" 2>/dev/null || true
+
+              if [[ "$status" -eq 0 ]]; then
+                echo "=== APT INSTALL COMPLETE: $label; elapsed $((SECONDS - started))s (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+                rm -f "$monitor_log"
+                return 0
+              fi
+
+              echo "=== APT INSTALL FAILED: $label; exit $status; elapsed $((SECONDS - started))s (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+              echo "=== LIVE APT PROCESS HISTORY (captured every 120s) ==="
+              cat "$monitor_log" || true
+              rm -f "$monitor_log"
+              echo "=== dpkg audit ==="
+              sudo dpkg --audit || true
+              echo "=== apt/dpkg/debconf process snapshot after timeout ==="
+              ps -eo pid,ppid,stat,wchan:32,etime,comm,args | grep -E '(^|[[:space:]])(apt-get|dpkg|debconf|needrestart|unattended-upgrade|sudo|timeout)([[:space:]]|$)' || true
+              echo "=== APT terminal log tail ==="
+              sudo tail -n 160 /var/log/apt/term.log || true
+              echo "=== APT history log tail ==="
+              sudo tail -n 80 /var/log/apt/history.log || true
+              echo "=== dpkg log tail ==="
+              sudo tail -n 100 /var/log/dpkg.log || true
+              return "$status"
             }
 
             install_apt_group "Clang and Linux binutils" clang binutils-x86-64-linux-gnu
