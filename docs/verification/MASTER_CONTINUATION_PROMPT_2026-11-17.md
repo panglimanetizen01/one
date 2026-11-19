@@ -300,3 +300,14 @@ This block supersedes older active PR/branch/pin/status instructions above. Pres
 - Fixed-weight final release gate run #44519577312 / job 135544436703 remains IN_PROGRESS. Ledger/DoD source SHA `d6c382a245c49a028bc60809f22ca956c7f894cc`; ledger currently 92/100 provisional, 0/100 verified, E6 0/4, 10 unchecked DoD items. The gate also requires terminal-success mirror workflows and a protected package-provenance release run. This is broader than Issue #104 E4; do not mark final release accepted.
 - Documentation updates most recently include Issue #104 report commit `85122f9ff2207798ea48f3d2e71f8328c7acda0e` and verification README commit `5ccb25abadd5edc298e13b76c2dbbc9f07fc984e`. Refresh PR #113 metadata after this prompt update and poll CircleCI on the resulting exact SHA.
 - Keep PR #113 OPEN / DRAFT / UNMERGED, Issue #104 OPEN / NOT ACCEPTED, and `main` untouched. Do not change the protected verifier again without explicit authorization. Do not rerun the already completed 14/14 diagnostic utility suite absent a source change.
+
+
+## SEC-05 LINUX FAILURE ROOT CAUSE — 2026-11-19
+
+- Protected verifier run #44519577571 attempt 1, Linux job 135544437757, exact candidate `722d662e7a81711ba3607d26571f4048a292b3ed`, failed at step 5 `Install Linux native cross-compilers`.
+- Exact log evidence: APT update succeeded; install fetched 194 MB over 11m 9s, then package downloads repeatedly timed out / could not connect to `azure.archive.ubuntu.com` at `52.252.75.106:80`. APT exit code 100, final message `Unable to fetch some archives`.
+- This is a hosted-runner Azure Ubuntu mirror/network failure, not a Rust/SEC-05 code/test failure. Windows SEC-05 job passed. E4 protected run #44519577693 passed independently.
+- Only failed Linux job rerun initiated, attempt 2, job 135581237093; it was still in the cross-compiler install step at last poll. Wait for terminal evidence.
+- Do not modify protected verifier branch without explicit authorization. If failure reproduces, make mirror source deterministic and add bounded download retries/diagnostics; do not remove compiler/architecture capabilities without proving they are unnecessary.
+- Separate CircleCI APT timeout incident remains unclassified; do not conflate the two incidents.
+- Latest PR #113 HEAD at this checkpoint: `5386e1048615524e6b6a6c079267b35a2367c484`; CircleCI `one-linux` PENDING (workflow `dfae6ca1-099d-4ea9-8fd1-1f9dd32c1a1c`, job `0f9dc451-d530-434d-98bb-b3e28f5b3c8f`). Refresh exact SHA and status after any documentation commits.
