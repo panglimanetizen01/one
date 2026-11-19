@@ -234,3 +234,10 @@ CircleCI now reports SUCCESS for the exact PR #113 documentation SHA eeafcab579c
 Runtime native ONE pada Android API 35 arm64-v8a telah berhasil dijalankan pada exact source SHA `722d662e7a81711ba3607d26571f4048a292b3ed`; hasil ELF exit code 0 dengan marker `ONE_NATIVE_BACKEND_OK`. Ini memverifikasi cakupan runtime Android AArch64 untuk backend native.
 
 Bukti tersebut **tidak berarti adapter filesystem Android sudah didukung**. Pembatasan filesystem tetap eksperimental: penulisan nested Linux dan adapter platform yang belum tersedia tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED. Project ONE belum dinyatakan selesai atau siap rilis.
+
+
+## Pembaruan status langsung — 20 November 2026
+
+CircleCI `ci/circleci: one-linux` telah berstatus **SUCCESS** pada exact HEAD PR #113 `b0d854124191587882705c832e1825ad2a46cc8f` (workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`). Ini adalah bukti status job untuk branch draft, bukan bukti bahwa konfigurasi sudah masuk ke branch `main` atau bahwa seluruh proyek siap rilis.
+
+Verifikasi E4 filesystem independen tetap terikat pada source pin `722d662e7a81711ba3607d26571f4048a292b3ed` melalui run [#44519577693](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577693). Bukti Windows native junction/reparse-point tetap terbatas pada Windows Server 2025 build 26100. Penulisan nested Linux dan adapter platform yang belum tersedia tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED; gate penerimaan berbobot tetap belum lulus.

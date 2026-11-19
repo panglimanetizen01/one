@@ -153,7 +153,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## CI execution provider
 
-CircleCI is the intended canonical Linux CI provider. The migration is still a draft: PR #108 (`ci/circleci-migration-rebased-20261117`) is the dependency-safe candidate based on PR #102 and includes the bounded Unix reader-shutdown implementation from PR #107. The candidate's CircleCI configuration and job execution are not yet verified; `main` still contains the GitHub Actions workflows. Do not claim a provider cutover until a terminal CircleCI run is inspected on the exact candidate SHA.
+CircleCI is the intended canonical Linux CI provider. The draft PR #113 candidate now contains `.circleci/config.yml`, and CircleCI `ci/circleci: one-linux` reports terminal SUCCESS on exact PR HEAD `b0d854124191587882705c832e1825ad2a46cc8f` (workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`). This is job-level exact-SHA evidence; provider step logs were not separately inspected. The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and still has no `.circleci/config.yml`. Therefore no canonical CI-provider cutover is claimed.
 
 Windows Server 2025 native execution remains independently verified in [one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Linux-host MinGW cross-compilation does not replace Windows-host execution.
 
@@ -181,9 +181,10 @@ The GitHub repository is currently PUBLIC and remains the canonical source of tr
 The source-level `filesystem.write` slice described above is distinct from a security sandbox. The stronger project-root confinement capability is still experimental in draft PR #113 / Issue #104 and is **not part of canonical `main`**.
 
 - Linux candidate writes are limited to direct children of the host-injected root; nested paths fail closed.
-- Windows candidate writes use native handle-relative temporary-file replacement and still require the latest exact-SHA verification.
+- Windows candidate writes use native handle-relative temporary-file replacement. Protected E4 verification passed for the canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed` (verifier run [#44519577693](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577693)); the Windows native probe is limited to Windows Server 2025 build 26100.
+- Linux and Windows E4 adversarial checks, the independent cross-platform/distro checks, and Android API 35 ARM64 runtime evidence are recorded for source pin `722d662...`. The PR #113 source/test tree has no net source/test path changes from that pin; its current HEAD is a documentation/CI-tooling descendant. Do not relabel those runs as executions on the documentation HEAD.
+- CircleCI `one-linux` is SUCCESS on PR #113 documentation HEAD `b0d854124191587882705c832e1825ad2a46cc8f`; this does not mean the independent release gate passed.
 - Other platform backends remain unsupported/fail-closed.
-- The latest candidate's E4, full cross-platform, Android runtime, and CircleCI checks are not yet all complete.
 
 Do not rely on the current released `filesystem.write` slice to confine hostile paths or treat it as a project sandbox. Read the [user-facing feature status](docs/panduan-pengguna/status-fitur.md), [security contract](docs/SECURITY.md), and [Issue #104 design](docs/security/issue-104-filesystem-root-confinement-design.md) before enabling filesystem write in an untrusted environment.
 
