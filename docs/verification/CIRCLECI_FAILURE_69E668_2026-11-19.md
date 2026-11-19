@@ -74,3 +74,15 @@ The package set and required Linux-host Windows cross-compilation capability are
 - PR #113 remains OPEN / DRAFT / UNMERGED.
 - Do not modify `main`, merge the PR, force-push, or change the protected verifier pin.
 - This CircleCI provisioning failure does not change independent verifier results and does not establish Issue #104 acceptance.
+
+
+## Exact-SHA follow-up — instrumented Clang group timeout — 2026-11-19
+
+- Failed source SHA: `26fcd96d53e19b4218e5b1e5926020a8326fb09b`.
+- CircleCI pipeline: `2c819857-b2b8-4be5-ba75-6b9ad6b4b62b`; workflow `one-ci`; job `one-linux` #747 / `9666c56b-20cc-4be8-b08c-6547c4a467ab`; failed step #105.
+- The report confirms the first group, **Clang and Linux binutils**, started at `08:47:02 UTC`. All five Clang packages reached installed state by `08:47:06 UTC`; man-db and libc-bin triggers reached installed state by `08:47:09 UTC`.
+- At `09:12:02 UTC`, the wrapper recorded `APT INSTALL FAILED: Clang and Linux binutils; exit 124; elapsed 1500s`. This is the configured 25-minute GNU timeout, not the 30-minute CircleCI no-output guard.
+- The MinGW group did **not** start. The failure handler ran `dpkg --audit` (no pending package output), captured a post-timeout process snapshot, and showed no active apt/dpkg/debconf process. The snapshot cannot reveal the process state before timeout termination.
+- Evidence-based conclusion: the Clang install command remained alive for 25 minutes after its final visible dpkg trigger output, then was terminated by `timeout`. The packages being installed does not establish that the parent `apt-get` returned. The precise wait point / hook / child process remains UNKNOWN. Do not blame Clang packages, MinGW, or increase the timeout blindly.
+- Follow-up config commit: `60a8a20ca92dd4d55ce062f08708250eb1cb6317`. It retains the same package groups and 25-minute deadline, but records live apt/dpkg/debconf/needrestart/sudo/timeout process state every 120 seconds while the install runs, including process wait-channel data. On failure it also captures APT terminal/history logs. This is additional diagnosis, not a claimed fix.
+- The config change has not yet been validated by CircleCI or `circleci config validate`. The 14 diagnostic Python unit tests passed on parent SHA `26fcd96...`; that result does not transfer to this new config commit.
