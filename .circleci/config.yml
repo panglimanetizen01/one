@@ -10,7 +10,7 @@ commands:
     steps:
       - run:
           name: Install Linux and Windows-target cross-toolchains (Linux host)
-          no_output_timeout: 45m
+          no_output_timeout: 30m
           command: |
             set -euo pipefail
             # The CircleCI Android machine image may point Noble at a regional
@@ -22,15 +22,36 @@ commands:
             sudo apt-get clean
             apt_opts=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o DPkg::Lock::Timeout=300)
             timeout 5m sudo apt-get "${apt_opts[@]}" update
-            # Install only the x86_64 POSIX MinGW runtime/toolchain needed by
-            # native_backend_linux_windows.rs. The mingw-w64 meta-package also
-            # pulls unrelated architectures and thread models, increasing
-            # install time and the chance of CI timeout/package-mirror failures.
-            # Exact-SHA job 734 reached dpkg package setup and trigger processing
-            # but hit the 25-minute command deadline (exit 124). The package
-            # set remains minimal; extend the bounded install window for slow
-            # package configuration and trigger processing.
-            timeout 40m sudo apt-get "${apt_opts[@]}" install -y --no-install-recommends clang gcc-mingw-w64-x86-64-posix binutils-x86-64-linux-gnu
+
+            # Install package groups independently. The previous combined
+            # install exhausted its 40-minute command deadline after package
+            # setup/trigger output. Separate groups and failure diagnostics
+            # identify whether Clang or MinGW/dpkg processing is the blocker.
+            install_apt_group() {
+              local label="$1"
+              shift
+              local started="$SECONDS"
+              local status=0
+              echo "=== APT INSTALL START: $label (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+              if timeout 25m sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_opts[@]}" install -y --no-install-recommends "$@"; then
+                echo "=== APT INSTALL COMPLETE: $label; elapsed $((SECONDS - started))s (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+                return 0
+              else
+                status=$?
+                echo "=== APT INSTALL FAILED: $label; exit $status; elapsed $((SECONDS - started))s (UTC $(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+                echo "=== dpkg audit ==="
+                sudo dpkg --audit || true
+                echo "=== apt/dpkg/debconf process snapshot ==="
+                ps -eo pid,ppid,stat,etime,args | grep -E '[a]pt-get|[d]pkg|[d]ebconf' || true
+                echo "=== dpkg log tail ==="
+                sudo tail -n 100 /var/log/dpkg.log || true
+                return "$status"
+              fi
+            }
+
+            install_apt_group "Clang and Linux binutils" clang binutils-x86-64-linux-gnu
+            install_apt_group "x86_64 POSIX MinGW" gcc-mingw-w64-x86-64-posix
+
             {
               echo "export ONE_WINDOWS_CLANG=clang"
             } >> "$BASH_ENV"
