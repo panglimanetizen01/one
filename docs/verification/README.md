@@ -158,3 +158,11 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - Removed the arbitrary 10-page cap from exact-SHA pipeline discovery. The diagnostic now follows all API v2 continuation tokens until the endpoint ends pagination and detects repeated tokens to prevent infinite loops.
 - Added regression coverage for a 12-page result and repeated-token cycle; diagnostic suite now has 14 test methods. The updated suite has not yet been executed on the new HEAD.
 - See `CIRCLECI_DIAGNOSTICS.md` for the implementation details and exact-SHA validation command. Previous CI/test evidence does not transfer to the new commits.
+
+
+## Linux cross-toolchain timeout remediation — 2026-11-19
+
+- Exact-SHA diagnostics on `72bd068e33045c95d042c225c0bdfd27ea4df57f` identified job `one-linux` #730, failed step #105, “Install Linux and Windows-target cross-toolchains (Linux host)”.
+- The step exited 124 while running `apt-get install` under an explicit 15-minute deadline. The log showed successful 66.1 MB download and package setup/trigger processing; package download failure was not indicated.
+- On PR #113, the bounded apt install deadline was increased to 25 minutes and its CircleCI no-output guard to 30 minutes. Toolchain package selection and platform coverage were not reduced.
+- The remediation is pending a fresh exact-SHA CircleCI execution. Do not transfer prior statuses or claim PASS until the new run reaches a terminal state and its failed/successful steps are checked.
