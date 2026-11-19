@@ -107,3 +107,15 @@ The full GitHub Actions job logs were retrieved after the initial run-summary re
 - Protected E4 run #44519577693 remains terminal SUCCESS for all three E4 jobs; the failures above belong to separate workflows and do not invalidate that exact E4 result.
 - Do not call the full protected verifier push green. Keep Issue #104 OPEN / NOT ACCEPTED and PR #113 OPEN / DRAFT / UNMERGED.
 - Next safe work: inspect apt-mirror configuration/remediation for the SEC-05 runner; separately reconcile E1 intended test cases against actual source test targets before changing workflow commands.
+
+
+## E4 exact test execution audit — protected run #44519577693 — 2026-11-19
+
+The full Unix and Windows E4 job logs and workflow helper were inspected. The "0 passed" Cargo summaries emitted by non-matching test binaries are expected when a filter is applied across multiple binaries; they are not evidence that the required test filter was empty. The workflow explicitly guards against filtered-only false positives:
+
+- Unix helper run_test(expected, filter) counts exact passing test-output lines matching the filter and fails unless the count equals the expected value. Expected counts are 3 read-rejection, 5 write, 1 walk, 1 parent-symlink race, and 1 mount-boundary no-truncate.
+- Unix job log contains all 11 required passing tests, including actual mount-boundary, symlink, parent-traversal, atomic-write, race, and no-truncate cases.
+- Windows helper requires the requested test name, "running 1 test", and "test result: ok. 1 passed; 0 failed" for every invocation.
+- Windows job log contains all seven required passing tests: directory-junction escape; absolute in-root read; outside-root absolute confinement/no-side-effect; successful write; oversized write rejection; denied atomic replacement preserving target; parent-directory traversal rejection.
+- Native Windows job log records ordinary-file open success and both direct/intermediate junction opens rejected with STATUS_REPARSE_POINT_ENCOUNTERED (0xC000050B), ending with OBJ_DONT_REPARSE_ROOT_DIRECTORY_JUNCTION_DENIAL_OK.
+- Therefore protected E4 run #44519577693 is supported by actual exact test execution, not merely green job conclusions or filtered-only output. Platform limits remain as stated above.
