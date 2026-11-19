@@ -37,8 +37,8 @@ The current PR HEAD still contains the exact named tests required by the diagnos
 ## Remaining boundaries — do not promote prematurely
 
 - Issue #104 remains OPEN / NOT ACCEPTED. The evidence above materially advances implementation and verification, but does not authorize changing the protected verifier pin or closing the issue.
-- PR #44 remains OPEN / DRAFT / UNMERGED. Its diagnostic branch pin is separate from the protected `verification/CANONICAL_COMMIT.txt`.
-- Protected verifier pin remains exactly `e50748a1b25922d9090eba1f5fb90548d7c7d003`; it must not be changed without explicit authorization.
+- PR #44 was subsequently marked ready and merged with explicit user authorization; the exact merge commit and post-merge pin are recorded below.
+- At the time of the initial evidence snapshot, protected verifier pin was `e50748a1b25922d9090eba1f5fb90548d7c7d003`; it was subsequently promoted through the explicitly authorized PR #44 merge. Current protected pin is recorded in the promotion section below.
 - Linux nested writes remain deliberately fail-closed; do not add a path-based fallback.
 - macOS and other unsupported platforms remain fail-closed. Android runtime evidence is API 35 ARM64 only.
 - Keep PR #113 OPEN / DRAFT / UNMERGED. Do not merge, modify `main`, force-push, delete branches, or change verifier pins.
@@ -61,3 +61,15 @@ The diagnostic PR #44 and protected `verification` branch are intentionally diff
 - PR #44 remains OPEN / DRAFT / UNMERGED. Its diagnostic branch runs have all completed successfully, but none of this changes the protected `verification` branch.
 - This is the remaining verifier-governance/acceptance gate, not an unverified runtime code claim. Do not merge PR #44, alter the protected pin, or close Issue #104 without explicit authorization.
 - PR #44 conversation comment ID: `7008358258`; PR #113 conversation comment ID: `7008342294`.
+
+
+## AUTHORIZED PROTECTED VERIFIER PROMOTION — 2026-11-19
+
+- User explicitly authorized promotion of PR #44 to protected branch `verification`.
+- PR #44 was marked ready for review and merged successfully. Merge commit: `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`.
+- PR #44 head immediately before merge: `75eddb0489947f473a8130d246a3f5d79711d693`; base branch: `verification`; merge used expected-head SHA guard. PR URL: https://github.com/panglimanetizen01/one-windows-verification/pull/44.
+- Post-merge readback from protected branch `verification`: `CANONICAL_COMMIT.txt` = `722d662e7a81711ba3607d26571f4048a292b3ed`. The protected workflow contains the new Windows `NtCreateFile + OBJ_DONT_REPARSE` probe, the Windows denied-atomic-replacement regression, and the updated Linux read/write E4 test inventory.
+- The diagnostic branch's seven relevant workflow runs were all terminal SUCCESS before merge: #44335797294 (Debian 12 + Ubuntu 24.04), #44335797191 (resource guard), #44335797320 (Android AArch64 artifact build), #44335797200 (Ubuntu + Windows Server 2025 cross-platform), #44335797344 (three E4 jobs: Unix, Windows reparse/handle, Windows native OBJ_DONT_REPARSE), #44335797365 (SEC-05 Linux + Windows), and #44335797240 (Android API 35 ARM64 build + runtime).
+- Important evidence boundary: these are successful diagnostic-branch runs on the candidate. The post-merge push-triggered protected-branch runs are not yet visible in the available workflow-run readback; do not call the protected post-merge execution green until those exact runs are confirmed. The workflow's push trigger includes branch `verification` and path filters for the canonical pin and E4 workflow.
+- The PR body records CircleCI failure on source SHA `722d662...`; cause remains unknown from that historical run. The later CircleCI `one-linux` run on `70ae27c...` was SUCCESS, and compare confirms runtime/test paths unchanged between those source SHAs; only CircleCI config, docs, and diagnostics changed. Current ONE PR #113 HEAD `d6b4c4e781a8d1ace85b2657626d4e02295005c8` has CircleCI status PENDING (workflow `08114a30-dac4-4ee5-9d4d-dc075ef9adff`, job `ae78409c-7e8f-4063-b0f8-faf0c7eee3d7`).
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Issue #104 remains OPEN / NOT ACCEPTED. No change was made to ONE `main` or the PR #113 state.
