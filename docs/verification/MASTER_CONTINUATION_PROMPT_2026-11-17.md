@@ -311,3 +311,11 @@ This block supersedes older active PR/branch/pin/status instructions above. Pres
 - Do not modify protected verifier branch without explicit authorization. If failure reproduces, make mirror source deterministic and add bounded download retries/diagnostics; do not remove compiler/architecture capabilities without proving they are unnecessary.
 - Separate CircleCI APT timeout incident remains unclassified; do not conflate the two incidents.
 - Latest PR #113 HEAD at this checkpoint: `5386e1048615524e6b6a6c079267b35a2367c484`; CircleCI `one-linux` PENDING (workflow `dfae6ca1-099d-4ea9-8fd1-1f9dd32c1a1c`, job `0f9dc451-d530-434d-98bb-b3e28f5b3c8f`). Refresh exact SHA and status after any documentation commits.
+
+
+## Mandatory live continuation — 2026-11-19 13:20Z
+
+1. PR #113 exact HEAD is `bc0070cbe6ea23b97ff814c145d68c24585a83c5`; CircleCI `ci/circleci: one-linux` is SUCCESS for this exact SHA (workflow `3d609b9a-fadc-4451-97fd-daf371ae0d4f`, job `8973d4dd-f38f-4bd1-9aa5-f098cfa3c7b0`). Do not transfer this result to later commits.
+2. SEC-05 protected-verifier run `44519577571`, attempt 2: Linux job `135581237093` remains IN_PROGRESS at step 5 `Install Linux native cross-compilers`; Windows job `135581239271` is SUCCESS. Linux job logs are unavailable until completion. Poll for terminal evidence before classifying the rerun.
+3. If the rerun fails, inspect exact logs and confirm whether Azure Ubuntu mirror connectivity recurred. If it passes, document a successful same-candidate retry only; do not claim a durable fix without a configuration change and repeatable validation.
+4. No protected verifier workflow change was made. Keep Issue #104 OPEN / NOT ACCEPTED, PR #113 OPEN / DRAFT / UNMERGED, and `main` untouched. Preserve full cross-compiler architecture coverage and fail-closed platform behavior.
