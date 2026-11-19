@@ -223,3 +223,11 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - Separate SEC-05 Linux cross-compiler-install job failed; its Windows job passed. Do not confuse this with the E4 result or claim the full verifier repository push was green.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED pending remaining acceptance-gate reconciliation.
 - Detailed exact-SHA evidence: [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
+
+
+## Fixed-weight release ledger gate — 2026-11-19
+
+- Protected verifier run #44519577312 remains IN_PROGRESS, checking the fixed-weight ledger against source SHA `722d662...` and ledger/DoD document SHA `d6c382a...`.
+- The pinned ledger records 92/100 provisional implementation, 0/100 verified, E6 0/4; 10 Definition of Done items remain unchecked. The gate also requires exact-SHA mirror workflows and a protected package-provenance release run.
+- This is a broader final-release gate, not the E4 result. Do not claim final release acceptance while it is in progress.
+- Detailed evidence: [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
