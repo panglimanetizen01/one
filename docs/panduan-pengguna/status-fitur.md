@@ -207,3 +207,11 @@ Pembatasan akses filesystem masih **eksperimental dan belum diterima sebagai fit
 - PR #113 tetap OPEN / DRAFT / UNMERGED; Issue #104 tetap OPEN / NOT ACCEPTED.
 
 Jangan menyimpulkan fitur aman untuk semua platform atau siap rilis hanya dari satu kelompok test yang lulus.
+
+## Status pembaruan verifikasi — 19 November 2026
+
+Perbaikan workflow verifikasi independen untuk pemeriksaan paket, instalasi compiler Linux, runtime Windows native, dan pengujian bahasa ONE v0.1 telah digabungkan ke branch verifikasi independen. Sebagian pemeriksaan protected-branch sudah lulus, sementara pemeriksaan lintas platform dan runtime Windows lainnya masih berjalan.
+
+**Batas penting:** hasil verifikasi workflow bukan berarti seluruh fitur keamanan filesystem telah diterima atau aplikasi siap dirilis. Issue #104 masih OPEN / NOT ACCEPTED. Penulisan nested pada Linux dan adapter platform yang belum didukung tetap ditolak secara aman. Project ONE belum dinyatakan selesai atau 100% diterima.
+
+PR #113 tetap draft dan belum digabung; branch utama ONE tidak berubah. Hasil CircleCI SUCCESS pada SHA 64c490e9045aa29506772f74e3697a63a66b9695 berlaku hanya untuk SHA tersebut. Commit dokumentasi berikutnya memerlukan hasil CircleCI baru.

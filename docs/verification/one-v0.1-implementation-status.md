@@ -274,3 +274,37 @@ This dated checkpoint supersedes earlier status summaries that predate code-bear
 - Linux nested writes and unsupported-platform filesystem operations remain fail-closed. Android API 35 ARM64 runtime evidence does not establish Android filesystem adapter support.
 - PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED because protected release gate #44519577312 failed and the full acceptance matrix is not complete.
 - PR #45–#48 remediation workflows passed on their respective draft branches; they are not yet protected-branch evidence.
+
+## Verifier remediation integration and latest exact-SHA evidence — 2026-11-19 16:28Z
+
+The user authorized integration of independent verifier PRs #45–#48. They were squash-merged into panglimanetizen01/one-windows-verification protected branch verification; the protected branch now points to b14abf0020472dc45842be30854e0a09317d6cb4. Exact merge commits:
+
+- PR #45 candidate artifact integrity; tested PR head 9a72e04b7e2992d655f8e3fc4e478892e91b7ae5; merge 42feff8bc11d9b17d04ac9cff4abea4e80a7a832.
+- PR #46 SEC-05 bounded APT retries; tested PR head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11; merge d539a162aeed9d22988c7ffb0c7a893e8d33f571.
+- PR #47 Windows native runtime exact canonical pin/toolchain; tested PR head bd100d10c12c7b0849f01e9481111b0b0c859dd1; merge 4ae84bad84ddacf169b9f25fa4c78581ab2b4bc4.
+- PR #48 E1 v0.1 test-target alignment; tested PR head 06bf1d7cbd10adadb74c79d7296f951244ae9839; merge b14abf0020472dc45842be30854e0a09317d6cb4.
+
+Canonical source pin remains 722d662e7a81711ba3607d26571f4048a292b3ed. No pin, fixed-weight ledger, DoD checkbox, package-release dispatch, or source implementation was changed.
+
+### Protected-branch push runs (do not conflate with PR-branch runs)
+
+- Artifact integrity run #44566172841 on merge 42feff8: SUCCESS. Log verified Linux and Windows candidate metadata, including Rust/Cargo 1.100.0.
+- SEC-05 run #44566187162 on merge d539a16: IN PROGRESS; Linux job 135708430394 SUCCESS, Windows job 135708430883 IN PROGRESS.
+- Windows Native Backend Runtime #44566197814 on merge 4ae84ba: IN PROGRESS, Windows Server 2025 job 135708473420.
+- E1 cross-platform #44566212975 on final protected HEAD b14abf0: IN PROGRESS, Ubuntu job 135708526288 and Windows job 135708526901.
+- Focused stdlib/database #44566212982 on b14abf0: SUCCESS. Retrieved Linux log confirms source-pinned Rust/Cargo 1.100.0; stdlib 6/6, core pipeline 6/6, conformance 5/5, database unit 1/1, database vertical slice 9/9, full one-core library 148/148, and warnings-denied Clippy PASS.
+- E1 Windows #44566212997 on b14abf0: SUCCESS. Retrieved Windows log confirms Rust/Cargo 1.100.0; stdlib 6/6, core pipeline 6/6, conformance 5/5, full one-core library 133/133, and warnings-denied Clippy PASS.
+
+Only terminal runs above may be classified SUCCESS. In-progress scopes remain NOT VERIFIED until jobs finish and logs are inspected. Protected E4 run #44519577693 remains SUCCESS for its original declared scope and was not rerun because E4 source/test inputs did not change.
+
+### CircleCI exact-SHA correction
+
+ONE PR #113 HEAD 64c490e9045aa29506772f74e3697a63a66b9695 has now reached CircleCI ci/circleci: one-linux SUCCESS (workflow b16121d3-51f0-4297-bb05-16e15b0434ea, job 148c47ea-a1ac-4574-8a61-1980d6c5a55a, status updated 2026-11-19T16:28:21Z). This is exact-SHA status evidence; CircleCI provider step logs were not retrieved in this session. Any subsequent docs commit creates a new PR head and requires its own CircleCI result; this SUCCESS must not transfer.
+
+### Release/acceptance boundary
+
+The prior fixed-weight gate #44519577312 remains FAILURE with its retrieved log: 92/100 implementation, 0/100 verified, 18 ledger rows checked, 10 unchecked DoD items, exact-SHA wait timeout, missing protected workflow evidence and no protected ONE Package Provenance Release. Newly merged fixes do not make that historical gate green. Wait for protected runs above to become terminal, reconcile their exact-source evidence, then consider a new gate evaluation only when relevant prerequisites changed. Do not change weights or mark DoD items without their own evidence.
+
+Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes and unsupported platform adapters remain fail-closed. No universal filesystem sandbox or full release acceptance is claimed. ONE main remains d35db95153f6ddd79885494c72f5aee16c899751. PR #113 remains OPEN / DRAFT / UNMERGED; no merge to ONE main is authorized.
+
+Verifier documentation follow-up PR #50 is OPEN / DRAFT at head 8c1d4dad927397219be5c8803e214105fa99e30f, targeting protected verification; it records the integration and exact status boundaries.
