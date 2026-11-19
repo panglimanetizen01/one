@@ -70,3 +70,13 @@ The setup command rewrites matching mirror hostnames across all APT source files
 ## Next action
 
 Obtain the redacted failed-step report for job `0adc6a90-9706-4c90-bd02-650edd74ab90` and independently confirm the pipeline revision is `7d4268d8cf713a6d6c3bd5ac533b7396d22b7361`. Use the existing `tools/ci/diagnose_circleci.py` utility with a locally configured `CIRCLECI_TOKEN`; never paste the token into chat. Once the first failing step is known, apply a minimal fix, validate the config and diagnostic tests on the resulting exact SHA, then inspect the new CircleCI run.
+
+
+## Follow-up status refresh — 2026-11-19
+
+- Latest PR #113 HEAD after adding this review artifact: `5f21f24603410dedbe51b11a62ca196ebfdddf26`.
+- Exact-HEAD GitHub combined status: `ci/circleci: one-linux` = PENDING; workflow `2ff63399-02db-41b6-a780-2a20e25dce2c`; job `c0a8d112-0c76-4b55-ac17-7020a8281c27` ([exact-HEAD job](https://app.circleci.com/workflow/2ff63399-02db-41b6-a780-2a20e25dce2c/job/c0a8d112-0c76-4b55-ac17-7020a8281c27)).
+- This PENDING result supersedes the prior statement that the documentation commit had no status contexts. It is not PASS and not FAIL. Do not transfer the FAILURE status from parent source SHA `7d4268d8cf713a6d6c3bd5ac533b7396d22b7361`.
+- PR #113 remains OPEN / DRAFT / UNMERGED; base branch remains `fix/windows-process-verifier-timeouts-20261118`; no merge or main change.
+- The diagnostic script and 13-test suite were read from this exact HEAD. No execution environment or CircleCI provider log reader is available through the connected tools in this session. Diagnostic tests and `circleci config validate` remain NOT VERIFIED.
+- Next external dependency: run the local diagnostic utility with `CIRCLECI_TOKEN` and the exact job UUID above; verify the job's pipeline revision equals `5f21f24603410dedbe51b11a62ca196ebfdddf26` before attributing the report. The previous failed job for parent SHA `7d4268d...` is a separate run.
