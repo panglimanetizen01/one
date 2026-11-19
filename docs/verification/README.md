@@ -214,3 +214,12 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - Pre-merge diagnostic workflow runs are green; post-merge protected push-triggered runs still require independent confirmation. Do not claim those runs green yet.
 - ONE PR #113 remains OPEN / DRAFT / UNMERGED. Its exact HEAD `d6b4c4e781a8d1ace85b2657626d4e02295005c8` has CircleCI PENDING (workflow `08114a30-dac4-4ee5-9d4d-dc075ef9adff`, job `ae78409c-7e8f-4063-b0f8-faf0c7eee3d7`). Issue #104 remains OPEN / NOT ACCEPTED.
 - Full evidence and limits: [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
+
+
+## Protected post-merge E4 verification — 2026-11-19
+
+- Protected branch `verification` received merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; canonical source pin is `722d662e7a81711ba3607d26571f4048a292b3ed`.
+- Post-merge E4 run #44519577693 is terminal SUCCESS: Unix no-follow/resource bounds, Windows reparse/handle checks, and Windows native `NtCreateFile + OBJ_DONT_REPARSE` probe all passed.
+- Separate SEC-05 Linux cross-compiler-install job failed; its Windows job passed. Do not confuse this with the E4 result or claim the full verifier repository push was green.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED pending remaining acceptance-gate reconciliation.
+- Detailed exact-SHA evidence: [Issue #104 current evidence reconciliation](ISSUE_104_CURRENT_STATUS_2026-11-19.md).
