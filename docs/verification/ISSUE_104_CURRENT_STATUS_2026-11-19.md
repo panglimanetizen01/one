@@ -49,3 +49,15 @@ The current PR HEAD still contains the exact named tests required by the diagnos
 1. Preserve the exact-SHA evidence above and reconcile any remaining stale status statements in the Issue #104 design, evidence matrix, implementation-status ledger, and user feature status.
 2. Review the acceptance/ledger procedure for how a candidate may be proposed for protected-verifier promotion. Do not perform the promotion or close Issue #104 without explicit authorization.
 3. Keep unsupported cases fail-closed and continue only with changes supported by a concrete test or documented acceptance gap.
+
+
+## Protected-verifier promotion gap — readback 2026-11-19
+
+The diagnostic PR #44 and protected `verification` branch are intentionally different:
+
+- Protected branch pin `CANONICAL_COMMIT.txt` remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`.
+- Protected branch E4 workflow still has the older inventory: 2 Linux read-rejection matches, 1 Linux write-rejection match, 1 walk-rejection match, and older database/governance/network test counts. It does not yet contain the added Windows atomic-replacement-denial test or the separate native `OBJ_DONT_REPARSE` contract-probe job.
+- PR #44's three-file diff updates the diagnostic branch's E4 workflow to the current source inventory (3 read-rejection matches, 5 write matches, 1 walk match, exact race + mount no-truncate tests, current supporting test counts), adds the Windows denied-atomic-replacement regression, adds the Windows native contract-probe job, enables the diagnostic `probe/**` push trigger, and updates only the diagnostic branch's `CANONICAL_COMMIT.txt` to `722d662...`.
+- PR #44 remains OPEN / DRAFT / UNMERGED. Its diagnostic branch runs have all completed successfully, but none of this changes the protected `verification` branch.
+- This is the remaining verifier-governance/acceptance gate, not an unverified runtime code claim. Do not merge PR #44, alter the protected pin, or close Issue #104 without explicit authorization.
+- PR #44 conversation comment ID: `7008358258`; PR #113 conversation comment ID: `7008342294`.
