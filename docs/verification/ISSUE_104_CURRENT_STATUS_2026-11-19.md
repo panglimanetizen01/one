@@ -80,3 +80,30 @@ The diagnostic PR #44 and protected `verification` branch are intentionally diff
 - Separate same-push workflows are not all green. In particular SEC-05 run #44519577571: Windows job SUCCESS; Linux job FAILED at step `Install Linux native cross-compilers` (step 5). This is a toolchain-install failure, not an E4 job failure. Other E1/stdlib/provenance/health/artifact workflows also reported failures and require separate scope/triage; do not aggregate them into the E4 result.
 - E4 acceptance evidence is now confirmed on the protected branch, but this alone does not establish that every Issue #104 acceptance gate is complete. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
 - PR #113 exact HEAD at time of this reconciliation: `3c77d753281ce117cb0c1951ca368c1ade575994`, CircleCI `ci/circleci: one-linux` SUCCESS (workflow `ca61ca33-e0ef-4df1-b048-821c26dcbb81`, job `586c97ac-1d4e-4d14-a9cf-c092f942023d`).
+
+
+## Protected verifier non-E4 failure log classification — 2026-11-19
+
+The full GitHub Actions job logs were retrieved after the initial run-summary review. This section supersedes the earlier statement that the SEC-05 and E1/stdlib failure causes were not yet classified.
+
+### SEC-05 Linux toolchain installation
+
+- Run #44519577571, Linux job `135544437757`, failed in `Install Linux native cross-compilers`.
+- `apt-get update` completed and fetched 13.2 MB. The install requested 277 MB of archives; 194 MB downloaded over 11 minutes before package fetches failed.
+- The failed package URLs were Ubuntu MinGW/LLD packages; the runner repeatedly failed to connect to Azure's Ubuntu mirror backend `azure.archive.ubuntu.com`, IP `52.252.75.106:80`. Final APT exit code: 100.
+- This is an observed mirror/network retrieval failure, not a Rust compile/test failure and not an E4 failure. It is consistent with the mirror connectivity instability previously seen in CircleCI, but do not assume the remediation is identical without validating the GitHub Actions runner's apt mirror configuration.
+- SEC-05 Windows job passed. No SEC-05 Linux test suite result exists because setup failed before tests ran.
+
+### E1 / standard-library workflow harness failures
+
+- E1 Windows run #44519577311, job `135544437394`, failed before tests executed: Cargo reported `no test target named stdlib_builtins in one-core package`, exit code 1.
+- Milestone 1 E1 Linux run #44519577315, job `135544437616`, failed with the same missing target, exit code 101.
+- Focused stdlib/database run #44519577640, job `135544438572`, failed at its first source-level integration step with the same missing target, exit code 101.
+- Exact candidate source tree `722d662...` contains no `crates/one-core/tests/stdlib_builtins.rs`; available integration test targets include `conformance`, `core_pipeline`, `security`, `target_backend_foundation`, and `target_toolchain_foundation`.
+- These are verifier-command/acceptance-fixture alignment failures: the named test target is absent, so the requested source-level acceptance tests did not run. Do not substitute a different test target or mark E1 passed without mapping/adding the intended test cases and validating their exact names.
+
+### Scope and next action
+
+- Protected E4 run #44519577693 remains terminal SUCCESS for all three E4 jobs; the failures above belong to separate workflows and do not invalidate that exact E4 result.
+- Do not call the full protected verifier push green. Keep Issue #104 OPEN / NOT ACCEPTED and PR #113 OPEN / DRAFT / UNMERGED.
+- Next safe work: inspect apt-mirror configuration/remediation for the SEC-05 runner; separately reconcile E1 intended test cases against actual source test targets before changing workflow commands.
