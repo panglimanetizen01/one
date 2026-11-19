@@ -4,14 +4,14 @@
 
 - Repository: `panglimanetizen01/one`.
 - PR #113: OPEN / DRAFT / UNMERGED.
-- Latest exact PR HEAD readback: `8829ca5e9fcb8d7412bdaee0714d48e6b7a894e3`.
+- Latest exact PR HEAD readback: `5386e1048615524e6b6a6c079267b35a2367c484`.
 - Base branch: `fix/windows-process-verifier-timeouts-20261118`; exact base SHA: `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
-- GitHub combined status on exact HEAD `8829ca5...`: `ci/circleci: one-linux` = PENDING at `2026-11-19T12:59:38Z`.
-- CircleCI workflow: `be01c3a0-3088-454d-b687-0fc71dc02a49`; job: `289e257e-c387-402b-a277-cee762af3493`.
-- Job URL: https://app.circleci.com/workflow/be01c3a0-3088-454d-b687-0fc71dc02a49/job/289e257e-c387-402b-a277-cee762af3493
-- Immediately preceding exact SHA `3c77d753281ce117cb0c1951ca368c1ade575994` had CircleCI `ci/circleci: one-linux` SUCCESS (workflow `ca61ca33-e0ef-4df1-b048-821c26dcbb81`, job `586c97ac-1d4e-4d14-a9cf-c092f942023d`). Do not transfer that success to the later documentation SHA.
+- GitHub combined status on exact HEAD `5386e1048615524e6b6a6c079267b35a2367c484`: `ci/circleci: one-linux` = PENDING at `2026-11-19T13:05:38Z`.
+- CircleCI workflow: `dfae6ca1-099d-4ea9-8fd1-1f9dd32c1a1c`; job: `0f9dc451-d530-434d-98bb-b3e28f5b3c8f`.
+- Job URL: https://app.circleci.com/workflow/dfae6ca1-099d-4ea9-8fd1-1f9dd32c1a1c/job/0f9dc451-d530-434d-98bb-b3e28f5b3c8f
+- The prior exact SHA `3c77d753281ce117cb0c1951ca368c1ade575994` had CircleCI SUCCESS, but that result does not transfer to later documentation commits.
 - The 14/14 diagnostic utility unit tests were run on `70ae27c...`; do not claim they were rerun on later documentation SHAs.
-- APT timeout was not reproduced in the successful run; root cause remains UNDETERMINED. Do not claim a root-cause fix.
+- The earlier CircleCI APT timeout root cause remains undetermined. It is distinct from the newly classified GitHub Actions SEC-05 Ubuntu mirror/network failure documented below.
 - Any further commit to PR #113 creates a new exact SHA requiring its own status check.
 
 ## Runtime-source identity and independent E4 evidence
@@ -128,3 +128,28 @@ The full Unix and Windows E4 job logs and workflow helper were inspected. The "0
 - The ledger at the pinned documentation SHA records implementation 92/100 provisional, verified 0/100, and E6 0/4; the Definition of Done has 10 unchecked items. The gate's verifier requires all positive-weight rows fully verified, zero unchecked DoD items, all required exact-SHA mirror workflows terminal-success, and a protected package-provenance release run for the exact source SHA.
 - This is a final Project ONE release gate, broader than the Issue #104 E4 subtask. Do not treat its current IN_PROGRESS state as PASS or FAIL, and do not update ledger scores/checkboxes to manufacture acceptance.
 - The gate is expected to report its own terminal evaluation after its live-workflow polling. Keep Issue #104 OPEN / NOT ACCEPTED and PR #113 OPEN / DRAFT / UNMERGED meanwhile.
+
+
+## SEC-05 LINUX FAILURE LOG ROOT CAUSE — 2026-11-19
+
+Exact evidence: protected-verifier workflow run #44519577571, attempt 1; Linux job `135544437757`, [workflow run](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577571). Runner: GitHub-hosted Ubuntu 24.04.5 LTS / `ubuntu-24.04`. Candidate checkout: `722d662e7a81711ba3607d26571f4048a292b3ed`. Failed step: `Install Linux native cross-compilers` (step 5).
+
+### Observed failure
+
+- Workflow command was `sudo apt-get update` followed by `sudo apt-get install -y clang lld mingw-w64 binutils-x86-64-linux-gnu`.
+- APT update completed successfully, using the runner's Azure Ubuntu mirror (`azure.archive.ubuntu.com`) and Microsoft package source.
+- Package install downloaded 194 MB over 11 minutes 9 seconds (reported average 290 kB/s), but several remaining package archives could not be fetched.
+- Repeated errors report connection failures/timeouts to `azure.archive.ubuntu.com`, IP `52.252.75.106:80`; APT's final fetch URLs included `security.ubuntu.com` and `archive.ubuntu.com`, while the transport error identifies the Azure mirror backend.
+- Examples: `mingw-w64-i686-dev`, `g++-mingw-w64-x86-64-posix`, several `gcc-mingw-w64` variants, `lld`, and meta-packages. The final APT message was `Unable to fetch some archives`; process exit code **100** at `2026-11-19T12:09:56Z`.
+- No evidence indicates a Rust compiler failure, SEC-05 source/test failure, package dependency conflict, dpkg configuration error, or compiler invocation. Because the install step failed, the Linux Rust toolchain and subprocess/one-core tests were skipped.
+- The Windows SEC-05 job in the same run passed, including existing subprocess contract tests and the complete `one-core` suite.
+- Later `if: always()` checks ran: the SEC-05 static marker check passed. Whole-repository `cargo fmt --check --all` printed existing formatting diffs but is explicitly non-blocking; it is not the cause of the job failure.
+
+### Classification and corrective experiment
+
+**Root cause classified:** GitHub-hosted runner's Azure-backed Ubuntu mirror/network endpoint was intermittently unreachable while APT fetched package archives. This is an infrastructure/package-download failure, not an application or SEC-05 test failure. It is distinct from the separate CircleCI APT timeout incident whose root cause remains undetermined.
+
+- A rerun of only the failed Linux job was initiated (workflow attempt 2) to test whether the mirror failure is transient, without changing source or protected branch configuration.
+- Rerun Linux job: `135581237093`; at last readback it was still executing `Install Linux native cross-compilers`. Do not claim rerun success until terminal completion.
+- No protected workflow or source change was made as part of this diagnosis. If the same failure recurs, a narrowly scoped remediation should first make the package source deterministic (avoid the failing Azure mirror path where possible), add bounded retries for transient archive fetch failures, and emit mirror/source diagnostics. Do not blindly reduce the compiler set or remove x86_64 target capability without inspecting actual downstream compiler requirements.
+- Keep the Windows job's successful result distinct from Linux. E4 run #44519577693 remains independently successful; this SEC-05 failure does not negate E4.
