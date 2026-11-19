@@ -1003,3 +1003,43 @@ mod tests {
         let _ = std::fs::remove_file(outside);
     }
 }
+
+
+#[cfg(all(test, any(target_os = "linux", windows)))]
+mod hardlink_tests {
+    use super::*;
+
+    #[test]
+    fn authority_rejects_hard_linked_targets_without_side_effects() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system clock must be after Unix epoch")
+            .as_nanos();
+        let base = std::env::temp_dir().join(format!(
+            "one-fs-hardlink-{}-{nonce}",
+            std::process::id()
+        ));
+        let root = base.join("root");
+        let target = root.join("inside.txt");
+        let outside = base.join("outside.txt");
+        std::fs::create_dir_all(&root).unwrap();
+        let original = b"HARD_LINK_SENTINEL";
+        std::fs::write(&target, original).unwrap();
+        std::fs::hard_link(&target, &outside)
+            .expect("test filesystem must support hard links");
+
+        let authority = FilesystemAuthority::open(&root, 1024, 1024).unwrap();
+        assert_eq!(
+            authority.read("inside.txt"),
+            Err(FilesystemError::HardLinkedFile)
+        );
+        assert_eq!(
+            authority.write("inside.txt", b"MUST_NOT_REPLACE"),
+            Err(FilesystemError::HardLinkedFile)
+        );
+        assert_eq!(std::fs::read(&target).unwrap(), original);
+        assert_eq!(std::fs::read(&outside).unwrap(), original);
+
+        std::fs::remove_dir_all(base).unwrap();
+    }
+}
