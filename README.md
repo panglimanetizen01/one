@@ -153,7 +153,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## CI execution provider
 
-CircleCI is the intended canonical Linux CI provider. The draft PR #113 candidate now contains `.circleci/config.yml`, and CircleCI `ci/circleci: one-linux` reports terminal SUCCESS on exact PR HEAD `b0d854124191587882705c832e1825ad2a46cc8f` (workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`). This is job-level exact-SHA evidence; provider step logs were not separately inspected. The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and still has no `.circleci/config.yml`. Therefore no canonical CI-provider cutover is claimed.
+CircleCI is the intended canonical Linux CI provider. The draft PR #113 candidate now contains `.circleci/config.yml`, and CircleCI `ci/circleci: one-linux` reports terminal SUCCESS on exact PR HEAD `051c7815cc5cf3dbca840ac8cbb38e3e663da6b7` (workflow `3b89115a-ff07-41ac-940e-fb78baccd7ac`, job `241f1d78-0aaf-4f47-8ea2-57fbd3b35a1c`). This is job-level exact-SHA evidence; provider step logs were not separately inspected. The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and still has no `.circleci/config.yml`. Therefore no canonical CI-provider cutover is claimed.
 
 Windows Server 2025 native execution remains independently verified in [one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Linux-host MinGW cross-compilation does not replace Windows-host execution.
 
@@ -182,7 +182,7 @@ The source-level `filesystem.write` slice described above is distinct from a sec
 
 - Linux candidate writes are limited to direct children of the host-injected root; nested paths fail closed.
 - Windows candidate writes use native handle-relative temporary-file replacement. Protected E4 verification passed for the canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed` (verifier run [#44519577693](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577693)); the Windows native probe is limited to Windows Server 2025 build 26100.
-- Linux and Windows E4 adversarial checks, the independent cross-platform/distro checks, and Android API 35 ARM64 runtime evidence are recorded for source pin `722d662...`. The PR #113 source/test tree has no net source/test path changes from that pin; its current HEAD is a documentation/CI-tooling descendant. Do not relabel those runs as executions on the documentation HEAD.
+- Linux and Windows E4 adversarial checks, the independent cross-platform/distro checks, and Android API 35 ARM64 runtime evidence are recorded for source pin `722d662...`; the retained metadata artifact was inspected and Issue #82 is closed for this runtime-evidence scope. The PR #113 source/test tree has no net source/test path changes from that pin; its current HEAD is a documentation/CI-tooling descendant. Do not relabel those runs as executions on the documentation HEAD.
 - CircleCI `one-linux` is SUCCESS on PR #113 documentation HEAD `b0d854124191587882705c832e1825ad2a46cc8f`; this does not mean the independent release gate passed.
 - Other platform backends remain unsupported/fail-closed.
 
