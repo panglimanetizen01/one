@@ -313,3 +313,29 @@ Use the existing `tools/ci/diagnose_circleci.py --job-id UUID` path with a local
 - Updated `docs/verification/CIRCLECI_DIAGNOSTICS.md` and verification README. New commits require fresh exact-SHA CircleCI status; no previous status is transferred.
 - The next verification must run the 14-test suite, then rerun exact-SHA discovery against the new HEAD. Store the report under `$HOME` (not `/tmp`) on Termux.
 - PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. No merge, main modification, force-push, or pin change.
+
+
+## Live checkpoint — exact-SHA Linux cross-toolchain timeout diagnosis — 2026-11-19
+
+### Evidence
+
+- Diagnostic target SHA: `72bd068e33045c95d042c225c0bdfd27ea4df57f`.
+- CircleCI job: `one-linux` #730; job UUID `a693b817-a36a-45fa-b7da-1fd0a31b95ac`; workflow UUID `04ac7411-2c10-4128-8823-17808177a3ee`.
+- Failed step #105: `Install Linux and Windows-target cross-toolchains (Linux host)`.
+- The exact-SHA diagnostic report returned exit 0 and confirmed source SHA equality. The failed step log ended with exit status 124.
+- The step used `timeout 15m sudo apt-get ... install`; CircleCI `no_output_timeout` was 20m. The supplied output showed 66.1 MB downloaded in 3 seconds, packages unpacked and configured, and processing of man-db/libc-bin triggers. No download or dependency-resolution error is evidenced.
+- Classification: explicit apt command deadline exceeded before the step completed. Do not classify as a CircleCI inactivity timeout or a package mirror failure.
+
+### Implemented remediation on PR #113
+
+- Changed only the Linux cross-toolchain provisioning step in `.circleci/config.yml`: apt install deadline 15m → 25m; CircleCI no-output timeout 20m → 30m.
+- Kept the package selection unchanged: clang, x86_64 POSIX MinGW GCC, and x86_64 Linux binutils. Linux-host Windows cross-compilation capability is preserved.
+- Synchronized `docs/verification/CIRCLECI_DIAGNOSTICS.md` and this verification README with the evidence and remediation.
+- Commits were applied sequentially to existing branch `security/issue-104-root-confinement-20261118`, beginning from diagnostic HEAD `72bd068...`. New final HEAD must be read from GitHub; do not use an intermediate docs/config commit as the final candidate.
+
+### Verification status and next gate
+
+- 14/14 Python diagnostic unit tests PASS on exact SHA `72bd068e33045c95d042c225c0bdfd27ea4df57f`; these tests predate the timeout-only config/docs commits.
+- CircleCI CLI config validation on Termux is NOT VERIFIED: the installed Go binary crashed with `SIGSYS` on `faccessat2`. This is a local Android runtime incompatibility, not a YAML validation result.
+- The new config commit requires a fresh CircleCI run. Verify the final PR #113 HEAD and its exact-SHA combined status; inspect the new job logs if it fails. Do not transfer the previous SHA's FAILURE.
+- PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. Protected `verification/CANONICAL_COMMIT.txt` remains `e50748a1b25922d9090eba1f5fb90548d7c7d003`. No merge, main modification, force-push, or protected pin change.
