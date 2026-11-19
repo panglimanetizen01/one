@@ -177,3 +177,11 @@ The direct `--job-id` mode of `tools/ci/diagnose_circleci.py` bypasses exact-HEA
 - The 14 diagnostic unit tests passed on the pre-remediation exact SHA `bb35f1e...`; they do not verify the changed CircleCI configuration. The local CircleCI CLI validator remains unusable on Termux due its previously observed SIGSYS/faccessat2 crash; config validation is NOT VERIFIED.
 - Next gate: sync the new config/docs HEAD in Termux, run the 14 tests on that exact HEAD, then inspect its own CircleCI status and logs. Do not transfer results from `bb35f1e...`.
 - PR #113 remains OPEN / DRAFT / UNMERGED; PR #44 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED; protected verifier pin remains unchanged. No merge, main modification, force-push, or protected-pin change.
+
+
+## CircleCI provisioning incident — 2026-11-19
+
+- Exact failed source SHA `69e66846a67f5d79044329ccf407838f454d24bf`: CircleCI job `one-linux` #740, step #105, cross-toolchain provisioning; explicit `timeout 40m` ended with exit 124.
+- APT downloads and package setup output completed, but the parent install command did not return before its deadline. The precise blocking package hook/process remains unknown.
+- Instrumented split-install config was committed as `84028a01fff08325db365a131a26a34c32690d62`; it separates Clang and MinGW installs and captures dpkg/process diagnostics on failure. Validation is pending on the new exact SHA.
+- Full incident evidence and follow-up: [CIRCLECI_FAILURE_69E668_2026-11-19.md](CIRCLECI_FAILURE_69E668_2026-11-19.md) and [CircleCI config review](CIRCLECI_CONFIG_REVIEW_2026-11-19.md).
