@@ -797,6 +797,7 @@ mod android_native {
         match openat(root, &leaf, O_PATH | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0) {
             Ok(existing) => {
                 let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
+                if metadata.file_type().is_symlink() { return Err(FilesystemError::ResolutionFailed); }
                 if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
                 if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
                 if mount_id(&existing)? != root_mount { return Err(FilesystemError::ResolutionFailed); }
