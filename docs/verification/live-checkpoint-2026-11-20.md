@@ -664,3 +664,11 @@ Latest source/dependency commits:
 - `91d2a6c3a49041284944a4dd12ae090bb783bd0d` sets a 5-second SQLite VM progress deadline and a 250 ms busy/lock wait timeout for each query connection.
 
 These controls complement the SQL/parameter/row/output caps and per-connection SQLite engine limits. Source-only change; no build/test/CI/verifier/platform matrix was run.
+
+
+## SQLite deadline covers output serialization — 2026-11-21
+
+Latest source commit: `75bf347d7bbb9cce89a488b02cc285c7f605e984` (`crates/one-core/src/database.rs`).
+
+- The 5-second query deadline now applies both to SQLite VM execution (progress handler) and to Rust-side row/result serialization, so time spent formatting large result sets is also bounded.
+- Source-only change; no build/test/CI/verifier/platform matrix ran.
