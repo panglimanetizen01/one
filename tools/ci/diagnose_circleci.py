@@ -67,7 +67,7 @@ def classify_failure(text: str) -> str:
     if any(term in lowered for term in (
         "too long with no output", "context deadline exceeded",
         "timed out", "timed_out", "operation timed out",
-    )) or re.search(r"\\btimeout\\b", lowered):
+    )) or re.search(r"\btimeout\b", lowered):
         return "TIMEOUT / NO-OUTPUT"
     if any(term in lowered for term in (
         "error[e", "could not compile", "clang: error",
@@ -286,7 +286,10 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         "PIPELINE REVISION: {}".format(job.get("pipeline_revision") or "UNVERIFIED"),
         "WORKFLOW UUID: {}".format(job.get("workflow_id") or "UNVERIFIED"),
         "WORKFLOW STATUS: {}".format(job.get("workflow_status") or "UNVERIFIED"),
-        "JOB STARTED AT: {}".format(job.get("job_started_at") or "null / not started"),
+        "JOB STARTED AT: {}".format(
+            (job.get("job_started_at") or "null / not started")
+            if job.get("pipeline_id") else "UNVERIFIED (direct job lookup)"
+        ),
         "=" * 78,
     ])
     report.append(source_identity_line(job))
