@@ -26,12 +26,13 @@ impl Interpreter {
  fn register_definitions(&mut self, statements: &[IrStatement]) { for statement in statements { match statement { IrStatement::Function { name, params, result, body } => { self.functions.insert(name.clone(), (params.clone(), result.clone(), body.clone())); }, IrStatement::Event { trigger, body } => { self.events.insert(trigger.join(" "), body.clone()); }, _ => {} } } }
  fn tick(&mut self) -> Result<(), RuntimeError> { self.steps += 1; if self.steps > self.max_steps { Err(RuntimeError { code: "R3002", message: "Program melebihi batas langkah eksekusi yang aman.".into() }) } else { Ok(()) } }
  fn exec_block(&mut self, statements: &[IrStatement], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { for statement in statements { self.tick()?; self.exec_statement(statement, env, output)?; } Ok(()) }
+ fn exec_scoped_block(&mut self, statements: &[IrStatement], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { env.push(); let result = self.exec_block(statements, env, output); env.pop(); result }
  fn exec_statement(&mut self, statement: &IrStatement, env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { match statement {
   IrStatement::Declaration { name, value } => { let value = self.eval(value, env)?; env.define(name.clone(), value); },
   IrStatement::Assignment { name, value } => { let value = self.eval(value, env)?; if !env.assign(name, value) { return Err(RuntimeError { code: "R3003", message: format!("Saya belum menemukan '{}'.", name) }); } },
   IrStatement::Action { name, args } => self.exec_action(name, args, env, output)?,
-  IrStatement::Conditional { condition, then_block, else_block } => match self.eval(condition, env)? { Value::Boolean(true) => { env.push(); self.exec_block(then_block, env, output)?; env.pop(); }, Value::Boolean(false) => { env.push(); self.exec_block(else_block, env, output)?; env.pop(); }, _ => return Err(RuntimeError { code: "R3004", message: "Kondisi harus menghasilkan boolean.".into() }) },
-  IrStatement::Loop { kind, body } => match kind { IrLoopKind::ForEach { variable, iterable } => { let list = self.eval(iterable, env)?; if let Value::List(values) = list { for value in values { env.push(); env.define(variable.clone(), value); self.exec_block(body, env, output)?; env.pop(); } } else { return Err(RuntimeError { code: "R3005", message: "Loop 'untuk setiap' membutuhkan daftar.".into() }); } }, IrLoopKind::While { condition } => loop { if !matches!(self.eval(condition, env)?, Value::Boolean(true)) { break; } env.push(); self.exec_block(body, env, output)?; env.pop(); self.tick()?; } },
+  IrStatement::Conditional { condition, then_block, else_block } => match self.eval(condition, env)? { Value::Boolean(true) => self.exec_scoped_block(then_block, env, output)?, Value::Boolean(false) => self.exec_scoped_block(else_block, env, output)?, _ => return Err(RuntimeError { code: "R3004", message: "Kondisi harus menghasilkan boolean.".into() }) },
+  IrStatement::Loop { kind, body } => match kind { IrLoopKind::ForEach { variable, iterable } => { let list = self.eval(iterable, env)?; if let Value::List(values) = list { for value in values { env.push(); env.define(variable.clone(), value); let result = self.exec_block(body, env, output); env.pop(); result?; } } else { return Err(RuntimeError { code: "R3005", message: "Loop 'untuk setiap' membutuhkan daftar.".into() }); } }, IrLoopKind::While { condition } => loop { if !matches!(self.eval(condition, env)?, Value::Boolean(true)) { break; } env.push(); let result = self.exec_block(body, env, output); env.pop(); result?; self.tick()?; } },
   IrStatement::Function { .. } | IrStatement::Event { .. } => {},
   IrStatement::Network { operation } => { let _ = self.execute_network(operation)?; },
   IrStatement::Orchestration { semantic, capability, effect, target, adapter, expectation } => {
@@ -50,4 +51,50 @@ impl Interpreter {
  fn eval(&mut self, expr: &IrExpr, env: &Environment) -> Result<Value, RuntimeError> { match expr { IrExpr::Text(v) => Ok(Value::Text(v.clone())), IrExpr::Number(v) => Ok(Value::Number(*v)), IrExpr::Boolean(v) => Ok(Value::Boolean(*v)), IrExpr::Nothing => Ok(Value::Nothing), IrExpr::Identifier(name) => env.get(name).ok_or_else(|| RuntimeError { code: "R3016", message: format!("Saya belum menemukan '{}'.", name) }), IrExpr::Binary { left, op, right } => { let left_value = self.eval(left, env)?; let right_value = self.eval(right, env)?; self.eval_binary(*op, left_value, right_value) }, IrExpr::Call { name, args } => self.call_function(name, args, env) } }
  fn eval_binary(&self, op: BinaryOp, left: Value, right: Value) -> Result<Value, RuntimeError> { match (op, left, right) { (BinaryOp::Add, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)), (BinaryOp::Subtract, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a - b)), (BinaryOp::Multiply, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a * b)), (BinaryOp::Divide, Value::Number(a), Value::Number(b)) if b != 0 => Ok(Value::Number(a / b)), (BinaryOp::Divide, _, Value::Number(0)) => Err(RuntimeError { code: "R3017", message: "Pembagian dengan nol tidak diperbolehkan.".into() }), (BinaryOp::Equal, a, b) => Ok(Value::Boolean(a == b)), (BinaryOp::Greater, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a > b)), (BinaryOp::Less, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a < b)), (BinaryOp::AtMost, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a <= b)), (BinaryOp::AtLeast, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a >= b)), (BinaryOp::Add, Value::Text(a), Value::Text(b)) => Ok(Value::Text(format!("{}{}", a, b))), _ => Err(RuntimeError { code: "R3018", message: "Operasi tidak cocok dengan tipe nilai.".into() }) } }
  fn call_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Environment) -> Result<Value, RuntimeError> { let (params, result, body) = self.functions.get(name).cloned().ok_or_else(|| RuntimeError { code: "R3019", message: format!("Pekerjaan '{}' belum dibuat.", name) })?; if params.len() != args.len() { return Err(RuntimeError { code: "R3020", message: format!("Pekerjaan '{}' membutuhkan {} parameter.", name, params.len()) }); } let mut env = caller_env.clone(); env.push(); for (param, arg) in params.iter().zip(args) { let value = self.eval(arg, caller_env)?; env.define(param.clone(), value); } let mut ignored_output = Vec::new(); self.exec_block(&body, &mut env, &mut ignored_output)?; self.eval(&result, &env) }
+}
+
+
+#[cfg(test)]
+mod scope_cleanup_tests {
+    use super::*;
+
+    #[test]
+    fn failed_event_does_not_leak_nested_scope_variables() {
+        let mut interpreter = Interpreter::new(CapabilitySet::none());
+        let program = IrProgram {
+            statements: vec![
+                IrStatement::Declaration {
+                    name: "root".into(),
+                    value: IrExpr::Text("retained".into()),
+                },
+                IrStatement::Event {
+                    trigger: vec!["uji".into()],
+                    body: vec![IrStatement::Conditional {
+                        condition: IrExpr::Boolean(true),
+                        then_block: vec![
+                            IrStatement::Declaration {
+                                name: "temporary".into(),
+                                value: IrExpr::Text("must not leak".into()),
+                            },
+                            IrStatement::Action {
+                                name: "unknown action".into(),
+                                args: Vec::new(),
+                            },
+                        ],
+                        else_block: Vec::new(),
+                    }],
+                },
+            ],
+        };
+
+        interpreter.execute(&program).expect("program setup should succeed");
+        let error = interpreter
+            .dispatch_event("uji")
+            .expect_err("unknown action should fail the event");
+        assert_eq!(error.code, "R3015");
+
+        let environment = interpreter.environment.as_ref().expect("event environment should be retained");
+        assert_eq!(environment.get("root"), Some(Value::Text("retained".into())));
+        assert_eq!(environment.get("temporary"), None);
+    }
 }
