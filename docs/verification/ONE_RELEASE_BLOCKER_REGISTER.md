@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `f8e46856803c9f45f54402e71d7e19853bdf46bc` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `eb8071e7592a9a1432fcc07a7fe681f598562782`.
+**Latest source/test candidate:** `5846eb70f2a462331873cc0023d1f1ab1106f86a` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `b1036d56cb04c9437c3779a2204e4e3a2aec3006`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
