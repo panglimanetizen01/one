@@ -365,8 +365,8 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
         thread::sleep(PROCESS_POLL_INTERVAL);
     };
 
-    // Terminate members of the original process group. This is best-effort
-    // cleanup only: a descendant may escape into a different session/group.
+    // Terminate the complete invocation group. The inherited Linux seccomp
+    // filter prevents descendants from creating a new session/group or PID namespace.
     kill_process_group(process_group);
     // Descendants may escape the process group while retaining inherited pipe
     // writers. Readers are nonblocking on Unix, so request shutdown after
@@ -1139,7 +1139,7 @@ mod tests {
     fn linux_process_cannot_escape_its_invocation_group_with_setsid() {
         let pid_file = std::env::temp_dir().join(format!("one-escaped-descendant-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \\\"$1\\\"; exec sleep 5' one-escaped \\\"$1\\\" || echo BLOCKED";
+        let script = r#"setsid sh -c 'echo $$ > "$1"; exec sleep 5' one-escaped "$1" || echo BLOCKED"#;
         let started = Instant::now();
         let result = run_process(&ProcessSpec {
             program: "sh".into(),
@@ -1159,7 +1159,7 @@ mod tests {
     fn linux_process_timeout_cannot_leave_an_escaped_session_descendant() {
         let pid_file = std::env::temp_dir().join(format!("one-timeout-descendant-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \\\"$1\\\"; exec sleep 30' one-timeout \\\"$1\\\" || sleep 30";
+        let script = r#"setsid sh -c 'echo $$ > "$1"; exec sleep 30' one-timeout "$1" || sleep 30"#;
         let error = run_process_with_timeout(&ProcessSpec {
             program: "sh".into(),
             args: vec!["-c".into(), script.into(), "one-test".into(), pid_file.to_string_lossy().into_owned()],
@@ -1176,7 +1176,7 @@ mod tests {
     fn linux_output_overflow_cannot_leave_an_escaped_session_writer() {
         let pid_file = std::env::temp_dir().join(format!("one-overflow-descendant-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \\\"$1\\\"; exec yes x' one-overflow \\\"$1\\\" || head -c 1048577 /dev/zero";
+        let script = r#"setsid sh -c 'echo $$ > "$1"; exec yes x' one-overflow "$1" || head -c 1048577 /dev/zero"#;
         let error = run_process_with_timeout(&ProcessSpec {
             program: "sh".into(),
             args: vec!["-c".into(), script.into(), "one-test".into(), pid_file.to_string_lossy().into_owned()],
