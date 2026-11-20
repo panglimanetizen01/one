@@ -1,6 +1,6 @@
 # One Network Foundation v0.1
 
-Status: **Implemented and independently verified for the currently implemented runtime slices; broader network support remains future work.**
+Status: **The network foundation and selected runtime slices are implemented; the 2026-11-21 bounded-response hardening candidate is NOT BUILT/TESTED. Broader network support remains future work.**
 
 ## Scope
 
@@ -93,3 +93,13 @@ This foundation does not yet claim implementation of:
 - production-complete support for every RFC extension of the verified application protocols.
 
 Those are subsequent vertical slices and must preserve the same deterministic semantic and capability boundaries.
+
+
+## 2026-11-21 — bounded HTTP response ingestion and filesystem payload allocation
+
+Latest relevant source commits:
+- `d32bb207f8ea6f24740560f374a4f698c687e172` — `FileWriteAdapter` now passes a borrowed text slice to `FilesystemAuthority::write`, so the configured write-byte limit is enforced before an owned output copy is made. The bounded echo copy happens only after a successful write. Added `filesystem_write_adapter_rejects_oversized_content_without_side_effects` (NOT RUN).
+- `ce39630fc9abdc9ba7c6accdf8db161a5cb002fa`, `8c219882aa37ee271874f58de172072531d80ddc`, `b636f0bc1e22008fc62dafe46a378cc2fb2b599b`, and `5fe958cad798b3d05c3ceb21f875f1f90074cb35` — HTTP/1.1 response ingestion now enforces a 64 KiB header ceiling and 32 MiB wire-body ceiling while reading, with fallible buffer growth; decoded response bodies remain capped at 16 MiB. The parser rejects duplicate Content-Length, unsupported/duplicate Transfer-Encoding, and simultaneous Content-Length + chunked framing; chunk-size arithmetic is checked and chunk allocation is fallible.
+- Added source regressions for oversized headers, ambiguous framing, duplicate lengths, chunk-size overflow, and bounded socket reads. NOT RUN.
+
+These are implementation/resource-boundary changes only. No build, test, CI, verifier, or platform matrix was run. No prior exact-SHA result transfers to this candidate.
