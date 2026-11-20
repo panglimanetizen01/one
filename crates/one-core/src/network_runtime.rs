@@ -53,7 +53,7 @@ fn read_http_response_bounded(stream: &mut TcpStream) -> Result<Vec<u8>, Network
         response.try_reserve(count)
             .map_err(|_| NetworkRuntimeError::Io("Memori tidak cukup untuk membaca respons HTTP.".into()))?;
         response.extend_from_slice(&buffer[..count]);
-        let marker = b"\\r\\n\\r\\n";
+        let marker = b"\r\n\r\n";
         if let Some(header_end) = response.windows(marker.len()).position(|window| window == marker) {
             if header_end > MAX_HTTP_RESPONSE_HEADER_BYTES {
                 return Err(NetworkRuntimeError::Protocol("Header HTTP melebihi batas ukuran.".into()));
