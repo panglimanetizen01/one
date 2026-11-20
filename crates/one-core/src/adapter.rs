@@ -264,6 +264,69 @@ mod filesystem_nofollow_tests {
     }
 
     #[test]
+    fn descriptor_relative_write_race_never_modifies_outside_symlink_target() {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        use std::thread;
+
+        let root = test_root("write-leaf-race");
+        let outside = root.with_extension("outside");
+        let target = root.join("target.txt");
+        std::fs::write(&outside, b"OUTSIDE_SENTINEL").unwrap();
+        std::fs::write(&target, b"INITIAL").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = Arc::new(FileWriteAdapter::with_authority(authority));
+        let stop = Arc::new(AtomicBool::new(false));
+
+        let attacker_target = target.clone();
+        let attacker_outside = outside.clone();
+        let attacker_stop = Arc::clone(&stop);
+        let attacker = thread::spawn(move || {
+            while !attacker_stop.load(Ordering::Relaxed) {
+                let _ = std::fs::remove_file(&attacker_target);
+                let _ = symlink(&attacker_outside, &attacker_target);
+                let _ = std::fs::remove_file(&attacker_target);
+                let _ = std::fs::write(&attacker_target, b"RACED_ENTRY");
+            }
+        });
+
+        for index in 0..128 {
+            let result = adapter.invoke(&write_request(
+                "target.txt",
+                &format!("SAFE_WRITE_{index}"),
+            ));
+            // A concurrent leaf replacement may make an individual operation
+            // fail closed; it must never redirect the write to the outside file.
+            if let Err(error) = result {
+                assert!(
+                    matches!(
+                        error,
+                        AdapterError::ResolutionFailed
+                            | AdapterError::BackendFailure
+                            | AdapterError::UnsupportedPlatform
+                    ),
+                    "unexpected write-race error: {error:?}"
+                );
+            }
+        }
+
+        stop.store(true, Ordering::Relaxed);
+        attacker.join().unwrap();
+        assert_eq!(std::fs::read(&outside).unwrap(), b"OUTSIDE_SENTINEL");
+
+        let _ = std::fs::remove_file(&target);
+        assert!(
+            std::fs::read_dir(&root)
+                .unwrap()
+                .all(|entry| !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")),
+            "temporary write entry leaked after concurrent leaf replacement"
+        );
+        drop(adapter);
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
     fn descriptor_relative_write_rejects_oversized_content_without_side_effects() {
         let root = test_root("write-limit");
         let target = root.join("target.txt");
