@@ -259,3 +259,13 @@ Bukti runtime Android API 35 arm64-v8a memiliki metadata artifact yang sudah dip
 Adapter filesystem kini hanya mengiklankan backend native pada platform yang benar-benar tersedia: Linux pada build Linux dan Windows pada build Windows. Android, macOS, dan platform lain belum memiliki backend filesystem dan tetap fail-closed. Pemilihan adapter memakai identitas platform host sebenarnya, bukan nilai generik.
 
 Bukti kandidat source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: test metadata lulus pada Linux dan Windows melalui E4 run #44585270928; workspace test lulus pada Ubuntu 24.04 dan Debian 12 melalui run #44585282690. CircleCI untuk source ini masih PENDING. Issue #104 tetap OPEN / NOT ACCEPTED dan fitur belum dirilis ke `main`. Bukti runtime Android API 35 adalah bukti runtime native yang terpisah, bukan dukungan adapter filesystem Android.
+
+## Pembaruan status filesystem — 20 November 2026
+
+- Pemeriksaan independen pada source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` telah lulus untuk regresi hard-link di Linux dan Windows.
+- File yang memiliki hard link ke luar project root ditolak untuk operasi baca dan tulis; pengujian memeriksa bahwa isi file di dalam maupun di luar root tidak berubah.
+- Windows juga telah lulus pengujian junction/reparse-point, target absolut di dalam root, penolakan target di luar root tanpa side effect, atomic write, batas ukuran, dan parent traversal.
+- Linux telah lulus pengujian no-follow, mount-boundary, traversal, race pada parent symlink, serta direct-child write.
+- Status dukungan tetap terbatas: filesystem backend tersedia hanya pada Linux dan Windows. Android dan macOS belum memiliki filesystem adapter. Pada Linux, nested writes tetap ditolak secara fail-closed.
+- Ini merupakan bukti regresi dan verifikasi teknis pada kandidat PR, bukan penerimaan rilis. Issue #104 tetap OPEN / NOT ACCEPTED; jangan menganggap fitur sebagai sandbox universal atau mengaktifkan dukungan platform yang belum tersedia.
+- CircleCI `ci/circleci: one-linux` pada source yang sama berstatus SUCCESS. Bukti ini tidak otomatis berlaku untuk SHA berikutnya.
