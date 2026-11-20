@@ -926,50 +926,84 @@ mod macos_native {
     use std::path::{Component, Path};
     use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
+
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
-    fn direct_child(relative: &Path) -> Result<CString, FilesystemError> {
-        let mut components = relative.components();
-        let Some(Component::Normal(name)) = components.next() else { return Err(FilesystemError::InvalidTarget); };
-        if components.next().is_some() || name.as_bytes().is_empty() { return Err(FilesystemError::UnsupportedPlatform); }
-        CString::new(name.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)
-    }
+
     fn map_error(error: std::io::Error) -> FilesystemError {
-        match error.raw_os_error() { Some(libc::ELOOP) | Some(libc::EXDEV) => FilesystemError::ResolutionFailed, Some(libc::ENOENT) => FilesystemError::NotFound, _ => FilesystemError::IoFailure }
+        match error.raw_os_error() {
+            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) => FilesystemError::ResolutionFailed,
+            Some(libc::ENOENT) => FilesystemError::NotFound,
+            _ => FilesystemError::IoFailure,
+        }
     }
-    fn openat(root: &File, name: &CString, flags: i32, mode: u32) -> Result<File, FilesystemError> {
-        let fd = unsafe { libc::openat(root.as_raw_fd(), name.as_ptr(), flags, mode) };
+
+    fn openat(directory: &File, name: &CString, flags: i32, mode: u32) -> Result<File, FilesystemError> {
+        let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), flags, mode) };
         if fd < 0 { return Err(map_error(std::io::Error::last_os_error())); }
         Ok(unsafe { File::from_raw_fd(fd) })
     }
+
     fn verify_same_mount(root: &File, file: &File) -> Result<(), FilesystemError> {
         let mut root_info: libc::statfs = unsafe { std::mem::zeroed() };
         let mut file_info: libc::statfs = unsafe { std::mem::zeroed() };
         // SAFETY: both descriptors are live and each statfs output points to
         // a writable statfs value with the platform ABI layout.
         if unsafe { libc::fstatfs(root.as_raw_fd(), &mut root_info) } != 0
-            || unsafe { libc::fstatfs(file.as_raw_fd(), &mut file_info) } != 0
-        {
+            || unsafe { libc::fstatfs(file.as_raw_fd(), &mut file_info) } != 0 {
             return Err(FilesystemError::IoFailure);
         }
         if root_info.f_fsid.val != file_info.f_fsid.val
-            || root_info.f_mntonname != file_info.f_mntonname
-        {
+            || root_info.f_mntonname != file_info.f_mntonname {
             return Err(FilesystemError::ResolutionFailed);
         }
         Ok(())
     }
+
+    fn parent_and_leaf(root: &File, relative: &Path) -> Result<(File, CString), FilesystemError> {
+        let components: Vec<_> = relative.components().collect();
+        if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        let mut parent = root.try_clone().map_err(|_| FilesystemError::IoFailure)?;
+        for component in &components[..components.len() - 1] {
+            let Component::Normal(name) = component else { return Err(FilesystemError::InvalidTarget); };
+            let name = CString::new(name.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+            let next = openat(&parent, &name,
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+            let metadata = next.metadata().map_err(|_| FilesystemError::IoFailure)?;
+            if !metadata.is_dir() { return Err(FilesystemError::NotRegularFile); }
+            verify_same_mount(root, &next)?;
+            parent = next;
+        }
+        let Component::Normal(leaf) = components[components.len() - 1] else {
+            return Err(FilesystemError::InvalidTarget);
+        };
+        let leaf = CString::new(leaf.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+        Ok((parent, leaf))
+    }
+
+    fn create_temp(parent: &File, name: &CString) -> Result<File, std::io::Error> {
+        let fd = unsafe {
+            libc::openat(parent.as_raw_fd(), name.as_ptr(),
+                libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600)
+        };
+        if fd < 0 { return Err(std::io::Error::last_os_error()); }
+        Ok(unsafe { File::from_raw_fd(fd) })
+    }
+
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
-        let name = direct_child(relative)?;
-        let file = openat(root, &name, libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+        let (parent, leaf) = parent_and_leaf(root, relative)?;
+        let file = openat(&parent, &leaf,
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
         verify_same_mount(root, &file)?;
         Ok(file)
     }
+
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
-        let leaf = direct_child(relative)?;
-        match openat(root, &leaf, libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0) {
+        let (parent, leaf) = parent_and_leaf(root, relative)?;
+        match openat(&parent, &leaf,
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0) {
             Ok(existing) => {
                 let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
                 if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
@@ -983,8 +1017,9 @@ mod macos_native {
         for _ in 0..16 {
             let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
             let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-            let name = CString::new(format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id())).map_err(|_| FilesystemError::InvalidTarget)?;
-            match create_temp(root, &name) {
+            let name = CString::new(format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id()))
+                .map_err(|_| FilesystemError::InvalidTarget)?;
+            match create_temp(&parent, &name) {
                 Ok(file) => { created = Some((file, name)); break; },
                 Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
                 Err(error) => return Err(map_error(error)),
@@ -997,14 +1032,18 @@ mod macos_native {
             verify_same_mount(root, &temp)?;
             temp.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             temp.sync_all().map_err(|_| FilesystemError::IoFailure)?;
-            let renamed = unsafe { libc::renameat(root.as_raw_fd(), temp_name.as_ptr(), root.as_raw_fd(), leaf.as_ptr()) };
+            let renamed = unsafe {
+                libc::renameat(parent.as_raw_fd(), temp_name.as_ptr(), parent.as_raw_fd(), leaf.as_ptr())
+            };
             if renamed != 0 { return Err(map_error(std::io::Error::last_os_error())); }
-            root.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+            parent.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             Ok(())
         })();
         if result.is_err() {
-            let removed = unsafe { libc::unlinkat(root.as_raw_fd(), temp_name.as_ptr(), 0) };
-            if removed != 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ENOENT) { return Err(FilesystemError::IoFailure); }
+            let removed = unsafe { libc::unlinkat(parent.as_raw_fd(), temp_name.as_ptr(), 0) };
+            if removed != 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ENOENT) {
+                return Err(FilesystemError::IoFailure);
+            }
         }
         result
     }
