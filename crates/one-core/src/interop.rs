@@ -290,7 +290,7 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
         .stderr(Stdio::piped())
         .process_group(0);
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     // SAFETY: the pre-exec hook performs only child-local prctl syscalls and
     // installs the inherited process-group containment filter before exec.
     unsafe {
