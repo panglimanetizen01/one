@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `a2b98ba20ab6473a69698825457031178391c93c` |
+| PR #113 HEAD at pre-register refresh read | `2ac38936eef9500cee6bf40f49778efd84ca9c54` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` |
+| Code-bearing source | `be5566435394cc27bbeb863b78c69b0fe52f774c` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `c501032e86cf9487ecbeeaacf6328b6cf95d7af8`.
+**Latest source/test candidate:** `be5566435394cc27bbeb863b78c69b0fe52f774c` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `a2b98ba20ab6473a69698825457031178391c93c`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -701,3 +701,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - HTTP request serialization, response ingestion and chunk-body decoding use `try_reserve_exact` under the explicit 16 MiB/64 KiB/32 MiB ceilings, avoiding geometric capacity growth beyond intended limits.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `a2b98ba20ab6473a69698825457031178391c93c`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — IPv6 HTTP authority and query-only target support
+
+- Latest source candidate: `be5566435394cc27bbeb863b78c69b0fe52f774c` (NOT BUILT/TESTED).
+- Shared HTTP authority parsing supports bracketed IPv6 with default/explicit ports; generic DNS/socket resolution now brackets IPv6 socket addresses correctly.
+- HTTP GET target parsing supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace paths. Source regressions added, NOT RUN.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `2ac38936eef9500cee6bf40f49778efd84ca9c54`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
