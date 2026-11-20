@@ -30,7 +30,7 @@ Post-merge `One CI` run `39371290853` tidak menghasilkan execution evidence: ked
 
 **Eksperimental — filesystem read source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk operasi `baca berkas` dengan izin CLI eksplisit. Boundary ini telah diverifikasi lintas Ubuntu + Windows Server 2025 pada source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui mirror run `38903950612`.
 
-**Eksperimental — process execution:** Windows uses Job Object containment; Linux candidate now installs inherited seccomp restrictions to prevent descendants from creating new sessions/process groups or namespaces. The new Linux implementation is NOT BUILT/TESTED yet. Android and macOS process execution fail closed until equivalent containment exists. The v0.1 slice remains one explicitly targeted program with no extra arguments.
+**Eksperimental — process execution:** Windows uses Job Object containment; Linux and Android candidates install inherited seccomp restrictions to prevent descendants from creating new sessions/process groups or namespaces. These changes are NOT BUILT/TESTED yet. macOS process execution remains fail-closed until equivalent containment exists. The v0.1 slice remains one explicitly targeted program with no extra arguments.
 
 **Eksperimental — filesystem write source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk `tulis ke berkas` dengan permission `filesystem.write` dan target file yang sama. Evidence executable tetap dibatasi pada Termux/Android untuk exact SHA yang tercatat.
 
