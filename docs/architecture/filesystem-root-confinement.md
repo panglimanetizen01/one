@@ -8,7 +8,7 @@ flowchart TB
     Host --> HostPlatform["PlatformKind::current_host()"]
     HostPlatform --> SelectAdapter["Orchestrator selects using actual host platform"]
     SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux on Linux; Windows on Windows; none on Android/macOS"]
-    ProjectRoot --> Authority["FilesystemAuthority::open(project_root, limits)"]
+    ProjectRoot --> Authority["FilesystemAuthority::open(host_cwd, limits) — final-component no-follow + retained-handle identity check"]
     Authority --> Root["Retained trusted root directory handle"]
     RequestedTarget["Requested target"] --> Confine["Resolve against fixed root; reject outside-root absolute targets"]
     Authority --> Confine
@@ -109,3 +109,10 @@ The Mermaid diagram above remains the existing architecture source of truth; thi
 - CLI filesystem authority now comes only from the host process working directory. The source-file path and program-controlled `--target` no longer choose or widen the trusted root. A CLI regression fixture places the `.one` source outside the working directory while reading an in-root target.
 - Implementation commits: `8b1d13e02c181fc06b97fb7f147e1ccd013d3aa1` (CLI root binding), `5e39430a341629eb9fda11ee4e11b0f6f40487ab` (CLI fixture), and `7cbcb1bf575defe03a2d9991dc5094569de95f03` (Linux root-handle acquisition).
 - This candidate has NOT been built or tested after these changes. Do not transfer prior exact-SHA evidence. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable; Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Windows root no-reparse implementation — 2026-11-20
+
+- Windows root acquisition no longer canonicalizes through the final component before opening it. It canonicalizes only the parent, preserves the final name, opens it with the existing `OBJ_DONT_REPARSE` / `FILE_OPEN_REPARSE_POINT` native path, then compares volume serial and file index against the path identity.
+- Added `filesystem::windows_root_tests::authority_rejects_reparse_root_without_following_final_component` in commit `8dd92aebc033a94abb14a8d7ec498f6933d4ba8e`; it creates a directory junction and requires root acquisition to fail closed.
+- Windows implementation commit: `b208a1a5bdf4a9ffb00a7c17aa4a401ed4a237ce`. This and the Linux/CLI root changes are NOT BUILT OR TESTED. Latest code-bearing candidate: `8dd92aebc033a94abb14a8d7ec498f6933d4ba8e`.
+- Preserve Issue #104 OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable.
