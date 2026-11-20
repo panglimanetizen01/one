@@ -655,3 +655,12 @@ Latest source/test candidate: `76f76c9a7a5884c08d851afc203cb1cae7a5827a` (NOT BU
 - SQLite engine limits are now configured per connection through rusqlite's `limits` feature: 16 MiB value/row length, 64 KiB SQL, 256 columns, 128 variables, bounded compound SELECT/function args/expression depth/LIKE pattern, zero attached databases, and zero auxiliary worker threads.
 - Result serialization uses fallible exact growth; BLOB hex size is checked before allocating/copying, and invalid UTF-8 text is streamed through bounded lossy conversion.
 - Added regressions for oversized SQL and BLOB hex output. NOT RUN. No build/test/CI/verifier/platform matrix was run.
+
+
+## SQLite query execution-time and lock-wait limits — 2026-11-21
+
+Latest source/dependency commits:
+- `f6716d2c9dc83208de695c699804da7ccde9aec0` enables rusqlite `hooks` alongside `limits`.
+- `91d2a6c3a49041284944a4dd12ae090bb783bd0d` sets a 5-second SQLite VM progress deadline and a 250 ms busy/lock wait timeout for each query connection.
+
+These controls complement the SQL/parameter/row/output caps and per-connection SQLite engine limits. Source-only change; no build/test/CI/verifier/platform matrix was run.
