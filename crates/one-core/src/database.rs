@@ -150,12 +150,12 @@ impl ToolAdapter for SqliteAdapter {
                 .ok_or(AdapterError::BackendFailure)?;
             for index in 0..column_count {
                 if index > 0 {
-                    Self::append_bounded(&mut output, b"\\t")?;
+                    Self::append_bounded(&mut output, b"\t")?;
                 }
                 let value = row.get_ref(index).map_err(|_| AdapterError::BackendFailure)?;
                 Self::append_value(&mut output, value)?;
             }
-            Self::append_bounded(&mut output, b"\\n")?;
+            Self::append_bounded(&mut output, b"\n")?;
         }
 
         Ok(AdapterResult { success: true, output })
