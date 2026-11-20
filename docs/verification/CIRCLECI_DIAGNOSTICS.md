@@ -226,3 +226,10 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - Corrective commit `3b684acd1f3e68f1b40dd6d600fad0e013044495` updates only the bootstrap workflow: normal PRs retain merge-result checkout; PRs targeting `fix/windows-process-verifier-timeouts-20261118` checkout exact PR head SHA; only the bootstrap PR branch skips the contract checker, while PR #113 retains the full check.
 - Run #2244 (`44748865610`) is IN_PROGRESS on this exact commit; do not record PASS until both OS jobs and all non-skipped steps complete successfully.
 - PR #115 remains OPEN / UNMERGED. PR #113 remains OPEN / DRAFT / UNMERGED. CircleCI status for PR #115 corrective commit is PENDING at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`; CircleCI provider logs are not accessible in this session.
+
+
+## Terminal GitHub Actions bootstrap result — 2026-11-20
+
+- PR #115 corrective workflow commit `3b684acd1f3e68f1b40dd6d600fad0e013044495` completed GitHub Actions run #2244 / `44748865610` with terminal SUCCESS on Ubuntu and Windows. Build, Clippy, workspace tests, and all focused tests passed on both. The bootstrap-only Contract artifacts step was intentionally skipped; no contract-check PASS is claimed for the bootstrap branch.
+- CircleCI status on this same SHA is FAILURE at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`. The CircleCI job page is inaccessible through the connected browser and there is no CircleCI CLI/MCP action in this session; root cause remains UNKNOWN.
+- PR #113 docs HEAD `2cbf87ed05277fc6d66088a645f2aea8d0d8ce16` has CircleCI PENDING at last readback, workflow `d924efb4-6927-43e7-85c7-ad38cab7f425`, job `192e4737-7e01-426d-b2f4-80ee80fa48c3`. PR #113 has no GitHub Actions run yet because bootstrap PR #115 remains unmerged.
