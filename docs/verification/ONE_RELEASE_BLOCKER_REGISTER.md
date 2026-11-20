@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` |
+| PR #113 HEAD at pre-register refresh read | `ad29bda44f571f70106b1531ef1913534e3ce938` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
@@ -107,7 +107,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest code-bearing source:** `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` (NOT BUILT/TESTED); it includes the prior `waitid(WNOWAIT)` cleanup hardening from `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` and adds explicit 2 MiB aggregate stdout/stderr capture enforcement alongside 1 MiB per-stream limits. PR #113 HEAD before this register sync: `d5ddd7f39bbc54a7c0e88db907dfae5f8c49afc5`.
+**Latest code-bearing source/test candidate:** `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (NOT BUILT/TESTED); it includes the prior `waitid(WNOWAIT)` cleanup hardening from `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` and adds explicit 2 MiB aggregate stdout/stderr capture enforcement alongside 1 MiB per-stream limits. PR #113 HEAD before this register sync: `d5ddd7f39bbc54a7c0e88db907dfae5f8c49afc5`.
 
 - Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
 - Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
@@ -619,3 +619,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Release contract reconciliation: `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` corrects stale platform statements. Current source exposes filesystem adapters on Linux, Windows, Android, and macOS (with Android/macOS nested paths fail-closed; Linux nested writes require detached-mount support); process adapters on Linux, Android, and Windows (macOS fail-closed). These are source capabilities, not acceptance or support claims.
 - PR #113 remains OPEN / DRAFT / UNMERGED, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update itself advances branch HEAD. Refresh live PR metadata before the next action.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. Broad build/test/verification remains deferred until implementation scope is complete.
+
+
+## Evidence/documentation sync after subprocess helper correction — 2026-11-21
+
+- The evidence matrix and v0.1 completion addendum now record source commit `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` as a duplicate-test-helper compile-blocker correction only. They explicitly do not promote build/test/verification status.
+- Release contract platform-boundary reconciliation is commit `da5b007fe1dcfc7caa3c14c69b500866d5edbb75`.
+- PR #113 live HEAD at pre-register refresh: `ad29bda44f571f70106b1531ef1913534e3ce938`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; state OPEN / DRAFT / UNMERGED. This register update advances the branch; refresh before the next operation.
+- Issue #104/#105 remain OPEN / NOT ACCEPTED. Implementation-first order unchanged.
