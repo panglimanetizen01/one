@@ -514,3 +514,12 @@ PR #113 remains OPEN / DRAFT / UNMERGED on `security/issue-104-root-confinement-
 ## Subprocess resource-bound implementation refresh — 2026-11-21
 
 The latest code-bearing source for Issue #81/#105 is `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed`. It explicitly enforces a 10-second deadline, 1 MiB stdout cap, 1 MiB stderr cap, and 2 MiB aggregate output ceiling before returning a process result. Source tests cover stdout overflow, stderr overflow, timeout, normal exit/status/stream preservation, and Linux/Android direct-fork + `setsid` escape attempts for normal completion, timeout, and output overflow. No build or test was run on this source. Issues #81 and #105 remain OPEN; no security or release acceptance is claimed.
+
+
+## Implementation continuation — Linux FIFO blocking-read fix — 2026-11-21
+
+- Code commit: `50923b545f2c804b24aa773ea5bb60129d1e0ff2`; it changes `crates/one-core/src/filesystem.rs` only.
+- Linux `openat2` read now adds `O_NONBLOCK` so a FIFO with no writer cannot block before the adapter rejects its non-regular-file type. Added Linux regression `authority_rejects_fifo_without_blocking` using `mkfifo`.
+- This is a focused implementation correction and regression-test addition, not a test result. No build, test, CI, verifier, or broad matrix was run. Issue #104 remains OPEN / NOT ACCEPTED.
+- PR #113 remains OPEN / DRAFT / UNMERGED, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. At the read before documentation synchronization, HEAD was `ac3e6037e102fc088c8137d8e7a7e1c8c6ffec99`; documentation commits following that read will advance HEAD without changing the code-bearing source.
+- Continue implementation-first against the release blocker register. Preserve exact-SHA evidence, protected verifier pins, fixed ledger/DoD, fail-closed unsupported paths, and release authorization.
