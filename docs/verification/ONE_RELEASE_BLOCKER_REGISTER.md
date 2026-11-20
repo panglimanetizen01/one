@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` |
+| PR #113 HEAD at pre-register refresh read | `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
@@ -611,3 +611,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
 
 - PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances the branch; refresh live HEAD before the next operation.
+
+
+## Current source/documentation reconciliation — 2026-11-21
+
+- Source compile-blocker correction: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` removes the duplicate `cleanup_test_escaped_group` definition in `interop.rs` test module. Exactly one definition remains in the current source. No build/test has been run.
+- Release contract reconciliation: `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` corrects stale platform statements. Current source exposes filesystem adapters on Linux, Windows, Android, and macOS (with Android/macOS nested paths fail-closed; Linux nested writes require detached-mount support); process adapters on Linux, Android, and Windows (macOS fail-closed). These are source capabilities, not acceptance or support claims.
+- PR #113 remains OPEN / DRAFT / UNMERGED, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update itself advances branch HEAD. Refresh live PR metadata before the next action.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Broad build/test/verification remains deferred until implementation scope is complete.
