@@ -286,17 +286,17 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
     #[test]
     fn chunked_http_trailers_are_validated_and_framing_is_exact() {
         let valid = parse_http_response(
-            b"HTTP/1.1 200 OK\\r\\nTransfer-Encoding: chunked\\r\\n\\r\\n5\\r\\nhello\\r\\n0\\r\\nX-Trace: ok\\r\\n\\r\\n",
+            b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\nX-Trace: ok\r\n\r\n",
             100,
         ).expect("valid trailer");
         assert_eq!(valid.body, b"hello");
         let forbidden = parse_http_response(
-            b"HTTP/1.1 200 OK\\r\\nTransfer-Encoding: chunked\\r\\n\\r\\n0\\r\\nContent-Length: 0\\r\\n\\r\\n",
+            b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n0\r\nContent-Length: 0\r\n\r\n",
             100,
         );
         assert!(matches!(forbidden, Err(NetworkRuntimeError::Protocol(_))));
         let trailing = parse_http_response(
-            b"HTTP/1.1 200 OK\\r\\nContent-Length: 1\\r\\n\\r\\nxextra",
+            b"HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\nxextra",
             100,
         );
         assert!(matches!(trailing, Err(NetworkRuntimeError::Protocol(_))));
