@@ -286,7 +286,10 @@ mod filesystem_nofollow_tests {
                 let _ = std::fs::remove_file(&attacker_target);
                 let _ = symlink(&attacker_outside, &attacker_target);
                 let _ = std::fs::remove_file(&attacker_target);
-                let _ = std::fs::write(&attacker_target, b"RACED_ENTRY");
+                let _ = std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&attacker_target);
             }
         });
 
