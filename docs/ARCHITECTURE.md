@@ -111,3 +111,16 @@ One source
 ```
 
 This pattern is the preferred template for future real-world capabilities.
+
+## 18. Full architecture map
+
+The following diagram is the visual architecture reference for repository navigation and future development. It complements this written contract; it does not override the semantic and boundary rules above.
+
+![ONE full architecture map](architecture/one-full-architecture-map.png)
+
+- Repository path: `docs/architecture/one-full-architecture-map.png`
+- Image format: PNG, RGBA
+- Dimensions: 5150 × 11552 pixels
+- File size: 2,052,034 bytes
+- SHA-256: `e2f30a7fe3d11acd9ae76d26d2a4cd71ff3d4c5a3fa27cc13bdf9f35b313d638`
+- Added in commit: `87cce87`

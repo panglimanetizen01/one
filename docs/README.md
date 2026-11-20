@@ -2,6 +2,13 @@
 
 This directory is the normative documentation surface for One v0.1. When code and prose disagree, the implementation status document must identify the discrepancy; a silent contract change is not allowed.
 
+## Architecture navigation
+
+- [Full architecture map](architecture/one-full-architecture-map.png) — visual navigation across language foundation, compiler/runtime, platform, capability, interoperability, and verification layers.
+- [Architecture contract](ARCHITECTURE.md) — written architecture boundaries, semantic authority, and implementation constraints.
+
+The diagram complements the written contract. It is a navigation reference, not a substitute for specifications, source code, tests, or exact-SHA verification evidence.
+
 ## User documentation
 
 For people who want to **use One**, start here:
@@ -64,6 +71,9 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Verification and release
 
+- [one-completion-ledger.md](https://github.com/panglimanetizen01/one/blob/docs/restore-completion-ledger-dod-20261117/docs/verification/one-completion-ledger.md) — fixed-weight completion ledger; current implementation estimate and exact-SHA verified points.
+- [DEFINITION_OF_DONE.md](https://github.com/panglimanetizen01/one/blob/docs/restore-completion-ledger-dod-20261117/docs/verification/DEFINITION_OF_DONE.md) — release acceptance checklist and fail-closed Definition of Done.
+
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
 - `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
@@ -91,8 +101,23 @@ User documentation is intentionally separate from normative engineering contract
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
-- `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.
+- [CircleCI config on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/.circleci/config.yml) — proposed canonical Linux product CI and opt-in Linux release checks; the config remains on the separate migration branch until that PR is authorized and merged.
+- [Independent Windows verification repository](https://github.com/panglimanetizen01/one-windows-verification) — Windows Server 2025 native build and exact-SHA execution evidence.
+
+## CI and developer operations
+
+- [CI migration contract on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/docs/CI.md) — CircleCI Linux-only provider boundary, required product checks, opt-in Linux release checks, and independent Windows exact-SHA verification.
+- [`verification/README.md`](verification/README.md) — ownership and evidence rules for canonical CI and independent verification artifacts.
+- [`verification/windows-native-verification.md`](verification/windows-native-verification.md) — independent Windows-host native artifact verification contract.
+- [CircleCI config on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/.circleci/config.yml) — canonical Linux product CI and opt-in Linux release checks.
 
 ## Canonical rule
 
 GitHub `main` is the canonical source. Local/Termux copies are verification environments only. Documentation must never claim green cross-platform execution without actual evidence from a successful Linux and Windows run. Native Linux AArch64 is currently verified on the exact PR #64 SHA within the AArch64/Linux host boundary; Linux x86_64 and Windows x86_64 are currently build-proven but lack target execution evidence. The process/system and other source-level orchestration capabilities retain their separately recorded evidence boundaries.
+
+## CI and verification infrastructure
+
+- [CI and verification evidence contract](spec/one-v0.1-ci-verification-contract.md) — normative classification rules for executed failures, toolchain bootstrap failures, runner blockers, plan-credit blockers, and exact-SHA evidence.
+- [CircleCI infrastructure incident record — 2026-11-16](verification/circleci-infrastructure-incident-2026-11-16.md) — forensic evidence for historical MSYS2 job #254, explicit no-credit jobs #409/#424/#426, pre-run jobs #407/#408 with cause unconfirmed, and independent Windows run #21.
+
+These are development/tooling records. They do not alter ONE language semantics or user-facing CLI behavior.

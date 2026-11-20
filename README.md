@@ -157,6 +157,24 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 - `docs/verification/native-backends-2026-10-19.md`
 - `docs/release/one-v0.1.md`
 
+## Architecture navigation
+
+- [Full architecture map](docs/architecture/one-full-architecture-map.png) — visual navigation across the ONE system.
+- [Architecture contract](docs/ARCHITECTURE.md) — normative written boundaries and semantic authority.
+- The diagram is a navigation aid; written contracts, implementation, and exact-SHA evidence remain authoritative for technical claims.
+
+## CI execution provider
+
+CircleCI is the canonical CI execution provider for Project ONE's Linux product and Linux release checks. The migration is reviewed on `ci/circleci-migration-20261113`; its proposed CircleCI configuration runs `one-linux` by default and `release-linux` only when explicitly requested.
+
+Windows Server 2025 product/native verification is maintained separately in [`panglimanetizen01/one-windows-verification`](https://github.com/panglimanetizen01/one-windows-verification), using an explicit full-SHA source pin and a manifest that records both source and verifier identities. The Linux CircleCI job retains MinGW-w64 cross-compilation coverage for Windows-target backend tests; that does not claim Windows-host execution.
+
+See [CI migration contract on PR #95](https://github.com/panglimanetizen01/one/blob/ci/circleci-migration-20261113/docs/CI.md) and [the independent Windows verification contract](docs/verification/windows-native-verification.md). A CircleCI Linux result and a Windows verifier result must each be checked against the same exact canonical source SHA. Neither result substitutes for the other.
+
 ## Verification boundary
 
-The private GitHub repository remains the source of truth. Verification mirrors and local environments are verification infrastructure only. Never generalize evidence from one revision or platform to another without proof.
+GitHub `main` remains the canonical source of truth. Verification mirrors and local environments are verification infrastructure only. Repository visibility is an owner-controlled setting and must not be changed as part of routine development. Never generalize evidence from one revision or platform to another without proof.
+
+## CI and verification evidence
+
+The development-side CI outcome classifications and current infrastructure incident record are documented in [the CI verification evidence contract](docs/spec/one-v0.1-ci-verification-contract.md) and [the CircleCI infrastructure incident record](docs/verification/circleci-infrastructure-incident-2026-11-16.md). Runner/toolchain failures must not be presented as ONE language failures without executed source/test evidence.

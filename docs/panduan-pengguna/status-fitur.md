@@ -43,3 +43,9 @@ Post-merge `One CI` run `39371290853` tidak menghasilkan execution evidence: ked
 HTTP methods/HTTPS/API features yang lebih luas, native C/C++, Python, Node, JVM bindings, compiler backend native penuh, package registry, IDE/editor, GUI framework integration, dan locale tambahan tidak boleh didokumentasikan sebagai kemampuan yang sudah tersedia hanya karena arah arsitekturnya sudah ditentukan.
 
 Untuk daftar teknis yang lebih lengkap, lihat `docs/verification/one-v0.1-implementation-status.md` dan `docs/verification/one-v0.1-evidence-matrix.md`.
+
+## Status verifikasi otomatis dan dampaknya bagi pengguna
+
+Status job CI harus dibedakan dari status kemampuan bahasa One. Job yang tidak pernah memulai runner, atau berhenti saat menyiapkan toolchain, bukan bukti bahwa compiler, runtime, grammar, CLI, atau program pengguna gagal. Klaim bahwa suatu kemampuan telah terverifikasi tetap harus menyebut revisi sumber (exact SHA), platform, dan bukti eksekusi yang benar-benar dijalankan.
+
+Untuk insiden yang tercatat pada 2026-11-16, job Windows historis #254 gagal saat inisialisasi keyring MSYS2 pada alur yang sudah tidak menjadi konfigurasi CI aktif. Job #409, #424, dan #426 memiliki pesan eksplisit kehabisan kredit dan diklasifikasikan PLAN-CREDIT-BLOCKED; job #407 dan #408 tidak menunjukkan eksekusi tes dan penyebabnya belum diketahui. Lihat [catatan forensik CircleCI](../verification/circleci-infrastructure-incident-2026-11-16.md). Temuan infrastruktur ini tidak mengubah status fitur One.

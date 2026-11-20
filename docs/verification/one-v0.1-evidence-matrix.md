@@ -1,5 +1,14 @@
 # One v0.1 Evidence Matrix
 
+
+## Current exact-SHA CI candidate — 2026-11-16
+
+- PR #95 candidate: `panglimanetizen01/one`, branch `ci/circleci-migration-20261113`, exact source SHA `07d8cbf7422b8340f8efda3c2f9d4425f85b7537`; base `main` `d35db95153f6ddd79885494c72f5aee16c899751`.
+- CircleCI `ci/circleci: one-linux`: PASS; workflow `0e03e28b-dfb9-4198-b897-3ce5d16dc2d8`; job `b2f536a1-6c87-49b5-9a3f-2db2f2908595`.
+- Independent Windows Server 2025 run [#28](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/43865524749): PASS, 32/32 steps; native exit code 0; output `Budi`; verifier SHA `a83e05437a7d0612f1bf6f5dcc0c7b39483a8173`.
+- Windows artifact ZIP SHA-256 `7dd4435e41bc8f0660f454768711c0fc460e2ca0fe38f2dee1034c59c0f767a5`; executable SHA-256 `9004e87f0c9d0357ee0197a1bce2a26474cb714aa8d71d54990236c9266dcfeb`; manifest SHA-256 `d95ae44ee24c5b793aeef59fb006e48d4c5b3e62de4cd5012b2b5a769cbf92a4`.
+- Both platform gates PASS for this exact source SHA. The optional `release-check` has not run. PR #95 remains OPEN / DRAFT / UNMERGED; `main` is unchanged and still contains the legacy GitHub Actions workflows. This is candidate evidence, not merge/release approval or proof of 100% project completion.
+
 This matrix ties each release claim to a canonical artifact. A claim is not considered verified merely because an implementation file exists.
 
 | Requirement | Canonical artifact | Evidence required | Current state |
@@ -66,3 +75,16 @@ Run `39554661451` verifies the exact code-bearing source SHA above on Ubuntu and
 - Filesystem write, database query, and HTTP GET retain their historical Termux/Android evidence; their source/core/CLI tests also passed in the Ubuntu/Windows Server 2025 exact-SHA matrix `39554661451` for `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. This does not imply every target architecture was executed.
 - Native Linux x86_64 and Windows x86_64 are build-proven on PR #64 but are not execution-verified until a real target executor succeeds.
 - The last code-bearing source revision `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` has host-level Ubuntu/Windows exact-SHA verification in run `39554661451`. This does not certify every cross-compiled target artifact as executed, and does not by itself constitute release approval. Later evidence-sync commits changed documentation only.
+
+## Hosted CI infrastructure incidents — 2026-11-16
+
+| Item | Exact evidence | Classification | Product-code conclusion |
+|---|---|---|---|
+| CircleCI #254 / pipeline #201 | Source SHA e44d16b2b5f4ef50c33674ccf711bd11b410effa; Windows Server 2025; MSYS2 package sync failed before ONE checks | TOOLCHAIN-BOOTSTRAP-FAIL: MSYS2 first-run/keyring initialization | No ONE source/test result from this job |
+| CircleCI #426 / pipeline #290 | Source SHA e92d3a3003b68283d5f0fe1315dcb41dcc33bd62; provider explicitly reports `free-plan-no-credits-available`; no source/test step ran | PLAN-CREDIT-BLOCKED | No source/test result |
+| CircleCI #407–#408 | No executable steps or assigned executor demonstrated; individual root causes remain unknown | RUNNER-NOT-STARTED / BLOCKED | No source/test result |
+| CircleCI #409 / pipeline #278 | Explicit provider message: `free-plan-no-credits-available` | PLAN-CREDIT-BLOCKED for this job only | No source/test result inferred |
+| CircleCI #424 | Explicit provider message: no plan credits available | PLAN-CREDIT-BLOCKED for this job only | No source/test result inferred |
+| Independent Windows run #21 | ONE source SHA f85375e279257dcbb7d4ded9632800fcd1b78cc9; verifier SHA 9c40fffdaca6125561320a16475515e82923e9e8 | PASS, exact-SHA Windows Server 2025 boundary | Success applies only to the pinned SHA |
+
+See [incident record](circleci-infrastructure-incident-2026-11-16.md) and [CI evidence contract](../spec/one-v0.1-ci-verification-contract.md). Do not transfer evidence across SHAs or infer a source failure from a runner that did not execute.
