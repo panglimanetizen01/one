@@ -194,3 +194,12 @@ Latest source commit: `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (`crates/one-co
 
 - HTTP request serialization, response ingestion, and chunk-body decoding now use `try_reserve_exact` within the explicit request/response size ceilings, avoiding geometric capacity growth beyond the intended bounds.
 - This is source-only resource hardening. No build/test/CI/verifier/platform matrix ran.
+
+
+## IPv6 HTTP authority and query-only target support — 2026-11-21
+
+Latest source commits:
+- `f8631323b7c987c69f2ab8072bbf081deb626fb9` — shared HTTP authority parser accepts bracketed IPv6 literals with default/explicit ports; generic network resolution now formats IPv6 socket addresses correctly.
+- `4b0749fbd413233ee45259942a334190474ac89e` and `5bc86f6110145074cbee96942ad7942e25318b9c` — HTTP GET target parsing uses the shared authority parser, supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace request paths.
+- `b0e034b3c98248e6f33823bd1ff9f2242c89fa8f` and `be5566435394cc27bbeb863b78c69b0fe52f774c` add source regressions for IPv6 authorities, query-only paths, and invalid paths. NOT RUN.
+- No build/test/CI/verifier/platform matrix was run.
