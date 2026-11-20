@@ -1,6 +1,6 @@
 #![allow(clippy::possible_missing_else)]
 #![allow(unused_imports)]
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
 use crate::adapter::{AdapterArgument, FileReadAdapter, FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter};
@@ -46,7 +46,64 @@ impl Interpreter {
   }
  } Ok(()) }
  fn orchestration_error(error: OrchestrationError) -> RuntimeError { match error { OrchestrationError::InvalidRequest(error) => RuntimeError { code: "N3208", message: format!("Permintaan orchestration tidak valid: {:?}.", error) }, OrchestrationError::PolicyDenied(decision) => RuntimeError { code: "N3209", message: format!("Permintaan orchestration ditolak policy: {:?}.", decision) }, OrchestrationError::ApprovalRequired => RuntimeError { code: "N3210", message: "Permintaan orchestration membutuhkan persetujuan.".into() }, OrchestrationError::NoCompatibleAdapter => RuntimeError { code: "N3211", message: "Tidak ada adapter orchestration yang kompatibel.".into() }, OrchestrationError::Adapter(error) => RuntimeError { code: "N3212", message: format!("Adapter orchestration gagal: {:?}.", error) } } }
- fn exec_action(&mut self, name: &str, args: &[IrExpr], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { match name { "tampilkan" => { if args.len() != 1 { return Err(RuntimeError { code: "R3006", message: "'tampilkan' membutuhkan tepat satu nilai.".into() }); } output.push(self.eval(&args[0], env)?.display()); }, "sapa" => { if args.len() != 1 { return Err(RuntimeError { code: "R3007", message: "'sapa' membutuhkan satu nama.".into() }); } output.push(format!("Halo, {}!", self.eval(&args[0], env)?.display())); }, "buat daftar" => { if args.len() != 1 { return Err(RuntimeError { code: "R3008", message: "'buat daftar' membutuhkan nama daftar.".into() }); } if let IrExpr::Identifier(name) = &args[0] { env.define(name.clone(), Value::List(Vec::new())); } else { return Err(RuntimeError { code: "R3009", message: "Nama daftar harus berupa identifier.".into() }); } }, "tambahkan" | "hapus" => { if args.len() != 2 { return Err(RuntimeError { code: "R3010", message: format!("'{}' membutuhkan nilai dan nama daftar.", name) }); } let item = match &args[0] { IrExpr::Identifier(word) => env.get(word).unwrap_or_else(|| Value::Text(word.clone())), _ => self.eval(&args[0], env)? }; let list_name = match &args[1] { IrExpr::Identifier(value) => value, _ => return Err(RuntimeError { code: "R3011", message: "Nama daftar harus berupa identifier.".into() }) }; let mut list = env.get(list_name).ok_or_else(|| RuntimeError { code: "R3012", message: format!("Saya belum menemukan daftar '{}'.", list_name) })?; match &mut list { Value::List(values) if name == "tambahkan" => values.push(item), Value::List(values) => { if let Some(index) = values.iter().position(|v| v == &item) { values.remove(index); } }, _ => return Err(RuntimeError { code: "R3013", message: format!("'{}' bukan daftar.", list_name) }) } let _ = env.assign(list_name, list); }, "gunakan proses" => { if !self.capabilities.permits(Capability::Process) { return Err(RuntimeError { code: "R3014", message: "Kemampuan proses belum diberikan kepada program.".into() }); } }, _ => return Err(RuntimeError { code: "R3015", message: format!("Aksi '{}' belum memiliki implementasi standard library.", name) }) } Ok(()) }
+ fn exec_action(&mut self, name: &str, args: &[IrExpr], env: &mut Environment, output: &mut Vec<String>) -> Result<(), RuntimeError> { match name { "tampilkan" => { if args.len() != 1 { return Err(RuntimeError { code: "R3006", message: "'tampilkan' membutuhkan tepat satu nilai.".into() }); } output.push(self.eval(&args[0], env)?.display()); }, "sapa" => { if args.len() != 1 { return Err(RuntimeError { code: "R3007", message: "'sapa' membutuhkan satu nama.".into() }); } output.push(format!("Halo, {}!", self.eval(&args[0], env)?.display())); }, "buat daftar" => { if args.len() != 1 { return Err(RuntimeError { code: "R3008", message: "'buat daftar' membutuhkan nama daftar.".into() }); } if let IrExpr::Identifier(name) = &args[0] { env.define(name.clone(), Value::List(Vec::new())); } else { return Err(RuntimeError { code: "R3009", message: "Nama daftar harus berupa identifier.".into() }); } }, "buat pemetaan" => {
+    if args.len() != 1 { return Err(RuntimeError { code: "R3030", message: "'buat pemetaan' membutuhkan nama pemetaan.".into() }); }
+    if let IrExpr::Identifier(map_name) = &args[0] {
+        env.define(map_name.clone(), Value::Map(BTreeMap::new()));
+    } else {
+        return Err(RuntimeError { code: "R3031", message: "Nama pemetaan harus berupa identifier.".into() });
+    }
+}, "masukkan ke pemetaan" => {
+    if args.len() != 3 { return Err(RuntimeError { code: "R3032", message: "'masukkan' membutuhkan kunci, nilai, dan nama pemetaan.".into() }); }
+    let key = match self.eval(&args[0], env)? {
+        Value::Text(key) => key,
+        _ => return Err(RuntimeError { code: "R3033", message: "Kunci pemetaan harus berupa teks.".into() }),
+    };
+    let value = self.eval(&args[1], env)?;
+    let map_name = match &args[2] {
+        IrExpr::Identifier(name) => name,
+        _ => return Err(RuntimeError { code: "R3034", message: "Nama pemetaan harus berupa identifier.".into() }),
+    };
+    let mut map = env.get(map_name).ok_or_else(|| RuntimeError { code: "R3035", message: format!("Pemetaan '{}' belum dibuat.", map_name) })?;
+    match &mut map {
+        Value::Map(values) => { values.insert(key, value); }
+        _ => return Err(RuntimeError { code: "R3036", message: format!("'{}' bukan pemetaan.", map_name) }),
+    }
+    let _ = env.assign(map_name, map);
+}, "ambil kunci dari pemetaan" => {
+    if args.len() != 2 { return Err(RuntimeError { code: "R3037", message: "'ambil kunci' membutuhkan kunci dan nama pemetaan.".into() }); }
+    let key = match self.eval(&args[0], env)? {
+        Value::Text(key) => key,
+        _ => return Err(RuntimeError { code: "R3038", message: "Kunci pemetaan harus berupa teks.".into() }),
+    };
+    let map_name = match &args[1] {
+        IrExpr::Identifier(name) => name,
+        _ => return Err(RuntimeError { code: "R3039", message: "Nama pemetaan harus berupa identifier.".into() }),
+    };
+    let map = env.get(map_name).ok_or_else(|| RuntimeError { code: "R3040", message: format!("Pemetaan '{}' belum dibuat.", map_name) })?;
+    match map {
+        Value::Map(values) => output.push(values.get(&key).ok_or_else(|| RuntimeError { code: "R3041", message: format!("Kunci '{}' tidak ditemukan dalam pemetaan '{}'.", key, map_name) })?.display()),
+        _ => return Err(RuntimeError { code: "R3042", message: format!("'{}' bukan pemetaan.", map_name) }),
+    }
+}, "hapus kunci dari pemetaan" => {
+    if args.len() != 2 { return Err(RuntimeError { code: "R3043", message: "'hapus kunci' membutuhkan kunci dan nama pemetaan.".into() }); }
+    let key = match self.eval(&args[0], env)? {
+        Value::Text(key) => key,
+        _ => return Err(RuntimeError { code: "R3044", message: "Kunci pemetaan harus berupa teks.".into() }),
+    };
+    let map_name = match &args[1] {
+        IrExpr::Identifier(name) => name,
+        _ => return Err(RuntimeError { code: "R3045", message: "Nama pemetaan harus berupa identifier.".into() }),
+    };
+    let mut map = env.get(map_name).ok_or_else(|| RuntimeError { code: "R3046", message: format!("Pemetaan '{}' belum dibuat.", map_name) })?;
+    match &mut map {
+        Value::Map(values) => {
+            if values.remove(&key).is_none() { return Err(RuntimeError { code: "R3047", message: format!("Kunci '{}' tidak ditemukan dalam pemetaan '{}'.", key, map_name) }); }
+        }
+        _ => return Err(RuntimeError { code: "R3048", message: format!("'{}' bukan pemetaan.", map_name) }),
+    }
+    let _ = env.assign(map_name, map);
+}, "tambahkan" | "hapus" => { if args.len() != 2 { return Err(RuntimeError { code: "R3010", message: format!("'{}' membutuhkan nilai dan nama daftar.", name) }); } let item = match &args[0] { IrExpr::Identifier(word) => env.get(word).unwrap_or_else(|| Value::Text(word.clone())), _ => self.eval(&args[0], env)? }; let list_name = match &args[1] { IrExpr::Identifier(value) => value, _ => return Err(RuntimeError { code: "R3011", message: "Nama daftar harus berupa identifier.".into() }) }; let mut list = env.get(list_name).ok_or_else(|| RuntimeError { code: "R3012", message: format!("Saya belum menemukan daftar '{}'.", list_name) })?; match &mut list { Value::List(values) if name == "tambahkan" => values.push(item), Value::List(values) => { if let Some(index) = values.iter().position(|v| v == &item) { values.remove(index); } }, _ => return Err(RuntimeError { code: "R3013", message: format!("'{}' bukan daftar.", list_name) }) } let _ = env.assign(list_name, list); }, "gunakan proses" => { if !self.capabilities.permits(Capability::Process) { return Err(RuntimeError { code: "R3014", message: "Kemampuan proses belum diberikan kepada program.".into() }); } }, _ => return Err(RuntimeError { code: "R3015", message: format!("Aksi '{}' belum memiliki implementasi standard library.", name) }) } Ok(()) }
  fn eval(&mut self, expr: &IrExpr, env: &Environment) -> Result<Value, RuntimeError> { match expr { IrExpr::Text(v) => Ok(Value::Text(v.clone())), IrExpr::Number(v) => Ok(Value::Number(*v)), IrExpr::Boolean(v) => Ok(Value::Boolean(*v)), IrExpr::Nothing => Ok(Value::Nothing), IrExpr::Identifier(name) => env.get(name).ok_or_else(|| RuntimeError { code: "R3016", message: format!("Saya belum menemukan '{}'.", name) }), IrExpr::Binary { left, op, right } => { let left_value = self.eval(left, env)?; let right_value = self.eval(right, env)?; self.eval_binary(*op, left_value, right_value) }, IrExpr::Call { name, args } => self.call_function(name, args, env) } }
  fn eval_binary(&self, op: BinaryOp, left: Value, right: Value) -> Result<Value, RuntimeError> { match (op, left, right) { (BinaryOp::Add, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)), (BinaryOp::Subtract, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a - b)), (BinaryOp::Multiply, Value::Number(a), Value::Number(b)) => Ok(Value::Number(a * b)), (BinaryOp::Divide, Value::Number(a), Value::Number(b)) if b != 0 => Ok(Value::Number(a / b)), (BinaryOp::Divide, _, Value::Number(0)) => Err(RuntimeError { code: "R3017", message: "Pembagian dengan nol tidak diperbolehkan.".into() }), (BinaryOp::Equal, a, b) => Ok(Value::Boolean(a == b)), (BinaryOp::Greater, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a > b)), (BinaryOp::Less, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a < b)), (BinaryOp::AtMost, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a <= b)), (BinaryOp::AtLeast, Value::Number(a), Value::Number(b)) => Ok(Value::Boolean(a >= b)), (BinaryOp::Add, Value::Text(a), Value::Text(b)) => Ok(Value::Text(format!("{}{}", a, b))), _ => Err(RuntimeError { code: "R3018", message: "Operasi tidak cocok dengan tipe nilai.".into() }) } }
  fn call_function(&mut self, name: &str, args: &[IrExpr], caller_env: &Environment) -> Result<Value, RuntimeError> { let (params, result, body) = self.functions.get(name).cloned().ok_or_else(|| RuntimeError { code: "R3019", message: format!("Pekerjaan '{}' belum dibuat.", name) })?; if params.len() != args.len() { return Err(RuntimeError { code: "R3020", message: format!("Pekerjaan '{}' membutuhkan {} parameter.", name, params.len()) }); } let mut env = caller_env.clone(); env.push(); for (param, arg) in params.iter().zip(args) { let value = self.eval(arg, caller_env)?; env.define(param.clone(), value); } let mut ignored_output = Vec::new(); self.exec_block(&body, &mut env, &mut ignored_output)?; self.eval(&result, &env) }

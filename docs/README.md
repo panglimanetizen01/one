@@ -8,6 +8,7 @@ For people who want to **use One**, start here:
 
 - `panduan-pengguna/README.md` — official beginner entry point.
 - `panduan-pengguna/mulai-dari-nol.md` — first-run orientation.
+- `panduan-pengguna/human-vnext-daftar-tugas.md` — experimental human-vNext task-list walkthrough.
 - `panduan-pengguna/instalasi.md` — current installation/distribution boundary.
 - `panduan-pengguna/program-pertama.md` — first usable program.
 - `panduan-pengguna/konsep-dasar.md` — current language concepts.
@@ -29,6 +30,10 @@ User documentation is intentionally separate from normative engineering contract
 ## Foundation
 
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
+- `superpowers/specs/2026-10-22-one-human-instruction-language-contract-audit.md` — proposed forensic audit and acceptance gates for the intended human-instruction surface; does not override v0.1.
+- `superpowers/specs/2026-10-22-one-human-instruction-surface-vnext.md` — proposed vNext source-language contract, literal/data requirements, compatibility gates, and task-list acceptance target; not normative.
+- `superpowers/specs/2026-10-22-one-forensic-readiness-audit.md` — evidence-based audit of the accepted vision versus current implementation, prototype defects, and end-to-end completion gates.
+- `superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md` — versioned, non-normative starter grammar contract for the experimental parser and task-list runner.
 - `superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md` — approved end-to-end network/platform architecture.
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
 - `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger and release gate.
@@ -65,7 +70,9 @@ User documentation is intentionally separate from normative engineering contract
 ## Verification and release
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
-- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.
+- `verification/one-v0.1-implementation-status.md` — implementation inventory and current orchestration/native-backend boundary.\n- `verification/one-completion-ledger.md` — fixed weighted vNext completion method, milestone gates, and evidence status.\n- `verification/one-vnext-session-checkpoint.md` — continuation checkpoint for the active vNext workstream.\n- `verification/human-vnext-task-list.md` — experimental task-list example usage and current limitations.
+- `verification/human-vnext-grammar-review.md` — bounded technical review of the experimental starter grammar and its explicit limitations.
+- `verification/human-vnext-exact-sha-verification-contract.md` — clean GitHub-HEAD local verification procedure and evidence boundaries.\n- `../examples/human-vnext/daftar-tugas.one` — runnable source fixture for the experimental human-vNext task-list command.
 - `verification/one-v0.1-verification.md` — current exact-SHA evidence record for canonical main plus branch-bound evidence where explicitly labeled.
 - `verification/one-v0.1-evidence-matrix.md` — requirement-to-artifact-to-evidence matrix.
 - `verification/one-v0.1-offline-evidence-template.md` — record format for independent Linux/Windows execution evidence.
@@ -89,6 +96,7 @@ User documentation is intentionally separate from normative engineering contract
 - `../crates/one-core/tests/network_foundation.rs` — executable One Network foundation tests.
 - `../crates/one-core/tests/orchestration_runtime.rs` — executable orchestration lifecycle tests.
 - `../tools/check_contract.py` — static contract-artifact consistency checker.
+- `../tools/verify-human-vnext.sh` — clean, exact-GitHub-SHA human-vNext local verification script.
 - `../tools/verify_offline.sh` — independent Linux verification path.
 - `../tools/verify_offline.ps1` — independent Windows verification path.
 - `../.github/workflows/windows-native-verification.yml` — Windows native artifact and execution verification workflow.

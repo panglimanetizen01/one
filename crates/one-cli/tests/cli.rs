@@ -17,3 +17,127 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
 #[test] fn run_command_executes_filesystem_read_from_one_source() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "isi One\nbaris kedua\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &data_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(output.status.success()); assert_eq!(String::from_utf8_lossy(&output.stdout), "isi One\nbaris kedua\n"); }
 #[test] fn filesystem_read_is_denied_without_explicit_capability() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-denied-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-denied-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "rahasia\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap()]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3205")); }
 #[test] fn filesystem_read_rejects_out_of_scope_target() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-scope-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-scope-source-{source_id}.one")); let data_arg = portable_path(&data); let scope_arg = portable_path(&std::env::temp_dir()); fs::write(&data, "di luar\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &scope_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3209")); }
+
+
+#[test]
+fn human_vnext_cli_runs_task_app_and_reopens_persistent_data() {
+    use std::io::Write;
+    use std::process::Stdio;
+    let root = std::env::temp_dir().join(format!(
+        "one-human-vnext-cli-{}",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    fs::create_dir_all(&root).unwrap();
+    let source = root.join("daftar-tugas.one");
+    let data = root.join("tugas.db");
+    fs::write(&source, concat!(
+        "Buat aplikasi daftar tugas\n",
+        "Pengguna bisa menambahkan tugas\n",
+        "    Terima judul tugas\n",
+        "    Simpan tugas baru\n",
+        "Pengguna bisa melihat semua tugas\n",
+        "    Tampilkan semua tugas\n",
+        "Pengguna bisa menandai tugas sebagai selesai\n",
+        "    Terima tugas yang dipilih\n",
+        "    Tandai tugas sebagai selesai\n",
+        "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+    )).unwrap();
+
+    let mut first = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["jalankan-human-vnext", source.to_str().unwrap(), "--data", data.to_str().unwrap()])
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
+    first.stdin.take().unwrap().write_all(b"tambah\nBelanja\nkeluar\n").unwrap();
+    let first_output = first.wait_with_output().unwrap();
+    assert!(first_output.status.success(), "{}", String::from_utf8_lossy(&first_output.stderr));
+    assert!(data.is_file());
+
+    let mut second = Command::new(env!("CARGO_BIN_EXE_one"))
+        .args(["jalankan-human-vnext", source.to_str().unwrap(), "--data", data.to_str().unwrap()])
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn().unwrap();
+    second.stdin.take().unwrap().write_all(b"lihat\nselesai\n1\nkeluar\n").unwrap();
+    let second_output = second.wait_with_output().unwrap();
+    let stdout = String::from_utf8_lossy(&second_output.stdout);
+    assert!(second_output.status.success(), "{}", String::from_utf8_lossy(&second_output.stderr));
+    assert!(stdout.contains("Belanja"), "task must survive a new CLI process");
+    assert!(stdout.contains("Tugas 1 ditandai selesai"), "completion must execute through the CLI");
+    let _ = fs::remove_dir_all(&root);
+}
+
+
+#[test]
+fn default_v01_cli_does_not_auto_detect_human_vnext_source() {
+    let source = fixture("human-vnext-no-autodetect", concat!(
+        "Buat aplikasi daftar tugas\n",
+        "Pengguna bisa menambahkan tugas\n",
+        "    Terima judul tugas\n",
+        "    Simpan tugas baru\n",
+        "Pengguna bisa melihat semua tugas\n",
+        "    Tampilkan semua tugas\n",
+        "Pengguna bisa menandai tugas sebagai selesai\n",
+        "    Terima tugas yang dipilih\n",
+        "    Tandai tugas sebagai selesai\n",
+        "Simpan semua tugas agar tidak hilang saat aplikasi ditutup\n",
+    ));
+    let output = run(&["periksa", source.to_str().unwrap()]);
+    let _ = fs::remove_file(&source);
+    assert!(!output.status.success(), "v0.1 must not silently select the human-vNext parser");
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("EHV002"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_missing_source_argument() {
+    let output = run(&["jalankan-human-vnext"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("Penggunaan: one jalankan-human-vnext"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_unknown_option_without_running_program() {
+    let source = fixture("human-vnext-option", "Buat aplikasi catatan\n");
+    let output = run(&["jalankan-human-vnext", source.to_str().unwrap(), "--unknown"]);
+    let _ = fs::remove_file(&source);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("EHV001"));
+}
+
+#[test]
+fn human_vnext_cli_reports_missing_source_file() {
+    let path = std::env::temp_dir().join(format!(
+        "one-human-vnext-missing-{}.one",
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+    ));
+    let output = run(&["jalankan-human-vnext", path.to_str().unwrap()]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("EHV001"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_invalid_source_with_parser_diagnostic() {
+    let source = fixture("human-vnext-invalid", "Buat aplikasi catatan\nInstruksi tidak dikenal\n");
+    let output = run(&["jalankan-human-vnext", source.to_str().unwrap()]);
+    let _ = fs::remove_file(&source);
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("EHV002"));
+    assert!(stderr.contains("H0016"));
+}
+
+#[test]
+fn human_vnext_cli_rejects_task_app_without_persistence_contract() {
+    let source = fixture("human-vnext-no-persist", concat!(
+        "Buat aplikasi daftar tugas\n",
+        "Pengguna bisa menambahkan tugas\n",
+        "    Terima judul tugas\n",
+        "    Simpan tugas baru\n",
+        "Pengguna bisa melihat semua tugas\n",
+        "    Tampilkan semua tugas\n",
+        "Pengguna bisa menandai tugas sebagai selesai\n",
+        "    Terima tugas yang dipilih\n",
+        "    Tandai tugas sebagai selesai\n",
+    ));
+    let output = run(&["jalankan-human-vnext", source.to_str().unwrap()]);
+    let _ = fs::remove_file(&source);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("EHV003"));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("wajib mendeklarasikan"));
+}

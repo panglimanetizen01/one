@@ -1,0 +1,18 @@
+Buat program kalkulator
+
+buat pekerjaan jumlahkan
+    terima kiri
+    terima kanan
+    hasilnya adalah kiri ditambah kanan
+
+buat pekerjaan kuadrat
+    terima nilai
+    hasilnya adalah nilai dikali nilai
+
+jumlah adalah jumlahkan dengan 19 dan 23
+hasil adalah kuadrat dengan jumlah
+
+kalau hasil lebih besar dari 1000
+    tampilkan "Hasil melebihi seribu"
+kalau tidak
+    tampilkan hasil

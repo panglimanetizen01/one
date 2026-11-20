@@ -52,6 +52,9 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: Exact-SHA verifier shell syntax
+        shell: bash
+        run: bash -n tools/verify-human-vnext.sh
       - name: Build
         run: cargo build --workspace --all-targets
       - name: Clippy

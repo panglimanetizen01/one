@@ -6,6 +6,10 @@ pub mod diagnostic;
 pub mod governance;
 pub mod interop;
 pub mod interpreter;
+/// Experimental, isolated parser for the proposed human-instruction surface.
+pub mod human_vnext;
+/// Human-language source adapter compiled through the canonical AST, semantic analyzer and IR.
+pub mod human_compiler;
 pub mod ir;
 pub mod lexer;
 pub mod native_backend;
@@ -26,6 +30,7 @@ pub mod orchestration_audit;
 pub mod orchestration_result;
 pub mod orchestrator;
 pub mod parser;
+pub mod persistence;
 pub mod platform;
 pub mod runtime;
 pub mod semantic;
@@ -83,7 +88,7 @@ pub use orchestration_result::{
     OrchestrationResultError, normalize_result,
 };
 pub use orchestrator::{OrchestrationError, Orchestrator};
-pub use parser::parse;
+pub use parser::{parse, parse_human_core};
 pub use semantic::{TypedProgram, analyze, analyze_network};
 pub use target::{
     ArtifactFormat, ExecutionProfile, LinkerStrategy, ReferenceTargetBackend, ReferenceToolchain,
@@ -134,4 +139,12 @@ mod tests {
             .expect_err("orchestration must be denied by default");
         assert_eq!(error.code, "N3209");
     }
+
+    #[test]
+    fn mapping_grammar_is_opt_in_and_does_not_change_v01_parser() {
+        let source = "buat pemetaan profil\n";
+        assert!(parse(source).is_err(), "v0.1 must not accept experimental mapping syntax");
+        assert!(parse_human_core(source).is_ok(), "explicit human-core parser accepts mapping syntax");
+    }
+
 }

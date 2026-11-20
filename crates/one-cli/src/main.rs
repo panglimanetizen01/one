@@ -3,7 +3,7 @@
 use std::{collections::HashSet, env, fs, path::{Path, PathBuf}, process::ExitCode};
 use one_core::{analyze, lower, parse, Capability, CapabilitySet, ExecutionPolicy, Interpreter, ScopeRule};
 const VERSION: &str = "0.1.0";
-fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
+fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one jalankan-human-core <program.one> (frontend vNext ke IR kanonis)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &bundle.0 { eprintln!("{}: {}", diagnostic.code, diagnostic.message); if let Some(span) = &diagnostic.span { eprintln!("  baris {}, kolom {}", span.line, span.column); } for note in &diagnostic.notes { eprintln!("  catatan: {}", note); } for suggestion in &diagnostic.suggestions { eprintln!("  saran: {}", suggestion); } } }
 fn compile_source(source: &str) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let program = parse(source)?; let typed = analyze(&program)?; Ok((program, typed)) }
 fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("src").join("main.one"); if path.is_file() { Ok(path) } else { Err(format!("Proyek tidak memiliki '{}'.", path.display())) } }
@@ -13,6 +13,47 @@ fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir(
 fn run_conformance_fixtures(root: &Path) -> Result<usize, String> { let valid = fixture_files(&root.join("tests/conformance/valid"))?; let invalid = fixture_files(&root.join("tests/conformance/invalid"))?; let mut count = 0; for path in valid { let (_, typed) = compile_file(&path).map_err(|bundle| format!("Fixture valid '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?; let ir = lower(&typed).map_err(|bundle| format!("Fixture valid '{}' gagal diturunkan: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?; let mut interpreter = Interpreter::new(CapabilitySet::none()); interpreter.execute(&ir).map_err(|error| format!("Fixture valid '{}' gagal saat runtime: {}", path.display(), error.message))?; count += 1; } for path in invalid { let result = compile_file(&path); if result.is_ok() { return Err(format!("Fixture invalid '{}' diterima.", path.display())); } count += 1; } Ok(count) }
 fn main() -> ExitCode {
  let mut args = env::args().skip(1); let Some(first) = args.next() else { usage(); return ExitCode::from(2); }; if first == "help" { if args.next().is_some() { usage(); return ExitCode::from(2); } usage(); return ExitCode::SUCCESS; } if first == "version" { if args.next().is_some() { usage(); return ExitCode::from(2); } println!("one {VERSION}"); return ExitCode::SUCCESS; }
+ if first == "jalankan-human-vnext" || first == "run-human-vnext" {
+  let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-vnext <program.one> [--data <berkas>]"); return ExitCode::from(2); };
+  let source_path = Path::new(&source_arg);
+  let mut storage_path = source_path.with_extension("tugas.db");
+  while let Some(option) = args.next() {
+   match option.as_str() {
+    "--data" => { let Some(value) = args.next() else { eprintln!("EHV001: --data membutuhkan jalur berkas."); return ExitCode::from(2); }; storage_path = PathBuf::from(value); }
+    _ => { eprintln!("EHV001: opsi tidak dikenal '{}'.", option); return ExitCode::from(2); }
+   }
+  }
+  let source = match fs::read_to_string(source_path) {
+   Ok(source) => source,
+   Err(error) => { eprintln!("EHV001: tidak dapat membaca '{}': {}", source_path.display(), error); return ExitCode::from(2); }
+  };
+  let program = match one_core::human_vnext::parse(&source) {
+   Ok(program) => program,
+   Err(error) => { eprintln!("EHV002: {}", error); return ExitCode::from(1); }
+  };
+  let stdin = std::io::stdin();
+  let stdout = std::io::stdout();
+  let mut input = stdin.lock();
+  let mut output = stdout.lock();
+  return match one_core::human_vnext::run_task_app(&program, &storage_path, &mut input, &mut output) {
+   Ok(()) => ExitCode::SUCCESS,
+   Err(error) => { eprintln!("EHV003: {}", error); ExitCode::from(1) }
+  };
+ }
+ if first == "jalankan-human-core" || first == "run-human-core" {
+  let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-core <program.one>"); return ExitCode::from(2); };
+  if args.next().is_some() { eprintln!("EHV1001: terlalu banyak argumen."); return ExitCode::from(2); }
+  let path = Path::new(&source_arg);
+  let compiled = match one_core::human_compiler::compile_file(path) {
+   Ok(program) => program,
+   Err(bundle) => { print_diagnostics(&bundle); return ExitCode::from(1); }
+  };
+  let mut interpreter = Interpreter::new(CapabilitySet::none());
+  return match interpreter.execute(&compiled.ir) {
+   Ok(result) => { for line in result.output { println!("{}", line); } ExitCode::SUCCESS },
+   Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) }
+  };
+ }
  let command = match first.as_str() { "buat" | "new" => "new", "periksa" | "check" => "check", "jalankan" | "run" => "run", "bangun" | "build" => "build", "ast" => "ast", "test" => "test", "package" => "package", "lihat" if args.next().as_deref() == Some("struktur") => "ast", _ => { usage(); return ExitCode::from(2); } };
  if command == "new" { let Some(folder) = args.next() else { usage(); return ExitCode::from(2); }; if args.next().is_some() { usage(); return ExitCode::from(2); } let root = Path::new(&folder); if root.exists() { eprintln!("Folder '{}' sudah ada.", folder); return ExitCode::from(2); } let src = root.join("src"); if let Err(error) = fs::create_dir_all(&src).and_then(|_| fs::write(root.join("one.toml"), "nama = \"proyek-one\"\nversi = \"0.1.0\"\n")).and_then(|_| fs::write(src.join("main.one"), "tampilkan \"Halo dari One\"\n")) { eprintln!("Gagal membuat proyek: {}", error); return ExitCode::from(2); } println!("Proyek One dibuat di {}", root.display()); return ExitCode::SUCCESS; }
  let Some(path_arg) = args.next() else { usage(); return ExitCode::from(2); }; let path = Path::new(&path_arg); let mut orchestration_target = None; let mut orchestration_capability = None;
