@@ -249,7 +249,7 @@ impl FilesystemAuthority {
 
         let path = CString::new(relative.as_os_str().as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
         let how = OpenHow {
-            flags: (libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW) as u64,
+            flags: (libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK) as u64,
             mode: 0,
             resolve: RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV,
         };
@@ -1825,6 +1825,25 @@ mod tests {
         let authority = FilesystemAuthority::open(&root, 32, 32).unwrap();
         assert_eq!(authority.read("inside.txt").unwrap(), b"inside");
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn authority_rejects_fifo_without_blocking() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let root = std::env::temp_dir().join(format!("one-fs-authority-fifo-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let fifo = root.join("pipe");
+        let fifo_name = std::ffi::CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        // SAFETY: mkfifo receives a valid NUL-terminated path and a restrictive mode.
+        assert_eq!(unsafe { libc::mkfifo(fifo_name.as_ptr(), 0o600) }, 0);
+
+        let authority = FilesystemAuthority::open(&root, 32, 32).unwrap();
+        assert_eq!(authority.read("pipe"), Err(FilesystemError::NotRegularFile));
+
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[cfg(target_os = "linux")]
