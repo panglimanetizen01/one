@@ -81,3 +81,12 @@ This is a non-destructive execution-priority update. It does not modify the task
 - Added three target-gated regression tests per platform. They are implementation coverage only until compiled and executed on the respective targets.
 - Linux nested writes remain fail-closed because the current safe parent-movement solution depends on privileged detached mount operations. Windows native handle-relative backend remains as previously implemented.
 - These changes advance platform implementation but do NOT close Issue #104. Remaining work includes adversarial review of parent/root movement, platform-specific execution evidence, and any acceptance gaps in the fixed Issue #104 contract. Do not run the broad release matrix until implementation scope is complete.
+
+## Issue #105 — Linux process-group containment implementation candidate — 2026-11-20
+
+- Latest code-bearing candidate: `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT OR TESTED).
+- Linux subprocess startup now installs an inherited seccomp filter in the child before `exec`. It denies `setsid`, `setpgid`, `unshare`, `setns`, clone namespace flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` so compatible runtimes can fall back to `clone`. The existing dedicated process group is therefore intended to remain non-escapable for descendants; group cleanup still runs on normal return, timeout, and output overflow.
+- If the kernel refuses `PR_SET_NO_NEW_PRIVS` or filter installation, process spawn fails closed. Windows Job Object containment remains unchanged.
+- Process execution is now explicitly unavailable on Android and macOS until equivalent non-escapable containment exists; `ProcessAdapter` advertises only Linux and Windows.
+- Replaced the old escaped-session reader-only probes with three Linux adversarial regressions for attempted `setsid` on normal completion, timeout, and output overflow. These tests have NOT been run.
+- This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
