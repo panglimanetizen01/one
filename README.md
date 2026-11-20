@@ -153,12 +153,7 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## CI execution provider
 
-CircleCI is the intended canonical Linux CI provider, currently carried only by draft PR #113. Exact-SHA status is split:
-
-- Code-bearing source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20`: `ci/circleci: one-linux` SUCCESS (workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`). Provider step logs were not inspected.
-- Latest PR #113 documentation HEAD at the time of this checkpoint, `71d518ae4b9aa3b1bf05c738e9d6e862883ffcd0`: FAILURE (workflow `980d47d2-704a-426f-87b4-b0687657f42d`, job `a288a97c-38ff-448b-b74d-8abcea612342`). The failed step and root cause are UNKNOWN because provider logs are not accessible in the connected session.
-
-The documentation HEAD is a 12-commit descendant of the code-bearing source; the net diff contains documentation paths only. Do not transfer the source SHA's SUCCESS to the documentation HEAD, and do not infer a source-code failure from the documentation-HEAD status. See [the live 2026-11-20 checkpoint](docs/verification/live-checkpoint-2026-11-20.md) for exact verifier runs, limitations, and the redacted diagnostic command.
+CircleCI is the intended canonical Linux CI provider, currently carried only by draft PR #113. The live exact-SHA readback is recorded in [the live 2026-11-20 checkpoint](docs/verification/live-checkpoint-2026-11-20.md): code-bearing source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` is SUCCESS, while current documentation HEAD `5daf3337b4bcc93fa3ee6072f9633915d5fea85b` is FAILURE (job #833; first reported step #101 CANCELED; provider root cause UNKNOWN). The source-to-HEAD range is documentation-only, so neither status is transferable to the other SHA. The separate `main` pipeline #399 is ERROR, with provider cause UNKNOWN. No CircleCI provider logs were inspected in this session.
 
 The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and has no `.circleci/config.yml`. No canonical CI-provider cutover is claimed.
 
