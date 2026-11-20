@@ -30,7 +30,7 @@ flowchart TB
 
     ReadAdapter --> MacosRead["macOS read backend — direct root children only"]
     MacosRead --> MacosOpen["openat(root_fd, leaf, O_NOFOLLOW)"]
-    MacosOpen --> MacosVolume["st_dev match · regular file · nlink = 1"]
+    MacosOpen --> MacosVolume["fstatfs f_fsid + mount point · regular file · nlink = 1"]
     MacosVolume --> ReadChecks
 
     ReadAdapter --> WindowsRead["Windows read backend"]
@@ -176,3 +176,14 @@ The source diagram now includes the Android and macOS direct-child filesystem ca
 - Android/macOS retain direct-child native read/write candidates; nested paths remain fail-closed. Android mount identity uses `statx(STATX_MNT_ID)`; macOS compares `fstatfs` filesystem ID and mount point.
 - The host authority root is exclusively the process working directory. Source path, `one.toml`, and `--target` do not select or widen it.
 - Source presence is not acceptance. Issue #104 remains OPEN / NOT ACCEPTED until exact-SHA adversarial evidence is produced. The previous E4 evidence on source `722d662...` does not transfer to this candidate.
+
+
+## 2026-11-21 — Android/macOS filesystem source repair and confinement boundary
+
+Latest code-bearing source: `0f5859426273a61174d6d1b08ed8771a6f4b136a` (`crates/one-core/src/filesystem.rs`).
+
+- Android's duplicate `create_temp` definition has been removed; macOS now has its missing exclusive `create_temp` helper. Static source inventory shows one helper definition in each native module. No compiler was run.
+- Android/macOS direct-child operations retain root-handle-relative no-follow reads and same-directory exclusive-temp atomic replacement; Android requires `statx(STATX_MNT_ID)`, while macOS compares `f_fsid` and mount point with `fstatfs`. Regular-file and hard-link checks remain.
+- Nested paths on both POSIX backends explicitly return `UnsupportedPlatform`. Ordinary POSIX directory descriptors do not prevent a parent directory from being renamed outside the retained root, so a multi-component openat walk would not satisfy the root-confinement race contract. No such unsafe nested support is enabled.
+- Android/macOS source regressions cover direct-child operation, leaf symlink rejection, nested-path fail-closed behavior, root symlink rejection, and hard-link side-effect preservation. These tests are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. This source correction is not a build/test/verifier result; no platform support or release approval is promoted.
