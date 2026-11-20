@@ -879,3 +879,11 @@ Latest source commit: `75bf347d7bbb9cce89a488b02cc285c7f605e984` (`crates/one-co
 
 - The 5-second query deadline now applies both to SQLite VM execution (progress handler) and to Rust-side row/result serialization, so time spent formatting large result sets is also bounded.
 - Source-only change; no build/test/CI/verifier/platform matrix ran.
+
+
+## Additional SQLite parser/VM limits — 2026-11-21
+
+Latest source commit: `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` (`crates/one-core/src/database.rs`).
+
+- Added per-connection SQLite limits for parser depth (1,000), VDBE instruction count (1,000,000), and trigger recursion depth (0), complementing the previously recorded length, SQL, column, variable, expression, compound-select, function, LIKE, attachment, and worker-thread limits.
+- Source-only hardening; no build/test/CI/verifier/platform matrix ran.
