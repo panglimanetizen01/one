@@ -816,6 +816,11 @@ mod android_native {
     fn parent_and_leaf(root: &File, relative: &Path) -> Result<(File, CString), FilesystemError> {
         let components: Vec<_> = relative.components().collect();
         if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        // POSIX directory descriptors do not pin a directory inside the
+        // retained root: an attacker may rename an opened parent directory
+        // outside the root before the leaf operation. Until this backend has
+        // a native anti-move primitive, nested paths must fail closed.
+        if components.len() != 1 { return Err(FilesystemError::UnsupportedPlatform); }
         let root_mount = mount_id(root)?;
         let root_dev = root.metadata().map_err(|_| FilesystemError::IoFailure)?.dev();
         let mut parent = root.try_clone().map_err(|_| FilesystemError::IoFailure)?;
@@ -962,6 +967,11 @@ mod macos_native {
     fn parent_and_leaf(root: &File, relative: &Path) -> Result<(File, CString), FilesystemError> {
         let components: Vec<_> = relative.components().collect();
         if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        // POSIX directory descriptors do not pin a directory inside the
+        // retained root: an attacker may rename an opened parent directory
+        // outside the root before the leaf operation. Until this backend has
+        // a native anti-move primitive, nested paths must fail closed.
+        if components.len() != 1 { return Err(FilesystemError::UnsupportedPlatform); }
         let mut parent = root.try_clone().map_err(|_| FilesystemError::IoFailure)?;
         for component in &components[..components.len() - 1] {
             let Component::Normal(name) = component else { return Err(FilesystemError::InvalidTarget); };
@@ -2002,23 +2012,21 @@ mod android_filesystem_tests {
     }
 
     #[test]
-    fn android_nested_paths_work_and_symlink_parents_fail_closed() {
+    fn android_leaf_symlinks_and_nested_paths_fail_closed() {
         let root = temp_dir("deny");
         let outside = root.with_extension("outside");
         std::fs::create_dir_all(root.join("nested")).unwrap();
         std::fs::create_dir_all(&outside).unwrap();
-        std::fs::write(root.join("nested/file.txt"), b"before").unwrap();
         std::fs::write(outside.join("sentinel.txt"), b"outside-sentinel").unwrap();
         symlink(&outside, root.join("escape-dir")).unwrap();
         symlink(outside.join("sentinel.txt"), root.join("escape.txt")).unwrap();
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
-        assert_eq!(authority.read("nested/file.txt").unwrap(), b"before");
-        authority.write("nested/file.txt", b"after").unwrap();
-        assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"after");
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::UnsupportedPlatform));
         assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
         drop(authority);
         std::fs::remove_dir_all(root).unwrap();
@@ -2074,22 +2082,20 @@ mod macos_filesystem_tests {
         drop(authority); std::fs::remove_dir_all(root).unwrap();
     }
     #[test]
-    fn macos_nested_paths_work_and_symlink_parents_fail_closed() {
+    fn macos_leaf_symlink_and_nested_paths_fail_closed() {
         let root = temp_dir("deny"); let outside = root.with_extension("outside");
         std::fs::create_dir_all(root.join("nested")).unwrap();
         std::fs::create_dir_all(&outside).unwrap();
-        std::fs::write(root.join("nested/file.txt"), b"before").unwrap();
         std::fs::write(outside.join("sentinel.txt"), b"outside-sentinel").unwrap();
         symlink(&outside, root.join("escape-dir")).unwrap();
         symlink(outside.join("sentinel.txt"), root.join("escape.txt")).unwrap();
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
-        assert_eq!(authority.read("nested/file.txt").unwrap(), b"before");
-        authority.write("nested/file.txt", b"after").unwrap();
-        assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"after");
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::UnsupportedPlatform));
         assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
         drop(authority); std::fs::remove_dir_all(root).unwrap(); std::fs::remove_dir_all(outside).unwrap();
     }
