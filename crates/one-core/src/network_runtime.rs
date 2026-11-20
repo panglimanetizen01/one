@@ -302,4 +302,32 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         assert!(matches!(trailing, Err(NetworkRuntimeError::Protocol(_))));
     }
 
+    #[test]
+    fn http_parser_rejects_invalid_response_header_tokens_and_controls() {
+        let invalid_name = parse_http_response(
+            b"HTTP/1.1 200 OK\r\nBad Header: value\r\nContent-Length: 0\r\n\r\n",
+            100,
+        );
+        assert!(matches!(invalid_name, Err(NetworkRuntimeError::Protocol(_))));
+        let invalid_value = parse_http_response(
+            b"HTTP/1.1 200 OK\r\nX-Test: bad\x01value\r\nContent-Length: 0\r\n\r\n",
+            100,
+        );
+        assert!(matches!(invalid_value, Err(NetworkRuntimeError::Protocol(_))));
+    }
+
+    #[test]
+    fn http_request_rejects_invalid_header_tokens_and_target_controls() {
+        let invalid_header = HttpRequest {
+            method: "GET".into(), authority: "example.test".into(), path: "/".into(),
+            headers: vec![("Bad Header".into(), "value".into())], body: Vec::new(),
+        };
+        assert!(matches!(invalid_header.to_bytes(), Err(NetworkRuntimeError::Protocol(_))));
+        let invalid_target = HttpRequest {
+            method: "GET".into(), authority: "example.test".into(), path: "/bad path".into(),
+            headers: Vec::new(), body: Vec::new(),
+        };
+        assert!(matches!(invalid_target.to_bytes(), Err(NetworkRuntimeError::Protocol(_))));
+    }
+
 }
