@@ -2,7 +2,7 @@
 
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs, UdpSocket};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::capability::CapabilitySet;
 use crate::network::{NetworkAddressKind, NetworkConnectionId, NetworkOperation, NetworkTarget, NetworkTransport};
@@ -158,13 +158,22 @@ const MAX_HTTP_RESPONSE_BODY_BYTES: usize = 16 * 1024 * 1024;
 const MAX_HTTP_RESPONSE_WIRE_BODY_BYTES: usize = 32 * 1024 * 1024;
 const MAX_HTTP_RESPONSE_BYTES: usize = MAX_HTTP_RESPONSE_HEADER_BYTES + MAX_HTTP_RESPONSE_WIRE_BODY_BYTES;
 
-fn read_http_response_bounded(stream: &mut TcpStream) -> Result<Vec<u8>, NetworkRuntimeError> {
+fn read_http_response_bounded(stream: &mut TcpStream, timeout: Duration) -> Result<Vec<u8>, NetworkRuntimeError> {
+    let deadline = Instant::now() + timeout;
     let mut response = Vec::new();
     let mut buffer = [0u8; 16 * 1024];
     loop {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining.is_zero() {
+            return Err(NetworkRuntimeError::Io("Batas waktu membaca respons HTTP terlampaui.".into()));
+        }
+        stream.set_read_timeout(Some(remaining))
+            .map_err(|error| NetworkRuntimeError::Io(error.to_string()))?;
         let count = match stream.read(&mut buffer) {
             Ok(count) => count,
             Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) if error.kind() == std::io::ErrorKind::TimedOut || error.kind() == std::io::ErrorKind::WouldBlock =>
+                return Err(NetworkRuntimeError::Io("Batas waktu membaca respons HTTP terlampaui.".into())),
             Err(error) => return Err(NetworkRuntimeError::Io(error.to_string())),
         };
         if count == 0 { break; }
@@ -250,7 +259,7 @@ fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, Netw
     }
 }
 
-pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> { if !capabilities.permits(crate::capability::Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); } let (host, port) = parse_http_authority(&request.authority)?; let address = resolve_target(&host, port, None)?; let mut stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let response = read_http_response_bounded(&mut stream)?; parse_http_response(&response, MAX_HTTP_RESPONSE_BODY_BYTES) }
+pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> { if !capabilities.permits(crate::capability::Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); } let (host, port) = parse_http_authority(&request.authority)?; let address = resolve_target(&host, port, None)?; let mut stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let response = read_http_response_bounded(&mut stream, timeout)?; parse_http_response(&response, MAX_HTTP_RESPONSE_BODY_BYTES) }
 #[cfg(test)]
 mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io::{Read, Write}; use std::net::TcpListener; use std::thread;
     #[test] fn localhost_resolution_returns_a_real_socket_address() { let address = resolve_target("localhost", 80, None).expect("localhost must resolve"); assert!(address.ip().is_loopback()); }
