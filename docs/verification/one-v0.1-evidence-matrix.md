@@ -603,3 +603,9 @@ This is the newest readback. Preserve all earlier snapshots as history; this blo
 - Regression fixture updated to run a source file outside the host working directory while reading a file inside that working directory.
 - Source commits: `8b1d13e02c181fc06b97fb7f147e1ccd013d3aa1` and `7cbcb1bf575defe03a2d9991dc5094569de95f03`; fixture commit: `5e39430a341629eb9fda11ee4e11b0f6f40487ab`.
 - No build, test, or verifier run has been performed after these changes. All prior exact-SHA evidence remains historical and does not transfer to this candidate. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Linux root no-follow regression — 2026-11-20
+
+- Added `filesystem::tests::authority_rejects_symlink_root_without_following_final_component` in commit `ab72ec5d65a5e237cdc1b10e40ea209149f42e74` to prove that a symlink cannot be supplied as the final trusted-root component.
+- This test has NOT been run. Latest code-bearing candidate is `ab72ec5d65a5e237cdc1b10e40ea209149f42e74`; current PR #113 HEAD is documentation-only `b8f5569333723cf916ad918735934b9b5d774095` (OPEN / DRAFT / UNMERGED). No exact-SHA test result is claimed.
+- The current implementation delta comprises CLI cwd-only root selection, Linux no-follow root-handle acquisition with identity check, and the two new CLI/filesystem regression fixtures. Linux nested writes remain fail-closed; Android/macOS adapters remain unavailable; Issue #104 remains OPEN / NOT ACCEPTED.
