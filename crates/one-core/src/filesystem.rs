@@ -798,46 +798,49 @@ mod android_native {
         Ok(info.mount_id)
     }
 
-    fn direct_child(relative: &Path) -> Result<CString, FilesystemError> {
-        let mut components = relative.components();
-        let Some(Component::Normal(name)) = components.next() else {
-            return Err(FilesystemError::InvalidTarget);
-        };
-        if components.next().is_some() || name.as_bytes().is_empty() {
-            return Err(FilesystemError::UnsupportedPlatform);
-        }
-        CString::new(name.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)
-    }
-
     fn map_error(error: std::io::Error) -> FilesystemError {
         match error.raw_os_error() {
-            Some(libc::ELOOP) | Some(libc::EXDEV) => FilesystemError::ResolutionFailed,
+            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
             Some(libc::ENOSYS) | Some(libc::EINVAL) => FilesystemError::UnsupportedPlatform,
-            // EPERM can be an ordinary DAC/SELinux denial for this target;
-            // do not misreport an access-control decision as missing kernel support.
             _ => FilesystemError::IoFailure,
         }
     }
 
-    fn openat(root: &File, name: &CString, flags: i32, mode: u32) -> Result<File, FilesystemError> {
-        let fd = unsafe { libc::openat(root.as_raw_fd(), name.as_ptr(), flags, mode) };
+    fn openat(directory: &File, name: &CString, flags: i32, mode: u32) -> Result<File, FilesystemError> {
+        let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), flags, mode) };
         if fd < 0 { return Err(map_error(std::io::Error::last_os_error())); }
         Ok(unsafe { File::from_raw_fd(fd) })
     }
 
-    fn create_temp(root: &File, name: &CString) -> Result<File, std::io::Error> {
-        let fd = unsafe {
-            libc::openat(root.as_raw_fd(), name.as_ptr(),
-                libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600)
+    fn parent_and_leaf(root: &File, relative: &Path) -> Result<(File, CString), FilesystemError> {
+        let components: Vec<_> = relative.components().collect();
+        if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        let root_mount = mount_id(root)?;
+        let root_dev = root.metadata().map_err(|_| FilesystemError::IoFailure)?.dev();
+        let mut parent = root.try_clone().map_err(|_| FilesystemError::IoFailure)?;
+        for component in &components[..components.len() - 1] {
+            let Component::Normal(name) = component else { return Err(FilesystemError::InvalidTarget); };
+            let name = CString::new(name.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+            let next = openat(&parent, &name,
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+            let metadata = next.metadata().map_err(|_| FilesystemError::IoFailure)?;
+            if !metadata.is_dir() { return Err(FilesystemError::NotRegularFile); }
+            if metadata.dev() != root_dev || mount_id(&next)? != root_mount {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+            parent = next;
+        }
+        let Component::Normal(leaf) = components[components.len() - 1] else {
+            return Err(FilesystemError::InvalidTarget);
         };
-        if fd < 0 { return Err(std::io::Error::last_os_error()); }
-        Ok(unsafe { File::from_raw_fd(fd) })
+        let leaf = CString::new(leaf.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+        Ok((parent, leaf))
     }
 
-    fn create_temp(root: &File, name: &CString) -> Result<File, std::io::Error> {
+    fn create_temp(parent: &File, name: &CString) -> Result<File, std::io::Error> {
         let fd = unsafe {
-            libc::openat(root.as_raw_fd(), name.as_ptr(),
+            libc::openat(parent.as_raw_fd(), name.as_ptr(),
                 libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600)
         };
         if fd < 0 { return Err(std::io::Error::last_os_error()); }
@@ -845,25 +848,32 @@ mod android_native {
     }
 
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
-        let name = direct_child(relative)?;
-        let file = openat(root, &name, libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+        let (parent, leaf) = parent_and_leaf(root, relative)?;
+        let file = openat(&parent, &leaf,
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
-        if mount_id(root)? != mount_id(&file)? { return Err(FilesystemError::ResolutionFailed); }
+        if metadata.dev() != root.metadata().map_err(|_| FilesystemError::IoFailure)?.dev()
+            || mount_id(root)? != mount_id(&file)? {
+            return Err(FilesystemError::ResolutionFailed);
+        }
         Ok(file)
     }
 
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
-        let leaf = direct_child(relative)?;
+        let (parent, leaf) = parent_and_leaf(root, relative)?;
         let root_mount = mount_id(root)?;
-        match openat(root, &leaf, O_PATH | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0) {
+        let root_dev = root.metadata().map_err(|_| FilesystemError::IoFailure)?.dev();
+        match openat(&parent, &leaf, O_PATH | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0) {
             Ok(existing) => {
                 let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
                 if metadata.file_type().is_symlink() { return Err(FilesystemError::ResolutionFailed); }
                 if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
                 if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
-                if mount_id(&existing)? != root_mount { return Err(FilesystemError::ResolutionFailed); }
+                if metadata.dev() != root_dev || mount_id(&existing)? != root_mount {
+                    return Err(FilesystemError::ResolutionFailed);
+                }
             }
             Err(FilesystemError::NotFound) => {},
             Err(error) => return Err(error),
@@ -874,7 +884,7 @@ mod android_native {
             let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
             let name = CString::new(format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id()))
                 .map_err(|_| FilesystemError::InvalidTarget)?;
-            match create_temp(root, &name) {
+            match create_temp(&parent, &name) {
                 Ok(file) => { created = Some((file, name)); break; },
                 Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
                 Err(error) => return Err(map_error(error)),
@@ -883,18 +893,19 @@ mod android_native {
         let (mut temp, temp_name) = created.ok_or(FilesystemError::IoFailure)?;
         let result = (|| {
             let metadata = temp.metadata().map_err(|_| FilesystemError::IoFailure)?;
-            if !metadata.is_file() || metadata.nlink() != 1 || mount_id(&temp)? != root_mount {
+            if !metadata.is_file() || metadata.nlink() != 1 || metadata.dev() != root_dev
+                || mount_id(&temp)? != root_mount {
                 return Err(FilesystemError::ResolutionFailed);
             }
             temp.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             temp.sync_all().map_err(|_| FilesystemError::IoFailure)?;
-            let renamed = unsafe { libc::renameat(root.as_raw_fd(), temp_name.as_ptr(), root.as_raw_fd(), leaf.as_ptr()) };
+            let renamed = unsafe { libc::renameat(parent.as_raw_fd(), temp_name.as_ptr(), parent.as_raw_fd(), leaf.as_ptr()) };
             if renamed != 0 { return Err(map_error(std::io::Error::last_os_error())); }
-            root.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+            parent.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             Ok(())
         })();
         if result.is_err() {
-            let removed = unsafe { libc::unlinkat(root.as_raw_fd(), temp_name.as_ptr(), 0) };
+            let removed = unsafe { libc::unlinkat(parent.as_raw_fd(), temp_name.as_ptr(), 0) };
             if removed != 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ENOENT) {
                 return Err(FilesystemError::IoFailure);
             }
