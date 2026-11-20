@@ -38,10 +38,21 @@ flowchart TB
     NtOpen --> WindowsPolicy["OBJ_DONT_REPARSE · reparse / volume checks"]
     WindowsPolicy --> ReadChecks
 
-    WriteAdapter --> LinuxWrite["Linux write backend — direct root children only"]
+    WriteAdapter --> LinuxWrite["Linux write backend — direct + guarded nested"]
     LinuxWrite --> Nested{"Nested parent path?"}
-    Nested -->|Yes| FailClosed["UnsupportedPlatform — no write attempted"]
-    Nested -->|No| LinuxLeaf["openat2 leaf validation"]
+    Nested -->|No| LinuxLeaf["openat2 leaf validation under retained root"]
+    Nested -->|Yes| LinuxMount["open_tree detached mount clone"]
+    LinuxMount --> LinuxNoSymlink["mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)"]
+    LinuxNoSymlink --> LinuxNestedParent["openat2 parent beneath detached mount"]
+    LinuxNestedParent --> LinuxNestedTemp["Exclusive temp sibling via retained parent handle"]
+    LinuxNestedTemp --> LinuxNestedSync["write_all + sync_all"]
+    LinuxNestedSync --> LinuxNestedRename["renameat2 within detached parent"]
+    LinuxNestedRename --> LinuxNestedDirSync["sync containing directory"]
+    LinuxNestedSync -->|failure| LinuxNestedCleanup["unlinkat temp sibling in detached parent"]
+    LinuxNestedRename -->|failure| LinuxNestedCleanup
+    LinuxMount -->|unsupported primitive| FailClosed["UnsupportedPlatform — no write attempted"]
+    LinuxNoSymlink -->|unsupported primitive| FailClosed
+    LinuxNestedParent -->|resolution failure| FailClosed
     LinuxLeaf --> LinuxPolicy["BENEATH · NO_SYMLINKS · NO_XDEV"]
     LinuxPolicy --> LinuxType["Regular file · same device · nlink = 1"]
     LinuxType --> LinuxTemp["Exclusive temp sibling via root_fd"]
@@ -103,9 +114,9 @@ flowchart TB
 
 ## Explicit limitations
 
-- Linux nested writes fail closed because a retained nested-directory handle can be moved outside the root after opening. Direct-child writes use the retained root handle as their parent authority.
-- Linux direct-child and Windows write paths have protected E4 evidence on code-bearing source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` (protected push run #44519577693). Linux nested writes remain fail-closed. The native Windows probe is limited to Windows Server 2025 build 26100.
-- Android and macOS support is currently limited to direct children of the retained root. Android requires `statx(STATX_MNT_ID)`; macOS compares `st_dev`. Nested paths fail closed. These implementations are code candidates only and have NOT been built or tested.
+- Linux nested writes use a guarded detached mount (`open_tree` + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2`) so parent movement cannot redirect the final write outside the retained root. The path fails closed when the required kernel/security primitives are unavailable; direct-child writes continue to use the retained root handle.
+- Historical Linux direct-child and Windows write evidence on source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` (protected push run #44519577693) does not verify the later detached-mount implementation. The native Windows probe is limited to Windows Server 2025 build 26100.
+- Android and macOS support is currently limited to direct children of the retained root. Android requires `statx(STATX_MNT_ID)`; macOS compares `fstatfs` filesystem ID and mount point. Nested paths fail closed. These implementations are code candidates only and have NOT been built or tested.
 - Other platforms fail closed.
 - A successful artifact build or one passing platform job does not imply full platform support or Issue #104 acceptance.
 - The full architecture map in PR #97 is a separate non-normative overview image. This focused source diagram supplements it; it does not claim that the image itself has been visually inspected or reconciled.
@@ -157,3 +168,11 @@ The source diagram now includes the Android and macOS direct-child filesystem ca
 - Linux nested writes now have a guarded detached-mount implementation using `open_tree`, recursive `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, and `openat2` resolution; the operation fails closed when the host kernel/security profile does not permit those primitives. Directory-entry durability syncs the containing directory after atomic replacement.
 - Android direct-child operations require `statx(STATX_MNT_ID)` equality. macOS direct-child operations compare `fstatfs` filesystem ID and mount point (not merely `st_dev`). Both reject symlink/hard-link leaves and use exclusive temporary siblings, file sync, directory sync, and `renameat`. Nested Android/macOS paths remain fail-closed.
 - New Android/macOS hard-link regressions are in source. Candidate `4c46a41fe45baa7627557a2a25b9c71812840479` is NOT BUILT/TESTED; Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Implementation source refresh — 2026-11-21
+
+- Current code-bearing candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). The diagram's Linux nested-write path now reflects detached-mount cloning, no-symlink mount attributes, parent resolution under the detached mount, atomic rename, and containing-directory sync. Unsupported kernel/security primitives fail closed.
+- Android/macOS retain direct-child native read/write candidates; nested paths remain fail-closed. Android mount identity uses `statx(STATX_MNT_ID)`; macOS compares `fstatfs` filesystem ID and mount point.
+- The host authority root is exclusively the process working directory. Source path, `one.toml`, and `--target` do not select or widen it.
+- Source presence is not acceptance. Issue #104 remains OPEN / NOT ACCEPTED until exact-SHA adversarial evidence is produced. The previous E4 evidence on source `722d662...` does not transfer to this candidate.
