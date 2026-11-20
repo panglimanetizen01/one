@@ -5,7 +5,7 @@ from diagnose_circleci import (
     DiagnosticError,
     classify_failure,
     classify_job_evidence,
-    discover_failed_jobs,
+    discover_exact_sha_jobs,
     extract_failed_steps,
     paged_v2_items,
     redact,
@@ -163,7 +163,7 @@ class CircleCIDiagnosticTests(unittest.TestCase):
             with self.assertRaisesRegex(DiagnosticError, "non-object item"):
                 list(paged_v2_items("https://circleci.example/pipelines", {}))
 
-    def test_exact_sha_pipeline_without_failed_jobs_is_not_an_error(self):
+    def test_exact_sha_pipeline_with_running_job_is_not_hidden(self):
         responses = [
             {
                 "items": [
@@ -189,10 +189,10 @@ class CircleCIDiagnosticTests(unittest.TestCase):
             },
         ]
         with patch("diagnose_circleci.get_json", side_effect=responses):
-            self.assertEqual(
-                discover_failed_jobs("token", "gh/example/one", "feature", "a" * 40),
-                [],
-            )
+            jobs = discover_exact_sha_jobs("token", "gh/example/one", "feature", "a" * 40)
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["id"], "job-uuid")
+        self.assertEqual(jobs[0]["status"], "running")
 
     def test_exact_sha_discovery_checks_every_matching_pipeline(self):
         sha = "a" * 40
@@ -217,12 +217,16 @@ class CircleCIDiagnosticTests(unittest.TestCase):
              "next_page_token": None},
         ]
         with patch("diagnose_circleci.get_json", side_effect=responses) as get_json:
-            failures = discover_failed_jobs("token", "gh/example/one", "feature", sha)
-        self.assertEqual(len(failures), 1)
-        self.assertEqual(failures[0]["pipeline_id"], "older-pipeline")
-        self.assertEqual(failures[0]["pipeline_revision"], sha)
-        self.assertEqual(failures[0]["workflow_id"], "older-workflow")
-        self.assertEqual(failures[0]["job_started_at"], None)
+            failures = discover_exact_sha_jobs("token", "gh/example/one", "feature", sha)
+        self.assertEqual(len(failures), 2)
+        older = next(job for job in failures if job["id"] == "older-job")
+        newer = next(job for job in failures if job["id"] == "newer-job")
+        self.assertEqual(older["pipeline_id"], "older-pipeline")
+        self.assertEqual(older["pipeline_revision"], sha)
+        self.assertEqual(older["workflow_id"], "older-workflow")
+        self.assertIsNone(older["job_started_at"])
+        self.assertEqual(newer["pipeline_id"], "newer-pipeline")
+        self.assertEqual(newer["status"], "running")
         self.assertEqual(get_json.call_count, 5)
 
     def test_direct_job_lookup_marks_source_sha_unverified(self):
