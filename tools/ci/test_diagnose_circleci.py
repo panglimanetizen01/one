@@ -4,6 +4,7 @@ from unittest.mock import patch
 from diagnose_circleci import (
     DiagnosticError,
     classify_failure,
+    classify_job_evidence,
     discover_failed_jobs,
     extract_failed_steps,
     paged_v2_items,
@@ -66,6 +67,30 @@ class CircleCIDiagnosticTests(unittest.TestCase):
     def test_classifies_no_output_timeout(self):
         self.assertEqual(
             classify_failure("Too long with no output: context deadline exceeded"),
+            "TIMEOUT / NO-OUTPUT",
+        )
+
+    def test_classifier_does_not_match_its_own_explanatory_phrase(self):
+        self.assertEqual(
+            classify_failure("No step with failed/timed_out outcome was exposed by API v3."),
+            "UNCLASSIFIED — inspect the evidence below",
+        )
+
+    def test_canceled_step_without_start_or_logs_is_pre_execution_unknown(self):
+        self.assertEqual(
+            classify_job_evidence(["canceled"], None, ""),
+            "PRE-EXECUTION TERMINATION / ROOT CAUSE UNKNOWN",
+        )
+
+    def test_canceled_step_after_start_without_logs_is_not_timeout(self):
+        self.assertEqual(
+            classify_job_evidence(["canceled"], "2026-11-20T10:00:00Z", ""),
+            "NO-OUTPUT / ROOT CAUSE UNKNOWN",
+        )
+
+    def test_timed_out_provider_outcome_is_classified_as_timeout(self):
+        self.assertEqual(
+            classify_job_evidence(["timed_out"], None, ""),
             "TIMEOUT / NO-OUTPUT",
         )
 
