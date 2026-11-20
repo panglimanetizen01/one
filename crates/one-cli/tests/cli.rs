@@ -42,8 +42,8 @@ fn run_command_does_not_allow_source_location_to_widen_filesystem_root() {
     let outside = std::env::temp_dir().join(format!("one-filesystem-outside-{id}.txt"));
     let source = std::env::temp_dir().join(format!("one-filesystem-source-widen-{id}.one"));
     let outside_arg = portable_path(&outside);
-    fs::write(&outside, "rahasia di luar root\\n").unwrap();
-    fs::write(&source, format!("baca berkas \\"{}\\"\\n", outside_arg)).unwrap();
+    fs::write(&outside, "rahasia di luar root\n").unwrap();
+    fs::write(&source, format!("baca berkas \"{}\"\n", outside_arg)).unwrap();
 
     // The source and target share a parent outside cwd. Neither may widen
     // the host-selected root to that parent directory.
