@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — security and filesystem integration
+
+- Bind filesystem authority to the host process working directory instead of the `.one` source location or requested target.
+- Open Linux project roots with directory/no-follow/close-on-exec flags and validate path identity against the retained root handle.
+- Add a CLI regression fixture for a source file outside the working directory accessing an in-root target.
+
+
 ## Unreleased — One v0.1
 
 - Added formal lexical and concrete grammar contracts.
