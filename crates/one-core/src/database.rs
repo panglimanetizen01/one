@@ -2,6 +2,7 @@ use crate::adapter::{AdapterArgument, AdapterError, AdapterMetadata, AdapterRequ
 use crate::capability::Capability;
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
 use rusqlite::{limits::Limit, types::ValueRef, Connection};
+use std::time::{Duration, Instant};
 
 pub struct SqliteAdapter {
     metadata: AdapterMetadata,
@@ -33,6 +34,7 @@ impl SqliteAdapter {
     const MAX_PARAMETER_BYTES: usize = 1024 * 1024;
     const MAX_QUERY_ROWS: usize = 100_000;
     const MAX_QUERY_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+    const MAX_QUERY_DURATION: Duration = Duration::from_secs(5);
 
     fn append_bounded(output: &mut Vec<u8>, bytes: &[u8]) -> Result<(), AdapterError> {
         let next_len = output.len().checked_add(bytes.len())
@@ -141,6 +143,9 @@ impl ToolAdapter for SqliteAdapter {
         connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 64 * 1024);
         connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0);
         connection.set_limit(Limit::SQLITE_LIMIT_WORKER_THREADS, 0);
+        connection.busy_timeout(Duration::from_millis(250)).map_err(|_| AdapterError::BackendFailure)?;
+        let deadline = Instant::now() + Self::MAX_QUERY_DURATION;
+        connection.progress_handler(1_000, Some(move || Instant::now() >= deadline));
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
