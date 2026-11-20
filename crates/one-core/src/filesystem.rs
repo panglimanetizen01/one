@@ -575,6 +575,9 @@ where
         if rename_result != 0 {
             return Err(linux_filesystem_error(std::io::Error::last_os_error()));
         }
+        // Persist the directory-entry update as well as the file contents.
+        // The detached mount descriptor is the retained root directory.
+        mount.sync_all().map_err(|_| FilesystemError::IoFailure)?;
         guard.committed = true;
         Ok(())
     })();
@@ -721,6 +724,7 @@ where
         if rename_result != 0 {
             return Err(linux_filesystem_error(std::io::Error::last_os_error()));
         }
+        root.sync_all().map_err(|_| FilesystemError::IoFailure)?;
         guard.committed = true;
         Ok(())
     })();
