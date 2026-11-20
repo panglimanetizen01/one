@@ -138,3 +138,16 @@ Never merge PRs, modify `main`, force-push, delete branches, promote protected p
 - PR #113 remains OPEN / DRAFT / UNMERGED. Its previously recorded head before follow-up documentation sync was `673c057421ad3a3293dab990563e7f83cd7f3681`; its base is the same verifier branch. After this merge, no GitHub Actions PR run was yet returned for PR #113's recorded head or the merge commit at the immediate readback. CircleCI on the merge commit is PENDING at `https://app.circleci.com/workflow/509828d0-3d7d-434a-8f00-a58645eabe9e/job/83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`.
 - PR #113's previous CircleCI status remains PENDING at `https://app.circleci.com/workflow/97d5e3d0-c7ff-4668-a5ee-569e4726febc/job/5c1135d8-d3dd-4d7c-a564-14478bc2508a`. Do not claim B-001 resolved until a job starts and exact-SHA evidence verifies the run.
 - Next: update only the existing verification docs on PR #113 branch (which should now trigger the newly installed PR workflow), then inspect exact run and require the full Contract artifacts, Build, Clippy, workspace tests, and focused tests on both Ubuntu and Windows. Keep PR #113 draft/open and do not merge it. CircleCI root cause remains unknown; no blind rerun or credit purchase.
+
+
+## Post-merge verification checkpoint — 2026-11-20
+
+- PR #115 is MERGED; merge commit `3adace165890bb69de346880e3c612c5cd6c2ff8`. Its diff adds only `.github/workflows/ci.yml`.
+- Follow-up documentation commits on PR #113 branch:
+  - register update `02fafe353a6a57627037d4d88df8966ba0c0e916`
+  - live checkpoint update `ff0d3ded5233b819e66375ff14471d8baa320171`
+  - CircleCI diagnostics update / latest PR #113 HEAD at last readback `9d9e4ac785c18194f9821156c0c56e9b0c08a3da`.
+- PR #113 remains OPEN / DRAFT / UNMERGED at exact HEAD `9d9e4ac785c18194f9821156c0c56e9b0c08a3da`. The workflow file is now present on its base branch. The GitHub connector's exact-commit workflow-run lookup returned no PR-triggered Actions run for this SHA; do not claim GitHub Actions verification started or passed.
+- CircleCI on PR #113 latest HEAD is PENDING: workflow `418906bd-0e0e-4f86-aac5-df6042c21e61`, job `c6073561-4718-49be-afe7-aa686cf3589a`. CircleCI on base merge commit is also PENDING: workflow `509828d0-3d7d-434a-8f00-a58645eabe9e`, job `83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`.
+- B-001 is NOT CLOSED. The earlier pre-execution failure on pipeline #1201 remains historically valid; the current pending statuses are not proof of job start or resolution. The 400,000 OSS allocation balance remains unknown.
+- No PR #113 merge, no main update, no protected verifier pin change, and no fixed ledger/DoD/acceptance change.
