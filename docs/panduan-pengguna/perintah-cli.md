@@ -163,3 +163,8 @@ Perintah dan capability di atas tetap bersifat eksperimental sesuai batasnya. Ja
 - Runtime scope dan policy: PR #100 dan #101 memperbaiki pemulihan scope setelah error serta inheritance deny/approval; keduanya lulus pada branch masing-masing tetapi belum terintegrasi ke main.
 
 Semua PASS tersebut adalah bukti GitHub Actions pada SHA kandidat masing-masing, bukan bukti CircleCI dan bukan persetujuan rilis. CircleCI migration masih draft pada PR #108; main belum berpindah provider.
+
+## Root filesystem untuk izin berkas
+
+Saat program memakai `filesystem.read` atau `filesystem.write`, root tepercaya adalah direktori kerja proses One (`cwd`) ketika perintah dijalankan. Jalankan perintah dari folder proyek yang ingin dijadikan batas akses. Lokasi file `.one` dan nilai `--target` tidak dapat memperluas root tersebut; `--target` hanya membatasi izin ke target yang diminta. Target di luar root akan ditolak.
+
