@@ -64,7 +64,7 @@ User documentation is intentionally separate from normative engineering contract
 
 ## Verification and release
 - `verification/forensic-audit-2026-11-17.md` — repository-wide forensic inventory, documentation/CI drift, exact-SHA evidence, and open security gates.
-- `verification/MASTER_CONTINUATION_PROMPT_2026-11-17.md` — read-first master prompt for the next execution session; prevents re-auditing completed exact-SHA work.
+- `verification/MASTER_CONTINUATION_PROMPT_2026-11-17.md` — historical long-form prompt snapshot, superseded as the session entry point by `verification/MASTER_CONTINUATION_PROMPT.md`; preserve for history.
 - `spec/one-v0.1-ci-verification-contract.md` — normative development-side CI and exact-SHA evidence contract.
 
 - `testing/conformance.md` — retained v0.1 conformance contract artifact.
