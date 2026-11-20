@@ -494,6 +494,14 @@ where
     {
         return Err(FilesystemError::ResolutionFailed);
     }
+    let parent_sync_handle = linux_openat2(
+        mount.as_raw_fd(),
+        &parent_name,
+        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
+        0,
+        RESOLVE,
+    )
+    .map_err(linux_filesystem_error)?;
 
     match linux_openat2(
         mount.as_raw_fd(),
@@ -575,9 +583,8 @@ where
         if rename_result != 0 {
             return Err(linux_filesystem_error(std::io::Error::last_os_error()));
         }
-        // Persist the directory-entry update as well as the file contents.
-        // The detached mount descriptor is the retained root directory.
-        mount.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+        // Persist the entry in the actual containing directory.
+        parent_sync_handle.sync_all().map_err(|_| FilesystemError::IoFailure)?;
         guard.committed = true;
         Ok(())
     })();
