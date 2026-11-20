@@ -79,4 +79,42 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
     #[test] fn capability_denial_happens_before_connection() { let mut runtime = RealNetworkRuntime::new(); let result = runtime.execute(NetworkOperation::Connect { target: NetworkTarget::Service { host: "127.0.0.1".into(), port: 9 }, constraints: crate::network::NetworkConstraints { address_kind: Some(NetworkAddressKind::Ipv4), transport: NetworkTransport::Reliable, security: Some(crate::network::NetworkSecurity::Insecure), timeout_ms: 50, protocol: Some(NetworkProtocolFamily::Tcp) } }, &CapabilitySet::none()); assert!(matches!(result, Err(NetworkRuntimeError::CapabilityDenied(_)))); }
     #[test] fn http_request_and_response_are_real_bytes() { let listener = TcpListener::bind("127.0.0.1:0").expect("bind"); let address = listener.local_addr().expect("address"); let server = thread::spawn(move || { let (mut stream, _) = listener.accept().expect("accept"); let mut request = Vec::new(); let mut buffer = [0u8; 1024]; loop { let read = stream.read(&mut buffer).expect("read"); if read == 0 { break; } request.extend_from_slice(&buffer[..read]); if request.windows(4).any(|w| w == b"\r\n\r\n") { break; } } assert!(request.starts_with(b"GET / HTTP/1.1\r\n")); stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello").expect("write"); }); let mut runtime = RealNetworkRuntime::new(); let capabilities = CapabilitySet::none().allow(crate::capability::Capability::NetworkConnect); let authority = format!("{}:{}", address.ip(), address.port()); let response = execute_http11(&mut runtime, HttpRequest::get(authority, "/"), &capabilities, Duration::from_secs(2)).expect("http"); assert_eq!(response.status, 200); assert_eq!(response.body, b"hello"); server.join().expect("server"); }
     #[test] fn chunked_http_body_is_decoded_without_guessing() { let response = parse_http_response(b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n", 100).expect("parse"); assert_eq!(response.body, b"hello"); }
+    #[test]
+    fn http_response_rejects_ambiguous_framing_and_duplicate_lengths() {
+        let ambiguous = parse_http_response(b"HTTP/1.1 200 OK\\r\\nContent-Length: 5\\r\\nTransfer-Encoding: chunked\\r\\n\\r\\n0\\r\\n\\r\\n", 100);
+        assert!(matches!(ambiguous, Err(NetworkRuntimeError::Protocol(_))));
+        let duplicate = parse_http_response(b"HTTP/1.1 200 OK\\r\\nContent-Length: 1\\r\\nContent-Length: 1\\r\\n\\r\\nx", 100);
+        assert!(matches!(duplicate, Err(NetworkRuntimeError::Protocol(_))));
+    }
+
+    #[test]
+    fn http_response_rejects_headers_over_64_kib() {
+        let mut bytes = b"HTTP/1.1 200 OK\\r\\nX-Fill: ".to_vec();
+        bytes.extend(std::iter::repeat_n(b'a', MAX_HTTP_RESPONSE_HEADER_BYTES));
+        bytes.extend_from_slice(b"\\r\\n\\r\\n");
+        assert!(matches!(parse_http_response(&bytes, 100), Err(NetworkRuntimeError::Protocol(_))));
+    }
+
+    #[test]
+    fn http_chunk_size_overflow_is_rejected() {
+        let response = parse_http_response(b"HTTP/1.1 200 OK\\r\\nTransfer-Encoding: chunked\\r\\n\\r\\nFFFFFFFFFFFFFFFFFFFFFFFF\\r\\n", 100);
+        assert!(matches!(response, Err(NetworkRuntimeError::Protocol(_))));
+    }
+
+    #[test]
+    fn bounded_http_reader_stops_on_oversized_header() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let address = listener.local_addr().expect("address");
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept");
+            let mut oversized = vec![b'X'; MAX_HTTP_RESPONSE_HEADER_BYTES + 8192];
+            oversized.extend_from_slice(b"\\r\\n\\r\\n");
+            let _ = stream.write_all(&oversized);
+        });
+        let mut stream = TcpStream::connect(address).expect("connect");
+        stream.set_read_timeout(Some(Duration::from_secs(2))).expect("timeout");
+        assert!(matches!(read_http_response_bounded(&mut stream), Err(NetworkRuntimeError::Protocol(_))));
+        server.join().expect("server");
+    }
+
 }
