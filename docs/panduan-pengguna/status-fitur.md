@@ -30,7 +30,7 @@ Post-merge `One CI` run `39371290853` tidak menghasilkan execution evidence: ked
 
 **Eksperimental — filesystem read source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk operasi `baca berkas` dengan izin CLI eksplisit. Boundary ini telah diverifikasi lintas Ubuntu + Windows Server 2025 pada source `f482c6b75505d9965dd33f4f25bb0cd04072cedb` melalui mirror run `38903950612`.
 
-**Eksperimental — process execution source-to-runtime vertical slice:** `jalankan proses` telah diverifikasi lintas Ubuntu + Windows Server 2025 pada source `9038ac75f197753ff1ab6af7478e63e4831903a2` melalui mirror run `38929072800`. Slice ini dibatasi pada satu program yang ditargetkan secara eksplisit tanpa argumen tambahan.
+**Eksperimental — process execution:** Windows uses Job Object containment; Linux candidate now installs inherited seccomp restrictions to prevent descendants from creating new sessions/process groups or namespaces. The new Linux implementation is NOT BUILT/TESTED yet. Android and macOS process execution fail closed until equivalent containment exists. The v0.1 slice remains one explicitly targeted program with no extra arguments.
 
 **Eksperimental — filesystem write source-to-runtime vertical slice:** One memiliki jalur bahasa yang dapat dieksekusi untuk `tulis ke berkas` dengan permission `filesystem.write` dan target file yang sama. Evidence executable tetap dibatasi pada Termux/Android untuk exact SHA yang tercatat.
 
@@ -50,7 +50,7 @@ Status fitur harus dibaca bersama revisi source yang sedang digunakan. PR #108 k
 
 Perbaikan kandidat tersebut belum digabung ke main dan belum menjadi rilis. Karena itu:
 
-- Process execution tetap Eksperimental. Batasnya 10 detik untuk direct child, maksimum 1 MiB per stream, dan reader shutdown grace 100 ms pada Unix. Descendant yang membuat session/process group baru masih dapat bertahan; ini bukan jaminan process-tree containment (Issue #105).
+- Process execution tetap Eksperimental: deadline 10 detik, maksimum 1 MiB per stream, bounded reader shutdown. Linux seccomp containment candidate dan Windows Job Object membatasi descendants; Linux candidate belum diverifikasi. Android/macOS fail-closed. Issue #105 tetap OPEN sampai adversarial execution membuktikan cleanup.
 - Filesystem read/write tetap Eksperimental dan belum boleh dianggap sebagai sandbox project-root. Race-resistant path confinement dengan handle-relative open belum tersedia pada main (Issue #104).
 - Database query tetap Eksperimental. Kandidat PR #108 kini mengintegrasikan read-only file-open dan regression test, tetapi exact-SHA gabungan belum diverifikasi; main belum berubah.
 - Issue #82 untuk eksekusi runtime Android AArch64 masih terbuka; build artifact saja bukan bukti runtime execution.
@@ -256,7 +256,7 @@ Bukti runtime Android API 35 arm64-v8a memiliki metadata artifact yang sudah dip
 
 ## Pembaruan dukungan filesystem — 20 November 2026
 
-Adapter filesystem kini hanya mengiklankan backend native pada platform yang benar-benar tersedia: Linux pada build Linux dan Windows pada build Windows. Android, macOS, dan platform lain belum memiliki backend filesystem dan tetap fail-closed. Pemilihan adapter memakai identitas platform host sebenarnya, bukan nilai generik.
+Filesystem adapters now advertise Linux, Windows, Android, and macOS direct-child backends on their respective hosts. Android requires kernel `statx(STATX_MNT_ID)`; macOS checks device identity. All nested paths remain fail-closed on Android/macOS, and Linux nested writes remain fail-closed. These new Android/macOS implementations are NOT BUILT/TESTED and do not close Issue #104.
 
 Bukti kandidat source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: test metadata lulus pada Linux dan Windows melalui E4 run #44585270928; workspace test lulus pada Ubuntu 24.04 dan Debian 12 melalui run #44585282690. CircleCI untuk source ini masih PENDING. Issue #104 tetap OPEN / NOT ACCEPTED dan fitur belum dirilis ke `main`. Bukti runtime Android API 35 adalah bukti runtime native yang terpisah, bukan dukungan adapter filesystem Android.
 
@@ -266,7 +266,7 @@ Bukti kandidat source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: test metadata 
 - File yang memiliki hard link ke luar project root ditolak untuk operasi baca dan tulis; pengujian memeriksa bahwa isi file di dalam maupun di luar root tidak berubah.
 - Windows juga telah lulus pengujian junction/reparse-point, target absolut di dalam root, penolakan target di luar root tanpa side effect, atomic write, batas ukuran, dan parent traversal.
 - Linux telah lulus pengujian no-follow, mount-boundary, traversal, race pada parent symlink, serta direct-child write.
-- Status dukungan tetap terbatas: filesystem backend tersedia hanya pada Linux dan Windows. Android dan macOS belum memiliki filesystem adapter. Pada Linux, nested writes tetap ditolak secara fail-closed.
+- Filesystem support remains experimental: Linux and Windows retain their existing native backends; Android and macOS now have direct-child candidate backends. Nested Android/macOS paths and Linux nested writes remain fail-closed. New Android/macOS code is not yet verified.
 - Ini merupakan bukti regresi dan verifikasi teknis pada kandidat PR, bukan penerimaan rilis. Issue #104 tetap OPEN / NOT ACCEPTED; jangan menganggap fitur sebagai sandbox universal atau mengaktifkan dukungan platform yang belum tersedia.
 - CircleCI `ci/circleci: one-linux` pada source yang sama berstatus SUCCESS. Bukti ini tidak otomatis berlaku untuk SHA berikutnya.
 
@@ -275,7 +275,7 @@ Bukti kandidat source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: test metadata 
 
 Kandidat PR #113 dengan source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` kini memiliki bukti eksekusi native backend pada Android API 35 ARM64 melalui verifier PR #51 HEAD `226360d00bc26f858128d3127591fce13ecd52d9`, workflow [#44652693606](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44652693606). Job build #136011228119 dan runtime #136012787863 keduanya SUCCESS. Log menunjukkan ELF AArch64 berhasil dieksekusi pada emulator dengan exit code 0 dan output `ONE_NATIVE_BACKEND_OK`.
 
-Bukti ini hanya untuk native backend runtime pada environment Android API 35 ARM64 yang diuji. **Ini bukan bukti dukungan filesystem adapter Android.** Adapter filesystem Android/macOS tetap belum tersedia dan fail-closed. Linux nested writes tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED; kandidat PR belum digabung ke `main` dan belum menjadi rilis.
+Bukti native runtime Android API 35 ARM64 yang historis tidak membuktikan filesystem adapter baru. Android kini memiliki direct-child filesystem candidate yang membutuhkan statx mount-ID; implementasi belum diuji pada perangkat. Nested paths tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED.
 
 CircleCI pada code-bearing source `fb5c8bc...` berstatus SUCCESS (workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`). Namun CircleCI pada dokumentasi HEAD PR #113 `3c6853886b2d7b43f5bcfb021cff81d6a48ad48e` berstatus FAILURE (workflow `5f0f4f99-436b-4581-9096-0863954836c3`, job `34bb08ef-767c-45b8-b898-ee28d39e071d`, report `38db588c-4a20-468d-b344-0dd124659f63`). Failed step/root cause belum diketahui karena provider log belum dapat diakses; jangan mengubah konfigurasi berdasarkan dugaan.
 
@@ -286,11 +286,11 @@ CircleCI pada code-bearing source `fb5c8bc...` berstatus SUCCESS (workflow `3a9c
 - CircleCI pada source implementasi `fb5c8bc...` = SUCCESS (workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`). CircleCI pada dokumentasi HEAD `71d518a...` = FAILURE (workflow `980d47d2-704a-426f-87b4-b0687657f42d`, job `a288a97c-38ff-448b-b74d-8abcea612342`). Step gagal dan akar penyebab belum diketahui; jangan menyimpulkan penyebab atau mengubah konfigurasi tanpa log.
 - Verifier PR #51 tetap OPEN / DRAFT / UNMERGED pada HEAD `e5632e75c473546527c7e9a404262631d827f429`, dengan pin branch kandidat `fb5c8bc...`. E4 adversarial run #44656893733 SUCCESS: test hard-link yang sama benar-benar dijalankan dan lulus di Linux serta Windows. Linux distro #44656893931, Windows native runtime #44656893882, cross-platform #44656893832, SEC-05 #44656893697, artifact integrity #44656893650, resource guard #44656893627, E1 Windows #44656893639, dan focused stdlib/database #44656893788 juga SUCCESS pada workflow verifier HEAD ini.
 - E1 Milestone 1 #44656893655 dan Android AArch64 runtime host #44656893597 masih IN_PROGRESS pada verifier HEAD terbaru. Bukti Android API 35 ARM64 emulator #44652693606 telah SUCCESS pada source `fb5c8bc...` di verifier HEAD sebelumnya; cakupannya native backend runtime, bukan filesystem adapter Android.
-- Adapter filesystem tetap hanya tersedia pada Linux dan Windows. Android/macOS tetap fail-closed; Linux nested writes tetap fail-closed. Issue #104 tetap OPEN / NOT ACCEPTED. Tidak ada perubahan pada `main`, protected verifier pin, ledger, atau status merge.
+- Adapter filesystem candidate kini tersedia pada Linux, Windows, Android, dan macOS untuk direct-child operations; Android/macOS code belum diverifikasi. Linux nested writes dan Android/macOS nested paths tetap fail-closed. Issue #104 tetap OPEN / NOT ACCEPTED.
 
 ## Filesystem root-confinement candidate — 20 November 2026
 
-Filesystem read/write remains **Eksperimental** in the unmerged PR #113 candidate. The trusted root is the host process current working directory; the source file path and `--target` do not select or widen it. Linux currently supports reads and direct-child atomic writes, while nested writes fail closed. Windows uses handle-relative traversal and atomic writes. Android/macOS filesystem adapters remain unavailable.
+Filesystem read/write remains **Eksperimental** in the unmerged PR #113 candidate. The trusted root is the host process current working directory; source path and `--target` cannot widen it. Linux/Windows retain their native implementations; Android/macOS now have direct-child read/atomic-replace candidates. Nested writes remain fail-closed where a race-resistant parent-movement guarantee is not available. Android/macOS candidates are NOT BUILT/TESTED.
 
 The latest candidate implementation is `7cbcb1bf575defe03a2d9991dc5094569de95f03`; its host-root and Linux root-handle changes have not yet been built or tested. This is not a release claim, sandbox certification, or status change on `main`.
 
