@@ -1071,7 +1071,7 @@ mod tests {
         assert!(error.contains("embedded NUL"));
     }
 
-    #[cfg(any(target_os = "linux", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", windows))]
     #[test]
     fn allowed_process_preserves_exit_status_and_streams() {
         let (program, args) = if cfg!(windows) {
@@ -1104,7 +1104,7 @@ mod tests {
         assert!(result.stderr.contains("stderr"));
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn non_idle_reader_stops_after_shutdown_grace() {
         struct SlowAlwaysReadyReader;
@@ -1143,7 +1143,7 @@ mod tests {
         );
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn linux_process_cannot_escape_its_invocation_group_with_setsid() {
         let pid_file = std::env::temp_dir().join(format!("one-escaped-descendant-{}.pid", std::process::id()));
@@ -1163,7 +1163,7 @@ mod tests {
         let _ = std::fs::remove_file(pid_file);
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn linux_process_timeout_cannot_leave_an_escaped_session_descendant() {
         let pid_file = std::env::temp_dir().join(format!("one-timeout-descendant-{}.pid", std::process::id()));
@@ -1180,7 +1180,7 @@ mod tests {
         let _ = std::fs::remove_file(pid_file);
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn linux_output_overflow_cannot_leave_an_escaped_session_writer() {
         let pid_file = std::env::temp_dir().join(format!("one-overflow-descendant-{}.pid", std::process::id()));
@@ -1196,7 +1196,7 @@ mod tests {
         assert!(!pid_file.exists(), "no setsid writer may survive output overflow");
         let _ = std::fs::remove_file(pid_file);
     }
-    #[cfg(any(target_os = "linux", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", windows))]
     #[test]
     fn subprocess_execution_is_bounded_by_a_deadline() {
         let (program, args) = if cfg!(windows) {
@@ -1221,7 +1221,7 @@ mod tests {
         assert!(started.elapsed() < Duration::from_secs(15));
     }
 
-    #[cfg(any(target_os = "linux", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", windows))]
     #[test]
     fn subprocess_stdout_capture_has_a_hard_limit() {
         let (program, args) = if cfg!(windows) {
@@ -1260,7 +1260,7 @@ mod tests {
         );
     }
 
-    #[cfg(any(target_os = "linux", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", windows))]
     #[test]
     fn subprocess_stderr_capture_has_a_hard_limit() {
         let (program, args) = if cfg!(windows) {
