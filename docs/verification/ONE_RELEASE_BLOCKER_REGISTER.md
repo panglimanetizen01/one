@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `0039ee6cd4a969ee264dad365b819f187d919d38` |
+| PR #113 HEAD at pre-register refresh read | `20d16862bc7f51d0a5122884eb31223fc1b7bc7d` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `75bf347d7bbb9cce89a488b02cc285c7f605e984` |
+| Code-bearing source | `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -743,3 +743,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - The 5-second SQLite deadline now covers both SQLite VM execution through the progress handler and Rust-side row/result serialization; busy/lock waits remain capped at 250 ms.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `0039ee6cd4a969ee264dad365b819f187d919d38`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — additional SQLite parser and VM limits
+
+- Latest source candidate: `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` (NOT BUILT/TESTED).
+- SQLite per-connection resource profile now also caps parser depth at 1,000, VDBE instructions at 1,000,000, and trigger recursion at 0, in addition to the previously recorded SQL/value/row/output/parameter and execution-time bounds.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `20d16862bc7f51d0a5122884eb31223fc1b7bc7d`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
