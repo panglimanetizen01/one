@@ -808,7 +808,9 @@ mod android_native {
         match error.raw_os_error() {
             Some(libc::ELOOP) | Some(libc::EXDEV) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
-            Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => FilesystemError::UnsupportedPlatform,
+            Some(libc::ENOSYS) | Some(libc::EINVAL) => FilesystemError::UnsupportedPlatform,
+            // EPERM can be an ordinary DAC/SELinux denial for this target;
+            // do not misreport an access-control decision as missing kernel support.
             _ => FilesystemError::IoFailure,
         }
     }
