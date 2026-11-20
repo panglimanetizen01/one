@@ -287,3 +287,9 @@ CircleCI pada code-bearing source `fb5c8bc...` berstatus SUCCESS (workflow `3a9c
 - Verifier PR #51 tetap OPEN / DRAFT / UNMERGED pada HEAD `e5632e75c473546527c7e9a404262631d827f429`, dengan pin branch kandidat `fb5c8bc...`. E4 adversarial run #44656893733 SUCCESS: test hard-link yang sama benar-benar dijalankan dan lulus di Linux serta Windows. Linux distro #44656893931, Windows native runtime #44656893882, cross-platform #44656893832, SEC-05 #44656893697, artifact integrity #44656893650, resource guard #44656893627, E1 Windows #44656893639, dan focused stdlib/database #44656893788 juga SUCCESS pada workflow verifier HEAD ini.
 - E1 Milestone 1 #44656893655 dan Android AArch64 runtime host #44656893597 masih IN_PROGRESS pada verifier HEAD terbaru. Bukti Android API 35 ARM64 emulator #44652693606 telah SUCCESS pada source `fb5c8bc...` di verifier HEAD sebelumnya; cakupannya native backend runtime, bukan filesystem adapter Android.
 - Adapter filesystem tetap hanya tersedia pada Linux dan Windows. Android/macOS tetap fail-closed; Linux nested writes tetap fail-closed. Issue #104 tetap OPEN / NOT ACCEPTED. Tidak ada perubahan pada `main`, protected verifier pin, ledger, atau status merge.
+
+## Filesystem root-confinement candidate — 20 November 2026
+
+Filesystem read/write remains **Eksperimental** in the unmerged PR #113 candidate. The trusted root is the host process current working directory; the source file path and `--target` do not select or widen it. Linux currently supports reads and direct-child atomic writes, while nested writes fail closed. Windows uses handle-relative traversal and atomic writes. Android/macOS filesystem adapters remain unavailable.
+
+The latest candidate implementation is `7cbcb1bf575defe03a2d9991dc5094569de95f03`; its host-root and Linux root-handle changes have not yet been built or tested. This is not a release claim, sandbox certification, or status change on `main`.
