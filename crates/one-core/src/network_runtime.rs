@@ -41,10 +41,11 @@ impl HttpRequest {
     }
 
     pub fn to_bytes(&self) -> Result<Vec<u8>, NetworkRuntimeError> {
-        if self.method.is_empty() || self.path.is_empty()
-            || self.method.contains('\r') || self.method.contains('\n')
-            || self.path.contains('\r') || self.path.contains('\n')
-            || self.authority.contains('\r') || self.authority.contains('\n')
+        if !is_http_token(&self.method)
+            || self.authority.is_empty()
+            || self.authority.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == 64 || byte == 35)
+            || !(self.path.starts_with('/') || self.path == "*")
+            || self.path.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == 35)
         {
             return Err(NetworkRuntimeError::Protocol("Permintaan HTTP memiliki token awal yang tidak valid.".into()));
         }
@@ -60,9 +61,8 @@ impl HttpRequest {
         let mut header_size = start_line_size;
         let mut content_length = None;
         for (name, value) in &self.headers {
-            if name.is_empty() || name.eq_ignore_ascii_case("host")
-                || name.contains('\r') || name.contains('\n')
-                || value.contains('\r') || value.contains('\n')
+            if !is_http_token(name) || name.eq_ignore_ascii_case("host")
+                || value.bytes().any(|byte| (byte < 0x20 && byte != 9) || byte == 0x7f)
             {
                 return Err(NetworkRuntimeError::Protocol("Header HTTP tidak valid.".into()));
             }
