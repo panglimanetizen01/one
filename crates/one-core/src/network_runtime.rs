@@ -24,7 +24,43 @@ impl RealNetworkRuntime {
     fn receive(&mut self, id: NetworkConnectionId) -> Result<NetworkRuntimeResult, NetworkRuntimeError> { let connection = self.connections.get_mut(&id).ok_or_else(|| NetworkRuntimeError::Connection(format!("Koneksi {} tidak ditemukan.", id.0)))?; let mut buffer = vec![0u8; 64 * 1024]; let size = match connection { Connection::Tcp(stream) => stream.read(&mut buffer).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?, Connection::Udp(socket) => socket.recv(&mut buffer).map_err(|e| NetworkRuntimeError::Io(e.to_string()))? }; buffer.truncate(size); Ok(NetworkRuntimeResult::Received { id, data: buffer }) }
     pub fn close(&mut self, id: NetworkConnectionId) -> bool { self.connections.remove(&id).is_some() }
 }
-fn resolve_target(host: &str, port: u16, address_kind: Option<NetworkAddressKind>) -> Result<SocketAddr, NetworkRuntimeError> { let service = format!("{host}:{port}"); let mut addresses = service.to_socket_addrs().map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?; addresses.find(|a| match address_kind { Some(NetworkAddressKind::Ipv4) => a.is_ipv4(), Some(NetworkAddressKind::Ipv6) => a.is_ipv6(), Some(NetworkAddressKind::Name) | None => true }).ok_or_else(|| NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))) }
+pub(crate) fn parse_http_authority(authority: &str) -> Result<(String, u16), NetworkRuntimeError> {
+    if authority.is_empty() || authority.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == b'@' || byte == b'#') {
+        return Err(NetworkRuntimeError::InvalidOperation("HTTP authority tidak valid.".into()));
+    }
+    if authority.starts_with('[') {
+        let close = authority.find(']').ok_or_else(|| NetworkRuntimeError::InvalidOperation("HTTP IPv6 authority tidak valid.".into()))?;
+        let host = &authority[1..close];
+        host.parse::<std::net::Ipv6Addr>()
+            .map_err(|_| NetworkRuntimeError::InvalidOperation("Literal IPv6 HTTP tidak valid.".into()))?;
+        let suffix = &authority[close + 1..];
+        let port = if suffix.is_empty() { 80 } else {
+            let port_text = suffix.strip_prefix(':').ok_or_else(|| NetworkRuntimeError::InvalidOperation("Port HTTP tidak valid.".into()))?;
+            port_text.parse::<u16>().map_err(|_| NetworkRuntimeError::InvalidOperation("Port HTTP tidak valid.".into()))?
+        };
+        return Ok((host.to_owned(), port));
+    }
+    if authority.matches(':').count() > 1 {
+        return Err(NetworkRuntimeError::InvalidOperation("Literal IPv6 HTTP harus menggunakan tanda kurung siku.".into()));
+    }
+    let (host, port) = match authority.rsplit_once(':') {
+        Some((host, port_text)) => {
+            if host.is_empty() || port_text.is_empty() {
+                return Err(NetworkRuntimeError::InvalidOperation("HTTP authority tidak valid.".into()));
+            }
+            let port = port_text.parse::<u16>()
+                .map_err(|_| NetworkRuntimeError::InvalidOperation("Port HTTP tidak valid.".into()))?;
+            (host, port)
+        }
+        None => (authority, 80),
+    };
+    if host.is_empty() {
+        return Err(NetworkRuntimeError::InvalidOperation("Host HTTP kosong.".into()));
+    }
+    Ok((host.to_owned(), port))
+}
+
+fn resolve_target(host: &str, port: u16, address_kind: Option<NetworkAddressKind>) -> Result<SocketAddr, NetworkRuntimeError> { let service = if host.parse::<std::net::Ipv6Addr>().is_ok() { format!("[{host}]:{port}") } else { format!("{host}:{port}") }; let mut addresses = service.to_socket_addrs().map_err(|e| NetworkRuntimeError::Resolution(e.to_string()))?; addresses.find(|a| match address_kind { Some(NetworkAddressKind::Ipv4) => a.is_ipv4(), Some(NetworkAddressKind::Ipv6) => a.is_ipv6(), Some(NetworkAddressKind::Name) | None => true }).ok_or_else(|| NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))) }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HttpRequest { pub method: String, pub authority: String, pub path: String, pub headers: Vec<(String, String)>, pub body: Vec<u8> }
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -214,7 +250,7 @@ fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, Netw
     }
 }
 
-pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> { if !capabilities.permits(crate::capability::Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); } let host = request.authority.split(':').next().filter(|v| !v.is_empty()).ok_or_else(|| NetworkRuntimeError::InvalidOperation("Host HTTP kosong.".into()))?.to_string(); let port = request.authority.rsplit(':').next().and_then(|v| v.parse::<u16>().ok()).unwrap_or(80); let address = resolve_target(&host, port, None)?; let mut stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let response = read_http_response_bounded(&mut stream)?; parse_http_response(&response, MAX_HTTP_RESPONSE_BODY_BYTES) }
+pub fn execute_http11(_runtime: &mut RealNetworkRuntime, request: HttpRequest, capabilities: &CapabilitySet, timeout: Duration) -> Result<HttpResponse, NetworkRuntimeError> { if !capabilities.permits(crate::capability::Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); } let (host, port) = parse_http_authority(&request.authority)?; let address = resolve_target(&host, port, None)?; let mut stream = TcpStream::connect_timeout(&address, timeout).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; stream.set_read_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.set_write_timeout(Some(timeout)).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; stream.write_all(&request.to_bytes()?).map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; let response = read_http_response_bounded(&mut stream)?; parse_http_response(&response, MAX_HTTP_RESPONSE_BODY_BYTES) }
 #[cfg(test)]
 mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io::{Read, Write}; use std::net::TcpListener; use std::thread;
     #[test] fn localhost_resolution_returns_a_real_socket_address() { let address = resolve_target("localhost", 80, None).expect("localhost must resolve"); assert!(address.ip().is_loopback()); }
