@@ -373,9 +373,8 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
     // Terminate the complete invocation group. The inherited Linux seccomp
     // filter prevents descendants from creating a new session/group or PID namespace.
     kill_process_group(process_group);
-    // Descendants may escape the process group while retaining inherited pipe
-    // writers. Readers are nonblocking on Unix, so request shutdown after
-    // draining all bytes currently available instead of joining indefinitely.
+    // Nonblocking readers retain a bounded shutdown path for unusual pipe
+    // behavior even though Linux descendants cannot leave the invocation group.
     reader_shutdown.store(true, Ordering::Release);
     let stdout = join_reader(stdout_reader)?;
     let stderr = join_reader(stderr_reader)?;
