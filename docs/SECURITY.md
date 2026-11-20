@@ -203,3 +203,13 @@ Latest source commits:
 - `4b0749fbd413233ee45259942a334190474ac89e` and `5bc86f6110145074cbee96942ad7942e25318b9c` — HTTP GET target parsing uses the shared authority parser, supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace request paths.
 - `b0e034b3c98248e6f33823bd1ff9f2242c89fa8f` and `be5566435394cc27bbeb863b78c69b0fe52f774c` add source regressions for IPv6 authorities, query-only paths, and invalid paths. NOT RUN.
 - No build/test/CI/verifier/platform matrix was run.
+
+
+## SQLite query resource boundaries — 2026-11-21
+
+Latest source/test candidate: `76f76c9a7a5884c08d851afc203cb1cae7a5827a` (NOT BUILT/TESTED).
+
+- SQL text is capped at 64 KiB; parameters at 128 values / 1 MiB total; result rows at 100,000; serialized output at 16 MiB.
+- SQLite engine limits are now configured per connection through rusqlite's `limits` feature: 16 MiB value/row length, 64 KiB SQL, 256 columns, 128 variables, bounded compound SELECT/function args/expression depth/LIKE pattern, zero attached databases, and zero auxiliary worker threads.
+- Result serialization uses fallible exact growth; BLOB hex size is checked before allocating/copying, and invalid UTF-8 text is streamed through bounded lossy conversion.
+- Added regressions for oversized SQL and BLOB hex output. NOT RUN. No build/test/CI/verifier/platform matrix was run.
