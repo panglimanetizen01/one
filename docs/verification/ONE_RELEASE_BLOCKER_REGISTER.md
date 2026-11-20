@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `955d37489e44c4b638d047477283160db62dc609` |
+| PR #113 HEAD | `b023e6df94db416224a22211aa466fb854cabca0` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `0a9685bded788ae46596227bd61457d10db1179c` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `955d37489e44c4b638d047477283160db62dc609`.
+**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `b023e6df94db416224a22211aa466fb854cabca0`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
@@ -508,3 +508,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Live implementation refresh: PR #113 HEAD `412d87f6e05d2d996538093623bcb52412216553`; latest code-bearing source/test candidate `0a9685bded788ae46596227bd61457d10db1179c` adds Linux seccomp process-group containment and fail-closed Android/macOS process execution. No build/test evidence is claimed.
 
 - Live PR identity refresh: #113 HEAD `955d37489e44c4b638d047477283160db62dc609`, OPEN / DRAFT / UNMERGED. Current code-bearing source/test candidate remains `0a9685bded788ae46596227bd61457d10db1179c`; no build/test evidence is claimed.
+
+- Architecture source updated for Android/macOS direct-child backends in commit `b023e6df94db416224a22211aa466fb854cabca0`; current PR #113 HEAD is now that SHA. Latest code-bearing source remains `0a9685bded788ae46596227bd61457d10db1179c`.
