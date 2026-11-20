@@ -29,7 +29,88 @@ fn resolve_target(host: &str, port: u16, address_kind: Option<NetworkAddressKind
 pub struct HttpRequest { pub method: String, pub authority: String, pub path: String, pub headers: Vec<(String, String)>, pub body: Vec<u8> }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HttpResponse { pub status: u16, pub reason: String, pub headers: Vec<(String, String)>, pub body: Vec<u8> }
-impl HttpRequest { pub fn get(authority: impl Into<String>, path: impl Into<String>) -> Self { Self { method: "GET".into(), authority: authority.into(), path: path.into(), headers: Vec::new(), body: Vec::new() } } pub fn to_bytes(&self) -> Result<Vec<u8>, NetworkRuntimeError> { if self.method.is_empty() || self.path.is_empty() || self.path.contains('\r') || self.path.contains('\n') || self.authority.contains('\r') || self.authority.contains('\n') { return Err(NetworkRuntimeError::Protocol("Permintaan HTTP memiliki token awal yang tidak valid.".into())); } let mut bytes = format!("{} {} HTTP/1.1\r\nHost: {}\r\n", self.method, self.path, self.authority).into_bytes(); let mut has_length = false; for (name, value) in &self.headers { if name.eq_ignore_ascii_case("host") || name.contains('\r') || name.contains('\n') || value.contains('\r') || value.contains('\n') { return Err(NetworkRuntimeError::Protocol("Header HTTP tidak valid.".into())); } if name.eq_ignore_ascii_case("content-length") { has_length = true; } bytes.extend_from_slice(format!("{}: {}\r\n", name, value).as_bytes()); } if !self.body.is_empty() && !has_length { bytes.extend_from_slice(format!("Content-Length: {}\r\n", self.body.len()).as_bytes()); } bytes.extend_from_slice(b"Connection: close\r\n\r\n"); bytes.extend_from_slice(&self.body); Ok(bytes) } }
+impl HttpRequest {
+    pub fn get(authority: impl Into<String>, path: impl Into<String>) -> Self {
+        Self { method: "GET".into(), authority: authority.into(), path: path.into(), headers: Vec::new(), body: Vec::new() }
+    }
+
+    pub fn to_bytes(&self) -> Result<Vec<u8>, NetworkRuntimeError> {
+        if self.method.is_empty() || self.path.is_empty()
+            || self.method.contains('\r') || self.method.contains('\n')
+            || self.path.contains('\r') || self.path.contains('\n')
+            || self.authority.contains('\r') || self.authority.contains('\n')
+        {
+            return Err(NetworkRuntimeError::Protocol("Permintaan HTTP memiliki token awal yang tidak valid.".into()));
+        }
+        if self.body.len() > MAX_HTTP_REQUEST_BODY_BYTES {
+            return Err(NetworkRuntimeError::Protocol("HTTP request body melebihi batas ukuran.".into()));
+        }
+
+        let start_line_size = self.method.len().checked_add(self.path.len())
+            .and_then(|size| size.checked_add(self.authority.len()))
+            .and_then(|size| size.checked_add(20))
+            .filter(|size| *size <= MAX_HTTP_RESPONSE_HEADER_BYTES)
+            .ok_or_else(|| NetworkRuntimeError::Protocol("HTTP request line melebihi batas ukuran.".into()))?;
+        let mut header_size = start_line_size;
+        let mut content_length = None;
+        for (name, value) in &self.headers {
+            if name.is_empty() || name.eq_ignore_ascii_case("host")
+                || name.contains('\r') || name.contains('\n')
+                || value.contains('\r') || value.contains('\n')
+            {
+                return Err(NetworkRuntimeError::Protocol("Header HTTP tidak valid.".into()));
+            }
+            if name.eq_ignore_ascii_case("content-length") {
+                if content_length.is_some() {
+                    return Err(NetworkRuntimeError::Protocol("Content-Length duplikat.".into()));
+                }
+                let parsed = value.parse::<usize>()
+                    .map_err(|_| NetworkRuntimeError::Protocol("Content-Length tidak valid.".into()))?;
+                if parsed != self.body.len() {
+                    return Err(NetworkRuntimeError::Protocol("Content-Length tidak sesuai ukuran body.".into()));
+                }
+                content_length = Some(parsed);
+            }
+            if name.eq_ignore_ascii_case("transfer-encoding") {
+                return Err(NetworkRuntimeError::Protocol("Transfer-Encoding request tidak didukung.".into()));
+            }
+            let line_size = name.len().checked_add(value.len())
+                .and_then(|size| size.checked_add(4))
+                .ok_or_else(|| NetworkRuntimeError::Protocol("Header HTTP melebihi batas ukuran.".into()))?;
+            header_size = header_size.checked_add(line_size)
+                .filter(|size| *size <= MAX_HTTP_RESPONSE_HEADER_BYTES)
+                .ok_or_else(|| NetworkRuntimeError::Protocol("Header HTTP melebihi batas ukuran.".into()))?;
+        }
+        if !self.body.is_empty() && content_length.is_none() {
+            header_size = header_size.checked_add(32)
+                .filter(|size| *size <= MAX_HTTP_RESPONSE_HEADER_BYTES)
+                .ok_or_else(|| NetworkRuntimeError::Protocol("Header HTTP melebihi batas ukuran.".into()))?;
+        }
+        header_size = header_size.checked_add(21)
+            .filter(|size| *size <= MAX_HTTP_RESPONSE_HEADER_BYTES)
+            .ok_or_else(|| NetworkRuntimeError::Protocol("Header HTTP melebihi batas ukuran.".into()))?;
+        let total_size = header_size.checked_add(self.body.len())
+            .ok_or_else(|| NetworkRuntimeError::Protocol("Permintaan HTTP melebihi batas ukuran.".into()))?;
+
+        let mut bytes = Vec::new();
+        bytes.try_reserve(total_size)
+            .map_err(|_| NetworkRuntimeError::Io("Memori tidak cukup untuk membentuk permintaan HTTP.".into()))?;
+        bytes.extend_from_slice(format!("{} {} HTTP/1.1\r\nHost: {}\r\n", self.method, self.path, self.authority).as_bytes());
+        let mut has_length = content_length.is_some();
+        for (name, value) in &self.headers {
+            if name.eq_ignore_ascii_case("content-length") { has_length = true; }
+            bytes.extend_from_slice(format!("{}: {}\r\n", name, value).as_bytes());
+        }
+        if !self.body.is_empty() && !has_length {
+            bytes.extend_from_slice(format!("Content-Length: {}\r\n", self.body.len()).as_bytes());
+        }
+        bytes.extend_from_slice(b"Connection: close\r\n\r\n");
+        bytes.extend_from_slice(&self.body);
+        Ok(bytes)
+    }
+}
+
+const MAX_HTTP_REQUEST_BODY_BYTES: usize = 16 * 1024 * 1024;
 const MAX_HTTP_RESPONSE_HEADER_BYTES: usize = 64 * 1024;
 const MAX_HTTP_RESPONSE_BODY_BYTES: usize = 16 * 1024 * 1024;
 const MAX_HTTP_RESPONSE_WIRE_BODY_BYTES: usize = 32 * 1024 * 1024;
