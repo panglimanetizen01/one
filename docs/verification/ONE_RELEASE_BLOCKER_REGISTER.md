@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `edd51a01b955ace5caeb993595d6e27bd8c940fe` |
+| PR #113 HEAD at pre-register refresh read | `7260f992c298668ee6c83b253c016167cb7ea4ec` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `76f76c9a7a5884c08d851afc203cb1cae7a5827a` |
+| Code-bearing source | `91d2a6c3a49041284944a4dd12ae090bb783bd0d` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -727,3 +727,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Output serialization uses bounded fallible exact allocation; BLOB hex output is size-checked before copy, and text conversion is streamed through the same cap. Oversized SQL/BLOB regressions added; NOT RUN.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `edd51a01b955ace5caeb993595d6e27bd8c940fe`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — SQLite execution deadline and busy timeout
+
+- Latest source candidate: `91d2a6c3a49041284944a4dd12ae090bb783bd0d` (NOT BUILT/TESTED); rusqlite hooks feature enabled by `f6716d2c9dc83208de695c699804da7ccde9aec0`.
+- Each SQLite query connection now has a 5-second VM progress-handler deadline and a 250 ms busy/lock wait timeout, in addition to the previously recorded SQL/parameter/row/output caps and SQLite engine limits.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `7260f992c298668ee6c83b253c016167cb7ea4ec`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
