@@ -963,3 +963,12 @@ Research identified a possible kernel-enforced path-resolution approach that mus
 Hard limitation: `OPEN_TREE_CLONE` requires `CAP_SYS_ADMIN`; unsupported kernels/hosts must remain fail-closed. References: [open_tree(2)](https://man7.org/linux/man-pages/man2/open_tree.2.html), [mount_setattr(2)](https://man7.org/linux/man-pages/man2/mount_setattr.2.html).
 
 Status: design hypothesis only. No production code changed for this approach. Before adoption, a dedicated adversarial prototype must demonstrate parent move-out, symlink substitution, mount-boundary, temp cleanup, and outside-sentinel preservation on the actual Linux runner; Windows behavior must remain green. Do not claim this solves the gap until those results exist.
+
+## Android filesystem adapter implementation candidate — 2026-11-20
+
+- Source/test candidate: `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT OR TESTED).
+- Android now has a native `FilesystemAuthority` root open and a handle-relative direct-child read/atomic-replace backend. Root and leaf are opened without following final symlinks; `statx(STATX_MNT_ID)` is required to reject mount crossings; reads reject non-regular and hard-linked files; writes use an exclusive temporary sibling, `fsync`, and root-relative `renameat`.
+- The backend deliberately avoids `openat2` because Android seccomp may terminate the process with `SIGSYS` for that syscall. It requires kernel `statx` mount-ID support; if unavailable it fails closed.
+- Scope is intentionally limited to direct children of the trusted root. Nested Android paths return `UnsupportedPlatform`; no claim of full Android filesystem support or Issue #104 acceptance is made.
+- Three Android-targeted regression tests cover direct-child read/write, leaf-symlink and nested-path denial, and final-component root-symlink rejection. They have NOT been run. Actual Termux/device execution is still required.
+- Linux nested writes remain fail-closed; macOS filesystem adapter remains unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
