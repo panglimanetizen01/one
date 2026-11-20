@@ -63,3 +63,11 @@ Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broa
 Latest code-bearing source/test candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). Linux/Android process supervision now observes direct-child exit using `waitid(P_PID, WEXITED | WNOHANG | WNOWAIT)` rather than reaping via `try_wait()` before process-group cleanup. The child remains a zombie (its PID/PGID cannot be recycled) while the wrapper sends SIGKILL to the invocation process group; only then does `Child::wait()` reap it. The redundant post-reap group kill was removed. All timeout, output-overflow, wait-error and normal-completion paths terminate the group before reaping.
 
 Process escape regressions use in-binary ignored helpers with direct `fork` + `setsid(2)` syscalls, record any escaped PID and clean up before failing. Three paths: normal completion, timeout, output overflow. NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Implementation continuation — Linux FIFO blocking-read fix — 2026-11-21
+
+- Code commit: `50923b545f2c804b24aa773ea5bb60129d1e0ff2`; it changes `crates/one-core/src/filesystem.rs` only.
+- Linux `openat2` read now adds `O_NONBLOCK` so a FIFO with no writer cannot block before the adapter rejects its non-regular-file type. Added Linux regression `authority_rejects_fifo_without_blocking` using `mkfifo`.
+- This is a focused implementation correction and regression-test addition, not a test result. No build, test, CI, verifier, or broad matrix was run. Issue #104 remains OPEN / NOT ACCEPTED.
+- PR #113 remains OPEN / DRAFT / UNMERGED, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. At the read before documentation synchronization, HEAD was `ac3e6037e102fc088c8137d8e7a7e1c8c6ffec99`; documentation commits following that read will advance HEAD without changing the code-bearing source.
+- Continue implementation-first against the release blocker register. Preserve exact-SHA evidence, protected verifier pins, fixed ledger/DoD, fail-closed unsupported paths, and release authorization.
