@@ -140,3 +140,9 @@ Exact candidate evidence: source `c7f460a4e38be61de635ad5af9f7ff987a941f01`; E4 
 PR #113 implementation now derives filesystem authority exclusively from the host process working directory. Linux root acquisition uses `O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC` and checks device/inode identity against the retained handle. Windows preserves the final root component, opens with native no-reparse flags, and checks volume/file identity. CLI positive/negative root-selection fixtures plus Linux symlink-root and Windows junction-root regressions have been added.
 
 Latest source/test candidate: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; current PR #113 HEAD at last readback: `6f7d86842c80a81135227d8d62404e848ab5d8c3`. These changes have NOT been built or tested; no prior exact-SHA evidence transfers. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Android syscall-availability boundary — 2026-11-20
+
+Do not enable the Linux `openat2` backend for Android by changing `cfg(target_os = "linux")` to include Android. A recent native Termux report on Android 16 documents Android seccomp delivering `SIGSYS` for `openat2`, which terminates the process instead of returning `ENOSYS`/`EPERM` for a safe fallback ([upstream report](https://github.com/oven-sh/bun/issues/39060)). This is a specific environment report, not a claim that every Android version/device blocks the syscall.
+
+Android filesystem support therefore remains fail-closed until a separate resolver is designed around primitives that preserve the required root, symlink, mount-identity, and race guarantees, and then exercised on actual Android/Termux targets. An errno-only fallback is insufficient if the syscall can terminate the process.
