@@ -207,3 +207,22 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - Provider-side CircleCI logs are not accessible through the connected session. Collect job #833 logs by direct job UUID and pipeline #399 logs using the local diagnostic script; verify each run's source revision before attribution. Never expose `CIRCLECI_TOKEN`.
 - No merge, force-push, `main` update, protected pin promotion, ledger-weight/DoD change, or blind retry is authorized by this status refresh.
 
+
+
+## Exact-SHA pre-execution investigation — pipeline #1201 — 2026-11-20
+
+- PR #113 HEAD: `509b7b197115adb1ba80d730342e9f6fbf981645`.
+- Pipeline #1201 UUID `41becc6d-b56e-45e8-b273-629ba08c4390`; workflow `9a87f37e-ebc9-4574-a966-14dc1300e7db`; job #836 UUID `9dbc05b4-a601-4fbc-b6a4-61f64ecc8e9a`; pipeline revision exactly matches the PR HEAD.
+- Job `started_at=null`, stopped at the workflow's ~0.5s failure. API v3 step #101 is CANCELED / `Task information unavailable`, stdout/stderr empty. Do not label this a test timeout.
+- Source/compiled config were present. SHA-256 source `b7827cd95925851482b833a5f45033e1b26ef0f731857b29e2df0821e08fd155`; compiled `9f3f77d48351a10c3222a4a1b79634d30de29038c562c9c0e548046026b85aee`. Compiled job uses `android:default`, resource class `large`.
+- Project Advanced UI shows Free and Open Source ON and Block all new work OFF. Plan screenshot reports 110,089 / 30,000 regular credits used and states OS contributions are not subject to that 30,000 limit; the separate 400,000 OSS pool balance is not visible. Earlier `free-plan-no-credits-available` remains an unresolved provider error, not yet reconciled with the UI evidence.
+- Project settings API is HTTP 403 despite Personal API Token `/api/v2/me` and project metadata returning HTTP 200. Do not infer OSS is OFF from the settings endpoint denial.
+- A local diagnostic false-positive was identified: the report's explanatory phrase `failed/timed_out` is matched by the classifier, causing a `TIMEOUT / NO-OUTPUT` label. The actual evidence remains canceled step/no job start. Do not treat the label as a confirmed timeout.
+- Root cause remains UNKNOWN. Next: provider-side job failure detail / OSS allocation eligibility. No speculative CircleCI config patch or blind rerun.
+
+## GitHub Actions bootstrap workflow correction — 2026-11-20
+
+- PR #115 initial run #2243 failed on both Ubuntu and Windows at Contract artifacts because `tools/check_contract.py` in the PR #113 candidate correctly rejects `.github/workflows/ci.yml`. Build, Clippy, and tests were skipped.
+- Corrective commit `3b684acd1f3e68f1b40dd6d600fad0e013044495` updates only the bootstrap workflow: normal PRs retain merge-result checkout; PRs targeting `fix/windows-process-verifier-timeouts-20261118` checkout exact PR head SHA; only the bootstrap PR branch skips the contract checker, while PR #113 retains the full check.
+- Run #2244 (`44748865610`) is IN_PROGRESS on this exact commit; do not record PASS until both OS jobs and all non-skipped steps complete successfully.
+- PR #115 remains OPEN / UNMERGED. PR #113 remains OPEN / DRAFT / UNMERGED. CircleCI status for PR #115 corrective commit is PENDING at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`; CircleCI provider logs are not accessible in this session.
