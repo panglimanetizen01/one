@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch only the failed CircleCI job steps and their logs for ONE.
+"""Inspect exact-SHA CircleCI jobs and fetch logs for non-successful steps in ONE.
 
 Uses CircleCI API v2 only to discover pipeline/workflow/job UUIDs, then uses
 the current CircleCI API v3 for job metadata and per-step logs.
@@ -22,7 +22,6 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 DEFAULT_PROJECT_SLUG = "gh/panglimanetizen01/one"
 API_ROOT = "https://circleci.com"
 FAILED_OUTCOMES = {"failed", "timed_out", "timedout", "error"}
-FAILED_JOB_STATUSES = {"failed", "timed_out", "timedout", "error"}
 SECRET_PATTERNS = [
     (re.compile(r"(?i)(Bearer\s+)[A-Za-z0-9._~+/=-]+"), r"\1[REDACTED]"),
     (re.compile(r"(?i)\b(CIRCLECI_TOKEN|CIRCLE_TOKEN|GITHUB_TOKEN|GH_TOKEN)\s*=\s*\S+"), r"\1=[REDACTED]"),
@@ -203,7 +202,7 @@ def git_value(*args: str) -> str:
         ) from exc
 
 
-def discover_failed_jobs(
+def discover_exact_sha_jobs(
     token: str, project_slug: str, branch: str, commit_sha: str
 ) -> List[Dict[str, Any]]:
     encoded_slug = urllib.parse.quote(project_slug, safe="/")
@@ -236,7 +235,7 @@ def discover_failed_jobs(
             jobs_url = "{}/api/v2/workflow/{}/job".format(API_ROOT, workflow_id)
             for job in paged_v2_items(jobs_url, v2_headers(token)):
                 status = str(job.get("status") or "").lower()
-                if status in FAILED_JOB_STATUSES and job.get("id"):
+                if job.get("id"):
                     failures.append({
                         "id": job["id"],
                         "name": job.get("name") or "Unnamed job",
@@ -254,11 +253,7 @@ def discover_failed_jobs(
                         "commit_sha": commit_sha,
                         "branch": branch,
                     })
-    if not failures:
-        # An exact-SHA pipeline with no failed job is not a diagnostic/API error:
-        # it may still be running, may have succeeded, or may have no jobs.
-        # The caller must not report this as a build failure or as a PASS.
-        return []
+    # Return all jobs from every exact-SHA pipeline, including pending/running jobs.
     return failures
 
 
@@ -371,7 +366,7 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Find failed CircleCI jobs for the current ONE commit and print only failed-step logs."
+        description="Inspect all CircleCI jobs for the exact ONE commit and print non-successful step logs."
     )
     parser.add_argument("--job-id", help="Inspect a known CircleCI job UUID directly.")
     parser.add_argument("--sha", help="Exact Git commit SHA; defaults to git HEAD.")
@@ -414,7 +409,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             print("Project: {}".format(args.project_slug))
             print("Branch: {}".format(branch))
             print("Exact commit: {}".format(commit_sha))
-            jobs = discover_failed_jobs(
+            jobs = discover_exact_sha_jobs(
                 token, args.project_slug, branch, commit_sha
             )
 
@@ -428,7 +423,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         report.append("Jobs selected for inspection: {}".format(len(jobs)))
         if not jobs and not args.job_id:
             report.append(
-                "No failed or timed-out jobs were listed for the exact-SHA pipeline. "
+                "No jobs were listed for any exact-SHA pipeline. "
                 "This is NOT a PASS: the pipeline may still be running, may have "
                 "succeeded, or may contain no jobs. Check workflow status in CircleCI."
             )
