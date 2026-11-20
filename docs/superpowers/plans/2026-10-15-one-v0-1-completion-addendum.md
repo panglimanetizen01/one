@@ -62,3 +62,13 @@ This is a non-destructive execution overlay. It does not rewrite historical task
 - Execute in order: diagnose CircleCI pre-execution termination; close Issue #104 against unchanged criteria; reconcile remaining formal v0.1 gates; freeze one exact candidate SHA and run the integrated matrix; synchronize affected existing docs; prepare release artifacts only after approval.
 - A job with `started_at=null` is not evidence of a test timeout or test failure. Current provider root cause remains UNKNOWN; see the blocker register and live checkpoint.
 - This overlay changes prioritization only. It does not change task weights, acceptance rules, issue state, or release approval.
+
+## Implementation-first release sprint override — 2026-11-20
+
+This is a non-destructive execution-priority update. It does not modify the task ledger, fixed acceptance criteria, evidence weights, or DoD.
+
+- Complete the real in-scope product implementation before initiating another broad verification cycle. Add/update regression tests with the implementation, but defer the integrated platform/security/release matrix until implementation scope is complete.
+- Issue #104 is the current P0 production implementation blocker. The active candidate is PR #113; its latest source changes bind filesystem authority to host `cwd` and open the Linux root without following a final symlink. The candidate remains unbuilt/untested and unaccepted.
+- B-001 classifier correction has exact-SHA CircleCI workflow/job success on `979973cd6fb6f76802e13dbbbe21530d68b4cf53`; preserve its historical root-cause uncertainty, but do not repeat the investigation without a new relevant failure.
+- Preserve fail-closed behavior for Linux nested writes until a race-resistant parent-movement solution exists. Do not weaken the filesystem boundary to claim feature completeness.
+- After Issue #104 implementation, continue any remaining v0.1 implementation gaps in the existing plan and release contract. Then reconcile the fixed ledger and run one integrated final matrix on a frozen exact SHA.
