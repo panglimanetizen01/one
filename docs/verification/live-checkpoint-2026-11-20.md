@@ -509,3 +509,8 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 ## IMPLEMENTATION-FIRST CHECKPOINT — 2026-11-21
 
 PR #113 remains OPEN / DRAFT / UNMERGED on `security/issue-104-root-confinement-20261118`, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Latest code-bearing source is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`; current PR HEAD after test-fixture corrections is `2600ec18d4e3fb05558ca50d7cf466638e1ab015`. The two new commits change only `crates/one-cli/tests/filesystem_write.rs` and intentionally use `[skip ci]`. They align CLI fixture working directories with the host-owned root contract, allow Linux nested writes only when the detached-mount backend works (otherwise fail closed with no side effects), and stop treating Android/macOS as unsupported native backends. No tests or workflows were run. See the single work queue `ONE_RELEASE_BLOCKER_REGISTER.md` for the full source inventory and exact status boundaries. Issue #104/#105 remain OPEN / NOT ACCEPTED; no release/ledger/protected-pin state changed.
+
+
+## Subprocess resource-bound implementation refresh — 2026-11-21
+
+The latest code-bearing source for Issue #81/#105 is `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed`. It explicitly enforces a 10-second deadline, 1 MiB stdout cap, 1 MiB stderr cap, and 2 MiB aggregate output ceiling before returning a process result. Source tests cover stdout overflow, stderr overflow, timeout, normal exit/status/stream preservation, and Linux/Android direct-fork + `setsid` escape attempts for normal completion, timeout, and output overflow. No build or test was run on this source. Issues #81 and #105 remain OPEN; no security or release acceptance is claimed.
