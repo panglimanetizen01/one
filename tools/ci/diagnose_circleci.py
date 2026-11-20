@@ -98,14 +98,21 @@ def classify_failure(text: str) -> str:
     return "UNCLASSIFIED — inspect the evidence below"
 
 
-def classify_job_evidence(step_outcomes: Sequence[str], started_at: Optional[str], log_text: str) -> str:
-    """Keep provider outcomes distinct from log-based hints and pre-start cancellation."""
+def classify_job_evidence(
+    step_outcomes: Sequence[str],
+    started_at: Optional[str],
+    log_text: str,
+    start_time_known: bool = True,
+) -> str:
+    """Keep provider outcomes distinct from logs and explicitly null start time."""
     outcomes = {str(value or "").lower() for value in step_outcomes}
     if outcomes.intersection({"timed_out", "timedout"}):
         return "TIMEOUT / NO-OUTPUT"
     if not log_text.strip():
-        if not started_at:
+        if start_time_known and not started_at:
             return "PRE-EXECUTION TERMINATION / ROOT CAUSE UNKNOWN"
+        if not start_time_known:
+            return "NO-OUTPUT / START TIME UNKNOWN"
         return "NO-OUTPUT / ROOT CAUSE UNKNOWN"
     return classify_failure(log_text)
 
@@ -243,6 +250,7 @@ def discover_failed_jobs(
                         "workflow_id": workflow_id,
                         "workflow_status": workflow.get("status"),
                         "job_started_at": job.get("started_at"),
+                        "job_start_time_known": "started_at" in job,
                         "commit_sha": commit_sha,
                         "branch": branch,
                     })
@@ -289,7 +297,8 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         "WORKFLOW STATUS: {}".format(job.get("workflow_status") or "UNVERIFIED"),
         "JOB STARTED AT: {}".format(
             (job.get("job_started_at") or "null / not started")
-            if job.get("pipeline_id") else "UNVERIFIED (direct job lookup)"
+            if job.get("pipeline_id") and job.get("job_start_time_known")
+            else ("UNKNOWN" if job.get("pipeline_id") else "UNVERIFIED (direct job lookup)")
         ),
         "=" * 78,
     ])
@@ -352,6 +361,7 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         [step.get("outcome") for step in steps],
         attributes.get("started_at") or job.get("job_started_at"),
         "\n".join(log_evidence),
+        "started_at" in attributes or job.get("job_start_time_known", False),
     )
     report.insert(0, "EVIDENCE CLASSIFICATION: " + classification)
     report.append("")
