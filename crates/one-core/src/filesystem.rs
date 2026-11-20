@@ -1936,6 +1936,23 @@ mod android_filesystem_tests {
         std::fs::remove_file(alias).unwrap();
         std::fs::remove_dir_all(root).unwrap();
     }
+
+    #[test]
+    fn android_hard_link_targets_are_rejected_without_modifying_either_name() {
+        let root = temp_dir("hardlink");
+        let target = root.join("inside.txt");
+        let outside = root.with_extension("outside.txt");
+        std::fs::write(&target, b"KEEP_BOTH").unwrap();
+        std::fs::hard_link(&target, &outside).expect("Android temp filesystem must support hard links");
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("inside.txt"), Err(FilesystemError::HardLinkedFile));
+        assert_eq!(authority.write("inside.txt", b"REPLACE"), Err(FilesystemError::HardLinkedFile));
+        assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_BOTH");
+        assert_eq!(std::fs::read(&outside).unwrap(), b"KEEP_BOTH");
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
 }
 
 #[cfg(all(test, target_os = "macos"))]
@@ -1977,5 +1994,21 @@ mod macos_filesystem_tests {
         symlink(&root, &alias).unwrap();
         assert!(matches!(FilesystemAuthority::open(&alias, 4096, 4096), Err(FilesystemError::InvalidRoot)));
         std::fs::remove_file(alias).unwrap(); std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn macos_hard_link_targets_are_rejected_without_modifying_either_name() {
+        let root = temp_dir("hardlink");
+        let target = root.join("inside.txt");
+        let outside = root.with_extension("outside.txt");
+        std::fs::write(&target, b"KEEP_BOTH").unwrap();
+        std::fs::hard_link(&target, &outside).expect("macOS temp filesystem must support hard links");
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("inside.txt"), Err(FilesystemError::HardLinkedFile));
+        assert_eq!(authority.write("inside.txt", b"REPLACE"), Err(FilesystemError::HardLinkedFile));
+        assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_BOTH");
+        assert_eq!(std::fs::read(&outside).unwrap(), b"KEEP_BOTH");
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
     }
 }
