@@ -347,7 +347,11 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
                 stream.upper(), min(max_lines, len(lines)), len(lines)
             ))
             report.extend(lines[-max_lines:])
-    classification = classify_failure("\n".join(report))
+    classification = classify_job_evidence(
+        [step.get("outcome") for step in steps],
+        attributes.get("started_at") or job.get("job_started_at"),
+        "\n".join(log_evidence),
+    )
     report.insert(0, "EVIDENCE CLASSIFICATION: " + classification)
     report.append("")
     report.append("Note: classification is a log-based clue, not an automatic root-cause verdict.")
