@@ -43,3 +43,11 @@ Issue #105 masih OPEN untuk menyelesaikan containment descendant Unix atau mempe
 - Status dukungan tetap terbatas: filesystem backend tersedia hanya pada Linux dan Windows. Android dan macOS belum memiliki filesystem adapter. Pada Linux, nested writes tetap ditolak secara fail-closed.
 - Ini merupakan bukti regresi dan verifikasi teknis pada kandidat PR, bukan penerimaan rilis. Issue #104 tetap OPEN / NOT ACCEPTED; jangan menganggap fitur sebagai sandbox universal atau mengaktifkan dukungan platform yang belum tersedia.
 - CircleCI `ci/circleci: one-linux` pada source yang sama berstatus SUCCESS. Bukti ini tidak otomatis berlaku untuk SHA berikutnya.
+
+## Filesystem root boundary — experimental candidate PR #113
+
+Filesystem read/write orchestration remains experimental and is not a general-purpose sandbox. When this candidate is used, the trusted project root is the host process's current working directory (`cwd`); the `.one` source-file location and `--target` cannot widen that root. The host retains a directory handle and file access is resolved relative to it.
+
+Current platform boundary: Linux reads and direct-child writes use the retained root handle; nested Linux writes fail closed. Windows uses native handle-relative traversal and writes. Android/macOS filesystem adapters are not available. These limits remain in force until the complete Issue #104 acceptance contract is satisfied and the feature is released.
+
+Candidate implementation on PR #113 HEAD `7cbcb1bf575defe03a2d9991dc5094569de95f03` is not yet built or tested; this note is a scope statement, not a support or security certification.
