@@ -952,6 +952,61 @@ mod windows_native {
         }
         result
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::os::windows::io::AsRawHandle;
+
+        #[test]
+        fn retained_parent_handle_blocks_directory_rename() {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock must be after Unix epoch")
+                .as_nanos();
+            let root = std::env::temp_dir().join(format!(
+                "one-win-parent-rename-{}-{nonce}",
+                std::process::id()
+            ));
+            let nested = root.join("nested");
+            let moved = root.with_extension("moved");
+            std::fs::create_dir_all(&nested).unwrap();
+            std::fs::write(nested.join("sentinel.txt"), b"UNCHANGED").unwrap();
+
+            let root_handle = open_root(&root).unwrap();
+            let component: Vec<u16> = "nested".encode_utf16().collect();
+            // These are the same parent-handle share flags used by write_relative:
+            // FILE_SHARE_DELETE is deliberately absent so a concurrent rename
+            // cannot move the retained parent outside the trusted root.
+            let retained_parent = open_named(
+                &component,
+                root_handle.as_raw_handle() as HANDLE,
+                OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+                FILE_LIST_DIRECTORY | FILE_TRAVERSE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_OPEN,
+                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+            )
+            .unwrap();
+            drop(root_handle);
+
+            let rename_while_retained = std::fs::rename(&nested, &moved);
+            assert!(
+                rename_while_retained.is_err(),
+                "Windows allowed the retained parent directory to move while its no-delete-share handle was open"
+            );
+            assert!(nested.is_dir());
+            assert!(!moved.exists());
+            assert_eq!(std::fs::read(nested.join("sentinel.txt")).unwrap(), b"UNCHANGED");
+
+            drop(retained_parent);
+            std::fs::rename(&nested, &moved)
+                .expect("directory rename should succeed after the retained handle closes");
+            assert!(moved.is_dir());
+            std::fs::remove_dir_all(&moved).unwrap();
+            std::fs::remove_dir_all(&root).unwrap();
+        }
+    }
 }
 
 #[cfg(all(test, target_os = "linux"))]
