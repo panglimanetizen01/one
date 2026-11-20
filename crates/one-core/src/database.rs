@@ -139,9 +139,12 @@ impl ToolAdapter for SqliteAdapter {
         connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, Self::MAX_PARAMETERS as i32);
         connection.set_limit(Limit::SQLITE_LIMIT_COMPOUND_SELECT, 128);
         connection.set_limit(Limit::SQLITE_LIMIT_EXPR_DEPTH, 1000);
+        connection.set_limit(Limit::SQLITE_LIMIT_PARSER_DEPTH, 1000);
+        connection.set_limit(Limit::SQLITE_LIMIT_VDBE_OP, 1_000_000);
         connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 128);
         connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 64 * 1024);
         connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0);
+        connection.set_limit(Limit::SQLITE_LIMIT_TRIGGER_DEPTH, 0);
         connection.set_limit(Limit::SQLITE_LIMIT_WORKER_THREADS, 0);
         connection.busy_timeout(Duration::from_millis(250)).map_err(|_| AdapterError::BackendFailure)?;
         let deadline = Instant::now() + Self::MAX_QUERY_DURATION;
