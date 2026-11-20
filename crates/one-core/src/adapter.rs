@@ -4,7 +4,7 @@ use crate::filesystem::{FilesystemAuthority, FilesystemError};
 
 use crate::capability::{Capability, CapabilitySet};
 use crate::interop::{run_process, ProcessSpec};
-use crate::network_runtime::{execute_http11, HttpRequest, RealNetworkRuntime};
+use crate::network_runtime::{execute_http11, parse_http_authority, HttpRequest, RealNetworkRuntime};
 use crate::orchestration::{AdapterId, AdapterStatus, CapabilityRequest, ExecutionScope};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -126,12 +126,19 @@ impl ToolAdapter for HttpGetAdapter {
 }
 fn parse_http_target(target: &str) -> Result<(String, String), AdapterError> {
     let rest = target.strip_prefix("http://").ok_or(AdapterError::InvalidArguments)?;
-    if rest.contains('#') || rest.contains('\r') || rest.contains('\n') || rest.contains('@') { return Err(AdapterError::InvalidArguments); }
+    if rest.contains('#') || rest.contains('\r') || rest.contains('\n') {
+        return Err(AdapterError::InvalidArguments);
+    }
     let authority_end = rest.find('/').unwrap_or(rest.len());
     let authority = &rest[..authority_end];
-    if authority.is_empty() { return Err(AdapterError::InvalidArguments); }
-    if let Some((host, port)) = authority.rsplit_once(':') && (host.is_empty() || port.is_empty() || port.parse::<u16>().is_err()) { return Err(AdapterError::InvalidArguments); }
+    if authority.is_empty() {
+        return Err(AdapterError::InvalidArguments);
+    }
+    parse_http_authority(authority).map_err(|_| AdapterError::InvalidArguments)?;
     let path = if authority_end == rest.len() { "/" } else { &rest[authority_end..] };
+    if path.bytes().any(|byte| byte <= 0x20 || byte == 0x7f) {
+        return Err(AdapterError::InvalidArguments);
+    }
     Ok((authority.to_owned(), path.to_owned()))
 }
 
