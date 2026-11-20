@@ -38,26 +38,26 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 **Exact #1201 mapping and observations**
 - Webhook trigger: `2026-11-20T09:47:02.580Z`; pipeline created `09:47:02.849Z`; pipeline state `created`.
 - Workflow `one-ci` created `09:47:03.040Z`, stopped `09:47:03.544Z`, status `failed` (about 0.5 seconds).
-- Job `one-linux` #836 status `failed`; `started_at=null`, `stopped_at=09:47:03.544Z`, no duration, no dependencies.
+- Job `one-linux` #836 status `failed`; `started_at=null`, stopped `09:47:03.544Z`, no duration, no dependencies.
 - API v3 exposes step #101 `CANCELED` / `Error: Task information unavailable`; stdout/stderr are empty.
 - Pipeline config endpoint returns source and compiled configuration strings; setup-config fields are absent. Source config SHA-256: `b7827cd95925851482b833a5f45033e1b26ef0f731857b29e2df0821e08fd155`; compiled config SHA-256: `9f3f77d48351a10c3222a4a1b79634d30de29038c562c9c0e548046026b85aee`.
-- Compiled config includes `one-linux`, machine image `android:default`, resource class `large`. Config presence/compilation payload does not prove executor provisioning or job start.
-- Diagnostic script on the same target SHA contains a classifier false positive: its report text says no `failed/timed_out` step was exposed, then its classifier scans the word `timed_out` in that explanatory sentence and labels the report `TIMEOUT / NO-OUTPUT`. This is not timeout evidence; preserve the actual canceled-step/no-start facts.
+- Compiled config includes `one-linux`, machine image `android:default`, resource class `large`. Config payload presence does not prove executor provisioning or job start.
+- Diagnostic script classifier has a false positive: it scans the report's own explanatory phrase `failed/timed_out`, then labels it `TIMEOUT / NO-OUTPUT`. This is not timeout evidence; actual evidence remains canceled step/no job start.
 
 **CircleCI account/settings evidence — 2026-11-20**
 - Project Advanced screenshot: **Free and Open Source ON**, **Block all new work OFF**, **Only build pull requests OFF**, dynamic config ON.
 - Plan screenshot: Free plan; usage snapshot shows 110,089 of 30,000 regular credits used. The page explicitly states OS project contributions are not subject to the 30,000-credit limit and advertises up to 400,000 monthly credits for Linux open-source builds.
-- The screenshot does not show remaining/consumed balance for the separate 400,000 OSS allocation. An earlier provider error was recorded as `free-plan-no-credits-available`; the screenshots do not independently prove whether that OSS allocation was exhausted or whether the error still applies.
-- Personal API token authentication is valid (`/api/v2/me` HTTP 200); project metadata read is HTTP 200. Project settings API returns HTTP 403 Permission denied for both `gh` and `github` slugs. Do not interpret that as OSS OFF.
-- Do not buy credits, upgrade, or toggle settings. Do not retry CircleCI while the recorded no-credit provider block remains unresolved.
+- Screenshot does not show remaining/consumed balance for the separate 400,000 OSS allocation. An earlier provider error was recorded as `free-plan-no-credits-available`; screenshots do not prove whether the OSS allocation was exhausted or whether that error still applies.
+- Personal API token authentication is valid (`/api/v2/me` HTTP 200); project metadata read is HTTP 200. Project settings API returns HTTP 403 Permission denied for both `gh` and `github` slugs. Do not interpret this as OSS OFF.
+- Do not buy credits, upgrade, toggle settings, or retry CircleCI while the recorded no-credit provider block remains unresolved.
 
 **Classification:** confirmed pre-execution termination / no job start. It is NOT a test timeout, test assertion failure, compiler failure, or source regression. Root cause remains UNKNOWN; credit eligibility/allocation remains unresolved.
 
-**Next action:** obtain provider-side failure detail for #1201 and resolve the OSS allocation/eligibility block using authenticated CircleCI access. Do not patch CircleCI config or rerun blindly.
+**Next action:** obtain provider-side failure detail for #1201 and resolve OSS allocation/eligibility using authenticated CircleCI access. Do not patch CircleCI config or rerun blindly.
 
 **Separate GitHub Actions bootstrap route**
 - PR #115 `ci/bootstrap-actions-on-fix-windows-verifier-20261120` is OPEN / NOT MERGED; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
-- Initial run #2243 failed on both OS jobs because the PR #113 contract checker correctly rejected the newly introduced `.github/workflows/ci.yml`; Build/Clippy/Tests did not run.
+- Initial run #2243 failed on both OS jobs because the PR #113 contract checker rejected the newly introduced `.github/workflows/ci.yml`; Build/Clippy/Tests did not run.
 - Corrective workflow commit on PR #115: `3b684acd1f3e68f1b40dd6d600fad0e013044495`, blob `35015ded4f7635ea37ec2b035f2ba0c33d7d4bf5`. It preserves merge-result checkout for normal PRs, uses exact PR head checkout for the stacked base branch, and skips only the contract check on the bootstrap PR itself. Full contract check remains enabled for PR #113.
 - New GitHub Actions run #2244 (`44748865610`) is IN_PROGRESS on the corrective commit; Ubuntu and Windows jobs have started and were installing cross-toolchains at latest readback. This is not a PASS and does not resolve CircleCI B-001.
 - PR #113 remains OPEN / DRAFT / UNMERGED at `509b7b197115adb1ba80d730342e9f6fbf981645`; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
