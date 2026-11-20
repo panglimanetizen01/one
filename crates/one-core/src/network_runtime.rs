@@ -99,7 +99,7 @@ impl HttpRequest {
             .ok_or_else(|| NetworkRuntimeError::Protocol("Permintaan HTTP melebihi batas ukuran.".into()))?;
 
         let mut bytes = Vec::new();
-        bytes.try_reserve(total_size)
+        bytes.try_reserve_exact(total_size)
             .map_err(|_| NetworkRuntimeError::Io("Memori tidak cukup untuk membentuk permintaan HTTP.".into()))?;
         bytes.extend_from_slice(format!("{} {} HTTP/1.1\r\nHost: {}\r\n", self.method, self.path, self.authority).as_bytes());
         let mut has_length = content_length.is_some();
@@ -137,7 +137,7 @@ fn read_http_response_bounded(stream: &mut TcpStream) -> Result<Vec<u8>, Network
         if next_len > MAX_HTTP_RESPONSE_BYTES {
             return Err(NetworkRuntimeError::Protocol("Respons HTTP melebihi batas ukuran wire.".into()));
         }
-        response.try_reserve(count)
+        response.try_reserve_exact(count)
             .map_err(|_| NetworkRuntimeError::Io("Memori tidak cukup untuk membaca respons HTTP.".into()))?;
         response.extend_from_slice(&buffer[..count]);
         let marker = b"\r\n\r\n";
@@ -204,7 +204,7 @@ fn parse_chunked_body(mut bytes: &[u8], max_body: usize) -> Result<Vec<u8>, Netw
         if bytes.len() < framed_len {
             return Err(NetworkRuntimeError::Protocol("HTTP chunk terpotong.".into()));
         }
-        output.try_reserve(next_len - output.len())
+        output.try_reserve_exact(next_len - output.len())
             .map_err(|_| NetworkRuntimeError::Io("Memori tidak cukup untuk HTTP chunk.".into()))?;
         output.extend_from_slice(&bytes[..size]);
         if &bytes[size..size + 2] != b"\r\n" {
