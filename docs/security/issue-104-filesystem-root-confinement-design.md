@@ -944,3 +944,9 @@ This checkpoint supersedes older live-status statements above where they conflic
 Do not enable the Linux `openat2` backend for Android by changing `cfg(target_os = "linux")` to include Android. A recent native Termux report on Android 16 documents Android seccomp delivering `SIGSYS` for `openat2`, which terminates the process instead of returning `ENOSYS`/`EPERM` for a safe fallback ([upstream report](https://github.com/oven-sh/bun/issues/39060)). This is a specific environment report, not a claim that every Android version/device blocks the syscall.
 
 Android filesystem support therefore remains fail-closed until a separate resolver is designed around primitives that preserve the required root, symlink, mount-identity, and race guarantees, and then exercised on actual Android/Termux targets. An errno-only fallback is insufficient if the syscall can terminate the process.
+
+## Rejected Linux nested-write workaround: Landlock-only worker
+
+Do not treat a Landlock ruleset in a helper process as sufficient proof for nested writes. The Linux `landlock(7)` contract states that file descriptors opened before sandboxing are not subject to the restrictions, and `LANDLOCK_ACCESS_FS_WRITE_FILE` is checked when opening a file, not on subsequent `write(2)` calls. A parent directory can therefore be moved after a temporary file is opened; the already-open descriptor may still be writable. See the [Linux Landlock manual](https://man7.org/linux/man-pages/man7/Landlock.7.html).
+
+Until a different kernel-enforced primitive or threat-model change is proven on real Linux and Windows runners, keep nested Linux writes fail-closed. Do not replace this limitation with a Landlock-only helper, post-open ancestry check, advisory lock, or userspace watcher.
