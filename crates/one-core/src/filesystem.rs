@@ -160,7 +160,11 @@ impl FilesystemAuthority {
             if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
         }
         if metadata.len() > self.max_read_bytes { return Err(FilesystemError::ReadLimitExceeded); }
-        let mut bytes = Vec::with_capacity(metadata.len().min(self.max_read_bytes) as usize);
+        let initial_capacity = usize::try_from(metadata.len().min(self.max_read_bytes))
+            .map_err(|_| FilesystemError::ReadLimitExceeded)?;
+        let mut bytes = Vec::new();
+        bytes.try_reserve_exact(initial_capacity)
+            .map_err(|_| FilesystemError::IoFailure)?;
         file.take(self.max_read_bytes.saturating_add(1)).read_to_end(&mut bytes)
             .map_err(|_| FilesystemError::IoFailure)?;
         if bytes.len() as u64 > self.max_read_bytes { return Err(FilesystemError::ReadLimitExceeded); }
@@ -1842,6 +1846,23 @@ mod tests {
 
         let authority = FilesystemAuthority::open(&root, 32, 32).unwrap();
         assert_eq!(authority.read("pipe"), Err(FilesystemError::NotRegularFile));
+
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn authority_enforces_read_and_write_limits_without_partial_replacement() {
+        let root = std::env::temp_dir().join(format!("one-fs-authority-limits-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let target = root.join("inside.txt");
+        std::fs::write(&target, b"four").unwrap();
+
+        let authority = FilesystemAuthority::open(&root, 3, 3).unwrap();
+        assert_eq!(authority.read("inside.txt"), Err(FilesystemError::ReadLimitExceeded));
+        assert_eq!(authority.write("inside.txt", b"four"), Err(FilesystemError::WriteLimitExceeded));
+        assert_eq!(std::fs::read(&target).unwrap(), b"four");
 
         drop(authority);
         std::fs::remove_dir_all(root).unwrap();
