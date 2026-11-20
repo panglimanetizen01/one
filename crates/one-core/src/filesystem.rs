@@ -800,7 +800,7 @@ mod android_native {
 
     fn map_error(error: std::io::Error) -> FilesystemError {
         match error.raw_os_error() {
-            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) => FilesystemError::ResolutionFailed,
+            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
             Some(libc::ENOSYS) | Some(libc::EINVAL) => FilesystemError::UnsupportedPlatform,
             _ => FilesystemError::IoFailure,
@@ -931,7 +931,7 @@ mod macos_native {
 
     fn map_error(error: std::io::Error) -> FilesystemError {
         match error.raw_os_error() {
-            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) => FilesystemError::ResolutionFailed,
+            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
             _ => FilesystemError::IoFailure,
         }
@@ -2002,20 +2002,27 @@ mod android_filesystem_tests {
     }
 
     #[test]
-    fn android_leaf_symlinks_and_nested_paths_fail_closed() {
+    fn android_nested_paths_work_and_symlink_parents_fail_closed() {
         let root = temp_dir("deny");
         let outside = root.with_extension("outside");
-        std::fs::write(&outside, b"outside-sentinel").unwrap();
-        symlink(&outside, root.join("escape.txt")).unwrap();
+        std::fs::create_dir_all(root.join("nested")).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(root.join("nested/file.txt"), b"before").unwrap();
+        std::fs::write(outside.join("sentinel.txt"), b"outside-sentinel").unwrap();
+        symlink(&outside, root.join("escape-dir")).unwrap();
+        symlink(outside.join("sentinel.txt"), root.join("escape.txt")).unwrap();
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("nested/file.txt").unwrap(), b"before");
+        authority.write("nested/file.txt", b"after").unwrap();
+        assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"after");
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(std::fs::read(&outside).unwrap(), b"outside-sentinel");
+        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
         drop(authority);
         std::fs::remove_dir_all(root).unwrap();
-        std::fs::remove_file(outside).unwrap();
+        std::fs::remove_dir_all(outside).unwrap();
     }
 
     #[test]
@@ -2067,17 +2074,24 @@ mod macos_filesystem_tests {
         drop(authority); std::fs::remove_dir_all(root).unwrap();
     }
     #[test]
-    fn macos_leaf_symlink_and_nested_paths_fail_closed() {
+    fn macos_nested_paths_work_and_symlink_parents_fail_closed() {
         let root = temp_dir("deny"); let outside = root.with_extension("outside");
-        std::fs::write(&outside, b"outside-sentinel").unwrap();
-        symlink(&outside, root.join("escape.txt")).unwrap();
+        std::fs::create_dir_all(root.join("nested")).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(root.join("nested/file.txt"), b"before").unwrap();
+        std::fs::write(outside.join("sentinel.txt"), b"outside-sentinel").unwrap();
+        symlink(&outside, root.join("escape-dir")).unwrap();
+        symlink(outside.join("sentinel.txt"), root.join("escape.txt")).unwrap();
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("nested/file.txt").unwrap(), b"before");
+        authority.write("nested/file.txt", b"after").unwrap();
+        assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"after");
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(std::fs::read(&outside).unwrap(), b"outside-sentinel");
-        drop(authority); std::fs::remove_dir_all(root).unwrap(); std::fs::remove_file(outside).unwrap();
+        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
+        drop(authority); std::fs::remove_dir_all(root).unwrap(); std::fs::remove_dir_all(outside).unwrap();
     }
     #[test]
     fn macos_root_final_symlink_is_rejected() {
