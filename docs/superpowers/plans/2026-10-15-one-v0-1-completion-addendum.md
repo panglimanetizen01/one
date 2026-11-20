@@ -72,3 +72,12 @@ This is a non-destructive execution-priority update. It does not modify the task
 - B-001 classifier correction has exact-SHA CircleCI workflow/job success on `979973cd6fb6f76802e13dbbbe21530d68b4cf53`; preserve its historical root-cause uncertainty, but do not repeat the investigation without a new relevant failure.
 - Preserve fail-closed behavior for Linux nested writes until a race-resistant parent-movement solution exists. Do not weaken the filesystem boundary to claim feature completeness.
 - After Issue #104 implementation, continue any remaining v0.1 implementation gaps in the existing plan and release contract. Then reconcile the fixed ledger and run one integrated final matrix on a frozen exact SHA.
+
+## Issue #104 implementation continuation — Android + macOS adapters — 2026-11-20
+
+- Latest code-bearing candidate: `4be1b8fd579092d8195c3fb775b7c765f6221814`; current PR #113 HEAD before this documentation update: `0bed293163aee8d398e1894811ef1ece17b78ff5`. PR remains OPEN / DRAFT / UNMERGED; no source build/test/device evidence is claimed.
+- Added Android direct-child filesystem support using retained root handles, no-follow opens, mandatory `statx(STATX_MNT_ID)` checks, hard-link rejection, and atomic temp-file replacement. Android nested paths remain fail-closed.
+- Added macOS direct-child filesystem support using retained root handles, no-follow opens, device-identity checks, hard-link rejection, and atomic temp-file replacement. macOS nested paths remain fail-closed.
+- Added three target-gated regression tests per platform. They are implementation coverage only until compiled and executed on the respective targets.
+- Linux nested writes remain fail-closed because the current safe parent-movement solution depends on privileged detached mount operations. Windows native handle-relative backend remains as previously implemented.
+- These changes advance platform implementation but do NOT close Issue #104. Remaining work includes adversarial review of parent/root movement, platform-specific execution evidence, and any acceptance gaps in the fixed Issue #104 contract. Do not run the broad release matrix until implementation scope is complete.
