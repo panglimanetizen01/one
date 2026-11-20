@@ -134,3 +134,9 @@ The CLI's filesystem authority root is selected exclusively from the host proces
 The Issue #104 candidate now uses `PlatformKind::current_host()` for orchestrator selection. `FileReadAdapter` and `FileWriteAdapter` advertise only the compiled native backend: Linux builds advertise Linux; Windows builds advertise Windows; Android, macOS, and other unsupported targets advertise no filesystem backend and fail closed. This prevents a generic `PlatformKind::Any` declaration from overstating filesystem support.
 
 Exact candidate evidence: source `c7f460a4e38be61de635ad5af9f7ff987a941f01`; E4 run #44585270928 passed the metadata regression on Linux and Windows; Linux distro run #44585282690 passed Ubuntu 24.04 and Debian 12 workspace tests. CircleCI on this source remained PENDING at this checkpoint. Issue #104 remains OPEN / NOT ACCEPTED and this candidate is not in `main`.
+
+## Host-owned filesystem root implementation checkpoint — 2026-11-20
+
+PR #113 implementation now derives filesystem authority exclusively from the host process working directory. Linux root acquisition uses `O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC` and checks device/inode identity against the retained handle. Windows preserves the final root component, opens with native no-reparse flags, and checks volume/file identity. CLI positive/negative root-selection fixtures plus Linux symlink-root and Windows junction-root regressions have been added.
+
+Latest source/test candidate: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; current PR #113 HEAD at last readback: `6f7d86842c80a81135227d8d62404e848ab5d8c3`. These changes have NOT been built or tested; no prior exact-SHA evidence transfers. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
