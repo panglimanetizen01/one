@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `2ac38936eef9500cee6bf40f49778efd84ca9c54` |
+| PR #113 HEAD at pre-register refresh read | `dda1428ecb4cfabdecc8eb419d98965fa1a2ac39` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `be5566435394cc27bbeb863b78c69b0fe52f774c` |
+| Code-bearing source | `b4b4b3ee82e013eb3c001606820deaa76d50a9df` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -107,7 +107,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest code-bearing source/test candidate:** `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (NOT BUILT/TESTED); it includes the prior `waitid(WNOWAIT)` cleanup hardening from `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` and adds explicit 2 MiB aggregate stdout/stderr capture enforcement alongside 1 MiB per-stream limits. PR #113 HEAD before this register sync: `d5ddd7f39bbc54a7c0e88db907dfae5f8c49afc5`.
+**Latest code-bearing source/test candidate:** `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (NOT BUILT/TESTED); it includes the prior `waitid(WNOWAIT)` cleanup hardening from `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` and adds explicit 2 MiB aggregate stdout/stderr capture enforcement alongside 1 MiB per-stream limits. PR #113 HEAD before this register sync: `d5ddd7f39bbc54a7c0e88db907dfae5f8c49afc5`.
 
 - Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
 - Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
@@ -710,3 +710,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - HTTP GET target parsing supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace paths. Source regressions added, NOT RUN.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `2ac38936eef9500cee6bf40f49778efd84ca9c54`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — process adapter smoke fixture correction
+
+- Latest source/test candidate: `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (NOT BUILT/TESTED).
+- The process adapter no-argument smoke fixture now uses `whoami` instead of `rustc` (which can return nonzero without an input file); it is cfg-gated to Linux/Android/Windows. Android is included in process-platform metadata coverage.
+- Test source only; NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `dda1428ecb4cfabdecc8eb419d98965fa1a2ac39`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
