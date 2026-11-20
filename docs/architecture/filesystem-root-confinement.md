@@ -4,7 +4,7 @@ This focused architecture view documents the filesystem authority and adapter bo
 
 ```mermaid
 flowchart TB
-    Host["Host startup"] --> ProjectRoot["Project root from source context: nearest one.toml ancestor; otherwise cwd/source parent"]
+    Host["Host startup"] --> ProjectRoot["Project root from host process current working directory (independent of source and --target)"]
     Host --> HostPlatform["PlatformKind::current_host()"]
     HostPlatform --> SelectAdapter["Orchestrator selects using actual host platform"]
     SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux on Linux; Windows on Windows; none on Android/macOS"]
@@ -65,7 +65,7 @@ flowchart TB
 
 | Diagram component | Source |
 |---|---|
-| Host-selected project root (source context / nearest `one.toml`), authority injection, and target scope | `crates/one-cli/src/main.rs` |
+| Host-selected project root (process current working directory), authority injection, and target scope | `crates/one-cli/src/main.rs` |
 | Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
@@ -102,3 +102,10 @@ The architecture itself is unchanged by the test-only hard-link increment. The c
 ## Release-control traceability
 
 The Mermaid diagram above remains the existing architecture source of truth; this release-control update does not change its nodes or security semantics. The prioritized work queue is [ONE_RELEASE_BLOCKER_REGISTER.md](../verification/ONE_RELEASE_BLOCKER_REGISTER.md), and exact-SHA evidence remains in [the evidence matrix](../verification/one-v0.1-evidence-matrix.md). Do not recreate the diagram to represent project status.
+
+## Live implementation update — 2026-11-20 (host-owned filesystem root)
+
+- Candidate PR #113 implementation commit `7cbcb1bf575defe03a2d9991dc5094569de95f03` changes filesystem authority acquisition: Linux now opens the supplied root with `O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC`, validates that the canonical path still identifies the opened directory by device/inode, and fails closed if the path changed during acquisition.
+- CLI filesystem authority now comes only from the host process working directory. The source-file path and program-controlled `--target` no longer choose or widen the trusted root. A CLI regression fixture places the `.one` source outside the working directory while reading an in-root target.
+- Implementation commits: `8b1d13e02c181fc06b97fb7f147e1ccd013d3aa1` (CLI root binding), `5e39430a341629eb9fda11ee4e11b0f6f40487ab` (CLI fixture), and `7cbcb1bf575defe03a2d9991dc5094569de95f03` (Linux root-handle acquisition).
+- This candidate has NOT been built or tested after these changes. Do not transfer prior exact-SHA evidence. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable; Issue #104 remains OPEN / NOT ACCEPTED.
