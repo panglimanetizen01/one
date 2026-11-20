@@ -29,6 +29,8 @@ User documentation is intentionally separate from normative engineering contract
 ## Foundation
 
 - `superpowers/specs/2026-10-15-one-language-foundation-design.md` — locked architectural foundation and invariants.
+- `superpowers/specs/2026-10-22-one-human-instruction-language-contract-audit.md` — proposed forensic audit and acceptance gates for the intended human-instruction surface; does not override v0.1.
+- `superpowers/specs/2026-10-22-one-human-instruction-surface-vnext.md` — proposed vNext source-language contract, literal/data requirements, compatibility gates, and task-list acceptance target; not normative or implemented.
 - `superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md` — approved end-to-end network/platform architecture.
 - `superpowers/plans/2026-10-15-one-v0-1-implementation.md` — dependency-ordered implementation plan.
 - `superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md` — current task ledger and release gate.
