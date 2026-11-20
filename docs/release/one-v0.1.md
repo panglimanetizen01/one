@@ -332,3 +332,13 @@ Latest source commit: `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (`crates/one-co
 - Replaced the no-argument `rustc` smoke target (which can exit nonzero when no input file is supplied) with `whoami`, a no-argument command that emits output on Linux, Android and Windows.
 - Cfg-gated the smoke test to the platforms where ProcessAdapter advertises native containment, and included Android in the process-platform metadata regression.
 - Test source only; NOT RUN. No build/CI/verifier evidence is claimed. Issue #105 remains OPEN / NOT ACCEPTED.
+
+
+## SQLite query resource boundaries — 2026-11-21
+
+Latest source/test candidate: `76f76c9a7a5884c08d851afc203cb1cae7a5827a` (NOT BUILT/TESTED).
+
+- SQL text is capped at 64 KiB; parameters at 128 values / 1 MiB total; result rows at 100,000; serialized output at 16 MiB.
+- SQLite engine limits are now configured per connection through rusqlite's `limits` feature: 16 MiB value/row length, 64 KiB SQL, 256 columns, 128 variables, bounded compound SELECT/function args/expression depth/LIKE pattern, zero attached databases, and zero auxiliary worker threads.
+- Result serialization uses fallible exact growth; BLOB hex size is checked before allocating/copying, and invalid UTF-8 text is streamed through bounded lossy conversion.
+- Added regressions for oversized SQL and BLOB hex output. NOT RUN. No build/test/CI/verifier/platform matrix was run.
