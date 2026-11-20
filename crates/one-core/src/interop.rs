@@ -1,7 +1,7 @@
 use std::io::{self, Read};
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use std::os::fd::AsRawFd;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -12,11 +12,11 @@ use crate::capability::{Capability, CapabilitySet};
 
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 const READER_SHUTDOWN_GRACE: Duration = Duration::from_millis(100);
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 const READER_IDLE_GRACE: Duration = Duration::from_millis(20);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,7 +34,7 @@ pub struct ProcessResult {
     pub stderr: String,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn spawn_bounded_reader<R: Read + Send + 'static>(
     mut reader: R,
     output_limit_exceeded: Arc<AtomicBool>,
@@ -121,7 +121,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     })
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn set_reader_nonblocking<R: AsRawFd>(reader: &R) -> io::Result<()> {
     let descriptor = reader.as_raw_fd();
     // SAFETY: fcntl only reads and updates flags for this live pipe descriptor.
@@ -136,7 +136,7 @@ fn set_reader_nonblocking<R: AsRawFd>(reader: &R) -> io::Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn install_linux_process_group_filter() -> io::Result<()> {
     // Keep every descendant in the invocation's original process group.
     // The filter is inherited across fork/exec and cannot be removed after
@@ -259,7 +259,7 @@ fn run_process_with_timeout(
     }
     validate_process_spec(spec)?;
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     {
         run_process_unix(spec, timeout)
     }
@@ -267,10 +267,10 @@ fn run_process_with_timeout(
     {
         run_process_windows(spec, timeout)
     }
-    #[cfg(any(target_os = "android", target_os = "macos"))]
+    #[cfg(target_os = "macos")]
     {
         let _ = (spec, timeout);
-        Err("Process execution is unavailable on this platform until non-escapable descendant containment is implemented.".into())
+        Err("Process execution is unavailable on macOS until non-escapable descendant containment is implemented.".into())
     }
     #[cfg(not(any(target_os = "linux", windows, target_os = "android", target_os = "macos")))]
     {
@@ -279,7 +279,7 @@ fn run_process_with_timeout(
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResult, String> {
     use std::os::unix::process::CommandExt;
 
@@ -411,7 +411,7 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
     })
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn kill_process_group(process_group: i32) {
     // SAFETY: a negative pid addresses only the process group created for this
     // invocation via CommandExt::process_group(0).
