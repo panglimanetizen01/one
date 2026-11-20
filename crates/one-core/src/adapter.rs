@@ -34,17 +34,13 @@ impl AdapterMetadata { pub fn new(id: AdapterId, status: AdapterStatus, capabili
 
 fn filesystem_platforms() -> Vec<PlatformKind> {
     #[cfg(target_os = "linux")]
-    {
-        vec![PlatformKind::Linux]
-    }
+    { vec![PlatformKind::Linux] }
     #[cfg(windows)]
-    {
-        vec![PlatformKind::Windows]
-    }
-    #[cfg(not(any(target_os = "linux", windows)))]
-    {
-        Vec::new()
-    }
+    { vec![PlatformKind::Windows] }
+    #[cfg(target_os = "android")]
+    { vec![PlatformKind::Android] }
+    #[cfg(not(any(target_os = "linux", windows, target_os = "android")))]
+    { Vec::new() }
 }
 
 
@@ -782,6 +778,22 @@ mod filesystem_platform_metadata_tests {
                 (PlatformKind::Linux, true),
                 (PlatformKind::Windows, false),
                 (PlatformKind::Android, false),
+                (PlatformKind::Macos, false),
+            ] {
+                assert_eq!(reader.metadata().available_on(platform), expected, "reader metadata for {platform:?}");
+                assert_eq!(writer.metadata().available_on(platform), expected, "writer metadata for {platform:?}");
+            }
+        }
+
+        #[cfg(target_os = "android")]
+        {
+            assert_eq!(PlatformKind::current_host(), PlatformKind::Android);
+            assert!(reader.metadata().available_on(PlatformKind::current_host()));
+            assert!(writer.metadata().available_on(PlatformKind::current_host()));
+            for (platform, expected) in [
+                (PlatformKind::Linux, false),
+                (PlatformKind::Windows, false),
+                (PlatformKind::Android, true),
                 (PlatformKind::Macos, false),
             ] {
                 assert_eq!(reader.metadata().available_on(platform), expected, "reader metadata for {platform:?}");
