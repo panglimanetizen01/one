@@ -439,3 +439,16 @@ Continue Issue #104 production work and reconcile the normative contract against
 Do not treat a Landlock ruleset in a helper process as sufficient proof for nested writes. The Linux `landlock(7)` contract states that file descriptors opened before sandboxing are not subject to the restrictions, and `LANDLOCK_ACCESS_FS_WRITE_FILE` is checked when opening a file, not on subsequent `write(2)` calls. A parent directory can therefore be moved after a temporary file is opened; the already-open descriptor may still be writable. See the [Linux Landlock manual](https://man7.org/linux/man-pages/man7/Landlock.7.html).
 
 Until a different kernel-enforced primitive or threat-model change is proven on real Linux and Windows runners, keep nested Linux writes fail-closed. Do not replace this limitation with a Landlock-only helper, post-open ancestry check, advisory lock, or userspace watcher.
+
+## Candidate for safe Linux nested writes — NOT APPROVED FOR PRODUCTION
+
+Research identified a possible kernel-enforced path-resolution approach that must be proven before production changes:
+
+1. Clone the retained root mount as a detached mount tree with `open_tree(root_fd, "", AT_EMPTY_PATH | OPEN_TREE_CLONE | AT_RECURSIVE | OPEN_TREE_CLOEXEC)`.
+2. Apply `MOUNT_ATTR_NOSYMFOLLOW` recursively with `mount_setattr(mount_fd, "", AT_EMPTY_PATH | AT_RECURSIVE, ...)`.
+3. Use the detached mount fd as the `dirfd` for `*at()` operations (the `open_tree(2)` contract explicitly permits this). Create the temporary file at the clone root, then commit with a full relative destination path rooted at the same mount fd. Do not retain a nested parent fd for the final rename.
+4. If a parent is moved out, the destination path should no longer resolve from the cloned root; if an intermediate symlink is substituted, the mount's no-symlink attribute should reject traversal; cross-mount rename should fail with `EXDEV`.
+
+Hard limitation: `OPEN_TREE_CLONE` requires `CAP_SYS_ADMIN`; unsupported kernels/hosts must remain fail-closed. References: [open_tree(2)](https://man7.org/linux/man-pages/man2/open_tree.2.html), [mount_setattr(2)](https://man7.org/linux/man-pages/man2/mount_setattr.2.html).
+
+Status: design hypothesis only. No production code changed for this approach. Before adoption, a dedicated adversarial prototype must demonstrate parent move-out, symlink substitution, mount-boundary, temp cleanup, and outside-sentinel preservation on the actual Linux runner; Windows behavior must remain green. Do not claim this solves the gap until those results exist.
