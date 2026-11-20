@@ -136,6 +136,71 @@ fn set_reader_nonblocking<R: AsRawFd>(reader: &R) -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "linux")]
+fn install_linux_process_group_filter() -> io::Result<()> {
+    // Keep every descendant in the invocation's original process group.
+    // The filter is inherited across fork/exec and cannot be removed after
+    // PR_SET_NO_NEW_PRIVS. Namespace creation is denied as another escape path.
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct SockFilter { code: u16, jt: u8, jf: u8, k: u32 }
+    #[repr(C)]
+    struct SockFprog { len: u16, filter: *mut SockFilter }
+
+    const BPF_LD_W_ABS: u16 = 0x20;
+    const BPF_JMP_JEQ_K: u16 = 0x15;
+    const BPF_ALU_AND_K: u16 = 0x54;
+    const BPF_RET_K: u16 = 0x06;
+    const SECCOMP_RET_KILL_PROCESS: u32 = 0x8000_0000;
+    const SECCOMP_RET_ERRNO: u32 = 0x0005_0000;
+    const SECCOMP_RET_ALLOW: u32 = 0x7fff_0000;
+    const SECCOMP_MODE_FILTER: libc::c_int = 2;
+    const PR_SET_SECCOMP: libc::c_int = 22;
+    const PR_SET_NO_NEW_PRIVS: libc::c_int = 38;
+    const EPERM_ACTION: u32 = SECCOMP_RET_ERRNO | libc::EPERM as u32;
+    const CLONE_NAMESPACE_FLAGS: u32 = 0x0000_0080 | 0x0002_0000 | 0x0200_0000 |
+        0x0400_0000 | 0x0800_0000 | 0x1000_0000 | 0x2000_0000 | 0x4000_0000;
+
+    let audit_arch = if cfg!(target_arch = "x86_64") { 0xc000_003e }
+        else if cfg!(target_arch = "aarch64") { 0xc000_00b7 }
+        else if cfg!(target_arch = "x86") { 0x4000_0003 }
+        else if cfg!(target_arch = "arm") { 0x4000_0028 }
+        else { return Err(io::Error::new(io::ErrorKind::Unsupported, "Linux process containment is unavailable for this CPU architecture")); };
+
+    // seccomp_data: arch at byte 4, syscall number at byte 0, args[0] at byte 16.
+    let mut filter = [
+        SockFilter { code: BPF_LD_W_ABS, jt: 0, jf: 0, k: 4 },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 1, jf: 0, k: audit_arch },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: SECCOMP_RET_KILL_PROCESS },
+        SockFilter { code: BPF_LD_W_ABS, jt: 0, jf: 0, k: 0 },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 0, jf: 1, k: libc::SYS_setpgid as u32 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: EPERM_ACTION },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 0, jf: 1, k: libc::SYS_setsid as u32 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: EPERM_ACTION },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 0, jf: 1, k: libc::SYS_unshare as u32 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: EPERM_ACTION },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 0, jf: 1, k: libc::SYS_setns as u32 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: EPERM_ACTION },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 0, jf: 4, k: libc::SYS_clone as u32 },
+        SockFilter { code: BPF_LD_W_ABS, jt: 0, jf: 0, k: 16 },
+        SockFilter { code: BPF_ALU_AND_K, jt: 0, jf: 0, k: CLONE_NAMESPACE_FLAGS },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 1, jf: 0, k: 0 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: EPERM_ACTION },
+        SockFilter { code: BPF_LD_W_ABS, jt: 0, jf: 0, k: 0 },
+        SockFilter { code: BPF_JMP_JEQ_K, jt: 0, jf: 1, k: libc::SYS_clone3 as u32 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: SECCOMP_RET_ERRNO | libc::ENOSYS as u32 },
+        SockFilter { code: BPF_RET_K, jt: 0, jf: 0, k: SECCOMP_RET_ALLOW },
+    ];
+    let program = SockFprog { len: filter.len() as u16, filter: filter.as_mut_ptr() };
+    // SAFETY: these prctl calls affect only the just-forked child before exec.
+    if unsafe { libc::prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    if unsafe { libc::prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &program as *const SockFprog as libc::c_ulong, 0, 0) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(())
+}
 fn join_reader(reader: JoinHandle<io::Result<Vec<u8>>>) -> Result<Vec<u8>, String> {
     reader
         .join()
@@ -215,6 +280,13 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .process_group(0);
+
+    #[cfg(target_os = "linux")]
+    // SAFETY: the pre-exec hook performs only child-local prctl syscalls and
+    // installs the inherited process-group containment filter before exec.
+    unsafe {
+        command.pre_exec(install_linux_process_group_filter);
+    }
     if let Some(directory) = &spec.working_directory {
         command.current_dir(directory);
     }
@@ -1062,103 +1134,59 @@ mod tests {
         );
     }
 
-    // The helper waits until the setsid child has entered its new session before
-    // the direct shell exits, ensuring the inherited pipe writer is truly escaped.
     #[cfg(target_os = "linux")]
     #[test]
-    fn escaped_session_descendant_cannot_hold_output_readers_open() {
-        let pid_file =
-            std::env::temp_dir().join(format!("one-escaped-descendant-{}.pid", std::process::id()));
+    fn linux_process_cannot_escape_its_invocation_group_with_setsid() {
+        let pid_file = std::env::temp_dir().join(format!("one-escaped-descendant-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \"$1\"; exec sleep 5' one-escaped \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
+        let script = "setsid sh -c 'echo $$ > \\\"$1\\\"; exec sleep 5' one-escaped \\\"$1\\\" || echo BLOCKED";
         let started = Instant::now();
-        let result = run_process(
-            &ProcessSpec {
-                program: "sh".into(),
-                args: vec![
-                    "-c".into(),
-                    script.into(),
-                    "one-test".into(),
-                    pid_file.to_string_lossy().into_owned(),
-                ],
-                working_directory: None,
-            },
-            &CapabilitySet::none().allow(Capability::Process),
-        )
-        .expect("the shell command itself should complete successfully");
-        let elapsed = started.elapsed();
-        let pid = std::fs::read_to_string(&pid_file)
-            .expect("escaped descendant PID should be recorded")
-            .trim()
-            .parse::<libc::pid_t>()
-            .expect("escaped descendant PID should be numeric");
-        // The escaped process is test-owned; clean it up by its recorded PID.
-        // SAFETY: the helper created this process exclusively for this test.
-        unsafe {
-            libc::kill(-pid, libc::SIGKILL);
-        }
-        let _ = std::fs::remove_file(&pid_file);
-        assert!(result.success, "helper shell should exit successfully");
-        assert!(
-            elapsed < Duration::from_secs(3),
-            "reader shutdown took {elapsed:?}; an escaped pipe writer must not hold run_process open"
-        );
+        let result = run_process(&ProcessSpec {
+            program: "sh".into(),
+            args: vec!["-c".into(), script.into(), "one-test".into(), pid_file.to_string_lossy().into_owned()],
+            working_directory: None,
+        }, &CapabilitySet::none().allow(Capability::Process))
+        .expect("the shell should complete after the setsid attempt is denied");
+        assert!(result.success);
+        assert!(result.stdout.contains("BLOCKED") || result.stderr.contains("Operation not permitted"));
+        assert!(!pid_file.exists(), "a descendant must not enter a new session");
+        assert!(started.elapsed() < Duration::from_secs(3));
+        let _ = std::fs::remove_file(pid_file);
     }
 
     #[cfg(target_os = "linux")]
     #[test]
-    fn escaped_session_writer_cannot_hold_output_readers_open() {
-        let pid_file =
-            std::env::temp_dir().join(format!("one-escaped-writer-{}.pid", std::process::id()));
+    fn linux_process_timeout_cannot_leave_an_escaped_session_descendant() {
+        let pid_file = std::env::temp_dir().join(format!("one-timeout-descendant-{}.pid", std::process::id()));
         let _ = std::fs::remove_file(&pid_file);
-        let script = "setsid sh -c 'echo $$ > \"$1\"; exec yes x' one-escaped-writer \"$1\" & while [ ! -s \"$1\" ]; do sleep 0.01; done; exit 0";
-        let spec = ProcessSpec {
+        let script = "setsid sh -c 'echo $$ > \\\"$1\\\"; exec sleep 30' one-timeout \\\"$1\\\" || sleep 30";
+        let error = run_process_with_timeout(&ProcessSpec {
             program: "sh".into(),
-            args: vec![
-                "-c".into(),
-                script.into(),
-                "one-test".into(),
-                pid_file.to_string_lossy().into_owned(),
-            ],
+            args: vec!["-c".into(), script.into(), "one-test".into(), pid_file.to_string_lossy().into_owned()],
             working_directory: None,
-        };
-        let (sender, receiver) = std::sync::mpsc::channel();
-        let worker = std::thread::spawn(move || {
-            let result = run_process(&spec, &CapabilitySet::none().allow(Capability::Process));
-            let _ = sender.send(result.clone());
-            result
-        });
-
-        let pid_deadline = Instant::now() + Duration::from_secs(2);
-        while !pid_file.exists() && Instant::now() < pid_deadline {
-            thread::sleep(Duration::from_millis(10));
-        }
-        let pid = std::fs::read_to_string(&pid_file)
-            .expect("escaped writer PID should be recorded")
-            .trim()
-            .parse::<libc::pid_t>()
-            .expect("escaped writer PID should be numeric");
-
-        // The reader must stop before this test kills the escaped test-owned writer.
-        let completed_before_cleanup = receiver.recv_timeout(Duration::from_secs(3)).is_ok();
-        // SAFETY: this process group was created exclusively by this regression test.
-        unsafe {
-            libc::kill(-pid, libc::SIGKILL);
-        }
-        let _ = std::fs::remove_file(&pid_file);
-        let result = worker.join().expect("run_process worker must not panic");
-        assert!(
-            completed_before_cleanup,
-            "run_process reader shutdown waited for an escaped descendant that continuously writes"
-        );
-        let error = result
-            .expect_err("a continuously writing escaped descendant must not be silently accepted");
-        assert!(
-            error.contains("output limit") || error.contains("reader did not become idle"),
-            "unexpected bounded-reader error: {error}"
-        );
+        }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(1))
+        .expect_err("the fallback shell sleep must hit the configured deadline");
+        assert!(error.contains("deadline"));
+        assert!(!pid_file.exists(), "no setsid descendant may survive the timeout path");
+        let _ = std::fs::remove_file(pid_file);
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_output_overflow_cannot_leave_an_escaped_session_writer() {
+        let pid_file = std::env::temp_dir().join(format!("one-overflow-descendant-{}.pid", std::process::id()));
+        let _ = std::fs::remove_file(&pid_file);
+        let script = "setsid sh -c 'echo $$ > \\\"$1\\\"; exec yes x' one-overflow \\\"$1\\\" || head -c 1048577 /dev/zero";
+        let error = run_process_with_timeout(&ProcessSpec {
+            program: "sh".into(),
+            args: vec!["-c".into(), script.into(), "one-test".into(), pid_file.to_string_lossy().into_owned()],
+            working_directory: None,
+        }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(5))
+        .expect_err("stdout overflow must terminate the invocation group");
+        assert!(error.contains("output limit"));
+        assert!(!pid_file.exists(), "no setsid writer may survive output overflow");
+        let _ = std::fs::remove_file(pid_file);
+    }
     #[test]
     fn subprocess_execution_is_bounded_by_a_deadline() {
         let (program, args) = if cfg!(windows) {
