@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` |
+| PR #113 HEAD | `b91e8965b90270b3da4175df807043206a434b9a` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `0a9685bded788ae46596227bd61457d10db1179c` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
@@ -524,3 +524,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Latest implementation refresh: source/test candidate and PR #113 HEAD `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (OPEN / DRAFT / UNMERGED). Process containment regressions now invoke ignored helper tests from the current Rust test binary and exercise `fork` + direct `setsid(2)` rather than depending on an external `setsid` executable; the helper records any escaped PID so the parent test can clean it up before failing. These regressions remain NOT RUN.
 
 - Issue #105 follow-up source `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` adds `waitid(WNOWAIT)` observation of the direct child. The process-group leader remains unreaped until SIGKILL is sent to its group, preventing the group ID from being recycled before cleanup. The existing syscall-level adversarial tests remain unrun.
+
+- Documentation synchronization after code-bearing source `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` places PR #113 at HEAD `b91e8965b90270b3da4175df807043206a434b9a`; subsequent commits are documentation-only. PR remains OPEN / DRAFT / UNMERGED.
