@@ -62,11 +62,12 @@ def extract_failed_steps(job_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def classify_failure(text: str) -> str:
+    """Classify captured provider log text only, never report narration/metadata."""
     lowered = text.lower()
     if any(term in lowered for term in (
         "too long with no output", "context deadline exceeded",
-        "timed out", "timed_out", "timeout", "operation timed out",
-    )):
+        "timed out", "timed_out", "operation timed out",
+    )) or re.search(r"\\btimeout\\b", lowered):
         return "TIMEOUT / NO-OUTPUT"
     if any(term in lowered for term in (
         "error[e", "could not compile", "clang: error",
@@ -95,6 +96,18 @@ def classify_failure(text: str) -> str:
     )):
         return "CI CONFIGURATION"
     return "UNCLASSIFIED — inspect the evidence below"
+
+
+def classify_job_evidence(step_outcomes: Sequence[str], started_at: Optional[str], log_text: str) -> str:
+    """Keep provider outcomes distinct from log-based hints and pre-start cancellation."""
+    outcomes = {str(value or "").lower() for value in step_outcomes}
+    if outcomes.intersection({"timed_out", "timedout"}):
+        return "TIMEOUT / NO-OUTPUT"
+    if not log_text.strip():
+        if not started_at:
+            return "PRE-EXECUTION TERMINATION / ROOT CAUSE UNKNOWN"
+        return "NO-OUTPUT / ROOT CAUSE UNKNOWN"
+    return classify_failure(log_text)
 
 
 def request_bytes(url: str, headers: Dict[str, str], allow_missing: bool = False) -> bytes:
@@ -224,6 +237,11 @@ def discover_failed_jobs(
                     "status": status,
                     "workflow": workflow.get("name") or workflow_id,
                     "pipeline_id": pipeline_id,
+                    "pipeline_number": pipeline.get("number"),
+                    "pipeline_revision": (pipeline.get("vcs") or {}).get("revision"),
+                    "workflow_id": workflow_id,
+                    "workflow_status": workflow.get("status"),
+                    "job_started_at": job.get("started_at"),
                     "commit_sha": commit_sha,
                     "branch": branch,
                 })
@@ -264,7 +282,11 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         ),
         "JOB UUID: {}".format(job_id),
         "WORKFLOW: {}".format(job.get("workflow") or "explicit job lookup"),
-        "PIPELINE UUID: {}".format(job.get("pipeline_id") or "not resolved"),
+        "PIPELINE: {} | UUID: {}".format(job.get("pipeline_number") or "n/a", job.get("pipeline_id") or "not resolved"),
+        "PIPELINE REVISION: {}".format(job.get("pipeline_revision") or "UNVERIFIED"),
+        "WORKFLOW UUID: {}".format(job.get("workflow_id") or "UNVERIFIED"),
+        "WORKFLOW STATUS: {}".format(job.get("workflow_status") or "UNVERIFIED"),
+        "JOB STARTED AT: {}".format(job.get("job_started_at") or "null / not started"),
         "=" * 78,
     ])
     report.append(source_identity_line(job))
@@ -289,6 +311,7 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         report.append("No failed step details are present in the job response.")
         return report
 
+    log_evidence: List[str] = []
     for step in steps:
         number = step.get("num")
         if number is None:
@@ -311,6 +334,8 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
             )
             raw = request_bytes(log_url, v3_headers(token), allow_missing=True)
             text = redact(raw.decode("utf-8", errors="replace"))
+            if text.strip():
+                log_evidence.append(text)
             if not text.strip():
                 report.append("--- {}: no output ---".format(stream.upper()))
                 continue
