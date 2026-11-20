@@ -150,3 +150,10 @@ The Mermaid diagram above remains the existing architecture source of truth; thi
 ## Android/macOS direct-child implementation update — 2026-11-20
 
 The source diagram now includes the Android and macOS direct-child filesystem candidates. Android requires a kernel-provided statx mount ID to reject mount crossings; macOS compares the opened file's device identity with the retained root. Both use no-follow leaf opens, reject hard links/non-regular files, and replace files through a root-relative temporary sibling plus `fsync` and `renameat`. Nested paths remain fail-closed. Source candidate `4be1b8fd579092d8195c3fb775b7c765f6221814` and its later descendants have NOT been built or tested; Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Platform backend implementation refresh — 2026-11-21
+
+- Linux nested writes now have a guarded detached-mount implementation using `open_tree`, recursive `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, and `openat2` resolution; the operation fails closed when the host kernel/security profile does not permit those primitives. Directory-entry durability syncs the containing directory after atomic replacement.
+- Android direct-child operations require `statx(STATX_MNT_ID)` equality. macOS direct-child operations compare `fstatfs` filesystem ID and mount point (not merely `st_dev`). Both reject symlink/hard-link leaves and use exclusive temporary siblings, file sync, directory sync, and `renameat`. Nested Android/macOS paths remain fail-closed.
+- New Android/macOS hard-link regressions are in source. Candidate `4c46a41fe45baa7627557a2a25b9c71812840479` is NOT BUILT/TESTED; Issue #104 remains OPEN / NOT ACCEPTED.
