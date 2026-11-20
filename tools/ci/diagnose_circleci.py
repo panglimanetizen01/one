@@ -215,36 +215,37 @@ def discover_failed_jobs(
             "a known job explicitly.".format(commit_sha, branch)
         )
     pipelines.sort(key=lambda item: item.get("created_at") or "")
-    pipeline = pipelines[-1]
-    pipeline_id = pipeline.get("id")
-    if not pipeline_id:
-        raise DiagnosticError("The matching CircleCI pipeline has no UUID.")
-    workflow_url = "{}/api/v2/pipeline/{}/workflow".format(API_ROOT, pipeline_id)
     failures: List[Dict[str, Any]] = []
-    workflows = list(paged_v2_items(workflow_url, v2_headers(token)))
-    for workflow in workflows:
-        workflow_id = workflow.get("id")
-        if not workflow_id:
-            continue
-        jobs_url = "{}/api/v2/workflow/{}/job".format(API_ROOT, workflow_id)
-        for job in paged_v2_items(jobs_url, v2_headers(token)):
-            status = str(job.get("status") or "").lower()
-            if status in FAILED_JOB_STATUSES and job.get("id"):
-                failures.append({
-                    "id": job["id"],
-                    "name": job.get("name") or "Unnamed job",
-                    "job_number": job.get("job_number"),
-                    "status": status,
-                    "workflow": workflow.get("name") or workflow_id,
-                    "pipeline_id": pipeline_id,
-                    "pipeline_number": pipeline.get("number"),
-                    "pipeline_revision": (pipeline.get("vcs") or {}).get("revision"),
-                    "workflow_id": workflow_id,
-                    "workflow_status": workflow.get("status"),
-                    "job_started_at": job.get("started_at"),
-                    "commit_sha": commit_sha,
-                    "branch": branch,
-                })
+    for pipeline in pipelines:
+        pipeline_id = pipeline.get("id")
+        if not pipeline_id:
+            raise DiagnosticError("An exact-SHA pipeline has no UUID.")
+        workflow_url = "{}/api/v2/pipeline/{}/workflow".format(API_ROOT, pipeline_id)
+        workflows = list(paged_v2_items(workflow_url, v2_headers(token)))
+        for workflow in workflows:
+            workflow_id = workflow.get("id")
+            if not workflow_id:
+                continue
+            jobs_url = "{}/api/v2/workflow/{}/job".format(API_ROOT, workflow_id)
+            for job in paged_v2_items(jobs_url, v2_headers(token)):
+                status = str(job.get("status") or "").lower()
+                if status in FAILED_JOB_STATUSES and job.get("id"):
+                    failures.append({
+                        "id": job["id"],
+                        "name": job.get("name") or "Unnamed job",
+                        "job_number": job.get("job_number"),
+                        "status": status,
+                        "workflow": workflow.get("name") or workflow_id,
+                        "pipeline_id": pipeline_id,
+                        "pipeline_number": pipeline.get("number"),
+                        "pipeline_status": pipeline.get("state") or pipeline.get("status"),
+                        "pipeline_revision": (pipeline.get("vcs") or {}).get("revision"),
+                        "workflow_id": workflow_id,
+                        "workflow_status": workflow.get("status"),
+                        "job_started_at": job.get("started_at"),
+                        "commit_sha": commit_sha,
+                        "branch": branch,
+                    })
     if not failures:
         # An exact-SHA pipeline with no failed job is not a diagnostic/API error:
         # it may still be running, may have succeeded, or may have no jobs.
@@ -282,7 +283,7 @@ def inspect_job(token: str, job: Dict[str, Any], max_lines: int) -> List[str]:
         ),
         "JOB UUID: {}".format(job_id),
         "WORKFLOW: {}".format(job.get("workflow") or "explicit job lookup"),
-        "PIPELINE: {} | UUID: {}".format(job.get("pipeline_number") or "n/a", job.get("pipeline_id") or "not resolved"),
+        "PIPELINE: {} | UUID: {} | STATUS: {}".format(job.get("pipeline_number") or "n/a", job.get("pipeline_id") or "not resolved", job.get("pipeline_status") or "UNVERIFIED"),
         "PIPELINE REVISION: {}".format(job.get("pipeline_revision") or "UNVERIFIED"),
         "WORKFLOW UUID: {}".format(job.get("workflow_id") or "UNVERIFIED"),
         "WORKFLOW STATUS: {}".format(job.get("workflow_status") or "UNVERIFIED"),
