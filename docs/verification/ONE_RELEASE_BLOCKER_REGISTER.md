@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `6fc86c688d4906372ed24ad2dc4672693aaccf34` |
+| PR #113 HEAD at pre-register refresh read | `471780fae326786fdc9a6158860b4b4b601cbb3f` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `50923b545f2c804b24aa773ea5bb60129d1e0ff2` |
+| Code-bearing source | `8792f7a1f707f444d00026d916fa8c18b7f3e7f1` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -582,3 +582,13 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Documentation sync commits: `8f091944...`, `bfead1a4...`, `0bfd7f48...`, `24e6ba24...`, `d48dbf19...`, `ac3e6037...`, `f805752d...`, `6fc86c68...`. These record the implementation delta only; no test/build/CI evidence is claimed.
 - PR #113 was OPEN / DRAFT / UNMERGED at the last live read. Base SHA remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table's HEAD is the exact read immediately before this register refresh; this register commit itself advances the branch. Refresh live HEAD before the next operation.
 - Issue #104 remains OPEN / NOT ACCEPTED. The fix removes a blocking-I/O hazard but does not close race, mount, hard-link, platform, or acceptance requirements.
+
+
+## Filesystem read allocation and resource-limit hardening — 2026-11-21
+
+- Latest code-bearing source: `8792f7a1f707f444d00026d916fa8c18b7f3e7f1`.
+- The Linux `openat2` read path includes `O_NONBLOCK` (commit `50923b545f2c804b24aa773ea5bb60129d1e0ff2`) so FIFO reads cannot block before regular-file rejection; regression `authority_rejects_fifo_without_blocking` is present, NOT RUN.
+- Read-buffer capacity now uses checked `usize::try_from` and fallible `Vec::try_reserve_exact` rather than unchecked `u64 as usize`/infallible preallocation (commit `8792f7a1f707f444d00026d916fa8c18b7f3e7f1`). Added `authority_enforces_read_and_write_limits_without_partial_replacement`, NOT RUN.
+- Commit `68d39100980474e71f78e4f9c079d8bc2c603fbe` also corrected the stale Linux nested-write comment to describe the detached-mount path and fail-closed fallback accurately.
+- No build, test, CircleCI, verifier, or platform matrix has run on this candidate. Issue #104 remains OPEN / NOT ACCEPTED. These are implementation changes and test additions, not acceptance evidence.
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update itself advances the branch, so refresh before next action.
