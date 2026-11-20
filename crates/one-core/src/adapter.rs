@@ -39,7 +39,9 @@ fn filesystem_platforms() -> Vec<PlatformKind> {
     { vec![PlatformKind::Windows] }
     #[cfg(target_os = "android")]
     { vec![PlatformKind::Android] }
-    #[cfg(not(any(target_os = "linux", windows, target_os = "android")))]
+    #[cfg(target_os = "macos")]
+    { vec![PlatformKind::Macos] }
+    #[cfg(not(any(target_os = "linux", windows, target_os = "android", target_os = "macos")))]
     { Vec::new() }
 }
 
@@ -795,6 +797,22 @@ mod filesystem_platform_metadata_tests {
                 (PlatformKind::Windows, false),
                 (PlatformKind::Android, true),
                 (PlatformKind::Macos, false),
+            ] {
+                assert_eq!(reader.metadata().available_on(platform), expected, "reader metadata for {platform:?}");
+                assert_eq!(writer.metadata().available_on(platform), expected, "writer metadata for {platform:?}");
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            assert_eq!(PlatformKind::current_host(), PlatformKind::Macos);
+            assert!(reader.metadata().available_on(PlatformKind::current_host()));
+            assert!(writer.metadata().available_on(PlatformKind::current_host()));
+            for (platform, expected) in [
+                (PlatformKind::Linux, false),
+                (PlatformKind::Windows, false),
+                (PlatformKind::Android, false),
+                (PlatformKind::Macos, true),
             ] {
                 assert_eq!(reader.metadata().available_on(platform), expected, "reader metadata for {platform:?}");
                 assert_eq!(writer.metadata().available_on(platform), expected, "writer metadata for {platform:?}");
