@@ -333,11 +333,31 @@ fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
 }
 
 #[cfg(target_os = "linux")]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum LinuxWriteStage {
+    TempCreated,
+    Written,
+    Synced,
+    BeforeRename,
+}
+
 fn linux_write_relative(
     root: &File,
     relative: &Path,
     bytes: &[u8],
 ) -> Result<(), FilesystemError> {
+    linux_write_relative_with_hook(root, relative, bytes, |_| Ok(()))
+}
+
+fn linux_write_relative_with_hook<F>(
+    root: &File,
+    relative: &Path,
+    bytes: &[u8],
+    mut hook: F,
+) -> Result<(), FilesystemError>
+where
+    F: FnMut(LinuxWriteStage) -> Result<(), FilesystemError>,
+{
     use std::ffi::CString;
     use std::os::fd::AsRawFd;
     use std::os::unix::ffi::OsStrExt;
@@ -430,6 +450,7 @@ fn linux_write_relative(
     };
 
     let result = (|| {
+        hook(LinuxWriteStage::TempCreated)?;
         let metadata = temporary_file
             .metadata()
             .map_err(|_| FilesystemError::IoFailure)?;
@@ -439,9 +460,12 @@ fn linux_write_relative(
         temporary_file
             .write_all(bytes)
             .map_err(|_| FilesystemError::IoFailure)?;
+        hook(LinuxWriteStage::Written)?;
         temporary_file
             .sync_all()
             .map_err(|_| FilesystemError::IoFailure)?;
+        hook(LinuxWriteStage::Synced)?;
+        hook(LinuxWriteStage::BeforeRename)?;
 
         let rename_result = unsafe {
             libc::renameat(
