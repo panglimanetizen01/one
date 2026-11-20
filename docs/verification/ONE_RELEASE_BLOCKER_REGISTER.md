@@ -472,3 +472,11 @@ Status: design hypothesis only. No production code changed for this approach. Be
 
 
 - Documentation-only follow-up after the Android source candidate: current PR #113 HEAD is `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee`; Android source/test candidate remains `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec`. No build/test/device evidence is claimed.
+
+## macOS filesystem adapter implementation candidate — 2026-11-20
+
+- Source/test candidate: `4be1b8fd579092d8195c3fb775b7c765f6221814` (NOT BUILT OR TESTED).
+- macOS now has a native retained-root open and direct-child read/atomic-replace backend. Root and leaf operations use directory/file descriptors with `O_NOFOLLOW`; file and root device identity are compared; hard-linked and non-regular targets are rejected; writes use an exclusive temporary sibling, `fsync`, and root-relative `renameat`.
+- The macOS adapter is deliberately limited to direct children of the trusted root. Nested paths return `UnsupportedPlatform`. This implementation has no target-host execution evidence yet; its mount/device and race behavior still require platform-specific review.
+- Three macOS-only regression tests cover direct-child read/write, symlink/nested-path denial, and final-component root-symlink rejection. They have NOT been run.
+- Android direct-child backend remains statx-mount-ID dependent; Linux nested writes remain fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
