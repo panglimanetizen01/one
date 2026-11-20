@@ -238,3 +238,12 @@ Latest source commit: `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` (`crates/one-co
 
 - Added per-connection SQLite limits for parser depth (1,000), VDBE instruction count (1,000,000), and trigger recursion depth (0), complementing the previously recorded length, SQL, column, variable, expression, compound-select, function, LIKE, attachment, and worker-thread limits.
 - Source-only hardening; no build/test/CI/verifier/platform matrix ran.
+
+
+## Absolute HTTP response read deadline — 2026-11-21
+
+Latest source commits: `981467252a95198adfc72872db2dc652fa9f505e` and `a911431be5a1dad31dc2344e09a357e2d5e91212` (`crates/one-core/src/network_runtime.rs`).
+
+- Bounded response ingestion now uses one absolute deadline across all socket reads, updating the socket timeout to the remaining budget each iteration. This prevents a slow-trickle peer from resetting the full per-read timeout indefinitely.
+- The bounded-reader regression fixture now supplies its explicit deadline. NOT RUN.
+- No build/test/CI/verifier/platform matrix ran.
