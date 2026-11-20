@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `d2aaa345717fcd86f4998a603f2756c1a58317ed` |
+| PR #113 HEAD | `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `d2aaa345717fcd86f4998a603f2756c1a58317ed`.
+**Latest source/test candidate:** `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
@@ -469,3 +469,6 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Implemented Android native root acquisition and direct-child file read/atomic replace using a retained root fd, O_NOFOLLOW, statx mount-ID checks, hard-link rejection, exclusive temp creation, fsync, and root-relative renameat. Android nested paths remain fail-closed; statx MNT_ID is mandatory; macOS adapter remains unavailable.
 - Added three Android-only regression tests. No build, test, device run, or verifier result is claimed for this candidate.
 - Continue implementation work; do not run the broad matrix until implementation scope is complete. Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed. Preserve fixed acceptance, ledger/DoD, verifier pins, main, and release controls.
+
+
+- Documentation-only follow-up after the Android source candidate: current PR #113 HEAD is `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee`; Android source/test candidate remains `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec`. No build/test/device evidence is claimed.
