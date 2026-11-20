@@ -159,3 +159,12 @@ Latest source commits:
 - `4b0749fbd413233ee45259942a334190474ac89e` and `5bc86f6110145074cbee96942ad7942e25318b9c` — HTTP GET target parsing uses the shared authority parser, supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace request paths.
 - `b0e034b3c98248e6f33823bd1ff9f2242c89fa8f` and `be5566435394cc27bbeb863b78c69b0fe52f774c` add source regressions for IPv6 authorities, query-only paths, and invalid paths. NOT RUN.
 - No build/test/CI/verifier/platform matrix was run.
+
+
+## Absolute HTTP response read deadline — 2026-11-21
+
+Latest source commits: `981467252a95198adfc72872db2dc652fa9f505e` and `a911431be5a1dad31dc2344e09a357e2d5e91212` (`crates/one-core/src/network_runtime.rs`).
+
+- Bounded response ingestion now uses one absolute deadline across all socket reads, updating the socket timeout to the remaining budget each iteration. This prevents a slow-trickle peer from resetting the full per-read timeout indefinitely.
+- The bounded-reader regression fixture now supplies its explicit deadline. NOT RUN.
+- No build/test/CI/verifier/platform matrix ran.
