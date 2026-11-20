@@ -875,4 +875,11 @@ mod filesystem_platform_metadata_tests {
             }
         }
     }
+    #[test]
+    fn http_get_target_parser_supports_ipv6_and_query_only_paths() {
+        assert_eq!(parse_http_target("http://[::1]:8080/path").unwrap(), ("[::1]:8080".into(), "/path".into()));
+        assert_eq!(parse_http_target("http://example.test?mode=one").unwrap(), ("example.test".into(), "/?mode=one".into()));
+        assert!(parse_http_target("http://example.test/bad path").is_err());
+    }
+
 }
