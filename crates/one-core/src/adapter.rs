@@ -346,20 +346,33 @@ mod filesystem_nofollow_tests {
     }
 
     #[test]
-    fn descriptor_relative_write_fails_closed_for_nested_parent() {
+    fn nested_write_uses_native_backend_or_fails_closed_without_side_effects() {
         let root = test_root("write-nested");
         let nested = root.join("nested");
         std::fs::create_dir(&nested).unwrap();
-        std::fs::write(nested.join("target.txt"), b"KEEP_ORIGINAL").unwrap();
+        let target = nested.join("target.txt");
+        std::fs::write(&target, b"KEEP_ORIGINAL").unwrap();
         let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
         let adapter = FileWriteAdapter::with_authority(authority);
 
-        let result = adapter.invoke(&write_request("nested/target.txt", "ATTACK"));
+        match adapter.invoke(&write_request("nested/target.txt", "ATTACK")) {
+            Ok(result) => {
+                assert!(result.success);
+                assert_eq!(std::fs::read(&target).unwrap(), b"ATTACK");
+            }
+            Err(AdapterError::UnsupportedPlatform) => {
+                assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+            }
+            Err(error) => panic!("unexpected nested-write result: {error:?}"),
+        }
 
-        assert_eq!(result, Err(AdapterError::UnsupportedPlatform));
-        assert_eq!(std::fs::read(nested.join("target.txt")).unwrap(), b"KEEP_ORIGINAL");
         assert_eq!(std::fs::read_dir(&nested).unwrap().count(), 1);
-
+        assert!(
+            std::fs::read_dir(&root).unwrap().all(|entry| {
+                !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
+            }),
+            "nested write leaked a temporary file into the project root"
+        );
         drop(adapter);
         std::fs::remove_dir_all(root).unwrap();
     }
