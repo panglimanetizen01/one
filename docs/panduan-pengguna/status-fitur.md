@@ -293,3 +293,9 @@ CircleCI pada code-bearing source `fb5c8bc...` berstatus SUCCESS (workflow `3a9c
 Filesystem read/write remains **Eksperimental** in the unmerged PR #113 candidate. The trusted root is the host process current working directory; the source file path and `--target` do not select or widen it. Linux currently supports reads and direct-child atomic writes, while nested writes fail closed. Windows uses handle-relative traversal and atomic writes. Android/macOS filesystem adapters remain unavailable.
 
 The latest candidate implementation is `7cbcb1bf575defe03a2d9991dc5094569de95f03`; its host-root and Linux root-handle changes have not yet been built or tested. This is not a release claim, sandbox certification, or status change on `main`.
+
+## Android host identity — 2026-11-20
+
+- `crates/one-core/src/platform.rs` now exposes `Platform::Android` and returns it for `target_os = "android"` instead of collapsing Android into `Platform::Other` (`f8e46856803c9f45f54402e71d7e19853bdf46bc`).
+- This is host identity only; it does NOT enable Android filesystem operations. The filesystem adapter remains fail-closed on Android until a safe resolver is available that avoids process-killing seccomp behavior and preserves root/symlink/mount/race guarantees.
+- The platform unit test was updated but has NOT been run.
