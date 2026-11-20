@@ -1177,6 +1177,58 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
+    fn authority_atomic_write_failures_cleanup_temp_and_preserve_target() {
+        let root = std::env::temp_dir().join(format!(
+            "one-fs-write-fault-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"KEEP_ORIGINAL").unwrap();
+
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        for fail_at in [
+            LinuxWriteStage::TempCreated,
+            LinuxWriteStage::Written,
+            LinuxWriteStage::Synced,
+            LinuxWriteStage::BeforeRename,
+        ] {
+            let result = linux_write_relative_with_hook(
+                &authority.root,
+                std::path::Path::new("target.txt"),
+                b"REPLACEMENT",
+                |stage| {
+                    if stage == fail_at {
+                        Err(FilesystemError::IoFailure)
+                    } else {
+                        Ok(())
+                    }
+                },
+            );
+
+            assert_eq!(result, Err(FilesystemError::IoFailure));
+            assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+            let entries = std::fs::read_dir(&root)
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name())
+                .collect::<Vec<_>>();
+            assert_eq!(
+                entries,
+                vec![std::ffi::OsString::from("target.txt")],
+                "temporary sibling leaked after injected failure at {fail_at:?}"
+            );
+        }
+
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
     fn authority_rejects_parent_traversal_and_outside_absolute_targets() {
         let root = std::env::temp_dir();
         let authority = FilesystemAuthority::open(&root, 1024, 1024).unwrap();
