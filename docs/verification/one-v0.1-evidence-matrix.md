@@ -594,3 +594,12 @@ This is the newest readback. Preserve all earlier snapshots as history; this blo
 ### CircleCI and release gate
 - CircleCI `ci/circleci: one-linux` on source `c4f3800...` remains PENDING; workflow `cdb2cc27-ced0-4b88-ab5a-3b656e173151`, job `bbb3abb8-7272-483a-9708-18f5573ee2fd`. Pipeline ID/`vcs.revision` mapping and provider logs remain unavailable. B-001 remains PARTIAL / NOT CLOSED.
 - Protected verifier branch/pin, protected ledger pin `d6c382a...`, fixed weights, DoD, main, acceptance criteria, merge, and release state remain unchanged. Historical fixed-weight gate #44519577312 remains FAILURE.
+
+## Implementation-first candidate delta — 2026-11-20
+
+- Current PR #113 HEAD at this checkpoint: `748d2b79eb5f62440f6f37007a2150926b04985e` (OPEN / DRAFT / UNMERGED; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`).
+- Implementation change: CLI filesystem authority is now derived solely from the host process working directory, not the `.one` source path or program-controlled `--target`.
+- Linux root acquisition opens the supplied directory with `O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC`, then compares canonical-path device/inode identity to the retained root handle and fails closed on mismatch.
+- Regression fixture updated to run a source file outside the host working directory while reading a file inside that working directory.
+- Source commits: `8b1d13e02c181fc06b97fb7f147e1ccd013d3aa1` and `7cbcb1bf575defe03a2d9991dc5094569de95f03`; fixture commit: `5e39430a341629eb9fda11ee4e11b0f6f40487ab`.
+- No build, test, or verifier run has been performed after these changes. All prior exact-SHA evidence remains historical and does not transfer to this candidate. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
