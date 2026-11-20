@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `ad29bda44f571f70106b1531ef1913534e3ce938` |
+| PR #113 HEAD at pre-register refresh read | `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` |
+| Code-bearing source | `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,15 +74,15 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was the same SHA.
+**Latest source/test candidate:** `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
 Current implementation boundaries:
 - Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(NOSYMFOLLOW)` + `openat2`, failing closed when required kernel/security primitives are unavailable.
 - Windows retains the native handle-relative/reparse-point backend.
-- Android has direct-child read/atomic-replace support with `O_NOFOLLOW`, mandatory `statx(STATX_MNT_ID)` equality, single-link checks, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed.
-- macOS has direct-child read/atomic-replace support with `O_NOFOLLOW`, single-link checks, `fstatfs` filesystem-ID + mount-point equality, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed.
+- Android has direct-child read/atomic-replace support with `O_NOFOLLOW`, mandatory `statx(STATX_MNT_ID)` equality, single-link checks, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed because POSIX directory descriptors do not prevent parent rename-out.
+- macOS has direct-child read/atomic-replace support with `O_NOFOLLOW`, single-link checks, `fstatfs` filesystem-ID + mount-point equality, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed because POSIX directory descriptors do not prevent parent rename-out.
 - Android/macOS hard-link side-effect regressions were added. All newly added platform regressions remain NOT RUN.
 - Verifier success does not itself constitute Issue #104 acceptance.
 
@@ -627,3 +627,14 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Release contract platform-boundary reconciliation is commit `da5b007fe1dcfc7caa3c14c69b500866d5edbb75`.
 - PR #113 live HEAD at pre-register refresh: `ad29bda44f571f70106b1531ef1913534e3ce938`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; state OPEN / DRAFT / UNMERGED. This register update advances the branch; refresh before the next operation.
 - Issue #104/#105 remain OPEN / NOT ACCEPTED. Implementation-first order unchanged.
+
+
+## 2026-11-21 — Android/macOS helper repair and fail-closed nested-path boundary
+
+- Latest code-bearing source: `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (`crates/one-core/src/filesystem.rs`).
+- Removed duplicate Android `create_temp` definition and added missing macOS `create_temp` implementation. These are source-visible compile-blocker corrections; no build was run.
+- Android/macOS retain direct-child no-follow read and atomic replacement. Android checks mandatory `statx(STATX_MNT_ID)`; macOS checks `fstatfs` filesystem ID + mount point; both enforce regular-file/single-link policy.
+- Nested Android/macOS paths remain fail-closed. A descriptor-relative parent walk was not retained as supported because ordinary POSIX directory handles do not prevent an opened parent directory from being renamed outside the retained root. The current resolver rejects multi-component paths with `UnsupportedPlatform` until an anti-move primitive exists.
+- Android/macOS tests now explicitly preserve nested-path denial and outside-sentinel integrity. They are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran. Preserve acceptance criteria, fixed ledger/DoD, and protected verifier pins.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register refresh HEAD `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
