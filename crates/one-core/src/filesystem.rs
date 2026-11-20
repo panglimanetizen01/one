@@ -50,7 +50,7 @@ impl FilesystemAuthority {
     /// Open and retain the host-selected project root. The root is trusted
     /// host configuration; never pass a program-controlled target here.
     pub fn open(root: impl AsRef<Path>, max_read_bytes: u64, max_write_bytes: u64) -> Result<Self, FilesystemError> {
-        #[cfg(not(any(target_os = "linux", windows)))]
+        #[cfg(not(any(target_os = "linux", target_os = "android", windows)))]
         {
             let _ = (root, max_read_bytes, max_write_bytes);
             return Err(FilesystemError::UnsupportedPlatform);
@@ -87,6 +87,29 @@ impl FilesystemAuthority {
                 return Err(FilesystemError::InvalidRoot);
             }
 
+            Ok(Self { root, canonical_root, max_read_bytes, max_write_bytes })
+        }
+        #[cfg(target_os = "android")]
+        {
+            use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+
+            if max_read_bytes == 0 || max_write_bytes == 0 {
+                return Err(FilesystemError::InvalidRoot);
+            }
+            let root_path = root.as_ref();
+            let root = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                .open(root_path)
+                .map_err(|_| FilesystemError::InvalidRoot)?;
+            let root_metadata = root.metadata().map_err(|_| FilesystemError::InvalidRoot)?;
+            if !root_metadata.is_dir() { return Err(FilesystemError::InvalidRoot); }
+            let canonical_root = std::fs::canonicalize(root_path).map_err(|_| FilesystemError::InvalidRoot)?;
+            let path_metadata = std::fs::metadata(&canonical_root).map_err(|_| FilesystemError::InvalidRoot)?;
+            if path_metadata.dev() != root_metadata.dev() || path_metadata.ino() != root_metadata.ino() {
+                return Err(FilesystemError::InvalidRoot);
+            }
+            android_native::mount_id(&root).map_err(|_| FilesystemError::UnsupportedPlatform)?;
             Ok(Self { root, canonical_root, max_read_bytes, max_write_bytes })
         }
         #[cfg(windows)]
@@ -143,7 +166,11 @@ impl FilesystemAuthority {
         {
             linux_write_relative(&self.root, &relative, bytes)
         }
-        #[cfg(not(any(target_os = "linux", windows)))]
+        #[cfg(target_os = "android")]
+        {
+            android_native::write_relative(&self.root, &relative, bytes)
+        }
+        #[cfg(not(any(target_os = "linux", target_os = "android", windows)))]
         {
             let _ = relative;
             Err(FilesystemError::UnsupportedPlatform)
@@ -236,7 +263,12 @@ impl FilesystemAuthority {
         windows_native::open_relative(&self.root, relative, false)
     }
 
-    #[cfg(not(any(target_os = "linux", windows)))]
+    #[cfg(target_os = "android")]
+    fn open_relative(&self, relative: &Path) -> Result<File, FilesystemError> {
+        android_native::open_relative(&self.root, relative)
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "android", windows)))]
     fn open_relative(&self, _relative: &Path) -> Result<File, FilesystemError> {
         Err(FilesystemError::UnsupportedPlatform)
     }
@@ -671,6 +703,139 @@ where
         guard.cleanup()?;
     }
     result
+}
+
+#[cfg(target_os = "android")]
+mod android_native {
+    use super::FilesystemError;
+    use std::ffi::CString;
+    use std::fs::File;
+    use std::io::Write;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::MetadataExt;
+    use std::path::{Component, Path};
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    const AT_EMPTY_PATH: i32 = 0x1000;
+    const STATX_MNT_ID: u32 = 0x1000;
+    const O_PATH: i32 = 0x0020_0000;
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    // Linux/Android statx ABI. The trailing reserved bytes keep the structure
+    // at the kernel-defined 256-byte size on 32-bit and 64-bit Android ABIs.
+    #[repr(C)]
+    #[derive(Default)]
+    struct StatxTimestamp { seconds: i64, nanoseconds: u32, reserved: i32 }
+    #[repr(C)]
+    #[derive(Default)]
+    struct Statx {
+        mask: u32, block_size: u32, attributes: u64,
+        links: u32, uid: u32, gid: u32, mode: u16, spare0: u16,
+        inode: u64, size: u64, blocks: u64, attributes_mask: u64,
+        atime: StatxTimestamp, btime: StatxTimestamp,
+        ctime: StatxTimestamp, mtime: StatxTimestamp,
+        rdev_major: u32, rdev_minor: u32, dev_major: u32, dev_minor: u32,
+        mount_id: u64, dio_mem_align: u32, dio_offset_align: u32,
+        subvolume: u64, atomic_min: u32, atomic_max: u32,
+        atomic_segments: u32, reserved: [u8; 76],
+    }
+
+    pub(super) fn mount_id(file: &File) -> Result<u64, FilesystemError> {
+        let empty = b"\0";
+        let mut info = Statx::default();
+        let result = unsafe {
+            libc::syscall(libc::SYS_statx, file.as_raw_fd(), empty.as_ptr() as *const libc::c_char,
+                AT_EMPTY_PATH, STATX_MNT_ID, &mut info as *mut Statx)
+        };
+        if result != 0 || info.mask & STATX_MNT_ID == 0 {
+            return Err(FilesystemError::UnsupportedPlatform);
+        }
+        Ok(info.mount_id)
+    }
+
+    fn direct_child(relative: &Path) -> Result<CString, FilesystemError> {
+        let mut components = relative.components();
+        let Some(Component::Normal(name)) = components.next() else {
+            return Err(FilesystemError::InvalidTarget);
+        };
+        if components.next().is_some() || name.as_bytes().is_empty() {
+            return Err(FilesystemError::UnsupportedPlatform);
+        }
+        CString::new(name.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)
+    }
+
+    fn map_error(error: std::io::Error) -> FilesystemError {
+        match error.raw_os_error() {
+            Some(libc::ELOOP) | Some(libc::EXDEV) => FilesystemError::ResolutionFailed,
+            Some(libc::ENOENT) => FilesystemError::NotFound,
+            Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => FilesystemError::UnsupportedPlatform,
+            _ => FilesystemError::IoFailure,
+        }
+    }
+
+    fn openat(root: &File, name: &CString, flags: i32, mode: u32) -> Result<File, FilesystemError> {
+        let fd = unsafe { libc::openat(root.as_raw_fd(), name.as_ptr(), flags, mode) };
+        if fd < 0 { return Err(map_error(std::io::Error::last_os_error())); }
+        Ok(unsafe { File::from_raw_fd(fd) })
+    }
+
+    pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
+        let name = direct_child(relative)?;
+        let file = openat(root, &name, libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+        let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
+        if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
+        if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
+        if mount_id(root)? != mount_id(&file)? { return Err(FilesystemError::ResolutionFailed); }
+        Ok(file)
+    }
+
+    pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
+        let leaf = direct_child(relative)?;
+        let root_mount = mount_id(root)?;
+        match openat(root, &leaf, O_PATH | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0) {
+            Ok(existing) => {
+                let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
+                if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
+                if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
+                if mount_id(&existing)? != root_mount { return Err(FilesystemError::ResolutionFailed); }
+            }
+            Err(FilesystemError::NotFound) => {},
+            Err(error) => return Err(error),
+        }
+        let mut created = None;
+        for _ in 0..16 {
+            let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
+            let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+            let name = CString::new(format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id()))
+                .map_err(|_| FilesystemError::InvalidTarget)?;
+            match openat(root, &name, libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600) {
+                Ok(file) => { created = Some((file, name)); break; },
+                Err(FilesystemError::IoFailure) => continue,
+                Err(error) => return Err(error),
+            }
+        }
+        let (mut temp, temp_name) = created.ok_or(FilesystemError::IoFailure)?;
+        let result = (|| {
+            let metadata = temp.metadata().map_err(|_| FilesystemError::IoFailure)?;
+            if !metadata.is_file() || metadata.nlink() != 1 || mount_id(&temp)? != root_mount {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+            temp.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
+            temp.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+            let renamed = unsafe { libc::renameat(root.as_raw_fd(), temp_name.as_ptr(), root.as_raw_fd(), leaf.as_ptr()) };
+            if renamed != 0 { return Err(map_error(std::io::Error::last_os_error())); }
+            Ok(())
+        })();
+        if result.is_err() {
+            let removed = unsafe { libc::unlinkat(root.as_raw_fd(), temp_name.as_ptr(), 0) };
+            if removed != 0 && std::io::Error::last_os_error().raw_os_error() != Some(libc::ENOENT) {
+                return Err(FilesystemError::IoFailure);
+            }
+        }
+        result
+    }
 }
 
 #[cfg(windows)]
