@@ -142,3 +142,10 @@ Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broa
 Latest code-bearing source/test candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). Linux/Android process supervision now observes direct-child exit using `waitid(P_PID, WEXITED | WNOHANG | WNOWAIT)` rather than reaping via `try_wait()` before process-group cleanup. The child remains a zombie (its PID/PGID cannot be recycled) while the wrapper sends SIGKILL to the invocation process group; only then does `Child::wait()` reap it. The redundant post-reap group kill was removed. All timeout, output-overflow, wait-error and normal-completion paths terminate the group before reaping.
 
 Process escape regressions use in-binary ignored helpers with direct `fork` + `setsid(2)` syscalls, record any escaped PID and clean up before failing. Three paths: normal completion, timeout, output overflow. NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Implementation-first source correction — subprocess test-module duplicate helper — 2026-11-21
+
+- Candidate source commit `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` removes a duplicate `cleanup_test_escaped_group` function definition from `crates/one-core/src/interop.rs` test module. Source readback confirms one definition remains.
+- This addresses a source-visible Rust duplicate-definition compile blocker; it is NOT a compile result. No build/test/CI/verifier/platform matrix was run on this candidate.
+- Release contract reconciliation commit `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` corrects stale platform descriptions: filesystem adapters exist for Linux/Windows/Android/macOS (Android/macOS nested paths fail closed; Linux nested writes require detached-mount support); process adapters exist for Linux/Android/Windows (macOS fail-closed). These are implementation boundaries, not acceptance/support claims.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Keep the fixed ledger, DoD, verifier pins, and release gates unchanged.
