@@ -233,3 +233,12 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - PR #115 corrective workflow commit `3b684acd1f3e68f1b40dd6d600fad0e013044495` completed GitHub Actions run #2244 / `44748865610` with terminal SUCCESS on Ubuntu and Windows. Build, Clippy, workspace tests, and all focused tests passed on both. The bootstrap-only Contract artifacts step was intentionally skipped; no contract-check PASS is claimed for the bootstrap branch.
 - CircleCI status on this same SHA is FAILURE at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`. The CircleCI job page is inaccessible through the connected browser and there is no CircleCI CLI/MCP action in this session; root cause remains UNKNOWN.
 - PR #113 docs HEAD `2cbf87ed05277fc6d66088a645f2aea8d0d8ce16` has CircleCI PENDING at last readback, workflow `d924efb4-6927-43e7-85c7-ad38cab7f425`, job `192e4737-7e01-426d-b2f4-80ee80fa48c3`. PR #113 has no GitHub Actions run yet because bootstrap PR #115 remains unmerged.
+
+
+## Bootstrap PR merge and subsequent CI observation — 2026-11-20
+
+- PR #115 merged successfully to `fix/windows-process-verifier-timeouts-20261118` with merge commit `3adace165890bb69de346880e3c612c5cd6c2ff8`; expected head was `3b684acd1f3e68f1b40dd6d600fad0e013044495`.
+- Merge diff adds only `.github/workflows/ci.yml` (87 lines). GitHub Actions PR #115 run #2244 had terminal SUCCESS on Ubuntu and Windows before merge; CircleCI for that PR commit was FAILURE but provider logs were unavailable.
+- After merge, CircleCI status on merge commit is PENDING at workflow `509828d0-3d7d-434a-8f00-a58645eabe9e`, job `83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`. This is a new exact merge-commit status context, not evidence of a successful job start.
+- PR #113 remained OPEN / DRAFT / UNMERGED. The newly installed GitHub Actions workflow had not yet yielded a PR #113 run in the immediate readback. Follow-up documentation-only commit to PR #113 should create a `pull_request` run; verify that exact SHA and all full-contract/build/test steps.
+- B-001 remains open. Do not classify pending CircleCI as pass, and do not assume the prior OSS credit error is resolved.
