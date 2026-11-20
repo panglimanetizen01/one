@@ -122,4 +122,4 @@ The full architecture map in PR #97 remains a non-normative overview. The focuse
 
 ## Host-selected filesystem authority root
 
-The CLI selects the filesystem authority root from the source/project context, not from the requested target. It prefers the nearest ancestor containing `one.toml`; otherwise it uses the process working directory when the source is beneath it, or the canonical source parent for a standalone source outside the working directory. Absolute targets are then resolved against that fixed root and rejected when outside it. See `crates/one-cli/src/main.rs` and the focused Mermaid diagram.
+The CLI selects the filesystem authority root exclusively from the host process current working directory (`std::env::current_dir()`), independently of the source-file location and requested target. The host opens and retains this root authority; source path and `--target` cannot select or widen it. Relative and absolute targets are resolved against that fixed root and rejected when outside it. See `crates/one-cli/src/main.rs` and the focused Mermaid diagram.
