@@ -133,3 +133,12 @@ Latest source commit: `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (`crates/one-co
 - Chunked responses bound chunk-size lines, require valid terminating CRLF, validate trailer syntax, reject framing/Host fields in trailers, and reject trailing bytes after the trailer terminator.
 - Added regressions for valid trailers, forbidden Content-Length trailers, and extra bytes after Content-Length. NOT RUN.
 - No build/test/CI/verifier/platform matrix was run; source-only candidate, no acceptance promoted.
+
+
+## HTTP header token/control validation regressions — 2026-11-21
+
+Latest source commit: `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (`crates/one-core/src/network_runtime.rs`).
+
+- Response header names are validated as HTTP tokens and values reject control bytes except HTAB. Request header names/values and request-target syntax have equivalent validation.
+- Added regressions for invalid response header names/values and invalid request header names/targets. NOT RUN.
+- No build/test/CI/verifier/platform matrix was run; this remains source-only implementation work.
