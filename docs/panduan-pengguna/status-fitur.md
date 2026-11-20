@@ -269,3 +269,12 @@ Bukti kandidat source `c7f460a4e38be61de635ad5af9f7ff987a941f01`: test metadata 
 - Status dukungan tetap terbatas: filesystem backend tersedia hanya pada Linux dan Windows. Android dan macOS belum memiliki filesystem adapter. Pada Linux, nested writes tetap ditolak secara fail-closed.
 - Ini merupakan bukti regresi dan verifikasi teknis pada kandidat PR, bukan penerimaan rilis. Issue #104 tetap OPEN / NOT ACCEPTED; jangan menganggap fitur sebagai sandbox universal atau mengaktifkan dukungan platform yang belum tersedia.
 - CircleCI `ci/circleci: one-linux` pada source yang sama berstatus SUCCESS. Bukti ini tidak otomatis berlaku untuk SHA berikutnya.
+
+
+## Pembaruan bukti runtime Android — 20 November 2026
+
+Kandidat PR #113 dengan source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` kini memiliki bukti eksekusi native backend pada Android API 35 ARM64 melalui verifier PR #51 HEAD `226360d00bc26f858128d3127591fce13ecd52d9`, workflow [#44652693606](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44652693606). Job build #136011228119 dan runtime #136012787863 keduanya SUCCESS. Log menunjukkan ELF AArch64 berhasil dieksekusi pada emulator dengan exit code 0 dan output `ONE_NATIVE_BACKEND_OK`.
+
+Bukti ini hanya untuk native backend runtime pada environment Android API 35 ARM64 yang diuji. **Ini bukan bukti dukungan filesystem adapter Android.** Adapter filesystem Android/macOS tetap belum tersedia dan fail-closed. Linux nested writes tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED; kandidat PR belum digabung ke `main` dan belum menjadi rilis.
+
+CircleCI pada code-bearing source `fb5c8bc...` berstatus SUCCESS (workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`). Namun CircleCI pada dokumentasi HEAD PR #113 `3c6853886b2d7b43f5bcfb021cff81d6a48ad48e` berstatus FAILURE (workflow `5f0f4f99-436b-4581-9096-0863954836c3`, job `34bb08ef-767c-45b8-b898-ee28d39e071d`, report `38db588c-4a20-468d-b344-0dd124659f63`). Failed step/root cause belum diketahui karena provider log belum dapat diakses; jangan mengubah konfigurasi berdasarkan dugaan.
