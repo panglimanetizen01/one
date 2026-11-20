@@ -1069,6 +1069,50 @@ mod windows_native {
     }
 }
 
+#[cfg(all(test, windows))]
+mod windows_root_tests {
+    use super::*;
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn authority_rejects_reparse_root_without_following_final_component() {
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let base = std::env::temp_dir().join(format!(
+            "one-root-reparse-{}-{nonce}",
+            std::process::id()
+        ));
+        let target = base.join("target");
+        let alias = base.join("alias");
+        std::fs::create_dir_all(&target).unwrap();
+
+        let output = Command::new("cmd.exe")
+            .args([
+                "/C",
+                "mklink",
+                "/J",
+                alias.to_str().unwrap(),
+                target.to_str().unwrap(),
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "could not create junction fixture: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        assert_eq!(
+            FilesystemAuthority::open(&alias, 1024, 1024).err(),
+            Some(FilesystemError::InvalidRoot),
+            "the trusted root must reject a final-component reparse point"
+        );
+
+        std::fs::remove_dir(alias).unwrap();
+        std::fs::remove_dir_all(base).unwrap();
+    }
+}
+
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
     use super::*;
