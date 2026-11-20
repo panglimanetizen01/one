@@ -198,4 +198,27 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         server.join().expect("server");
     }
 
+    #[test]
+    fn http_request_rejects_oversized_body_before_serialization() {
+        let request = HttpRequest {
+            method: "POST".into(), authority: "example.test".into(), path: "/".into(),
+            headers: Vec::new(), body: vec![0; MAX_HTTP_REQUEST_BODY_BYTES + 1],
+        };
+        assert!(matches!(request.to_bytes(), Err(NetworkRuntimeError::Protocol(_))));
+    }
+
+    #[test]
+    fn http_request_rejects_mismatched_content_length_and_transfer_encoding() {
+        let mismatched = HttpRequest {
+            method: "POST".into(), authority: "example.test".into(), path: "/".into(),
+            headers: vec![("Content-Length".into(), "9".into())], body: b"small".to_vec(),
+        };
+        assert!(matches!(mismatched.to_bytes(), Err(NetworkRuntimeError::Protocol(_))));
+        let transfer_encoded = HttpRequest {
+            method: "POST".into(), authority: "example.test".into(), path: "/".into(),
+            headers: vec![("Transfer-Encoding".into(), "chunked".into())], body: Vec::new(),
+        };
+        assert!(matches!(transfer_encoded.to_bytes(), Err(NetworkRuntimeError::Protocol(_))));
+    }
+
 }
