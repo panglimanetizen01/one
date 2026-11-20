@@ -195,4 +195,4 @@ Do not rely on the current released `filesystem.write` slice to confine hostile 
 
 ### Host-selected filesystem root
 
-The CLI does not derive filesystem authority from the requested target. It selects the root from the source/project context (nearest ancestor with `one.toml`, otherwise working directory or standalone source parent), then rejects absolute targets outside that root. This is separate from the exact target capability scope and is covered by CLI regression tests.
+The CLI derives filesystem authority exclusively from the host process current working directory (`cwd`), never from the source-file location or requested target. Relative and absolute targets outside that root are rejected. This is separate from the exact target capability scope and is covered by positive and negative CLI regression fixtures.
