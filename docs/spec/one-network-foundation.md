@@ -103,3 +103,13 @@ Latest relevant source commits:
 - Added source regressions for oversized headers, ambiguous framing, duplicate lengths, chunk-size overflow, and bounded socket reads. NOT RUN.
 
 These are implementation/resource-boundary changes only. No build, test, CI, verifier, or platform matrix was run. No prior exact-SHA result transfers to this candidate.
+
+
+## HTTP request serialization resource bounds — 2026-11-21
+
+Latest source commit: `198fbf4ccdbb7e219efbe3e296e98462a385c384` (`crates/one-core/src/network_runtime.rs`).
+
+- HTTP request bodies are capped at 16 MiB before serialization; request line + headers are capped at 64 KiB with checked size arithmetic and fallible preallocation.
+- Explicit Content-Length must parse and exactly match the body size; duplicate Content-Length and request Transfer-Encoding are rejected (chunked request serialization is not implemented).
+- Added source regressions for oversized request bodies, mismatched Content-Length, and unsupported Transfer-Encoding. NOT RUN.
+- No build, test, CI, verifier, or platform matrix was run. This remains an implementation candidate, not verification evidence.
