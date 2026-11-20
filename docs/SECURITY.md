@@ -103,3 +103,8 @@ Latest source/test candidate: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; curren
 ## Implementation-first source refresh — 2026-11-21
 
 The latest code-bearing Issue #104/#105 candidate is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. The CLI trusted root is the host process current working directory only; source-file path, manifest discovery, and requested target do not select or widen it. The Linux nested writer uses a detached mount and fails closed if `open_tree`, `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, or `openat2` cannot provide the required boundary. Android/macOS nested paths remain fail-closed. Source presence is not acceptance: the candidate has not been built or tested, and Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Linux special-file read hardening — 2026-11-21
+
+Code change: `50923b545f2c804b24aa773ea5bb60129d1e0ff2` updates the Linux `openat2` read flags to include `O_NONBLOCK` before the opened object is checked with `fstat` for regular-file type. This prevents opening a FIFO with blocking semantics while retaining the existing handle-relative `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV` policy. A Linux regression `authority_rejects_fifo_without_blocking` creates a FIFO with no writer and requires `FilesystemError::NotRegularFile`. The regression has NOT RUN; this is source/test presence only, not execution evidence or Issue #104 acceptance.
