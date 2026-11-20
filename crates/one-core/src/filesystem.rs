@@ -808,6 +808,24 @@ mod android_native {
         Ok(unsafe { File::from_raw_fd(fd) })
     }
 
+    fn create_temp(root: &File, name: &CString) -> Result<File, std::io::Error> {
+        let fd = unsafe {
+            libc::openat(root.as_raw_fd(), name.as_ptr(),
+                libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600)
+        };
+        if fd < 0 { return Err(std::io::Error::last_os_error()); }
+        Ok(unsafe { File::from_raw_fd(fd) })
+    }
+
+    fn create_temp(root: &File, name: &CString) -> Result<File, std::io::Error> {
+        let fd = unsafe {
+            libc::openat(root.as_raw_fd(), name.as_ptr(),
+                libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600)
+        };
+        if fd < 0 { return Err(std::io::Error::last_os_error()); }
+        Ok(unsafe { File::from_raw_fd(fd) })
+    }
+
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
         let name = direct_child(relative)?;
         let file = openat(root, &name, libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
@@ -838,10 +856,10 @@ mod android_native {
             let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
             let name = CString::new(format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id()))
                 .map_err(|_| FilesystemError::InvalidTarget)?;
-            match openat(root, &name, libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600) {
+            match create_temp(root, &name) {
                 Ok(file) => { created = Some((file, name)); break; },
-                Err(FilesystemError::IoFailure) => continue,
-                Err(error) => return Err(error),
+                Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
+                Err(error) => return Err(map_error(error)),
             }
         }
         let (mut temp, temp_name) = created.ok_or(FilesystemError::IoFailure)?;
@@ -854,6 +872,7 @@ mod android_native {
             temp.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             let renamed = unsafe { libc::renameat(root.as_raw_fd(), temp_name.as_ptr(), root.as_raw_fd(), leaf.as_ptr()) };
             if renamed != 0 { return Err(map_error(std::io::Error::last_os_error())); }
+            root.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             Ok(())
         })();
         if result.is_err() {
@@ -893,10 +912,21 @@ mod macos_native {
         if fd < 0 { return Err(map_error(std::io::Error::last_os_error())); }
         Ok(unsafe { File::from_raw_fd(fd) })
     }
-    fn verify_same_volume(root: &File, file: &File) -> Result<(), FilesystemError> {
-        let root_meta = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
-        let file_meta = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
-        if root_meta.dev() != file_meta.dev() { return Err(FilesystemError::ResolutionFailed); }
+    fn verify_same_mount(root: &File, file: &File) -> Result<(), FilesystemError> {
+        let mut root_info: libc::statfs = unsafe { std::mem::zeroed() };
+        let mut file_info: libc::statfs = unsafe { std::mem::zeroed() };
+        // SAFETY: both descriptors are live and each statfs output points to
+        // a writable statfs value with the platform ABI layout.
+        if unsafe { libc::fstatfs(root.as_raw_fd(), &mut root_info) } != 0
+            || unsafe { libc::fstatfs(file.as_raw_fd(), &mut file_info) } != 0
+        {
+            return Err(FilesystemError::IoFailure);
+        }
+        if root_info.f_fsid.val != file_info.f_fsid.val
+            || root_info.f_mntonname != file_info.f_mntonname
+        {
+            return Err(FilesystemError::ResolutionFailed);
+        }
         Ok(())
     }
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
@@ -905,7 +935,7 @@ mod macos_native {
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
-        verify_same_volume(root, &file)?;
+        verify_same_mount(root, &file)?;
         Ok(file)
     }
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
@@ -915,7 +945,7 @@ mod macos_native {
                 let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
                 if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
                 if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
-                verify_same_volume(root, &existing)?;
+                verify_same_mount(root, &existing)?;
             }
             Err(FilesystemError::NotFound) => {},
             Err(error) => return Err(error),
@@ -925,21 +955,22 @@ mod macos_native {
             let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
             let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
             let name = CString::new(format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id())).map_err(|_| FilesystemError::InvalidTarget)?;
-            match openat(root, &name, libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW, 0o600) {
+            match create_temp(root, &name) {
                 Ok(file) => { created = Some((file, name)); break; },
-                Err(FilesystemError::IoFailure) => continue,
-                Err(error) => return Err(error),
+                Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
+                Err(error) => return Err(map_error(error)),
             }
         }
         let (mut temp, temp_name) = created.ok_or(FilesystemError::IoFailure)?;
         let result = (|| {
             let metadata = temp.metadata().map_err(|_| FilesystemError::IoFailure)?;
             if !metadata.is_file() || metadata.nlink() != 1 { return Err(FilesystemError::ResolutionFailed); }
-            verify_same_volume(root, &temp)?;
+            verify_same_mount(root, &temp)?;
             temp.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             temp.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             let renamed = unsafe { libc::renameat(root.as_raw_fd(), temp_name.as_ptr(), root.as_raw_fd(), leaf.as_ptr()) };
             if renamed != 0 { return Err(map_error(std::io::Error::last_os_error())); }
+            root.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             Ok(())
         })();
         if result.is_err() {
