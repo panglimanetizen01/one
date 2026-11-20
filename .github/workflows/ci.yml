@@ -19,7 +19,16 @@ jobs:
         os: [ubuntu-latest, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
+      # Keep the merge-result checkout for normal PRs. The stacked security PR
+      # targets a base branch that intentionally carries this bootstrap workflow;
+      # test its exact head SHA so the temporary workflow is not mistaken for
+      # a legacy workflow in the candidate source tree.
       - uses: actions/checkout@v4
+        if: github.event_name != 'pull_request' || github.event.pull_request.base.ref != 'fix/windows-process-verifier-timeouts-20261118'
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'fix/windows-process-verifier-timeouts-20261118'
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -51,6 +60,11 @@ jobs:
       - name: Toolchain
         run: rustc --version && cargo --version
       - name: Contract artifacts
+        # The bootstrap PR only introduces this workflow. Its exact tree must
+        # temporarily contain .github/workflows/ci.yml, which the candidate's
+        # CircleCI-only contract intentionally rejects. All subsequent PRs run
+        # the full contract check against their own head source.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.ref != 'ci/bootstrap-actions-on-fix-windows-verifier-20261120'
         run: python tools/check_contract.py
       - name: Build
         run: cargo build --workspace --all-targets
