@@ -115,7 +115,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ## 3. Release sprint execution order
 
 1. **P0:** Complete Issue #104 production filesystem implementation against its unchanged acceptance contract; preserve fail-closed behavior for unsupported nested operations.
-2. **P1:** Complete Issue #105 Linux/Windows process containment implementation; Android/macOS process execution remains fail-closed until equivalent containment exists.
+2. **P1:** Complete Issue #105 Linux/Android/Windows process containment implementation; macOS process execution remains fail-closed until equivalent containment exists.
 3. **P1:** Reconcile every remaining formal v0.1 product/release gate from the existing contract and fixed ledger. Do not reopen B-001 absent a new relevant provider failure.
 4. **P2:** After implementation scope is complete, freeze one release-candidate SHA and run the required integrated platform matrix. Inspect terminal job results/logs. Parent-SHA evidence never transfers.
 5. **P2:** Synchronize only affected existing docs and Notion Skill; preserve historical evidence and exact-SHA boundaries.
