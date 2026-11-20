@@ -103,7 +103,7 @@ GitHub `main` is the canonical source. Local/Termux copies are verification envi
 
 ## Security design checkpoints
 
-- `security/issue-104-filesystem-root-confinement-design.md` — design-only checkpoint for trusted-root handle authority, Unix/Windows handle-relative traversal, bounded I/O, atomic writes, and the Issue #104 adversarial acceptance matrix. It is not an implementation or security PASS.
+- `security/issue-104-filesystem-root-confinement-design.md` — normative design and acceptance contract for trusted-root handle authority, Unix/Windows handle-relative traversal, bounded I/O, atomic writes, and the Issue #104 adversarial matrix. The candidate implementation is tracked separately; the document itself is not a security PASS.
 
 
 ## Architecture diagrams
