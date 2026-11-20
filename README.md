@@ -183,7 +183,7 @@ The GitHub repository is currently PUBLIC and remains the canonical source of tr
 
 The source-level `filesystem.write` slice described above is distinct from a security sandbox. The stronger project-root confinement capability is still experimental in draft PR #113 / Issue #104 and is **not part of canonical `main`**.
 
-- Linux candidate writes are limited to direct children of the host-injected root; nested paths fail closed.
+- Linux candidate writes support direct children and a guarded detached-mount nested path; nested operations fail closed when required kernel/security primitives are unavailable. Android/macOS have direct-child native candidates; their nested paths remain fail-closed.
 - Windows candidate writes use native handle-relative temporary-file replacement. Protected E4 verification passed for the canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed` (verifier run [#44519577693](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577693)); the Windows native probe is limited to Windows Server 2025 build 26100.
 - Protected E4 and Android API 35 ARM64 runtime evidence remain tied to source pin `722d662...`; Issue #82 is closed only for the Android runtime-evidence scope.
 - Current PR #113 code candidate `c7f460a4e38be61de635ad5af9f7ff987a941f01` adds truthful filesystem adapter platform metadata and actual host-platform selection. E4 run #44585270928 passed the metadata regression on Linux and Windows; Linux distro run #44585282690 passed Ubuntu 24.04 and Debian 12 workspace tests, including the CLI regression.
@@ -214,3 +214,8 @@ Latest source/test candidate: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; curren
 - `Platform` now identifies Windows, Linux, Android, and macOS explicitly rather than collapsing Android/macOS into `Other`; the platform unit test covers all four target cfgs (`5846eb70f2a462331873cc0023d1f1ab1106f86a`).
 - This is platform identification only. It does not imply filesystem adapter support on Android/macOS; those adapters remain fail-closed pending platform-safe resolver implementations.
 - The platform test has NOT been run.
+
+
+## Latest filesystem implementation candidate — 2026-11-21
+
+The current unmerged PR #113 code-bearing source is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. Its host-owned filesystem root is the process working directory, never a source-file path, manifest lookup, or program-supplied target. Linux includes a guarded detached-mount nested writer; Windows retains native handle-relative operations; Android/macOS include direct-child native read/write candidates and fail closed for nested paths. The CLI fixture corrections are test-only commits `46c777e...` and `2600ec1...`. No tests/builds were run on this candidate. Issue #104 remains OPEN / NOT ACCEPTED, and canonical `main` is unchanged.
