@@ -67,7 +67,7 @@ The project should not artificially cripple the language merely because it can e
 
 Filesystem effects are not a security sandbox merely because they pass through a capability adapter. Before any release can claim project-root confinement, the host must inject an immutable trusted root authority, all accepted operations must remain handle-relative, and symlink/reparse, mount, hard-link, traversal, race, side-effect, and size-limit tests must pass on the exact source revision.
 
-The current implementation candidate is tracked in [Issue #104](https://github.com/panglimanetizen01/one/issues/104) and its [design record](security/issue-104-filesystem-root-confinement-design.md). PR #113 remains unmerged. Linux candidate writes are limited to direct children of the retained root; nested writes fail closed. Windows native atomic replacement is under exact-SHA verification. Other platform backends remain unsupported.
+The current implementation candidate is tracked in [Issue #104](https://github.com/panglimanetizen01/one/issues/104) and its [design record](security/issue-104-filesystem-root-confinement-design.md). PR #113 remains unmerged. Linux supports direct-child atomic writes and a guarded detached-mount nested-write path that fails closed when required kernel primitives are unavailable. Windows uses a native handle-relative backend; Android and macOS have direct-child native candidates, while nested Android/macOS paths remain fail-closed. None of this promotes Issue #104 to ACCEPTED or makes the capability part of `main`.
 
 Do not advertise or rely on this capability as a released project sandbox until Issue #104 is ACCEPTED and the release contract is satisfied.
 
@@ -98,3 +98,8 @@ Do not implement or claim a cgroup/PID-namespace containment backend based only 
 PR #113 implementation now derives filesystem authority exclusively from the host process working directory. Linux root acquisition uses `O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC` and checks device/inode identity against the retained handle. Windows preserves the final root component, opens with native no-reparse flags, and checks volume/file identity. CLI positive/negative root-selection fixtures plus Linux symlink-root and Windows junction-root regressions have been added.
 
 Latest source/test candidate: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; current PR #113 HEAD at last readback: `6f7d86842c80a81135227d8d62404e848ab5d8c3`. These changes have NOT been built or tested; no prior exact-SHA evidence transfers. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Implementation-first source refresh — 2026-11-21
+
+The latest code-bearing Issue #104/#105 candidate is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. The CLI trusted root is the host process current working directory only; source-file path, manifest discovery, and requested target do not select or widen it. The Linux nested writer uses a detached mount and fails closed if `open_tree`, `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, or `openat2` cannot provide the required boundary. Android/macOS nested paths remain fail-closed. Source presence is not acceptance: the candidate has not been built or tested, and Issue #104 remains OPEN / NOT ACCEPTED.
