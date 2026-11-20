@@ -33,3 +33,13 @@ Process interoperability memiliki batas waktu 10 detik untuk proses langsung dan
 Namun, penghentian Unix saat ini hanya membunuh process group awal. Descendant yang membuat session/process group baru dapat tetap hidup setelah perintah selesai. Jadi fitur ini **bukan sandbox process-tree** dan tidak boleh dipakai sebagai jaminan isolasi proses yang tidak tepercaya. Pada Windows, Job Object dipasang saat proses dibuat dan anggota job dihentikan saat cleanup.
 
 Issue #105 masih OPEN untuk menyelesaikan containment descendant Unix atau mempersempit kontrak dukungan secara eksplisit.
+
+## Pembaruan status filesystem — 20 November 2026
+
+- Pemeriksaan independen pada source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` telah lulus untuk regresi hard-link di Linux dan Windows.
+- File yang memiliki hard link ke luar project root ditolak untuk operasi baca dan tulis; pengujian memeriksa bahwa isi file di dalam maupun di luar root tidak berubah.
+- Windows juga telah lulus pengujian junction/reparse-point, target absolut di dalam root, penolakan target di luar root tanpa side effect, atomic write, batas ukuran, dan parent traversal.
+- Linux telah lulus pengujian no-follow, mount-boundary, traversal, race pada parent symlink, serta direct-child write.
+- Status dukungan tetap terbatas: filesystem backend tersedia hanya pada Linux dan Windows. Android dan macOS belum memiliki filesystem adapter. Pada Linux, nested writes tetap ditolak secara fail-closed.
+- Ini merupakan bukti regresi dan verifikasi teknis pada kandidat PR, bukan penerimaan rilis. Issue #104 tetap OPEN / NOT ACCEPTED; jangan menganggap fitur sebagai sandbox universal atau mengaktifkan dukungan platform yang belum tersedia.
+- CircleCI `ci/circleci: one-linux` pada source yang sama berstatus SUCCESS. Bukti ini tidak otomatis berlaku untuk SHA berikutnya.
