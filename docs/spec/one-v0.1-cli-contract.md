@@ -137,7 +137,7 @@ Human-readable output is localized. A future machine-readable mode must provide 
 
 ## 6. Project discovery
 
-Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably.
+Commands operate on an explicit project root or an explicit source file. Project commands resolve `src/main.one` and `one.toml` deterministically. The CLI must not search arbitrary parent/sibling directories unpredictably. The `test` and `package` project commands must validate the required `nama` and `versi` manifest fields before executing or packaging the project.
 
 ## 7. Capability policy
 

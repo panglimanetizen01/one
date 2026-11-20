@@ -17,3 +17,53 @@ fn portable_path(path: &std::path::Path) -> String { path.to_string_lossy().repl
 #[test] fn run_command_executes_filesystem_read_from_one_source() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "isi One\nbaris kedua\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &data_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(output.status.success()); assert_eq!(String::from_utf8_lossy(&output.stdout), "isi One\nbaris kedua\n"); }
 #[test] fn filesystem_read_is_denied_without_explicit_capability() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-denied-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-denied-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "rahasia\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap()]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3205")); }
 #[test] fn filesystem_read_rejects_out_of_scope_target() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-scope-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-scope-source-{source_id}.one")); let data_arg = portable_path(&data); let scope_arg = portable_path(&std::env::temp_dir()); fs::write(&data, "di luar\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &scope_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3209")); }
+
+#[test] fn test_command_rejects_missing_project_manifest() {
+    let root = std::env::temp_dir().join(format!("one-project-test-missing-manifest-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["test", root.to_str().unwrap()]);
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
+}
+
+#[test] fn test_command_rejects_invalid_project_manifest() {
+    let root = std::env::temp_dir().join(format!("one-project-test-invalid-manifest-{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"uji\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["test", root.to_str().unwrap()]);
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
+}
+
+
+#[test] fn package_rejects_path_traversal_in_project_name() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("one-project-package-path-traversal-{id}"));
+    let escaped = std::env::temp_dir().join(format!("one-package-escape-{id}-0.1.0.onepkg"));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), format!("nama = \"../../one-package-escape-{id}\"\nversi = \"0.1.0\"\n")).unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["package", root.to_str().unwrap()]);
+    let escaped_created = escaped.exists();
+    let _ = fs::remove_file(&escaped);
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
+    assert!(!escaped_created, "package output must not escape the project target directory");
+}
+
+#[test] fn package_rejects_path_traversal_in_project_version() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("one-project-package-version-traversal-{id}"));
+    fs::create_dir_all(root.join("src")).unwrap();
+    fs::write(root.join("one.toml"), "nama = \"paket\"\nversi = \"../../escape\"\n").unwrap();
+    fs::write(root.join("src/main.one"), "tampilkan \"uji\"\n").unwrap();
+    let output = run(&["package", root.to_str().unwrap()]);
+    let _ = fs::remove_dir_all(&root);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("ETOOL002"));
+}
