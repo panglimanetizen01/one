@@ -160,7 +160,7 @@ impl TargetBackend for NativeAndroidAarch64Backend {
 }
 
 struct CGenerator {
-    variables: BTreeMap<String, CType>,
+    variables: BTreeMap<String, CVariable>,
     output: String,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -169,58 +169,49 @@ enum CType {
     Number,
     Boolean,
 }
+
+#[derive(Debug, Clone)]
+struct CVariable {
+    c_name: String,
+    ty: CType,
+}
+
 impl CGenerator {
-    fn identifier(name: &str) -> Result<(), NativeBackendError> {
-        let mut chars = name.chars();
-        let Some(first) = chars.next() else {
-            return Err(NativeBackendError::new(
-                "NATIVE-CODEGEN-IDENTIFIER",
-                "identifier native tidak boleh kosong",
-            ));
-        };
-        if !(first == '_' || first.is_ascii_alphabetic())
-            || !chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
-        {
-            return Err(NativeBackendError::new(
-                "NATIVE-CODEGEN-IDENTIFIER",
-                format!("identifier '{}' tidak dapat dipetakan aman ke C", name),
-            ));
-        }
-        Ok(())
+    fn c_name(index: usize) -> String {
+        format!("one_var_{index}")
     }
     fn statement(&mut self, statement: &IrStatement) -> Result<(), NativeBackendError> {
         match statement {
             IrStatement::Declaration { name, value } => {
-                Self::identifier(name)?;
                 let ty = self.expr_type(value)?;
-                self.variables.insert(name.clone(), ty);
+                let c_name = Self::c_name(self.variables.len());
+                self.variables.insert(name.clone(), CVariable { c_name: c_name.clone(), ty });
                 self.output.push_str("  ");
                 self.output.push_str(match ty {
                     CType::Text => "const char* ",
                     CType::Number => "long long ",
                     CType::Boolean => "bool ",
                 });
-                self.output.push_str(name);
+                self.output.push_str(&c_name);
                 self.output.push_str(" = ");
                 self.expr(value)?;
                 self.output.push_str(";\n");
             }
             IrStatement::Assignment { name, value } => {
-                Self::identifier(name)?;
-                let Some(expected) = self.variables.get(name).copied() else {
+                let Some(expected) = self.variables.get(name) else {
                     return Err(NativeBackendError::new(
                         "NATIVE-CODEGEN-UNDEFINED",
                         format!("assignment ke variabel '{}' tidak didukung", name),
                     ));
                 };
-                if expected != self.expr_type(value)? {
+                if expected.ty != self.expr_type(value)? {
                     return Err(NativeBackendError::new(
                         "NATIVE-CODEGEN-TYPE",
                         format!("tipe assignment '{}' tidak cocok", name),
                     ));
                 }
                 self.output.push_str("  ");
-                self.output.push_str(name);
+                self.output.push_str(&expected.c_name);
                 self.output.push_str(" = ");
                 self.expr(value)?;
                 self.output.push_str(";\n");
@@ -271,8 +262,7 @@ impl CGenerator {
             IrExpr::Number(_) => Ok(CType::Number),
             IrExpr::Boolean(_) => Ok(CType::Boolean),
             IrExpr::Identifier(name) => {
-                Self::identifier(name)?;
-                self.variables.get(name).copied().ok_or_else(|| {
+                self.variables.get(name).map(|variable| variable.ty).ok_or_else(|| {
                     NativeBackendError::new(
                         "NATIVE-CODEGEN-UNDEFINED",
                         format!("identifier '{}' tidak ditemukan", name),
@@ -306,8 +296,13 @@ impl CGenerator {
             IrExpr::Number(value) => self.output.push_str(&value.to_string()),
             IrExpr::Boolean(value) => self.output.push_str(if *value { "true" } else { "false" }),
             IrExpr::Identifier(name) => {
-                Self::identifier(name)?;
-                self.output.push_str(name);
+                let variable = self.variables.get(name).ok_or_else(|| {
+                    NativeBackendError::new(
+                        "NATIVE-CODEGEN-UNDEFINED",
+                        format!("identifier '{}' tidak ditemukan", name),
+                    )
+                })?;
+                self.output.push_str(&variable.c_name);
             }
             IrExpr::Binary { .. } | IrExpr::Nothing | IrExpr::Call { .. } => {
                 return Err(NativeBackendError::new(
@@ -509,7 +504,13 @@ fn resolve_linux_x86_64_linker(
 mod linker_discovery_tests {
     use super::*;
 
-    #[cfg(unix)]
+    fn unix_utility(name: &str) -> std::path::PathBuf {
+        std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default())
+            .map(|directory| directory.join(name))
+            .find(|candidate| candidate.is_file())
+            .unwrap_or_else(|| panic!("required Unix utility '{name}' not found in PATH"))
+    }
+
     #[test]
     fn linux_x86_64_linker_override_diprioritaskan() {
         let root = std::env::temp_dir().join(format!(
@@ -522,19 +523,8 @@ mod linker_discovery_tests {
 
         std::fs::create_dir_all(&root).unwrap();
         std::fs::create_dir_all(&path_candidate).unwrap();
-
-        std::fs::write(&expected, b"#!/bin/sh\nexit 0\n").unwrap();
-        std::fs::write(&path_linker, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            for path in [&expected, &path_linker] {
-                let mut permissions = std::fs::metadata(path).unwrap().permissions();
-                permissions.set_mode(0o755);
-                std::fs::set_permissions(path, permissions).unwrap();
-            }
-        }
+        std::os::unix::fs::symlink(unix_utility("true"), &expected).unwrap();
+        std::os::unix::fs::symlink(unix_utility("false"), &path_linker).unwrap();
 
         assert_eq!(
             resolve_linux_x86_64_linker(Some(&expected), Some(path_candidate.as_os_str()))
@@ -545,7 +535,6 @@ mod linker_discovery_tests {
         let _ = std::fs::remove_dir_all(root);
     }
 
-    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_override_tidak_kompatibel_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -555,28 +544,16 @@ mod linker_discovery_tests {
         let candidate = root.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&root).unwrap();
-        std::fs::write(&candidate, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = std::fs::metadata(&candidate).unwrap().permissions();
-            permissions.set_mode(0o755);
-            std::fs::set_permissions(&candidate, permissions).unwrap();
-        }
+        std::os::unix::fs::symlink(unix_utility("false"), &candidate).unwrap();
 
         let result = resolve_linux_x86_64_linker(Some(&candidate), None);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().code(),
-            "NATIVE-LINKER-INCOMPATIBLE"
-        );
+        assert_eq!(result.unwrap_err().code(), "NATIVE-LINKER-INCOMPATIBLE");
 
         let _ = std::fs::remove_dir_all(root);
     }
 
-    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_host_salah_ditolak() {
         let root = std::env::temp_dir().join(format!(
@@ -587,28 +564,16 @@ mod linker_discovery_tests {
         let candidate = bin.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&bin).unwrap();
-        std::fs::write(&candidate, b"#!/bin/sh\nexit 1\n").unwrap();
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let mut permissions = std::fs::metadata(&candidate).unwrap().permissions();
-            permissions.set_mode(0o755);
-            std::fs::set_permissions(&candidate, permissions).unwrap();
-        }
+        std::os::unix::fs::symlink(unix_utility("false"), &candidate).unwrap();
 
         let result = resolve_linux_x86_64_linker(None, Some(bin.as_os_str()));
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().code(),
-            "NATIVE-LINKER-INCOMPATIBLE"
-        );
+        assert_eq!(result.unwrap_err().code(), "NATIVE-LINKER-INCOMPATIBLE");
 
         let _ = std::fs::remove_dir_all(root);
     }
 
-    #[cfg(unix)]
     #[test]
     fn linux_x86_64_linker_ditemukan_dari_path() {
         let root = std::env::temp_dir().join(format!(
@@ -619,14 +584,12 @@ mod linker_discovery_tests {
         let expected = bin.join("x86_64-linux-gnu-ld");
 
         std::fs::create_dir_all(&bin).unwrap();
-        // This test verifies PATH discovery and successful invocation, not GNU ld
-        // compatibility parsing. Use a known executable instead of a shell script
-        // so the test is independent of the host shell and script execution policy.
-        std::os::unix::fs::symlink("/bin/true", &expected).unwrap();
+        // Probe with a system executable so noexec temporary mounts do not make
+        // the test depend on shell-script execution policy.
+        std::os::unix::fs::symlink(unix_utility("true"), &expected).unwrap();
 
-        let path_env = bin.as_os_str();
         assert_eq!(
-            resolve_linux_x86_64_linker(None, Some(path_env)).unwrap(),
+            resolve_linux_x86_64_linker(None, Some(bin.as_os_str())).unwrap(),
             expected
         );
 
@@ -879,5 +842,48 @@ mod artifact_validation_tests {
         assert!(result.is_ok());
 
         let _ = fs::remove_file(path);
+    }
+}
+
+
+#[cfg(test)]
+mod c_identifier_tests {
+    use super::*;
+    use crate::{analyze, lower, parse};
+
+    fn compile(source: &str) -> IrProgram {
+        let program = parse(source).expect("source should parse");
+        let typed = analyze(&program).expect("source should analyze");
+        lower(&typed).expect("source should lower")
+    }
+
+    #[test]
+    fn c_keywords_and_library_names_are_mangled() {
+        let program = compile(
+            "long adalah 7\nprintf adalah 9\ntampilkan long\ntampilkan printf\n",
+        );
+        let generated = CGenerator::generate(&program).expect("C generation should succeed");
+
+        assert!(generated.contains("long long one_var_0 = 7;"));
+        assert!(generated.contains("long long one_var_1 = 9;"));
+        assert!(generated.contains("printf(\"%lld\\n\", one_var_0);"));
+        assert!(generated.contains("printf(\"%lld\\n\", one_var_1);"));
+        assert!(!generated.contains("long long long"));
+    }
+
+    #[test]
+    fn multi_word_and_underscore_names_get_distinct_c_identifiers() {
+        let program = compile(
+            "nama lengkap adalah \"Budi\"\nnama_lengkap adalah \"Siti\"\nnama café adalah \"Dewi\"\nnama lengkap menjadi \"Citra\"\ntampilkan nama lengkap\ntampilkan nama_lengkap\ntampilkan nama café\n",
+        );
+        let generated = CGenerator::generate(&program).expect("C generation should succeed");
+
+        assert!(generated.contains("const char* one_var_0 = \"Budi\";"));
+        assert!(generated.contains("const char* one_var_1 = \"Siti\";"));
+        assert!(generated.contains("const char* one_var_2 = \"Dewi\";"));
+        assert!(generated.contains("one_var_0 = \"Citra\";"));
+        assert!(generated.contains("puts(one_var_0);"));
+        assert!(generated.contains("puts(one_var_1);"));
+        assert!(generated.contains("puts(one_var_2);"));
     }
 }

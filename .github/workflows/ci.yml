@@ -52,22 +52,24 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: Product CI contracts
+        run: python -m unittest discover -s tests -p test_product_ci_contract.py -v
       - name: Build
-        run: cargo build --workspace --all-targets
+        run: cargo --locked build --workspace --all-targets
       - name: Clippy
         shell: bash
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - name: Tests
-        run: cargo test --workspace --all-targets
+        run: cargo --locked test --workspace --all-targets
       - name: Deterministic .oneir and .onepkg artifacts
-        run: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+        run: cargo --locked test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - name: DNS success and failure classification
-        run: cargo test -p one-core --all-targets dns_adapter
+        run: cargo --locked test -p one-core --all-targets dns_adapter
       - name: Orchestration policy deny and allow paths
-        run: cargo test -p one-core --all-targets orchestrator
+        run: cargo --locked test -p one-core --all-targets orchestrator
       - name: Database vertical slice
-        run: cargo test -p one-core --test database_vertical_slice
+        run: cargo --locked test -p one-core --test database_vertical_slice
       - name: HTTP GET vertical slice
-        run: cargo test -p one-core --test http_get_vertical_slice
+        run: cargo --locked test -p one-core --test http_get_vertical_slice
       - name: HTTP GET CLI vertical slice
-        run: cargo test -p one-cli --test http_get_orchestration
+        run: cargo --locked test -p one-cli --test http_get_orchestration

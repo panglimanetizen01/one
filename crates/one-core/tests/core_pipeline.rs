@@ -38,7 +38,255 @@ fn rejects_undefined_name() {
 }
 
 #[test]
+fn rejects_assignment_before_declaration() {
+    let program = parse("nilai menjadi 7\n").expect("parse");
+    let error = analyze(&program).expect_err("assignment before declaration must fail");
+    assert_eq!(error.0[0].code, "E2002");
+}
+
+#[test]
+fn rejects_incompatible_reassignment() {
+    let program = parse("nilai adalah 7\nnilai menjadi \"teks\"\n").expect("parse");
+    let error = analyze(&program).expect_err("incompatible reassignment must fail");
+    assert_eq!(error.0[0].code, "E2003");
+}
+
+#[test]
 fn rejects_bad_indentation() {
     let source = "kalau benar\n  tampilkan \"salah indentasi\"\n";
     assert!(parse(source).is_err());
+}
+
+#[test]
+fn rejects_list_declaration_when_scalar_name_already_exists() {
+    let program = parse("belanja adalah 7\nbuat daftar belanja\n").expect("parse");
+    let error = analyze(&program).expect_err("list declaration must not replace scalar");
+    assert_eq!(error.0[0].code, "E2001");
+}
+
+#[test]
+fn rejects_duplicate_list_declaration() {
+    let program = parse("buat daftar belanja\nbuat daftar belanja\n").expect("parse");
+    let error = analyze(&program).expect_err("duplicate list must be rejected");
+    assert_eq!(error.0[0].code, "E2001");
+}
+
+#[test]
+fn allows_shadowing_in_a_nested_scope() {
+    let source = "nilai adalah 1\nkalau benar\n    nilai adalah 2\n    tampilkan nilai\ntampilkan nilai\n";
+    assert_eq!(run(source), vec!["2", "1"]);
+}
+
+#[test]
+fn runtime_rejects_list_action_that_would_replace_existing_value() {
+    let program = one_core::IrProgram {
+        statements: vec![
+            one_core::IrStatement::Declaration {
+                name: "belanja".into(),
+                value: one_core::IrExpr::Number(7),
+            },
+            one_core::IrStatement::Action {
+                name: "buat daftar".into(),
+                args: vec![one_core::IrExpr::Identifier("belanja".into())],
+            },
+        ],
+    };
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let error = interpreter.execute(&program).expect_err("runtime must not overwrite");
+    assert_eq!(error.code, "R3022");
+}
+
+
+#[test]
+fn runtime_rejects_assignment_to_undefined_name() {
+    let program = one_core::IrProgram {
+        statements: vec![one_core::IrStatement::Assignment {
+            name: "hilang".into(),
+            value: one_core::IrExpr::Number(1),
+        }],
+    };
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let error = interpreter.execute(&program).expect_err("runtime must reject undefined assignment");
+    assert_eq!(error.code, "R3003");
+}
+
+#[test]
+fn runtime_rejects_duplicate_ir_declaration() {
+    let program = one_core::IrProgram {
+        statements: vec![
+            one_core::IrStatement::Declaration {
+                name: "nilai".into(),
+                value: one_core::IrExpr::Number(1),
+            },
+            one_core::IrStatement::Declaration {
+                name: "nilai".into(),
+                value: one_core::IrExpr::Number(2),
+            },
+        ],
+    };
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    let error = interpreter.execute(&program).expect_err("runtime must reject duplicate");
+    assert_eq!(error.code, "R3022");
+}
+
+#[test]
+fn rejects_scalar_declaration_when_list_name_already_exists() {
+    let program = parse("buat daftar belanja\nbelanja adalah 7\n").expect("parse");
+    let error = analyze(&program).expect_err("scalar declaration must not replace list");
+    assert_eq!(error.0[0].code, "E2001");
+}
+
+
+fn assert_failed_event_preserves_outer_binding(
+    setup: Vec<one_core::IrStatement>,
+    failing_body: Vec<one_core::IrStatement>,
+) {
+    let mut statements = vec![one_core::IrStatement::Declaration {
+        name: "nilai".into(),
+        value: one_core::IrExpr::Number(1),
+    }];
+    statements.extend(setup);
+    statements.push(one_core::IrStatement::Event {
+        trigger: vec!["gagal".into()],
+        body: failing_body,
+    });
+    statements.push(one_core::IrStatement::Event {
+        trigger: vec!["baca".into()],
+        body: vec![one_core::IrStatement::Action {
+            name: "tampilkan".into(),
+            args: vec![one_core::IrExpr::Identifier("nilai".into())],
+        }],
+    });
+
+    let program = one_core::IrProgram { statements };
+    let mut interpreter = Interpreter::new(CapabilitySet::none());
+    interpreter.execute(&program).expect("event definitions should register");
+    let error = interpreter
+        .dispatch_event("gagal")
+        .expect_err("unknown action should fail the event");
+    assert_eq!(error.code, "R3015");
+    let result = interpreter
+        .dispatch_event("baca")
+        .expect("later event should still see the original outer scope");
+    assert_eq!(result.output, vec!["1"]);
+}
+
+#[test]
+fn failed_event_conditional_scope_is_cleaned_up() {
+    assert_failed_event_preserves_outer_binding(
+        vec![],
+        vec![one_core::IrStatement::Conditional {
+            condition: one_core::IrExpr::Boolean(true),
+            then_block: vec![
+                one_core::IrStatement::Declaration {
+                    name: "nilai".into(),
+                    value: one_core::IrExpr::Number(2),
+                },
+                one_core::IrStatement::Action {
+                    name: "aksi_tidak_dikenal".into(),
+                    args: vec![],
+                },
+            ],
+            else_block: vec![],
+        }],
+    );
+}
+
+#[test]
+fn failed_event_while_scope_is_cleaned_up() {
+    assert_failed_event_preserves_outer_binding(
+        vec![],
+        vec![one_core::IrStatement::Loop {
+            kind: one_core::IrLoopKind::While {
+                condition: one_core::IrExpr::Boolean(true),
+            },
+            body: vec![
+                one_core::IrStatement::Declaration {
+                    name: "nilai".into(),
+                    value: one_core::IrExpr::Number(2),
+                },
+                one_core::IrStatement::Action {
+                    name: "aksi_tidak_dikenal".into(),
+                    args: vec![],
+                },
+            ],
+        }],
+    );
+}
+
+#[test]
+fn failed_event_foreach_scope_is_cleaned_up() {
+    assert_failed_event_preserves_outer_binding(
+        vec![
+            one_core::IrStatement::Action {
+                name: "buat daftar".into(),
+                args: vec![one_core::IrExpr::Identifier("items".into())],
+            },
+            one_core::IrStatement::Action {
+                name: "tambahkan".into(),
+                args: vec![
+                    one_core::IrExpr::Text("item".into()),
+                    one_core::IrExpr::Identifier("items".into()),
+                ],
+            },
+        ],
+        vec![one_core::IrStatement::Loop {
+            kind: one_core::IrLoopKind::ForEach {
+                variable: "item".into(),
+                iterable: one_core::IrExpr::Identifier("items".into()),
+            },
+            body: vec![
+                one_core::IrStatement::Declaration {
+                    name: "nilai".into(),
+                    value: one_core::IrExpr::Number(2),
+                },
+                one_core::IrStatement::Action {
+                    name: "aksi_tidak_dikenal".into(),
+                    args: vec![],
+                },
+            ],
+        }],
+    );
+}
+
+fn execute_ir_expression(expression: one_core::ir::IrExpr) -> Result<one_core::interpreter::ExecutionResult, one_core::interpreter::RuntimeError> {
+    let program = one_core::ir::IrProgram {
+        statements: vec![one_core::ir::IrStatement::Action {
+            name: "tampilkan".into(),
+            args: vec![expression],
+        }],
+    };
+    Interpreter::new(CapabilitySet::none()).execute(&program)
+}
+
+#[test]
+fn integer_arithmetic_overflow_returns_stable_runtime_error() {
+    use one_core::ast::BinaryOp;
+    use one_core::ir::IrExpr;
+
+    let cases = vec![
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MAX)), op: BinaryOp::Add, right: Box::new(IrExpr::Number(1)) },
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MIN)), op: BinaryOp::Subtract, right: Box::new(IrExpr::Number(1)) },
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MAX)), op: BinaryOp::Multiply, right: Box::new(IrExpr::Number(2)) },
+        IrExpr::Binary { left: Box::new(IrExpr::Number(i64::MIN)), op: BinaryOp::Divide, right: Box::new(IrExpr::Number(-1)) },
+    ];
+
+    for expression in cases {
+        let error = execute_ir_expression(expression).expect_err("overflow must be reported, not panic or wrap");
+        assert_eq!(error.code, "R3023");
+    }
+}
+
+#[test]
+fn text_addition_is_rejected_as_a_type_mismatch() {
+    use one_core::ast::BinaryOp;
+    use one_core::ir::IrExpr;
+
+    let expression = IrExpr::Binary {
+        left: Box::new(IrExpr::Text("satu".into())),
+        op: BinaryOp::Add,
+        right: Box::new(IrExpr::Text("dua".into())),
+    };
+    let error = execute_ir_expression(expression).expect_err("text addition is not a numeric arithmetic operation");
+    assert_eq!(error.code, "R3018");
 }
