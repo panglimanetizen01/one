@@ -74,7 +74,7 @@ Do not advertise or rely on this capability as a released project sandbox until 
 
 ## CLI authority-root selection
 
-The CLI must derive the filesystem authority root from the source/project context, never from the requested target. It prefers the nearest ancestor containing `one.toml`; otherwise it uses the working directory for sources beneath it or the canonical source parent for standalone sources outside it. The requested target is independently checked against that fixed root. Absolute targets outside the root are rejected for both read and write operations.
+The CLI must derive the filesystem authority root exclusively from the host process current working directory (`std::env::current_dir()`), independently of both the source-file location and the requested target. It opens and retains that root authority before filesystem adapter invocation. The source path and `--target` never select or widen the root. Absolute and relative targets are independently resolved against the retained root; targets outside it are rejected for both read and write operations.
 
 Regression tests cover outside-root read/write attempts and verify that outside data is neither disclosed nor modified. This remains a draft PR #113 candidate pending exact-SHA verification.
 
