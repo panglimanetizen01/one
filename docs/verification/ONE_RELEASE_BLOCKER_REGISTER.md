@@ -107,7 +107,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest code-bearing source:** `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED); it adds `waitid(WNOWAIT)` cleanup hardening on top of the prior `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` process-containment implementation. PR #113 HEAD immediately before this register sync: `48cf777bfc196d19deb77937bcae56e89948bd6c`.
+**Latest code-bearing source:** `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` (NOT BUILT/TESTED); it includes the prior `waitid(WNOWAIT)` cleanup hardening from `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` and adds explicit 2 MiB aggregate stdout/stderr capture enforcement alongside 1 MiB per-stream limits. PR #113 HEAD before this register sync: `d5ddd7f39bbc54a7c0e88db907dfae5f8c49afc5`.
 
 - Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
 - Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
@@ -568,3 +568,8 @@ Continue contract-to-source integration review of the existing v0.1 implementati
 The protected verifier's `LEDGER_SOURCE_COMMIT.txt` pins documentation SHA `d6c382a245c49a028bc60809f22ca956c7f894cc`, which contains the fixed 100-point milestone ledger and Definition of Done. Its 92/100 implementation subtotal (E1 7/10, E2 7/8, E3 8/8, E4 6/6, E5 4/4, E6 0/4) is PROVISIONAL and belongs to the separate milestone-100 workstream; it is not a completion score for PR #113's current v0.1 candidate. The current PR #113 source branch is `security/issue-104-root-confinement-20261118`, with code-bearing candidate `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. The separate `milestone/100-ecosystem-20261023` branch is not safe to merge as-is and is not the current PR #113 integration base.
 
 The approved v0.1 package/build contract explicitly scopes the executable subset to an empty external dependency set and deterministic debug/intermediate `.oneir` / `.onepkg` artifacts; it does not claim a full external package registry or complete signed provenance envelope. Do not import future vNext/milestone-100 scope into v0.1 merely to chase ledger points, and do not alter the protected ledger, fixed weights, DoD, or release acceptance. Finish implementation against the approved v0.1 contract, then perform the required exact-SHA verification and gate reconciliation.
+
+
+### Related Issue #81 resource-bound implementation refresh — 2026-11-21
+
+The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` explicitly enforces a 10-second process deadline, 1 MiB stdout cap, 1 MiB stderr cap, and 2 MiB aggregate capture ceiling. Existing source tests cover stdout overflow, stderr overflow, deadline, normal status/stream preservation, and cleanup. Issue #81 remains OPEN pending exact-SHA Linux/Windows execution; Issue #105 remains OPEN / NOT ACCEPTED pending Linux and real Android/Termux adversarial execution. Do not start broad tests before the implementation scope is complete.
