@@ -1049,6 +1049,30 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
+    fn authority_rejects_symlink_root_without_following_final_component() {
+        use std::os::unix::fs::symlink;
+
+        let base = std::env::temp_dir().join(format!(
+            "one-fs-root-symlink-{}",
+            std::process::id()
+        ));
+        let root = base.join("root");
+        let alias = base.join("root-alias");
+        std::fs::create_dir_all(&root).unwrap();
+        symlink(&root, &alias).unwrap();
+
+        assert_eq!(
+            FilesystemAuthority::open(&alias, 1024, 1024).err(),
+            Some(FilesystemError::InvalidRoot),
+            "the trusted root must not follow a final symlink"
+        );
+
+        std::fs::remove_file(alias).unwrap();
+        std::fs::remove_dir_all(base).unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
     fn authority_rejects_parent_traversal_and_outside_absolute_targets() {
         let root = std::env::temp_dir();
         let authority = FilesystemAuthority::open(&root, 1024, 1024).unwrap();
