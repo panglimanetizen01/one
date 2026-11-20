@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `dda1428ecb4cfabdecc8eb419d98965fa1a2ac39` |
+| PR #113 HEAD at pre-register refresh read | `edd51a01b955ace5caeb993595d6e27bd8c940fe` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `b4b4b3ee82e013eb3c001606820deaa76d50a9df` |
+| Code-bearing source | `76f76c9a7a5884c08d851afc203cb1cae7a5827a` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -718,3 +718,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - The process adapter no-argument smoke fixture now uses `whoami` instead of `rustc` (which can return nonzero without an input file); it is cfg-gated to Linux/Android/Windows. Android is included in process-platform metadata coverage.
 - Test source only; NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `dda1428ecb4cfabdecc8eb419d98965fa1a2ac39`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — SQLite query resource boundaries
+
+- Latest source/test candidate: `76f76c9a7a5884c08d851afc203cb1cae7a5827a` (NOT BUILT/TESTED).
+- SQLite adapter limits SQL to 64 KiB, parameters to 128 / 1 MiB total, rows to 100,000, serialized output to 16 MiB; SQLite's own per-connection limits now cap value/row size, SQL size, columns, variables, compound SELECTs, expression depth, function args, LIKE patterns, attached databases, and worker threads.
+- Output serialization uses bounded fallible exact allocation; BLOB hex output is size-checked before copy, and text conversion is streamed through the same cap. Oversized SQL/BLOB regressions added; NOT RUN.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `edd51a01b955ace5caeb993595d6e27bd8c940fe`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
