@@ -46,3 +46,14 @@ ONE belum selesai/siap rilis sampai seluruh gate resmi release contract dan ledg
 
 
 **Implementation continuation override — 2026-11-21:** Current PR #113 code candidate `4c46a41fe45baa7627557a2a25b9c71812840479` is NOT BUILT/TESTED. Continue production implementation for Issue #104 and #105 plus every remaining in-scope v0.1 product requirement. Issue #104 now includes Linux detached-mount nested-write candidate, Windows native backend, Android/macOS direct-child backends (Android statx mount ID; macOS fstatfs fsid+mount point); unsupported nested operations fail closed. Issue #105 has inherited seccomp process containment on Linux/Android and Windows Job Objects; macOS process execution remains fail-closed. Add focused regression tests alongside code, but defer broad verification cycles until implementation scope is complete. Do not repeat B-001 without a new relevant failure. Keep docs/Notion Skill synchronized; preserve `main`, verifier pins, fixed ledger/DoD, acceptance, and release gates.
+
+
+## Implementation continuation refresh — 2026-11-21
+
+Latest code-bearing candidate and PR #113 HEAD at this checkpoint: `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (OPEN / DRAFT / UNMERGED; NOT BUILT/TESTED). This supersedes the previous 2026-11-21 candidate pointer.
+
+Issue #105 regression coverage now uses ignored helper tests in the same Rust test binary. The helper forks a descendant and calls `setsid(2)` directly, avoiding dependence on an external `setsid` utility on Android/Termux. The parent tests cover normal completion, timeout, and output overflow, record any escaped PID, and clean up the escaped group before reporting failure. The tests are NOT RUN.
+
+Issue #104 implementation changes from the previous checkpoint remain: Linux guarded detached-mount nested writer; Android direct-child `statx(STATX_MNT_ID)` backend; macOS direct-child `fstatfs` filesystem-ID/mount-point backend; exclusive temp replacement with file and directory sync; hard-link regressions. Windows native backend remains unchanged. Nested Android/macOS operations fail closed.
+
+Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broad verification is claimed. Continue implementation-first and preserve all release/security gates.
