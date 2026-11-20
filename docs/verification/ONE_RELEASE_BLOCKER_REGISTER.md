@@ -1,7 +1,7 @@
 # ONE RELEASE BLOCKER REGISTER
 
 **Status:** ACTIVE — single release-sprint work queue  
-**Last verified:** 2026-11-20  
+**Last verified:** 2026-11-21  
 **ONE PR:** [#113](https://github.com/panglimanetizen01/one/pull/113)  
 **Verifier PR:** [#51](https://github.com/panglimanetizen01/one-windows-verification/pull/51)
 
@@ -13,11 +13,11 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `b91e8965b90270b3da4175df807043206a434b9a` |
+| PR #113 HEAD at latest pre-sync live read | `ef83522456914a9a9549d7580a9fd9d2c7cc50ce` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `0a9685bded788ae46596227bd61457d10db1179c` |
-| Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
-| Verifier branch-local source pin | `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` |
+| Code-bearing source | `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` |
+| Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
+| Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
 
 PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all live refs, issue states, status contexts, and provider results before using this snapshot.
@@ -558,3 +558,6 @@ This checkpoint follows the owner's explicit instruction to finish the in-scope 
 
 ### Next implementation work
 Continue contract-to-source integration review of the existing v0.1 implementation scope and close any remaining production-code gaps before the broad test matrix. Do not rerun B-001 diagnostics, existing exact-SHA verifier suites, or historical gates without a relevant input change. Preserve fail-closed behavior and all protected state.
+
+
+> The PR #113 HEAD in the table is the exact live HEAD read immediately before this register refresh. This documentation update itself advances the PR branch; refresh the branch HEAD before the next action. The code-bearing source SHA is unchanged by this documentation-only update.
