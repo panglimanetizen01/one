@@ -698,3 +698,8 @@ Continue Issue #104 production work and reconcile the normative contract against
 ## Implementation-first source update — 2026-11-21
 
 The latest code-bearing candidate reviewed is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. Source includes retained-root Linux `openat2` reads, atomic direct-child writes, guarded detached-mount nested writes with fail-closed fallback; Windows native handle-relative operations; Android direct-child reads/writes with no-follow and mandatory `statx(STATX_MNT_ID)`; macOS direct-child reads/writes with no-follow and filesystem identity checks; hard-link rejection; and atomic temporary-file replacement/sync paths. Android/macOS nested paths remain fail-closed. CLI integration fixtures were corrected in `46c777e...` and `2600ec1...` to use the host working directory as authority and to reflect conditional Linux nested-write support. No build, test, or verifier run was performed. Issue #104 remains OPEN / NOT ACCEPTED; implementation source presence is not security acceptance. Preserve all existing acceptance criteria and protected verifier pins.
+
+
+## Linux special-file read hardening — 2026-11-21
+
+Code change: `50923b545f2c804b24aa773ea5bb60129d1e0ff2` updates the Linux `openat2` read flags to include `O_NONBLOCK` before the opened object is checked with `fstat` for regular-file type. This prevents opening a FIFO with blocking semantics while retaining the existing handle-relative `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV` policy. A Linux regression `authority_rejects_fifo_without_blocking` creates a FIFO with no writer and requires `FilesystemError::NotRegularFile`. The regression has NOT RUN; this is source/test presence only, not execution evidence or Issue #104 acceptance.
