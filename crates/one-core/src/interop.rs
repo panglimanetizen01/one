@@ -351,9 +351,14 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
             break child.wait();
         }
 
-        match child.try_wait() {
-            Ok(Some(status)) => break Ok(status),
-            Ok(None) => {}
+        match child_exited_without_reaping(child.id()) {
+            Ok(true) => {
+                // Keep the group leader unreaped until after all descendants
+                // have received SIGKILL; this prevents process-group ID reuse.
+                kill_process_group(process_group);
+                break child.wait();
+            }
+            Ok(false) => {}
             Err(error) => {
                 kill_process_group(process_group);
                 let _ = child.kill();
@@ -374,9 +379,8 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
         thread::sleep(PROCESS_POLL_INTERVAL);
     };
 
-    // Terminate the complete invocation group. The inherited Linux seccomp
-    // filter prevents descendants from creating a new session/group or PID namespace.
-    kill_process_group(process_group);
+    // The process group was terminated before reaping the direct child on
+    // every exit path, so its numeric group ID could not be recycled.
     // Nonblocking readers retain a bounded shutdown path for unusual pipe
     // behavior even though Linux descendants cannot leave the invocation group.
     reader_shutdown.store(true, Ordering::Release);
@@ -409,6 +413,32 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
         stdout: String::from_utf8_lossy(&stdout).into_owned(),
         stderr: String::from_utf8_lossy(&stderr).into_owned(),
     })
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn child_exited_without_reaping(pid: u32) -> io::Result<bool> {
+    loop {
+        // WNOWAIT observes the direct child as a zombie without releasing its
+        // PID. The process-group ID therefore cannot be recycled before group
+        // cleanup has run.
+        let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+        let result = unsafe {
+            libc::waitid(
+                libc::P_PID,
+                pid as libc::id_t,
+                &mut info,
+                libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
+            )
+        };
+        if result == 0 {
+            return Ok(unsafe { info.si_pid() } != 0);
+        }
+        let error = io::Error::last_os_error();
+        if error.kind() == io::ErrorKind::Interrupted {
+            continue;
+        }
+        return Err(error);
+    }
 }
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
