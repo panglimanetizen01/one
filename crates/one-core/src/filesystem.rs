@@ -1728,3 +1728,57 @@ mod hardlink_tests {
         std::fs::remove_dir_all(base).unwrap();
     }
 }
+
+#[cfg(all(test, target_os = "android"))]
+mod android_filesystem_tests {
+    use super::{FilesystemAuthority, FilesystemError};
+    use std::os::unix::fs::symlink;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir(label: &str) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!("one-android-{label}-{}-{}", std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        std::fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn android_direct_child_read_and_atomic_write_work_with_root_handle() {
+        let root = temp_dir("rw");
+        let target = root.join("data.txt");
+        std::fs::write(&target, b"before").unwrap();
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("data.txt").unwrap(), b"before");
+        authority.write("data.txt", b"after").unwrap();
+        assert_eq!(std::fs::read(&target).unwrap(), b"after");
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn android_leaf_symlinks_and_nested_paths_fail_closed() {
+        let root = temp_dir("deny");
+        let outside = root.with_extension("outside");
+        std::fs::write(&outside, b"outside-sentinel").unwrap();
+        symlink(&outside, root.join("escape.txt")).unwrap();
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(std::fs::read(&outside).unwrap(), b"outside-sentinel");
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_file(outside).unwrap();
+    }
+
+    #[test]
+    fn android_root_final_symlink_is_rejected() {
+        let root = temp_dir("root");
+        let alias = root.with_extension("alias");
+        symlink(&root, &alias).unwrap();
+        assert!(matches!(FilesystemAuthority::open(&alias, 4096, 4096), Err(FilesystemError::InvalidRoot)));
+        std::fs::remove_file(alias).unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+    }
+}
