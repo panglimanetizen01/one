@@ -1248,7 +1248,7 @@ mod tests {
         let executable = std::env::current_exe().expect("current test executable");
         let result = run_process(&ProcessSpec {
             program: executable.to_string_lossy().into_owned(),
-            args: vec!["--ignored".into(), "--exact".into(), "tests::process_group_escape_helper_exit".into(), "--nocapture".into()],
+            args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_escape_helper_exit".into(), "--nocapture".into()],
             working_directory: None,
         }, &CapabilitySet::none().allow(Capability::Process));
         let escaped_pid = cleanup_test_escaped_group(&pid_file);
@@ -1266,7 +1266,7 @@ mod tests {
         let executable = std::env::current_exe().expect("current test executable");
         let result = run_process_with_timeout(&ProcessSpec {
             program: executable.to_string_lossy().into_owned(),
-            args: vec!["--ignored".into(), "--exact".into(), "tests::process_group_escape_helper_timeout".into(), "--nocapture".into()],
+            args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_escape_helper_timeout".into(), "--nocapture".into()],
             working_directory: None,
         }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(1));
         let escaped_pid = cleanup_test_escaped_group(&pid_file);
@@ -1284,7 +1284,7 @@ mod tests {
         let executable = std::env::current_exe().expect("current test executable");
         let result = run_process_with_timeout(&ProcessSpec {
             program: executable.to_string_lossy().into_owned(),
-            args: vec!["--ignored".into(), "--exact".into(), "tests::process_group_escape_helper_output".into(), "--nocapture".into()],
+            args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_escape_helper_output".into(), "--nocapture".into()],
             working_directory: None,
         }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(5));
         let escaped_pid = cleanup_test_escaped_group(&pid_file);
