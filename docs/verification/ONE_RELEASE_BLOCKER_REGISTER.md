@@ -107,7 +107,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest source/test candidate:** `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (NOT BUILT/TESTED).
+**Latest code-bearing source:** `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED); it adds `waitid(WNOWAIT)` cleanup hardening on top of the prior `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` process-containment implementation. PR #113 HEAD immediately before this register sync: `48cf777bfc196d19deb77937bcae56e89948bd6c`.
 
 - Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
 - Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
