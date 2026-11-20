@@ -1414,6 +1414,81 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
+    fn nested_atomic_write_uses_detached_mount_and_rejects_parent_move() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let base = std::env::temp_dir().join(format!(
+            "one-fs-nested-mount-{}-{nonce}",
+            std::process::id()
+        ));
+        let root = base.join("root");
+        let nested = root.join("nested");
+        let outside = base.join("outside");
+        let target = nested.join("target.txt");
+        std::fs::create_dir_all(&nested).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(&target, b"INITIAL").unwrap();
+
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+
+        // Environments without CAP_SYS_ADMIN or open_tree/mount_setattr keep
+        // nested writes fail-closed. The privileged Linux path is exercised
+        // below whenever the kernel permits detached mount cloning.
+        let success = linux_write_nested_relative_with_hook(
+            &authority.root,
+            Path::new("nested/target.txt"),
+            b"UPDATED",
+            |_| Ok(()),
+        );
+        if success == Err(FilesystemError::UnsupportedPlatform) {
+            drop(authority);
+            std::fs::remove_dir_all(base).unwrap();
+            return;
+        }
+        success.expect("detached-mount nested write should succeed when supported");
+        assert_eq!(std::fs::read(&target).unwrap(), b"UPDATED");
+
+        std::fs::write(&target, b"KEEP_ON_PARENT_MOVE").unwrap();
+        let moved_to = outside.join("moved");
+        let mut moved = false;
+        let result = linux_write_nested_relative_with_hook(
+            &authority.root,
+            Path::new("nested/target.txt"),
+            b"MUST_NOT_ESCAPE",
+            |stage| {
+                if stage == LinuxWriteStage::BeforeRename {
+                    std::fs::rename(&nested, &moved_to).unwrap();
+                    moved = true;
+                }
+                Ok(())
+            },
+        );
+        assert!(moved, "the test must move the retained parent before commit");
+        assert!(
+            matches!(
+                result,
+                Err(FilesystemError::NotFound | FilesystemError::ResolutionFailed)
+            ),
+            "a parent moved outside the root must make the final root-relative rename fail: {result:?}"
+        );
+        assert_eq!(
+            std::fs::read(moved_to.join("target.txt")).unwrap(),
+            b"KEEP_ON_PARENT_MOVE"
+        );
+        std::fs::rename(&moved_to, &nested).unwrap();
+        let root_entries = std::fs::read_dir(&root)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<Vec<_>>();
+        assert_eq!(root_entries, vec![std::ffi::OsString::from("nested")]);
+        drop(authority);
+        std::fs::remove_dir_all(base).unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
     fn authority_rejects_parent_traversal_and_outside_absolute_targets() {
         let root = std::env::temp_dir();
         let authority = FilesystemAuthority::open(&root, 1024, 1024).unwrap();
