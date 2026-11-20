@@ -15,10 +15,8 @@ fn filesystem_authority_for_target(target: &str) -> Result<(Arc<FilesystemAuthor
  // the filesystem authority.
  let root = env::current_dir()
   .map_err(|error| format!("Tidak dapat menentukan direktori kerja proyek: {}", error))?;
- let canonical_root = fs::canonicalize(&root)
-  .map_err(|error| format!("Tidak dapat menentukan root proyek '{}': {}", root.display(), error))?;
- let authority = FilesystemAuthority::open(&canonical_root, 1_048_576, 1_048_576)
-  .map_err(|error| format!("Tidak dapat membangun otoritas filesystem untuk target '{}': {:?}", target, error))?;
+ let authority = FilesystemAuthority::open(&root, 1_048_576, 1_048_576)
+  .map_err(|error| format!("Tidak dapat membangun otoritas filesystem untuk root '{}' dan target '{}': {:?}", root.display(), target, error))?;
  Ok((Arc::new(authority), target.to_owned()))
 }
 fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
