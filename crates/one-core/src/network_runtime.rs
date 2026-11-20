@@ -301,7 +301,7 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         });
         let mut stream = TcpStream::connect(address).expect("connect");
         stream.set_read_timeout(Some(Duration::from_secs(2))).expect("timeout");
-        assert!(matches!(read_http_response_bounded(&mut stream), Err(NetworkRuntimeError::Protocol(_))));
+        assert!(matches!(read_http_response_bounded(&mut stream, Duration::from_secs(2)), Err(NetworkRuntimeError::Protocol(_))));
         server.join().expect("server");
     }
 
