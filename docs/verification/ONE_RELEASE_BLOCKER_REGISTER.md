@@ -26,7 +26,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 ### B-001 — CircleCI pre-execution termination
 
-**Priority:** P0 · **State:** OPEN / ROOT CAUSE UNKNOWN  
+**Priority:** P0 · **State:** RESOLVED OPERATIONALLY / HISTORICAL ROOT CAUSE UNKNOWN  
 **Affected candidate:** PR #113 exact HEAD `509b7b197115adb1ba80d730342e9f6fbf981645`
 
 | Run | Pipeline | Workflow | Job | Pipeline revision | Job start |
@@ -53,7 +53,15 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 **Classification:** confirmed pre-execution termination / no job start. It is NOT a test timeout, test assertion failure, compiler failure, or source regression. Root cause remains UNKNOWN; credit eligibility/allocation remains unresolved.
 
-**Next action:** obtain provider-side failure detail for #1201 and resolve OSS allocation/eligibility using authenticated CircleCI access. Do not patch CircleCI config or rerun blindly.
+**Resolution evidence — 2026-11-20**
+- Exact tested source SHA `6ef875291b599ef144dba5333e9a40c455f3e013` has GitHub combined status `ci/circleci: one-linux = success`, target workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`.
+- Compare from original failed SHA `509b7b197115adb1ba80d730342e9f6fbf981645` to tested SHA shows changes only in the three existing verification documents; no runtime source or CI workflow files changed. Thus the same code/workflow state subsequently received a successful CircleCI status.
+- The pre-execution failure is resolved operationally for this candidate code/workflow state. The provider's internal cause for historical pipeline #1201 remains UNKNOWN.
+- Latest PR #113 HEAD `7a9ac7ae720eba3b8f64c1bfa46feda3927dd410` adds only further changes to the same three docs beyond the tested SHA. CircleCI has no status entry for that newer docs-only HEAD.
+- GitHub Actions run #2247: Windows job SUCCESS; Ubuntu job remains IN_PROGRESS at `Install cross-compilers (Ubuntu)`; all subsequent Ubuntu steps pending. No full matrix PASS is claimed.
+- Free and Open Source remains ON per user's confirmed UI observation. Settings API 403 is an access limitation, not evidence of OFF.
+
+**Next action:** retain historical #1201 evidence; do not rerun or change CircleCI config for this operationally resolved blocker. Continue tracking the separate Ubuntu GitHub Actions job and remaining Issue #104 acceptance blockers.
 
 **Separate GitHub Actions bootstrap route**
 - PR #115 `ci/bootstrap-actions-on-fix-windows-verifier-20261120` is OPEN / NOT MERGED; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
