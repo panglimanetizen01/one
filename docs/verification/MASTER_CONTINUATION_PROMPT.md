@@ -71,3 +71,12 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - This is a focused implementation correction and regression-test addition, not a test result. No build, test, CI, verifier, or broad matrix was run. Issue #104 remains OPEN / NOT ACCEPTED.
 - PR #113 remains OPEN / DRAFT / UNMERGED, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. At the read before documentation synchronization, HEAD was `ac3e6037e102fc088c8137d8e7a7e1c8c6ffec99`; documentation commits following that read will advance HEAD without changing the code-bearing source.
 - Continue implementation-first against the release blocker register. Preserve exact-SHA evidence, protected verifier pins, fixed ledger/DoD, fail-closed unsupported paths, and release authorization.
+
+
+## Filesystem read-allocation and resource-limit hardening — 2026-11-21
+
+Code commit: `8792f7a1f707f444d00026d916fa8c18b7f3e7f1`.
+
+- Replaced the unchecked `u64 as usize` conversion used to preallocate filesystem read buffers with `usize::try_from` and `Vec::try_reserve_exact`. Oversized capacities now fail with a defined filesystem error instead of truncating on 32-bit hosts or panicking on reservation failure.
+- Added focused Linux regression `authority_enforces_read_and_write_limits_without_partial_replacement`; it verifies an oversized read is rejected, an oversized write is rejected, and the existing target bytes remain unchanged.
+- This regression is NOT RUN. No build, test, CI, verifier, or platform matrix is claimed. Issue #104 remains OPEN / NOT ACCEPTED.
