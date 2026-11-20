@@ -1,13 +1,15 @@
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Platform { Windows, Linux, Android, Other }
+pub enum Platform { Windows, Linux, Android, Macos, Other }
 
 pub fn current_platform() -> Platform {
     if cfg!(target_os = "windows") {
         Platform::Windows
     } else if cfg!(target_os = "android") {
         Platform::Android
+    } else if cfg!(target_os = "macos") {
+        Platform::Macos
     } else if cfg!(target_os = "linux") {
         Platform::Linux
     } else {
@@ -28,6 +30,8 @@ mod tests {
             assert_eq!(platform, Platform::Windows);
         } else if cfg!(target_os = "android") {
             assert_eq!(platform, Platform::Android);
+        } else if cfg!(target_os = "macos") {
+            assert_eq!(platform, Platform::Macos);
         } else if cfg!(target_os = "linux") {
             assert_eq!(platform, Platform::Linux);
         } else {
