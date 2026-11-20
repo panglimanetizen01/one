@@ -94,3 +94,7 @@ PR #44 merged as `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected branch `v
 ## Host-platform selection reconciliation — 2026-11-20
 
 The diagram now includes `PlatformKind::current_host()` and host-specific filesystem adapter metadata. Implementation: `crates/one-core/src/adapter.rs` (`filesystem_platforms`, `PlatformKind::current_host`) and `crates/one-core/src/interpreter.rs` (actual host passed to orchestration). Linux/Windows E4 metadata test and Linux distro integration evidence are recorded above. Android/macOS filesystem adapters remain unsupported; the separate Android runtime proof does not imply filesystem support.
+
+## Exact-source hard-link regression evidence — 2026-11-20
+
+The architecture itself is unchanged by the test-only hard-link increment. The cross-platform regression `filesystem::hardlink_tests::authority_rejects_hard_linked_targets_without_side_effects` now proves that a multiply-linked target is rejected for read and write and that the in-root and outside names retain their original bytes. E4 Linux and Windows jobs passed this test on source SHA `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` (verifier run #44651796986). The Mermaid diagram remains the architecture source of truth; no visual node or dependency changed. Linux nested writes and unsupported Android/macOS filesystem adapters remain fail-closed.
