@@ -1,7 +1,7 @@
 use std::io::{self, Read};
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 use std::os::fd::AsRawFd;
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -12,11 +12,11 @@ use crate::capability::{Capability, CapabilitySet};
 
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 const READER_SHUTDOWN_GRACE: Duration = Duration::from_millis(100);
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 const READER_IDLE_GRACE: Duration = Duration::from_millis(20);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,7 +34,7 @@ pub struct ProcessResult {
     pub stderr: String,
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn spawn_bounded_reader<R: Read + Send + 'static>(
     mut reader: R,
     output_limit_exceeded: Arc<AtomicBool>,
@@ -121,7 +121,7 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     })
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn set_reader_nonblocking<R: AsRawFd>(reader: &R) -> io::Result<()> {
     let descriptor = reader.as_raw_fd();
     // SAFETY: fcntl only reads and updates flags for this live pipe descriptor.
@@ -255,7 +255,7 @@ fn run_process_with_timeout(
     }
     validate_process_spec(spec)?;
 
-    #[cfg(unix)]
+    #[cfg(target_os = "linux")]
     {
         run_process_unix(spec, timeout)
     }
@@ -263,14 +263,19 @@ fn run_process_with_timeout(
     {
         run_process_windows(spec, timeout)
     }
-    #[cfg(not(any(unix, windows)))]
+    #[cfg(any(target_os = "android", target_os = "macos"))]
+    {
+        let _ = (spec, timeout);
+        Err("Process execution is unavailable on this platform until non-escapable descendant containment is implemented.".into())
+    }
+    #[cfg(not(any(target_os = "linux", windows, target_os = "android", target_os = "macos")))]
     {
         let _ = (spec, timeout);
         Err("Bounded process execution is unsupported on this platform.".into())
     }
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResult, String> {
     use std::os::unix::process::CommandExt;
 
@@ -403,7 +408,7 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
     })
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn kill_process_group(process_group: i32) {
     // SAFETY: a negative pid addresses only the process group created for this
     // invocation via CommandExt::process_group(0).
@@ -1063,6 +1068,7 @@ mod tests {
         assert!(error.contains("embedded NUL"));
     }
 
+    #[cfg(any(target_os = "linux", windows))]
     #[test]
     fn allowed_process_preserves_exit_status_and_streams() {
         let (program, args) = if cfg!(windows) {
@@ -1095,7 +1101,7 @@ mod tests {
         assert!(result.stderr.contains("stderr"));
     }
 
-    #[cfg(unix)]
+    #[cfg(target_os = "linux")]
     #[test]
     fn non_idle_reader_stops_after_shutdown_grace() {
         struct SlowAlwaysReadyReader;
@@ -1187,6 +1193,7 @@ mod tests {
         assert!(!pid_file.exists(), "no setsid writer may survive output overflow");
         let _ = std::fs::remove_file(pid_file);
     }
+    #[cfg(any(target_os = "linux", windows))]
     #[test]
     fn subprocess_execution_is_bounded_by_a_deadline() {
         let (program, args) = if cfg!(windows) {
@@ -1211,6 +1218,7 @@ mod tests {
         assert!(started.elapsed() < Duration::from_secs(15));
     }
 
+    #[cfg(any(target_os = "linux", windows))]
     #[test]
     fn subprocess_stdout_capture_has_a_hard_limit() {
         let (program, args) = if cfg!(windows) {
@@ -1249,6 +1257,7 @@ mod tests {
         );
     }
 
+    #[cfg(any(target_os = "linux", windows))]
     #[test]
     fn subprocess_stderr_capture_has_a_hard_limit() {
         let (program, args) = if cfg!(windows) {
