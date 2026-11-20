@@ -43,3 +43,12 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 
 - Added one linked release blocker register and a compact cross-session master prompt, connected to the existing roadmap, evidence matrix, Mermaid architecture source, release contract, and documentation index.
 - Recorded the exact CircleCI pre-execution mapping for PR #113 pipelines #1199 and #1198. Both jobs have `started_at=null`; root cause remains UNKNOWN and is not labeled a test timeout or source failure.
+
+## Android filesystem adapter implementation candidate — 2026-11-20
+
+- Source/test candidate: `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT OR TESTED).
+- Android now has a native `FilesystemAuthority` root open and a handle-relative direct-child read/atomic-replace backend. Root and leaf are opened without following final symlinks; `statx(STATX_MNT_ID)` is required to reject mount crossings; reads reject non-regular and hard-linked files; writes use an exclusive temporary sibling, `fsync`, and root-relative `renameat`.
+- The backend deliberately avoids `openat2` because Android seccomp may terminate the process with `SIGSYS` for that syscall. It requires kernel `statx` mount-ID support; if unavailable it fails closed.
+- Scope is intentionally limited to direct children of the trusted root. Nested Android paths return `UnsupportedPlatform`; no claim of full Android filesystem support or Issue #104 acceptance is made.
+- Three Android-targeted regression tests cover direct-child read/write, leaf-symlink and nested-path denial, and final-component root-symlink rejection. They have NOT been run. Actual Termux/device execution is still required.
+- Linux nested writes remain fail-closed; macOS filesystem adapter remains unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
