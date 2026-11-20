@@ -1002,6 +1002,18 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
 mod tests {
     use super::*;
 
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    fn cleanup_test_escaped_group(pid_file: &std::path::Path) -> Option<i32> {
+        let pid = std::fs::read_to_string(pid_file).ok()?.trim().parse::<i32>().ok()?;
+        // SAFETY: this helper only targets the process group created by the
+        // adversarial test's setsid child, never a caller-provided PID.
+        unsafe {
+            libc::kill(-pid, libc::SIGKILL);
+            libc::kill(pid, libc::SIGKILL);
+        }
+        Some(pid)
+    }
+
     #[test]
     fn denied_process_capability_never_spawns() {
         let spec = ProcessSpec {
@@ -1158,7 +1170,9 @@ mod tests {
         .expect("the shell should complete after the setsid attempt is denied");
         assert!(result.success);
         assert!(result.stdout.contains("BLOCKED") || result.stderr.contains("Operation not permitted"));
-        assert!(!pid_file.exists(), "a descendant must not enter a new session");
+        let escaped_pid = cleanup_test_escaped_group(&pid_file);
+        assert!(escaped_pid.is_none(), "a descendant must not enter a new session; escaped PID: {escaped_pid:?}");
+
         assert!(started.elapsed() < Duration::from_secs(3));
         let _ = std::fs::remove_file(pid_file);
     }
@@ -1176,7 +1190,9 @@ mod tests {
         }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(1))
         .expect_err("the fallback shell sleep must hit the configured deadline");
         assert!(error.contains("deadline"));
-        assert!(!pid_file.exists(), "no setsid descendant may survive the timeout path");
+        let escaped_pid = cleanup_test_escaped_group(&pid_file);
+        assert!(escaped_pid.is_none(), "no setsid descendant may survive the timeout path; escaped PID: {escaped_pid:?}");
+
         let _ = std::fs::remove_file(pid_file);
     }
 
@@ -1193,7 +1209,9 @@ mod tests {
         }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(5))
         .expect_err("stdout overflow must terminate the invocation group");
         assert!(error.contains("output limit"));
-        assert!(!pid_file.exists(), "no setsid writer may survive output overflow");
+        let escaped_pid = cleanup_test_escaped_group(&pid_file);
+        assert!(escaped_pid.is_none(), "no setsid writer may survive output overflow; escaped PID: {escaped_pid:?}");
+
         let _ = std::fs::remove_file(pid_file);
     }
     #[cfg(any(target_os = "linux", target_os = "android", windows))]
