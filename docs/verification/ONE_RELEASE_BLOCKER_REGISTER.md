@@ -26,7 +26,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 ### B-001 — CircleCI pre-execution termination
 
-**Priority:** P2 · **State:** OPERATIONALLY RESOLVED ON SHA `979973cd...`; HISTORICAL ROOT CAUSE UNKNOWN  
+**Priority:** P2 · **State:** PARTIAL — exact-SHA workflow/job success on `979973cd...`; historical pipeline #1201 root cause UNKNOWN; retain as non-active follow-up  
 **Affected candidate:** PR #113 exact HEAD `509b7b197115adb1ba80d730342e9f6fbf981645`
 
 | Run | Pipeline | Workflow | Job | Pipeline revision | Job start |
