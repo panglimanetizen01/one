@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `c501032e86cf9487ecbeeaacf6328b6cf95d7af8` |
+| PR #113 HEAD at pre-register refresh read | `a2b98ba20ab6473a69698825457031178391c93c` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `11bf5172ed060818dbd55d2ecee3cddf3cd99875` |
+| Code-bearing source | `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56`.
+**Latest source/test candidate:** `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `c501032e86cf9487ecbeeaacf6328b6cf95d7af8`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -693,3 +693,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - This builds on bounded request/response bodies, strict Content-Length/Transfer-Encoding framing, chunk trailer validation, and checked/fallible allocations.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `c501032e86cf9487ecbeeaacf6328b6cf95d7af8`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — exact fallible HTTP buffer reservations
+
+- Latest source candidate: `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (NOT BUILT/TESTED).
+- HTTP request serialization, response ingestion and chunk-body decoding use `try_reserve_exact` under the explicit 16 MiB/64 KiB/32 MiB ceilings, avoiding geometric capacity growth beyond intended limits.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `a2b98ba20ab6473a69698825457031178391c93c`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
