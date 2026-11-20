@@ -814,32 +814,19 @@ mod android_native {
     }
 
     fn parent_and_leaf(root: &File, relative: &Path) -> Result<(File, CString), FilesystemError> {
-        let components: Vec<_> = relative.components().collect();
-        if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        let mut components = relative.components();
+        let Some(Component::Normal(leaf)) = components.next() else {
+            return Err(FilesystemError::InvalidTarget);
+        };
         // POSIX directory descriptors do not pin a directory inside the
         // retained root: an attacker may rename an opened parent directory
         // outside the root before the leaf operation. Until this backend has
         // a native anti-move primitive, nested paths must fail closed.
-        if components.len() != 1 { return Err(FilesystemError::UnsupportedPlatform); }
-        let root_mount = mount_id(root)?;
-        let root_dev = root.metadata().map_err(|_| FilesystemError::IoFailure)?.dev();
-        let mut parent = root.try_clone().map_err(|_| FilesystemError::IoFailure)?;
-        for component in &components[..components.len() - 1] {
-            let Component::Normal(name) = component else { return Err(FilesystemError::InvalidTarget); };
-            let name = CString::new(name.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
-            let next = openat(&parent, &name,
-                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
-            let metadata = next.metadata().map_err(|_| FilesystemError::IoFailure)?;
-            if !metadata.is_dir() { return Err(FilesystemError::NotRegularFile); }
-            if metadata.dev() != root_dev || mount_id(&next)? != root_mount {
-                return Err(FilesystemError::ResolutionFailed);
-            }
-            parent = next;
+        if components.next().is_some() {
+            return Err(FilesystemError::UnsupportedPlatform);
         }
-        let Component::Normal(leaf) = components[components.len() - 1] else {
-            return Err(FilesystemError::InvalidTarget);
-        };
         let leaf = CString::new(leaf.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+        let parent = root.try_clone().map_err(|_| FilesystemError::IoFailure)?;
         Ok((parent, leaf))
     }
 
