@@ -145,7 +145,8 @@ impl ToolAdapter for SqliteAdapter {
         connection.set_limit(Limit::SQLITE_LIMIT_WORKER_THREADS, 0);
         connection.busy_timeout(Duration::from_millis(250)).map_err(|_| AdapterError::BackendFailure)?;
         let deadline = Instant::now() + Self::MAX_QUERY_DURATION;
-        connection.progress_handler(1_000, Some(move || Instant::now() >= deadline));
+        let progress_deadline = deadline;
+        connection.progress_handler(1_000, Some(move || Instant::now() >= progress_deadline));
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
@@ -160,6 +161,9 @@ impl ToolAdapter for SqliteAdapter {
         let mut output = Vec::new();
         let mut row_count = 0usize;
         while let Some(row) = rows.next().map_err(|_| AdapterError::BackendFailure)? {
+            if Instant::now() >= deadline {
+                return Err(AdapterError::BackendFailure);
+            }
             row_count = row_count.checked_add(1)
                 .filter(|count| *count <= Self::MAX_QUERY_ROWS)
                 .ok_or(AdapterError::BackendFailure)?;
