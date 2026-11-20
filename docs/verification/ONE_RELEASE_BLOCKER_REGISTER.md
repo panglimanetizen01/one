@@ -74,17 +74,19 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `b023e6df94db416224a22211aa466fb854cabca0`.
+**Latest source/test candidate:** `4c46a41fe45baa7627557a2a25b9c71812840479` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was the same SHA.
 
-Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
+Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
-Remaining boundaries:
-- Linux nested writes remain fail-closed.
-- Android/macOS filesystem adapters remain unavailable.
-- Android native-backend runtime evidence does not prove Android filesystem adapter support.
+Current implementation boundaries:
+- Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(NOSYMFOLLOW)` + `openat2`, failing closed when required kernel/security primitives are unavailable.
+- Windows retains the native handle-relative/reparse-point backend.
+- Android has direct-child read/atomic-replace support with `O_NOFOLLOW`, mandatory `statx(STATX_MNT_ID)` equality, single-link checks, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed.
+- macOS has direct-child read/atomic-replace support with `O_NOFOLLOW`, single-link checks, `fstatfs` filesystem-ID + mount-point equality, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed.
+- Android/macOS hard-link side-effect regressions were added. All newly added platform regressions remain NOT RUN.
 - Verifier success does not itself constitute Issue #104 acceptance.
 
-**Next action:** reconcile every fixed Issue #104 acceptance criterion against exact candidate source and terminal evidence. Implement only demonstrated gaps; keep unsupported behavior fail-closed. Do not alter criteria, fixed ledger weights, protected verifier pin, or DoD checkboxes.
+**Next action:** continue closing implementation gaps against the unchanged Issue #104 contract. Keep Issue #104 OPEN / NOT ACCEPTED until exact-SHA Unix and Windows adversarial execution proves actual side effects and race confinement. Do not alter criteria, fixed ledger weights, protected verifier pin, or DoD checkboxes.
 
 ### B-003 — Formal v0.1 release gates
 
@@ -105,7 +107,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest source/test candidate:** `418d9642778d975440b81df2bdb5e1bf9aa1d8a5` (NOT BUILT/TESTED).
+**Latest source/test candidate:** `4c46a41fe45baa7627557a2a25b9c71812840479` (NOT BUILT/TESTED).
 
 - Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
 - Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
@@ -510,3 +512,11 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Live PR identity refresh: #113 HEAD `955d37489e44c4b638d047477283160db62dc609`, OPEN / DRAFT / UNMERGED. Current code-bearing source/test candidate remains `0a9685bded788ae46596227bd61457d10db1179c`; no build/test evidence is claimed.
 
 - Architecture source updated for Android/macOS direct-child backends in commit `b023e6df94db416224a22211aa466fb854cabca0`; current PR #113 HEAD is now that SHA. Latest code-bearing source remains `0a9685bded788ae46596227bd61457d10db1179c`.
+
+
+## 2026-11-21 implementation refresh
+
+- PR #113 was OPEN / DRAFT / UNMERGED at code-bearing candidate `4c46a41fe45baa7627557a2a25b9c71812840479`; current candidate has not been built or tested.
+- Issue #104: Android/macOS direct-child filesystem backends are implemented; Android verifies statx mount ID; macOS verifies `fstatfs` filesystem ID and mount point; both add hard-link regressions, exclusive temp replacement, and directory sync. Linux nested writes use a guarded detached-mount backend and fail closed when unsupported. Windows backend remains unchanged. Issue #104 remains OPEN / NOT ACCEPTED.
+- Issue #105: Linux/Android inherited seccomp process-group containment candidate and Windows Job Object remain in scope; macOS process execution fails closed. Adversarial tests are present but unrun. Issue #105 remains OPEN / NOT ACCEPTED.
+- Keep broad matrix deferred until product implementation scope is complete. B-001 is not reopened absent a new provider failure.
