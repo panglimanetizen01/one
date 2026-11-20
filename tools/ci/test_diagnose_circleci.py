@@ -188,6 +188,37 @@ class CircleCIDiagnosticTests(unittest.TestCase):
                 [],
             )
 
+    def test_exact_sha_discovery_checks_every_matching_pipeline(self):
+        sha = "a" * 40
+        responses = [
+            {
+                "items": [
+                    {"id": "older-pipeline", "number": 10, "state": "failed",
+                     "vcs": {"revision": sha}, "created_at": "2026-11-18T00:00:00Z"},
+                    {"id": "newer-pipeline", "number": 11, "state": "created",
+                     "vcs": {"revision": sha}, "created_at": "2026-11-19T00:00:00Z"},
+                ],
+                "next_page_token": None,
+            },
+            {"items": [{"id": "older-workflow", "name": "one-ci", "status": "failed"}],
+             "next_page_token": None},
+            {"items": [{"id": "older-job", "name": "one-linux", "status": "failed",
+                        "job_number": 836, "started_at": None}],
+             "next_page_token": None},
+            {"items": [{"id": "newer-workflow", "name": "one-ci", "status": "running"}],
+             "next_page_token": None},
+            {"items": [{"id": "newer-job", "name": "one-linux", "status": "running"}],
+             "next_page_token": None},
+        ]
+        with patch("diagnose_circleci.get_json", side_effect=responses) as get_json:
+            failures = discover_failed_jobs("token", "gh/example/one", "feature", sha)
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(failures[0]["pipeline_id"], "older-pipeline")
+        self.assertEqual(failures[0]["pipeline_revision"], sha)
+        self.assertEqual(failures[0]["workflow_id"], "older-workflow")
+        self.assertEqual(failures[0]["job_started_at"], None)
+        self.assertEqual(get_json.call_count, 5)
+
     def test_direct_job_lookup_marks_source_sha_unverified(self):
         line = source_identity_line({"id": "job-uuid"})
         self.assertIn("SOURCE SHA: UNVERIFIED", line)
