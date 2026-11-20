@@ -505,3 +505,34 @@ Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broa
 Latest code-bearing source/test candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). Linux/Android process supervision now observes direct-child exit using `waitid(P_PID, WEXITED | WNOHANG | WNOWAIT)` rather than reaping via `try_wait()` before process-group cleanup. The child remains a zombie (its PID/PGID cannot be recycled) while the wrapper sends SIGKILL to the invocation process group; only then does `Child::wait()` reap it. The redundant post-reap group kill was removed. All timeout, output-overflow, wait-error and normal-completion paths terminate the group before reaping.
 
 Process escape regressions use in-binary ignored helpers with direct `fork` + `setsid(2)` syscalls, record any escaped PID and clean up before failing. Three paths: normal completion, timeout, output overflow. NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## IMPLEMENTATION-FIRST CONTINUATION — 2026-11-21
+
+This checkpoint follows the owner's explicit instruction to finish the in-scope implementation before starting broad tests, verification, or release-gate reruns. It does not change any acceptance criteria or protected state.
+
+### Exact candidate identity
+- ONE PR #113 remains OPEN / DRAFT / UNMERGED; branch `security/issue-104-root-confinement-20261118`; base `fix/windows-process-verifier-timeouts-20261118` at `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Latest code-bearing implementation source: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (Issue #105 Linux/Android child-PID retention using `waitid(WNOWAIT)`).
+- Test-fixture correction commits: `46c777e70f396cfee6d796d0667769dabe2d7208` and `2600ec18d4e3fb05558ca50d7cf466638e1ab015`; both affect only `crates/one-cli/tests/filesystem_write.rs`.
+- PR #113 HEAD after those commits: `2600ec18d4e3fb05558ca50d7cf466638e1ab015`. No source implementation or CI config changed in those two commits.
+
+### Implementation/source inventory — presence is not execution evidence
+- Issue #104 source contains Linux retained-root `openat2` reads, atomic direct-child writes, guarded detached-mount nested writes with fail-closed fallback; Windows native handle-relative/reparse-point backend; Android direct-child read/write with no-follow and `statx(STATX_MNT_ID)`; macOS direct-child read/write with no-follow and filesystem identity checks; exclusive temporary files, sync/rename paths, and hard-link rejection.
+- Issue #105 source contains inherited Linux/Android seccomp process-group containment, Windows Job Object containment, macOS process execution fail-closed, and Linux/Android `waitid(WNOWAIT)` so the direct child PID is retained until process-group cleanup.
+- Source contains three direct-`fork` + `setsid` adversarial regressions for normal completion, timeout, and output overflow, with escaped-PID recording/cleanup. These tests have NOT been run on source `72eae...`.
+- Android/macOS nested filesystem paths and macOS process execution remain fail-closed. Do not claim broader support.
+
+### Test-fixture implementation corrections
+- Replaced the incorrect “nearest manifest selects root” expectation with the contract-compliant host working-directory root test.
+- Added an explicit CLI test runner working-directory helper and used it where the trusted host root must be controlled by the fixture.
+- Updated Linux nested-write integration expectations: success is accepted only when the detached-mount backend works; otherwise only `UnsupportedPlatform` with unchanged target bytes and no leaked temp file is accepted.
+- Restricted the unsupported-platform fixture to targets without native filesystem backends; Android and macOS are no longer incorrectly classified as unsupported.
+- Commits use `[skip ci]` by design. No tests/builds/verifier workflows were run as part of this implementation-first checkpoint.
+
+### CI and acceptance boundary
+- Exact PR HEAD `64cea5895d930b8621a7e31209676057d275fdb3` had GitHub status `ci/circleci: one-linux = FAILURE` (workflow `b7b0bbab-06dc-4cbc-88cf-f54624594d8f`, job `6e1d368b-8055-4cfe-a64e-858f9bd2fcdd`). Provider pipeline revision, job membership, logs, and root cause were not obtained; no cause is inferred.
+- The newer commits `46c777e...` and `2600ec1...` intentionally skip CI and have no status contexts. No PASS is claimed for the new HEAD.
+- Issue #104 and Issue #105 remain OPEN / NOT ACCEPTED until the required exact-SHA evidence is produced. This checkpoint records implementation/source state only; it does not promote ledger points, DoD, verifier pins, or release status.
+
+### Next implementation work
+Continue contract-to-source integration review of the existing v0.1 implementation scope and close any remaining production-code gaps before the broad test matrix. Do not rerun B-001 diagnostics, existing exact-SHA verifier suites, or historical gates without a relevant input change. Preserve fail-closed behavior and all protected state.
