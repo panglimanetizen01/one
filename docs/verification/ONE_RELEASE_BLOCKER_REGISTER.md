@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56` |
+| PR #113 HEAD at pre-register refresh read | `c501032e86cf9487ecbeeaacf6328b6cf95d7af8` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` |
+| Code-bearing source | `11bf5172ed060818dbd55d2ecee3cddf3cd99875` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `bcfeadb61d79bfe09476cd47bdd9d9c20be92e28`.
+**Latest source/test candidate:** `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -684,3 +684,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - This extends the existing request/response size limits, token validation, ambiguous-framing rejection, and fallible buffer growth.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — HTTP header token/control validation
+
+- Latest source candidate: `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (NOT BUILT/TESTED).
+- HTTP response header names are validated as tokens and values reject control bytes except HTAB. Request header names/values and request-target syntax have equivalent validation. Added regressions for invalid response header names/values and invalid request header names/targets; NOT RUN.
+- This builds on bounded request/response bodies, strict Content-Length/Transfer-Encoding framing, chunk trailer validation, and checked/fallible allocations.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `c501032e86cf9487ecbeeaacf6328b6cf95d7af8`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
