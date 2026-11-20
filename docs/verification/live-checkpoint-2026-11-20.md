@@ -118,3 +118,12 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - Provider-side CircleCI logs are not accessible through the connected session. Collect job #833 logs by direct job UUID and pipeline #399 logs using the local diagnostic script; verify each run's source revision before attribution. Never expose `CIRCLECI_TOKEN`.
 - No merge, force-push, `main` update, protected pin promotion, ledger-weight/DoD change, or blind retry is authorized by this status refresh.
 
+## Release-sprint live status — 2026-11-20
+
+The single prioritized work queue is [ONE_RELEASE_BLOCKER_REGISTER.md](ONE_RELEASE_BLOCKER_REGISTER.md); new sessions start from [MASTER_CONTINUATION_PROMPT.md](MASTER_CONTINUATION_PROMPT.md).
+
+- PR #113 docs HEAD `a0d94bc9a26cf9effd4b202f29af50f81c8e4ee5`: pipeline #1199 / workflow `916983e9-dbde-4db2-a967-438a666ebb19` / job #834. Job `started_at=null`; step #101 CANCELED / `Task information unavailable`, no stdout/stderr. Root cause UNKNOWN.
+- Prior docs HEAD `5daf333...`: pipeline #1198 / job #833 has the same pre-execution/no-output signature.
+- Code-bearing source `fb5c8bc...` has separate CircleCI SUCCESS; it does not verify the documentation HEAD.
+- Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable.
+- No acceptance ledger, DoD, protected pin, merge, main, or release state changed.

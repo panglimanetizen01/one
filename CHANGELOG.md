@@ -30,3 +30,8 @@
 - Updated the native backend contract map, implementation-status inventory, evidence matrix, release boundary, user feature-status guide, and verification record to reflect the merged state and preserve exact-SHA evidence boundaries.
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution.
+
+## Release execution controls — 2026-11-20
+
+- Added one linked release blocker register and a compact cross-session master prompt, connected to the existing roadmap, evidence matrix, Mermaid architecture source, release contract, and documentation index.
+- Recorded the exact CircleCI pre-execution mapping for PR #113 pipelines #1199 and #1198. Both jobs have `started_at=null`; root cause remains UNKNOWN and is not labeled a test timeout or source failure.

@@ -52,3 +52,13 @@ The derivative set includes:
 ## Current release gate
 
 Source, normative documentation, fixtures, executable tests, verification tooling, and network runtime slices are present. The current canonical release gate is **VERIFIED** for exact SHA `38dc98fcee49fa04c589d5a3c825b0d4006d6d61` by independent run `38848143359` on Ubuntu and Windows Server 2025. Any later canonical commit requires a new exact-SHA matrix.
+
+## Release sprint overlay — 2026-11-20
+
+This is a non-destructive execution overlay. It does not rewrite historical tasks, fixed acceptance criteria, ledger weights, or Definition of Done.
+
+- The single prioritized work queue is [ONE_RELEASE_BLOCKER_REGISTER.md](../../verification/ONE_RELEASE_BLOCKER_REGISTER.md).
+- The copy/paste entry point for new sessions is [MASTER_CONTINUATION_PROMPT.md](../../verification/MASTER_CONTINUATION_PROMPT.md).
+- Execute in order: diagnose CircleCI pre-execution termination; close Issue #104 against unchanged criteria; reconcile remaining formal v0.1 gates; freeze one exact candidate SHA and run the integrated matrix; synchronize affected existing docs; prepare release artifacts only after approval.
+- A job with `started_at=null` is not evidence of a test timeout or test failure. Current provider root cause remains UNKNOWN; see the blocker register and live checkpoint.
+- This overlay changes prioritization only. It does not change task weights, acceptance rules, issue state, or release approval.

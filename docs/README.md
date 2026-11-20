@@ -110,3 +110,9 @@ GitHub `main` is the canonical source. Local/Termux copies are verification envi
 
 - [Filesystem root-confinement candidate diagram](architecture/filesystem-root-confinement.md) — source Mermaid view for the host-injected filesystem authority and platform-specific read/write boundaries in draft PR #113.
 - [Full architecture map](https://github.com/panglimanetizen01/one/blob/docs/system-architecture-diagram-20261115/docs/architecture/one-full-architecture-map.png) — non-normative overview image in still-open PR #97. Its binary image has not been visually inspected in this session.
+
+## Release execution and session continuity
+
+- `verification/ONE_RELEASE_BLOCKER_REGISTER.md` — single prioritized release blocker queue.
+- `verification/MASTER_CONTINUATION_PROMPT.md` — compact copy/paste entry point for every new session.
+- The register links the existing release contract, completion roadmap, evidence matrix, implementation status, verification records, Mermaid architecture source, and changelog. It controls priority only; those linked documents remain authoritative for acceptance.

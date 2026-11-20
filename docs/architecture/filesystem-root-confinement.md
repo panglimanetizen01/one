@@ -98,3 +98,7 @@ The diagram now includes `PlatformKind::current_host()` and host-specific filesy
 ## Exact-source hard-link regression evidence — 2026-11-20
 
 The architecture itself is unchanged by the test-only hard-link increment. The cross-platform regression `filesystem::hardlink_tests::authority_rejects_hard_linked_targets_without_side_effects` now proves that a multiply-linked target is rejected for read and write and that the in-root and outside names retain their original bytes. E4 Linux and Windows jobs passed this test on source SHA `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` (verifier run #44651796986). The Mermaid diagram remains the architecture source of truth; no visual node or dependency changed. Linux nested writes and unsupported Android/macOS filesystem adapters remain fail-closed.
+
+## Release-control traceability
+
+The Mermaid diagram above remains the existing architecture source of truth; this release-control update does not change its nodes or security semantics. The prioritized work queue is [ONE_RELEASE_BLOCKER_REGISTER.md](../verification/ONE_RELEASE_BLOCKER_REGISTER.md), and exact-SHA evidence remains in [the evidence matrix](../verification/one-v0.1-evidence-matrix.md). Do not recreate the diagram to represent project status.

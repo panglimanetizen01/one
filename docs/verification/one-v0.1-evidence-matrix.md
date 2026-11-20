@@ -489,3 +489,13 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - Provider-side CircleCI logs are not accessible through the connected session. Collect job #833 logs by direct job UUID and pipeline #399 logs using the local diagnostic script; verify each run's source revision before attribution. Never expose `CIRCLECI_TOKEN`.
 - No merge, force-push, `main` update, protected pin promotion, ledger-weight/DoD change, or blind retry is authorized by this status refresh.
 
+## Release sprint exact-SHA refresh — 2026-11-20
+
+- PR #113 HEAD `a0d94bc9a26cf9effd4b202f29af50f81c8e4ee5` maps to CircleCI pipeline #1199, workflow `916983e9-dbde-4db2-a967-438a666ebb19`, job #834 / `a130c5d9-c078-4c18-8ae5-571470f46d60`. Pipeline state: `created`; workflow/job: failed; job `started_at=null`; available step #101: CANCELED / `Task information unavailable`, stdout/stderr empty.
+- Prior docs HEAD `5daf3337b4bcc93fa3ee6072f9633915d5fea85b` maps to pipeline #1198, workflow `5ed6d9e7-976e-4322-b7ba-6deea915e1a9`, job #833 / `8d2d756e-9297-4a00-9a7d-a0c9bd734cba`; `started_at=null` and the same no-output canceled-step signature.
+- Classification for both: **pre-execution termination / ROOT CAUSE UNKNOWN**. Do not label as timeout, test failure, compiler failure, or source regression without provider evidence.
+- Local Termux diagnostic script blob equals remote PR #113 blob `751c25e0b4a4227638c898043ce175d62d523834`. Local checkout HEAD `70ae27cd9dab4429c528d6f01a42377f474c725c` is 76 commits behind; do not destructively synchronize it.
+- CircleCI SUCCESS on code source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` remains valid only for that SHA (workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`); provider step logs were not inspected. It does not transfer to docs HEAD `a0d94bc...`.
+- Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Existing verifier results remain attributed to their recorded source and verifier SHAs.
+- PR #113 remains OPEN / DRAFT / UNMERGED; ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. Verifier PR #51 remains OPEN / DRAFT / UNMERGED at `6c0979e62eb01e4b929c48b4224a3d4f742bc8af`; protected verifier pin `722d662...` unchanged.
+- See [ONE_RELEASE_BLOCKER_REGISTER.md](ONE_RELEASE_BLOCKER_REGISTER.md) for actions and [MASTER_CONTINUATION_PROMPT.md](MASTER_CONTINUATION_PROMPT.md) for session startup.
