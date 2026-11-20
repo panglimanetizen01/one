@@ -548,3 +548,14 @@ The independent verifier's expected source test-filter inventory is now structur
 - Source commit: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`).
 - Removed the second identical `cleanup_test_escaped_group` definition from the `interop.rs` test module. The duplicate would produce a Rust duplicate-definition error when compiling the test module; only one definition remains in source.
 - This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
+
+
+## Android/macOS filesystem helper repair and nested-path security boundary — 2026-11-21
+
+Latest code-bearing source: `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (`crates/one-core/src/filesystem.rs`).
+
+- Removed the duplicate Android `create_temp` definition and supplied the missing macOS `create_temp` helper. These were source-visible compile blockers; no build was run.
+- Android/macOS direct-child read/write backends remain. Their root-relative direct-child operations retain no-follow checks, regular-file/single-link checks, Android `statx(STATX_MNT_ID)` or macOS `fstatfs` identity checks, and same-directory atomic replacement.
+- Nested Android/macOS paths remain fail-closed. A proposed generic openat parent walk was deliberately not enabled: ordinary POSIX directory handles do not pin an opened parent beneath the retained root, so an attacker may rename that directory outside the root before the leaf operation. The current resolver rejects multi-component paths with `UnsupportedPlatform` until an anti-move primitive is implemented.
+- Android/macOS regression fixtures now cover nested-path fail-closed behavior, leaf symlinks, and an outside sentinel. These tests are NOT RUN.
+- This is source implementation hardening and a precise capability boundary, not acceptance. Issue #104 remains OPEN / NOT ACCEPTED. No build/test/CI/verifier/platform matrix was run and no status was promoted.
