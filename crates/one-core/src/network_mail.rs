@@ -3,13 +3,17 @@ use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
+use crate::resource_budget::ResourcePermit;
 
 const MAX_MAIL_LINE: usize = 64 * 1024;
 const MAX_IMAP_BODY: usize = 16 * 1024 * 1024;
+const MAX_MAIL_RESPONSE_BYTES: usize = 16 * 1024 * 1024;
+const MAX_MAIL_RESPONSE_LINES: usize = 100_000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MailProtocolError {
     CapabilityDenied,
+    ResourceLimitExceeded,
     InvalidResponse,
     Io(String),
     Timeout,
@@ -24,17 +28,44 @@ fn io_error(error: std::io::Error) -> MailProtocolError {
     if matches!(error.kind(), std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock) { MailProtocolError::Timeout } else { MailProtocolError::Io(error.to_string()) }
 }
 
-fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet) -> Result<TcpStream, MailProtocolError> {
+fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet) -> Result<(TcpStream, ResourcePermit), MailProtocolError> {
     permit(caps)?;
+    let resource_permit = ResourcePermit::operation().ok_or(MailProtocolError::ResourceLimitExceeded)?;
     let address = address.to_socket_addrs().map_err(io_error)?.next().ok_or_else(|| MailProtocolError::Io("no address resolved".into()))?;
     let stream = TcpStream::connect_timeout(&address, timeout).map_err(io_error)?;
     stream.set_read_timeout(Some(timeout)).map_err(io_error)?;
     stream.set_write_timeout(Some(timeout)).map_err(io_error)?;
-    Ok(stream)
+    Ok((stream, resource_permit))
 }
 
 fn validate_command_field(value: &str) -> Result<(), MailProtocolError> {
-    if value.contains('\r') || value.contains('\n') { Err(MailProtocolError::InvalidResponse) } else { Ok(()) }
+    if value.bytes().any(|byte| byte < 0x20 || byte == 0x7f) {
+        Err(MailProtocolError::InvalidResponse)
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_pop3_username(value: &str) -> Result<(), MailProtocolError> {
+    validate_command_field(value)?;
+    if value.is_empty() || value.bytes().any(|byte| byte.is_ascii_whitespace()) {
+        return Err(MailProtocolError::InvalidResponse);
+    }
+    Ok(())
+}
+
+fn quote_imap_string(value: &str) -> Result<String, MailProtocolError> {
+    validate_command_field(value)?;
+    let mut quoted = String::with_capacity(value.len().saturating_add(2));
+    quoted.push('"');
+    for character in value.chars() {
+        if character == '"' || character == '\\' {
+            quoted.push('\\');
+        }
+        quoted.push(character);
+    }
+    quoted.push('"');
+    Ok(quoted)
 }
 
 fn read_line(stream: &mut TcpStream) -> Result<String, MailProtocolError> {
@@ -60,18 +91,18 @@ fn require_ok(line: &str, prefix: &str) -> Result<(), MailProtocolError> {
     if line.starts_with(prefix) { Ok(()) } else { Err(MailProtocolError::Server(line.trim_end().to_string())) }
 }
 
-pub struct Pop3Client { stream: TcpStream }
+pub struct Pop3Client { stream: TcpStream, _resource_permit: ResourcePermit }
 
 impl Pop3Client {
     pub fn connect(address: &str, timeout: Duration, caps: &CapabilitySet) -> Result<Self, MailProtocolError> {
-        let mut stream = connect(address, timeout, caps)?;
+        let (mut stream, resource_permit) = connect(address, timeout, caps)?;
         let greeting = read_line(&mut stream)?;
         require_ok(&greeting, "+OK")?;
-        Ok(Self { stream })
+        Ok(Self { stream, _resource_permit: resource_permit })
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
-        validate_command_field(user)?;
+        validate_pop3_username(user)?;
         validate_command_field(password)?;
         require_ok(&command(&mut self.stream, &format!("USER {user}"))?, "+OK")?;
         require_ok(&command(&mut self.stream, &format!("PASS {password}"))?, "+OK")
@@ -81,8 +112,13 @@ impl Pop3Client {
         let first = command(&mut self.stream, "LIST")?;
         require_ok(&first, "+OK")?;
         let mut messages = Vec::new();
+        let mut response_bytes = first.len();
         loop {
             let line = read_line(&mut self.stream)?;
+            response_bytes = response_bytes.checked_add(line.len()).ok_or(MailProtocolError::InvalidResponse)?;
+            if response_bytes > MAX_MAIL_RESPONSE_BYTES || messages.len() >= MAX_MAIL_RESPONSE_LINES {
+                return Err(MailProtocolError::InvalidResponse);
+            }
             let trimmed = line.trim_end();
             if trimmed == "." { break; }
             let mut fields = trimmed.split_whitespace();
@@ -95,29 +131,34 @@ impl Pop3Client {
     }
 }
 
-pub struct ImapClient { stream: TcpStream, next_tag: u32 }
+pub struct ImapClient { stream: TcpStream, next_tag: u32, _resource_permit: ResourcePermit }
 
 impl ImapClient {
     pub fn connect(address: &str, timeout: Duration, caps: &CapabilitySet) -> Result<Self, MailProtocolError> {
-        let mut stream = connect(address, timeout, caps)?;
+        let (mut stream, resource_permit) = connect(address, timeout, caps)?;
         let greeting = read_line(&mut stream)?;
         if !greeting.starts_with("* OK") { return Err(MailProtocolError::Server(greeting.trim_end().to_string())); }
-        Ok(Self { stream, next_tag: 1 })
+        Ok(Self { stream, next_tag: 1, _resource_permit: resource_permit })
     }
 
-    fn tag(&mut self) -> String {
-        let tag = format!("a{:03}", self.next_tag);
-        self.next_tag += 1;
-        tag
+    fn tag(&mut self) -> Result<String, MailProtocolError> {
+        let current = self.next_tag;
+        self.next_tag = self.next_tag.checked_add(1).ok_or(MailProtocolError::InvalidResponse)?;
+        Ok(format!("a{:03}", current))
     }
 
     fn send(&mut self, command_text: &str) -> Result<(String, Vec<String>), MailProtocolError> {
         validate_command_field(command_text)?;
-        let tag = self.tag();
+        let tag = self.tag()?;
         self.stream.write_all(format!("{tag} {command_text}\r\n").as_bytes()).map_err(io_error)?;
         let mut untagged = Vec::new();
+        let mut response_bytes = 0usize;
         loop {
             let line = read_line(&mut self.stream)?;
+            response_bytes = response_bytes.checked_add(line.len()).ok_or(MailProtocolError::InvalidResponse)?;
+            if response_bytes > MAX_MAIL_RESPONSE_BYTES || untagged.len() >= MAX_MAIL_RESPONSE_LINES {
+                return Err(MailProtocolError::InvalidResponse);
+            }
             if line.starts_with(&format!("{tag} ")) {
                 return Ok((line[tag.len() + 1..].trim_end().to_string(), untagged));
             }
@@ -126,14 +167,14 @@ impl ImapClient {
     }
 
     pub fn login(&mut self, user: &str, password: &str) -> Result<(), MailProtocolError> {
-        validate_command_field(user)?;
-        validate_command_field(password)?;
+        let user = quote_imap_string(user)?;
+        let password = quote_imap_string(password)?;
         let (status, _) = self.send(&format!("LOGIN {user} {password}"))?;
         if status.starts_with("OK") { Ok(()) } else { Err(MailProtocolError::Server(status)) }
     }
 
     pub fn select(&mut self, mailbox: &str) -> Result<u32, MailProtocolError> {
-        validate_command_field(mailbox)?;
+        let mailbox = quote_imap_string(mailbox)?;
         let (status, lines) = self.send(&format!("SELECT {mailbox}"))?;
         if !status.starts_with("OK") { return Err(MailProtocolError::Server(status)); }
         for line in lines {
@@ -146,7 +187,7 @@ impl ImapClient {
     }
 
     pub fn fetch_body(&mut self, sequence: u32) -> Result<Vec<u8>, MailProtocolError> {
-        let tag = self.tag();
+        let tag = self.tag()?;
         self.stream.write_all(format!("{tag} FETCH {sequence} BODY[]\r\n").as_bytes()).map_err(io_error)?;
         let line = read_line(&mut self.stream)?;
         if !line.starts_with("* ") || !line.contains("FETCH") { return Err(MailProtocolError::InvalidResponse); }
@@ -171,6 +212,14 @@ mod tests {
     fn mail_clients_require_network_connect_capability_before_io() {
         assert!(matches!(Pop3Client::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
         assert!(matches!(ImapClient::connect("127.0.0.1:1", Duration::from_millis(10), &CapabilitySet::none()), Err(MailProtocolError::CapabilityDenied)));
+    }
+
+    #[test]
+    fn imap_arguments_are_quoted_and_escape_protocol_metacharacters() {
+        assert_eq!(quote_imap_string("safe mailbox").expect("quoted"), "\"safe mailbox\"");
+        assert_eq!(quote_imap_string("a\"b\\c").expect("escaped"), "\"a\\\"b\\\\c\"");
+        assert!(quote_imap_string("bad\r\nLOGIN attacker").is_err());
+        assert!(validate_pop3_username("user name").is_err());
     }
 
     #[test]

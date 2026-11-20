@@ -1,0 +1,50 @@
+name: ONE Standard Library Focused Verification
+
+on:
+  push:
+    branches: [ milestone/100-ecosystem-20261023 ]
+    paths:
+      - "crates/one-core/src/stdlib.rs"
+      - "crates/one-core/src/semantic.rs"
+      - "crates/one-core/src/interpreter.rs"
+      - "crates/one-core/tests/stdlib_builtins.rs"
+      - ".github/workflows/stdlib-focused.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "crates/one-core/src/stdlib.rs"
+      - "crates/one-core/src/semantic.rs"
+      - "crates/one-core/src/interpreter.rs"
+      - "crates/one-core/tests/stdlib_builtins.rs"
+      - ".github/workflows/stdlib-focused.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-stdlib-focused-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  stdlib:
+    name: UTC and deterministic stdlib regression tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with:
+          toolchain: 1.99.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+      - name: UTC formatter unit and calendar-boundary tests
+        run: cargo --locked test -p one-core --lib unix_seconds_format_as_valid_bounded_gregorian_utc_timestamps
+      - name: Source-level UTC formatter integration tests
+        run: cargo --locked test -p one-core --test stdlib_builtins unix_timestamp_formatter_runs_through_the_canonical_pipeline
+      - name: Source-level text prefix and suffix integration tests
+        run: cargo --locked test -p one-core --test stdlib_builtins text_prefix_and_suffix_builtins_execute_through_the_canonical_pipeline
+      - name: Source-level checked integer remainder integration tests
+        run: cargo --locked test -p one-core --test stdlib_builtins checked_integer_remainder_runs_through_the_canonical_pipeline
+      - name: Source-level case conversion and numeric integration tests
+        run: cargo --locked test -p one-core --test stdlib_builtins case_conversion_and_numeric_builtins_execute_through_the_canonical_pipeline
+      - name: Standard-library lint
+        run: cargo --locked clippy -p one-core --all-targets -- -D warnings

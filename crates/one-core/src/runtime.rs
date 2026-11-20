@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -6,6 +6,7 @@ pub enum Value {
     Number(i64),
     Boolean(bool),
     List(Vec<Value>),
+    Map(BTreeMap<String, Value>),
     Nothing,
 }
 
@@ -16,6 +17,7 @@ impl Value {
             Value::Number(v) => v.to_string(),
             Value::Boolean(v) => if *v { "benar".into() } else { "salah".into() },
             Value::List(values) => format!("[{}]", values.iter().map(Value::display).collect::<Vec<_>>().join(", ")),
+            Value::Map(values) => format!("{{{}}}", values.iter().map(|(key, value)| format!("{}: {}", key, value.display())).collect::<Vec<_>>().join(", ")),
             Value::Nothing => "tidak ada".into(),
         }
     }

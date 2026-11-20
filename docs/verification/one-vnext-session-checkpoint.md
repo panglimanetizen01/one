@@ -1,0 +1,300 @@
+# ONE vNext Session Checkpoint
+
+## Current continuation state — 2026-11-05
+
+- Canonical source: `panglimanetizen01/one`; branch `milestone/100-ecosystem-20261023`; PR #80 open/draft/unmerged; base `main` = `d35db95153f6ddd79885494c72f5aee16c899751`.
+- The exact source SHA is intentionally resolved from the live PR #80 head and matched verifier `CANONICAL_COMMIT.txt`, rather than embedded in this self-referential document. After this documentation commit, synchronize the verifier pin to the resulting branch HEAD before treating any matrix result as current.
+- Previous source candidate `85b035a9f0ec8512a13bb66c987e2f8ec024d8fd`: six canonical workflows (One CI 42019582401, E1 42019582386, E2 42019582378, Linux distro 42019582389, Repository Health 42019582606, focused stdlib 42019582717) completed FAILURE with job `steps: null`, no artifacts, and representative log downloads returning `BlobNotFound`. Root cause UNKNOWN; this is pre-step execution/evidence failure, not source-test failure and not PASS.
+- The last observable independent verifier matrix targeted predecessor `1248a39199322fd4007cbd043bb58864096842c8`. It exposed real Linux project-test fixture failures (missing temporary directories) and Windows CLI/package path/reparse failures. The Linux fixture setup was corrected in source ancestry after that run. Android API 35 AArch64 runtime run [41262527363](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262527363) passed on that predecessor only. Ledger gate [41262533958](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262533958) returned NOT PASSED: 10 DoD unchecked, E1–E6 0 verified, index/pin mismatch, incomplete/failed matrix jobs, and no protected production provenance run.
+- The source DoD checkbox count is **3 checked / 10 unchecked / 13 total**. Last measured ledger values remain **92/100 implementation provisional / 60/100 verified on an older SHA**; they are not current acceptance. E1–E6 remain 0 verified; fixed weights unchanged. Final score **UNKNOWN / NOT RECONCILED**; gate **NOT PASSED**.
+- PR #84 is open/draft, two commits ahead and three behind current `main`; its README correction is already represented in PR #80's branch. PR #85 is open/draft, three ahead and three behind `main`; its `ci.yml`/ `release-check.yml` checks overlap the current PR #80 branch. Both remain unmerged; do not close automatically. PR #83 remains an unaccepted SEC-05 experiment; #78 is scope-limited milestone-60 history; #77 is proposal/audit only; #76 is a separate HTTP IPv6 fix on a stale base.
+- No direct `main` edit, merge, release, protected E2 dispatch, secret/trust-store mutation, or branch-protection bypass is authorized. No-repeat guard: do not repeat the 132-file audit or identical zero-step retries.
+
+---
+
+
+## Superseded current-state snapshot — 2026-11-05 (replaced by continuation state above)
+
+- Canonical source: `panglimanetizen01/one`; branch `milestone/100-ecosystem-20261023`; PR #80 open/draft/unmerged; base `main` at `d35db95153f6ddd79885494c72f5aee16c899751`.
+- Current source HEAD: `85b035a9f0ec8512a13bb66c987e2f8ec024d8fd`; parent: `fecf6e0883124e47aebdda13294714b5d9bc15d5`. The independent verifier `verification` branch currently pins `1248a39199322fd4007cbd043bb58864096842c8`; this mismatch blocks current-HEAD acceptance.
+- Canonical source workflows on `85b035a9...`: One CI [42019582401](https://github.com/panglimanetizen01/one/actions/runs/42019582401), E1 [42019582386](https://github.com/panglimanetizen01/one/actions/runs/42019582386), E2 [42019582378](https://github.com/panglimanetizen01/one/actions/runs/42019582378), Linux distro [42019582389](https://github.com/panglimanetizen01/one/actions/runs/42019582389), Repository Health [42019582606](https://github.com/panglimanetizen01/one/actions/runs/42019582606), and focused stdlib [42019582717](https://github.com/panglimanetizen01/one/actions/runs/42019582717). All completed FAILURE with returned job `steps: null`; representative log downloads returned `BlobNotFound`; artifact lists were empty. Classify as pre-step execution/evidence failure, root cause UNKNOWN—not source-test failure and not PASS. Do not repeat identical retries without a changed condition or transient diagnosis.
+- Last observable verifier matrix is pinned to `1248a391...`, not current source. It found actual Linux fixture failures in `crates/one-cli/tests/project.rs`; the later source commits added the missing temporary-directory creation. It also found Windows CLI/package regressions involving reparse-point/canonical-path rejection in ordinary test temp directories. These failures are real for the tested `1248a391...` source and remain historical until the changed current source is re-run. Android API 35 AArch64 runtime run [41262527363](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262527363) passed on `1248a391...` only; not current-HEAD evidence.
+- Verifier ledger gate [41262533958](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/41262533958) returned NOT PASSED: evidence index did not name exact pin, 10 DoD items unchecked, E1–E6 all 0 verified, several matrix jobs incomplete/failed, and no protected production provenance run.
+- DoD checkbox count on the current source file is **3 checked / 10 unchecked / 13 total**. Last measured ledger subtotal remains **92/100 implementation provisional / 60/100 verified on an older source SHA**; it is not a current-SHA acceptance score. Final score **UNKNOWN / NOT RECONCILED**. E1–E6 remain 0 verified; fixed weights unchanged.
+- PR #84 remains open/draft and is two commits ahead/three behind current `main`; its only substantive README delta is already represented in PR #80's branch. PR #85 remains open/draft and is three commits ahead/three behind `main`; its CI/release-check delta overlaps checks already present in PR #80. Neither PR is merged; do not merge or close automatically. PR #83 remains an unaccepted SEC-05 experiment; #78 is scope-limited historical milestone-60 evidence; #77 is proposal/audit only; #76 remains a separate HTTP IPv6 fix requiring fresh base/diff review.
+- No merge, release, protected E2 dispatch, secret/trust-store mutation, or direct `main` edit is authorized. Pin synchronization and all further evidence must target the final resulting source SHA.
+
+---
+
+
+## Historical forensic audit — parent SHA fecf6e0
+
+**Audited parent candidate:** `fecf6e0883124e47aebdda13294714b5d9bc15d5` on `milestone/100-ecosystem-20261023`. PR [#80](https://github.com/panglimanetizen01/one/pull/80) remains open, draft, and unmerged; base `main` is `d35db95153f6ddd79885494c72f5aee16c899751`. This remediation commit advances the branch HEAD. The run results below are evidence for the parent SHA only; re-read the live HEAD and rerun required checks before assigning current-SHA acceptance.
+
+### Evidence inspected
+
+- [One CI 41262698742](https://github.com/panglimanetizen01/one/actions/runs/41262698742): Ubuntu and Windows reached runner setup, checkout, toolchain and documentation checks. Both stopped at the repository-health scanner regression test because one assertion expected scanner version `0.1.3`, while the implementation emits `0.2.0`. Build and later tests were skipped.
+- [Repository Health 41262698698](https://github.com/panglimanetizen01/one/actions/runs/41262698698): same stale scanner-version assertion failed on Ubuntu and Windows; the self-scan and evidence collection did not run.
+- [Linux Distribution Conformance 41262698730](https://github.com/panglimanetizen01/one/actions/runs/41262698730): build and Clippy passed on Ubuntu and Debian 12. Workspace tests exposed two project-test fixtures that attempted to create a symlink/write a source file beneath a temporary directory that had not been created.
+- [E1 lab 41262698708](https://github.com/panglimanetizen01/one/actions/runs/41262698708) and [E2 lab 41262698676](https://github.com/panglimanetizen01/one/actions/runs/41262698676): their focused standard-library and package/provenance tests passed, but full workspace tests also invoked Android/Windows cross-target CLI tests without installing those cross-compilers in these labs. Their summary step additionally used unescaped Markdown backticks in shell double-quoted echo strings, causing command substitution and spurious shell/Cargo errors.
+- [Focused standard-library run 41262698707](https://github.com/panglimanetizen01/one/actions/runs/41262698707) completed successfully.
+- The Android AArch64 job in One CI failed before the test script ran: the emulator never registered as `emulator-5554`, and the runner timed out waiting for boot. This is an emulator/harness failure, not proof of a ONE runtime defect or a PASS.
+- Debian's rustup bootstrap emitted a `$HOME`/UID-home mismatch warning (`/github/home` versus `/root`), but Rust installation and the subsequent build/Clippy steps completed. Do not misclassify that warning as the cause of the workspace test failures.
+
+### Remediation in this commit
+
+- Align the scanner regression expectation with the emitted `0.2.0` scanner version.
+- Create the temporary project directory in the two failing project-test fixtures before writing files or creating symlinks.
+- Exclude cross-target CLI tests from E1/E2 generic workspace labs; those labs do not provision the required target compilers. Dedicated native-target verification remains a separate gate.
+- Replace fragile shell backtick substitutions in E1/E2 test-lab summaries with safe `printf` output.
+
+### Acceptance boundary
+
+The previous ledger measurement (92/100 provisional implementation, 60/100 verified; 3/13 DoD boxes checked) belongs to an older exact source SHA and is not recalculated by these fixes. No new E1–E6 points are awarded here. Current final score remains **UNKNOWN / NOT RECONCILED** and the milestone-100 gate remains **NOT PASSED** until the new exact HEAD completes the required matrix, Android runtime evidence is resolved, and the independent ledger gate is rerun. No merge or release is authorized.
+
+---
+
+
+## Superseded continuation — 2026-10-31
+
+Parent candidate before this documentation reconciliation: `669fdd2e069181dd4db9268804db7e77dd3c6f78`. This docs-only commit advances the source SHA; use the live PR #80 head and matching verifier pin for the exact current SHA.
+
+- PR #80 remains open/draft/unmerged on `milestone/100-ecosystem-20261023`; base main remains `d35db95153f6ddd79885494c72f5aee16c899751`.
+- Collector delta: exact-SHA Check Runs/annotations, billing/spending-limit classification, heuristic secret redaction, strict Check Run SHA validation, and read-only `checks: read` permission. Scanner/collector test inventory is 62/9 methods; execution remains unverified.
+- Parent-source canonical runs 41217339585, 41217339577, 41217339600, 41217339578, 41217339580, and 41217339576 all failed before runner assignment: runner_id 0, no steps, no artifacts. Root cause UNKNOWN; not source-test failure or PASS.
+- DoD 3 checked / 10 unchecked; last ledger gate on parent ea515 reported 92/100 implementation and 60/100 verified from F/C rows, while E1–E6 remain 0 verified; latest exact-SHA gate remains pending and final 100% gate NOT PASSED.
+- No-repeat guard: no 132-file inventory repeat and no identical zero-step retries. No merge, release, protected E2 dispatch, or direct main edit.
+
+
+
+## Active scanner A–E handoff
+
+
+## Active scanner A–E handoff — 2026-10-28
+
+The scanner delta is implemented on the milestone PR branch; this block preserves the current execution boundary. The candidate immediately before this documentation synchronization was `d024ebbefdbf6139ddbeaec433f379f421ef88f9`. The live PR #80 head and independent verifier pin are authoritative for the resulting exact source SHA; this document commit itself advances the candidate.
+
+A–E scope: **A** integrity (revision, path/symlink, syntax, Markdown, workflow, CI/artifact evidence); **B** redacted secret-provider patterns, Python AST source/sink heuristics, JavaScript/TypeScript static security, prompt-injection correlation, and mutable supply-chain indicators; **C** bounded correlation/triage and CI-evidence classification; **D** exact-path/clean-tree/approved-branch guarded Markdown newline repair only; **E** positive/negative regression fixtures and a separate adjudicated quality/repair ledger. The current source defines **59** scanner test methods and **5** quality-ledger test methods; this is not evidence they executed.
+
+On pre-documentation candidate `d024ebbefdbf6139ddbeaec433f379f421ef88f9`, current-SHA runs were One CI `40727274160` (queued), E2 `40727274226` (queued), E1 `40727274162` (failed), Repository Health `40727274152` (queued), Linux distro `40727274290` (queued), and focused stdlib `40727274184` (failed). The two completed jobs returned `steps: null` and `logs_url: null`; the focused-stdlib log request returned `BlobNotFound` and artifacts were empty. Queued runs have no result yet. This is unresolved execution/evidence infrastructure, not a source-test failure or pass. No root cause is established. The document commit advances SHA, so all those run IDs become historical for final-head acceptance.
+
+Acceptance remains: implementation 92/100 provisional; E1 0/10, E2 0/8, E3 0/8, E4 0/6, E5 0/4, E6 0/4 verified; DoD 3 checked / 10 unchecked; final score UNKNOWN / NOT RECONCILED; gate NOT PASSED. No merge, release, protected E2 dispatch, protection bypass, secret/trust-store change, or direct main edit is authorized.
+
+No-repeat guard: do not repeat the 132-file static inventory. Next, inspect current-head Actions jobs/logs/artifacts; if they remain zero-step, use a different authorized execution path to run scanner, collector, quality tests and the self-scan. Do not retry identical jobs without a changed condition or transient-failure diagnosis.
+
+
+**Updated:** 2026-10-28  
+**Active target:** Milestone 100% — ecosystem and release quality  
+**Repository:** [panglimanetizen01/one](https://github.com/panglimanetizen01/one)  
+**Active PR:** [#80](https://github.com/panglimanetizen01/one/pull/80)  
+**Working branch:** `milestone/100-ecosystem-20261023`  
+**Base branch:** `main` — unchanged; no merge performed.
+
+## Historical recovery state — 2026-10-28 (superseded by active scanner handoff below)
+
+PR #80 is open/draft/unmerged. At recovery, source candidate `65d09e3f9ed8639ff0d22a948ada06c3def36c22` was named in the PR body; the independent verifier pin was stale at `c5ba60b16e0356753ffbd10d448b47dce64f01bb`. Source documentation reconciliation advances the candidate, so always read the live PR head and matching verifier pin before using evidence.
+
+Latest canonical source runs inspected: Repository Health `40699615876`, One CI `40699615548`, E1 lab `40699615687`, E2 lab `40699616047`, Linux distro `40699615916`, focused stdlib `40699615984`. Each failed with null/empty steps; logs were unavailable. Classify as **unresolved infrastructure/evidence failure**, not a source-test result. E3/E4/E5 prior-SHA evidence is historical; current verified completion score is **UNKNOWN / NOT RECONCILED**. The fixed-weight ledger's carried-forward F/C arithmetic is 60/100 and implementation subtotal is 92/100 provisional; neither is final acceptance. Gate **NOT PASSED**. No merge or production release.
+
+## Superseded checkpoint — before forensic reconciliation (2026-10-28)
+
+PR #80 remains draft/open/unmerged. The source ledger now records **92/100 implementation and 72/100 provisional verified** because E3 platform/runtime and E5 docs/tooling evidence passed on the pre-reconciliation candidate. The ledger update advances the source SHA, so the live independent gate must reconfirm the exact-SHA matrix before those points are final. E1 (10), E2 (8), E4 (6), and E6 (4) remain incomplete; E2 production release was not dispatched because no release authorization exists. The current gate is **NOT PASSED**. Read the exact source SHA from PR #80 and `CANONICAL_COMMIT.txt`; all older checkpoint SHAs below are historical.
+
+## Completion ledger (fixed weights; no reweighting)
+
+Canonical ledger: [one-completion-ledger.md](one-completion-ledger.md).
+
+- **Implementation subtotal:** 84/100 provisional points.
+- **Verified completion:** 60/100 points.
+- **E1–E6 verified points:** 0/40. E1, E2, E3, E4, E5, and E6 are not fully verified under the 100% acceptance criteria; the 24-point implementation/verification gap is not verified completion.
+- **Milestone 100% gate:** **NOT PASSED**.
+- The previously earned 60% milestone remains historical and scoped to its exact source SHA and evidence. It does not make the current 100% candidate green.
+
+## Current Git and CI evidence
+
+- PR #80 is **open, draft, and unmerged**; no merge is authorized by this checkpoint.
+- Historical code-bearing source SHA for the previous narrow stdlib slice: `5da1f4dfcfba7bc64186eaa6a4ab018e6703c8a6`. The latest exact-SHA verification and continuation changes are recorded in the section appended below.
+- Canonical workflow run [39994484534](https://github.com/panglimanetizen01/one/actions/runs/39994484534), “One CI”, completed with **failure**. The two reported jobs (`test (windows-2025)` and `test (ubuntu-latest)`) failed; job-step details/logs were not returned by the available connector. Root cause is **UNKNOWN** from available evidence; do not infer a source failure or a pass.
+- The associated Linux Distribution Conformance run [39994484625](https://github.com/panglimanetizen01/one/actions/runs/39994484625) and Standard Library Focused Verification run [39994484574](https://github.com/panglimanetizen01/one/actions/runs/39994484574) were **cancelled**. Subsequent runs on the integer-remainder candidate also report failure: [One CI 39995112864](https://github.com/panglimanetizen01/one/actions/runs/39995112864), [Linux distro 39995112888](https://github.com/panglimanetizen01/one/actions/runs/39995112888), and [focused stdlib 39995112905](https://github.com/panglimanetizen01/one/actions/runs/39995112905). The available job-step endpoint returned empty step lists for these jobs, so the underlying failure cause is **UNKNOWN**; this does not establish that the source tests failed or passed. The latest canonical runs on this branch have repeatedly failed before steps start: jobs report `runner_id: 0` and `steps: []`; retry attempt 2 also failed identically. This is an Actions runner provisioning failure, not evidence that source tests failed. The independent mirror fallback runs the required source checks.
+- Older independent-mirror PASS results only apply to their explicitly recorded older source SHAs. They do not verify the current PR head.
+- Exact-SHA independent verification is established for code SHA `07780078c2563f3622d036f483735b262eb298d6`: focused stdlib, Ubuntu/Debian distro, and Ubuntu/Windows cross-platform runs passed. This evidence applies to that SHA only; after this checkpoint-only commit, the new branch tip must be re-verified before claiming it is the final tested SHA.
+
+## Implemented scope and remaining acceptance
+
+The current milestone branch contains ecosystem work including standard-library helpers and UTC formatting, JSON limits, HTTP framing/size bounds, filesystem adapter checks, package/build tooling and SHA-256 module lock v2. Source presence alone is not acceptance evidence.
+
+Remaining mandatory requirements include, at minimum:
+
+- Complete and tested standard-library APIs, including the still-missing/incomplete time/date, concurrency, logging/configuration and persistence integration contracts.
+- External dependency declarations and registry resolution; authenticated package identity/provenance; target-specific artifact/release workflow.
+- Full current-SHA conformance and compatibility matrix on required platforms, with no substituted historical evidence.
+- Race-resistant filesystem confinement, general resource quotas, and complete threat/recovery review.
+- Complete, tested documentation/examples/developer workflow and compatibility review.
+- Final forensic Definition-of-Done audit and release evidence on the exact release SHA.
+
+## Actions taken in this session
+
+- Read `AGENTS.md`, `docs/ONE_CONSTITUTION.md`, `docs/ARCHITECTURE.md`, `docs/REQUIREMENTS.md`, `docs/COMPATIBILITY.md`, `docs/INTEROPERABILITY.md`, `docs/SECURITY.md`, ADR-0017, the weighted completion ledger, the prior checkpoint, the stdlib implementation and relevant CI workflow definitions.
+- Confirmed PR #80 is the active open/draft/unmerged milestone-100 branch; no merge or main-branch change was performed.
+- Implemented `one_core::stdlib::number_modulo`: checked signed-integer remainder rejects wrong value types, divisor zero, and the `i64::MIN % -1` overflow case.
+- Integrated the source-level builtin `angka sisa bagi` through runtime dispatch and semantic arity/type/result handling.
+- Added unit regression coverage and a canonical-pipeline integration test for positive and negative remainder, wrong argument type, and division-by-zero handling.
+- Updated `docs/spec/one-v0.1-stdlib.md` with the exact operation/error contract.
+- Relevant commits:
+  - `17a27f667d7178298b29d58ae1e308be9b9d81f3` — checked stdlib helper and unit tests.
+  - `961e3354f6fd655640ff60f82f919a2a0f08247f` — runtime builtin integration.
+  - `7f1eab3feaa23cadaaeffc9eb746f0f96b46f6a7` — semantic type/arity integration.
+  - `f93be7ea2e98a577abb3b764e7f0b72ab4d0fd08` — end-to-end regression test (follow-up test-fixture cleanup).
+  - `0f826510595472777cceab887cf2e36bb77d015b` — standard-library contract documentation.
+  - `cac099caa28bd9eeed3c72ded101a70ccec39b5a` — checkpoint update recording implementation and verification boundaries.
+- Verification evidence for source SHA `809a26d12a411b492f0888610dc9ebabf1a6992b` from the independent mirror:
+  - Focused stdlib run [39995613378](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995613378): **PASS** — exact-SHA checkout succeeded; UTC unit/boundary test, UTC pipeline test, prefix/suffix pipeline test, checked integer remainder pipeline test, and strict one-core Clippy all passed.
+  - Linux distro run [39995613439](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995613439): **SUCCESS** — Ubuntu 24.04 and Debian 12 both passed contract checks, build, Clippy, native workspace tests and real-network tests.
+  - Full cross-platform run [39995613393](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995613393): **IN PROGRESS** at the last inspection. Ubuntu had passed build, AST contract tests, Clippy and workspace tests; real-network runtime tests were still running. Windows was still provisioning the cross-compiler. No full cross-platform PASS is claimed yet.
+  - The first focused run [39995473148](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39995473148) correctly caught the invalid arithmetic-in-argument fixture (E1014). The fixture was fixed in `809a26d12a411b492f0888610dc9ebabf1a6992b` and the focused workflow then passed.
+  - Local clone/test execution is unavailable because this environment cannot resolve `github.com`; verification evidence above comes from the independent GitHub Actions mirror.
+- No verified ledger points are added for this narrow stdlib slice: E1 acceptance remains partial and E1–E6 verified points remain 0/40. The 100% gate remains NOT PASSED.
+
+## Next execution sequence
+
+1. Continue implementation on the existing PR branch; after any code-changing slice, pin the independent verification mirror to that exact source SHA and run focused, Linux-distro, and Ubuntu/Windows cross-platform workflows.
+2. Prioritize E2 external dependency resolution and authenticated package provenance; do not treat the current unsigned module lock as publisher authentication.
+3. Continue E1 standard-library breadth and E4 security work, especially race-resistant filesystem confinement and broader resource quotas, with focused regression tests.
+4. Complete E5 documentation/tooling review and preserve explicit limitations; the Android AArch64 ELF build-and-execute test remains ignored/skipped and is not a pass.
+5. Keep the source repository's runner-provisioning failure visible, use the reviewed exact-SHA mirror fallback, and perform E6 forensic audit only after all mandatory criteria are satisfied.
+
+## Gate
+
+**NOT PASSED — Milestone 100%.** PR #80 remains draft/unmerged. Canonical repository Actions still fail before executing steps (`runner_id=0`); the independent exact-SHA mirror matrix passed on source SHA `64985b51599c1531b6b8e07aa0aa9d16551e6e38`. Mandatory E1, E2, E4, E5, and E6 criteria remain incomplete.
+
+
+## 2026-10-24 continuation checkpoint — exact source SHA verified
+
+**Code-bearing source SHA:** `cec949631f3c91a5419957b1a8820904daa6bcd7`  
+**Exact SHA selected and verified:** `64985b51599c1531b6b8e07aa0aa9d16551e6e38` (the selected commit adds verification-contract documentation after the code-bearing commit above).  
+**Mirror selector commit:** `f0510674e46bf96a1a7356441c896d1e67697f4a`, file `CANONICAL_COMMIT.txt` points to the exact source SHA.  
+**PR / Git state:** [PR #80](https://github.com/panglimanetizen01/one/pull/80) remains open and draft; base `main` was not changed and no merge occurred.
+
+### Changes made
+
+- SQLite file-backed queries now open read-only, enable `query_only`, and do not create a missing database file. Query resource budgets: 1 MiB SQL, 1 MiB per parameter, 16 MiB aggregate parameters, 256 parameters, 100,000 rows, and 16 MiB output.
+- Added strict UTC timestamp parsing builtin `unix dari waktu utc` with Gregorian validation and end-to-end parser → semantic → IR → interpreter tests; documented the round-trip with `waktu utc dari unix`.
+- Corrected `tools/verify_offline.ps1` to propagate native command failures and explicitly skip only the Android-native CLI test on Windows.
+- Updated standard-library contracts and user documentation.
+
+### Verification evidence at exact source SHA `64985b51599c1531b6b8e07aa0aa9d16551e6e38`
+
+- Focused stdlib/database: [run 40006470057](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470057) — **SUCCESS**.
+- Linux distro: [run 40006470246](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470246) — **SUCCESS**, Ubuntu 24.04 and Debian 12.
+- Cross-platform: [run 40006470017](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40006470017) — **SUCCESS**, Ubuntu and Windows. Build, contract artifacts, AST tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification passed.
+- Windows offline verifier log confirms `OFFLINE VERIFICATION: PASS`, contains no `test result: FAILED`, and the Android-target CLI test is filtered out rather than falsely counted as passed. The separate Android AArch64 execution test remains ignored; no Android-native runtime pass is claimed.
+- Canonical repository Actions for source SHA `64985...` still fail with `runner_id=0` and empty steps; those runs did not execute source checks. The independent mirror is the documented fallback, not a claim that canonical Actions passed.
+- Earlier run [40005692552](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40005692552) is **not credited**: its Windows offline log exposed a failed Android test swallowed by PowerShell. The verifier fix above was applied and the exact-SHA matrix rerun successfully.
+
+### Completion and gate
+
+- **Implementation subtotal:** 84/100 provisional points (E1=7/10, E2=5/8, E3=8/8, E4=3/6, E5=1/4, E6=0/4; fixed weights unchanged).
+- **Verified completion:** 60/100. E1, E2, E3, E4, E5 and E6 have 0 verified points under the current 100% gate.
+- **Next:** implement external dependency resolution/provenance, broaden stdlib, harden filesystem race/resource controls, finish developer tooling/docs, then perform E6 forensic audit.
+- **GATE:** **NOT PASSED — Milestone 100% remains in progress.**
+
+This checkpoint update is documentation-only; the exact source SHA and evidence above remain the code-verification reference.
+
+
+## Latest exact-SHA verification — `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974`
+
+The branch snapshot `c21ba26f4f7cac7a50f183b650ecc86a6e8c4974` (after documentation-only ledger/checkpoint commits) was verified through the independent exact-SHA mirror:
+
+- Focused standard-library/database: [40007463554](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463554) — SUCCESS.
+- Linux distro: [40007463563](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463563) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform: [40007463527](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40007463527) — Ubuntu and Windows SUCCESS. Exact SHA is present in both job logs. Both platform jobs passed build, AST contract tests, Clippy, workspace tests, real-network tests and platform-appropriate offline verification. No `test result: FAILED` markers appear; each platform logs `OFFLINE VERIFICATION: PASS`.
+- Main workspace suite summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The separate Android AArch64 ELF build-and-execute test remains ignored on both platforms. The Android-target CLI test on Ubuntu only verifies artifact creation; it is not an Android runtime test. The Windows-specific CLI Android-target test was filtered out because Windows is not an Android toolchain.
+- Canonical source repository workflows for this SHA failed before steps with `runner_id=0` and empty step lists; those are infrastructure failures, not source test results.
+
+**Current totals:** implementation 84/100 provisional; verified 60/100; fixed ledger weights unchanged.  
+**GATE: NOT PASSED — Milestone 100% remains in progress.** External dependency resolution/provenance, broader stdlib, race-resistant filesystem/resource security, release/tooling/documentation completion and the E6 final audit remain outstanding.
+
+This checkpoint addition is documentation-only; the tested source snapshot is unchanged.
+
+
+## Forensic scoring correction — Android ELF execution remains unverified
+
+The prior checkpoint credited E3's 8/8 verified points based on Linux/Windows CI and an Android-target CLI build test. Inspection of `crates/one-core/tests/native_backend_android_aarch64.rs` shows the separate `build_native_menghasilkan_dan_menjalankan_elf_android_aarch64` test is explicitly `#[ignore]`; the CLI test `android_target_explicit_mempertahankan_build_native` only verifies that a build artifact exists. A successful artifact build is not a runtime execution pass.
+
+Therefore E3 remains **8/8 implemented, 0/8 verified** until the declared Android AArch64 ELF build-and-execute acceptance is satisfied or the repository contract explicitly excludes it. This is a correction to the verified score, not a weight change: implementation remains **84/100**, verified completion is **60/100**, E1–E6 verified points are **0/40**, and the 100% gate remains **NOT PASSED**.
+
+### Latest exact-SHA matrix
+
+The latest tested source snapshot is `ebf254d1194a903a3b582f3a18abfc402f2003d2`:
+
+- Focused stdlib/database [40009389100](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389100) — SUCCESS.
+- Linux distro [40009389164](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389164) — Ubuntu 24.04 and Debian 12 SUCCESS.
+- Cross-platform [40009389190](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40009389190) — Ubuntu and Windows SUCCESS. Exact SHA verified in both logs; build, Clippy, workspace tests, real-network tests and offline verification passed; no `test result: FAILED` marker; one `OFFLINE VERIFICATION: PASS` per platform.
+- Main workspace summaries: Ubuntu 215 passed / 0 failed; Windows 210 passed / 0 failed. The separate Android ELF build-and-execute test remains ignored on both platforms and is not counted as passed. Canonical repository Actions fail before steps with `runner_id=0`.
+
+This correction is documentation-only and does not change the tested source code snapshot.
+
+## 2026-10-24 milestone-100 continuation pointer
+
+The active continuation and latest E3/E4 evidence boundary are recorded in docs/verification/one-milestone-100-session-checkpoint.md and docs/verification/one-completion-ledger.md. Do not infer milestone-100 completion from the vNext foundation/core rows above.
+
+- Code-bearing source SHA for the latest implementation slice: b5c3827840a691868a69428ae4032614407f1062.
+- The Android AArch64 acceptance test now validates the produced ELF header and the canonical/mirror workflows include an Android arm64 emulator job to run the ignored build-and-execute test explicitly. Actual execution on this source SHA remains NOT YET VERIFIED.
+- Linux/Android filesystem adapters now use descriptor-relative O_NOFOLLOW opens for parent components and final files. This does not yet provide a root-confined sandbox or equivalent race-resistant behavior on Windows/macOS.
+- A CLI regression test now ensures unsupported external dependency declarations fail closed. Registry resolution, committed deterministic Cargo lock state, signed publisher identity, and authenticated provenance remain incomplete.
+- Current milestone scoring is 85/100 provisional implementation and 60/100 verified; weights remain unchanged. Canonical Actions on the preceding source SHA failed before steps with empty job step lists; those runs are infrastructure failures, not source-test results.
+- Gate: NOT PASSED. The mirror selector must be pinned to the latest checkpoint SHA and its exact-SHA jobs inspected before any verification points are awarded.
+
+## 2026-10-24 E2 lockfile continuation pointer
+
+Latest milestone-100 scoring and evidence are in docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation subtotal is now 86/100 provisional; verified remains 60/100. This supersedes the prior 85/100 provisional note in the continuation pointer above; the 30/30 foundation and 30/30 core verified rows remain unchanged.
+- Cargo.lock is now committed, no longer ignored, and Cargo build/test/run/Clippy commands in the canonical CI and local verification scripts use --locked.
+- Independent lock generation passed against source SHA cd4aa9f9be450ecc43a0419d057867967d23e469. SHA-256 is 84b2111b5d1ab0c942c6fc68040285bccc3065a5f4e4150814e202c0fe15bc21, with 113 package entries.
+- External One-language registry resolution and authenticated publisher provenance remain unimplemented. E2 remains partial.
+- The source branch head must be read again after this checkpoint commit; the mirror selector must then be pinned to that exact SHA and the complete workflow evidence reviewed.
+- Gate: NOT PASSED.
+
+## 2026-10-24 E5 reproducible toolchain pointer
+
+Latest milestone-100 state is recorded in docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation subtotal is now 87/100 provisional; verified remains 60/100. This supersedes the earlier 86/100 provisional note in the continuation pointer above; weights are unchanged.
+- rust-toolchain.toml pins Rust 1.99.0, matching the toolchain reported by the successful Cargo lockfile-generation workflow. Canonical CI and the independent mirror's distro, focused stdlib and Android workflows explicitly request 1.99.0.
+- The mirror cross-platform workflow uses Cargo --locked. Final exact-SHA verification of these workflow revisions is pending.
+- External One-language registry resolution and authenticated publisher provenance remain unimplemented; E2 is partial. Android AArch64 runtime execution and cross-platform filesystem confinement remain unverified/incomplete.
+- Gate: NOT PASSED.
+
+## 2026-10-24 latest execution evidence pointer
+
+The authoritative milestone-100 ledger and checkpoint are docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation subtotal: 87/100 provisional. Verified subtotal: 60/100. Fixed weights remain unchanged.
+- The workspace now commits Cargo.lock and uses --locked in CI/local verification. Root rust-toolchain.toml and the canonical/mirror workflows pin Rust 1.99.0.
+- The latest focused stdlib/database mirror job passed on source SHA c740982ef40b680ac8ae8682e738272ffad05331 using Rust 1.99.0 and --locked. This is not a full release pass.
+- Linux/Android filesystem path handling received descriptor-relative no-follow opens and regression tests; an absolute-path NUL-literal bug and a strict-Clippy C-string lint were both found and fixed.
+- The Android arm64 emulator workflow has not yet reached ELF execution on the current source snapshot. E2's external One registry and authenticated publisher provenance, E4's cross-platform confinement, and E6's final audit remain incomplete.
+- Gate: NOT PASSED.
+
+## 2026-10-24 Linux pass and Android pending pointer
+
+Authoritative milestone-100 state is in docs/verification/one-completion-ledger.md and docs/verification/one-milestone-100-session-checkpoint.md.
+
+- Implementation: 87/100 provisional. Verified: 60/100. Gate remains NOT PASSED.
+- Focused stdlib/database and Linux distro workflows passed on source SHA 102741eddac431cfe4f1b4b24bec3d7a2032428b using Rust 1.99.0 and --locked. The Linux distro run passed on Ubuntu 24.04 and Debian 12.
+- These results include the filesystem no-follow regressions and fail-closed unsupported dependency manifest test, but they are not a full milestone pass.
+- The Windows cross-platform run was cancelled during cleanup after tests had completed; rerun is required. Android emulator boot has not yet reached ELF execution; the bounded diagnostic workflow is now active.
+- Latest source before the checkpoint docs update was 9f2eae322104ecd4a655b4e5673e329ca537100f; the mirror selector must be repinned to the next exact checkpoint SHA.
+- E2 registry resolution/publisher authentication, E4 cross-platform confinement, E5 full release readiness and E6 final audit remain open.
+
+## 2026-10-24 continuation pointer — bounded provenance reads
+
+Authoritative milestone-100 records: `docs/verification/one-completion-ledger.md` and `docs/verification/one-milestone-100-session-checkpoint.md`.
+
+- Implementation subtotal is **88/100 provisional**; verified subtotal remains **60/100**. Fixed scoring weights unchanged.
+- Package signing/verification now bounds artifact, key, sidecar and trust-store reads to 64 MiB, 256 bytes, 16 KiB and 1 MiB respectively; a regression test rejects oversized input.
+- On source SHA `0a0f250dfc2e556bca40f2201752ee5d06f56854`, focused stdlib/database and Ubuntu/Debian distro workflows passed using Rust 1.99.0 and Cargo --locked.
+- Exact-SHA Windows and Android AArch64 emulator runs remain in progress. E2 external dependency resolution and E4 cross-platform root confinement remain incomplete.
+- The checkpoint commit advances the source SHA; rerun exact-SHA workflows against the final PR head before crediting the new code as verified.
+- Gate: **NOT PASSED**.

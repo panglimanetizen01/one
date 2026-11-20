@@ -1,0 +1,103 @@
+name: One Repository Health
+
+on:
+  push:
+    branches: [main, "milestone/**", "health/**", "diagnostic/**"]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+
+concurrency:
+  group: one-repository-health-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  repository-health:
+    name: Integrity scanner and regression fixtures
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout exact event revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Scanner regression tests
+        run: python -m unittest discover -s tools -p "test_one_health.py" -v
+
+      - name: CI metadata collector regression tests
+        run: python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+
+      - name: Detector quality ledger regression tests
+        run: python -m unittest discover -s tools -p "test_health_quality.py" -v
+
+      - name: Build One CLI for source-only grammar checks
+        run: cargo build --locked -p one-cli
+
+      - name: Collect exact-SHA CI run, job, step, artifact, Check Run, and annotation metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/collect_ci_health.py --output ci-health-evidence.json
+
+      - name: Restore prior health report for triage comparison
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: health-baseline
+          key: one-health-baseline-v2-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            one-health-baseline-v2-${{ github.ref_name }}-
+
+      - name: Scan repository and validate normative One fixtures (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          args=(--check-one-source --expected-sha "$GITHUB_SHA" --json-out one-health-report.json --markdown-out one-health-report.md --quiet)
+          if [[ -f health-baseline/one-health-report.json ]]; then args+=(--baseline health-baseline/one-health-report.json); fi
+          python tools/one_health.py "${args[@]}"
+
+      - name: Scan repository and validate normative One fixtures (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $args = @("--check-one-source", "--expected-sha", "$env:GITHUB_SHA", "--json-out", "one-health-report.json", "--markdown-out", "one-health-report.md", "--quiet")
+          if (Test-Path "health-baseline/one-health-report.json") { $args += @("--baseline", "health-baseline/one-health-report.json") }
+          python tools/one_health.py @args
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: one-health-report-${{ runner.os }}
+          path: |
+            one-health-report.json
+            one-health-report.md
+            ci-health-evidence.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Prepare next historical baseline
+        if: always() && hashFiles('one-health-report.json') != ''
+        run: python -c "from pathlib import Path; import shutil; d=Path('health-baseline'); d.mkdir(exist_ok=True); shutil.copy2('one-health-report.json', d/'one-health-report.json')"
+
+      - name: Save historical baseline
+        if: always() && hashFiles('health-baseline/one-health-report.json') != ''
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: health-baseline
+          key: one-health-baseline-v2-${{ github.ref_name }}-${{ github.run_id }}

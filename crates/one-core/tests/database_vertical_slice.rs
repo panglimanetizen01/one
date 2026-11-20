@@ -87,6 +87,32 @@ fn sqlite_adapter_reports_backend_failure_for_unavailable_database_path() {
 }
 
 #[test]
+fn sqlite_read_query_does_not_create_missing_database_file() {
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("clock")
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!(
+        "one-database-read-only-{}-{nonce}.sqlite",
+        std::process::id()
+    ));
+    assert!(!path.exists(), "test database path must be fresh");
+
+    let result = SqliteAdapter::new().invoke(
+        &AdapterRequest::new(request(&path.display().to_string()))
+            .with_argument(AdapterArgument::Text("SELECT 1".into())),
+    );
+    let was_created = path.exists();
+    let _ = std::fs::remove_file(&path);
+
+    assert_eq!(result, Err(one_core::AdapterError::BackendFailure));
+    assert!(
+        !was_created,
+        "database.query must not create a file-backed database as a side effect"
+    );
+}
+
+#[test]
 fn database_result_normalization_is_deterministic() {
     let first = normalize_result(
         one_core::AdapterId::new("database.sqlite.query"),

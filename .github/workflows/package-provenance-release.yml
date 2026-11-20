@@ -1,0 +1,157 @@
+name: ONE Package Provenance Release
+
+on:
+  # Production signing/publishing is an explicit protected action, never an automatic side effect of a candidate commit.
+  workflow_dispatch:
+    inputs:
+      project_path:
+        description: "Repository-relative path to a committed ONE project containing one.toml and src/main.one"
+        required: true
+        type: string
+      publisher_id:
+        description: "Publisher ID already present in the protected trusted-publisher store"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-package-release-${{ inputs.project_path || 'examples/package-release' }}
+  cancel-in-progress: false
+
+jobs:
+  sign-and-verify:
+    name: Build, sign, and verify source-bound package provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: one-release
+    steps:
+      - name: Checkout exact release source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Toolchain
+        run: rustc --version && cargo --version
+
+      - name: Validate release inputs and protected trust material
+        shell: bash
+        env:
+          PROJECT_PATH: ${{ inputs.project_path || 'examples/package-release' }}
+          PUBLISHER_ID: ${{ inputs.publisher_id || secrets.ONE_RELEASE_PUBLISHER_ID }}
+          ONE_RELEASE_SIGNING_SEED: ${{ secrets.ONE_RELEASE_SIGNING_SEED }}
+          ONE_TRUSTED_PUBLISHERS: ${{ secrets.ONE_TRUSTED_PUBLISHERS }}
+        run: |
+          set -euo pipefail
+          test -n "$PROJECT_PATH" || { echo "project_path is required" >&2; exit 2; }
+          test -n "$PUBLISHER_ID" || { echo "publisher_id is required" >&2; exit 2; }
+          [[ "$PROJECT_PATH" != *$'\n'* && "$PROJECT_PATH" != *$'\r'* ]] || { echo "project_path must not contain control line breaks" >&2; exit 2; }
+          [[ "$PUBLISHER_ID" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || { echo "publisher_id has an invalid format" >&2; exit 2; }
+          [[ "$ONE_RELEASE_SIGNING_SEED" =~ ^[0-9a-fA-F]{64}$ ]] || { echo "ONE_RELEASE_SIGNING_SEED must be a 32-byte hex seed in the protected one-release environment" >&2; exit 2; }
+          test -n "$ONE_TRUSTED_PUBLISHERS" || { echo "Missing protected environment secret ONE_TRUSTED_PUBLISHERS" >&2; exit 2; }
+          case "$PROJECT_PATH" in
+            /*|..|../*|*/../*|*/..) echo "project_path must be repository-relative and must not traverse parents" >&2; exit 2 ;;
+          esac
+          project_root="$(realpath -e -- "$GITHUB_WORKSPACE/$PROJECT_PATH")"
+          case "$project_root" in
+            "$GITHUB_WORKSPACE"/*) ;;
+            *) echo "project_path resolves outside the checked-out repository" >&2; exit 2 ;;
+          esac
+          test -f "$project_root/one.toml" || { echo "one.toml is missing" >&2; exit 2; }
+          test -f "$project_root/src/main.one" || { echo "src/main.one is missing" >&2; exit 2; }
+          printf '%s\n' "$ONE_RELEASE_SIGNING_SEED" > "$RUNNER_TEMP/one-release.seed"
+          printf '%s\n' "$ONE_TRUSTED_PUBLISHERS" > "$RUNNER_TEMP/one-trusted-publishers.txt"
+          chmod 600 "$RUNNER_TEMP/one-release.seed" "$RUNNER_TEMP/one-trusted-publishers.txt"
+          trusted_key=""
+          while IFS='=' read -r id key; do
+            if [[ "$id" == "$PUBLISHER_ID" && "$key" =~ ^[0-9a-fA-F]{64}$ ]]; then
+              trusted_key="$key"
+              break
+            fi
+          done < "$RUNNER_TEMP/one-trusted-publishers.txt"
+          test -n "$trusted_key" || { echo "publisher_id has no valid public key in the protected trust store" >&2; exit 2; }
+          echo "project_root=$project_root" >> "$GITHUB_ENV"
+          echo "publisher_id=$PUBLISHER_ID" >> "$GITHUB_ENV"
+
+      - name: Build ONE CLI
+        run: cargo --locked build --release -p one-cli
+
+      - name: Build package twice and enforce deterministic bytes
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          target/release/one package "$project_root"
+          mapfile -t first_artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
+          if [[ "${#first_artifacts[@]}" -ne 1 ]]; then
+            echo "Expected exactly one first-pass .onepkg artifact; found ${#first_artifacts[@]}" >&2
+            exit 1
+          fi
+          release_artifact="${first_artifacts[0]}"
+          first_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
+          rm -- "$release_artifact"
+
+          target/release/one package "$project_root"
+          mapfile -t second_artifacts < <(find "$project_root/target" -maxdepth 1 -type f -name '*.onepkg' -print)
+          if [[ "${#second_artifacts[@]}" -ne 1 ]]; then
+            echo "Expected exactly one second-pass .onepkg artifact; found ${#second_artifacts[@]}" >&2
+            exit 1
+          fi
+          release_artifact="${second_artifacts[0]}"
+          second_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
+          if [[ "$first_digest" != "$second_digest" ]]; then
+            echo "Non-deterministic package bytes: $first_digest != $second_digest" >&2
+            exit 1
+          fi
+          echo "PASS: deterministic package SHA-256 $second_digest"
+          echo "release_artifact=$release_artifact" >> "$GITHUB_ENV"
+          echo "release_artifact=$release_artifact" >> "$GITHUB_OUTPUT"
+
+      - name: Sign final artifact with source-bound Ed25519 V2 provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          target/release/one sign-package "$release_artifact" --publisher "$publisher_id" --private-key "$RUNNER_TEMP/one-release.seed" --source-root "$project_root"
+
+      - name: Verify final artifact against protected trust store and exact source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          target/release/one verify-package "$release_artifact" --trusted-publishers "$RUNNER_TEMP/one-trusted-publishers.txt" --source-root "$project_root"
+          sidecar="$release_artifact.provenance"
+          test -s "$sidecar"
+          grep -Fx "source_revision=$(git rev-parse HEAD)" "$sidecar"
+          grep -Eq '^source_sha256=[0-9a-f]{64}$' "$sidecar"
+          grep -Eq '^artifact_sha256=[0-9a-f]{64}$' "$sidecar"
+          grep -Eq '^artifact_format=One(PackageV1|HumanCorePackageV1)$' "$sidecar"
+          grep -Fx 'dependency_model=empty-v0.1' "$sidecar"
+          actual_artifact_digest="$(sha256sum "$release_artifact" | cut -d' ' -f1)"
+          signed_artifact_digest="$(sed -n 's/^artifact_sha256=//p' "$sidecar")"
+          test "$actual_artifact_digest" = "$signed_artifact_digest" || {
+            echo "Signed artifact digest does not match final package bytes" >&2
+            exit 1
+          }
+
+      - name: Produce and independently check portable artifact digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact_dir="$(dirname "$release_artifact")"
+          artifact_name="$(basename "$release_artifact")"
+          (
+            cd "$artifact_dir"
+            sha256sum "$artifact_name" "$artifact_name.provenance" > "$RUNNER_TEMP/one-release-sha256.txt"
+            sha256sum --check "$RUNNER_TEMP/one-release-sha256.txt"
+          )
+          cat "$RUNNER_TEMP/one-release-sha256.txt"
+
+      - name: Upload verified package, provenance, and checksums
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: one-package-release-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ steps.package.outputs.release_artifact }}
+            ${{ steps.package.outputs.release_artifact }}.provenance
+            ${{ runner.temp }}/one-release-sha256.txt

@@ -44,9 +44,9 @@ fn imap_authenticates_selects_and_fetches_message() {
     let server = thread::spawn(move || {
         let (mut stream, _) = listener.accept().expect("accept");
         stream.write_all(b"* OK ready\r\n").expect("greeting");
-        assert_eq!(read_line(&mut stream), b"a001 LOGIN alice secret\r\n");
+        assert_eq!(read_line(&mut stream), b"a001 LOGIN \"alice\" \"secret\"\r\n");
         stream.write_all(b"a001 OK LOGIN completed\r\n").expect("LOGIN reply");
-        assert_eq!(read_line(&mut stream), b"a002 SELECT INBOX\r\n");
+        assert_eq!(read_line(&mut stream), b"a002 SELECT \"INBOX\"\r\n");
         stream.write_all(b"* 2 EXISTS\r\na002 OK SELECT completed\r\n").expect("SELECT reply");
         assert_eq!(read_line(&mut stream), b"a003 FETCH 1 BODY[]\r\n");
         stream.write_all(b"* 1 FETCH (BODY[] {5}\r\nhello)\r\na003 OK FETCH completed\r\n").expect("FETCH reply");

@@ -1,0 +1,97 @@
+# Prompt 1 — E1 live audit checkpoint (2026-10-24)
+
+## Scope and exact source revision
+
+- Repository: https://github.com/panglimanetizen01/one
+- Work branch: `milestone/100-ecosystem-20261023`
+- Initial code-audit HEAD: `091e01b2fde3d860aa6d74fa866c53d03ad6f187`.
+- Latest test-change commit before this checkpoint refresh: `a996653bc638f202713a7d6169ea112096238e27`.
+- Historical checkpoint SHA supplied by the task: `54f3de667e05075805fcc5cd5dc621b653075667` (not HEAD; docs-only DoD update).
+- PR: https://github.com/panglimanetizen01/one/pull/80 (open, draft, unmerged).
+- `main` HEAD at audit: `d86c3be75c81a27d6d4f040f21718f6248413e47`. No change made to `main`.
+
+## Repository contract read
+
+Read `AGENTS.md`, `docs/ONE_CONSTITUTION.md`, `docs/DECISIONS.md`, `docs/spec/one-v0.1-standard-library.md`, `docs/spec/one-v0.1-stdlib.md`, `docs/verification/DEFINITION_OF_DONE.md`, `docs/verification/one-completion-ledger.md`, `docs/verification/one-milestone-100-session-checkpoint.md`, `docs/verification/one-v0.1-evidence-matrix.md`, and `.github/workflows/stdlib-focused.yml`. `ARCHITECTURE.md` is not present at the audited branch root (404); architecture decisions are in `docs/DECISIONS.md` and domain specs.
+
+## E1 contract inventory
+
+Normative source-level call surface listed in `docs/spec/one-v0.1-stdlib.md`:
+- Text: `panjang teks`, `teks memuat`, `teks diawali`, `teks diakhiri`, `huruf kecil`, `huruf besar`, `pangkas teks`, `ganti teks`, `pisah teks`, `ubah teks ke angka`.
+- Collections: `panjang daftar`, `gabung teks`, `jumlah daftar angka`, `ambil indeks`, `nilai pemetaan`, `atur pemetaan`.
+- Integers: `nilai mutlak`, `bagi bulat`, `angka sisa bagi`, `angka minimum`, `angka maksimum`.
+- JSON: `ubah nilai ke json`, `nilai dari json`.
+- UTC: `waktu utc dari unix`, `unix dari waktu utc`.
+
+The Rust helper module additionally exposes `display_value`, `list_append`, `list_remove`, `text_length`, `text_contains`, `text_starts_with`, `text_ends_with`, `text_lowercase`, `text_uppercase`, `text_trim`, `text_replace`, `text_split`, `text_to_integer`, `list_length`, `list_get`, `list_join_text`, `list_sum_numbers`, `map_get`, `map_set`, `number_abs`, `number_divide`, `number_modulo`, `number_min`, `number_max`, `value_to_json`, `json_to_value`, `unix_seconds_to_utc_text`, and `utc_text_to_unix_seconds`. Mapping helpers and `display_value` are Rust-level helpers, not source-level built-ins. Reserved standard-library domains are not automatically stable APIs.
+
+## Live hosted workflow evidence
+
+- Initial code-audit runs: https://github.com/panglimanetizen01/one/actions/runs/40099732249 and https://github.com/panglimanetizen01/one/actions/runs/40099732245.
+- Test-change commit: `a996653bc638f202713a7d6169ea112096238e27`.
+- Focused stdlib run on that exact SHA: https://github.com/panglimanetizen01/one/actions/runs/40100658290 (attempt 2). The run failed before executing steps: `steps: []`, `runner_id: 0`, `runner_name: ""`, start/completion only seconds apart; job logs endpoint returned `BlobNotFound`.
+- The Linux distribution workflow on the same SHA also failed before steps: https://github.com/panglimanetizen01/one/actions/runs/40100658294. The retry did not restore a runner.
+- Artifact endpoint for the earlier canonical run returned zero artifacts.
+- Classification: **hosted runner/infrastructure failure; no source test result**. This is not a test failure diagnosis and not a pass.
+- Earlier exact-SHA independent mirror runs listed in PR #80/ledger are historical and cannot verify current HEAD.
+
+## Code and test review notes
+
+- The normative contract explicitly rejects empty split separators, wrong input types, invalid signed-i64 conversion, negative/out-of-range list indices, non-text join members, non-integer/overflowing list sums, missing map keys, checked integer overflow, division/remainder edge cases, JSON floats/exponents, duplicate JSON keys, malformed escapes/surrogate pairs, excessive nesting, oversized JSON input/output, invalid UTC dates, offsets/fractions/leap seconds, and non-canonical UTC forms.
+- Current `stdlib.rs` implements checked index conversion via `usize::try_from`, checked arithmetic, ordered `BTreeMap` serialization, bounded JSON parsing/serialization, strict integer parsing, and strict UTC helpers. Existing integration tests cover a meaningful subset through parse → semantic analysis → IR → interpreter.
+- This inspection did not establish a newly failing source assertion or a specific production bug. No production-code change is justified without a reproducible failing test/root cause.
+- The available GitHub connector can inspect and commit repository contents but does not provide a shell/checkout execution environment. Therefore I did **not** claim to have run Cargo, Clippy, contract checker, or workspace tests locally. No test pass is asserted here.
+
+## Follow-up changes on 2026-10-24
+
+- Added three source-level regression-test groups in `crates/one-core/tests/stdlib_builtins.rs` at commit `a996653bc638f202713a7d6169ea112096238e27`: Unicode scalar/empty-text/i64 boundaries; empty-list join, invalid indices and wrong join member type; UTC parser year-zero and upper-year boundary.
+- These tests were committed but **not executed successfully**. Local clone/test execution is unavailable in this session because the container cannot resolve `github.com`; hosted CI retry on the exact test SHA again had no assigned runner or steps. No claim is made that the new assertions compile or pass until a runner executes them.
+
+## Acceptance status and required continuation
+
+- E1 remains **PARTIAL / NOT VERIFIED (0/10 ledger points)**. The repository's own Definition of Done explicitly says focused UTC/JSON/text/list/map/integer tests are partial evidence and E1 requires the full scope-defined API contract plus valid/invalid, deterministic, diagnostic, and cross-platform tests.
+- No ledger weights or acceptance boxes were changed.
+- Before E1 can close: restore a functioning runner or an approved independent execution environment; execute the focused suite on the exact source SHA, `cargo --locked test --workspace`, `cargo --locked clippy --workspace --all-targets -- -D warnings`, and `python tools/check_contract.py`; triage any actual failing assertion, fix only a reproducible root cause, then rerun the complete matrix on the resulting exact SHA. Independent verification must remain labelled as independent, never hosted CI.
+- Prompt 2 should begin only after E1 has a reproducible exact-SHA test record and this checkpoint is superseded with actual results. E2 provenance/protected-release acceptance, E3 Android AArch64 runtime, E4 open security/root-confinement/resource-bound review, and E6 final forensic reconciliation remain open.
+- Release gate remains **NOT PASSED**. PR #80 remains open/unmerged; no release was authorized or published.
+
+## Alternative E1 test lab added on 2026-10-24
+
+- Dedicated workflow: `.github/workflows/milestone-1-e1-lab.yml`.
+- Portable local entry point: `bash tools/milestone1-e1-lab.sh`.
+- Lab guide: `docs/verification/milestone-1-e1-test-lab.md`.
+- The lab executes the entire `one-core` stdlib integration test target, `one-core` library unit tests, workspace tests, workspace Clippy with warnings denied, and `tools/check_contract.py`; it prints the exact tested SHA and toolchain.
+- The dedicated hosted workflow was actually triggered on candidate SHA `266d51340b78f15bb52b742fd2e4c80d7353dccc`: https://github.com/panglimanetizen01/one/actions/runs/40100991584. It hit the same infrastructure symptom (`runner_id: 0`, empty runner name, `steps: []`), so it yielded no test result.
+- Attempted local execution is not possible in this session: the container has no Rust toolchain and cannot resolve `github.com` for a clone. No local pass is claimed.
+- To use a separate functioning runner pool, updated the independent verifier repository's `verification/CANONICAL_COMMIT.txt` to the current candidate revision. Pin update commit: https://github.com/panglimanetizen01/one-windows-verification/commit/29bfea16e6e630fffa9100d6e44c3ce36551013e. Its workflows did not start automatically after this API-driven commit, so trigger **Run workflow** manually on the verifier branch for the Linux distro, focused standard-library, and cross-platform workflows. Those new runs must show the exact candidate SHA before their results count.
+- Current candidate before this checkpoint refresh: `5aca770bb69f266577be8a2514635de09efa15be`. The checkpoint refresh itself will be the new candidate SHA; update the verifier pin to that resulting SHA before running its tests.
+
+**Gate remains NOT PASSED** until the dedicated or independent lab completes every required check successfully against one exact candidate SHA.
+
+## Independent E1 acceptance evidence — 2026-10-24
+
+Candidate source SHA `d3976f072389d84382bea05b85030b26693d16a2` was checked by the separate verifier repository after its canonical pin was updated.
+
+- Focused Standard Library + database resource-bound regressions, including all three new E1 tests and `cargo --locked clippy -p one-core --all-targets -- -D warnings`: **PASS** — https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40101323707
+- Linux distro verification, Ubuntu 24.04 and Debian 12: **PASS** — https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40101323704. Both jobs verified the exact source SHA, passed `tools/check_contract.py`, workspace build, Clippy, workspace tests (with the workflow's documented platform-specific skips), and real-network tests.
+- The earlier focused attempt on `f1c07bc85cd7b8c62e7eb125ca7697758f5de581` exposed a faulty negative-index test fixture, not a production implementation bug. The source was corrected by computing the negative index in a separate declaration; the corrected test then passed at `d3976f072389d84382bea05b85030b26693d16a2`.
+- E1 code and tests have now passed focused and broad Linux verification. This checkpoint refresh changes only documentation, creating a new exact source SHA; re-pin that resulting SHA and rerun the focused E1 suite plus Linux distro verification before considering E1 fully closed.
+- Do not infer whole-project 100% acceptance from these E1 checks. This checkpoint does not close E2/E3/E4/E6 and does not authorize merge/release.
+
+
+
+## Final exact-SHA lab checkpoint — 2026-10-24
+
+The latest executable independent matrix tested canonical source SHA `25b9b2385281c01280b46589c3bf9346bfdc2ea4`:
+
+- Focused Standard Library/database and `cargo --locked clippy -p one-core --all-targets -- -D warnings`: PASS — [run 40102204980](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204980).
+- Linux distro conformance: PASS on Ubuntu 24.04 and Debian 12; workspace build/tests, Clippy, and `tools/check_contract.py` passed — [run 40102204891](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204891).
+- Deterministic Cargo lockfile bootstrap: PASS — [run 40102204901](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204901).
+- Cross-platform Ubuntu + Windows Server 2025: PASS; both jobs passed workspace tests, Clippy, and offline verification — [run 40102204904](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204904).
+- Candidate artifact integrity: PASS; exact-SHA Linux/Windows candidate bundles, archive digests, embedded checksums, build metadata, ELF64 and PE32+ headers validated — [run 40102204878](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204878).
+- Android AArch64 ELF execution is not accepted yet. The API 35 boot attempt was cancelled after stalling; a smaller API 30 arm64 emulator retry is running at [run 40103088590](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40103088590). Acceptance requires the log to show the built ELF was executed and its output observed.
+- The fixed-weight ledger gate [run 40102204973](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40102204973) correctly remained NOT PASSED: it ran while the matrix was still in progress, the evidence index was stale, nine Definition of Done items were unchecked, broader E1/E2/E3/E4/E6 rows were not accepted, and the canonical protected-release evidence query was denied because `CANONICAL_READ_TOKEN` lacks Actions:read on the private canonical repository.
+
+These are independent verification-repository results, not canonical-repository hosted-CI results. The canonical hosted workflows still failed before any steps ran. The exact-SHA E1 API slice (text, collections, mappings, checked integers, JSON, UTC) passed focused and broad Linux/Windows tests, including malformed JSON, Unicode/surrogates, integer overflow, UTC canonical forms/year boundaries, invalid indexes and collection values, and deterministic mapping/JSON output. The broader ledger row remains partial until its full stated scope is reconciled; this checkpoint does not authorize merge or release.
+
+This checkpoint is documentation-only and therefore creates a new canonical source SHA. Re-pin that resulting SHA and rerun the exact-SHA matrix before treating the new HEAD as verified. The independent evidence index is maintained at [CANDIDATE_VERIFICATION.md](https://github.com/panglimanetizen01/one-windows-verification/blob/verification/CANDIDATE_VERIFICATION.md).

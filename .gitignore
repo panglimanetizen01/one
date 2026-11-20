@@ -1,3 +1,15 @@
 /target
-Cargo.lock
 .DS_Store
+
+# Local and CI health-scanner outputs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+node_modules/
+health-baseline/
+ci-health-evidence.json
+one-health-report.json
+one-health-report.md

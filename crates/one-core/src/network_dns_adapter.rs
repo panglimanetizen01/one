@@ -3,6 +3,7 @@ use std::net::ToSocketAddrs;
 use crate::adapter::{AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, PlatformKind, ToolAdapter};
 use crate::capability::Capability;
 use crate::orchestration::{AdapterId, AdapterStatus, ExecutionScope, OrchestrationValidationError};
+use crate::resource_budget::ResourcePermit;
 
 pub struct DnsResolveAdapter {
     metadata: AdapterMetadata,
@@ -33,6 +34,7 @@ impl ToolAdapter for DnsResolveAdapter {
             return Err(AdapterError::InvalidArguments);
         }
         self.metadata.validate_request(request.capability())?;
+        let _resource_permit = ResourcePermit::operation().ok_or(AdapterError::ResourceLimitExceeded)?;
         let host = match &request.capability().scope {
             ExecutionScope::Target(value) if !value.is_empty() => value,
             _ => return Err(AdapterError::InvalidRequest(OrchestrationValidationError::EmptyScope)),

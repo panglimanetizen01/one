@@ -1,0 +1,14 @@
+Buat aplikasi daftar tugas
+
+Pengguna bisa menambahkan tugas
+    Terima judul tugas
+    Simpan tugas baru
+
+Pengguna bisa melihat semua tugas
+    Tampilkan semua tugas
+
+Pengguna bisa menandai tugas sebagai selesai
+    Terima tugas yang dipilih
+    Tandai tugas sebagai selesai
+
+Simpan semua tugas agar tidak hilang saat aplikasi ditutup

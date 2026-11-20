@@ -13,7 +13,7 @@ A later full `cargo test` in the Debian/proot environment failed in the Android 
 
 ## Post-merge canonical state
 
-PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20. The last code-bearing canonical `main` revision independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Subsequent evidence-sync commits change documentation only, not source or tests.
+PR #64 was merged into `main` at merge commit `ec844aa652a4d35c3891fc810d344c9c9db2f5cf` on 2026-10-20. The last production-implementation revision of canonical `main` independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Subsequent evidence-sync commits also added test-only standard-library regression coverage in `crates/one-core/src/stdlib.rs`; they did not change production implementation, and those tests were not part of run `39554661451`.
 
 Independent exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out this exact canonical revision and passed on Ubuntu and Windows Server 2025. The jobs passed contract artifacts, build, AST contract regression tests, Clippy, workspace tests, real-network runtime tests, and platform-appropriate offline verification. Linux cross-compilers and Windows/Android cross-toolchains were provisioned successfully.
 

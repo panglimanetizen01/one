@@ -32,7 +32,7 @@ Minimum v0.1 classes:
 - `random.read`
 - `database.query`
 
-Database query is currently defined as a read-only, parameterized SQLite `SELECT` boundary. Database mutation requires a separate capability/effect contract and is not implied by `database.query`.
+Database query is a read-only, parameterized SQLite `SELECT` boundary. File-backed databases must already exist and are opened with SQLite read-only flags; the connection also enables `query_only`. The special `:memory:` resource creates an isolated ephemeral in-memory database for queries and tests. Query access must not create or mutate a file-backed database. Resource limits are 1 MiB per SQL statement, 1 MiB per text parameter, 16 MiB total parameter bytes, 256 parameters, 100,000 result rows, and 16 MiB serialized output; exceeding a limit returns a resource-limit error. Database mutation requires a separate capability/effect contract and is not implied by `database.query`.
 
 The current language-level HTTP GET slice uses `network.connect` with an exact URL target and is limited to explicit `http://` HTTP/1.1 GET requests. It does not imply HTTPS, redirects, arbitrary methods, custom headers/bodies, cookies, or API-specific authentication.
 
@@ -172,3 +172,7 @@ The semantic analyzer may annotate required effects, but actual permission evalu
 - time/randomness are controllable for deterministic tests;
 - capability errors are stable and provenance-aware;
 - reference interpreter and compiled backends enforce equivalent capability semantics.
+
+### Candidate implementation boundary (2026-10-24)
+
+The milestone-100 candidate exposes CLI `--root <directory>` for filesystem read/write policy rules. Its current rule performs path-component containment, rejects parent-directory components, and rejects absolute/relative scope mismatches; the filesystem adapters additionally reject symlink/reparse-point components and hard-linked final files (link count must equal one). This is a useful defense-in-depth policy boundary, but it is **not yet accepted as complete root confinement**: root-relative descriptor anchoring, race-resistant resolution, mount behavior, and cross-platform case/path semantics still require threat review and regression evidence. Do not award the full E4 root-confinement criterion from the lexical policy rule alone.

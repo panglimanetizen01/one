@@ -1,10 +1,11 @@
 #![cfg(feature = "real-network")]
 
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
-use crate::network_runtime::{HttpResponse, NetworkRuntimeError};
+use crate::network_runtime::{HttpResponse, NetworkRuntimeError, parse_http_authority, resolve_target};
+use crate::resource_budget::ResourcePermit;
 
 const MAX_BODY: usize = 16 * 1024 * 1024;
 
@@ -19,29 +20,22 @@ pub fn execute_http2(
             "Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into(),
         ));
     }
-    if authority.is_empty()
-        || authority.contains('\r')
-        || authority.contains('\n')
-        || path.is_empty()
-        || path.contains('\r')
-        || path.contains('\n')
+    if path.is_empty()
+        || !(path.starts_with('/') || path == "*")
+        || path.bytes().any(|byte| byte <= 0x20 || byte == 0x7f || byte == b'#')
     {
         return Err(NetworkRuntimeError::InvalidOperation(
-            "Tujuan HTTP/2 tidak valid.".into(),
+            "Path HTTP/2 tidak valid.".into(),
         ));
     }
 
-    let (host, port) = authority
-        .rsplit_once(':')
-        .and_then(|(host, port)| port.parse::<u16>().ok().map(|port| (host, port)))
-        .unwrap_or((authority, 80));
-    let address = format!("{host}:{port}")
-        .to_socket_addrs()
-        .map_err(|error| NetworkRuntimeError::Resolution(error.to_string()))?
-        .next()
-        .ok_or_else(|| {
-            NetworkRuntimeError::Resolution(format!("Tidak ada alamat yang cocok untuk {host}."))
-        })?;
+    // Share the process-wide budget with filesystem, DNS, SQLite, subprocess, and TCP work.
+    // Hold the permit through resolution and the complete HTTP/2 request lifecycle.
+    let _resource_permit = ResourcePermit::operation().ok_or_else(|| {
+        NetworkRuntimeError::InvalidOperation("Jumlah operasi jaringan aktif melampaui batas global.".into())
+    })?;
+    let (host, port) = parse_http_authority(authority)?;
+    let address = resolve_target(&host, port, None)?;
     let authority = authority.to_owned();
     let path = path.to_owned();
 
@@ -52,6 +46,31 @@ pub fn execute_http2(
             .await
             .map_err(|_| NetworkRuntimeError::Io("Waktu tunggu HTTP/2 habis.".into()))?
     })
+}
+
+const MAX_HTTP2_HEADER_COUNT: usize = 256;
+const MAX_HTTP2_HEADER_BYTES: usize = 64 * 1024;
+
+fn collect_bounded_headers(headers: &http::HeaderMap) -> Result<Vec<(String, String)>, NetworkRuntimeError> {
+    if headers.len() > MAX_HTTP2_HEADER_COUNT {
+        return Err(NetworkRuntimeError::Protocol("Jumlah header HTTP/2 melebihi batas.".into()));
+    }
+    let mut total_bytes = 0usize;
+    let mut output = Vec::with_capacity(headers.len());
+    for (name, value) in headers {
+        let value = value.to_str()
+            .map_err(|error| NetworkRuntimeError::Protocol(format!("Nilai header HTTP/2 bukan teks yang valid: {error}")))?;
+        total_bytes = total_bytes
+            .checked_add(name.as_str().len())
+            .and_then(|total| total.checked_add(value.len()))
+            .and_then(|total| total.checked_add(4))
+            .ok_or_else(|| NetworkRuntimeError::Protocol("Ukuran header HTTP/2 melampaui batas integer.".into()))?;
+        if total_bytes > MAX_HTTP2_HEADER_BYTES {
+            return Err(NetworkRuntimeError::Protocol("Header HTTP/2 melebihi batas ukuran.".into()));
+        }
+        output.push((name.to_string(), value.to_owned()));
+    }
+    Ok(output)
 }
 
 async fn execute_http2_async(
@@ -86,16 +105,7 @@ async fn execute_http2_async(
         .map_err(|error| NetworkRuntimeError::Protocol(error.to_string()))?;
 
     let status = response.status().as_u16();
-    let headers = response
-        .headers()
-        .iter()
-        .map(|(name, value)| {
-            (
-                name.to_string(),
-                value.to_str().unwrap_or_default().to_string(),
-            )
-        })
-        .collect::<Vec<_>>();
+    let headers = collect_bounded_headers(response.headers())?;
 
     let mut body = Vec::new();
     while let Some(chunk) = response.body_mut().data().await {
@@ -114,4 +124,104 @@ async fn execute_http2_async(
         headers,
         body,
     })
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn http2_rejects_malformed_authority_before_dns_or_socket_work() {
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        for authority in ["", "user@example.com:80", "example.com:", "example.com:abc", "example.com:65536", "2001:db8::1"] {
+            assert!(
+                execute_http2(authority, "/", &capabilities, Duration::from_millis(10)).is_err(),
+                "authority should be rejected: {authority}"
+            );
+        }
+    }
+
+    #[test]
+    fn http2_rejects_path_controls_spaces_and_fragments() {
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        for path in ["", "relative", "/has space", "/bad\rpath", "/bad\npath", "/path#fragment"] {
+            assert!(
+                execute_http2("127.0.0.1:80", path, &capabilities, Duration::from_millis(10)).is_err(),
+                "path should be rejected: {path:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn http2_loopback_performs_real_request_response_over_h2() {
+        use std::net::TcpListener;
+        use std::thread;
+
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        listener.set_nonblocking(true).expect("nonblocking");
+        let address = listener.local_addr().expect("address");
+        let server = thread::spawn(move || {
+            let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("runtime");
+            runtime.block_on(async move {
+                let listener = tokio::net::TcpListener::from_std(listener).expect("tokio listener");
+                let (stream, _) = listener.accept().await.expect("accept");
+                let mut connection = h2::server::handshake(stream).await.expect("h2 handshake");
+                let _ = tokio::time::timeout(Duration::from_secs(5), async {
+                    while let Some(result) = connection.accept().await {
+                        let (request, mut respond) = result.expect("h2 request");
+                        assert_eq!(request.uri().path(), "/probe");
+                        tokio::spawn(async move {
+                            let response = http::Response::builder()
+                                .status(200)
+                                .header("x-test", "yes")
+                                .body(())
+                                .expect("response");
+                            let mut stream = respond.send_response(response, false).expect("send headers");
+                            stream.send_data(bytes::Bytes::from_static(b"pong"), true).expect("send body");
+                        });
+                    }
+                }).await;
+            });
+        });
+
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        let response = execute_http2(
+            &format!("127.0.0.1:{}", address.port()),
+            "/probe",
+            &capabilities,
+            Duration::from_secs(3),
+        ).expect("HTTP/2 round trip");
+        assert_eq!(response.status, 200);
+        assert_eq!(response.body, b"pong");
+        assert!(response.headers.iter().any(|(name, value)| name == "x-test" && value == "yes"));
+        server.join().expect("server");
+    }
+
+    #[test]
+    fn http2_response_headers_enforce_count_and_byte_budgets() {
+        let mut headers = http::HeaderMap::new();
+        for index in 0..257 {
+            headers.insert(
+                http::HeaderName::from_bytes(format!("x-{index}").as_bytes()).expect("header name"),
+                http::HeaderValue::from_static("v"),
+            );
+        }
+        assert!(collect_bounded_headers(&headers).is_err());
+
+        let mut oversized = http::HeaderMap::new();
+        oversized.insert(
+            http::HeaderName::from_static("x-large"),
+            http::HeaderValue::from_bytes(&[b'x'; MAX_HTTP2_HEADER_BYTES]).expect("header value"),
+        );
+        assert!(collect_bounded_headers(&oversized).is_err());
+    }
+
+    #[test]
+    fn http2_requires_network_capability_before_target_processing() {
+        assert!(matches!(
+            execute_http2("bad authority", "bad path", &CapabilitySet::none(), Duration::from_millis(10)),
+            Err(NetworkRuntimeError::CapabilityDenied(_))
+        ));
+    }
 }

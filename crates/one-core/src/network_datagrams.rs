@@ -1,7 +1,9 @@
 use std::net::{SocketAddr, UdpSocket};
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::capability::{Capability, CapabilitySet};
+
+const MAX_TFTP_FILE_BYTES: usize = 16 * 1024 * 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DatagramProtocolError {
@@ -52,21 +54,28 @@ pub fn tftp_read(socket: &UdpSocket, server: SocketAddr, filename: &str, timeout
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut expected_block = 1u16;
     let mut output = Vec::new();
+    let mut transfer_peer: Option<SocketAddr> = None;
     let mut buffer = [0u8; 4 + 512];
     loop {
         let (size, from) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
-        let peer = from;
+        if from.ip() != server.ip() || transfer_peer.is_some_and(|peer| peer != from) {
+            return Err(DatagramProtocolError::InvalidPacket);
+        }
+        let peer = *transfer_peer.get_or_insert(from);
         let (opcode, block, payload) = parse_tftp_packet(&buffer[..size])?;
         match opcode {
             3 if block == expected_block => {
+                if output.len().saturating_add(payload.len()) > MAX_TFTP_FILE_BYTES {
+                    return Err(DatagramProtocolError::InvalidPacket);
+                }
                 output.extend_from_slice(payload);
                 let ack = [0, 4, (block >> 8) as u8, block as u8];
                 socket.send_to(&ack, peer).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
                 if payload.len() < 512 { return Ok(output); }
-                expected_block = expected_block.wrapping_add(1);
+                expected_block = expected_block.checked_add(1).ok_or(DatagramProtocolError::InvalidPacket)?;
             }
             5 => return Err(tftp_error(payload)),
-            3 if block == expected_block.wrapping_sub(1) => {
+            3 if expected_block > 1 && block == expected_block - 1 => {
                 let ack = [0, 4, (block >> 8) as u8, block as u8];
                 socket.send_to(&ack, peer).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
             }
@@ -77,12 +86,18 @@ pub fn tftp_read(socket: &UdpSocket, server: SocketAddr, filename: &str, timeout
 
 pub fn tftp_write(socket: &UdpSocket, server: SocketAddr, filename: &str, data: &[u8], timeout: Duration, capabilities: &CapabilitySet) -> Result<(), DatagramProtocolError> {
     permit(capabilities)?;
+    if data.len() > MAX_TFTP_FILE_BYTES {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
     socket.set_read_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     socket.set_write_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let request = tftp_request(2, filename)?;
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut buffer = [0u8; 4 + 512];
     let (size, peer) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
+    if peer.ip() != server.ip() {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
     let (opcode, block, payload) = parse_tftp_packet(&buffer[..size])?;
     if opcode == 5 { return Err(tftp_error(payload)); }
     if opcode != 4 || block != 0 { return Err(DatagramProtocolError::InvalidPacket); }
@@ -97,13 +112,16 @@ pub fn tftp_write(socket: &UdpSocket, server: SocketAddr, filename: &str, data: 
         packet.extend_from_slice(&block_number.to_be_bytes());
         packet.extend_from_slice(&data[offset..offset + chunk_len]);
         socket.send_to(&packet, peer).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
-        let (size, _) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
+        let (size, ack_peer) = socket.recv_from(&mut buffer).map_err(map_io_error)?;
+        if ack_peer != peer {
+            return Err(DatagramProtocolError::InvalidPacket);
+        }
         let (ack_opcode, ack_block, ack_payload) = parse_tftp_packet(&buffer[..size])?;
         if ack_opcode == 5 { return Err(tftp_error(ack_payload)); }
         if ack_opcode != 4 || ack_block != block_number { return Err(DatagramProtocolError::InvalidPacket); }
         offset += chunk_len;
         if final_block { return Ok(()); }
-        block_number = block_number.wrapping_add(1);
+        block_number = block_number.checked_add(1).ok_or(DatagramProtocolError::InvalidPacket)?;
     }
 }
 
@@ -113,12 +131,34 @@ pub fn ntp_query(socket: &UdpSocket, server: SocketAddr, timeout: Duration, capa
     socket.set_write_timeout(Some(timeout)).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut request = [0u8; 48];
     request[0] = 0x23;
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)
+        .map_err(|_| DatagramProtocolError::InvalidPacket)?;
+    let ntp_seconds = now.as_secs().checked_add(2_208_988_800)
+        .ok_or(DatagramProtocolError::InvalidPacket)?;
+    let fraction = ((u128::from(now.subsec_nanos()) << 32) / 1_000_000_000) as u32;
+    request[40..44].copy_from_slice(&(ntp_seconds as u32).to_be_bytes());
+    request[44..48].copy_from_slice(&fraction.to_be_bytes());
     socket.send_to(&request, server).map_err(|e| DatagramProtocolError::Io(e.to_string()))?;
     let mut response = [0u8; 512];
-    let (size, _) = socket.recv_from(&mut response).map_err(map_io_error)?;
-    if size < 48 || (response[0] & 0x07) != 4 { return Err(DatagramProtocolError::InvalidPacket); }
-    if response[1] > 15 { return Err(DatagramProtocolError::InvalidPacket); }
-    Ok(u64::from_be_bytes(response[40..48].try_into().expect("NTP timestamp is 8 bytes")))
+    let (size, peer) = socket.recv_from(&mut response).map_err(map_io_error)?;
+    if peer != server || size < 48 {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
+    let leap = response[0] >> 6;
+    let version = (response[0] >> 3) & 0x07;
+    let mode = response[0] & 0x07;
+    let stratum = response[1];
+    if !matches!(version, 3 | 4) || !matches!(mode, 4 | 5) || leap == 3 || !(1..=15).contains(&stratum) {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
+    if response[24..32] != request[40..48] {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
+    let timestamp = u64::from_be_bytes(response[40..48].try_into().expect("NTP timestamp is 8 bytes"));
+    if timestamp == 0 {
+        return Err(DatagramProtocolError::InvalidPacket);
+    }
+    Ok(timestamp)
 }
 
 #[cfg(test)]
@@ -176,12 +216,36 @@ mod tests {
             assert_eq!(request[0], 0x23);
             let mut response = [0u8; 48];
             response[0] = 0x24;
+            response[1] = 1;
+            response[24..32].copy_from_slice(&request[40..48]);
             response[40..48].copy_from_slice(&(1_700_000_000u64 << 32).to_be_bytes());
             server.send_to(&response, peer).expect("ntp response");
         });
         let socket = UdpSocket::bind("127.0.0.1:0").expect("bind");
         let timestamp = ntp_query(&socket, server_addr, Duration::from_secs(2), &caps()).expect("ntp");
         assert_eq!(timestamp, 1_700_000_000u64 << 32);
+        handle.join().expect("server");
+    }
+
+    #[test]
+    fn ntp_query_rejects_unsynchronized_or_non_server_packets() {
+        let server = UdpSocket::bind("127.0.0.1:0").expect("bind");
+        let server_addr = server.local_addr().expect("addr");
+        let handle = thread::spawn(move || {
+            let mut request = [0u8; 48];
+            let (_, peer) = server.recv_from(&mut request).expect("request");
+            let mut response = [0u8; 48];
+            response[0] = 0x24;
+            response[1] = 0;
+            response[24..32].copy_from_slice(&request[40..48]);
+            response[40..48].copy_from_slice(&(1_700_000_000u64 << 32).to_be_bytes());
+            server.send_to(&response, peer).expect("unsynchronized response");
+        });
+        let socket = UdpSocket::bind("127.0.0.1:0").expect("client");
+        assert_eq!(
+            ntp_query(&socket, server_addr, Duration::from_secs(2), &caps()),
+            Err(DatagramProtocolError::InvalidPacket)
+        );
         handle.join().expect("server");
     }
 

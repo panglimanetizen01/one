@@ -31,6 +31,25 @@ This repository contract exists so project intent does not depend on a previous 
 - Cross-distro, cross-terminal, cross-editor, and cross-environment portability as architectural goals
 - Deep interoperability with existing languages and technologies
 
+## Repository health and guarded repair tooling
+
+The repository-health scanner is **developer tooling**, not part of One's source-language grammar or CLI. It must not change how ordinary users write One programs.
+
+- Scanner and tests: `tools/one_health.py`, `tools/test_one_health.py`
+- Exact-SHA GitHub Actions evidence collector: `tools/collect_ci_health.py`, `tools/test_collect_ci_health.py`
+- Reviewed detector/repair quality metrics: `tools/health_quality.py`, `tools/test_health_quality.py`, with the [quality ledger guide](docs/verification/health-quality-ledger.md)
+- Usage and detector limitations: [repository health guide](docs/verification/repository-health.md) and [detector governance](docs/verification/health-detectors.md)
+
+Run the read-only checks with Python 3.11+:
+
+```sh
+python tools/one_health.py
+python -m unittest discover -s tools -p "test_one_health.py" -v
+python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+```
+
+The current implementation covers repository paths and text integrity, Python/TOML/JSON syntax, Markdown links, heading anchors and fences, targeted workflow references and overlap hints, normative One contract drift, baseline triage, exact-SHA Actions run/job/step/artifact metadata with cautious failure correlations, and read-only security heuristics for known credential patterns, suspicious Python dynamic execution/shell usage, and risky GitHub Actions configuration. JSON and Markdown reports expose detector execution status and findings per detector; these are coverage indicators, not accuracy or repair-success guarantees. Its safe-repair allowlist currently only adds a missing final newline to an explicitly selected Markdown file after a preview and guarded branch/clean-tree checks. It redacts suspected secret values from findings and does not claim complete detection: obfuscation, novel payloads, unknown credential formats, runtime behavior, and false positives require layered controls and human review. It does not autonomously edit One source, approve findings, merge pull requests, or release production artifacts. Full YAML validation, live log interpretation/root-cause analysis, broader repair classes, and manual detector-quality adjudication remain evolving work. Use the quality ledger to record reviewed false positives/misses and verified repair outcomes; empty or unreviewed records are not counted as success.
+
 ## v0.1 implementation
 
 ```text
@@ -73,7 +92,7 @@ One Source
  -> Native Artifact
 ```
 
-The last code-bearing canonical `main` revision independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out that source revision and passed on Ubuntu and Windows Server 2025. The subsequent evidence-documentation sync changes documentation only, not source or tests. Coverage included:
+The last production-implementation revision independently verified is `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`. Exact-SHA verification run [`39554661451`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/39554661451) checked out that revision and passed on Ubuntu and Windows Server 2025. Later commits added unit tests to `crates/one-core/src/stdlib.rs` (commit `ce8681d9e8aa6794bce284e39737f7d0af60eb05`) and removed a redundant test import (current `main` HEAD `d35db95153f6ddd79885494c72f5aee16c899751`). The production implementation was not changed by those two commits, but those added/changed tests have not been demonstrated by run `39554661451`; therefore current `main` HEAD is not exact-SHA verified by that run. Coverage of the verified implementation revision included:
 
 - contract artifacts and specification/implementation checks;
 - build, AST contract regression tests, Clippy, and workspace tests;

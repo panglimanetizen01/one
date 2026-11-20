@@ -1,0 +1,89 @@
+name: ONE Milestone 1 — E1 Standard Library Test Lab
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ milestone/100-ecosystem-20261023 ]
+    paths:
+      - "crates/one-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "tools/check_contract.py"
+      - "tools/milestone1-e1-lab.sh"
+      - "docs/spec/one-v0.1-stdlib.md"
+      - "docs/verification/**"
+      - ".github/workflows/milestone-1-e1-lab.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "crates/one-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "tools/check_contract.py"
+      - "tools/milestone1-e1-lab.sh"
+      - "docs/spec/one-v0.1-stdlib.md"
+      - "docs/verification/**"
+      - ".github/workflows/milestone-1-e1-lab.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-milestone-1-e1-lab-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  e1-focused-and-workspace:
+    name: E1 contract, regression, workspace, and lint (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact candidate revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with:
+          toolchain: 1.99.0
+          components: rustfmt, clippy
+      - name: Install Python for contract checker
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.x"
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+      - name: Print exact revision and toolchain
+        shell: bash
+        run: |
+          git rev-parse HEAD
+          rustc --version
+          cargo --version
+          python --version
+      - name: E1 standard-library integration regression suite
+        run: cargo --locked test -p one-core --test stdlib_builtins
+      - name: E1 standard-library library unit suite
+        run: cargo --locked test -p one-core --lib
+      - name: Full workspace tests
+        run: cargo --locked test --workspace --all-targets -- --skip windows_x86_64_target_mempertahankan_build_native --skip android_target_explicit_mempertahankan_build_native
+      - name: Workspace Clippy with warnings denied
+        run: cargo --locked clippy --workspace --all-targets -- -D warnings
+      - name: Repository contract checker
+        run: python tools/check_contract.py
+      - name: Record test-lab evidence
+        if: always()
+        shell: bash
+        run: |
+          {
+            printf '%s\n' \
+              '## Milestone 1 / E1 test lab' \
+              "- Commit: $(git rev-parse HEAD)" \
+              "- OS: $(uname -a)" \
+              "- Rust: $(rustc --version)" \
+              "- Cargo: $(cargo --version)" \
+              "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -52,22 +52,70 @@ fn backend_menolak_ir_yang_belum_didukung_dan_tidak_fallback_ke_interpreter() {
 #[test]
 fn spesifikasi_toolchain_android_aarch64_memakai_executable() {
     let toolchain = NativeAndroidAarch64Backend::new().toolchain();
-    assert_eq!(toolchain.target().triple(), "aarch64-linux-android24");
+    assert_eq!(toolchain.target().triple(), "aarch64-linux-android35");
     assert_eq!(toolchain.artifact(), &ArtifactFormat::Executable);
     assert_eq!(toolchain.capability(), ToolchainCapability::BuildAndExecute);
 }
 
 #[test]
-#[ignore = "membutuhkan Clang Android AArch64 pada lingkungan verifikasi"]
+#[ignore = "membutuhkan Clang Android AArch64 dan Android emulator; set ONE_ANDROID_CLANG dan ONE_ANDROID_ADB"]
 fn build_native_menghasilkan_dan_menjalankan_elf_android_aarch64() {
     let root = std::env::temp_dir().join(format!("one-native-test-{}", std::process::id()));
     fs::create_dir_all(&root).expect("temp dir harus dapat dibuat");
     let output = root.join("hello-android-aarch64");
     let ir = compile("tampilkan \"ONE_NATIVE_BACKEND_OK\"\n");
-    let artifact = NativeAndroidAarch64Backend::new().build(&ir, &output).expect("backend harus menghasilkan artifact native");
-    let run = Command::new(&artifact.path).output().expect("artifact Android harus dapat dijalankan");
-    assert!(run.status.success());
-    assert_eq!(String::from_utf8_lossy(&run.stdout), "ONE_NATIVE_BACKEND_OK\n");
-    assert!(artifact.path.is_file());
+    let artifact = NativeAndroidAarch64Backend::new()
+        .build(&ir, &output)
+        .expect("backend harus menghasilkan artifact native");
+    assert!(artifact.path.is_file(), "artifact Android tidak dibuat");
+
+    // Assert the actual artifact format/architecture before handing it to Android.
+    // A successful cross-build alone must not be confused with runtime acceptance.
+    let elf = fs::read(&artifact.path).expect("artifact ELF harus dapat dibaca");
+    assert!(elf.len() >= 20, "artifact terlalu pendek untuk header ELF");
+    assert_eq!(&elf[0..4], b"\x7fELF", "artifact harus ELF");
+    assert_eq!(elf[4], 2, "artifact harus ELFCLASS64");
+    assert_eq!(elf[5], 1, "artifact harus little-endian");
+    assert_eq!(u16::from_le_bytes([elf[18], elf[19]]), 183, "e_machine harus EM_AARCH64");
+
+    let adb = std::env::var("ONE_ANDROID_ADB")
+        .expect("ONE_ANDROID_ADB harus menunjuk ke adb yang terhubung ke emulator Android");
+    let remote = format!("/data/local/tmp/one-native-test-{}", std::process::id());
+    let artifact_path = artifact.path.to_str().expect("path artifact harus UTF-8");
+    let push = Command::new(&adb)
+        .args(["push", artifact_path, &remote])
+        .output()
+        .expect("adb push harus dapat dijalankan");
+    assert!(
+        push.status.success(),
+        "gagal mengirim ELF ke emulator: {}",
+        String::from_utf8_lossy(&push.stderr)
+    );
+
+    let chmod = Command::new(&adb)
+        .args(["shell", "chmod", "700", &remote])
+        .output()
+        .expect("adb chmod harus dapat dijalankan");
+    assert!(
+        chmod.status.success(),
+        "gagal mengatur izin ELF di emulator: {}",
+        String::from_utf8_lossy(&chmod.stderr)
+    );
+
+    let run = Command::new(&adb)
+        .args(["shell", &remote])
+        .output()
+        .expect("ELF Android harus dapat dijalankan melalui adb shell");
+    assert!(
+        run.status.success(),
+        "ELF Android gagal dieksekusi: {}",
+        String::from_utf8_lossy(&run.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&run.stdout).trim(),
+        "ONE_NATIVE_BACKEND_OK"
+    );
+
+    let _ = Command::new(&adb).args(["shell", "rm", "-f", &remote]).status();
     let _ = fs::remove_dir_all(root);
 }

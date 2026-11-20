@@ -2,21 +2,316 @@
 #![allow(clippy::needless_return)]
 use std::{collections::HashSet, env, fs, path::{Path, PathBuf}, process::ExitCode};
 use one_core::{analyze, lower, parse, Capability, CapabilitySet, ExecutionPolicy, Interpreter, ScopeRule};
+use sha2::{Digest, Sha256};
+mod package_provenance;
 const VERSION: &str = "0.1.0";
-fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
+fn usage() { println!("One v{VERSION}\n\nPenggunaan:\n  one jalankan-human-vnext <program.one> [--data <berkas>] (eksperimental)\n  one jalankan-human-core <program.one> (frontend vNext ke IR kanonis)\n  one buat <folder>\n  one periksa <file.one>\n  one jalankan <file.one> [--izinkan network.discover --target <alamat>]\n  one jalankan <file.one> [--izinkan network.connect --target <url>]\n  one jalankan <file.one> [--izinkan filesystem.read --target <path> --root <dir>]\n  one jalankan <file.one> [--izinkan filesystem.write --target <path> --root <dir>]\n  one jalankan <file.one> [--izinkan process.execute --target <program>]\n  one jalankan <file.one> [--izinkan database.query --target <database>]\n  one test <folder>\n  one bangun <file.one>\n  one package <folder>\n  one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file> --source-root <project-dir>\n  one verify-package <file.onepkg> --trusted-publishers <trust-store> [--source-root <project-dir>]\n  one lihat struktur <file.one>\n  one version\n  one help\n\nAlias teknis:\n  one new <folder>\n  one check <file.one>\n  one run <file.one> [--allow network.discover --target <alamat>]\n  one build <file.one>\n  one ast <file.one>\n\nOrchestration:\n  --izinkan <capability> --target <target>\n    memberi izin eksplisit dan hanya untuk target tersebut."); }
 fn print_diagnostics(bundle: &one_core::DiagnosticBundle) { for diagnostic in &bundle.0 { eprintln!("{}: {}", diagnostic.code, diagnostic.message); if let Some(span) = &diagnostic.span { eprintln!("  baris {}, kolom {}", span.line, span.column); } for note in &diagnostic.notes { eprintln!("  catatan: {}", note); } for suggestion in &diagnostic.suggestions { eprintln!("  saran: {}", suggestion); } } }
 fn compile_source(source: &str) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let program = parse(source)?; let typed = analyze(&program)?; Ok((program, typed)) }
 fn project_main(root: &Path) -> Result<PathBuf, String> { let path = root.join("src").join("main.one"); if path.is_file() { Ok(path) } else { Err(format!("Proyek tidak memiliki '{}'.", path.display())) } }
-fn project_metadata(root: &Path) -> Result<(String, String), String> { let manifest = root.join("one.toml"); let text = fs::read_to_string(&manifest).map_err(|e| format!("Tidak dapat membaca '{}': {}", manifest.display(), e))?; let mut seen = HashSet::new(); let mut name = None; let mut version = None; for (index, raw_line) in text.lines().enumerate() { let line = raw_line.trim(); if line.is_empty() || line.starts_with('#') { continue; } let Some((raw_key, raw_value)) = line.split_once('=') else { return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1)); }; let key = raw_key.trim(); let value = raw_value.trim(); if !matches!(key, "nama" | "versi") || !seen.insert(key) { return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1)); } let Some(value) = value.strip_prefix('"').and_then(|v| v.strip_suffix('"')) else { return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1)); }; if value.is_empty() { return Err(format!("Manifest '{}' memiliki nilai kosong pada baris {}.", manifest.display(), index + 1)); } match key { "nama" => name = Some(value.to_owned()), "versi" => version = Some(value.to_owned()), _ => unreachable!() } } match (name, version) { (Some(name), Some(version)) => Ok((name, version)), _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())) } }
-fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> { let source = fs::read_to_string(path).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca '{}': {}", path.display(), error), None)))?; compile_source(&source) }
+fn write_project_artifact(root: &Path, filename: &str, contents: &[u8]) -> Result<PathBuf, String> {
+    if !is_safe_artifact_filename(filename) {
+        return Err(format!("Nama artefak '{}' tidak aman.", filename));
+    }
+    let target = root.join("target");
+    match fs::create_dir(&target) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {}
+        Err(error) => return Err(format!("Tidak dapat membuat direktori artefak '{}': {}", target.display(), error)),
+    }
+    let relative = Path::new("target").join(filename);
+    one_core::write_file_within_project(root, &relative, contents)
+        .map_err(|error| format!("Tidak dapat menulis artefak '{}': {}", target.join(filename).display(), error))?;
+    Ok(target.join(filename))
+}
+
+
+fn is_safe_manifest_component(value: &str) -> bool {
+    !value.is_empty()
+        && value != "."
+        && value != ".."
+        && !value.starts_with('.')
+        && !value.ends_with('.')
+        && value.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'+')
+        })
+}
+
+fn is_safe_artifact_filename(value: &str) -> bool {
+    if value.is_empty()
+        || value == "."
+        || value == ".."
+        || value.starts_with('.')
+        || value.ends_with('.')
+        || value.ends_with(' ')
+        || value.chars().any(|character| {
+            character.is_control() || "/\\:*?\"<>|".contains(character)
+        })
+    {
+        return false;
+    }
+    let device_name = value
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches(' ')
+        .to_ascii_uppercase();
+    !matches!(device_name.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        && !(device_name.len() == 4
+            && (device_name.starts_with("COM") || device_name.starts_with("LPT"))
+            && matches!(device_name.as_bytes()[3], b'1'..=b'9'))
+}
+
+
+fn project_metadata(root: &Path) -> Result<(String, String), String> {
+    let manifest = root.join("one.toml");
+    let text = read_project_source(root, Path::new("one.toml"))?;
+    let mut seen = HashSet::new();
+    let mut name = None;
+    let mut version = None;
+
+    for (index, raw_line) in text.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((raw_key, raw_value)) = line.split_once('=') else {
+            return Err(format!("Manifest '{}' memiliki baris tidak valid {}.", manifest.display(), index + 1));
+        };
+        let key = raw_key.trim();
+        let value = raw_value.trim();
+        if !matches!(key, "nama" | "versi") || !seen.insert(key) {
+            return Err(format!("Manifest '{}' memiliki field tidak valid atau duplikat pada baris {}.", manifest.display(), index + 1));
+        }
+        let Some(value) = value.strip_prefix('"').and_then(|value| value.strip_suffix('"')) else {
+            return Err(format!("Manifest '{}' memiliki nilai tidak valid pada baris {}.", manifest.display(), index + 1));
+        };
+        if !is_safe_manifest_component(value) {
+            return Err(format!(
+                "Manifest '{}' memiliki nilai '{}' yang tidak aman untuk nama artefak pada field '{}' di baris {}.",
+                manifest.display(), value, key, index + 1
+            ));
+        }
+        match key {
+            "nama" => name = Some(value.to_owned()),
+            "versi" => version = Some(value.to_owned()),
+            _ => unreachable!(),
+        }
+    }
+
+    match (name, version) {
+        (Some(name), Some(version)) => Ok((name, version)),
+        _ => Err(format!("Manifest '{}' harus memuat nama dan versi.", manifest.display())),
+    }
+}
+fn read_project_source(root: &Path, relative: &Path) -> Result<String, String> {
+    let bytes = one_core::read_file_within_project(root, relative, 4 * 1024 * 1024)
+        .map_err(|error| format!("Sumber '{}' tidak dapat dibaca dalam akar proyek: {}", root.join(relative).display(), error))?;
+    String::from_utf8(bytes)
+        .map_err(|error| format!("Sumber '{}' bukan UTF-8 valid: {}", root.join(relative).display(), error))
+}
+fn compile_file(path: &Path) -> Result<(one_core::Program, one_core::TypedProgram), one_core::DiagnosticBundle> {
+    let supplied_parent = path.parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or_else(|| Path::new("."));
+    let root = fs::canonicalize(supplied_parent).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat menyelesaikan direktori sumber '{}': {}", supplied_parent.display(), error), None)))?;
+    let file_name = path.file_name().ok_or_else(|| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", "Jalur sumber harus menunjuk ke berkas reguler.", None)))?;
+    let source = one_core::read_file_within_project(&root, Path::new(file_name), 4 * 1024 * 1024)
+        .map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Tidak dapat membaca sumber '{}' dalam akar proyek: {}", path.display(), error), None)))?;
+    let source = String::from_utf8(source).map_err(|error| one_core::DiagnosticBundle::single(one_core::Diagnostic::error("ETOOL001", format!("Sumber '{}' bukan UTF-8 valid: {}", path.display(), error), None)))?;
+    compile_source(&source)
+}
 fn fixture_files(root: &Path) -> Result<Vec<PathBuf>, String> { if !root.is_dir() { return Ok(Vec::new()); } let mut files = fs::read_dir(root).map_err(|e| format!("Tidak dapat membaca '{}': {}", root.display(), e))?.map(|entry| entry.map(|e| e.path()).map_err(|e| format!("Tidak dapat membaca fixture: {}", e))).collect::<Result<Vec<_>, _>>()?; files.retain(|path| path.extension().and_then(|v| v.to_str()) == Some("one")); files.sort(); Ok(files) }
-fn run_conformance_fixtures(root: &Path) -> Result<usize, String> { let valid = fixture_files(&root.join("tests/conformance/valid"))?; let invalid = fixture_files(&root.join("tests/conformance/invalid"))?; let mut count = 0; for path in valid { let (_, typed) = compile_file(&path).map_err(|bundle| format!("Fixture valid '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?; let ir = lower(&typed).map_err(|bundle| format!("Fixture valid '{}' gagal diturunkan: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?; let mut interpreter = Interpreter::new(CapabilitySet::none()); interpreter.execute(&ir).map_err(|error| format!("Fixture valid '{}' gagal saat runtime: {}", path.display(), error.message))?; count += 1; } for path in invalid { let result = compile_file(&path); if result.is_ok() { return Err(format!("Fixture invalid '{}' diterima.", path.display())); } count += 1; } Ok(count) }
+fn sha256_hex(bytes: &[u8]) -> String {
+ Sha256::digest(bytes).iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn module_lock_contents(root: &Path, modules: &[PathBuf]) -> Result<String, String> {
+ let canonical_root = fs::canonicalize(root).map_err(|error| format!("Direktori sumber tidak dapat diresolusi: {error}"))?;
+ let mut entries = Vec::new();
+ for module in modules {
+  let relative = module.strip_prefix(&canonical_root).map_err(|_| format!("Modul '{}' berada di luar direktori sumber paket.", module.display()))?;
+  let name = relative.components().map(|component| component.as_os_str().to_string_lossy().into_owned()).collect::<Vec<_>>().join("/");
+  if name.is_empty() || name.split('/').any(|part| part == ".." || part.is_empty() || part.contains('\n') || part.contains('\r')) {
+   return Err(format!("Jalur modul tidak valid untuk lockfile: '{}'.", module.display()));
+  }
+  let bytes = one_core::read_file_within_project(&canonical_root, relative, 4 * 1024 * 1024).map_err(|error| format!("Modul '{}' tidak dapat dibaca untuk lockfile: {error}", module.display()))?;
+  entries.push((name, sha256_hex(&bytes)));
+ }
+ entries.sort_by(|left, right| left.0.cmp(&right.0));
+ let mut lock = String::from("One module lock v2\n# SHA-256 content digests; this lock does not authenticate publisher provenance.\n");
+ for (name, digest) in entries {
+  lock.push_str(&format!("{name} sha256={digest}\n"));
+ }
+ Ok(lock)
+}
+
+fn verify_existing_module_lock(project_root: &Path, source_root: &Path, modules: &[PathBuf]) -> Result<(), String> {
+ if !project_root.join("one.toml").is_file() {
+  return Ok(());
+ }
+ let (name, version) = project_metadata(project_root)?;
+ let lock_name = format!("{name}-{version}.one.lock");
+ let lock_relative = Path::new("target").join(&lock_name);
+ let actual_bytes = match one_core::read_file_within_project(project_root, &lock_relative, 16 * 1024 * 1024) {
+  Ok(bytes) => bytes,
+  Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+  Err(error) => return Err(format!("Module lock '{}' tidak dapat dibaca dengan aman: {error}", project_root.join(&lock_relative).display())),
+ };
+ let expected = module_lock_contents(source_root, modules)?;
+ let actual = String::from_utf8(actual_bytes).map_err(|error| format!("Module lock tidak berisi UTF-8 valid: {error}"))?;
+ if actual != expected {
+  return Err(format!("Module lock '{}' sudah usang; jalankan 'one package' untuk memperbaruinya.", project_root.join(&lock_relative).display()));
+ }
+ Ok(())
+}
+
+fn run_conformance_fixtures(root: &Path) -> Result<usize, String> {
+ let valid = fixture_files(&root.join("tests/conformance/valid"))?;
+ let invalid = fixture_files(&root.join("tests/conformance/invalid"))?;
+ let mut count = 0;
+ for path in valid {
+  let relative = path.strip_prefix(root).map_err(|_| format!("Fixture '{}' berada di luar akar proyek.", path.display()))?;
+  let source = read_project_source(root, relative)?;
+  let ir = if source.lines().next().unwrap_or("").starts_with("Buat program ") {
+   one_core::human_compiler::compile_file(&path).map(|compiled| compiled.ir).map_err(|bundle| format!("Fixture valid human-core '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?
+  } else {
+   let (_, typed) = compile_file(&path).map_err(|bundle| format!("Fixture valid '{}' ditolak: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?;
+   lower(&typed).map_err(|bundle| format!("Fixture valid '{}' gagal diturunkan: {}", path.display(), bundle.0.first().map(|d| d.message.as_str()).unwrap_or("diagnostic tidak tersedia")))?
+  };
+  let mut interpreter = Interpreter::new(CapabilitySet::none());
+  interpreter.execute(&ir).map_err(|error| format!("Fixture valid '{}' gagal saat runtime: {}", path.display(), error.message))?;
+  count += 1;
+ }
+ for path in invalid {
+  let relative = path.strip_prefix(root).map_err(|_| format!("Fixture '{}' berada di luar akar proyek.", path.display()))?;
+  let source = read_project_source(root, relative)?;
+  let accepted = if source.lines().next().unwrap_or("").starts_with("Buat program ") {
+   one_core::human_compiler::compile_file(&path).is_ok()
+  } else {
+   compile_file(&path).is_ok()
+  };
+  if accepted { return Err(format!("Fixture invalid '{}' diterima.", path.display())); }
+  count += 1;
+ }
+ Ok(count)
+}
 fn main() -> ExitCode {
  let mut args = env::args().skip(1); let Some(first) = args.next() else { usage(); return ExitCode::from(2); }; if first == "help" { if args.next().is_some() { usage(); return ExitCode::from(2); } usage(); return ExitCode::SUCCESS; } if first == "version" { if args.next().is_some() { usage(); return ExitCode::from(2); } println!("one {VERSION}"); return ExitCode::SUCCESS; }
+ if first == "sign-package" {
+  let Some(artifact) = args.next() else { eprintln!("Penggunaan: one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file> --source-root <project-dir>"); return ExitCode::from(2); };
+  let mut publisher: Option<String> = None;
+  let mut private_key: Option<PathBuf> = None;
+  let mut source_root: Option<PathBuf> = None;
+  while let Some(option) = args.next() {
+   match option.as_str() {
+    "--publisher" => { let Some(value) = args.next() else { eprintln!("ETOOL007: --publisher membutuhkan ID."); return ExitCode::from(2); }; publisher = Some(value); }
+    "--private-key" => { let Some(value) = args.next() else { eprintln!("ETOOL007: --private-key membutuhkan jalur."); return ExitCode::from(2); }; private_key = Some(PathBuf::from(value)); }
+    "--source-root" => { let Some(value) = args.next() else { eprintln!("ETOOL007: --source-root membutuhkan direktori proyek."); return ExitCode::from(2); }; source_root = Some(PathBuf::from(value)); }
+    _ => { eprintln!("ETOOL007: opsi sign-package tidak dikenal '{}'.", option); return ExitCode::from(2); }
+   }
+  }
+  let (Some(publisher), Some(private_key), Some(source_root)) = (publisher, private_key, source_root) else {
+   eprintln!("ETOOL007: --publisher, --private-key, dan --source-root wajib diberikan.");
+   return ExitCode::from(2);
+  };
+  return match package_provenance::sign_build_provenance(Path::new(&artifact), &publisher, &private_key, &source_root) {
+   Ok(sidecar) => { println!("Attestation build paket ditandatangani: {}", sidecar.display()); ExitCode::SUCCESS }
+   Err(error) => { eprintln!("ETOOL007: {error}"); ExitCode::from(1) }
+  };
+ }
+ if first == "verify-package" {
+  let Some(artifact) = args.next() else { eprintln!("Penggunaan: one verify-package <file.onepkg> --trusted-publishers <trust-store> [--source-root <project-dir>]"); return ExitCode::from(2); };
+  let mut trust_store: Option<PathBuf> = None;
+  let mut source_root: Option<PathBuf> = None;
+  while let Some(option) = args.next() {
+   match option.as_str() {
+    "--trusted-publishers" => { let Some(value) = args.next() else { eprintln!("ETOOL008: --trusted-publishers membutuhkan jalur."); return ExitCode::from(2); }; trust_store = Some(PathBuf::from(value)); }
+    "--source-root" => { let Some(value) = args.next() else { eprintln!("ETOOL008: --source-root membutuhkan direktori proyek."); return ExitCode::from(2); }; source_root = Some(PathBuf::from(value)); }
+    _ => { eprintln!("ETOOL008: opsi verify-package tidak dikenal '{}'.", option); return ExitCode::from(2); }
+   }
+  }
+  let Some(trust_store) = trust_store else { eprintln!("ETOOL008: --trusted-publishers wajib diberikan."); return ExitCode::from(2); };
+  let verification = if let Some(source_root) = source_root.as_deref() {
+   package_provenance::verify_build_provenance(Path::new(&artifact), &trust_store, source_root)
+  } else {
+   package_provenance::verify_artifact(Path::new(&artifact), &trust_store)
+  };
+  return match verification {
+   Ok(publisher) if source_root.is_some() => { println!("Build provenance terverifikasi terhadap source tree dan publisher: {publisher}"); ExitCode::SUCCESS }
+   Ok(publisher) => { println!("Signature publisher terverifikasi; source tree tidak diperiksa ulang; publisher: {publisher}"); ExitCode::SUCCESS }
+   Err(error) => { eprintln!("ETOOL008: {error}"); ExitCode::from(1) }
+  };
+ }
+ if first == "jalankan-human-vnext" || first == "run-human-vnext" {
+  let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-vnext <program.one> [--data <berkas>]"); return ExitCode::from(2); };
+  let source_path = Path::new(&source_arg);
+  let mut storage_path = source_path.with_extension("tugas.db");
+  while let Some(option) = args.next() {
+   match option.as_str() {
+    "--data" => { let Some(value) = args.next() else { eprintln!("EHV001: --data membutuhkan jalur berkas."); return ExitCode::from(2); }; storage_path = PathBuf::from(value); }
+    _ => { eprintln!("EHV001: opsi tidak dikenal '{}'.", option); return ExitCode::from(2); }
+   }
+  }
+  let source = match fs::read_to_string(source_path) {
+   Ok(source) => source,
+   Err(error) => { eprintln!("EHV001: tidak dapat membaca '{}': {}", source_path.display(), error); return ExitCode::from(2); }
+  };
+  let program = match one_core::human_vnext::parse(&source) {
+   Ok(program) => program,
+   Err(error) => { eprintln!("EHV002: {}", error); return ExitCode::from(1); }
+  };
+  let stdin = std::io::stdin();
+  let stdout = std::io::stdout();
+  let mut input = stdin.lock();
+  let mut output = stdout.lock();
+  return match one_core::human_vnext::run_task_app(&program, &storage_path, &mut input, &mut output) {
+   Ok(()) => ExitCode::SUCCESS,
+   Err(error) => { eprintln!("EHV003: {}", error); ExitCode::from(1) }
+  };
+ }
+ if first == "jalankan-human-core" || first == "run-human-core" {
+  let Some(source_arg) = args.next() else { eprintln!("Penggunaan: one jalankan-human-core <program.one>"); return ExitCode::from(2); };
+  if args.next().is_some() { eprintln!("EHV1001: terlalu banyak argumen."); return ExitCode::from(2); }
+  let path = Path::new(&source_arg);
+  let compiled = match one_core::human_compiler::compile_file(path) {
+   Ok(program) => program,
+   Err(bundle) => { print_diagnostics(&bundle); return ExitCode::from(1); }
+  };
+  let mut interpreter = Interpreter::new(CapabilitySet::none());
+  return match interpreter.execute(&compiled.ir) {
+   Ok(result) => { for line in result.output { println!("{}", line); } ExitCode::SUCCESS },
+   Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) }
+  };
+ }
  let command = match first.as_str() { "buat" | "new" => "new", "periksa" | "check" => "check", "jalankan" | "run" => "run", "bangun" | "build" => "build", "ast" => "ast", "test" => "test", "package" => "package", "lihat" if args.next().as_deref() == Some("struktur") => "ast", _ => { usage(); return ExitCode::from(2); } };
  if command == "new" { let Some(folder) = args.next() else { usage(); return ExitCode::from(2); }; if args.next().is_some() { usage(); return ExitCode::from(2); } let root = Path::new(&folder); if root.exists() { eprintln!("Folder '{}' sudah ada.", folder); return ExitCode::from(2); } let src = root.join("src"); if let Err(error) = fs::create_dir_all(&src).and_then(|_| fs::write(root.join("one.toml"), "nama = \"proyek-one\"\nversi = \"0.1.0\"\n")).and_then(|_| fs::write(src.join("main.one"), "tampilkan \"Halo dari One\"\n")) { eprintln!("Gagal membuat proyek: {}", error); return ExitCode::from(2); } println!("Proyek One dibuat di {}", root.display()); return ExitCode::SUCCESS; }
- let Some(path_arg) = args.next() else { usage(); return ExitCode::from(2); }; let path = Path::new(&path_arg); let mut orchestration_target = None; let mut orchestration_capability = None;
- if command == "run" { while let Some(option) = args.next() { match option.as_str() { "--izinkan" | "--allow" => { let Some(capability) = args.next() else { eprintln!("ETOOL004: --izinkan membutuhkan capability."); return ExitCode::from(2); }; if !matches!(capability.as_str(), "network.discover" | "network.connect" | "filesystem.read" | "filesystem.write" | "process.execute" | "database.query") { eprintln!("ETOOL004: capability '{}' belum tersedia melalui CLI.", capability); return ExitCode::from(2); } orchestration_capability = Some(capability); }, "--target" => { let Some(target) = args.next() else { eprintln!("ETOOL004: --target membutuhkan target."); return ExitCode::from(2); }; orchestration_target = Some(target); }, _ => { usage(); return ExitCode::from(2); } } } } else if args.next().is_some() { usage(); return ExitCode::from(2); }
- if orchestration_target.is_some() != orchestration_capability.is_some() { eprintln!("ETOOL004: --izinkan dan --target harus diberikan bersama."); return ExitCode::from(2); }
- if command == "test" || command == "package" { let root = if path.is_dir() { path.to_path_buf() } else { path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf() }; let main_file = match project_main(&root) { Ok(value) => value, Err(message) => { eprintln!("ETOOL001: {message}"); return ExitCode::from(2); } }; let (_, typed) = match compile_file(&main_file) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } }; let ir = match lower(&typed) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } }; if command == "test" { let mut interpreter = Interpreter::new(CapabilitySet::none()); match interpreter.execute(&ir) { Ok(_) => match run_conformance_fixtures(&root) { Ok(count) => { println!("Tests berhasil: {} ({} fixture)", root.display(), count + 1); ExitCode::SUCCESS }, Err(message) => { eprintln!("ETOOL003: {message}"); ExitCode::from(1) } }, Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) } } } else { let (name, version) = match project_metadata(&root) { Ok(value) => value, Err(message) => { eprintln!("ETOOL002: {message}"); return ExitCode::from(2); } }; let target = root.join("target"); if let Err(error) = fs::create_dir_all(&target) { eprintln!("Gagal membuat target: {}", error); return ExitCode::from(2); } let artifact = target.join(format!("{name}-{version}.onepkg")); let manifest = match fs::read_to_string(root.join("one.toml")) { Ok(value) => value, Err(error) => { eprintln!("ETOOL002: Tidak dapat membaca manifest: {error}"); return ExitCode::from(2); } }; let contents = format!("One package v0.1\n\n[manifest]\n{manifest}\n[ir]\n{}", ir.canonical_text()); if let Err(error) = fs::write(&artifact, contents) { eprintln!("Gagal menulis paket: {}", error); return ExitCode::from(2); } println!("Paket berhasil: {}", artifact.display()); ExitCode::SUCCESS } } else { let (program, typed) = match compile_file(path) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } }; match command { "check" => { println!("OK: {}", path.display()); ExitCode::SUCCESS }, "ast" => { println!("{:#?}", program); ExitCode::SUCCESS }, "run" => match lower(&typed) { Ok(ir) => { let mut interpreter = match (orchestration_capability, orchestration_target) { (Some(capability), Some(target)) => match capability.as_str() { "network.discover" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::NetworkDiscover).allow_scope(Capability::NetworkDiscover, ScopeRule::Target(target))), "network.connect" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::NetworkConnect).allow_scope(Capability::NetworkConnect, ScopeRule::Target(target))), "filesystem.read" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::FilesystemRead).allow_scope(Capability::FilesystemRead, ScopeRule::Target(target))), "filesystem.write" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::FilesystemWrite).allow_scope(Capability::FilesystemWrite, ScopeRule::Target(target))), "process.execute" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::Process).allow_scope(Capability::Process, ScopeRule::Target(target))), "database.query" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::DatabaseQuery).allow_scope(Capability::DatabaseQuery, ScopeRule::Resource(target))), _ => unreachable!() }, (None, None) => Interpreter::new(CapabilitySet::none()), _ => unreachable!() }; match interpreter.execute(&ir) { Ok(result) => { for line in result.output { println!("{}", line); } ExitCode::SUCCESS }, Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) } } }, Err(error) => { print_diagnostics(&error); return ExitCode::from(1) } }, "build" => match lower(&typed) { Ok(ir) => { let parent = path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf(); let target = parent.join("target"); if let Err(error) = fs::create_dir_all(&target) { eprintln!("Gagal menulis artefak build: {}", error); return ExitCode::from(2) } let output = target.join(format!("{}.oneir", path.file_stem().and_then(|v| v.to_str()).unwrap_or("program"))); if let Err(error) = fs::write(&output, ir.canonical_text()) { eprintln!("Gagal menulis artefak build: {}", error); return ExitCode::from(2) } println!("Build berhasil: {}", output.display()); ExitCode::SUCCESS }, Err(error) => { print_diagnostics(&error); return ExitCode::from(1) } }, _ => { usage(); return ExitCode::from(2) } } }
+ let Some(path_arg) = args.next() else { usage(); return ExitCode::from(2); }; let path = Path::new(&path_arg); let mut orchestration_target = None; let mut orchestration_capability = None; let mut orchestration_root = None;
+ if command == "run" { while let Some(option) = args.next() { match option.as_str() { "--izinkan" | "--allow" => { let Some(capability) = args.next() else { eprintln!("ETOOL004: --izinkan membutuhkan capability."); return ExitCode::from(2); }; if !matches!(capability.as_str(), "network.discover" | "network.connect" | "filesystem.read" | "filesystem.write" | "process.execute" | "database.query") { eprintln!("ETOOL004: capability '{}' belum tersedia melalui CLI.", capability); return ExitCode::from(2); } orchestration_capability = Some(capability); }, "--target" => { let Some(target) = args.next() else { eprintln!("ETOOL004: --target membutuhkan target."); return ExitCode::from(2); }; orchestration_target = Some(target); }, "--root" => { let Some(root) = args.next() else { eprintln!("ETOOL004: --root membutuhkan direktori."); return ExitCode::from(2); }; orchestration_root = Some(root); }, _ => { usage(); return ExitCode::from(2); } } } } else if args.next().is_some() { usage(); return ExitCode::from(2); }
+ if orchestration_target.is_some() != orchestration_capability.is_some() { eprintln!("ETOOL004: --izinkan dan --target harus diberikan bersama."); return ExitCode::from(2); } if orchestration_root.is_some() && !matches!(orchestration_capability.as_deref(), Some("filesystem.read") | Some("filesystem.write")) { eprintln!("ETOOL004: --root hanya berlaku untuk filesystem.read atau filesystem.write."); return ExitCode::from(2); }
+ if command == "build" {
+  let supplied_parent = path.parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or_else(|| Path::new("."));
+  let header = fs::canonicalize(supplied_parent).ok().and_then(|root| path.file_name().and_then(|name| read_project_source(&root, Path::new(name)).ok())).and_then(|source| source.lines().next().map(str::to_owned)).unwrap_or_default();
+  if header.starts_with("Buat program ") {
+   let compiled = match one_core::human_compiler::compile_file(path) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } };
+   let parent = path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf();
+   let project_root = parent.parent().unwrap_or_else(|| Path::new("."));
+   if let Err(message) = verify_existing_module_lock(project_root, &parent, &compiled.modules) { eprintln!("ETOOL006: {message}"); return ExitCode::from(1); }
+   let stem = path.file_stem().and_then(|value| value.to_str()).unwrap_or("program");
+   let Some(filename) = is_safe_artifact_filename(stem).then(|| format!("{stem}.oneir")) else { eprintln!("ETOOL009: nama artefak build tidak aman."); return ExitCode::from(2); };
+   let artifact_bytes = compiled.ir.canonical_text();
+   let output = match write_project_artifact(&parent, &filename, artifact_bytes.as_bytes()) { Ok(value) => value, Err(message) => { eprintln!("Gagal menulis artefak build: {}", message); return ExitCode::from(2); } };
+   println!("Build human-core berhasil: {}", output.display());
+   return ExitCode::SUCCESS;
+  }
+ }
+ if command == "test" || command == "package" { let root = if path.is_dir() { path.to_path_buf() } else { path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf() }; let main_file = match project_main(&root) { Ok(value) => value, Err(message) => { eprintln!("ETOOL001: {message}"); return ExitCode::from(2); } }; let main_relative = match main_file.strip_prefix(&root) { Ok(relative) => relative, Err(_) => { eprintln!("ETOOL001: berkas utama berada di luar akar proyek."); return ExitCode::from(2); } }; let main_source = match read_project_source(&root, main_relative) { Ok(source) => source, Err(message) => { eprintln!("ETOOL001: {message}"); return ExitCode::from(2); } }; let source_header = main_source.lines().next().unwrap_or_default().to_owned(); let (ir, is_human_core, module_lock) = if source_header.starts_with("Buat program ") { match one_core::human_compiler::compile_file(&main_file) { Ok(compiled) => { let source_root = main_file.parent().unwrap_or_else(|| Path::new(".")); if command == "test" && let Err(message) = verify_existing_module_lock(&root, source_root, &compiled.modules) { eprintln!("ETOOL006: {message}"); return ExitCode::from(1); } let lock = if command == "package" { match module_lock_contents(source_root, &compiled.modules) { Ok(lock) => Some(lock), Err(message) => { eprintln!("ETOOL005: {message}"); return ExitCode::from(2); } } } else { None }; (compiled.ir, true, lock) }, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } } } else { let (_, typed) = match compile_file(&main_file) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } }; let ir = match lower(&typed) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } }; (ir, false, None) }; if command == "test" { let mut interpreter = Interpreter::new(CapabilitySet::none()); match interpreter.execute(&ir) { Ok(_) => match run_conformance_fixtures(&root) { Ok(count) => { println!("Tests berhasil: {} ({} fixture)", root.display(), count + 1); ExitCode::SUCCESS }, Err(message) => { eprintln!("ETOOL003: {message}"); ExitCode::from(1) } }, Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) } } } else { let (name, version) = match project_metadata(&root) { Ok(value) => value, Err(message) => { eprintln!("ETOOL002: {message}"); return ExitCode::from(2); } }; let artifact_name = format!("{name}-{version}.onepkg"); let artifact = root.join("target").join(&artifact_name); let manifest = match read_project_source(&root, Path::new("one.toml")) { Ok(value) => value, Err(message) => { eprintln!("ETOOL002: Tidak dapat membaca manifest: {message}"); return ExitCode::from(2); } }; let contents = if is_human_core { let Some(lock) = module_lock.as_deref() else { eprintln!("ETOOL005: Module lock tidak tersedia untuk paket human-core."); return ExitCode::from(2); }; format!("One human-core package v1\n\n[manifest]\n{manifest}\n[frontend]\nhuman-core\n[module-lock]\n{lock}[ir]\n{}", ir.canonical_text()) } else { format!("One package v0.1\n\n[manifest]\n{manifest}\n[ir]\n{}", ir.canonical_text()) }; if let Some(lock) = module_lock.as_deref() { let lock_name = format!("{name}-{version}.one.lock"); if let Err(message) = write_project_artifact(&root, &lock_name, lock.as_bytes()) { eprintln!("Gagal menulis module lock: {}", message); return ExitCode::from(2); } } if let Err(message) = write_project_artifact(&root, &artifact_name, contents.as_bytes()) { eprintln!("Gagal menulis paket: {}", message); return ExitCode::from(2); } println!("Paket berhasil: {}", artifact.display()); ExitCode::SUCCESS } } else { let (program, typed) = match compile_file(path) { Ok(value) => value, Err(error) => { print_diagnostics(&error); return ExitCode::from(1); } }; match command { "check" => { println!("OK: {}", path.display()); ExitCode::SUCCESS }, "ast" => { println!("{:#?}", program); ExitCode::SUCCESS }, "run" => match lower(&typed) { Ok(ir) => { let mut interpreter = match (orchestration_capability, orchestration_target) { (Some(capability), Some(target)) => match capability.as_str() { "network.discover" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::NetworkDiscover).allow_scope(Capability::NetworkDiscover, ScopeRule::Target(target))), "network.connect" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::NetworkConnect).allow_scope(Capability::NetworkConnect, ScopeRule::Target(target))), "filesystem.read" => { let scope = orchestration_root.as_ref().map(|root| ScopeRule::Root(root.clone())).unwrap_or_else(|| ScopeRule::Target(target.clone())); Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::FilesystemRead).allow_scope(Capability::FilesystemRead, scope)) }, "filesystem.write" => { let scope = orchestration_root.as_ref().map(|root| ScopeRule::Root(root.clone())).unwrap_or_else(|| ScopeRule::Target(target.clone())); Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::FilesystemWrite).allow_scope(Capability::FilesystemWrite, scope)) }, "process.execute" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::Process).allow_scope(Capability::Process, ScopeRule::Target(target))), "database.query" => Interpreter::with_orchestration_policy(ExecutionPolicy::default().grant(Capability::DatabaseQuery).allow_scope(Capability::DatabaseQuery, ScopeRule::Resource(target))), _ => unreachable!() }, (None, None) => Interpreter::new(CapabilitySet::none()), _ => unreachable!() }; match interpreter.execute(&ir) { Ok(result) => { for line in result.output { println!("{}", line); } ExitCode::SUCCESS }, Err(error) => { eprintln!("{}: {}", error.code, error.message); ExitCode::from(1) } } }, Err(error) => { print_diagnostics(&error); return ExitCode::from(1) } }, "build" => match lower(&typed) { Ok(ir) => { let parent = path.parent().unwrap_or_else(|| Path::new(".")).to_path_buf(); let stem = path.file_stem().and_then(|value| value.to_str()).unwrap_or("program"); let Some(filename) = is_safe_artifact_filename(stem).then(|| format!("{stem}.oneir")) else { eprintln!("ETOOL009: nama artefak build tidak aman."); return ExitCode::from(2) }; let artifact_bytes = ir.canonical_text(); let output = match write_project_artifact(&parent, &filename, artifact_bytes.as_bytes()) { Ok(value) => value, Err(message) => { eprintln!("Gagal menulis artefak build: {}", message); return ExitCode::from(2) } }; println!("Build berhasil: {}", output.display()); ExitCode::SUCCESS }, Err(error) => { print_diagnostics(&error); return ExitCode::from(1) } }, _ => { usage(); return ExitCode::from(2) } } }
+}
+#[cfg(test)]
+mod package_lock_tests {
+    use super::sha256_hex;
+
+    #[test]
+    fn sha256_uses_stable_known_vectors() {
+        assert_eq!(sha256_hex(b""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        assert_eq!(sha256_hex(b"a"), "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb");
+    }
 }

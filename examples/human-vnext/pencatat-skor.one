@@ -1,0 +1,10 @@
+Buat program pencatat skor
+
+skor awal adalah 10
+bonus adalah 5
+skor akhir adalah skor awal ditambah bonus
+
+kalau skor akhir sama dengan 15
+    tampilkan "Skor tervalidasi"
+kalau tidak
+    tampilkan "Skor tidak valid"

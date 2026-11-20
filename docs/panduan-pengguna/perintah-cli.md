@@ -32,7 +32,7 @@ Vertical slice filesystem read yang tersedia secara eksperimental adalah `baca b
 one jalankan main.one --izinkan filesystem.read --target data/contoh.txt
 ```
 
-Tanpa capability `filesystem.read`, source orchestration ditolak. Target harus sama persis dengan target yang diberi izin.
+Tanpa capability `filesystem.read`, source orchestration ditolak. Tanpa opsi `--root`, target harus sama persis dengan target yang diberi izin. Untuk pembatasan direktori, gunakan `--root <dir>` bersama target yang berada di bawah root tersebut.
 
 ## Menulis berkas melalui orchestration filesystem — eksperimental
 
@@ -57,13 +57,13 @@ one run main.one --allow filesystem.write --target data/hasil.txt
 Aturan boundary:
 
 - `filesystem.write` harus diberikan secara eksplisit;
-- `--target` wajib sama dengan file target yang diminta source;
+- `--target` wajib cocok dengan file target yang diminta source; jika `--root` diberikan, target juga harus berada di dalam root berdasarkan komponen path;
 - payload saat ini satu nilai teks;
 - implementasi menulis satu payload ke satu file target;
 - tanpa permission, policy menolak orchestration sebelum adapter filesystem dipanggil;
 - fitur ini tidak boleh diperlakukan sebagai filesystem management umum atau sandbox/path-confinement guarantee.
 
-Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/Android. Contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification lulus. Belum ada exact-SHA Ubuntu/Windows evidence untuk executable revision ini.
+Exact-SHA cross-platform evidence on candidate `1dec26abcc90ac27d892cf3ff0a83dedb8b90fd8`: [mirror run `40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) passed Ubuntu and Windows Server 2025 workspace tests, including `filesystem_write_requires_explicit_capability_and_writes_target`, `run_command_executes_filesystem_write_from_one_source`, final-symlink denial, and bounded-write regressions. The earlier Termux/Android result at `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` remains historical. This is still an experimental, explicitly target-scoped write slice—not a general filesystem manager or sandbox guarantee.
 
 ## Menjalankan proses — eksperimental
 
@@ -79,9 +79,9 @@ one jalankan main.one --izinkan process.execute --target rustc
 
 Boundary saat ini: satu program yang ditargetkan secara eksplisit tanpa argumen tambahan.
 
-## Menjalankan kueri database — dalam pengembangan
+## Menjalankan kueri database — eksperimental
 
-SQLite-backed database query sudah diimplementasikan, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
+SQLite-backed database query tersedia sebagai vertical slice terbatas; jangan menyamakannya dengan API persistence umum.
 
 Source One:
 
@@ -99,15 +99,16 @@ Boundary implementasi saat ini:
 
 - capability `database.query` wajib diberikan secara eksplisit;
 - `--target` adalah resource database dan harus cocok persis;
-- adapter menggunakan SQLite nyata dan parameterized SELECT;
+- adapter menggunakan SQLite nyata dan parameterized `SELECT`;
 - hasil dinormalisasi sebagai teks UTF-8;
 - INSERT/UPDATE/DELETE/DDL belum termasuk boundary query ini;
-- current implementation lineage `0aa4acdf3796235eac432138fec829b6508879e3` belum executable-verified;
-- hosted CI run `550` gagal tanpa step yang dieksekusi, sehingga bukan source-failure evidence.
+- query, parameter, row/output, VM-opcode, dan waktu eksekusi dibatasi;
+- final-component symlink diblokir oleh `SQLITE_OPEN_NOFOLLOW`, dengan regresi Unix;
+- exact-SHA cross-platform run [`40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) menjalankan `database_vertical_slice` dan `database_orchestration` pada Ubuntu + Windows; focused run [`40084595238`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595238) lulus batas sumber daya SQLite dan symlink regression.
 
-## Mengambil HTTP — dalam pengembangan
+## Mengambil HTTP — eksperimental
 
-HTTP GET sudah diimplementasikan sebagai vertical slice terbatas, tetapi belum memiliki exact-SHA executable verification. Karena itu pengguna tidak boleh menganggapnya sebagai fitur yang didukung.
+HTTP GET tersedia sebagai vertical slice terbatas, bukan HTTP client/API SDK umum.
 
 Source One:
 
@@ -125,13 +126,12 @@ Boundary implementasi saat ini:
 
 - capability `network.connect` wajib diberikan secara eksplisit;
 - `--target` harus sama persis dengan URL source;
-- adapter `network.http.get` menggunakan HTTP/1.1 GET yang sudah tersedia di network runtime;
+- adapter `network.http.get` menggunakan HTTP/1.1 GET;
 - hanya skema `http://` yang termasuk slice ini;
-- hasil yang dikembalikan adalah response body di bawah ekspektasi UTF-8;
+- response body dinormalisasi ke UTF-8 dan dibatasi;
 - response non-2xx diperlakukan sebagai adapter failure;
 - HTTPS, method selain GET, custom headers/body, redirects, cookies, dan API-specific authentication belum termasuk boundary ini;
-- current implementation head `913e644ea665711c669590a80d7ff19866cb7671` belum executable-verified;
-- latest inspected hosted CI run `585` gagal dengan zero reported steps pada Ubuntu dan Windows, sehingga bukan source-failure evidence.
+- exact-SHA cross-platform run [`40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) menjalankan `http_get_vertical_slice` dan `http_get_orchestration` pada Ubuntu + Windows; real-network tests juga lulus pada kedua platform.
 
 ## `bangun` dan `package`
 
@@ -144,6 +144,32 @@ Keduanya **belum** boleh disebut sebagai native executable compiler atau platfor
 
 ## Verification boundary
 
-Latest exact-SHA executable evidence for filesystem write/CLI is `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8` on Termux/Android. The recorded stages are contract check, build, Clippy with `-D warnings`, targeted filesystem-write CLI test, full workspace tests, and offline verification: all PASS.
+The latest fully passing evidence before the current documentation reconciliation is [cross-platform run `40084595236`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595236) on source SHA `1dec26abcc90ac27d892cf3ff0a83dedb8b90fd8`, which passed Ubuntu + Windows Server 2025 workspace tests, CLI vertical slices, real-network tests, offline verification, and bundle generation. Focused standard-library/database/provenance regressions passed in [run `40084595238`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595238); Ubuntu 24.04 and Debian 12 passed in [run `40084595259`](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/40084595259). The current source head includes later documentation-only corrections, so these are historical for the previous SHA until the exact-SHA matrix reruns.
 
-The latest cross-platform evidence remains independent mirror run `38929072800` against `9038ac75f197753ff1ab6af7478e63e4831903a2` on Ubuntu + Windows Server 2025. It verifies the process/system boundary, not the later filesystem-write, database, or HTTP changes.
+These links are exact evidence for the SHA named in the logs, not automatic evidence for a later documentation commit. If source changes, rerun the required matrix on the new SHA. The canonical repository's Actions jobs have also failed before executable steps with empty `steps: []`; those are infrastructure failures, not source-test passes or failures.
+
+## Pembatasan root filesystem
+
+Untuk operasi baca/tulis, `--root <dir>` menambahkan aturan containment berbasis komponen path:
+
+```text
+one jalankan main.one --izinkan filesystem.read --root data --target data/input.txt
+one jalankan main.one --izinkan filesystem.write --root data --target data/output.txt
+```
+
+Target di luar root, path dengan komponen parent `..`, dan ketidakcocokan path absolut/relatif ditolak. Tanpa `--root`, perilaku exact-target lama tetap berlaku. Root scope tidak boleh dipasarkan sebagai sandbox sistem operasi lengkap; proteksi adapter no-follow/reparse-point dan batas sumber daya tetap berlaku.
+
+## Menandatangani dan memverifikasi provenance paket
+
+Perintah rilis terpisah tersedia untuk publisher yang telah memiliki seed privat dan trust store publisher yang dikirim melalui kanal independen:
+
+```text
+one sign-package <file.onepkg> --publisher <id> --private-key <seed-hex-file> --source-root <project-dir>
+one verify-package <file.onepkg> --trusted-publishers <trust-store> --source-root <project-dir>
+```
+
+Jangan menaruh seed privat di source project atau artefak. Untuk alur rilis terlindungi, konfigurasi environment dan langkah operasional, baca [panduan provenance paket rilis](provenance-rilis.md). Paket hasil `one package` sendiri belum otomatis ditandatangani.
+
+## Catatan bukti
+
+Nomor SHA/run yang tercantum pada bagian verification di atas adalah bukti historis untuk revision yang disebut di sana, bukan otomatis bukti untuk branch head terbaru. Untuk status milestone-100 saat ini, gunakan `docs/verification/one-completion-ledger.md` dan `docs/verification/one-milestone-100-session-checkpoint.md`. Candidate belum boleh disebut rilis final sebelum semua gerbang exact-SHA, Android, standard library, keamanan, dokumentasi, dan Definition of Done lulus.

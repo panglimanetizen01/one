@@ -1,5 +1,8 @@
 # One v0.1 Implementation Status
 
+> Historical v0.1 baseline snapshot. Exact SHAs, run IDs, and status claims in this document apply only to the explicitly listed older revisions; they are not the active Milestone 100 acceptance record. Use [the completion ledger](one-completion-ledger.md), [Definition of Done](DEFINITION_OF_DONE.md), PR #80, and the independent current-source pin for current acceptance.
+
+
 | Area | State | Evidence in canonical repository |
 |---|---|---|
 | Foundation | ACCEPTED / NORMATIVE | `docs/foundation/one-v0.1-foundation.md` + accepted language invariants; implementation conformance is tracked separately |

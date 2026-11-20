@@ -7,15 +7,25 @@ use rustls::RootCertStore;
 use webpki_roots::TLS_SERVER_ROOTS;
 use crate::capability::{Capability, CapabilitySet};
 use crate::network_runtime::NetworkRuntimeError;
+use crate::resource_budget::ResourcePermit;
+
+const MAX_QUIC_PAYLOAD_BYTES: usize = 16 * 1024 * 1024;
 
 pub fn execute_quic(host: &str, address: SocketAddr, payload: &[u8], capabilities: &CapabilitySet, timeout: Duration) -> Result<Vec<u8>, NetworkRuntimeError> {
     if !capabilities.permits(Capability::NetworkConnect) { return Err(NetworkRuntimeError::CapabilityDenied("Kemampuan jaringan NetworkConnect belum diberikan kepada program.".into())); }
+    if payload.len() > MAX_QUIC_PAYLOAD_BYTES {
+        return Err(NetworkRuntimeError::InvalidOperation("Payload QUIC melebihi batas 16 MiB.".into()));
+    }
+    // The permit covers endpoint creation, connection setup, and bounded response collection.
+    let _resource_permit = ResourcePermit::operation().ok_or_else(|| {
+        NetworkRuntimeError::InvalidOperation("Jumlah operasi jaringan aktif melampaui batas global.".into())
+    })?;
     let host = host.to_owned(); let payload = payload.to_vec(); let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
     runtime.block_on(async move {
         let mut roots = RootCertStore::empty(); roots.extend(TLS_SERVER_ROOTS.iter().cloned()); let client_config = ClientConfig::with_root_certificates(Arc::new(roots)).map_err(|e| NetworkRuntimeError::Identity(e.to_string()))?;
         let bind_addr: SocketAddr = "0.0.0.0:0".parse::<SocketAddr>().map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; let mut endpoint = Endpoint::client(bind_addr).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; endpoint.set_default_client_config(client_config);
         let connecting = endpoint.connect(address, &host).map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; let connection = tokio::time::timeout(timeout, connecting).await.map_err(|_| NetworkRuntimeError::Connection("Batas waktu QUIC habis.".into()))?.map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?;
-        let (mut send, mut recv) = tokio::time::timeout(timeout, connection.open_bi()).await.map_err(|_| NetworkRuntimeError::Connection("Pembukaan QUIC stream melewati batas waktu.".into()))?.map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; tokio::io::AsyncWriteExt::write_all(&mut send, &payload).await.map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; send.finish().map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
+        let (mut send, mut recv) = tokio::time::timeout(timeout, connection.open_bi()).await.map_err(|_| NetworkRuntimeError::Connection("Pembukaan QUIC stream melewati batas waktu.".into()))?.map_err(|e| NetworkRuntimeError::Connection(e.to_string()))?; tokio::time::timeout(timeout, tokio::io::AsyncWriteExt::write_all(&mut send, &payload)).await.map_err(|_| NetworkRuntimeError::Connection("Pengiriman QUIC melewati batas waktu.".into()))?.map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; send.finish().map_err(|e| NetworkRuntimeError::Io(e.to_string()))?;
         let response = tokio::time::timeout(timeout, recv.read_to_end(16 * 1024 * 1024)).await.map_err(|_| NetworkRuntimeError::Connection("Penerimaan QUIC melewati batas waktu.".into()))?.map_err(|e| NetworkRuntimeError::Io(e.to_string()))?; endpoint.close(0u32.into(), b"done"); Ok(response)
     })
 }
@@ -23,6 +33,15 @@ pub fn execute_quic(host: &str, address: SocketAddr, payload: &[u8], capabilitie
 #[cfg(test)]
 mod tests {
     use super::*; use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
+    #[test]
+    fn quic_rejects_oversized_payload_before_copying_or_connecting() {
+        let capabilities = CapabilitySet::none().allow(Capability::NetworkConnect);
+        let payload = vec![b'x'; MAX_QUIC_PAYLOAD_BYTES + 1];
+        assert!(matches!(
+            execute_quic("localhost", "127.0.0.1:4433".parse().unwrap(), &payload, &capabilities, Duration::from_millis(50)),
+            Err(NetworkRuntimeError::InvalidOperation(message)) if message.contains("16 MiB")
+        ));
+    }
     #[test] fn quic_denial_happens_before_endpoint_creation() { let result = execute_quic("localhost", "127.0.0.1:4433".parse().unwrap(), b"ping", &CapabilitySet::none(), Duration::from_millis(50)); assert!(matches!(result, Err(NetworkRuntimeError::CapabilityDenied(_)))); }
     #[test] fn quic_loopback_round_trip_is_real_transport() { let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("runtime"); runtime.block_on(async { tokio::time::timeout(Duration::from_secs(5), async {
         let certified = rcgen::generate_simple_self_signed(vec!["localhost".into()]).expect("certificate"); let cert = CertificateDer::from(certified.cert.der().to_vec()); let key = PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(certified.key_pair.serialize_der())); let server_config = quinn::ServerConfig::with_single_cert(vec![cert.clone()], key).expect("server config"); let server = Endpoint::server(server_config, "127.0.0.1:0".parse().unwrap()).expect("server"); let server_addr = server.local_addr().expect("server address");

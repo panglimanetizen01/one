@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: one-ci-${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
@@ -19,9 +23,9 @@ jobs:
         os: [ubuntu-latest, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
         with:
           packages: platform-tools
       - name: Install cross-compilers (Ubuntu)
@@ -35,7 +39,7 @@ jobs:
           echo "ONE_WINDOWS_CLANG=clang" >> "$GITHUB_ENV"
       - name: Install cross-compilers (Windows)
         if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e
         with:
           msystem: MINGW64
           update: true
@@ -52,22 +56,88 @@ jobs:
         run: rustc --version && cargo --version
       - name: Contract artifacts
         run: python tools/check_contract.py
+      - name: User documentation consistency
+        run: python tools/check_user_docs.py
+      - name: User documentation checker tests
+        run: python tools/check_user_docs_test.py
+      - name: Repository health scanner regression tests
+        run: python -m unittest discover -s tools -p "test_one_health.py" -v
+      - name: CI metadata collector regression tests
+        run: python -m unittest discover -s tools -p "test_collect_ci_health.py" -v
+      - name: Exact-SHA verifier shell syntax
+        shell: bash
+        run: bash -n tools/verify-human-vnext.sh
       - name: Build
-        run: cargo build --workspace --all-targets
+        run: cargo --locked build --workspace --all-targets
+      - name: Repository health scan and One source contract checks
+        run: python tools/one_health.py --check-one-source --json-out one-health-report.json --markdown-out one-health-report.md --quiet
+      - name: Upload repository health report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: one-health-report-${{ runner.os }}
+          path: |
+            one-health-report.json
+            one-health-report.md
+          if-no-files-found: warn
+          retention-days: 14
       - name: Clippy
         shell: bash
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo --locked clippy --workspace --all-targets -- -D warnings
       - name: Tests
-        run: cargo test --workspace --all-targets
+        run: cargo --locked test --workspace --all-targets
       - name: Deterministic .oneir and .onepkg artifacts
-        run: cargo test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
+        run: cargo --locked test -p one-cli --test cli build_and_package_artifacts_are_byte_deterministic
       - name: DNS success and failure classification
-        run: cargo test -p one-core --all-targets dns_adapter
+        run: cargo --locked test -p one-core --all-targets dns_adapter
       - name: Orchestration policy deny and allow paths
-        run: cargo test -p one-core --all-targets orchestrator
+        run: cargo --locked test -p one-core --all-targets orchestrator
       - name: Database vertical slice
-        run: cargo test -p one-core --test database_vertical_slice
+        run: cargo --locked test -p one-core --test database_vertical_slice
       - name: HTTP GET vertical slice
-        run: cargo test -p one-core --test http_get_vertical_slice
+        run: cargo --locked test -p one-core --test http_get_vertical_slice
       - name: HTTP GET CLI vertical slice
-        run: cargo test -p one-cli --test http_get_orchestration
+        run: cargo --locked test -p one-cli --test http_get_orchestration
+
+  android-aarch64-runtime:
+    name: Android AArch64 ELF build and runtime acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with:
+          toolchain: 1.99.0
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: platform-tools
+      - name: Install Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          set +o pipefail
+          yes | sdkmanager --licenses
+          sdk_status=${PIPESTATUS[1]}
+          set -euo pipefail
+          test "$sdk_status" -eq 0
+          sdkmanager --install "ndk;27.2.12479018"
+          test -x "$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+      - name: Build and execute ELF AArch64 on Android emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 35
+          target: google_apis
+          arch: arm64-v8a
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          disable-linux-hw-accel: true
+          emulator-boot-timeout: 900
+          script: |
+            set -euo pipefail
+            export ONE_ANDROID_CLANG="$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+            export ONE_ANDROID_ADB="$ANDROID_HOME/platform-tools/adb"
+            adb devices
+            cargo --locked test -p one-core --test native_backend_android_aarch64 build_native_menghasilkan_dan_menjalankan_elf_android_aarch64 -- --ignored --exact --nocapture

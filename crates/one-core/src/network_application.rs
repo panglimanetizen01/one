@@ -4,6 +4,10 @@ use std::time::Duration;
 
 use crate::capability::{Capability, CapabilitySet};
 
+const MAX_APPLICATION_REPLY_BYTES: usize = 16 * 1024 * 1024;
+const MAX_APPLICATION_REPLY_LINES: usize = 100_000;
+const MAX_APPLICATION_FIELD_BYTES: usize = 64 * 1024;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ApplicationProtocolError {
     CapabilityDenied,
@@ -21,6 +25,15 @@ fn io_error(e: std::io::Error) -> ApplicationProtocolError {
     if matches!(e.kind(), std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock) { ApplicationProtocolError::Timeout } else { ApplicationProtocolError::Io(e.to_string()) }
 }
 
+fn retry_interrupted<T>(mut operation: impl FnMut() -> std::io::Result<T>) -> std::io::Result<T> {
+    loop {
+        match operation() {
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            result => return result,
+        }
+    }
+}
+
 fn connect<A: ToSocketAddrs>(address: A, timeout: Duration, caps: &CapabilitySet) -> Result<TcpStream, ApplicationProtocolError> {
     permit(caps)?;
     let stream = TcpStream::connect_timeout(&address.to_socket_addrs().map_err(io_error)?.next().ok_or_else(|| ApplicationProtocolError::Io("no address resolved".into()))?, timeout).map_err(io_error)?;
@@ -33,7 +46,7 @@ fn read_line(stream: &mut TcpStream) -> Result<String, ApplicationProtocolError>
     let mut data = Vec::new();
     let mut byte = [0u8; 1];
     loop {
-        let n = stream.read(&mut byte).map_err(io_error)?;
+        let n = retry_interrupted(|| stream.read(&mut byte)).map_err(io_error)?;
         if n == 0 { return Err(ApplicationProtocolError::InvalidResponse); }
         data.push(byte[0]);
         if data.ends_with(b"\r\n") { break; }
@@ -44,13 +57,21 @@ fn read_line(stream: &mut TcpStream) -> Result<String, ApplicationProtocolError>
 
 fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationProtocolError> {
     let first = read_line(stream)?;
-    if first.len() < 5 { return Err(ApplicationProtocolError::InvalidResponse); }
+    if first.len() < 5 || !first.is_ascii() { return Err(ApplicationProtocolError::InvalidResponse); }
     let code: u16 = first[..3].parse().map_err(|_| ApplicationProtocolError::InvalidResponse)?;
     let multiline = first.as_bytes()[3] == b'-';
+    let mut total_bytes = first.len();
+    let mut line_count = 1usize;
     let mut text = first[4..].trim_end().to_string();
     if multiline {
         loop {
             let line = read_line(stream)?;
+            if !line.is_ascii() { return Err(ApplicationProtocolError::InvalidResponse); }
+            total_bytes = total_bytes.checked_add(line.len()).ok_or(ApplicationProtocolError::InvalidResponse)?;
+            line_count = line_count.checked_add(1).ok_or(ApplicationProtocolError::InvalidResponse)?;
+            if total_bytes > MAX_APPLICATION_REPLY_BYTES || line_count > MAX_APPLICATION_REPLY_LINES {
+                return Err(ApplicationProtocolError::InvalidResponse);
+            }
             if line.len() >= 5 && line[..3].parse::<u16>().ok() == Some(code) && line.as_bytes()[3] == b' ' { text.push('\n'); text.push_str(line[4..].trim_end()); break; }
             text.push('\n'); text.push_str(line.trim_end());
         }
@@ -59,7 +80,13 @@ fn read_ftp_reply(stream: &mut TcpStream) -> Result<(u16, String), ApplicationPr
 }
 
 fn validate_command_field(value: &str) -> Result<(), ApplicationProtocolError> {
-    if value.contains('\r') || value.contains('\n') { Err(ApplicationProtocolError::InvalidResponse) } else { Ok(()) }
+    if value.len() > MAX_APPLICATION_FIELD_BYTES
+        || value.bytes().any(|byte| byte < 0x20 || byte == 0x7f)
+    {
+        Err(ApplicationProtocolError::InvalidResponse)
+    } else {
+        Ok(())
+    }
 }
 
 fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), ApplicationProtocolError> {
@@ -72,6 +99,7 @@ fn ftp_command(stream: &mut TcpStream, command: &str) -> Result<(u16, String), A
 pub fn ftp_login(address: &str, user: &str, password: &str, timeout: Duration, caps: &CapabilitySet) -> Result<(), ApplicationProtocolError> {
     validate_command_field(user)?;
     validate_command_field(password)?;
+    if user.is_empty() { return Err(ApplicationProtocolError::InvalidResponse); }
     let mut stream = connect(address, timeout, caps)?;
     let (code, _) = read_ftp_reply(&mut stream)?;
     if code / 100 != 2 { return Err(ApplicationProtocolError::Server(code, "FTP greeting rejected".into())); }
@@ -86,6 +114,14 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
     validate_command_field(sender)?;
     validate_command_field(recipient)?;
     validate_command_field(subject)?;
+    if sender.is_empty() || recipient.is_empty() {
+        return Err(ApplicationProtocolError::InvalidResponse);
+    }
+    if body.len() > MAX_APPLICATION_REPLY_BYTES
+        || body.bytes().any(|byte| byte == 0 || byte == 0x7f || (byte < 0x20 && !matches!(byte, b'\r' | b'\n' | b'\t')))
+    {
+        return Err(ApplicationProtocolError::InvalidResponse);
+    }
     let mut stream = connect(address, timeout, caps)?;
     let (code, _) = read_ftp_reply(&mut stream)?;
     if code != 220 { return Err(ApplicationProtocolError::Server(code, "SMTP greeting rejected".into())); }
@@ -101,6 +137,9 @@ pub fn smtp_send(address: &str, sender: &str, recipient: &str, subject: &str, bo
         .map(|line| if line.starts_with('.') { format!(".{line}") } else { line.to_string() })
         .collect::<String>();
     let message = format!("From: <{sender}>\r\nTo: <{recipient}>\r\nSubject: {subject}\r\n\r\n{stuffed}\r\n.\r\n");
+    if message.len() > MAX_APPLICATION_REPLY_BYTES {
+        return Err(ApplicationProtocolError::InvalidResponse);
+    }
     stream.write_all(message.as_bytes()).map_err(io_error)?;
     let (code, text) = read_ftp_reply(&mut stream)?;
     if code != 250 { return Err(ApplicationProtocolError::Server(code, text)); }
@@ -137,6 +176,21 @@ mod tests {
     }
 
     #[test]
+    fn interrupted_protocol_reads_are_retried() {
+        let mut attempts = 0;
+        let result = retry_interrupted(|| {
+            attempts += 1;
+            if attempts == 1 {
+                Err(std::io::Error::from(std::io::ErrorKind::Interrupted))
+            } else {
+                Ok(42)
+            }
+        }).expect("interrupted reads should retry");
+        assert_eq!(result, 42);
+        assert_eq!(attempts, 2);
+    }
+
+    #[test]
     fn ftp_login_speaks_real_control_channel() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
         let addr = listener.local_addr().expect("addr");
@@ -150,6 +204,19 @@ mod tests {
         });
         ftp_login(&addr.to_string(), "alice", "secret", Duration::from_secs(2), &caps()).expect("ftp login");
         handle.join().expect("server");
+    }
+
+    #[test]
+    fn ftp_reply_parser_rejects_non_ascii_status_prefix_without_panicking() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+        let address = listener.local_addr().expect("address");
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept");
+            stream.write_all("éé220 malformed\r\n".as_bytes()).expect("reply");
+        });
+        let result = ftp_login(&address.to_string(), "alice", "secret", Duration::from_secs(2), &caps());
+        assert!(matches!(result, Err(ApplicationProtocolError::InvalidResponse)));
+        server.join().expect("server");
     }
 
     #[test]

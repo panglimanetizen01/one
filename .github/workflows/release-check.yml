@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Toolchain
         shell: bash
         if: runner.os != 'Windows'
@@ -32,16 +32,34 @@ jobs:
         shell: pwsh
         if: runner.os == 'Windows'
         run: python tools/check_contract.py
+      - name: User documentation consistency
+        shell: bash
+        if: runner.os != 'Windows'
+        run: python3 tools/check_user_docs.py
+      - name: User documentation consistency (Windows)
+        shell: pwsh
+        if: runner.os == 'Windows'
+        run: python tools/check_user_docs.py
+      - name: User documentation checker regression tests
+        shell: bash
+        if: runner.os != 'Windows'
+        run: python3 tools/check_user_docs_test.py
+      - name: User documentation checker regression tests (Windows)
+        shell: pwsh
+        if: runner.os == 'Windows'
+        run: python tools/check_user_docs_test.py
       - name: Build
-        run: cargo build --workspace --all-targets
+        run: cargo --locked build --workspace --all-targets
       - name: Clippy
         shell: bash
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo --locked clippy --workspace --all-targets -- -D warnings
       - name: Tests
-        run: cargo test --workspace --all-targets
+        run: cargo --locked test --workspace --all-targets
+      - name: Package provenance signing and trusted-publisher verification
+        run: cargo --locked test -p one-cli --test cli package_signature_cli_authenticates_trusted_publisher_and_detects_tampering -- --exact
       - name: Real network runtime tests
         shell: bash
-        run: cargo test -p one-core --features real-network --all-targets
+        run: cargo --locked test -p one-core --features real-network --all-targets
       - name: Offline verification
         shell: bash
         if: runner.os != 'Windows'

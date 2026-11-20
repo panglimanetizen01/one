@@ -45,6 +45,9 @@ The existing numeric codes below remain valid for the current reference implemen
 - `E0005` — unsupported string escape.
 - `E0006` — unterminated string.
 - `E0007` — unsupported character.
+- `E0008` — source file exceeds 4 MiB.
+- `E0009` — token stream exceeds 250,000 tokens.
+- `E0010` — indentation depth exceeds 256 levels.
 
 ### Parser
 
@@ -61,6 +64,9 @@ The existing numeric codes below remain valid for the current reference implemen
 - `E1015` — invalid number literal.
 - `E1016` — token cannot begin an expression.
 - `E1017`–`E1018` — malformed list mutation action.
+- `E1025` — nested block depth exceeds 128.
+- `E1026` — nested call-expression depth exceeds 128.
+- `E1027` — one expression exceeds 128 binary operators.
 
 ### Semantic
 

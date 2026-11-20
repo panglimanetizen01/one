@@ -1,5 +1,6 @@
 use crate::capability::Capability;
 use crate::orchestration::{CapabilityRequest, OrchestrationValidationError};
+use std::path::{Component, Path};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScopeRule {
@@ -7,6 +8,7 @@ pub enum ScopeRule {
     Global,
     Local,
     Target(String),
+    Root(String),
     Resource(String),
 }
 
@@ -17,6 +19,16 @@ impl ScopeRule {
             (Self::Global, crate::orchestration::ExecutionScope::Global) => true,
             (Self::Local, crate::orchestration::ExecutionScope::Local) => true,
             (Self::Target(expected), crate::orchestration::ExecutionScope::Target(actual)) => expected == actual,
+            (Self::Root(root), crate::orchestration::ExecutionScope::Target(actual)) => {
+                let root = Path::new(root);
+                let actual = Path::new(actual);
+                !root.as_os_str().is_empty()
+                    && !actual.as_os_str().is_empty()
+                    && root.is_absolute() == actual.is_absolute()
+                    && !root.components().any(|part| matches!(part, Component::ParentDir))
+                    && !actual.components().any(|part| matches!(part, Component::ParentDir))
+                    && actual.starts_with(root)
+            }
             (Self::Resource(expected), crate::orchestration::ExecutionScope::Resource(actual)) => expected == actual,
             _ => false,
         }
@@ -183,6 +195,38 @@ mod tests {
         assert_eq!(
             policy.evaluate(&request),
             PolicyDecision::Deny(DenyReason::MissingCapability)
+        );
+    }
+
+    #[test]
+    fn filesystem_root_scope_allows_descendants_and_rejects_prefix_siblings_and_parent_traversal() {
+        use std::path::PathBuf;
+
+        let root = std::env::temp_dir().join("one-root-scope");
+        let inside = root.join("subdir").join("file.txt");
+        let sibling = root.with_file_name("one-root-scope-sibling").join("file.txt");
+        let escape = root.join("..").join("outside.txt");
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::FilesystemRead)
+            .allow_scope(
+                Capability::FilesystemRead,
+                ScopeRule::Root(root.to_string_lossy().into_owned()),
+            );
+        let request_for = |path: &PathBuf| CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target(path.to_string_lossy().into_owned()),
+            EffectClass::Read,
+        );
+
+        assert_eq!(policy.evaluate(&request_for(&inside)), PolicyDecision::Allow);
+        assert_eq!(
+            policy.evaluate(&request_for(&sibling)),
+            PolicyDecision::Deny(DenyReason::OutOfScope)
+        );
+        assert_eq!(
+            policy.evaluate(&request_for(&escape)),
+            PolicyDecision::Deny(DenyReason::OutOfScope)
         );
     }
 

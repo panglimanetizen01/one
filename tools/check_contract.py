@@ -6,6 +6,7 @@ required = [
     "README.md", "SECURITY.md", "CONTRIBUTING.md", "CHANGELOG.md", "Cargo.toml", "rust-toolchain.toml",
     ".github/workflows/ci.yml", ".github/workflows/release-check.yml", ".github/workflows/windows-native-verification.yml",
     "docs/README.md",
+    "docs/panduan-pengguna/human-vnext-daftar-tugas.md",
     "docs/superpowers/specs/2026-10-15-one-language-foundation-design.md",
     "docs/superpowers/specs/2026-10-15-one-end-to-end-network-platform-design.md",
     "docs/superpowers/plans/2026-10-15-one-v0-1-implementation.md",
@@ -30,6 +31,38 @@ required = [
     "docs/release/one-v0.1.md", "tests/spec/grammar_examples.one", "crates/one-core/tests/conformance.rs",
     "crates/one-core/tests/native_backend_linux_windows.rs", "crates/one-cli/tests/native_cli.rs",
     "tools/check_contract.py", "tools/verify_offline.sh", "tools/verify_offline.ps1",
+    "docs/superpowers/specs/2026-10-22-one-human-instruction-grammar-vnext-draft.md",
+    "docs/verification/one-completion-ledger.md", "docs/verification/human-vnext-task-list.md",
+    "docs/verification/human-vnext-exact-sha-verification-contract.md", "tools/verify-human-vnext.sh",
+    "docs/spec/human-instruction-vnext-starter-grammar.md",
+    "docs/verification/human-vnext-grammar-review.md",
+    "examples/human-vnext/daftar-tugas.one",
+    "tests/human-vnext/valid/minimal-data.one",
+    "tests/human-vnext/valid/unicode-name.one",
+    "tests/human-vnext/valid/task-list.one",
+    "tests/human-vnext/valid/text-block-boundaries.one",
+    "tests/human-vnext/valid/instruction-like-text.one",
+    "tests/human-vnext/valid/opaque-text-whitespace.one",
+    "tests/human-vnext/invalid/empty.one",
+    "tests/human-vnext/invalid/orphan-instruction.one",
+    "tests/human-vnext/invalid/unknown-instruction.one",
+    "tests/human-vnext/invalid/unresolved-display.one",
+    "tests/human-vnext/invalid/indented-application.one",
+    "tests/human-vnext/invalid/missing-text-block.one",
+    "tests/human-vnext/invalid/duplicate-data.one",
+    "tests/human-vnext/invalid/duplicate-persistence.one",
+    "tests/human-vnext/invalid/action-name-as-data.one",
+    "tests/human-vnext/invalid/repeated-spaces.one",
+    "tests/human-vnext/invalid/duplicate-data-action-name.one",
+    "tests/human-vnext/invalid/second-application.one",
+    "tests/human-vnext/invalid/empty-action.one",
+    "tests/human-vnext/invalid/tab-indentation.one",
+    "tests/human-vnext/invalid/tab-before-text-prefix.one",
+    "tests/human-vnext/invalid/noncanonical-indent.one",
+    "tests/human-vnext/invalid/invalid-action-name.one",
+    "tests/human-vnext/invalid/unicode-combining-mark.one",
+    "crates/one-core/src/human_vnext.rs",
+    "crates/one-cli/tests/cli.rs",
 ]
 
 missing = [path for path in required if not (ROOT / path).is_file()]
@@ -69,9 +102,119 @@ for marker in ("kalau ", "untuk setiap ", "selama ", "buat pekerjaan ", "ketika 
     if marker not in fixture:
         raise SystemExit(f"GRAMMAR FIXTURE: missing normative construct marker {marker!r}")
 
+human_parser_tests = (ROOT / "crates/one-core/src/human_vnext.rs").read_text(encoding="utf-8")
+for marker in (
+    "semantic_errors_report_the_relevant_declaration_line",
+    "rejects_noncanonical_identifier_edges_and_punctuation",
+    "identifier_names_are_case_sensitive",
+    "invalid_human_vnext_fixtures_are_rejected",
+    "instruction_like_lines_remain_opaque_text_data",
+    "text_block_preserves_extra_spaces_and_tabs_as_data",
+    "semantic_errors_report_the_relevant_declaration_line",
+):
+    if marker not in human_parser_tests:
+        raise SystemExit(f"HUMAN vNEXT PARSER TESTS: missing required test {marker!r}")
+
+for marker in (
+    '"menambahkan tugas"',
+    '"melihat semua tugas"',
+    '"menandai tugas sebagai selesai"',
+    "OpenOptions::new()",
+    ".create_new(true)",
+    "file.sync_all()",
+    "replace_file(&temporary, path)",
+    "task_app_persists_across_sessions_and_marks_completion",
+    "task_app_rejects_missing_persistence_declaration",
+    "task_storage_rejects_corrupt_records",
+    "task_app_rejects_blank_title_without_persisting_it",
+    "task_app_rejects_non_numeric_and_unknown_task_ids",
+    "task_storage_reports_parent_path_write_failure",
+    "task_storage_replaces_existing_records_on_repeated_saves",
+    "task_storage_cleans_temporary_file_when_replacement_fails",
+    "task_app_rejects_non_tab_control_characters_in_titles",
+    "task_app_rejects_actions_the_runner_cannot_execute",
+    "task_app_rejects_supported_body_under_an_unrecognized_action_name",
+    "task_app_rejects_data_the_runner_cannot_execute",
+    "task_app_rejects_unhandled_persistence_collections",
+):
+    if marker not in human_parser_tests:
+        raise SystemExit(f"HUMAN vNEXT RUNTIME TESTS: missing required test {marker!r}")
+
+human_cli_tests = (ROOT / "crates/one-cli/tests/cli.rs").read_text(encoding="utf-8")
+for marker in (
+    "human_vnext_cli_runs_task_app_and_reopens_persistent_data",
+    "default_v01_cli_does_not_auto_detect_human_vnext_source",
+    "human_vnext_cli_rejects_missing_source_argument",
+    "human_vnext_cli_rejects_unknown_option_without_running_program",
+    "human_vnext_cli_reports_missing_source_file",
+    "human_vnext_cli_rejects_invalid_source_with_parser_diagnostic",
+    "human_vnext_cli_rejects_task_app_without_persistence_contract",
+):
+    if marker not in human_cli_tests:
+        raise SystemExit(f"HUMAN vNEXT CLI TESTS: missing required test {marker!r}")
+
+human_vnext = (ROOT / "examples/human-vnext/daftar-tugas.one").read_text(encoding="utf-8")
+for marker in (
+    "Buat aplikasi daftar tugas",
+    "Terima judul tugas",
+    "Simpan tugas baru",
+    "Tampilkan semua tugas",
+    "Tandai tugas sebagai selesai",
+    "Simpan semua tugas agar tidak hilang saat aplikasi ditutup",
+):
+    if marker not in human_vnext:
+        raise SystemExit(f"HUMAN vNEXT EXAMPLE: missing required instruction {marker!r}")
+
+ledger = (ROOT / "docs/verification/one-completion-ledger.md").read_text(encoding="utf-8")
+current_result = ledger.partition("## Current result")[2].partition("## Repository work checkpoint")[0]
+if (
+    "TOTAL" not in ledger
+    or "Milestone target" not in current_result
+    or not any(f"{percent}%" in current_result for percent in ("30", "60", "100"))
+    or not any(marker in current_result for marker in ("**Gate:** **NOT PASSED**", "**Gate:** **PASS GREEN LOCKED**"))
+):
+    raise SystemExit("COMPLETION LEDGER: missing valid current milestone status or weighted total")
+
+grammar_review = (ROOT / "docs/verification/human-vnext-grammar-review.md").read_text(encoding="utf-8")
+if "ACCEPTED WITH EXPLICIT SCOPE BOUNDARIES" not in grammar_review or "External sign-off" not in grammar_review or "none claimed" not in grammar_review:
+    raise SystemExit("HUMAN vNEXT GRAMMAR REVIEW: missing bounded acceptance or external-review boundary")
+
+verification_contract = (ROOT / "docs/verification/human-vnext-exact-sha-verification-contract.md").read_text(encoding="utf-8")
+verification_script = (ROOT / "tools/verify-human-vnext.sh").read_text(encoding="utf-8")
+for marker in (
+    "git ls-remote origin",
+    "https://github.com/panglimanetizen01/one.git",
+    "bash -n tools/verify-human-vnext.sh",
+    "VERIFIED SOURCE SHA",
+    "checks changed the worktree",
+    "cargo build --workspace --all-targets",
+    "cargo clippy --workspace --all-targets -- -D warnings",
+    "cargo test --workspace --all-targets",
+    "does not manufacture CI results",
+    "panglimanetizen01/one-windows-verification",
+    "Independent hosted cross-platform verification",
+    "CANONICAL_COMMIT.txt",
+    "ubuntu-latest",
+    "windows-2025",
+    "repository-internal technical review",
+    "at least 15 minutes",
+    "same canonical source SHA",
+    "BLOCKED/INFRASTRUCTURE",
+    "Do not call the overall mirror matrix green",
+):
+    if marker not in verification_contract + verification_script:
+        raise SystemExit(f"EXACT-SHA VERIFICATION CONTRACT: missing required rule/command {marker!r}")
+
 print("CONTRACT CHECK: PASS")
 print(f"required artifacts: {len(required)}")
 print(f"indexed concrete artifacts checked: {sum(1 for ref in index_references if '*' not in ref)}")
 print(f"valid fixtures: {len(valid)}")
 print(f"invalid fixtures: {len(invalid)}")
+human_valid = sorted((ROOT / "tests/human-vnext/valid").glob("*.one"))
+human_invalid = sorted((ROOT / "tests/human-vnext/invalid").glob("*.one"))
+if len(human_valid) < 6 or len(human_invalid) < 18:
+    raise SystemExit("HUMAN vNEXT FIXTURES: expected at least 6 valid and 18 invalid fixtures")
+
 print(f"golden fixtures: {len(golden)}")
+print(f"human-vNext valid fixtures: {len(human_valid)}")
+print(f"human-vNext invalid fixtures: {len(human_invalid)}")
