@@ -182,4 +182,35 @@ mod tests {
             Err(AdapterError::InvalidArguments)
         );
     }
+    #[test]
+    fn sqlite_adapter_rejects_oversized_sql_before_prepare() {
+        let adapter = SqliteAdapter::new();
+        let request = CapabilityRequest::new(
+            crate::orchestration::SemanticCapabilityId::DatabaseQuery,
+            Capability::DatabaseQuery,
+            ExecutionScope::resource(":memory:"),
+            crate::orchestration::EffectClass::Read,
+        );
+        let sql = format!("SELECT 1 {}", " ".repeat(SqliteAdapter::MAX_SQL_BYTES));
+        assert_eq!(
+            adapter.invoke(&AdapterRequest::new(request).with_argument(AdapterArgument::Text(sql))),
+            Err(AdapterError::InvalidArguments)
+        );
+    }
+
+    #[test]
+    fn sqlite_adapter_rejects_blob_hex_output_over_limit_without_hex_copy() {
+        let adapter = SqliteAdapter::new();
+        let request = CapabilityRequest::new(
+            crate::orchestration::SemanticCapabilityId::DatabaseQuery,
+            Capability::DatabaseQuery,
+            ExecutionScope::resource(":memory:"),
+            crate::orchestration::EffectClass::Read,
+        );
+        let result = adapter.invoke(
+            &AdapterRequest::new(request).with_argument(AdapterArgument::Text("SELECT zeroblob(9000000)".into()))
+        );
+        assert_eq!(result, Err(AdapterError::BackendFailure));
+    }
+
 }
