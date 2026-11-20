@@ -12,6 +12,20 @@ use crate::capability::{Capability, CapabilitySet};
 
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
+#[cfg(any(target_os = "linux", target_os = "android", windows))]
+const MAX_OUTPUT_BYTES_TOTAL: usize = 2 * MAX_OUTPUT_BYTES_PER_STREAM;
+
+#[cfg(any(target_os = "linux", target_os = "android", windows))]
+fn validate_total_output_limit(stdout_bytes: usize, stderr_bytes: usize) -> Result<(), String> {
+    let total = stdout_bytes.saturating_add(stderr_bytes);
+    if total > MAX_OUTPUT_BYTES_TOTAL {
+        return Err(format!(
+            "Subprocess exceeded the {} byte aggregate output limit.",
+            MAX_OUTPUT_BYTES_TOTAL
+        ));
+    }
+    Ok(())
+}
 #[cfg(any(target_os = "linux", target_os = "android"))]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -406,6 +420,7 @@ fn run_process_unix(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResu
             READER_SHUTDOWN_GRACE
         ));
     }
+    validate_total_output_limit(stdout.len(), stderr.len())?;
 
     Ok(ProcessResult {
         status_code: status.code(),
@@ -1019,6 +1034,7 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
             MAX_OUTPUT_BYTES_PER_STREAM
         ));
     }
+    validate_total_output_limit(stdout.len(), stderr.len())?;
 
     Ok(ProcessResult {
         status_code: Some(exit_code as i32),
@@ -1347,6 +1363,23 @@ mod tests {
         .expect_err("long-running process must be terminated");
         assert!(error.contains("deadline"));
         assert!(started.elapsed() < Duration::from_secs(15));
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android", windows))]
+    #[test]
+    fn aggregate_output_limit_is_explicit_and_checked() {
+        assert_eq!(MAX_OUTPUT_BYTES_TOTAL, 2 * MAX_OUTPUT_BYTES_PER_STREAM);
+        assert!(validate_total_output_limit(
+            MAX_OUTPUT_BYTES_PER_STREAM,
+            MAX_OUTPUT_BYTES_PER_STREAM
+        )
+        .is_ok());
+        let error = validate_total_output_limit(
+            MAX_OUTPUT_BYTES_PER_STREAM,
+            MAX_OUTPUT_BYTES_PER_STREAM.saturating_add(1),
+        )
+        .expect_err("aggregate output above two stream caps must be rejected");
+        assert!(error.contains("aggregate output limit"));
     }
 
     #[cfg(any(target_os = "linux", target_os = "android", windows))]
