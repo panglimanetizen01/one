@@ -24,7 +24,7 @@ Lanjutkan Project ONE dari repository dan dokumentasi persisten. Fokus utama ada
 ## Cara kerja wajib
 
 - Jalankan alur **DISCOVER → IMPLEMENT → INTEGRATE → DOCUMENT → FINAL VERIFY → RELEASE**.
-- Prioritas utama: implementasi production code yang masih hilang pada Issue #104 dan backlog v0.1 yang diwajibkan kontrak. B-001 classifier/CircleCI sudah memiliki exact-SHA terminal success pada `979973cd...`; jangan mengulang investigasi itu tanpa failure baru yang relevan.
+- Prioritas utama: implementasi production code yang masih hilang pada Issue #104 (filesystem confinement), Issue #105 (process containment), dan backlog v0.1 yang diwajibkan kontrak. B-001 classifier/CircleCI tidak diulang tanpa failure baru. B-001 classifier/CircleCI sudah memiliki exact-SHA terminal success pada `979973cd...`; jangan mengulang investigasi itu tanpa failure baru yang relevan.
 - Tambahkan regression tests bersama implementasi, tetapi tunda full matrix dan audit berulang sampai scope implementasi selesai. Jalankan pemeriksaan terarah lebih awal hanya bila diperlukan untuk mencegah perubahan security-sensitive yang tidak aman.
 - Bedakan FACT, HYPOTHESIS, ROOT CAUSE, HISTORICAL, dan UNKNOWN.
 - Untuk CircleCI, hubungkan job → workflow → pipeline → `.vcs.revision`; pastikan job anggota workflow. `--job-id` saja bukan bukti exact SHA. Jika `started_at=null`, jangan menyebutnya test timeout/failure.
