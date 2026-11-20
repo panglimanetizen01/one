@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `d14a679f20cf49bb408a5b72ddaf9ecc9155d254` |
+| PR #113 HEAD | `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `4be1b8fd579092d8195c3fb775b7c765f6221814` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `4be1b8fd579092d8195c3fb775b7c765f6221814` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `d14a679f20cf49bb408a5b72ddaf9ecc9155d254`.
+**Latest source/test candidate:** `4be1b8fd579092d8195c3fb775b7c765f6221814` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
@@ -483,3 +483,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 
 
 - Current PR #113 HEAD `d14a679f20cf49bb408a5b72ddaf9ecc9155d254` includes the macOS adapter source candidate `4be1b8fd579092d8195c3fb775b7c765f6221814` plus documentation synchronization. No build/test/device evidence is claimed for either new Android/macOS backend.
+
+- Live readback after Android/macOS implementation documentation: PR #113 HEAD `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28`, OPEN / DRAFT / UNMERGED. Code-bearing source candidate remains `4be1b8fd579092d8195c3fb775b7c765f6221814`; docs-only descendants do not change its unverified status.
