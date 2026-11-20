@@ -306,3 +306,11 @@ Latest source commit: `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (`crates/one-co
 - Response header names are validated as HTTP tokens and values reject control bytes except HTAB. Request header names/values and request-target syntax have equivalent validation.
 - Added regressions for invalid response header names/values and invalid request header names/targets. NOT RUN.
 - No build/test/CI/verifier/platform matrix was run; this remains source-only implementation work.
+
+
+## Exact fallible HTTP buffer reservations — 2026-11-21
+
+Latest source commit: `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (`crates/one-core/src/network_runtime.rs`).
+
+- HTTP request serialization, response ingestion, and chunk-body decoding now use `try_reserve_exact` within the explicit request/response size ceilings, avoiding geometric capacity growth beyond the intended bounds.
+- This is source-only resource hardening. No build/test/CI/verifier/platform matrix ran.
