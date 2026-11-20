@@ -366,4 +366,13 @@ mod tests { use super::*; use crate::network::NetworkProtocolFamily; use std::io
         assert!(matches!(invalid_target.to_bytes(), Err(NetworkRuntimeError::Protocol(_))));
     }
 
+    #[test]
+    fn http_authority_parser_supports_bracketed_ipv6_and_default_ports() {
+        assert_eq!(parse_http_authority("[::1]:8080").unwrap(), ("::1".into(), 8080));
+        assert_eq!(parse_http_authority("[::1]").unwrap(), ("::1".into(), 80));
+        assert_eq!(parse_http_authority("example.test").unwrap(), ("example.test".into(), 80));
+        assert!(parse_http_authority("::1:8080").is_err());
+        assert!(parse_http_authority("[not-ipv6]:80").is_err());
+    }
+
 }
