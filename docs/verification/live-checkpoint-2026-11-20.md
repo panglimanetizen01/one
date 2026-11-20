@@ -590,3 +590,13 @@ Latest source commit: `198fbf4ccdbb7e219efbe3e296e98462a385c384` (`crates/one-co
 - Explicit Content-Length must parse and exactly match the body size; duplicate Content-Length and request Transfer-Encoding are rejected (chunked request serialization is not implemented).
 - Added source regressions for oversized request bodies, mismatched Content-Length, and unsupported Transfer-Encoding. NOT RUN.
 - No build, test, CI, verifier, or platform matrix was run. This remains an implementation candidate, not verification evidence.
+
+
+## HTTP request syntax validation — 2026-11-21
+
+Latest source commit: `b0a3379a1fb49feb18dcf61a2521446f199a8e2b` (`crates/one-core/src/network_runtime.rs`).
+
+- Request method and header names must be valid HTTP tokens.
+- Authority rejects whitespace/control bytes, user-info separators and fragments; request-target must use origin-form or `*`, and rejects whitespace/control bytes and fragments.
+- Header values reject control bytes other than horizontal tab.
+- These checks complement the 16 MiB request-body / 64 KiB header caps, Content-Length consistency checks, and response framing limits. Source-only change; no build or tests run.
