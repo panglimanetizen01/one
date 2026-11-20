@@ -81,11 +81,11 @@ Regression tests cover outside-root read/write attempts and verify that outside 
 
 ## Process execution containment boundary — Issue #105 — 20 November 2026
 
-The current process adapter enforces a 10-second direct-child deadline and 1 MiB capture limit per output stream. On Unix, stdout/stderr readers are nonblocking and have a 100 ms shutdown grace (20 ms idle grace); this prevents an escaped pipe writer from keeping the caller blocked indefinitely. However, cleanup still kills only the original process group. A descendant that calls `setsid()` or creates a new process group can survive after the invocation returns. Bounded reader shutdown is **not** process-tree containment or a sandbox.
+The current process implementation candidate enforces a 10-second direct-child deadline, 1 MiB stdout and stderr limits independently, and a 2 MiB aggregate capture ceiling. Linux/Android create a dedicated process group and install an inherited seccomp filter before exec to deny `setsid`, `setpgid`, namespace creation, and related escape paths; cleanup targets the retained process group on normal completion, timeout, and output overflow. Windows uses a Job Object assigned during process creation and terminates remaining job members during cleanup. macOS process execution remains fail-closed. The Linux/Android containment implementation is source-present but NOT BUILT/TESTED on the current candidate; do not describe it as a verified process-tree guarantee or sandbox.
 
 Windows uses a Job Object assigned during process creation and terminates remaining job members during cleanup. The cross-platform guarantee is therefore not identical.
 
-Evidence boundary: SEC-05 run #44566187162 passed on its pinned source `722d662...` for the bounded timeout/output contract, but does not prove escaped-session cleanup. On candidate source `c7f460a4e38be61de635ad5af9f7ff987a941f01`, the Windows SEC-05 job #135776430245 is SUCCESS while the Linux job #135776429279 remains IN_PROGRESS at native cross-compiler installation. Issue #105 remains OPEN; no process-tree containment claim is made.
+Historical evidence boundary: SEC-05 run #44566187162 passed on its pinned source `722d662...` for the bounded timeout/output contract, but does not prove later seccomp containment. The current code-bearing candidate `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` adds explicit aggregate capture enforcement and is NOT BUILT/TESTED. Issue #81 and Issue #105 remain OPEN; no current-candidate process-tree PASS is claimed.
 
 
 ## Issue #105 — containment feasibility boundary — 2026-11-20
