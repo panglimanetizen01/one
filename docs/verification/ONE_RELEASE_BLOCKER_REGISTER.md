@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `094f182a99a6bbd8af4dd7960f140d503a424025` |
+| PR #113 HEAD at pre-register refresh read | `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `858a5da09fe2ea74ebd17b0798f13fac848c7a28` |
+| Code-bearing source | `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -602,3 +602,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Current `adapter.rs` source inventory exactly matches the protected E4 workflow's nonzero test filters: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, 1 `descriptor_relative_walk_rejects_`. This was checked by source-name inventory only, not by running the tests.
 - No build, test, CircleCI, verifier, or platform matrix was run. Issue #104 remains OPEN / NOT ACCEPTED. No acceptance, verifier pin, ledger, DoD, or release state was promoted.
 - PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update advances the branch, so refresh live HEAD before next action.
+
+
+## Duplicate subprocess-test helper compile blocker removed — 2026-11-21
+
+- Source commit: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`).
+- Removed the second identical `cleanup_test_escaped_group` definition from the `interop.rs` test module. The duplicate would produce a Rust duplicate-definition error when compiling the test module; only one definition remains in source.
+- This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
+
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances the branch; refresh live HEAD before the next operation.
