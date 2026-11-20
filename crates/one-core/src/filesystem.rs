@@ -57,12 +57,36 @@ impl FilesystemAuthority {
         }
         #[cfg(target_os = "linux")]
         {
-            if max_read_bytes == 0 || max_write_bytes == 0 { return Err(FilesystemError::InvalidRoot); }
-            let canonical_root = std::fs::canonicalize(root).map_err(|_| FilesystemError::InvalidRoot)?;
-            let root = File::open(&canonical_root).map_err(|_| FilesystemError::InvalidRoot)?;
-            if !root.metadata().map_err(|_| FilesystemError::InvalidRoot)?.is_dir() {
+            use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+
+            if max_read_bytes == 0 || max_write_bytes == 0 {
                 return Err(FilesystemError::InvalidRoot);
             }
+
+            // Open the supplied root itself without following a final symlink.
+            // Canonicalize only after acquiring the handle, then compare inode
+            // identity so a concurrent path replacement fails closed.
+            let root_path = root.as_ref();
+            let root = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                .open(root_path)
+                .map_err(|_| FilesystemError::InvalidRoot)?;
+            let root_metadata = root.metadata().map_err(|_| FilesystemError::InvalidRoot)?;
+            if !root_metadata.is_dir() {
+                return Err(FilesystemError::InvalidRoot);
+            }
+
+            let canonical_root =
+                std::fs::canonicalize(root_path).map_err(|_| FilesystemError::InvalidRoot)?;
+            let path_metadata =
+                std::fs::metadata(&canonical_root).map_err(|_| FilesystemError::InvalidRoot)?;
+            if path_metadata.dev() != root_metadata.dev()
+                || path_metadata.ino() != root_metadata.ino()
+            {
+                return Err(FilesystemError::InvalidRoot);
+            }
+
             Ok(Self { root, canonical_root, max_read_bytes, max_write_bytes })
         }
         #[cfg(windows)]
