@@ -126,7 +126,7 @@ Compatibility status must be recorded per exact source revision and tested envir
 
 ### CLI filesystem root selection
 
-The CLI's filesystem authority root is selected from source/project context, not the requested target. It prefers the nearest `one.toml` ancestor; otherwise it uses the working directory for sources beneath it or the canonical source parent for standalone sources outside it. Absolute targets outside this root are rejected for both reads and writes. This host integration is still a draft PR #113 candidate pending exact-SHA verification.
+The CLI's filesystem authority root is selected exclusively from the host process current working directory (`std::env::current_dir()`), independently of source-file location and requested target. The source path and `--target` cannot select or widen this root. Relative and absolute targets outside it are rejected for both reads and writes. This host integration remains a draft PR #113 candidate pending exact-SHA verification.
 
 
 ## Filesystem adapter platform metadata and host selection — 2026-11-20
