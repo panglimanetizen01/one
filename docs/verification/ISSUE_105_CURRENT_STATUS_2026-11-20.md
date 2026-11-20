@@ -38,3 +38,8 @@ SEC-05 run [#44566187162](https://github.com/panglimanetizen01/one-windows-verif
 ## Implementation-first source update — 2026-11-21
 
 Latest code-bearing source `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` now includes Linux/Android inherited seccomp rules that prevent descendants from leaving the invocation process group or creating namespaces, plus `waitid(WNOWAIT)` observation so the direct child PID is retained until process-group SIGKILL cleanup. Windows Job Object containment remains the native Windows path; macOS process execution remains fail-closed. The source contains three direct-`fork` + `setsid` adversarial regressions for normal completion, timeout, and output overflow, including escaped-PID recording and cleanup. These tests have NOT RUN on this source SHA. This is an implementation/source update only; Issue #105 remains OPEN / NOT ACCEPTED until exact-SHA adversarial execution proves no escaped descendant survives each path. Do not infer success from source presence.
+
+
+## Subprocess resource-bound follow-up — 2026-11-21
+
+The code-bearing candidate advanced to `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed`. In addition to the Linux/Android seccomp + `waitid(WNOWAIT)` containment source and Windows Job Object backend recorded above, the process implementation now explicitly names and checks a 2 MiB aggregate stdout/stderr capture ceiling (1 MiB per stream), alongside the 10-second deadline. Regression tests exist for stdout overflow, stderr overflow, timeout, normal exit/status/stream preservation, and the three direct-fork + `setsid` adversarial cases. None has been run on this candidate. Issue #105 remains OPEN / NOT ACCEPTED; related Issue #81 remains OPEN pending exact-SHA execution and cleanup evidence.
