@@ -631,11 +631,12 @@ where
     let leaf = relative.file_name().ok_or(FilesystemError::InvalidTarget)?;
     let leaf_name = CString::new(leaf.as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
 
-    // The current Linux write backend deliberately supports only direct
-    // children of the retained root. A nested directory can be renamed out of
-    // the root after its handle is opened; ordinary dirfd-relative rename
-    // would then write into that moved directory. Until a stronger parent
-    // movement boundary is available, nested writes fail closed.
+    // Direct-child writes use the retained root descriptor. Nested writes
+    // use a detached recursive mount clone with NOSYMFOLLOW and root-relative
+    // openat2/renameat2 resolution so a moved parent cannot redirect the
+    // replacement outside the retained tree. If the kernel cannot provide
+    // those primitives or a resolution check fails, the nested write fails
+    // closed rather than falling back to an ordinary parent-dirfd rename.
     if parent != Path::new(".") {
         return linux_write_nested_relative_with_hook(root, relative, bytes, |_| Ok(()));
     }
