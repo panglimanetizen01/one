@@ -459,3 +459,8 @@ A fresh exact-SHA status readback supersedes the PENDING observation above for d
 - The status target URLs still expose workflow/job UUIDs only. The CircleCI app pages remain inaccessible here; no provider step output, pipeline UUID/number, `vcs.revision`, job membership, or `started_at` has been independently read. Therefore the three FAILURE labels do **not** establish a test failure, timeout, or root cause.
 - The diagnostic tests on SHA `3db852f...` must be treated as **NOT VERIFIED** until the actual CircleCI step log is obtained. B-001 remains PARTIAL / NOT CLOSED.
 - Next safe evidence collection: run the repository's updated exact-SHA diagnostic locally for `3db852f...` using an already-configured local `CIRCLECI_TOKEN`; do not paste the token. Share only the redacted report. The utility now discovers every matching pipeline and lists all jobs, including pending/running, while preserving exact revision and job-start evidence.
+
+
+## Termux worktree map and continuation entrypoint
+
+For Termux continuation, read [TERMUX_WORKTREE_MAP.md](TERMUX_WORKTREE_MAP.md) first. The PR #113 branch `security/issue-104-root-confinement-20261118` is already checked out in `$HOME/one-pr113`; do not try to switch to it from `$HOME/one` or create a duplicate worktree. The map records the confirmed directory/branch layout, safe fast-forward-only synchronization procedure, and current B-001 handoff. Always re-check status and exact SHAs before syncing; preserve all local and untracked evidence.
