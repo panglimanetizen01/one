@@ -1,8 +1,8 @@
 # Issue #105 — Unix subprocess descendant containment status
 
-**Status:** OPEN / NOT IMPLEMENTED / NOT ACCEPTED
+**Status:** OPEN / PARTIAL IMPLEMENTATION / NOT ACCEPTED
 
-**Current code source reviewed:** `722d662e7a81711ba3607d26571f4048a292b3ed`; relevant `interop.rs` behavior is unchanged in the Issue #104 candidate `c7f460a4e38be61de635ad5af9f7ff987a941f01`.
+**Latest Issue #105 source correction:** `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`); it removes a duplicate `cleanup_test_escaped_group` test helper. The process-containment implementation is partial and still NOT ACCEPTED.
 
 ## Current implementation
 
@@ -50,3 +50,13 @@ The code-bearing candidate advanced to `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed
 - Source commit: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`).
 - Removed the second identical `cleanup_test_escaped_group` definition from the `interop.rs` test module. The duplicate would produce a Rust duplicate-definition error when compiling the test module; only one definition remains in source.
 - This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
+
+
+## Current implementation status — 2026-11-21
+
+The earlier "Current implementation" description above is a historical pre-containment snapshot and is superseded by the implementation-first updates below.
+
+- Linux and Android source now installs an inherited seccomp filter before exec to prevent descendants from leaving the invocation process group or creating namespaces; cleanup observes direct-child exit with `waitid(WNOWAIT)`, kills the retained group, then reaps the child.
+- Windows uses the existing Job Object assigned during process creation and terminates remaining job members during cleanup. macOS remains fail-closed.
+- The source contains adversarial fork + `setsid` regressions for normal completion, timeout, and output overflow, plus stdout/stderr and deadline bounds. The duplicate test helper was removed in `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830`.
+- No exact-SHA build or adversarial test run has been performed on this candidate. Issue #105 remains OPEN / NOT ACCEPTED; source presence is not process-tree acceptance.
