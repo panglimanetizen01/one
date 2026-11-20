@@ -91,9 +91,14 @@ impl FilesystemAuthority {
         }
         #[cfg(windows)]
         {
-            if max_read_bytes == 0 || max_write_bytes == 0 { return Err(FilesystemError::InvalidRoot); }
-            let canonical_root = std::fs::canonicalize(root).map_err(|_| FilesystemError::InvalidRoot)?;
+            if max_read_bytes == 0 || max_write_bytes == 0 {
+                return Err(FilesystemError::InvalidRoot);
+            }
+            let canonical_root = windows_native::canonical_root_path(root.as_ref())?;
             let root = windows_native::open_root(&canonical_root)?;
+            if !windows_native::root_matches_path(&root, &canonical_root)? {
+                return Err(FilesystemError::InvalidRoot);
+            }
             Ok(Self { root, canonical_root, max_read_bytes, max_write_bytes })
         }
     }
@@ -650,6 +655,37 @@ mod windows_native {
             result.extend_from_slice(&source);
         }
         Ok(result)
+    }
+
+    pub fn canonical_root_path(path: &Path) -> Result<std::path::PathBuf, FilesystemError> {
+        let absolute = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            std::env::current_dir()
+                .map_err(|_| FilesystemError::InvalidRoot)?
+                .join(path)
+        };
+        let Some(leaf) = absolute.file_name() else {
+            // Volume roots have no final directory component to follow.
+            return std::fs::canonicalize(&absolute).map_err(|_| FilesystemError::InvalidRoot);
+        };
+        let parent = absolute.parent().ok_or(FilesystemError::InvalidRoot)?;
+        let canonical_parent =
+            std::fs::canonicalize(parent).map_err(|_| FilesystemError::InvalidRoot)?;
+        // Preserve the final component verbatim so open_root can reject a
+        // reparse point instead of canonicalizing through it.
+        Ok(canonical_parent.join(leaf))
+    }
+
+    pub fn root_matches_path(root: &File, path: &Path) -> Result<bool, FilesystemError> {
+        use std::os::windows::fs::MetadataExt;
+
+        let handle_info = file_info(root)?;
+        let path_info = std::fs::metadata(path).map_err(|_| FilesystemError::InvalidRoot)?;
+        let handle_index = ((handle_info.nFileIndexHigh as u64) << 32)
+            | handle_info.nFileIndexLow as u64;
+        Ok(path_info.volume_serial_number() == Some(handle_info.dwVolumeSerialNumber)
+            && path_info.file_index() == Some(handle_index))
     }
 
     pub fn open_root(path: &Path) -> Result<File, FilesystemError> {
