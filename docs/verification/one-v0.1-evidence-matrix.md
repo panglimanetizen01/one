@@ -755,3 +755,14 @@ The independent verifier's expected source test-filter inventory is now structur
 - This addresses a source-visible Rust duplicate-definition compile blocker; it is NOT a compile result. No build/test/CI/verifier/platform matrix was run on this candidate.
 - Release contract reconciliation commit `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` corrects stale platform descriptions: filesystem adapters exist for Linux/Windows/Android/macOS (Android/macOS nested paths fail closed; Linux nested writes require detached-mount support); process adapters exist for Linux/Android/Windows (macOS fail-closed). These are implementation boundaries, not acceptance/support claims.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. Keep the fixed ledger, DoD, verifier pins, and release gates unchanged.
+
+
+## Android/macOS filesystem helper repair and nested-path security boundary — 2026-11-21
+
+Latest code-bearing source: `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (`crates/one-core/src/filesystem.rs`).
+
+- Removed the duplicate Android `create_temp` definition and supplied the missing macOS `create_temp` helper. These were source-visible compile blockers; no build was run.
+- Android/macOS direct-child read/write backends remain. Their root-relative direct-child operations retain no-follow checks, regular-file/single-link checks, Android `statx(STATX_MNT_ID)` or macOS `fstatfs` identity checks, and same-directory atomic replacement.
+- Nested Android/macOS paths remain fail-closed. A proposed generic openat parent walk was deliberately not enabled: ordinary POSIX directory handles do not pin an opened parent beneath the retained root, so an attacker may rename that directory outside the root before the leaf operation. The current resolver rejects multi-component paths with `UnsupportedPlatform` until an anti-move primitive is implemented.
+- Android/macOS regression fixtures now cover nested-path fail-closed behavior, leaf symlinks, and an outside sentinel. These tests are NOT RUN.
+- This is source implementation hardening and a precise capability boundary, not acceptance. Issue #104 remains OPEN / NOT ACCEPTED. No build/test/CI/verifier/platform matrix was run and no status was promoted.
