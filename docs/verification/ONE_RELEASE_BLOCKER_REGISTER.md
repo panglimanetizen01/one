@@ -485,3 +485,12 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Current PR #113 HEAD `d14a679f20cf49bb408a5b72ddaf9ecc9155d254` includes the macOS adapter source candidate `4be1b8fd579092d8195c3fb775b7c765f6221814` plus documentation synchronization. No build/test/device evidence is claimed for either new Android/macOS backend.
 
 - Live readback after Android/macOS implementation documentation: PR #113 HEAD `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28`, OPEN / DRAFT / UNMERGED. Code-bearing source candidate remains `4be1b8fd579092d8195c3fb775b7c765f6221814`; docs-only descendants do not change its unverified status.
+
+## Issue #105 — Linux process-group containment implementation candidate — 2026-11-20
+
+- Latest code-bearing candidate: `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT OR TESTED).
+- Linux subprocess startup now installs an inherited seccomp filter in the child before `exec`. It denies `setsid`, `setpgid`, `unshare`, `setns`, clone namespace flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` so compatible runtimes can fall back to `clone`. The existing dedicated process group is therefore intended to remain non-escapable for descendants; group cleanup still runs on normal return, timeout, and output overflow.
+- If the kernel refuses `PR_SET_NO_NEW_PRIVS` or filter installation, process spawn fails closed. Windows Job Object containment remains unchanged.
+- Process execution is now explicitly unavailable on Android and macOS until equivalent non-escapable containment exists; `ProcessAdapter` advertises only Linux and Windows.
+- Replaced the old escaped-session reader-only probes with three Linux adversarial regressions for attempted `setsid` on normal completion, timeout, and output overflow. These tests have NOT been run.
+- This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
