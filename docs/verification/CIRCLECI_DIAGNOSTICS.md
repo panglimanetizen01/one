@@ -292,3 +292,12 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - Current PR #113 HEAD at readback: `441df4590ba6d356671408371a5fc5b87739f4a7`. Comparing tested SHA to current HEAD shows 12 documentation-only commits touching only the existing `ONE_RELEASE_BLOCKER_REGISTER.md`, `live-checkpoint-2026-11-20.md`, and `CIRCLECI_DIAGNOSTICS.md` (42 insertions each; no runtime source or workflow files). GitHub combined-status query for current docs HEAD returned no status entries. Therefore CircleCI success is proven for tested source SHA, not a new CircleCI check on latest docs-only HEAD.
 - GitHub Actions run #2247 / `44750302610`: Windows job `136336114808` terminal SUCCESS; Ubuntu job `136336114373` remains IN_PROGRESS at `Install cross-compilers (Ubuntu)`; all following Ubuntu steps pending. Run remains IN_PROGRESS overall, with no recorded failure. Do not claim full matrix success.
 - PR #113 remains OPEN / DRAFT / UNMERGED. PR #115 remains MERGED at `3adace165890bb69de346880e3c612c5cd6c2ff8`. No merge, main change, source/workflow modification, verifier pin change, or acceptance/ledger/DoD change.
+
+
+## B-001 operational resolution — 2026-11-20
+
+- Historical CircleCI pipeline #1201 on SHA `509b7b197115adb1ba80d730342e9f6fbf981645` remains a confirmed pre-execution termination; provider root cause remains unknown.
+- Exact SHA `6ef875291b599ef144dba5333e9a40c455f3e013` subsequently received `ci/circleci: one-linux = success`, workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. Compare from original failed SHA to tested SHA shows only the three existing verification docs changed; runtime source and CI workflow are unchanged.
+- B-001 is RESOLVED OPERATIONALLY for this candidate code/workflow state; historical provider root cause UNKNOWN. Latest PR #113 HEAD `7a9ac7ae720eba3b8f64c1bfa46feda3927dd410` adds docs-only commits beyond tested SHA and has no CircleCI status entry.
+- GitHub Actions run #2247: Windows SUCCESS; Ubuntu IN_PROGRESS at Ubuntu cross-compiler installation, later steps pending. Overall matrix is not yet PASS.
+- Free and Open Source is ON per user-confirmed CircleCI UI. Settings API 403 is only a permission limitation.
