@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee` |
+| PR #113 HEAD | `d14a679f20cf49bb408a5b72ddaf9ecc9155d254` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` |
+| Code-bearing source | `4be1b8fd579092d8195c3fb775b7c765f6221814` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
 | Verifier branch-local source pin | `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee`.
+**Latest source/test candidate:** `4be1b8fd579092d8195c3fb775b7c765f6221814` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `d14a679f20cf49bb408a5b72ddaf9ecc9155d254`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
@@ -480,3 +480,6 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - The macOS adapter is deliberately limited to direct children of the trusted root. Nested paths return `UnsupportedPlatform`. This implementation has no target-host execution evidence yet; its mount/device and race behavior still require platform-specific review.
 - Three macOS-only regression tests cover direct-child read/write, symlink/nested-path denial, and final-component root-symlink rejection. They have NOT been run.
 - Android direct-child backend remains statx-mount-ID dependent; Linux nested writes remain fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+- Current PR #113 HEAD `d14a679f20cf49bb408a5b72ddaf9ecc9155d254` includes the macOS adapter source candidate `4be1b8fd579092d8195c3fb775b7c765f6221814` plus documentation synchronization. No build/test/device evidence is claimed for either new Android/macOS backend.
