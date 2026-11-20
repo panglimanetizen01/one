@@ -47,6 +47,15 @@ pub struct ExecutionPolicy {
 }
 
 impl ExecutionPolicy {
+    fn covers(policy_capability: Capability, requested_capability: Capability) -> bool {
+        policy_capability == requested_capability
+            || (policy_capability == Capability::Filesystem
+                && matches!(
+                    requested_capability,
+                    Capability::FilesystemRead | Capability::FilesystemWrite
+                ))
+    }
+
     pub fn grant(mut self, capability: Capability) -> Self {
         if !self.grants.contains(&capability) {
             self.grants.push(capability);
@@ -81,31 +90,22 @@ impl ExecutionPolicy {
         if let Err(error) = request.validate() {
             return PolicyDecision::Deny(DenyReason::InvalidRequest(error));
         }
-        if self.denials.contains(&request.capability) {
+        if self.denials.iter().any(|capability| Self::covers(*capability, request.capability)) {
             return PolicyDecision::Deny(DenyReason::ExplicitlyDenied);
         }
         let capability_granted = self.grants.iter().any(|capability| {
-            *capability == request.capability
-                || (matches!(
-                    request.capability,
-                    Capability::FilesystemRead | Capability::FilesystemWrite
-                ) && *capability == Capability::Filesystem)
+            Self::covers(*capability, request.capability)
         });
         if !capability_granted {
             return PolicyDecision::Deny(DenyReason::MissingCapability);
         }
         let scope_allowed = self.scopes.iter().any(|(capability, rule)| {
-            (*capability == request.capability
-                || (matches!(
-                    request.capability,
-                    Capability::FilesystemRead | Capability::FilesystemWrite
-                ) && *capability == Capability::Filesystem))
-                && rule.matches(&request.scope)
+            Self::covers(*capability, request.capability) && rule.matches(&request.scope)
         });
         if !scope_allowed {
             return PolicyDecision::Deny(DenyReason::OutOfScope);
         }
-        if self.approvals.contains(&request.capability) {
+        if self.approvals.iter().any(|capability| Self::covers(*capability, request.capability)) {
             return PolicyDecision::RequireApproval;
         }
         PolicyDecision::Allow
@@ -220,5 +220,50 @@ mod tests {
         let id_request = request(ExecutionScope::target("server.example"));
         let en_request = request(ExecutionScope::target("server.example"));
         assert_eq!(policy.evaluate(&id_request), policy.evaluate(&en_request));
+    }
+
+    #[test]
+    fn coarse_filesystem_denial_overrides_inherited_read_and_write_grants() {
+        let read = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Read,
+        );
+        let write = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemWrite,
+            Capability::FilesystemWrite,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Write,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::Filesystem)
+            .deny(Capability::Filesystem)
+            .allow_scope(Capability::Filesystem, ScopeRule::Any);
+
+        assert_eq!(
+            policy.evaluate(&read),
+            PolicyDecision::Deny(DenyReason::ExplicitlyDenied)
+        );
+        assert_eq!(
+            policy.evaluate(&write),
+            PolicyDecision::Deny(DenyReason::ExplicitlyDenied)
+        );
+    }
+
+    #[test]
+    fn coarse_filesystem_approval_applies_to_inherited_child_capabilities() {
+        let request = CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemRead,
+            Capability::FilesystemRead,
+            ExecutionScope::target("file.txt"),
+            EffectClass::Read,
+        );
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::Filesystem)
+            .require_approval(Capability::Filesystem)
+            .allow_scope(Capability::Filesystem, ScopeRule::Any);
+
+        assert_eq!(policy.evaluate(&request), PolicyDecision::RequireApproval);
     }
 }
