@@ -7,7 +7,7 @@ flowchart TB
     Host["Host startup"] --> ProjectRoot["Project root from host process current working directory (independent of source and --target)"]
     Host --> HostPlatform["PlatformKind::current_host()"]
     HostPlatform --> SelectAdapter["Orchestrator selects using actual host platform"]
-    SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux on Linux; Windows on Windows; none on Android/macOS"]
+    SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux · Windows · Android · macOS native direct-child backends"]
     ProjectRoot --> Authority["FilesystemAuthority::open(host_cwd, limits) — final-component no-follow + retained-handle identity check"]
     Authority --> Root["Retained trusted root directory handle"]
     RequestedTarget["Requested target"] --> Confine["Resolve against fixed root; reject outside-root absolute targets"]
@@ -22,6 +22,16 @@ flowchart TB
     LinuxRead --> Openat2Read["openat2(root_fd, relative)"]
     Openat2Read --> ReadPolicy["BENEATH · NO_SYMLINKS · NO_XDEV"]
     ReadPolicy --> ReadChecks["Regular-file check · read-size limit"]
+
+    ReadAdapter --> AndroidRead["Android read backend — direct root children only"]
+    AndroidRead --> AndroidOpen["openat(root_fd, leaf, O_NOFOLLOW)"]
+    AndroidOpen --> AndroidMount["statx(STATX_MNT_ID) · same mount · nlink = 1"]
+    AndroidMount --> ReadChecks
+
+    ReadAdapter --> MacosRead["macOS read backend — direct root children only"]
+    MacosRead --> MacosOpen["openat(root_fd, leaf, O_NOFOLLOW)"]
+    MacosOpen --> MacosVolume["st_dev match · regular file · nlink = 1"]
+    MacosVolume --> ReadChecks
 
     ReadAdapter --> WindowsRead["Windows read backend"]
     WindowsRead --> NtOpen["NtCreateFile with retained parent handles"]
@@ -39,6 +49,22 @@ flowchart TB
     LinuxSync --> LinuxRename["renameat(root_fd, temp, root_fd, leaf)"]
     LinuxSync -->|failure| LinuxCleanup["unlinkat temporary sibling"]
     LinuxRename -->|failure| LinuxCleanup
+
+    WriteAdapter --> AndroidWrite["Android write backend — direct root children only"]
+    AndroidWrite --> AndroidLeaf["O_PATH · O_NOFOLLOW · statx mount-ID check"]
+    AndroidLeaf --> AndroidTemp["Exclusive temp sibling via root_fd"]
+    AndroidTemp --> AndroidSync["write_all + sync_all"]
+    AndroidSync --> AndroidRename["renameat(root_fd, temp, root_fd, leaf)"]
+    AndroidSync -->|failure| AndroidCleanup["unlinkat temporary sibling"]
+    AndroidRename -->|failure| AndroidCleanup
+
+    WriteAdapter --> MacosWrite["macOS write backend — direct root children only"]
+    MacosWrite --> MacosLeaf["openat O_NOFOLLOW · st_dev · nlink = 1"]
+    MacosLeaf --> MacosTemp["Exclusive temp sibling via root_fd"]
+    MacosTemp --> MacosSync["write_all + sync_all"]
+    MacosSync --> MacosRename["renameat(root_fd, temp, root_fd, leaf)"]
+    MacosSync -->|failure| MacosCleanup["unlinkat temporary sibling"]
+    MacosRename -->|failure| MacosCleanup
 
     WriteAdapter --> WindowsWrite["Windows write backend"]
     WindowsWrite --> WinWalk["Handle-relative parent traversal"]
@@ -68,6 +94,8 @@ flowchart TB
 | Host-selected project root (process current working directory), authority injection, and target scope | `crates/one-cli/src/main.rs` |
 | Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
+| Android `openat` read and direct-child atomic write with statx mount ID | `crates/one-core/src/filesystem.rs` |
+| macOS `openat` read and direct-child atomic write with device identity | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
@@ -77,6 +105,7 @@ flowchart TB
 
 - Linux nested writes fail closed because a retained nested-directory handle can be moved outside the root after opening. Direct-child writes use the retained root handle as their parent authority.
 - Linux direct-child and Windows write paths have protected E4 evidence on code-bearing source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` (protected push run #44519577693). Linux nested writes remain fail-closed. The native Windows probe is limited to Windows Server 2025 build 26100.
+- Android and macOS support is currently limited to direct children of the retained root. Android requires `statx(STATX_MNT_ID)`; macOS compares `st_dev`. Nested paths fail closed. These implementations are code candidates only and have NOT been built or tested.
 - Other platforms fail closed.
 - A successful artifact build or one passing platform job does not imply full platform support or Issue #104 acceptance.
 - The full architecture map in PR #97 is a separate non-normative overview image. This focused source diagram supplements it; it does not claim that the image itself has been visually inspected or reconciled.
@@ -116,3 +145,8 @@ The Mermaid diagram above remains the existing architecture source of truth; thi
 - Added `filesystem::windows_root_tests::authority_rejects_reparse_root_without_following_final_component` in commit `8dd92aebc033a94abb14a8d7ec498f6933d4ba8e`; it creates a directory junction and requires root acquisition to fail closed.
 - Windows implementation commit: `b208a1a5bdf4a9ffb00a7c17aa4a401ed4a237ce`. This and the Linux/CLI root changes are NOT BUILT OR TESTED. Latest code-bearing candidate: `8dd92aebc033a94abb14a8d7ec498f6933d4ba8e`.
 - Preserve Issue #104 OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable.
+
+
+## Android/macOS direct-child implementation update — 2026-11-20
+
+The source diagram now includes the Android and macOS direct-child filesystem candidates. Android requires a kernel-provided statx mount ID to reject mount crossings; macOS compares the opened file's device identity with the retained root. Both use no-follow leaf opens, reject hard links/non-regular files, and replace files through a root-relative temporary sibling plus `fsync` and `renameat`. Nested paths remain fail-closed. Source candidate `4be1b8fd579092d8195c3fb775b7c765f6221814` and its later descendants have NOT been built or tested; Issue #104 remains OPEN / NOT ACCEPTED.
