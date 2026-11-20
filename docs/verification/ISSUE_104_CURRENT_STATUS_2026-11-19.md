@@ -4,7 +4,7 @@
 
 - Repository: `panglimanetizen01/one`.
 - PR #113: OPEN / DRAFT / UNMERGED.
-- Latest exact PR HEAD readback: `5386e1048615524e6b6a6c079267b35a2367c484`.
+- Historical exact PR HEAD readback: `5386e1048615524e6b6a6c079267b35a2367c484` (superseded by the 2026-11-21 checkpoint appended below).
 - Base branch: `fix/windows-process-verifier-timeouts-20261118`; exact base SHA: `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
 - GitHub combined status on exact HEAD `5386e1048615524e6b6a6c079267b35a2367c484`: `ci/circleci: one-linux` = PENDING at `2026-11-19T13:05:38Z`.
 - CircleCI workflow: `dfae6ca1-099d-4ea9-8fd1-1f9dd32c1a1c`; job: `0f9dc451-d530-434d-98bb-b3e28f5b3c8f`.
@@ -721,3 +721,14 @@ Code commits:
 - `858a5da09fe2ea74ebd17b0798f13fac848c7a28`: replace the stale test that required every Linux nested write to fail with `nested_write_uses_native_backend_or_fails_closed_without_side_effects`. It accepts a successful native detached-mount write or an explicit `UnsupportedPlatform` fallback, and checks target integrity and temp-file cleanup.
 
 The independent verifier's expected source test-filter inventory is now structurally matched in `adapter.rs`: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, and 1 `descriptor_relative_walk_rejects_` tests. This is a source inventory check only; no tests were run and no verifier PASS is claimed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Android/macOS filesystem helper repair and nested-path security boundary — 2026-11-21
+
+Latest code-bearing source: `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (`crates/one-core/src/filesystem.rs`).
+
+- Removed the duplicate Android `create_temp` definition and supplied the missing macOS `create_temp` helper. These were source-visible compile blockers; no build was run.
+- Android/macOS direct-child read/write backends remain. Their root-relative direct-child operations retain no-follow checks, regular-file/single-link checks, Android `statx(STATX_MNT_ID)` or macOS `fstatfs` identity checks, and same-directory atomic replacement.
+- Nested Android/macOS paths remain fail-closed. A proposed generic openat parent walk was deliberately not enabled: ordinary POSIX directory handles do not pin an opened parent beneath the retained root, so an attacker may rename that directory outside the root before the leaf operation. The current resolver rejects multi-component paths with `UnsupportedPlatform` until an anti-move primitive is implemented.
+- Android/macOS regression fixtures now cover nested-path fail-closed behavior, leaf symlinks, and an outside sentinel. These tests are NOT RUN.
+- This is source implementation hardening and a precise capability boundary, not acceptance. Issue #104 remains OPEN / NOT ACCEPTED. No build/test/CI/verifier/platform matrix was run and no status was promoted.
