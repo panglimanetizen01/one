@@ -34,6 +34,26 @@ fn run_command_uses_working_directory_as_filesystem_root_not_source_location() {
     assert!(output.status.success(), "filesystem read command failed: {}", String::from_utf8_lossy(&output.stderr));
     assert_eq!(String::from_utf8_lossy(&output.stdout), "isi One\nbaris kedua\n");
 }
+#[test]
+fn run_command_does_not_allow_source_location_to_widen_filesystem_root() {
+    let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let root = std::env::temp_dir().join(format!("one-filesystem-deny-root-{id}"));
+    fs::create_dir_all(&root).unwrap();
+    let outside = std::env::temp_dir().join(format!("one-filesystem-outside-{id}.txt"));
+    let source = std::env::temp_dir().join(format!("one-filesystem-source-widen-{id}.one"));
+    let outside_arg = portable_path(&outside);
+    fs::write(&outside, "rahasia di luar root\\n").unwrap();
+    fs::write(&source, format!("baca berkas \\"{}\\"\\n", outside_arg)).unwrap();
+
+    // The source and target share a parent outside cwd. Neither may widen
+    // the host-selected root to that parent directory.
+    let output = run_in(&root, &["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &outside_arg]);
+    let _ = fs::remove_file(&source);
+    let _ = fs::remove_file(&outside);
+    let _ = fs::remove_dir_all(&root);
+    assert!(!output.status.success(), "filesystem authority widened to the source parent");
+    assert!(output.stdout.is_empty());
+}
 #[test] fn filesystem_read_is_denied_without_explicit_capability() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-denied-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-denied-source-{source_id}.one")); let data_arg = portable_path(&data); fs::write(&data, "rahasia\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap()]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3205")); }
 #[test] fn filesystem_read_rejects_out_of_scope_target() { let source_id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(); let data = std::env::temp_dir().join(format!("one-filesystem-scope-data-{source_id}.txt")); let source = std::env::temp_dir().join(format!("one-filesystem-scope-source-{source_id}.one")); let data_arg = portable_path(&data); let scope_arg = portable_path(&std::env::temp_dir()); fs::write(&data, "di luar\n").unwrap(); fs::write(&source, format!("baca berkas \"{}\"\n", data_arg)).unwrap(); let output = run(&["run", source.to_str().unwrap(), "--izinkan", "filesystem.read", "--target", &scope_arg]); let _ = fs::remove_file(&data); let _ = fs::remove_file(&source); assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("N3209")); }
 
