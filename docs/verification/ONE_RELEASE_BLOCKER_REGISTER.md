@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `471780fae326786fdc9a6158860b4b4b601cbb3f` |
+| PR #113 HEAD at pre-register refresh read | `094f182a99a6bbd8af4dd7960f140d503a424025` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `8792f7a1f707f444d00026d916fa8c18b7f3e7f1` |
+| Code-bearing source | `858a5da09fe2ea74ebd17b0798f13fac848c7a28` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -592,3 +592,13 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Commit `68d39100980474e71f78e4f9c079d8bc2c603fbe` also corrected the stale Linux nested-write comment to describe the detached-mount path and fail-closed fallback accurately.
 - No build, test, CircleCI, verifier, or platform matrix has run on this candidate. Issue #104 remains OPEN / NOT ACCEPTED. These are implementation changes and test additions, not acceptance evidence.
 - PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update itself advances the branch, so refresh before next action.
+
+
+## Linux nested-write implementation and verifier inventory alignment — 2026-11-21
+
+- Latest code-bearing source: `858a5da09fe2ea74ebd17b0798f13fac848c7a28`.
+- Commit `0fd434ad46e6b8e93c3b9ed887447baf10d0f697` maps Linux `EOPNOTSUPP` from required detached-mount primitives to `UnsupportedPlatform`, preserving fail-closed behavior for filesystems/kernels without the required operation.
+- Commit `858a5da09fe2ea74ebd17b0798f13fac848c7a28` replaces the obsolete Linux nested-write test that unconditionally expected denial. The new `nested_write_uses_native_backend_or_fails_closed_without_side_effects` accepts native detached-mount success or explicit unsupported fallback and checks target integrity/temp cleanup.
+- Current `adapter.rs` source inventory exactly matches the protected E4 workflow's nonzero test filters: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, 1 `descriptor_relative_walk_rejects_`. This was checked by source-name inventory only, not by running the tests.
+- No build, test, CircleCI, verifier, or platform matrix was run. Issue #104 remains OPEN / NOT ACCEPTED. No acceptance, verifier pin, ledger, DoD, or release state was promoted.
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update advances the branch, so refresh live HEAD before next action.
