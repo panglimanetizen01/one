@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `bcfeadb61d79bfe09476cd47bdd9d9c20be92e28` |
+| PR #113 HEAD at pre-register refresh read | `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `b0a3379a1fb49feb18dcf61a2521446f199a8e2b` |
+| Code-bearing source | `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `b0a3379a1fb49feb18dcf61a2521446f199a8e2b` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `ff6b66088a0dadecb2adca1847f0642be544c04b`.
+**Latest source/test candidate:** `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `bcfeadb61d79bfe09476cd47bdd9d9c20be92e28`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -675,3 +675,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - HTTP request method/header names now require valid token syntax; authority and request-target reject whitespace/control bytes and fragments; header values reject control bytes other than HTAB. This complements request/response resource limits and framing checks already recorded.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `bcfeadb61d79bfe09476cd47bdd9d9c20be92e28`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — HTTP exact framing and chunk trailer validation
+
+- Latest source candidate: `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (NOT BUILT/TESTED).
+- Content-Length bodies require exact declared length; chunked parsing bounds size lines, validates trailer syntax and termination, rejects framing/Host trailers, and rejects trailing bytes. Regressions added for valid/forbidden trailers and extra bytes; NOT RUN.
+- This extends the existing request/response size limits, token validation, ambiguous-framing rejection, and fallible buffer growth.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
