@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was the same SHA.
+**Latest source/test candidate:** `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was the same SHA.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -522,3 +522,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Keep broad matrix deferred until product implementation scope is complete. B-001 is not reopened absent a new provider failure.
 
 - Latest implementation refresh: source/test candidate and PR #113 HEAD `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (OPEN / DRAFT / UNMERGED). Process containment regressions now invoke ignored helper tests from the current Rust test binary and exercise `fork` + direct `setsid(2)` rather than depending on an external `setsid` executable; the helper records any escaped PID so the parent test can clean it up before failing. These regressions remain NOT RUN.
+
+- Issue #105 follow-up source `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` adds `waitid(WNOWAIT)` observation of the direct child. The process-group leader remains unreaped until SIGKILL is sent to its group, preventing the group ID from being recycled before cleanup. The existing syscall-level adversarial tests remain unrun.
