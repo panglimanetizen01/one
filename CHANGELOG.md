@@ -4,6 +4,7 @@
 
 - Bind filesystem authority to the host process working directory instead of the `.one` source location or requested target.
 - Open Linux project roots with directory/no-follow/close-on-exec flags and validate path identity against the retained root handle.
+- Open Windows project roots without following a final reparse point; validate volume/file identity against the retained native handle.
 - Add a CLI regression fixture for a source file outside the working directory accessing an in-root target.
 
 
