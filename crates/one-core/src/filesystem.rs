@@ -767,6 +767,7 @@ mod android_native {
         subvolume: u64, atomic_min: u32, atomic_max: u32,
         atomic_segments: u32, reserved: [u8; 76],
     }
+    const _: [(); 256] = [(); std::mem::size_of::<Statx>()];
 
     pub(super) fn mount_id(file: &File) -> Result<u64, FilesystemError> {
         let empty = b"\0";
