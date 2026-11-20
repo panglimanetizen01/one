@@ -386,7 +386,7 @@ fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
         Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) | Some(libc::EBUSY) => {
             FilesystemError::ResolutionFailed
         }
-        Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => {
+        Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) | Some(libc::EOPNOTSUPP) => {
             FilesystemError::UnsupportedPlatform
         }
         Some(libc::ENOENT) => FilesystemError::NotFound,
