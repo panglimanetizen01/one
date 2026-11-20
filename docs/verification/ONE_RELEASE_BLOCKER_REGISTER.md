@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `412d87f6e05d2d996538093623bcb52412216553` |
+| PR #113 HEAD | `955d37489e44c4b638d047477283160db62dc609` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `0a9685bded788ae46596227bd61457d10db1179c` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `412d87f6e05d2d996538093623bcb52412216553`.
+**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `955d37489e44c4b638d047477283160db62dc609`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
@@ -102,13 +102,23 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 - Full overview image remains in draft [PR #97](https://github.com/panglimanetizen01/one/blob/docs/system-architecture-diagram-20261115/docs/architecture/one-full-architecture-map.png); its binary has not been visually inspected in this session.
 - Do not recreate/re-upload a duplicate diagram. Update existing Mermaid source only if architecture changes, then synchronize links and evidence.
 
+### B-005 — Issue #105 non-escapable process containment
+
+**Priority:** P1 · **State:** OPEN / NOT ACCEPTED
+**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED).
+
+- Linux process startup now installs a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
+- Filter setup failure is fail-closed. Windows Job Object containment is unchanged. Process execution is explicitly unavailable on Android/macOS until equivalent containment exists; the adapter advertises Linux/Windows only.
+- Three Linux adversarial tests now cover attempted `setsid` during normal completion, timeout, and output overflow. They have NOT been run.
+- Acceptance requires reviewing the seccomp architecture/syscall policy and executing the adversarial cases on supported Linux architectures, proving no descendant survives all three paths. Do not claim process-tree containment or close Issue #105 before that evidence.
+
 ## 3. Release sprint execution order
 
-1. **P0:** Diagnose CircleCI pre-execution termination using provider evidence; no speculative config patch or blind rerun.
-2. **P1:** Close Issue #104 against its unchanged acceptance contract; reuse valid exact-source evidence and verify any new code on a new exact SHA.
-3. **P1:** Reconcile every remaining formal v0.1 release gate from the existing contract and fixed ledger.
-4. **P2:** Freeze one release-candidate SHA and run the required integrated platform matrix. Inspect terminal job results/logs. Parent-SHA evidence never transfers.
-5. **P2:** Synchronize only affected existing docs: specs, roadmap/addendum, implementation status, evidence matrix, verification index/checkpoint, user feature status, architecture source, changelog, docs map, and Notion Skill.
+1. **P0:** Complete Issue #104 production filesystem implementation against its unchanged acceptance contract; preserve fail-closed behavior for unsupported nested operations.
+2. **P1:** Complete Issue #105 Linux/Windows process containment implementation; Android/macOS process execution remains fail-closed until equivalent containment exists.
+3. **P1:** Reconcile every remaining formal v0.1 product/release gate from the existing contract and fixed ledger. Do not reopen B-001 absent a new relevant provider failure.
+4. **P2:** After implementation scope is complete, freeze one release-candidate SHA and run the required integrated platform matrix. Inspect terminal job results/logs. Parent-SHA evidence never transfers.
+5. **P2:** Synchronize only affected existing docs and Notion Skill; preserve historical evidence and exact-SHA boundaries.
 6. **P3:** Prepare release artifacts/notes. Merge, tag, publish, and distribute only after all gates pass and the owner explicitly authorizes it.
 
 ## 4. Connected documentation ecosystem
@@ -496,3 +506,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
 
 - Live implementation refresh: PR #113 HEAD `412d87f6e05d2d996538093623bcb52412216553`; latest code-bearing source/test candidate `0a9685bded788ae46596227bd61457d10db1179c` adds Linux seccomp process-group containment and fail-closed Android/macOS process execution. No build/test evidence is claimed.
+
+- Live PR identity refresh: #113 HEAD `955d37489e44c4b638d047477283160db62dc609`, OPEN / DRAFT / UNMERGED. Current code-bearing source/test candidate remains `0a9685bded788ae46596227bd61457d10db1179c`; no build/test evidence is claimed.
