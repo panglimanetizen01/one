@@ -1133,17 +1133,6 @@ mod tests {
     }
 
 
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    fn cleanup_test_escaped_group(pid_file: &std::path::Path) -> Option<i32> {
-        let pid = std::fs::read_to_string(pid_file).ok()?.trim().parse::<i32>().ok()?;
-        // SAFETY: this helper only targets the process group created by the
-        // adversarial test's setsid child, never a caller-provided PID.
-        unsafe {
-            libc::kill(-pid, libc::SIGKILL);
-            libc::kill(pid, libc::SIGKILL);
-        }
-        Some(pid)
-    }
 
     #[test]
     fn denied_process_capability_never_spawns() {
