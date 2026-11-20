@@ -88,6 +88,12 @@ class CircleCIDiagnosticTests(unittest.TestCase):
             "NO-OUTPUT / ROOT CAUSE UNKNOWN",
         )
 
+    def test_missing_start_time_metadata_is_not_assumed_pre_execution(self):
+        self.assertEqual(
+            classify_job_evidence(["canceled"], None, "", start_time_known=False),
+            "NO-OUTPUT / START TIME UNKNOWN",
+        )
+
     def test_timed_out_provider_outcome_is_classified_as_timeout(self):
         self.assertEqual(
             classify_job_evidence(["timed_out"], None, ""),
