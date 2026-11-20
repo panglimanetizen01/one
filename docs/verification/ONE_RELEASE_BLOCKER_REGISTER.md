@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1` |
+| PR #113 HEAD at pre-register refresh read | `69e863f9a1238650e14c367cb5036e38d473b3bb` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` |
+| Code-bearing source | `0f5859426273a61174d6d1b08ed8771a6f4b136a` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1`.
+**Latest source/test candidate:** `0f5859426273a61174d6d1b08ed8771a6f4b136a` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `69e863f9a1238650e14c367cb5036e38d473b3bb`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -638,3 +638,14 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Android/macOS tests now explicitly preserve nested-path denial and outside-sentinel integrity. They are NOT RUN.
 - Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran. Preserve acceptance criteria, fixed ledger/DoD, and protected verifier pins.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register refresh HEAD `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — Android/macOS filesystem source repair and confinement boundary
+
+- Latest code-bearing source: `0f5859426273a61174d6d1b08ed8771a6f4b136a` (`crates/one-core/src/filesystem.rs`).
+- Removed duplicate Android `create_temp` and added missing macOS `create_temp`; static inventory shows one helper definition in each native module. No compiler was run.
+- Android/macOS direct-child no-follow reads and same-directory atomic replacement remain. Android requires `statx(STATX_MNT_ID)`; macOS checks `f_fsid` + mount point using `fstatfs`; both enforce regular-file/single-link policy.
+- Nested Android/macOS paths remain fail-closed. Ordinary POSIX directory descriptors do not prevent parent rename-out; multi-component traversal is explicitly rejected with `UnsupportedPlatform` until an anti-move primitive is implemented. The attempted generic openat parent walk was not left enabled.
+- Android/macOS regressions cover direct-child paths, symlink rejection, nested fail-closed behavior, root symlinks, and hard-link side effects. NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. No build/test/CI/verifier/platform matrix ran; no acceptance or release state promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `69e863f9a1238650e14c367cb5036e38d473b3bb`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register commit advances the branch; refresh before next action.
