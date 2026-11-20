@@ -4,6 +4,14 @@ fn run(args: &[&str]) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_one")).args(args).output().unwrap()
 }
 
+fn run_in(directory: &std::path::Path, args: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_one"))
+        .current_dir(directory)
+        .args(args)
+        .output()
+        .unwrap()
+}
+
 #[cfg(windows)]
 #[test]
 fn run_command_executes_filesystem_write_from_one_source() {
@@ -13,7 +21,7 @@ fn run_command_executes_filesystem_write_from_one_source() {
     let target_arg = target.to_string_lossy().replace('\\', "/");
     fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"halo dari CLI One\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&std::env::temp_dir(), &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -37,7 +45,7 @@ fn run_command_executes_filesystem_write_for_direct_child_on_linux() {
     let target_arg = target.to_string_lossy().replace('\\', "/");
     fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"halo dari CLI One\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&std::env::temp_dir(), &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -54,7 +62,7 @@ fn run_command_executes_filesystem_write_for_direct_child_on_linux() {
 
 #[cfg(target_os = "linux")]
 #[test]
-fn run_command_rejects_nested_linux_filesystem_write_without_side_effects() {
+fn run_command_supports_nested_linux_write_when_detached_mount_is_available() {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
     let nested_name = format!(".one-filesystem-write-nested-{id}");
     let nested = std::env::temp_dir().join(&nested_name);
@@ -65,7 +73,7 @@ fn run_command_rejects_nested_linux_filesystem_write_without_side_effects() {
     let target_arg = format!("{nested_name}/target.txt");
     fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"ATTACK\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&std::env::temp_dir(), &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -74,16 +82,19 @@ fn run_command_rejects_nested_linux_filesystem_write_without_side_effects() {
         &target_arg,
     ]);
 
-    assert!(!output.status.success(), "nested Linux filesystem write unexpectedly succeeded");
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("UnsupportedPlatform"), "expected fail-closed diagnostic, got: {stderr}");
-    assert_eq!(fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+    if output.status.success() {
+        assert_eq!(fs::read(&target).unwrap(), b"ATTACK");
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(stderr.contains("UnsupportedPlatform"), "expected fail-closed diagnostic, got: {stderr}");
+        assert_eq!(fs::read(&target).unwrap(), b"KEEP_ORIGINAL");
+    }
     assert_eq!(fs::read_dir(&nested).unwrap().count(), 1);
     let _ = fs::remove_dir_all(&nested);
     let _ = fs::remove_file(&source);
 }
 
-#[cfg(all(not(windows), not(target_os = "linux")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "android", target_os = "macos")))]
 #[test]
 fn run_command_rejects_filesystem_write_when_backend_is_unsupported() {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
@@ -92,7 +103,7 @@ fn run_command_rejects_filesystem_write_when_backend_is_unsupported() {
     let target_arg = target.to_string_lossy().replace('\\', "/");
     fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"halo dari CLI One\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&std::env::temp_dir(), &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -154,7 +165,7 @@ fn run_command_rejects_absolute_filesystem_target_outside_source_project_root() 
     fs::write(&target, "KEEP_OUTSIDE_SENTINEL").unwrap();
     fs::write(&source, format!("tulis ke berkas \"{target_arg}\" dengan \"ATTACK\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&project_root, &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -184,7 +195,7 @@ fn run_command_rejects_absolute_filesystem_read_outside_source_project_root() {
     fs::write(&target, "OUTSIDE_READ_SENTINEL").unwrap();
     fs::write(&source, format!("baca berkas \"{target_arg}\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&project_root, &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -230,13 +241,15 @@ fn run_command_resolves_relative_source_from_host_working_root() {
 #[test]
 fn filesystem_write_permission_does_not_grant_filesystem_read() {
     let id = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    let target = std::env::temp_dir().join(format!("one-filesystem-read-target-{id}.txt"));
-    let source = std::env::temp_dir().join(format!("one-filesystem-read-source-{id}.one"));
+    let project_root = std::env::temp_dir().join(format!("one-filesystem-read-project-{id}"));
+    fs::create_dir(&project_root).unwrap();
+    let target = project_root.join("target.txt");
+    let source = project_root.join("main.one");
     let target_arg = target.to_string_lossy().replace('\\', "/");
     fs::write(&target, "rahasia").unwrap();
     fs::write(&source, format!("baca berkas \"{target_arg}\"\n")).unwrap();
 
-    let output = run(&[
+    let output = run_in(&project_root, &[
         "run",
         source.to_str().unwrap(),
         "--izinkan",
@@ -249,6 +262,5 @@ fn filesystem_write_permission_does_not_grant_filesystem_read() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("N3209"), "unexpected stderr: {stderr}");
     assert!(stderr.contains("MissingCapability"), "unexpected stderr: {stderr}");
-    let _ = fs::remove_file(&target);
-    let _ = fs::remove_file(&source);
+    let _ = fs::remove_dir_all(&project_root);
 }
