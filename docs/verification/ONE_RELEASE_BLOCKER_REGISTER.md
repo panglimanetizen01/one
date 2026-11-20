@@ -105,12 +105,12 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED).
+**Latest source/test candidate:** `418d9642778d975440b81df2bdb5e1bf9aa1d8a5` (NOT BUILT/TESTED).
 
-- Linux process startup now installs a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
-- Filter setup failure is fail-closed. Windows Job Object containment is unchanged. Process execution is explicitly unavailable on Android/macOS until equivalent containment exists; the adapter advertises Linux/Windows only.
-- Three Linux adversarial tests now cover attempted `setsid` during normal completion, timeout, and output overflow. They have NOT been run.
-- Acceptance requires reviewing the seccomp architecture/syscall policy and executing the adversarial cases on supported Linux architectures, proving no descendant survives all three paths. Do not claim process-tree containment or close Issue #105 before that evidence.
+- Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
+- Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
+- Three adversarial `setsid` tests and bounded-reader regression are target-gated for Linux and Android, covering normal completion, timeout, and output overflow. They have NOT been run.
+- Acceptance requires reviewing the seccomp architecture/syscall policy and executing the adversarial cases on supported Linux architectures and a real Android/Termux target, proving no descendant survives all three paths. Reconcile existing Windows Job Object evidence. Do not claim process-tree containment or close Issue #105 before that evidence.
 
 ## 3. Release sprint execution order
 
