@@ -153,11 +153,19 @@ An explicit HTTP GET source-level path is executable-verified within its recorde
 
 ## CI execution provider
 
-CircleCI is the intended canonical Linux CI provider. The draft PR #113 candidate now contains `.circleci/config.yml`, and CircleCI `ci/circleci: one-linux` reports terminal SUCCESS on exact PR HEAD `26a34efb6d0908bd02738a7b05090f96051a6dc7` (workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). This is job-level exact-SHA evidence; provider step logs were not separately inspected. The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and still has no `.circleci/config.yml`. Therefore no canonical CI-provider cutover is claimed.
+CircleCI is the intended canonical Linux CI provider, currently carried only by draft PR #113. Exact-SHA status is split:
+
+- Code-bearing source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20`: `ci/circleci: one-linux` SUCCESS (workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`). Provider step logs were not inspected.
+- Latest PR #113 documentation HEAD at the time of this checkpoint, `71d518ae4b9aa3b1bf05c738e9d6e862883ffcd0`: FAILURE (workflow `980d47d2-704a-426f-87b4-b0687657f42d`, job `a288a97c-38ff-448b-b74d-8abcea612342`). The failed step and root cause are UNKNOWN because provider logs are not accessible in the connected session.
+
+The documentation HEAD is a 12-commit descendant of the code-bearing source; the net diff contains documentation paths only. Do not transfer the source SHA's SUCCESS to the documentation HEAD, and do not infer a source-code failure from the documentation-HEAD status. See [the live 2026-11-20 checkpoint](docs/verification/live-checkpoint-2026-11-20.md) for exact verifier runs, limitations, and the redacted diagnostic command.
+
+The configuration is not integrated into canonical `main`, which remains `d35db95153f6ddd79885494c72f5aee16c899751` and has no `.circleci/config.yml`. No canonical CI-provider cutover is claimed.
 
 Windows Server 2025 native execution remains independently verified in [one-windows-verification](https://github.com/panglimanetizen01/one-windows-verification). Linux-host MinGW cross-compilation does not replace Windows-host execution.
 
 ## Documentation
+- [Live continuation checkpoint — 2026-11-20](docs/verification/live-checkpoint-2026-11-20.md) — exact source/documentation SHAs, CircleCI split status, independent verifier runs, platform limits, and next gates.
 - [Forensic repository audit](docs/verification/forensic-audit-2026-11-17.md) — latest inventory, confirmed findings, exact-SHA evidence, and open gates.
 - [Master continuation prompt](docs/verification/MASTER_CONTINUATION_PROMPT_2026-11-17.md) — mandatory read-first context and next-session execution order.
 
