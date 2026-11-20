@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `39741b5b90f6326a7b3991ee9d48521ea52f74bd` |
+| PR #113 HEAD at pre-register refresh read | `ff6b66088a0dadecb2adca1847f0642be544c04b` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `5fe958cad798b3d05c3ceb21f875f1f90074cb35` |
+| Code-bearing source | `198fbf4ccdbb7e219efbe3e296e98462a385c384` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `5fe958cad798b3d05c3ceb21f875f1f90074cb35` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `69e863f9a1238650e14c367cb5036e38d473b3bb`.
+**Latest source/test candidate:** `198fbf4ccdbb7e219efbe3e296e98462a385c384` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `39741b5b90f6326a7b3991ee9d48521ea52f74bd`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -658,3 +658,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - HTTP/1.1 response ingestion now caps headers at 64 KiB and wire body at 32 MiB while receiving data, uses fallible vector growth, and retains a 16 MiB decoded-body cap. Parser rejects duplicate Content-Length, unsupported/duplicate Transfer-Encoding, conflicting Content-Length + chunked framing, and chunk-size overflow. Added bounded-reader/parser regressions; NOT RUN.
 - No build/test/CI/verifier/platform matrix was run. These changes are implementation/resource-boundary hardening only; no exact-SHA evidence or release status is promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `39741b5b90f6326a7b3991ee9d48521ea52f74bd`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — bounded HTTP request serialization follow-up
+
+- Latest source candidate: `198fbf4ccdbb7e219efbe3e296e98462a385c384` (NOT BUILT/TESTED).
+- HTTP request bodies are limited to 16 MiB before serialization; request line/headers to 64 KiB with checked arithmetic and fallible preallocation. Content-Length must match body length; duplicate Content-Length and unsupported Transfer-Encoding are rejected. Added request-limit/framing regressions; NOT RUN.
+- This complements the previously recorded bounded HTTP response ingestion (64 KiB headers, 32 MiB wire body, 16 MiB decoded body) and filesystem write payload allocation hardening.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register refresh HEAD `ff6b66088a0dadecb2adca1847f0642be544c04b`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
