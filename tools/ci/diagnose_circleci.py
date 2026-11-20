@@ -64,8 +64,13 @@ def classify_failure(text: str) -> str:
     """Classify captured provider log text only, never report narration/metadata."""
     lowered = text.lower()
     if any(term in lowered for term in (
+        "test result: failed", "test failed", "assertion failed",
+        "assertionerror", "panicked at", "failures:",
+    )):
+        return "TEST FAILURE"
+    if any(term in lowered for term in (
         "too long with no output", "context deadline exceeded",
-        "timed out", "timed_out", "operation timed out",
+        "timed out", "operation timed out",
     )) or re.search(r"\btimeout\b", lowered):
         return "TIMEOUT / NO-OUTPUT"
     if any(term in lowered for term in (
