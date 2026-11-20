@@ -60,3 +60,12 @@ The earlier "Current implementation" description above is a historical pre-conta
 - Windows uses the existing Job Object assigned during process creation and terminates remaining job members during cleanup. macOS remains fail-closed.
 - The source contains adversarial fork + `setsid` regressions for normal completion, timeout, and output overflow, plus stdout/stderr and deadline bounds. The duplicate test helper was removed in `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830`.
 - No exact-SHA build or adversarial test run has been performed on this candidate. Issue #105 remains OPEN / NOT ACCEPTED; source presence is not process-tree acceptance.
+
+
+## Process adapter smoke-fixture correction — 2026-11-21
+
+Latest source commit: `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (`crates/one-core/src/adapter.rs`).
+
+- Replaced the no-argument `rustc` smoke target (which can exit nonzero when no input file is supplied) with `whoami`, a no-argument command that emits output on Linux, Android and Windows.
+- Cfg-gated the smoke test to the platforms where ProcessAdapter advertises native containment, and included Android in the process-platform metadata regression.
+- Test source only; NOT RUN. No build/CI/verifier evidence is claimed. Issue #105 remains OPEN / NOT ACCEPTED.
