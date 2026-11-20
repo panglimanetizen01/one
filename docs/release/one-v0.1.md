@@ -96,7 +96,7 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 - The existing `build` command emits a deterministic `.oneir` IR/debug artifact; the native backend slice does not replace it with a general-purpose native compiler claim.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - The language-level orchestration catalog is not complete.
-- Filesystem write is experimental only within the single-text-payload/single-target boundary and its currently verified Android/Termux platform boundary.
+- Filesystem write is experimental only within the single-text-payload/single-target boundary. Historical Termux evidence applies only to its recorded older source revision; the current Issue #104 confinement candidate exposes Linux and Windows adapters, while Android/macOS filesystem adapters remain fail-closed. Do not claim current Android filesystem support from historical Termux evidence.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary.
 - Database query remains a read-only parameterized SQLite SELECT slice; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
 - HTTP GET remains limited to explicit `http://` HTTP/1.1 GET, exact target scope, and response-body normalization; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
