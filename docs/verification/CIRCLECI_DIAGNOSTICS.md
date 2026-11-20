@@ -242,3 +242,13 @@ This is a later GitHub status readback than earlier dated entries in this docume
 - After merge, CircleCI status on merge commit is PENDING at workflow `509828d0-3d7d-434a-8f00-a58645eabe9e`, job `83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`. This is a new exact merge-commit status context, not evidence of a successful job start.
 - PR #113 remained OPEN / DRAFT / UNMERGED. The newly installed GitHub Actions workflow had not yet yielded a PR #113 run in the immediate readback. Follow-up documentation-only commit to PR #113 should create a `pull_request` run; verify that exact SHA and all full-contract/build/test steps.
 - B-001 remains open. Do not classify pending CircleCI as pass, and do not assume the prior OSS credit error is resolved.
+
+
+## PR #113 GitHub Actions run #2247 — 2026-11-20
+
+- Exact candidate HEAD: `6ef875291b599ef144dba5333e9a40c455f3e013`. GitHub Actions run #2247 / `44750302610` is QUEUED then RUNNING on this exact SHA; [run #2247](https://github.com/panglimanetizen01/one/actions/runs/44750302610).
+- Ubuntu job `136336114373`: runner started, correct exact-head checkout succeeded, Android SDK setup succeeded; currently in `Install cross-compilers (Ubuntu)`. Contract artifacts, Build, Clippy, workspace tests, and focused tests have not yet started.
+- Windows 2025 job `136336114808`: runner started, correct exact-head checkout succeeded, Android SDK setup succeeded; currently in `Install cross-compilers (Windows)`. Contract artifacts, Build, Clippy, workspace tests, and focused tests have not yet started.
+- Both jobs are still IN_PROGRESS with no failed steps at latest readback. Do not claim any test pass yet.
+- CircleCI on this same PR #113 SHA remains PENDING: workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. B-001 remains open until exact CircleCI job start/outcome and cause are established.
+- PR #113 remains OPEN / DRAFT / UNMERGED. PR #115 remains merged at `3adace165890bb69de346880e3c612c5cd6c2ff8`.
