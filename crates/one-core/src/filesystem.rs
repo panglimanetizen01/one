@@ -341,6 +341,191 @@ enum LinuxWriteStage {
     BeforeRename,
 }
 
+#[cfg(target_os = "linux")]
+fn linux_write_nested_relative_with_hook<F>(
+    root: &File,
+    relative: &Path,
+    bytes: &[u8],
+    mut hook: F,
+) -> Result<(), FilesystemError>
+where
+    F: FnMut(LinuxWriteStage) -> Result<(), FilesystemError>,
+{
+    use std::ffi::CString;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::ffi::OsStrExt;
+    use std::os::unix::fs::MetadataExt;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    const AT_EMPTY_PATH: u32 = 0x1000;
+    const AT_RECURSIVE: u32 = 0x8000;
+    const OPEN_TREE_CLONE: u32 = 1;
+    const MOUNT_ATTR_NOSYMFOLLOW: u64 = 0x0020_0000;
+    const RESOLVE: u64 = 0x01 | 0x04 | 0x08;
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    if relative.is_absolute()
+        || relative.components().any(|component| {
+            !matches!(component, std::path::Component::Normal(_))
+        })
+    {
+        return Err(FilesystemError::InvalidTarget);
+    }
+    let relative_name =
+        CString::new(relative.as_os_str().as_bytes()).map_err(|_| FilesystemError::InvalidTarget)?;
+
+    #[repr(C)]
+    struct MountAttr {
+        attr_set: u64,
+        attr_clr: u64,
+        propagation: u64,
+        userns_fd: u64,
+    }
+    let empty = b"\0";
+    let mount_fd = unsafe {
+        libc::syscall(
+            libc::SYS_open_tree,
+            root.as_raw_fd(),
+            empty.as_ptr() as *const libc::c_char,
+            (AT_EMPTY_PATH | AT_RECURSIVE | OPEN_TREE_CLONE | libc::O_CLOEXEC as u32) as libc::c_uint,
+        ) as libc::c_int
+    };
+    if mount_fd < 0 {
+        return Err(linux_filesystem_error(std::io::Error::last_os_error()));
+    }
+    let mount = unsafe { File::from_raw_fd(mount_fd) };
+    let attr = MountAttr {
+        attr_set: MOUNT_ATTR_NOSYMFOLLOW,
+        attr_clr: 0,
+        propagation: 0,
+        userns_fd: 0,
+    };
+    let attr_result = unsafe {
+        libc::syscall(
+            libc::SYS_mount_setattr,
+            mount.as_raw_fd(),
+            empty.as_ptr() as *const libc::c_char,
+            (AT_EMPTY_PATH | AT_RECURSIVE) as libc::c_uint,
+            &attr as *const MountAttr,
+            std::mem::size_of::<MountAttr>(),
+        )
+    };
+    if attr_result != 0 {
+        return Err(linux_filesystem_error(std::io::Error::last_os_error()));
+    }
+
+    let root_metadata = mount.metadata().map_err(|_| FilesystemError::IoFailure)?;
+    let parent = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
+    let parent_name = if parent.as_os_str().is_empty() {
+        CString::new(".").expect("static path")
+    } else {
+        CString::new(parent.as_os_str().as_bytes())
+            .map_err(|_| FilesystemError::InvalidTarget)?
+    };
+    let parent_handle = linux_openat2(
+        mount.as_raw_fd(),
+        &parent_name,
+        libc::O_PATH | libc::O_DIRECTORY | libc::O_CLOEXEC,
+        0,
+        RESOLVE,
+    )
+    .map_err(linux_filesystem_error)?;
+    if parent_handle.metadata().map_err(|_| FilesystemError::IoFailure)?.dev()
+        != root_metadata.dev()
+    {
+        return Err(FilesystemError::ResolutionFailed);
+    }
+
+    match linux_openat2(
+        mount.as_raw_fd(),
+        &relative_name,
+        libc::O_PATH | libc::O_CLOEXEC,
+        0,
+        RESOLVE,
+    ) {
+        Ok(existing) => {
+            let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
+            if !metadata.is_file() {
+                return Err(FilesystemError::NotRegularFile);
+            }
+            if metadata.nlink() != 1 {
+                return Err(FilesystemError::HardLinkedFile);
+            }
+            if metadata.dev() != root_metadata.dev() {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+        }
+        Err(error) if error.raw_os_error() == Some(libc::ENOENT) => {}
+        Err(error) => return Err(linux_filesystem_error(error)),
+    }
+
+    let mut created = None;
+    for _ in 0..16 {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let name = format!(".one-write-{}-{nonce}-{counter}.tmp", std::process::id());
+        let temp_name = CString::new(name).map_err(|_| FilesystemError::InvalidTarget)?;
+        match linux_openat2(
+            mount.as_raw_fd(),
+            &temp_name,
+            libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+            0o600,
+            RESOLVE,
+        ) {
+            Ok(file) => {
+                created = Some((file, temp_name));
+                break;
+            }
+            Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
+            Err(error) => return Err(linux_filesystem_error(error)),
+        }
+    }
+    let (mut temporary_file, temporary_name) =
+        created.ok_or(FilesystemError::IoFailure)?;
+    let mut guard = LinuxTempFileGuard {
+        parent_fd: mount.as_raw_fd(),
+        name: temporary_name,
+        committed: false,
+    };
+
+    let result = (|| {
+        hook(LinuxWriteStage::TempCreated)?;
+        let metadata = temporary_file.metadata().map_err(|_| FilesystemError::IoFailure)?;
+        if !metadata.is_file() || metadata.nlink() != 1 || metadata.dev() != root_metadata.dev() {
+            return Err(FilesystemError::ResolutionFailed);
+        }
+        temporary_file.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
+        hook(LinuxWriteStage::Written)?;
+        temporary_file.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+        hook(LinuxWriteStage::Synced)?;
+        hook(LinuxWriteStage::BeforeRename)?;
+
+        let rename_result = unsafe {
+            libc::syscall(
+                libc::SYS_renameat2,
+                mount.as_raw_fd(),
+                guard.name.as_ptr(),
+                mount.as_raw_fd(),
+                relative_name.as_ptr(),
+                0_u32,
+            )
+        };
+        if rename_result != 0 {
+            return Err(linux_filesystem_error(std::io::Error::last_os_error()));
+        }
+        guard.committed = true;
+        Ok(())
+    })();
+    if result.is_err() {
+        guard.cleanup()?;
+    }
+    result
+}
+
 fn linux_write_relative(
     root: &File,
     relative: &Path,
@@ -384,7 +569,7 @@ where
     // would then write into that moved directory. Until a stronger parent
     // movement boundary is available, nested writes fail closed.
     if parent != Path::new(".") {
-        return Err(FilesystemError::UnsupportedPlatform);
+        return linux_write_nested_relative_with_hook(root, relative, bytes, |_| Ok(()));
     }
     let parent_fd = root.as_raw_fd();
     let root_metadata = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
