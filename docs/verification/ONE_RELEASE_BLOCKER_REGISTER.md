@@ -59,7 +59,8 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 - PR #115 `ci/bootstrap-actions-on-fix-windows-verifier-20261120` is OPEN / NOT MERGED; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
 - Initial run #2243 failed on both OS jobs because the PR #113 contract checker rejected the newly introduced `.github/workflows/ci.yml`; Build/Clippy/Tests did not run.
 - Corrective workflow commit on PR #115: `3b684acd1f3e68f1b40dd6d600fad0e013044495`, blob `35015ded4f7635ea37ec2b035f2ba0c33d7d4bf5`. It preserves merge-result checkout for normal PRs, uses exact PR head checkout for the stacked base branch, and skips only the contract check on the bootstrap PR itself. Full contract check remains enabled for PR #113.
-- New GitHub Actions run #2244 (`44748865610`) is IN_PROGRESS on the corrective commit; Ubuntu and Windows jobs have started and were installing cross-toolchains at latest readback. This is not a PASS and does not resolve CircleCI B-001.
+- GitHub Actions run #2244 (`44748865610`) is terminal SUCCESS on exact PR #115 HEAD `3b684acd1f3e68f1b40dd6d600fad0e013044495`. Ubuntu and Windows jobs both completed SUCCESS; Build, Clippy, workspace tests, and all focused tests passed. The bootstrap PR's Contract artifacts step was intentionally skipped; it is not claimed as executed on this bootstrap branch. [Run #2244](https://github.com/panglimanetizen01/one/actions/runs/44748865610).
+- CircleCI status on the same PR #115 SHA is FAILURE at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`; provider logs are inaccessible in this session, so root cause is not inferred. This does not change the separate B-001 mapping for PR #113 pipeline #1201.
 - PR #113 remains OPEN / DRAFT / UNMERGED at `509b7b197115adb1ba80d730342e9f6fbf981645`; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
 
 ### B-002 — Issue #104 security acceptance
