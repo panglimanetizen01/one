@@ -98,7 +98,7 @@ Filesystem root confinement remains in development in PR #113; canonical `main` 
 
 The PR #113 candidate now contains a Linux atomic write backend for files that are **direct children of the host-injected trusted project root**. It opens/validates the leaf with `openat2` using `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, creates an exclusive temporary sibling relative to the retained root directory descriptor, writes and syncs it, and atomically replaces the leaf with `renameat`. Oversized writes, symlink leaves, hard links, and mount-point crossings fail closed.
 
-**Nested Linux writes are intentionally unsupported for now.** A retained nested-directory handle can be moved outside the trusted root while an operation is in progress; this implementation refuses nested targets rather than risk writing through a moved parent directory. Windows candidate writes use a separate native handle-relative implementation.
+Historical direct-child-only behavior was superseded by a guarded detached-mount nested writer. Nested Linux writes now attempt `open_tree` + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2`; if the required kernel/security primitives are unavailable, the operation fails closed. Windows retains its native handle-relative backend.
 
 The Linux write implementation and new tests are committed in candidate source SHA `cc54597b471493f4350d0dc0f3a2896babb33ea4`. The independent E4 verifier pin now targets this SHA; fresh E4 and related workflows are queued. This is IMPLEMENTED but NOT VERIFIED until those exact-SHA jobs finish. PR #113 remains draft/unmerged; canonical `main` has not gained this feature. Issue #104 remains OPEN / NOT ACCEPTED.
 
@@ -139,7 +139,7 @@ The test correction is source SHA `2fa1436daa102d3cf32125da6c440ae19cc83ba7`. Th
 
 The CLI previously derived the filesystem authority root from the requested absolute target's parent. That could let the target choose its own root and did not satisfy project-root confinement. It has been corrected.
 
-The host now selects the root from the source/project context: nearest ancestor containing `one.toml`; otherwise the process working directory when the source is beneath it, or the canonical source parent for a standalone source outside the working directory. The requested target no longer influences root selection. Absolute targets outside the selected root are rejected.
+Historical behavior note: source-context/manifest-root selection was superseded. The current CLI selects the trusted root exclusively from the host process working directory (`std::env::current_dir()`); source-file location, `one.toml`, and `--target` never select or widen it. Absolute and relative targets are resolved against that fixed root.
 
 New CLI tests cover:
 - Absolute write target outside source project root: rejected, outside sentinel unchanged.
@@ -153,14 +153,14 @@ Source SHA: `79a98861080fed2ceaa0a7a2f56e07d6fbc19fca`; focused diagram updated 
 
 ## Manifest-root CLI regression test — 18 November 2026
 
-Added a cross-platform CLI integration test proving that the nearest ancestor containing `one.toml` is selected as the filesystem authority root for a source under `src/`. The test writes to a direct-child target under that project root. This complements outside-root read/write rejection and relative-source tests.
+Historical test expectation, superseded 2026-11-21: the nearest `one.toml` must not select the filesystem root. The fixture was corrected to set the CLI process working directory explicitly and prove that the host working directory is the authority root.
 
 Test source SHA: `1b7c3bb1dbc29a33c086b4df21a9996025c1e075`; diagnostic verifier pin updated to this SHA. Exact-SHA workflows are pending.
 
 
 ## Project-root ancestor lookup correction — 18 November 2026
 
-The source-context resolver now continues searching ancestors above the process working directory for the nearest `one.toml` manifest before falling back to the working directory or standalone source parent. This avoids selecting a subdirectory as root when the source itself is directly beneath a project subdirectory.
+Historical resolver behavior, superseded 2026-11-21: ancestor manifest lookup is not the security contract. The root is exclusively the host process current working directory; the source path and manifest cannot choose it.
 
 Source SHA: `722d662e7a81711ba3607d26571f4048a292b3ed`; diagnostic verifier pin updated. Exact-SHA verification is pending.
 
@@ -292,7 +292,7 @@ CircleCI pada code-bearing source `fb5c8bc...` berstatus SUCCESS (workflow `3a9c
 
 Filesystem read/write remains **Eksperimental** in the unmerged PR #113 candidate. The trusted root is the host process current working directory; source path and `--target` cannot widen it. Linux/Windows retain their native implementations; Android/macOS now have direct-child read/atomic-replace candidates. Nested writes remain fail-closed where a race-resistant parent-movement guarantee is not available. Android/macOS candidates are NOT BUILT/TESTED.
 
-The latest candidate implementation is `7cbcb1bf575defe03a2d9991dc5094569de95f03`; its host-root and Linux root-handle changes have not yet been built or tested. This is not a release claim, sandbox certification, or status change on `main`.
+That 2026-11-20 candidate pointer is historical. The latest code-bearing candidate is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`; it has not been built or tested. This is not a release claim, sandbox certification, or status change on `main`.
 
 ## Android host identity — 2026-11-20
 
@@ -377,3 +377,11 @@ Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broa
 Latest code-bearing source/test candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). Linux/Android process supervision now observes direct-child exit using `waitid(P_PID, WEXITED | WNOHANG | WNOWAIT)` rather than reaping via `try_wait()` before process-group cleanup. The child remains a zombie (its PID/PGID cannot be recycled) while the wrapper sends SIGKILL to the invocation process group; only then does `Child::wait()` reap it. The redundant post-reap group kill was removed. All timeout, output-overflow, wait-error and normal-completion paths terminate the group before reaping.
 
 Process escape regressions use in-binary ignored helpers with direct `fork` + `setsid(2)` syscalls, record any escaped PID and clean up before failing. Three paths: normal completion, timeout, output overflow. NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Superseding implementation update — 2026-11-21
+
+The historical source-context/manifest-root notes above are superseded. The current security contract and CLI implementation select the trusted filesystem root exclusively from the host process working directory (`std::env::current_dir()`). Neither the source-file location, the nearest `one.toml` manifest, nor `--target` selects or widens the root. The old manifest-root regression expectation was incorrect and has been replaced by `run_command_uses_host_working_directory_as_filesystem_root`.
+
+The Linux writer is no longer limited to direct children in every environment: it uses a guarded detached-mount path for nested targets, and fails closed when the kernel/security profile cannot provide the required `open_tree`, `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, and `openat2` primitives. Android and macOS have native direct-child read/atomic-replacement candidates; nested Android/macOS paths remain fail-closed. Windows retains the native handle-relative backend.
+
+Latest code-bearing candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. CLI integration fixtures were aligned with the host-cwd authority and conditional Linux nested-write contract in test-only commits `46c777e70f396cfee6d796d0667769dabe2d7208` and `2600ec18d4e3fb05558ca50d7cf466638e1ab015`. These commits intentionally skip CI; no build/test result is claimed. Issue #104 remains OPEN / NOT ACCEPTED, and this candidate is not part of canonical `main`.
