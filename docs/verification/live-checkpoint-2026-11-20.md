@@ -127,3 +127,14 @@ The single prioritized work queue is [ONE_RELEASE_BLOCKER_REGISTER.md](ONE_RELEA
 - Code-bearing source `fb5c8bc...` has separate CircleCI SUCCESS; it does not verify the documentation HEAD.
 - Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable.
 - No acceptance ledger, DoD, protected pin, merge, main, or release state changed.
+
+
+## Latest execution checkpoint — 2026-11-20
+
+- Exact PR #113 identity remains OPEN / DRAFT / UNMERGED: HEAD `509b7b197115adb1ba80d730342e9f6fbf981645`; base `fix/windows-process-verifier-timeouts-20261118` at `181ad350d8f0db53cda654c4d378425fbdd6ab24`. ONE `main` remains unchanged at `d35db95153f6ddd79885494c72f5aee16c899751`.
+- CircleCI pipeline #1201 is now mapped exactly to workflow `9a87f37e-ebc9-4574-a966-14dc1300e7db`, job #836 `9dbc05b4-a601-4fbc-b6a4-61f64ecc8e9a`, revision `509b7b197115adb1ba80d730342e9f6fbf981645`. Workflow/job stop within about 0.5s; job `started_at=null`; API v3 step #101 is CANCELED / `Task information unavailable`, with empty stdout/stderr. Root cause remains UNKNOWN.
+- User-provided CircleCI screenshots confirm Free and Open Source ON and Block all new work OFF. Plan usage is 110,089 / 30,000 regular credits, but the page explicitly exempts OS project contributions from the 30,000 limit and advertises 400,000 monthly OSS credits. The screenshots do not expose the remaining OSS balance. An earlier `free-plan-no-credits-available` provider error remains unresolved; do not buy/upgrade/toggle or retry blindly.
+- CircleCI settings API returns 403 while account `/api/v2/me` and project metadata endpoints return 200. This is an endpoint permission gap, not evidence OSS is disabled.
+- PR #115 bootstrap workflow initial run #2243 failed both jobs at Contract artifacts because the candidate's CircleCI-only contract rejected the workflow file. Corrective commit `3b684acd1f3e68f1b40dd6d600fad0e013044495` narrows checkout to exact PR head only for the stacked base branch and skips only the contract step on the bootstrap PR itself. Full contract checking remains enabled on PR #113.
+- GitHub Actions run #2244 (`44748865610`) on the corrective PR #115 commit is IN_PROGRESS; Ubuntu and Windows were installing cross-toolchains at latest readback. No PASS is claimed.
+- No merge, main update, verifier pin change, fixed ledger/DoD change, or Issue #104 acceptance change was made.
