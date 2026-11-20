@@ -1,7 +1,7 @@
 # ONE RELEASE BLOCKER REGISTER
 
 **Status:** ACTIVE — single release-sprint work queue  
-**Last verified:** 2026-11-21  
+**Last verified:** 2026-11-21 (implementation-first refresh)  
 **ONE PR:** [#113](https://github.com/panglimanetizen01/one/pull/113)  
 **Verifier PR:** [#51](https://github.com/panglimanetizen01/one-windows-verification/pull/51)
 
@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at latest pre-sync live read | `ef83522456914a9a9549d7580a9fd9d2c7cc50ce` |
+| PR #113 HEAD at pre-register refresh read | `6fc86c688d4906372ed24ad2dc4672693aaccf34` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` |
+| Code-bearing source | `50923b545f2c804b24aa773ea5bb60129d1e0ff2` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -573,3 +573,12 @@ The approved v0.1 package/build contract explicitly scopes the executable subset
 ### Related Issue #81 resource-bound implementation refresh — 2026-11-21
 
 The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` explicitly enforces a 10-second process deadline, 1 MiB stdout cap, 1 MiB stderr cap, and 2 MiB aggregate capture ceiling. Existing source tests cover stdout overflow, stderr overflow, deadline, normal status/stream preservation, and cleanup. Issue #81 remains OPEN pending exact-SHA Linux/Windows execution; Issue #105 remains OPEN / NOT ACCEPTED pending Linux and real Android/Termux adversarial execution. Do not start broad tests before the implementation scope is complete.
+
+
+## Linux FIFO blocking-read implementation fix — 2026-11-21
+
+- Code commit `50923b545f2c804b24aa773ea5bb60129d1e0ff2` changes Linux `FilesystemAuthority::open_relative` to include `O_NONBLOCK` in the `openat2` read flags. Previously a FIFO target could block during open before the post-open regular-file check. Android/macOS read backends already use nonblocking open flags.
+- Added Linux regression `authority_rejects_fifo_without_blocking`: creates a FIFO without a writer and expects `NotRegularFile`. It is NOT RUN.
+- Documentation sync commits: `8f091944...`, `bfead1a4...`, `0bfd7f48...`, `24e6ba24...`, `d48dbf19...`, `ac3e6037...`, `f805752d...`, `6fc86c68...`. These record the implementation delta only; no test/build/CI evidence is claimed.
+- PR #113 was OPEN / DRAFT / UNMERGED at the last live read. Base SHA remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table's HEAD is the exact read immediately before this register refresh; this register commit itself advances the branch. Refresh live HEAD before the next operation.
+- Issue #104 remains OPEN / NOT ACCEPTED. The fix removes a blocking-I/O hazard but does not close race, mount, hard-link, platform, or acceptance requirements.
