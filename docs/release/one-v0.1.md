@@ -96,7 +96,7 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 - The existing `build` command emits a deterministic `.oneir` IR/debug artifact; the native backend slice does not replace it with a general-purpose native compiler claim.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - The language-level orchestration catalog is not complete.
-- Filesystem write is experimental only within the single-text-payload/single-target boundary. Historical Termux evidence applies only to its recorded older source revision; the current Issue #104 confinement candidate exposes Linux and Windows adapters, while Android/macOS filesystem adapters remain fail-closed. Do not claim current Android filesystem support from historical Termux evidence.
+- Filesystem read/write remains experimental and limited to one explicitly scoped target and one text payload. The current Issue #104 candidate exposes filesystem adapters on Linux, Windows, Android, and macOS: Linux supports direct-child operations plus a detached-mount nested-write path when required kernel/filesystem primitives are available (otherwise it fails closed); Windows uses its native handle-relative backend; Android and macOS currently support direct-child operations while nested paths fail closed. These source capabilities are not platform acceptance or a `SUPPORTED` claim until the fixed Issue #104 adversarial acceptance evidence exists. Historical Termux evidence applies only to its recorded older source revision and must not be used to claim current Android acceptance.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary.
 - Database query remains a read-only parameterized SQLite SELECT slice; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
 - HTTP GET remains limited to explicit `http://` HTTP/1.1 GET, exact target scope, and response-body normalization; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
@@ -121,7 +121,7 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 - Added Android direct-child filesystem support using retained root handles, no-follow opens, mandatory `statx(STATX_MNT_ID)` checks, hard-link rejection, and atomic temp-file replacement. Android nested paths remain fail-closed.
 - Added macOS direct-child filesystem support using retained root handles, no-follow opens, device-identity checks, hard-link rejection, and atomic temp-file replacement. macOS nested paths remain fail-closed.
 - Added three target-gated regression tests per platform. They are implementation coverage only until compiled and executed on the respective targets.
-- Linux nested writes remain fail-closed because the current safe parent-movement solution depends on privileged detached mount operations. Windows native handle-relative backend remains as previously implemented.
+- Linux nested writes use the detached-mount/root-relative backend when the kernel and backing filesystem provide the required operations; the implementation fails closed with `UnsupportedPlatform` when they do not. Windows retains the native handle-relative backend. Android and macOS currently provide direct-child filesystem operations; nested paths remain fail-closed.
 - These changes advance platform implementation but do NOT close Issue #104. Remaining work includes adversarial review of parent/root movement, platform-specific execution evidence, and any acceptance gaps in the fixed Issue #104 contract. Do not run the broad release matrix until implementation scope is complete.
 
 ## Issue #105 — Linux process-group containment implementation candidate — 2026-11-20
@@ -129,7 +129,7 @@ No paid GitHub upgrade is required or authorized merely to obtain hosted CI exec
 - Latest code-bearing candidate: `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT OR TESTED).
 - Linux subprocess startup now installs an inherited seccomp filter in the child before `exec`. It denies `setsid`, `setpgid`, `unshare`, `setns`, clone namespace flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` so compatible runtimes can fall back to `clone`. The existing dedicated process group is therefore intended to remain non-escapable for descendants; group cleanup still runs on normal return, timeout, and output overflow.
 - If the kernel refuses `PR_SET_NO_NEW_PRIVS` or filter installation, process spawn fails closed. Windows Job Object containment remains unchanged.
-- Process execution is now explicitly unavailable on Android and macOS until equivalent non-escapable containment exists; `ProcessAdapter` advertises only Linux and Windows.
+- At this checkpoint, process execution was unavailable on Android and macOS pending equivalent containment. The subsequent Android process-containment extension below supersedes the Android portion: the current source advertises Linux, Android, and Windows, while macOS remains fail-closed.
 - Replaced the old escaped-session reader-only probes with three Linux adversarial regressions for attempted `setsid` on normal completion, timeout, and output overflow. These tests have NOT been run.
 - This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
 
@@ -225,3 +225,13 @@ The independent verifier's expected source test-filter inventory is now structur
 - Source commit: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`).
 - Removed the second identical `cleanup_test_escaped_group` definition from the `interop.rs` test module. The duplicate would produce a Rust duplicate-definition error when compiling the test module; only one definition remains in source.
 - This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
+
+
+## Current platform capability reconciliation — 2026-11-21
+
+This section supersedes earlier broad platform summaries where they conflict with the latest source inventory; it does not promote any platform to accepted or supported status.
+
+- Filesystem adapter metadata currently includes Linux, Windows, Android, and macOS. Linux has a detached-mount nested-write backend with explicit fail-closed fallback; Android/macOS nested filesystem paths remain fail-closed. Windows retains its handle-relative backend. Direct-child implementation presence is not Issue #104 acceptance.
+- Process adapter metadata currently includes Linux, Android, and Windows. Linux/Android use the inherited seccomp process-group filter; Windows uses Job Objects. macOS process execution remains fail-closed. Issue #105 remains OPEN / NOT ACCEPTED.
+- The current PR #113 source also had a duplicate subprocess-test helper removed in commit `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830`. This is a source compile-blocker correction, not build/test evidence.
+- No broad build, test, CI, verifier, or platform matrix has been run on the latest candidate. Do not claim a verified/accepted/supported release state.
