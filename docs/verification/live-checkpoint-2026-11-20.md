@@ -600,3 +600,13 @@ Latest source commit: `b0a3379a1fb49feb18dcf61a2521446f199a8e2b` (`crates/one-co
 - Authority rejects whitespace/control bytes, user-info separators and fragments; request-target must use origin-form or `*`, and rejects whitespace/control bytes and fragments.
 - Header values reject control bytes other than horizontal tab.
 - These checks complement the 16 MiB request-body / 64 KiB header caps, Content-Length consistency checks, and response framing limits. Source-only change; no build or tests run.
+
+
+## HTTP exact framing and trailer validation — 2026-11-21
+
+Latest source commit: `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (`crates/one-core/src/network_runtime.rs`).
+
+- Content-Length response bodies must now match the declared length exactly; trailing bytes are rejected.
+- Chunked responses bound chunk-size lines, require valid terminating CRLF, validate trailer syntax, reject framing/Host fields in trailers, and reject trailing bytes after the trailer terminator.
+- Added regressions for valid trailers, forbidden Content-Length trailers, and extra bytes after Content-Length. NOT RUN.
+- No build/test/CI/verifier/platform matrix was run; source-only candidate, no acceptance promoted.
