@@ -747,3 +747,11 @@ Code commits:
 - `858a5da09fe2ea74ebd17b0798f13fac848c7a28`: replace the stale test that required every Linux nested write to fail with `nested_write_uses_native_backend_or_fails_closed_without_side_effects`. It accepts a successful native detached-mount write or an explicit `UnsupportedPlatform` fallback, and checks target integrity and temp-file cleanup.
 
 The independent verifier's expected source test-filter inventory is now structurally matched in `adapter.rs`: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, and 1 `descriptor_relative_walk_rejects_` tests. This is a source inventory check only; no tests were run and no verifier PASS is claimed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Implementation-first source correction — subprocess test-module duplicate helper — 2026-11-21
+
+- Candidate source commit `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` removes a duplicate `cleanup_test_escaped_group` function definition from `crates/one-core/src/interop.rs` test module. Source readback confirms one definition remains.
+- This addresses a source-visible Rust duplicate-definition compile blocker; it is NOT a compile result. No build/test/CI/verifier/platform matrix was run on this candidate.
+- Release contract reconciliation commit `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` corrects stale platform descriptions: filesystem adapters exist for Linux/Windows/Android/macOS (Android/macOS nested paths fail closed; Linux nested writes require detached-mount support); process adapters exist for Linux/Android/Windows (macOS fail-closed). These are implementation boundaries, not acceptance/support claims.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Keep the fixed ledger, DoD, verifier pins, and release gates unchanged.
