@@ -146,3 +146,13 @@ The single prioritized work queue is [ONE_RELEASE_BLOCKER_REGISTER.md](ONE_RELEA
 - PR #115 remains OPEN / UNMERGED. CircleCI status on the same SHA is FAILURE (workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`); provider logs are inaccessible, so cause is UNKNOWN.
 - PR #113 remains OPEN / DRAFT / UNMERGED at latest docs HEAD `2cbf87ed05277fc6d66088a645f2aea8d0d8ce16`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Its CircleCI context was PENDING at last readback (workflow `d924efb4-6927-43e7-85c7-ad38cab7f425`, job `192e4737-7e01-426d-b2f4-80ee80fa48c3`). No GitHub Actions run exists for PR #113 yet because PR #115 is not merged.
 - No merge, main change, verifier pin change, acceptance-ledger/DoD change, or Issue #104 acceptance occurred.
+
+
+## Authorized bootstrap merge — 2026-11-20
+
+- PR #115 was explicitly authorized by the user and merged into `fix/windows-process-verifier-timeouts-20261118` using expected head SHA `3b684acd1f3e68f1b40dd6d600fad0e013044495`.
+- Merge commit: `3adace165890bb69de346880e3c612c5cd6c2ff8`. Diff from the prior base SHA contains only `.github/workflows/ci.yml` (87 additions); exactly three commits ahead including the merge.
+- PR #115 is now merged. PR #113 remains OPEN / DRAFT / UNMERGED. Its head before this follow-up docs update was `673c057421ad3a3293dab990563e7f83cd7f3681`.
+- GitHub Actions run for PR #113 was not yet returned by the immediate post-merge lookup. Updating existing docs on the PR #113 head is the next low-risk trigger for its newly installed `pull_request` workflow. The full contract check must run there (unlike bootstrap PR #115).
+- CircleCI on merge commit is PENDING: workflow `509828d0-3d7d-434a-8f00-a58645eabe9e`, job `83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`. PR #113 CircleCI context also PENDING. B-001 remains OPEN / ROOT CAUSE UNKNOWN.
+- No `main` change, PR #113 merge, protected verifier pin update, acceptance criteria or fixed ledger/DoD modification.
