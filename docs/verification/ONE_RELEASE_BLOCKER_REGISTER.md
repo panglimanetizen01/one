@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `b023e6df94db416224a22211aa466fb854cabca0` |
+| PR #113 HEAD | `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source | `0a9685bded788ae46596227bd61457d10db1179c` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `4c46a41fe45baa7627557a2a25b9c71812840479` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was the same SHA.
+**Latest source/test candidate:** `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was the same SHA.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -107,7 +107,7 @@ The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 ev
 ### B-005 — Issue #105 non-escapable process containment
 
 **Priority:** P1 · **State:** OPEN / NOT ACCEPTED
-**Latest source/test candidate:** `4c46a41fe45baa7627557a2a25b9c71812840479` (NOT BUILT/TESTED).
+**Latest source/test candidate:** `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (NOT BUILT/TESTED).
 
 - Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
 - Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
@@ -520,3 +520,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Issue #104: Android/macOS direct-child filesystem backends are implemented; Android verifies statx mount ID; macOS verifies `fstatfs` filesystem ID and mount point; both add hard-link regressions, exclusive temp replacement, and directory sync. Linux nested writes use a guarded detached-mount backend and fail closed when unsupported. Windows backend remains unchanged. Issue #104 remains OPEN / NOT ACCEPTED.
 - Issue #105: Linux/Android inherited seccomp process-group containment candidate and Windows Job Object remain in scope; macOS process execution fails closed. Adversarial tests are present but unrun. Issue #105 remains OPEN / NOT ACCEPTED.
 - Keep broad matrix deferred until product implementation scope is complete. B-001 is not reopened absent a new provider failure.
+
+- Latest implementation refresh: source/test candidate and PR #113 HEAD `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (OPEN / DRAFT / UNMERGED). Process containment regressions now invoke ignored helper tests from the current Rust test binary and exercise `fork` + direct `setsid(2)` rather than depending on an external `setsid` executable; the helper records any escaped PID so the parent test can clean it up before failing. These regressions remain NOT RUN.
