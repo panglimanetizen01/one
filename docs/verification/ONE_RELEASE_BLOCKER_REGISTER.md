@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD | `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28` |
+| PR #113 HEAD | `412d87f6e05d2d996538093623bcb52412216553` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `4be1b8fd579092d8195c3fb775b7c765f6221814` |
+| Code-bearing source | `0a9685bded788ae46596227bd61457d10db1179c` |
 | Verifier PR #51 HEAD | `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` |
 | Verifier branch-local source pin | `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `4be1b8fd579092d8195c3fb775b7c765f6221814` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28`.
+**Latest source/test candidate:** `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT/TESTED); latest PR #113 HEAD at last readback is `412d87f6e05d2d996538093623bcb52412216553`.
 
 Exact-source verifier evidence already recorded in the evidence matrix includes E4 adversarial filesystem, Linux distro, Windows native runtime, SEC-05, resource guard, artifact integrity, focused standard-library/database, E1 Windows, and Android API 35 native-runtime evidence. Preserve these results; do not rerun without a changed source/verifier input or a documented technical reason.
 
@@ -494,3 +494,5 @@ Status: design hypothesis only. No production code changed for this approach. Be
 - Process execution is now explicitly unavailable on Android and macOS until equivalent non-escapable containment exists; `ProcessAdapter` advertises only Linux and Windows.
 - Replaced the old escaped-session reader-only probes with three Linux adversarial regressions for attempted `setsid` on normal completion, timeout, and output overflow. These tests have NOT been run.
 - This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
+
+- Live implementation refresh: PR #113 HEAD `412d87f6e05d2d996538093623bcb52412216553`; latest code-bearing source/test candidate `0a9685bded788ae46596227bd61457d10db1179c` adds Linux seccomp process-group containment and fail-closed Android/macOS process execution. No build/test evidence is claimed.
