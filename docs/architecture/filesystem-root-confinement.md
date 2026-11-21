@@ -28,7 +28,7 @@ flowchart TB
     AndroidOpen --> AndroidMount["regular file · same device · statx mount ID · nlink = 1"]
     AndroidMount --> ReadChecks
 
-    ReadAdapter --> MacosRead["macOS read backend — XNU kernel-bounded path (supported kernels)"]
+    ReadAdapter --> MacosRead["macOS read backend — direct-child legacy + XNU-bounded nested path"]
     MacosRead --> MacosOpen["openat(root_fd, relative, O_RESOLVE_BENEATH · O_NOFOLLOW_ANY · O_UNIQUE)"]
     MacosOpen --> MacosVolume["fstatfs f_fsid + mount point · regular file · nlink = 1; unsupported kernels fail closed"]
     MacosVolume --> ReadChecks
@@ -125,7 +125,7 @@ flowchart TB
 - Linux nested writes use a guarded detached mount (`open_tree` + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2`) so parent movement cannot redirect the final write outside the retained root. The path fails closed when the required kernel/security primitives are unavailable; direct-child writes continue to use the retained root handle.
 - Historical Linux direct-child and Windows write evidence on source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` (protected push run #44519577693) does not verify the later detached-mount implementation. The native Windows probe is limited to Windows Server 2025 build 26100.
 - Android nested reads use kernel `openat2`; nested writes use the detached-mount + recursive `MOUNT_ATTR_NOSYMFOLLOW` + `openat2`/`renameat2` transaction shared with Linux. Android still fails closed when the kernel or SELinux policy denies any required primitive. Direct-child writes retain the existing statx mount-ID checks.
-- macOS nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` mount identity checks; kernels that reject the flags fail closed. macOS nested writes remain fail-closed because a race-safe atomic publication path that also excludes mount crossings has not yet been proven. Direct-child writes remain supported.
+- macOS direct-child reads retain the legacy `O_NOFOLLOW` path; nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` mount identity checks. Kernels that reject the nested-path flags fail closed. macOS nested writes remain fail-closed because a race-safe atomic publication path that also excludes mount crossings has not yet been proven. Direct-child writes remain supported.
 - The new Android/macOS source changes and regressions have NOT been built or run.
 - Other platforms fail closed.
 - A successful artifact build or one passing platform job does not imply full platform support or Issue #104 acceptance.
@@ -216,3 +216,9 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Source candidate `9fe53815f83701a62536472f8a3c87cebac22e7a` adds Android nested writes through the detached-mount transaction already used by Linux. It requires `open_tree`, recursive `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, and `openat2`/`renameat2`; denied or unavailable primitives fail closed. The Linux write-stage hook is now forwarded into the nested helper rather than silently replaced with a no-op.
 - macOS nested reads now use XNU `O_RESOLVE_BENEATH`, `O_NOFOLLOW_ANY`, and `O_UNIQUE`, followed by file-type, link-count, and `fstatfs` mount identity checks. Kernels without the flags fail closed. macOS nested writes remain fail-closed pending an atomic no-cross-mount publication primitive.
 - Source regressions were adjusted for capability-gated Android nested writes and macOS nested reads. They are NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — compatibility and lint follow-up
+
+- Source candidate `568d9360f0beec63c10fbeae9cac63f384bd082f` preserves macOS direct-child reads with the original `O_NOFOLLOW` path on older kernels; only nested reads require the newer XNU beneath/no-follow/unique flags. Nested writes remain fail-closed.
+- Clippy issues surfaced on earlier source candidate `9fe53815f83701a62536472f8a3c87cebac22e7a` were corrected in descendant commits: HTTP authority delimiter search uses a character array; SQLite limit/progress-handler `Result`s are propagated as `BackendFailure` so resource controls fail closed. The failing Clippy run does not verify these fixes.
