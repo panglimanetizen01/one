@@ -976,6 +976,8 @@ mod macos_native {
     const O_NOFOLLOW_ANY: i32 = 0x2000_0000;
     const RENAME_NOFOLLOW_ANY: u32 = 0x0000_0010;
     const RENAME_RESOLVE_BENEATH: u32 = 0x0000_0020;
+    // XNU's ENOTCAPABLE is 107. It is distinct from ENOATTR (93).
+    const ENOTCAPABLE: i32 = 107;
 
     unsafe extern "C" {
         fn renameatx_np(
@@ -989,7 +991,7 @@ mod macos_native {
 
     fn map_error(error: std::io::Error) -> FilesystemError {
         match error.raw_os_error() {
-            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) | Some(93) => FilesystemError::ResolutionFailed,
+            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) | Some(ENOTCAPABLE) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
             Some(libc::EMLINK) => FilesystemError::HardLinkedFile,
             Some(libc::EINVAL) | Some(libc::ENOSYS) | Some(libc::ENOTSUP) => FilesystemError::UnsupportedPlatform,
@@ -1001,16 +1003,27 @@ mod macos_native {
         let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), flags, mode) };
         if fd < 0 {
             let error = std::io::Error::last_os_error();
-            #[cfg(test)]
-            eprintln!(
-                "macOS openat failed: path={:?} flags={flags:#x} errno={:?} error={error}",
-                name.to_string_lossy(),
-                error.raw_os_error()
-            );
-            // XNU reports ENOTCAPABLE when O_UNIQUE rejects a multiply-linked
-            // vnode. Preserve that as the strict hard-link policy result.
-            if flags & O_UNIQUE != 0 && error.raw_os_error() == Some(93) {
-                return Err(FilesystemError::HardLinkedFile);
+            // XNU may report EACCES (older releases) or ENOTCAPABLE (newer
+            // releases) when O_UNIQUE rejects a multiply-linked vnode. Those
+            // errors can also describe access/path failures, so retry only
+            // without O_UNIQUE to classify the failure; the original operation
+            // remains denied and the retry is never used for the operation.
+            if flags & O_UNIQUE != 0
+                && matches!(error.raw_os_error(), Some(libc::EACCES) | Some(ENOTCAPABLE))
+            {
+                let retry_flags = flags & !O_UNIQUE;
+                let retry_fd = unsafe {
+                    libc::openat(directory.as_raw_fd(), name.as_ptr(), retry_flags, mode)
+                };
+                if retry_fd >= 0 {
+                    let retry_file = unsafe { File::from_raw_fd(retry_fd) };
+                    if retry_file
+                        .metadata()
+                        .is_ok_and(|metadata| metadata.nlink() > 1)
+                    {
+                        return Err(FilesystemError::HardLinkedFile);
+                    }
+                }
             }
             return Err(map_error(error));
         }
@@ -1268,13 +1281,7 @@ mod macos_native {
                 )
             };
             if renamed != 0 {
-                let error = std::io::Error::last_os_error();
-                #[cfg(test)]
-                eprintln!(
-                    "macOS renameatx_np failed: flags={RENAME_FLAGS:#x} errno={:?} error={error}",
-                    error.raw_os_error()
-                );
-                return Err(map_error(error));
+                return Err(map_error(std::io::Error::last_os_error()));
             }
             temporary_guard.committed = true;
             parent.sync_all().map_err(|_| FilesystemError::IoFailure)?;
@@ -1355,7 +1362,7 @@ mod macos_native {
         }
 
         #[test]
-        fn nested_write_atomically_replaces_file_beneath_root() {
+        fn nested_write_publishes_atomically_or_fails_closed_when_kernel_flags_are_unavailable() {
             let root = unique_root("nested-write");
             let nested = root.join("nested");
             std::fs::create_dir_all(&nested).unwrap();
@@ -1363,8 +1370,21 @@ mod macos_native {
             std::fs::write(&target, b"before").unwrap();
 
             let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
-            authority.write("nested/target.txt", b"after").unwrap();
-            assert_eq!(std::fs::read(&target).unwrap(), b"after");
+            match authority.write("nested/target.txt", b"after") {
+                Ok(()) => assert_eq!(std::fs::read(&target).unwrap(), b"after"),
+                Err(FilesystemError::UnsupportedPlatform) => {
+                    // Older XNU releases may reject the atomic beneath/no-follow
+                    // rename flags. Unsupported must leave the target unchanged.
+                    assert_eq!(std::fs::read(&target).unwrap(), b"before");
+                }
+                Err(error) => panic!("unexpected nested-write result: {error:?}"),
+            }
+            assert!(
+                std::fs::read_dir(&root).unwrap().all(|entry| {
+                    !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
+                }),
+                "nested write must not leak a root staging file"
+            );
 
             drop(authority);
             std::fs::remove_dir_all(root).unwrap();
