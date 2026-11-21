@@ -1123,20 +1123,21 @@ mod macos_native {
         Ok(file)
     }
 
-    struct RootTempFileGuard {
-        root_fd: std::os::fd::RawFd,
+    struct MacTempFileGuard {
+        parent_fd: std::os::fd::RawFd,
         name: CString,
         committed: bool,
     }
 
-    impl RootTempFileGuard {
-        // Surface cleanup failures to the caller instead of silently leaving a
-        // staging entry behind. Drop remains a best-effort final safety net.
+    impl MacTempFileGuard {
+        // The temporary is created in the validated destination parent. Keep
+        // that directory handle for cleanup even if its name is moved during
+        // the operation; only this operation's staging entry is removed.
         fn cleanup(&mut self) -> Result<(), FilesystemError> {
             if self.committed {
                 return Ok(());
             }
-            let result = unsafe { libc::unlinkat(self.root_fd, self.name.as_ptr(), 0) };
+            let result = unsafe { libc::unlinkat(self.parent_fd, self.name.as_ptr(), 0) };
             if result == 0
                 || std::io::Error::last_os_error().raw_os_error() == Some(libc::ENOENT)
             {
@@ -1147,11 +1148,11 @@ mod macos_native {
         }
     }
 
-    impl Drop for RootTempFileGuard {
+    impl Drop for MacTempFileGuard {
         fn drop(&mut self) {
             if !self.committed {
                 unsafe {
-                    libc::unlinkat(self.root_fd, self.name.as_ptr(), 0);
+                    libc::unlinkat(self.parent_fd, self.name.as_ptr(), 0);
                 }
             }
         }
@@ -1250,7 +1251,7 @@ mod macos_native {
                 std::process::id()
             ))
             .map_err(|_| FilesystemError::InvalidTarget)?;
-            match create_temp(root, &name) {
+            match create_temp(&parent, &name) {
                 Ok(file) => {
                     created = Some((file, name));
                     break;
@@ -1261,8 +1262,8 @@ mod macos_native {
         }
         let (mut temporary, temporary_name) =
             created.ok_or(FilesystemError::IoFailure)?;
-        let mut temporary_guard = RootTempFileGuard {
-            root_fd,
+        let mut temporary_guard = MacTempFileGuard {
+            parent_fd: parent.as_raw_fd(),
             name: temporary_name,
             committed: false,
         };
@@ -1274,6 +1275,7 @@ mod macos_native {
             {
                 return Err(FilesystemError::ResolutionFailed);
             }
+            verify_same_mount(root, &temporary)?;
             hook(MacWriteStage::TempCreated)?;
 
             temporary.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
@@ -1281,10 +1283,18 @@ mod macos_native {
             temporary.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             hook(MacWriteStage::Synced)?;
             hook(MacWriteStage::BeforeRename)?;
+            // Resolve the same-directory temporary path again from the
+            // retained root at commit time. If the parent was moved outside
+            // the root, RENAME_RESOLVE_BENEATH makes publication fail closed.
+            let mut temporary_relative = parent_path.as_os_str().as_bytes().to_vec();
+            temporary_relative.push(b'/');
+            temporary_relative.extend_from_slice(temporary_guard.name.as_bytes());
+            let temporary_relative = CString::new(temporary_relative)
+                .map_err(|_| FilesystemError::InvalidTarget)?;
             let renamed = unsafe {
                 renameatx_np(
                     root_fd,
-                    temporary_guard.name.as_ptr(),
+                    temporary_relative.as_ptr(),
                     root_fd,
                     target_name.as_ptr(),
                     RENAME_FLAGS,
@@ -1524,8 +1534,8 @@ mod macos_native {
             // An invalid directory descriptor forces unlinkat to fail with
             // EBADF. Cleanup must report the failure instead of marking the
             // staging entry as successfully removed.
-            let mut guard = super::RootTempFileGuard {
-                root_fd: -1,
+            let mut guard = super::MacTempFileGuard {
+                parent_fd: -1,
                 name: CString::new(".one-write-cleanup-failure.tmp").unwrap(),
                 committed: false,
             };
