@@ -1089,3 +1089,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Source commit `618db752953eff4672787453b0a8877405f4ebe8` corrects the `FilesystemAuthority::write` API comment to reflect the macOS XNU nested-write path and Android direct-child-only boundary. No runtime behavior changed.
 - Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (NOT BUILT / NOT TESTED).
+
+## 2026-11-21 — master prompt source checkpoint synchronized
+
+- Updated `MASTER_CONTINUATION_PROMPT.md` in commit `f040450b6845a7460a89d0cbd92935f09b590166` to identify `618db752953eff4672787453b0a8877405f4ebe8` as the latest combined source/test candidate.
+- Documentation-only; no evidence or acceptance state changed.
