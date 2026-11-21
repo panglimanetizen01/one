@@ -954,3 +954,10 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - B-002 remains OPEN / NOT ACCEPTED. The code slice does not close E4, prove all parent/leaf race cases, complete host-root integration, or establish platform matrix support. Capability and adapter exposure intentionally deferred until native implementation evidence and cross-platform contract review.
 - Required next focused evidence: compile and run the two new Windows delete tests on the exact source SHA; inspect failures rather than weakening tests; then add any missing adversarial case (especially parent rename exclusion during nested delete) before expanding language capability. Preserve existing Linux/Android/macOS fail-closed boundaries.
 - Added leaf identity race regression retained_delete_handle_blocks_leaf_rename: source-only proof that the no-delete-share leaf handle blocks rename until closed. It is NOT RUN; B-002 remains OPEN / NOT ACCEPTED.
+
+## B-002 exact-SHA implementation evidence — 2026-11-21
+
+- Windows handle-bound delete source/test SHA 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0: GitHub Actions One CI run #44870781889 terminal SUCCESS.
+- Ubuntu job #136744590581 and Windows Server 2025 job #136744590451 both passed Build, Clippy, Tests, and deterministic artifact steps.
+- Windows tests passed: delete_uses_validated_handle_and_removes_nested_regular_file; delete_rejects_hard_links_without_removing_either_name; retained_delete_handle_blocks_leaf_rename; retained_parent_handle_blocks_directory_rename. Windows one-core library summary: 156 passed / 0 failed.
+- This closes the focused implementation/test slice only, not B-002 as a whole. Issue #104 remains OPEN / NOT ACCEPTED pending full E4 adversarial acceptance, host-root integration, remaining platform primitive coverage, and release contract evidence.
