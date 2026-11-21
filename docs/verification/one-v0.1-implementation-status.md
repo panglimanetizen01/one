@@ -919,3 +919,11 @@ The Windows native delete host API has its own exact-SHA CI evidence (run #44870
 - interpreter registration, default-denial/no-side-effect test, and Windows explicit-grant execution test.
 
 Current source checkpoint `0fa43eb0be53c8e79424597ece055147872b35c4` is NOT YET BUILT / TESTED. Native Windows CI evidence at the earlier SHA must not be reused as proof for this newer language bridge. Linux/Android/macOS remain unadvertised and fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — filesystem.delete language bridge verified (Windows-only)
+
+Source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4 passed GitHub Actions One CI run #44871756593. Ubuntu job #136747608726 passed Build, Clippy, and Tests with one-core 181 passed / 0 failed / 3 ignored. Windows Server 2025 job #136747608925 passed Build, Clippy, and Tests with one-core 167 passed / 0 failed.
+
+The exact-SHA tests prove the Indonesian action parses and lowers to filesystem.delete/Delete, default policy denies deletion without changing the file, an explicit scoped grant reaches the Windows native adapter, and Windows adapter metadata is Windows-only. Windows logs also prove the actual directory-junction escape test rejects the target and preserves the outside sentinel. GitHub status context ci/circleci: one-linux is SUCCESS on the same SHA; provider logs were not independently reviewed.
+
+Status: Implemented and Verified for the narrow Windows-only file-delete slice. Not Supported cross-platform. Linux, Android, and macOS remain unavailable/fail-closed. Issue #104 remains OPEN / NOT ACCEPTED because POSIX delete, host-root integration, remaining E4 adversarial matrix, and release acceptance are still outstanding.
