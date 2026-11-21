@@ -1039,11 +1039,24 @@ mod macos_native {
             || unsafe { libc::fstatfs(file.as_raw_fd(), &mut file_info) } != 0 {
             return Err(FilesystemError::IoFailure);
         }
-        // libc 0.2.191 models Darwin fsid_t as an opaque ABI type but
-        // implements Eq for it. Compare the typed identifiers rather than
-        // reading private fields or comparing raw bytes (which could include
-        // representation padding).
-        if root_info.f_fsid != file_info.f_fsid
+        // libc 0.2.191 follows Darwin's definition:
+        // typedef struct { int32_t __fsid_val[2]; } fsid_t.
+        // The field is intentionally private and fsid_t does not implement
+        // PartialEq, so read exactly the two ABI-defined words. The size
+        // assertions prevent silently accepting a changed libc representation.
+        const _: () = assert!(std::mem::size_of::<libc::fsid_t>() == std::mem::size_of::<[i32; 2]>());
+        const _: () = assert!(std::mem::align_of::<libc::fsid_t>() == std::mem::align_of::<[i32; 2]>());
+        let root_fsid = unsafe {
+            std::ptr::read_unaligned(
+                std::ptr::addr_of!(root_info.f_fsid).cast::<[i32; 2]>(),
+            )
+        };
+        let file_fsid = unsafe {
+            std::ptr::read_unaligned(
+                std::ptr::addr_of!(file_info.f_fsid).cast::<[i32; 2]>(),
+            )
+        };
+        if root_fsid != file_fsid
             || root_info.f_mntonname != file_info.f_mntonname {
             return Err(FilesystemError::ResolutionFailed);
         }
