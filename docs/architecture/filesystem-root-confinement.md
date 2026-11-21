@@ -7,7 +7,7 @@ flowchart TB
     Host["Host startup"] --> ProjectRoot["Project root from host process current working directory (independent of source and --target)"]
     Host --> HostPlatform["PlatformKind::current_host()"]
     HostPlatform --> SelectAdapter["Orchestrator selects using actual host platform"]
-    SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux · Windows · Android · macOS native direct-child backends"]
+    SelectAdapter --> AdapterMetadata["Filesystem metadata: Linux · Windows · Android direct-child · macOS direct-child + XNU-bounded nested backends"]
     ProjectRoot --> Authority["FilesystemAuthority::open(host_cwd, limits) — final-component no-follow + retained-handle identity check"]
     Authority --> Root["Retained trusted root directory handle"]
     RequestedTarget["Requested target"] --> Confine["Resolve against fixed root; reject outside-root absolute targets"]
@@ -73,18 +73,18 @@ flowchart TB
     AndroidRename -->|failure| AndroidCleanup
     AndroidWrite -->|Nested parent path| FailClosed
 
-    WriteAdapter --> MacosWrite["macOS write backend — direct + XNU-bounded nested candidate"]
+    WriteAdapter --> MacosWrite["macOS write backend — direct + XNU-bounded nested"]
     MacosWrite --> MacosNested{"Nested parent path?"}
     MacosNested -->|No| MacosLeaf["openat O_NOFOLLOW · fstatfs identity · nlink = 1"]
     MacosLeaf --> MacosTemp["Exclusive temp sibling via root_fd"]
     MacosTemp --> MacosSync["write_all + sync_all"]
     MacosSync --> MacosRename["renameat(root_fd, temp, root_fd, leaf)"]
     MacosNested -->|Yes| MacosNestedValidate["openat O_RESOLVE_BENEATH · O_NOFOLLOW_ANY · O_UNIQUE + fstatfs parent check"]
-    MacosNestedValidate --> MacosRootTemp["Exclusive temp staged on root mount"]
-    MacosRootTemp --> MacosNestedSync["write_all + sync_all"]
-    MacosNestedSync --> MacosNestedRename["renameatx_np with RENAME_RESOLVE_BENEATH · RENAME_NOFOLLOW_ANY"]
-    MacosNestedRename --> MacosParentSync["sync containing directory; cross-mount rename fails EXDEV"]
-    MacosNestedSync -->|failure| MacosNestedCleanup["unlinkat root staging sibling"]
+    MacosNestedValidate --> MacosParentTemp["Exclusive temp sibling via retained validated parent handle"]
+    MacosParentTemp --> MacosNestedSync["write_all + sync_all"]
+    MacosNestedSync --> MacosNestedRename["renameatx_np(root_fd, parent/temp, root_fd, target) with RESOLVE_BENEATH · NOFOLLOW_ANY"]
+    MacosNestedRename --> MacosParentSync["sync retained parent directory; mount crossing denied before staging"]
+    MacosNestedSync -->|failure| MacosNestedCleanup["unlinkat retained parent handle"]
     MacosNestedRename -->|failure| MacosNestedCleanup
     MacosSync -->|failure| MacosCleanup["unlinkat temporary sibling"]
     MacosRename -->|failure| MacosCleanup
@@ -126,7 +126,7 @@ flowchart TB
 | Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
 | Android direct-child read/write only; multi-component paths fail closed because observed Termux seccomp kills `openat2` with SIGSYS and userspace parent walks permit rename races | `crates/one-core/src/filesystem.rs` |
-| macOS XNU beneath/no-symlink/unique nested read; direct-child write; nested write candidate stages at root and publishes with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)` | `crates/one-core/src/filesystem.rs` |
+| macOS XNU beneath/no-symlink/unique nested read; same-directory nested-write temp under a verified same-mount parent; root-relative renameatx_np with RENAME_RESOLVE_BENEATH and RENAME_NOFOLLOW_ANY; macOS 15 returns UnsupportedPlatform for nested writes and remains fail-closed, while macOS 26 is required to support them | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection, explicit delete capability, and adversarial filesystem tests | `crates/one-core/src/adapter.rs`, `crates/one-core/src/capability.rs`, `crates/one-core/src/interpreter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
@@ -269,3 +269,12 @@ The Mermaid source above reflects the current source implementation, not the old
 - Process containment: Linux/Android seccomp + process-group cleanup and Windows Job Objects remain the only advertised production implementations. macOS now has a source-only `/usr/bin/sandbox-exec` candidate using `(allow default) (deny process-fork)`; XNU routes direct `posix_spawn` through `fork1()` and `mac_proc_check_fork()`. Source probes cover fork/vfork/posix_spawn/posix_spawnp and exec replacement, but no native tests have run. This is single-process mode, not tree-kill; brokered launchd/Mach-service launches remain unproven, so `ProcessAdapter` continues to exclude macOS.
 
 Current code-bearing candidate after the source correction: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`. It is source-only; no build, tests, CI, or acceptance evidence is claimed. Issue #104 and #105 remain OPEN / NOT ACCEPTED.
+
+## 2026-11-21 native macOS nested-write staging refinement
+
+- Source/test code SHA: fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff; PR workflow configuration SHA: 41fd03451cac51639db3b46049d7d7ad5724b460.
+- Nested macOS writes now create the exclusive staging sibling in the already-opened and verify_same_mount-validated destination parent. The final renameatx_np resolves both the temporary source path and target path from the retained root handle using RENAME_RESOLVE_BENEATH and RENAME_NOFOLLOW_ANY.
+- The parent handle remains retained for unlinkat cleanup. If the parent is moved outside root before publication, root-relative source resolution fails; cleanup removes only the operation's temporary entry through the retained parent handle. The target sentinel remains unchanged.
+- The mount-boundary regression opens / as root and attempts to write beneath /dev; it must return ResolutionFailed before creating a temporary file or target.
+- Cleanup tests now cover a forced unlinkat failure and injected failures at TempCreated, Written, Synced, and BeforeRename. macOS native test run #44905993471 passed on source SHA 5dfa5fea8fe2d9359fc27e46fb158c57ce70abe4 with 15 passed / 0 failed / 4 ignored in the macos_ filter and 8 passed / 0 failed in nested_write_ on each runner.
+- A strict probe at SHA d93479f010e0e00edefa7d438d584f5500c809aa confirms macOS 15 still returns UnsupportedPlatform for nested atomic write even with same-directory staging; macOS 26 passes the strict requirement. The workflow restores the correct policy: nested reads required on both; nested writes required on macOS 26 and fail-closed on macOS 15. Do not weaken the rename flags to make macOS 15 appear supported.
