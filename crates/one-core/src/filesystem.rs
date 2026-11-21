@@ -2658,9 +2658,12 @@ mod tests {
 
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
 
-        // Environments without CAP_SYS_ADMIN or open_tree/mount_setattr keep
-        // nested writes fail-closed. The privileged Linux path is exercised
-        // below whenever the kernel permits detached mount cloning.
+        // Unprivileged CI may lack CAP_SYS_ADMIN or detached-mount primitives.
+        // Such environments may verify fail-closed behavior, but the dedicated
+        // privileged CircleCI lane sets this variable and must exercise the
+        // actual native nested-write and parent-move path.
+        let require_native =
+            std::env::var("ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE").as_deref() == Ok("1");
         let success = linux_write_nested_relative_with_hook(
             &authority.root,
             Path::new("nested/target.txt"),
@@ -2669,7 +2672,11 @@ mod tests {
         );
         if success == Err(FilesystemError::UnsupportedPlatform) {
             drop(authority);
-            std::fs::remove_dir_all(base).unwrap();
+            std::fs::remove_dir_all(&base).unwrap();
+            assert!(
+                !require_native,
+                "native Linux nested-write primitives are required in the privileged CI lane"
+            );
             return;
         }
         success.expect("detached-mount nested write should succeed when supported");
@@ -2710,6 +2717,43 @@ mod tests {
         assert_eq!(root_entries, vec![std::ffi::OsString::from("nested")]);
         drop(authority);
         std::fs::remove_dir_all(base).unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn nested_write_rejects_mount_boundary_before_creating_staging_file() {
+        use std::os::fd::AsRawFd;
+
+        let root = File::open("/").unwrap();
+        let relative = Path::new(&format!(
+            "dev/one-linux-mount-boundary-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        )).to_path_buf();
+        let target = Path::new("/").join(&relative);
+        assert!(!target.exists());
+
+        let require_native =
+            std::env::var("ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE").as_deref() == Ok("1");
+        let result = linux_write_nested_relative_with_hook(
+            &root,
+            &relative,
+            b"MUST_NOT_CROSS_MOUNT",
+            |_| Ok(()),
+        );
+        if result == Err(FilesystemError::UnsupportedPlatform) {
+            assert!(
+                !require_native,
+                "native Linux mount-boundary test must run in the privileged CI lane"
+            );
+            return;
+        }
+        assert_eq!(result, Err(FilesystemError::ResolutionFailed));
+        assert!(!target.exists(), "mount-boundary denial must not create a target");
+        let _root_fd = root.as_raw_fd();
     }
 
     #[cfg(target_os = "linux")]
