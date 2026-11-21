@@ -913,3 +913,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Linux/Android process containment source blocks `setsid` and `setpgid` via inherited seccomp and kills the invocation process group before reaping. Windows uses Job Objects; macOS remains fail-closed. New unique working-directory fixtures and setpgid adversarial cases are source-only / NOT BUILT / NOT TESTED.
 - Documentation updated in this continuation: CLI guide, user feature status, existing filesystem Mermaid architecture, Issue #105 status, implementation status, evidence matrix, master continuation prompt, blocker register, and Notion Skill. No duplicate tracking document created.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. Do not treat source additions as test evidence; do not change main, protected verifier pins, fixed ledger/DoD, acceptance criteria, or release state.
+
+## 2026-11-21 — macOS nested-write native primitive checkpoint
+
+- Latest code-bearing source candidate: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT / NOT TESTED); later docs commits do not change this source SHA.
+- macOS nested writes now have a source candidate using root-level exclusive staging plus XNU `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`. It validates target/parent with beneath/no-follow/unique flags and `fstatfs`; cross-mount publication from root staging fails `EXDEV`. Added source tests for success, symlink-parent denial, hardlink denial, and moving parent outside root before publication. Needs macOS native build/test.
+- Android correction: current source supports direct-child read/write only; all nested paths fail closed. Earlier notes claiming nested Android `openat2`/detached-mount support are stale relative to checked-in `android_native`; observed Termux seccomp kills `openat2` with SIGSYS.
+- macOS delete remains fail-closed: XNU `unlinkat` supports beneath/no-symlink/unique checks but lacks an atomic no-cross-mount constraint; a separate mount check is insufficient. Linux/Android delete remain fail-closed; Windows handle-bound delete remains unchanged.
+- macOS process containment remains fail-closed. Seatbelt `process-fork` denial is only a research candidate until `posix_spawn`, vfork/fork, and all descendant paths are demonstrated blocked.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. No builds/tests, CI, verifier, or acceptance result is claimed.
