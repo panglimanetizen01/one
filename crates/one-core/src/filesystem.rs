@@ -7,7 +7,7 @@
 
 use std::fs::File;
 use std::io::Read;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 
@@ -783,7 +783,8 @@ mod android_native {
         rdev_major: u32, rdev_minor: u32, dev_major: u32, dev_minor: u32,
         mount_id: u64, dio_mem_align: u32, dio_offset_align: u32,
         subvolume: u64, atomic_min: u32, atomic_max: u32,
-        atomic_segments: u32, reserved: [u8; 76],
+        atomic_segments: u32, reserved_a: [u8; 32],
+        reserved_b: [u8; 32], reserved_c: [u8; 12],
     }
     const _: [(); 256] = [(); std::mem::size_of::<Statx>()];
 
