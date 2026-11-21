@@ -989,3 +989,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Primitive gap: Linux `unlinkat`, Android `unlinkat`, and macOS `unlinkat` are name-based and do not apply disposition to the exact validated file handle. No safe fd-bound delete implementation has been proven for these platforms under the unchanged Issue #104 race/mount contract. Do not introduce check-then-unlink or a userspace parent walk; keep these adapters fail-closed.
 - New CLI tests and the CLI bridge are NOT BUILT / NOT TESTED at HEAD `8d2ced9...`. Next implementation step is to continue closing only operations for which an equivalent native primitive can be justified; then run focused CLI and adapter tests on exact SHA before integrated platform acceptance.
 - Issue #104 remains OPEN / NOT ACCEPTED. No main, protected verifier pin, acceptance criteria, fixed ledger/DoD, merge, or release state changed.
+
+## 2026-11-21 — process containment adversarial coverage hardening
+
+- Reviewed the existing native process containment source: Linux/Android use `process_group(0)`, `PR_SET_NO_NEW_PRIVS`, inherited seccomp denial of `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone`, and x32 ABI; `clone3` returns `ENOSYS` for compatible fallback. Cleanup observes direct-child exit with `waitid(WNOWAIT)`, kills the invocation group before reaping, and applies the same cleanup on normal exit, timeout, and output overflow.
+- Windows uses `PROC_THREAD_ATTRIBUTE_JOB_LIST` during `CreateProcessW`, `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, `IsProcessInJob` verification, `TerminateJobObject`, and active-process-zero cleanup. macOS remains fail-closed; no equivalent backend is implemented.
+- Commit `5e79f351b887f3dee7f77ae3a2e8dd86e5d108ea` gives each existing setsid adversarial test a unique working-directory fixture to prevent parallel-test PID-file collisions.
+- Commit `18bd42f1eecb7ca40dcf88a5b8d6456d15361f2e` adds `setpgid(0, 0)` escape probes for normal completion, timeout, and output overflow; commit `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` corrects test-attribute placement.
+- Exact source/test candidate `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` is NOT BUILT / NOT TESTED. These additions strengthen test coverage only; they do not change the production seccomp policy or prove containment.
+- Issue #105 remains OPEN / NOT ACCEPTED. Exact-SHA Linux/Android adversarial execution and Windows Job Object descendant execution remain required; macOS remains unsupported/fail-closed.
