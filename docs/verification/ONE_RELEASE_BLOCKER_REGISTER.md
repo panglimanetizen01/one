@@ -788,3 +788,13 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Exact-SHA run #2410 (`44845255637`) on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` ended with Ubuntu Build SUCCESS / Clippy FAILURE / Tests SKIPPED and Windows Build FAILURE. Windows errors showed Linux-only writer functions were compiled on Windows (missing Unix std APIs/libc/Linux helpers) and unstable `std::os::windows::fs::MetadataExt::{volume_serial_number,file_index}` calls.
 - Corrected in source descendants: `74df3aa901732c8eb3adaac728162715fc3a4961` gates Linux writer functions to Linux only and replaces unstable Windows metadata APIs with a no-reparse NT handle reopen plus `GetFileInformationByHandle` volume/file-index comparison. Earlier Clippy corrections remain in `82a90b41...` and `c23bd0e0...`.
 - No rerun on the corrected candidate is confirmed. Android native tests and macOS native tests remain outstanding; no platform support is promoted. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — corrected candidate queued for fresh CI
+
+- PR #113 HEAD before this register update: `8248d9d7ffd2dcf15b0708c6cf6383f943ec5e38`; base: `181ad350d8f0db53cda654c4d378425fbdd6ab24`; OPEN / DRAFT / UNMERGED.
+- Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED locally). The seven commits after it at this point are documentation-only.
+- GitHub Actions run #2425 (`44845652963`) is IN_PROGRESS on the corrected source candidate; Ubuntu and Windows jobs were both still in progress at last readback. No result claimed.
+- CircleCI context `ci/circleci: one-linux` for source SHA `74df3aa901732c8eb3adaac728162715fc3a4961` is PENDING. No CircleCI result claimed.
+- User-confirmed Termux worktree last reached `1e8e19dcf3833aaff7169427350fa50b7df1f545`; it must safely fast-forward to the current remote before building. Do not overwrite changes.
+- Issue #104 remains OPEN / NOT ACCEPTED. No broad verification or release acceptance is promoted.
