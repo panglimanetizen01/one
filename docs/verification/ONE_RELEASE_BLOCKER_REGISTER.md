@@ -1048,3 +1048,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated the existing master prompt in commit `52bf6986a726f4e874a1b679501969d347d6cb1c` to distinguish the latest combined code candidate `3bad0196e9352871d09cb9b966cf6b393a866603` from the filesystem-specific candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`.
 - Documentation-only; no source/test evidence, acceptance, fixed ledger/DoD, verifier pin, main, merge, or release state changed.
+
+## 2026-11-21 — ProcessAdapter macOS exclusion regression
+
+- Source/test commit `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the existing ProcessAdapter metadata test to run on macOS, asserting that `PlatformKind::Macos` remains unadvertised while Seatbelt is only a single-process candidate and brokered launches are unproven.
+- Latest combined source/test candidate: `0408b92f6eafb12c18371d0079c6e73915e8e87c` (NOT BUILT / NOT TESTED). Issue #105 remains OPEN / NOT ACCEPTED.
