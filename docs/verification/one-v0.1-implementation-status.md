@@ -950,3 +950,8 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 - Added source-only probes for fork, vfork, posix_spawn, posix_spawnp, positive exec replacement, timeout, and stdout overflow. NOT BUILT / NOT RUN on macOS.
 - This is a deliberately narrowed single-process mode, not a process-tree-kill implementation. Brokered launchd/Mach-service process creation remains unproven. `ProcessAdapter` continues to exclude `PlatformKind::Macos`, so no macOS process support is advertised.
 - `sandbox-exec` is deprecated and may disappear; missing wrapper/profile failure must fail closed. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — ProcessAdapter macOS exclusion regression
+
+- Source/test commit `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the existing `process_adapter_advertises_only_platforms_with_non_escapable_containment` test to execute on macOS as well, asserting that `ProcessAdapter` continues to exclude `PlatformKind::Macos` while the Seatbelt single-process candidate and brokered-spawn gap remain unresolved.
+- Latest combined source/test candidate: `0408b92f6eafb12c18371d0079c6e73915e8e87c` (NOT BUILT / NOT TESTED). No platform support is promoted.
