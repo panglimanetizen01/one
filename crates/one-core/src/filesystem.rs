@@ -171,6 +171,26 @@ impl FilesystemAuthority {
         Ok(bytes)
     }
 
+    /// Delete a regular, single-link file using a platform-native operation
+    /// that acts on the opened file handle rather than re-resolving its path.
+    ///
+    /// The first implementation is Windows-only: NT file disposition is bound
+    /// to the validated handle while retained parent handles deny rename/delete
+    /// sharing. Other platforms remain explicitly unsupported until they can
+    /// provide equivalent object-identity and root-confinement guarantees.
+    pub fn delete(&self, target: impl AsRef<Path>) -> Result<(), FilesystemError> {
+        let relative = self.relative_target(target.as_ref())?;
+        #[cfg(windows)]
+        {
+            windows_native::delete_relative(&self.root, &relative)
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = relative;
+            Err(FilesystemError::UnsupportedPlatform)
+        }
+    }
+
     /// Atomically replace a regular, single-link file beneath the retained
     /// root handle. Linux and Windows use platform-native handle-relative
     /// operations; unsupported platforms remain fail-closed.
@@ -1524,6 +1544,121 @@ mod windows_native {
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+    /// Mark the exact validated file object for deletion. The opened leaf
+    /// handle requests DELETE access but does not share DELETE; retained parent
+    /// handles use the same no-delete-share policy as write_relative. This
+    /// prevents the leaf or any traversed parent from being renamed/replaced
+    /// while disposition is applied to the validated object.
+    pub fn delete_relative(root: &File, relative: &Path) -> Result<(), FilesystemError> {
+        let root_info = file_info(root)?;
+        if root_info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
+            || root_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0
+        {
+            return Err(FilesystemError::InvalidRoot);
+        }
+
+        let components: Vec<_> = relative.components().collect();
+        if components.is_empty() { return Err(FilesystemError::InvalidTarget); }
+        let mut parents: Vec<File> = Vec::new();
+        let mut parent_handle = root.as_raw_handle() as HANDLE;
+        let mut leaf_wide = None;
+
+        for (index, component) in components.iter().enumerate() {
+            let Component::Normal(part) = component else {
+                return Err(FilesystemError::OutsideRoot);
+            };
+            let wide: Vec<u16> = part.encode_wide().collect();
+            if wide.is_empty()
+                || wide.iter().any(|unit| *unit == 0 || *unit == 92 || *unit == 47)
+            {
+                return Err(FilesystemError::InvalidTarget);
+            }
+            if index + 1 == components.len() {
+                leaf_wide = Some(wide);
+                break;
+            }
+
+            // FILE_SHARE_DELETE is deliberately absent. Holding this handle
+            // prevents the traversed directory from being renamed outside
+            // the trusted root until the leaf disposition has been applied.
+            let directory = open_named(
+                &wide,
+                parent_handle,
+                OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+                FILE_LIST_DIRECTORY | FILE_TRAVERSE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_OPEN,
+                FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+            )?;
+            let info = file_info(&directory)?;
+            if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
+                || info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber
+                || info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0
+            {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+            parents.push(directory);
+            parent_handle = parents.last().expect("parent handle was just retained").as_raw_handle() as HANDLE;
+        }
+
+        let leaf_wide = leaf_wide.ok_or(FilesystemError::InvalidTarget)?;
+        // Open the leaf itself without following reparse points. The handle
+        // denies DELETE sharing so its identity/link count cannot be changed
+        // through a concurrent rename or hard-link operation while checked.
+        let leaf = open_named(
+            &leaf_wide,
+            parent_handle,
+            OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+            DELETE_ACCESS | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            FILE_OPEN,
+            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+        )?;
+        let info = file_info(&leaf)?;
+        if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+            return Err(FilesystemError::ResolutionFailed);
+        }
+        if info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber {
+            return Err(FilesystemError::ResolutionFailed);
+        }
+        if info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE) != 0 {
+            return Err(FilesystemError::NotRegularFile);
+        }
+        if info.nNumberOfLinks != 1 {
+            return Err(FilesystemError::HardLinkedFile);
+        }
+
+        #[repr(C)]
+        struct FileDispositionInformation {
+            delete_file: u8,
+        }
+        const FILE_DISPOSITION_INFORMATION_CLASS: i32 = 13;
+        let disposition = FileDispositionInformation { delete_file: 1 };
+        let mut io_status = IoStatusBlock {
+            value: IoStatusValue { status: 0 },
+            information: 0,
+        };
+        // SAFETY: leaf is a live handle opened with DELETE access; the
+        // information structure matches FILE_DISPOSITION_INFORMATION and its
+        // size is passed exactly. NT applies disposition to this handle's
+        // object, not to a second path lookup.
+        let status = unsafe {
+            NtSetInformationFile(
+                leaf.as_raw_handle() as HANDLE,
+                &mut io_status,
+                &disposition as *const FileDispositionInformation as *const c_void,
+                std::mem::size_of::<FileDispositionInformation>() as u32,
+                FILE_DISPOSITION_INFORMATION_CLASS,
+            )
+        };
+        if status < 0 {
+            return Err(status_error(status));
+        }
+        drop(leaf);
+        drop(parents);
+        Ok(())
+    }
+
     pub fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
         let root_info = file_info(root)?;
         if root_info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
@@ -1656,6 +1791,53 @@ mod windows_native {
     mod tests {
         use super::*;
         use std::os::windows::io::AsRawHandle;
+
+        #[test]
+        fn delete_uses_validated_handle_and_removes_nested_regular_file() {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock must be after Unix epoch")
+                .as_nanos();
+            let root = std::env::temp_dir().join(format!(
+                "one-win-delete-{}-{nonce}",
+                std::process::id()
+            ));
+            let nested = root.join("nested");
+            std::fs::create_dir_all(&nested).unwrap();
+            let target = nested.join("target.txt");
+            std::fs::write(&target, b"DELETE_ME").unwrap();
+
+            let authority = super::super::FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            authority.delete("nested/target.txt").unwrap();
+            assert!(!target.exists(), "the handle-disposition delete must remove the target");
+            drop(authority);
+            std::fs::remove_dir_all(root).unwrap();
+        }
+
+        #[test]
+        fn delete_rejects_hard_links_without_removing_either_name() {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock must be after Unix epoch")
+                .as_nanos();
+            let base = std::env::temp_dir().join(format!(
+                "one-win-delete-hardlink-{}-{nonce}",
+                std::process::id()
+            ));
+            let root = base.join("root");
+            std::fs::create_dir_all(&root).unwrap();
+            let target = root.join("target.txt");
+            let outside = base.join("outside.txt");
+            std::fs::write(&target, b"KEEP_BOTH").unwrap();
+            std::fs::hard_link(&target, &outside).unwrap();
+
+            let authority = super::super::FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            assert_eq!(authority.delete("target.txt"), Err(FilesystemError::HardLinkedFile));
+            assert_eq!(std::fs::read(&target).unwrap(), b"KEEP_BOTH");
+            assert_eq!(std::fs::read(&outside).unwrap(), b"KEEP_BOTH");
+            drop(authority);
+            std::fs::remove_dir_all(base).unwrap();
+        }
 
         #[test]
         fn retained_parent_handle_blocks_directory_rename() {
