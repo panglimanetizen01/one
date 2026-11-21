@@ -879,3 +879,10 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 ## Filesystem implementation refresh — 2026-11-21
 
 - Source candidate `9fe53815f83701a62536472f8a3c87cebac22e7a` adds Android nested writes using detached mount cloning, recursive `MOUNT_ATTR_NOSYMFOLLOW`, `openat2` resolution with `BENEATH | NO_SYMLINKS | NO_XDEV`, and atomic `renameat2`; unsupported or denied primitives fail closed. macOS nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` mount checks, while nested writes remain fail-closed until a no-cross-mount atomic publication primitive is proven. Source tests were updated but have not been run. Do not promote build/test/platform support.
+
+
+## 2026-11-21 — nested filesystem and CI lint follow-up
+
+- Source candidate `568d9360f0beec63c10fbeae9cac63f384bd082f` contains Android detached-mount nested writes and macOS kernel-bounded nested reads (supported XNU kernels), preserving the old direct-child macOS read path. macOS nested writes remain fail-closed.
+- Follow-up Clippy fixes propagate every SQLite `set_limit` and `progress_handler` error as `AdapterError::BackendFailure` and use `str::find(['/', '?'])` for the HTTP authority delimiter. They preserve fail-closed resource policy and `-D warnings`.
+- Run #2410 on parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` had Ubuntu Build PASS / Clippy FAIL / Tests SKIPPED. Descendant fixes have NOT been re-run successfully. Latest candidate NOT BUILT/TESTED.
