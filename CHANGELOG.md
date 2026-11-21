@@ -142,3 +142,8 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - Fix Rust parser errors in the process escape probe by parenthesizing unsafe `setpgid` and `setsid` call expressions before comparisons.
 - Commit: `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`.
 - The pre-fix GitHub Actions Ubuntu and Windows Build jobs failed on exact SHA `168ff06e7a8d09e575e6ac71513399c9f1f4f994`; the fixed SHA has not yet been rebuilt. No verification or release status is promoted.
+
+### CI source build and Linux process regressions — 2026-11-21
+- GitHub Actions One CI #44900738968 passed on exact PR #113 SHA `7744e46849f97b5868a6a75ee365b6f72cca5609` for Ubuntu and Windows 2025, including Build, Clippy, Tests, and Complete job.
+- Ubuntu executed and passed six Linux process-group adversarial regressions for setsid/setpgid across normal completion, timeout, and output overflow.
+- CircleCI remains PENDING on this SHA; Android/Termux and full Issue #104/#105 acceptance remain open.
