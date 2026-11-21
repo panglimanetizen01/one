@@ -989,3 +989,16 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 - Latest source/test HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232` corrects a stale public-authority integration regression so it expects confined nested-write success when supported, otherwise UnsupportedPlatform with no side effects; symlink-parent writes remain denied and outside sentinel unchanged.
 - This commit has not yet completed CI; GitHub Actions run #44901974950 is IN_PROGRESS and CircleCI is PENDING. Neither executes macOS cfg tests on a native Mac.
 - macOS nested write remains candidate / NOT VERIFIED. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Issue #104 platform implementation refresh — 2026-11-21
+
+- Latest code/test SHA at this checkpoint: 6403592796b9827e4bffe26a982dfc66afc75d9d. PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED.
+- macOS nested filesystem: same-directory exclusive temporary sibling is created under a validated parent; Darwin f_fsid and f_mntonname identity checks remain; final publication is root-relative renameatx_np with RENAME_RESOLVE_BENEATH and RENAME_NOFOLLOW_ANY; cleanup uses retained parent handle. macOS 15 nested writes fail closed; macOS 26 nested writes are required and pass.
+- macOS native workflow #44906889694 passed on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d. Both macos-15 and macos-26: 15 passed / 0 failed / 4 ignored in macos_ filter; 8 passed / 0 failed in nested_write_ filter.
+- Windows: centralized volume-serial comparison is used by root-relative operations and covered by windows_volume_identity_rejects_mismatch. New adapter tests cover real directory-junction write escape rejection with unchanged outside sentinel/no temp leak and positive absolute in-root writes. These tests await terminal Windows CI evidence on the current SHA.
+- Android: direct-child backend uses statx STATX_MNT_ID and st_dev. Added android_statx_mount_id_matches_same_mount_and_rejects_devfs; it is NOT YET RUN on a real Android/Termux process. Nested paths remain fail-closed.
+- Linux: openat2 read uses BENEATH/NO_SYMLINKS/NO_XDEV; nested writes require detached-mount primitives and fail closed if unavailable. POSIX delete remains unsupported/fail-closed; Windows is the only platform with handle-bound delete.
+- One CI run #44906889708 was IN_PROGRESS at last read (Ubuntu and Windows cross-toolchain installation). CircleCI context ci/circleci: one-linux on this SHA was PENDING; workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider .vcs.revision/log mapping is unavailable; do not claim CircleCI PASS.
+- The independent verifier PR #51 still pins historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Its filter must be extended for the new Windows junction-write, absolute-write, and volume-identity tests plus Android statx regression when the implementation candidate is frozen. Do not change the canonical/protected pin prematurely.
+- This is implementation progress and targeted native evidence only. Do not promote DoD, E1-E6, release readiness, or platform-wide support claims.
+
