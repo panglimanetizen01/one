@@ -306,14 +306,14 @@ impl FilesystemAuthority {
 
 
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 struct LinuxTempFileGuard {
     parent_fd: std::os::fd::RawFd,
     name: std::ffi::CString,
     committed: bool,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 impl LinuxTempFileGuard {
     fn cleanup(&mut self) -> Result<(), FilesystemError> {
         if self.committed {
@@ -331,7 +331,7 @@ impl LinuxTempFileGuard {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 impl Drop for LinuxTempFileGuard {
     fn drop(&mut self) {
         if !self.committed {
@@ -342,7 +342,7 @@ impl Drop for LinuxTempFileGuard {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn linux_openat2(
     directory_fd: std::os::fd::RawFd,
     path: &std::ffi::CString,
@@ -380,7 +380,7 @@ fn linux_openat2(
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
     match error.raw_os_error() {
         Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) | Some(libc::EBUSY) => {
@@ -394,7 +394,7 @@ fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum LinuxWriteStage {
     TempCreated,
@@ -403,7 +403,7 @@ enum LinuxWriteStage {
     BeforeRename,
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn linux_write_nested_relative_with_hook<F>(
     root: &File,
     relative: &Path,
@@ -642,7 +642,7 @@ where
     // those primitives or a resolution check fails, the nested write fails
     // closed rather than falling back to an ordinary parent-dirfd rename.
     if parent != Path::new(".") {
-        return linux_write_nested_relative_with_hook(root, relative, bytes, |_| Ok(()));
+        return linux_write_nested_relative_with_hook(root, relative, bytes, hook);
     }
     let parent_fd = root.as_raw_fd();
     let root_metadata = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
@@ -884,6 +884,11 @@ mod android_native {
     }
 
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
+        if relative.parent().is_some_and(|parent| !parent.as_os_str().is_empty()) {
+            // Use the detached-mount transaction shared with Linux. Android
+            // kernels/SELinux profiles denying these syscalls remain fail-closed.
+            return super::linux_write_nested_relative_with_hook(root, relative, bytes, |_| Ok(()));
+        }
         let (parent, leaf) = parent_and_leaf(root, relative)?;
         let root_mount = mount_id(root)?;
         let root_dev = root.metadata().map_err(|_| FilesystemError::IoFailure)?.dev();
@@ -951,10 +956,17 @@ mod macos_native {
 
     static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+    // XNU path-resolution flags from bsd/sys/fcntl.h. Unsupported kernels
+    // must fail closed; no racy userspace component walk is used as fallback.
+    const O_RESOLVE_BENEATH: i32 = 0x0000_1000;
+    const O_UNIQUE: i32 = 0x0000_2000;
+    const O_NOFOLLOW_ANY: i32 = 0x2000_0000;
+
     fn map_error(error: std::io::Error) -> FilesystemError {
         match error.raw_os_error() {
-            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) => FilesystemError::ResolutionFailed,
+            Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) | Some(93) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
+            Some(libc::EINVAL) | Some(libc::ENOSYS) | Some(libc::ENOTSUP) => FilesystemError::UnsupportedPlatform,
             _ => FilesystemError::IoFailure,
         }
     }
@@ -1017,9 +1029,14 @@ mod macos_native {
     }
 
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
-        let (parent, leaf) = parent_and_leaf(root, relative)?;
-        let file = openat(&parent, &leaf,
-            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+        let path = CString::new(relative.as_os_str().as_bytes())
+            .map_err(|_| FilesystemError::InvalidTarget)?;
+        // XNU resolves the entire path beneath root in-kernel. O_NOFOLLOW_ANY
+        // rejects symlinks in every component; O_UNIQUE enforces single-link.
+        // Unsupported kernels return an error; never fall back to a userspace walk.
+        let file = openat(root, &path,
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NONBLOCK
+                | O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE, 0)?;
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
@@ -2041,9 +2058,14 @@ mod android_filesystem_tests {
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::NotFound));
-        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
+        match authority.write("nested/file.txt", b"nested") {
+            Ok(()) => assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"nested"),
+            Err(FilesystemError::UnsupportedPlatform) => assert!(!root.join("nested/file.txt").exists()),
+            other => panic!("unexpected nested Android write result: {other:?}"),
+        }
         assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::UnsupportedPlatform));
+        assert!(matches!(authority.write("escape-dir/sentinel.txt", b"changed"),
+            Err(FilesystemError::ResolutionFailed | FilesystemError::UnsupportedPlatform)));
         assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
         drop(authority);
         std::fs::remove_dir_all(root).unwrap();
@@ -2120,6 +2142,7 @@ mod macos_filesystem_tests {
     fn macos_leaf_symlink_and_nested_paths_fail_closed() {
         let root = temp_dir("deny"); let outside = root.with_extension("outside");
         std::fs::create_dir_all(root.join("nested")).unwrap();
+        std::fs::write(root.join("nested/data.txt"), b"nested-data").unwrap();
         std::fs::create_dir_all(&outside).unwrap();
         std::fs::write(outside.join("sentinel.txt"), b"outside-sentinel").unwrap();
         symlink(&outside, root.join("escape-dir")).unwrap();
@@ -2127,9 +2150,16 @@ mod macos_filesystem_tests {
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
+        match authority.read("nested/data.txt") {
+            Ok(bytes) => assert_eq!(bytes, b"nested-data"),
+            Err(FilesystemError::UnsupportedPlatform) => {},
+            other => panic!("unexpected nested macOS read result: {other:?}"),
+        }
+        assert!(matches!(authority.read("escape-dir/sentinel.txt"),
+            Err(FilesystemError::ResolutionFailed | FilesystemError::UnsupportedPlatform)));
+        // Nested writes remain blocked until atomic beneath + no-symlink +
+        // no-cross-mount publication is proven under directory-rename races.
         assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::UnsupportedPlatform));
         assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::UnsupportedPlatform));
         assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
         drop(authority); std::fs::remove_dir_all(root).unwrap(); std::fs::remove_dir_all(outside).unwrap();
