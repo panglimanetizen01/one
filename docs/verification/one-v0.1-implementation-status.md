@@ -982,3 +982,10 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 - Code-bearing source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609`: One CI #44900738968 passed Ubuntu #136835893296 and Windows 2025 #136835893110, including Build, Clippy, Tests, and Complete job.
 - Docs-only HEAD `48b8a3235d8b23653764ef005ca5946598182545`: One CI #44901074701 passed Ubuntu #136836894258 and Windows 2025 #136836894522, including Build, Clippy, Tests, and Complete job. The intervening 8 commits changed documentation only.
 - These results do not promote Issue #104/#105 acceptance, Android/macOS runtime support, POSIX delete, E1–E6, fixed ledger, DoD, or release approval.
+
+## 2026-11-21 — macOS nested-write integration correction
+
+- Runtime candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` adds XNU beneath/no-follow nested atomic publication via root-staged temporary file and `renameatx_np`.
+- Latest source/test HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232` corrects a stale public-authority integration regression so it expects confined nested-write success when supported, otherwise UnsupportedPlatform with no side effects; symlink-parent writes remain denied and outside sentinel unchanged.
+- This commit has not yet completed CI; GitHub Actions run #44901974950 is IN_PROGRESS and CircleCI is PENDING. Neither executes macOS cfg tests on a native Mac.
+- macOS nested write remains candidate / NOT VERIFIED. Issue #104 remains OPEN / NOT ACCEPTED.
