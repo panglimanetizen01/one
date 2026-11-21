@@ -129,3 +129,9 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - Correct platform status: current Android source is direct-child-only; multi-component read/write paths fail closed because the observed Termux seccomp profile kills `openat2` with SIGSYS. Earlier notes describing Android nested `openat2`/detached-mount support are not the current source state.
 - macOS deletion remains fail-closed because XNU `unlinkat` lacks an atomic no-cross-mount constraint; Linux/Android deletion remain fail-closed. macOS process containment remains fail-closed; Seatbelt `process-fork` is research only.
 - Candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` is NOT BUILT / NOT TESTED; no support or acceptance claim is made.
+
+### Issue #105 — macOS Seatbelt process-creation guard candidate (2026-11-21)
+- Add a macOS process wrapper candidate using `/usr/bin/sandbox-exec` and SBPL `deny process-fork`, with host-enforced timeout and output caps. Source probes cover fork, vfork, posix_spawn, posix_spawnp, exec replacement, timeout, and output overflow.
+- XNU source inspection shows `fork1()` invokes `mac_proc_check_fork()` and the spawn path uses `PROC_CREATE_SPAWN`; this supports the direct process-creation denial hypothesis but is not native test evidence.
+- This is single-process mode, not descendant-tree termination. Brokered launchd/Mach-service launches remain unproven, and `ProcessAdapter` continues to exclude macOS. `sandbox-exec` is deprecated; absence or profile failure must fail closed.
+- Candidate `3bad0196e9352871d09cb9b966cf6b393a866603` is NOT BUILT / NOT TESTED. Issue #105 remains OPEN / NOT ACCEPTED.
