@@ -2720,8 +2720,6 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn nested_write_rejects_mount_boundary_before_creating_staging_file() {
-        use std::os::fd::AsRawFd;
-
         let root = File::open("/").unwrap();
         let relative = Path::new(&format!(
             "dev/one-linux-mount-boundary-{}-{}",
