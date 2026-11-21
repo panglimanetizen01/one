@@ -2724,7 +2724,7 @@ mod macos_filesystem_tests {
         drop(authority); std::fs::remove_dir_all(root).unwrap();
     }
     #[test]
-    fn macos_leaf_symlink_and_nested_paths_fail_closed() {
+    fn macos_nested_write_is_confined_and_leaf_symlinks_are_rejected() {
         let root = temp_dir("deny"); let outside = root.with_extension("outside");
         std::fs::create_dir_all(root.join("nested")).unwrap();
         std::fs::write(root.join("nested/data.txt"), b"nested-data").unwrap();
@@ -2742,10 +2742,27 @@ mod macos_filesystem_tests {
         }
         assert!(matches!(authority.read("escape-dir/sentinel.txt"),
             Err(FilesystemError::ResolutionFailed | FilesystemError::UnsupportedPlatform)));
-        // Nested writes remain blocked until atomic beneath + no-symlink +
-        // no-cross-mount publication is proven under directory-rename races.
-        assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::UnsupportedPlatform));
+        // The XNU candidate stages at the retained root and publishes with
+        // kernel-enforced beneath/no-follow rename. Older kernels may reject
+        // the required flags; that path must remain fail-closed and leave no
+        // destination or staging artifact behind.
+        match authority.write("nested/file.txt", b"nested-write") {
+            Ok(()) => assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"nested-write"),
+            Err(FilesystemError::UnsupportedPlatform) => {
+                assert!(!root.join("nested/file.txt").exists(), "unsupported kernel created a nested target");
+            }
+            other => panic!("unexpected confined nested-write result: {other:?}"),
+        }
+        assert!(
+            std::fs::read_dir(&root).unwrap().all(|entry| {
+                !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
+            }),
+            "nested write must not leak root-staged temporary files"
+        );
+        assert!(matches!(
+            authority.write("escape-dir/sentinel.txt", b"changed"),
+            Err(FilesystemError::ResolutionFailed | FilesystemError::UnsupportedPlatform)
+        ), "symlink-parent write must be rejected by XNU path resolution");
         assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
         drop(authority); std::fs::remove_dir_all(root).unwrap(); std::fs::remove_dir_all(outside).unwrap();
     }
