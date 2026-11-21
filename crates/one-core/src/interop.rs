@@ -1330,9 +1330,6 @@ mod tests {
 
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
-
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    #[test]
     fn linux_process_cannot_escape_its_invocation_group_with_setpgid() {
         let (working_directory, pid_file) = test_escape_fixture("setpgid-normal");
         let executable = std::env::current_exe().expect("current test executable");
@@ -1382,6 +1379,8 @@ mod tests {
         assert!(error.contains("output limit"), "unexpected overflow result: {error}");
     }
 
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
     fn linux_process_timeout_cannot_leave_an_escaped_session_descendant() {
         let (working_directory, pid_file) = test_escape_fixture("setsid-timeout");
         let executable = std::env::current_exe().expect("current test executable");
