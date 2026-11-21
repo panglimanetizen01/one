@@ -819,3 +819,24 @@ Security constraints and next engineering action:
 ## 2026-11-21 — Android seccomp-safe direct-child boundary
 
 The Termux ARM64 trace confirmed `statx(STATX_MNT_ID)` succeeds and `openat2` terminates the process with `SIGSYS / SYS_SECCOMP`. The Android backend must not invoke `openat2` in this environment. Code candidate `e5c8a7d5d2075902ef4f027322e2e615908bac14` limits Android reads to a single direct child opened relative to the retained root with `openat(O_NOFOLLOW | O_NONBLOCK)`, followed by regular-file, single-link, device, and mount-ID checks. Nested reads and writes return `UnsupportedPlatform` before invoking `openat2`. A userspace parent walk is rejected because a retained parent descriptor does not prevent rename-out-of-root races. Direct-child atomic writes remain unchanged. Updated Android tests and this implementation are NOT BUILT / NOT TESTED. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android Termux validation and exact-SHA CI readback
+
+User-provided Termux evidence on exact PR #113 HEAD `0d197840d40c5e7045896497eb9e6ab5b8df7dfb` (clean official worktree `$HOME/one-pr113`, branch `security/issue-104-root-confinement-20261118`):
+
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS; completed successfully in 5.55s with no warnings.
+- `android_direct_child_read_and_atomic_write_work_with_root_handle`: PASS (1 passed, 0 failed).
+- `android_leaf_symlinks_and_nested_paths_fail_closed`: PASS (1 passed, 0 failed).
+- `android_nested_reads_fail_closed_without_openat2`: PASS (1 passed, 0 failed).
+- `android_root_final_symlink_is_rejected`: PASS (1 passed, 0 failed).
+- These are four individually selected Android tests, not the complete Android filesystem/security suite. The hard-link fixture test and full platform/E4 matrix are not established by this run. Nested paths remain intentionally unsupported/fail-closed on this Android environment; passing the fail-closed tests is not proof of nested-path support.
+
+Exact-SHA remote status readback for `0d197840d40c5e7045896497eb9e6ab5b8df7dfb`:
+
+- GitHub commit status context `ci/circleci: one-linux`: FAILURE. Status target: https://app.circleci.com/workflow/cf6395a6-d5a0-448b-868f-1089e0153c08/job/cc43be9e-09ce-4499-8d3a-a603fdb533cf
+- The CircleCI job page could not be opened through the available inspection channel; provider logs, failing step, pipeline revision mapping, and root cause are UNKNOWN. Do not classify this as a source/test failure or timeout without provider logs.
+- GitHub Actions One CI run #44853076199: IN_PROGRESS at readback; no terminal result claimed.
+- PR #113 remains OPEN and unmerged; retain DRAFT status. Issue #104 remains OPEN / NOT ACCEPTED. No main, protected verifier pin, acceptance criteria, merge, or release state changed.
+
+Classification at this exact SHA: workspace Clippy PASS; four selected Android tests PASS; CircleCI status FAILURE / cause UNKNOWN; GitHub Actions IN_PROGRESS; full Android suite, independent Windows verifier, complete E4, and Issue #104 acceptance NOT VERIFIED.
