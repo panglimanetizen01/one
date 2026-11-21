@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at latest live read | `44fed1a9b9e3b6adfca31f14fa8e01e9f3219ef9` |
+| PR #113 HEAD at latest live read | `f5a0bff593035b4ba9be92ae883a36386b12176b` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source/test SHA | `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff` |
+| Code-bearing source/test SHA | `f5a0bff593035b4ba9be92ae883a36386b12176b` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -75,8 +75,8 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
 **PR #113:** OPEN / DRAFT / UNMERGED · base `181ad350d8f0db53cda654c4d378425fbdd6ab24`  
-**Runtime candidate:** `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff`  
-**Latest source/test HEAD:** `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff` (macOS same-directory nested staging plus Windows junction/absolute-write regressions; PR #113 remains OPEN / DRAFT / UNMERGED).
+**Runtime candidate:** `f5a0bff593035b4ba9be92ae883a36386b12176b`  
+**Latest source/test HEAD:** `f5a0bff593035b4ba9be92ae883a36386b12176b` (adds Android statx mount-ID regression; PR #113 remains OPEN / DRAFT / UNMERGED).
 
 **Current concrete implementation**
 - Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing.
@@ -1172,4 +1172,18 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - E4 source inventory at fa01: Unix filters remain 3 descriptor_relative_read_rejects_, 5 descriptor_relative_write_, 1 descriptor_relative_walk_rejects_. Existing Windows tests cover junction read, absolute read, absolute escape side effects, atomic write, denied atomic replacement, oversized content, parent traversal, and retained-parent rename prevention; the two new tests above extend write-junction and positive absolute-write coverage. The independent verifier PR #51 still pins c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not move canonical/protected pins until implementation scope is complete and the full E4 suite is ready for one exact-SHA run.
 - Remaining platform gaps: macOS 15 nested writes fail closed; macOS delete unsupported. Android nested paths remain fail-closed under the observed Termux seccomp/openat2 constraint; direct-child backend only. Linux nested writes depend on detached-mount primitives and fail closed if unavailable. POSIX delete remains unsupported. Windows is the only platform with handle-bound delete. Issue #104 remains OPEN / NOT ACCEPTED.
 - Next implementation work: finish remaining cross-platform/E4 gaps without weakening the mount/volume, symlink/reparse, hard-link, root-confinement, or cleanup contracts. Then update verifier filters/pin only when the source candidate is frozen, run the exact E4 Windows/Unix suite, and reconcile all docs/Notion evidence.
+
+## 2026-11-21 — Android statx mount-identity regression
+
+- Exact source/test SHA and PR #113 HEAD at this read: f5a0bff593035b4ba9be92ae883a36386b12176b. PR remains OPEN / DRAFT / UNMERGED.
+- Added android_statx_mount_id_matches_same_mount_and_rejects_devfs. It opens a temporary project root, a nested directory on that same filesystem, and /dev; it requires statx STATX_MNT_ID to match root/nested and differ for devfs. This exercises the Android mount-ID ABI directly without invoking openat2 (which can SIGSYS under the app seccomp policy).
+- Android direct-child read/write and existing symlink, hard-link, nested-path fail-closed, root-symlink tests remain unchanged. No nested path fallback was introduced.
+- This Android-specific test has NOT YET RUN on a real Android/Termux process. Required device command after syncing the exact branch head:
+  cargo test -p one-core --locked android_statx_mount_id_matches_same_mount_and_rejects_devfs -- --nocapture
+  Then run the complete Android filesystem test group:
+  cargo test -p one-core --locked android_ -- --nocapture
+- Native macOS run #44906550034 SUCCESS on exact SHA f5a0bff593035b4ba9be92ae883a36386b12176b. Both macos-15 job #136853268604 and macos-26 job #136853268421: 15 passed / 0 failed / 4 ignored in macos_ filter; 8 passed / 0 failed in nested_write_ filter.
+- One CI run #44906550001 on exact SHA f5a0bff593035b4ba9be92ae883a36386b12176b was IN_PROGRESS at last read: Ubuntu Build; Windows Android NDK installation. Refresh terminal result before claiming pass.
+- GitHub commit status for this exact SHA reports CircleCI context ci/circleci: one-linux PENDING; workflow b1e496eb-4d30-4827-b76f-4cc52482ac53, job 554efe35-ba73-40ae-8486-c7319c3f6929. CircleCI page is not accessible through available tools, so pipeline .vcs.revision and provider logs remain unverified. Do not claim CircleCI PASS.
+- This test improves evidence for Android's statx mount-ID guard but does not add nested support. Android multi-component reads/writes remain UnsupportedPlatform. Issue #104 remains OPEN / NOT ACCEPTED.
 
