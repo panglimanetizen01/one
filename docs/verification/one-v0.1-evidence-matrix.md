@@ -941,3 +941,15 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 | macOS process descendant containment | unsupported | FAIL-CLOSED / NOT IMPLEMENTED |
 
 No evidence is promoted by these source changes. Issue #104 and #105 remain OPEN / NOT ACCEPTED; full platform matrix, adversarial side-effect proof, and fixed release gates remain outstanding.
+
+## 2026-11-21 — XNU nested write source-only evidence boundary
+
+| Claim | Candidate/source | Evidence state |
+|---|---|---|
+| macOS nested atomic write using XNU `renameatx_np` beneath/no-symlink flags | `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` | SOURCE ONLY / NOT BUILT / NOT TESTED; requires native macOS execution |
+| macOS nested write regressions: success, symlink parent, hardlink, parent-move-before-publish | same source candidate | SOURCE ONLY / NOT RUN |
+| Android nested read/write | current `android_native` source | FAIL-CLOSED for multi-component targets; direct-child only. Observed Termux seccomp kills `openat2` with SIGSYS |
+| macOS delete | XNU `unlinkat` flags `AT_RESOLVE_BENEATH`, `AT_SYMLINK_NOFOLLOW_ANY`, `AT_UNIQUE` | Not enabled: no atomic no-cross-mount flag, so full Issue #104 contract is not met |
+| macOS process containment via Seatbelt `process-fork` denial | research only | NOT IMPLEMENTED; `posix_spawn` and other descendant routes unproven |
+
+No evidence is promoted. Issue #104 and #105 remain OPEN / NOT ACCEPTED. Prior exact-SHA Windows/Linux evidence is not transferred to this candidate.
