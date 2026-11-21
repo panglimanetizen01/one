@@ -145,3 +145,11 @@ Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8
 - Ubuntu executed six Linux setsid/setpgid adversarial regressions across normal completion, timeout, and output overflow; all passed. Android/Termux remains outstanding.
 - CircleCI on this SHA is PENDING (workflow `6e00388e-687e-497b-b95d-20a38a2cb535`, job `753aeb6f-e6cf-40d2-ada0-daef15471b88`); provider revision/log evidence unavailable.
 - Continue implementation-first from B-002 Issue #104 P0; keep Issue #104/#105 OPEN / NOT ACCEPTED and do not repeat the already-passed Ubuntu/Windows GitHub Actions suite absent a source/input change.
+
+## Latest handoff — 2026-11-21
+
+- PR #113 HEAD `48b8a3235d8b23653764ef005ca5946598182545`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`, OPEN / DRAFT / UNMERGED.
+- One CI #44901074701 passed Ubuntu #136836894258 and Windows 2025 #136836894522 on this exact docs HEAD. Code-bearing source `7744e46849f97b5868a6a75ee365b6f72cca5609` passed One CI #44900738968 on both platforms. The intervening commits are documentation-only.
+- CircleCI on docs HEAD remains PENDING (workflow `1d5dbab5-d047-4bbf-b5b5-a394707d2289`, job `826b2a25-a1a2-4c06-a011-aa56a1bc6c0f)); provider revision/log evidence unavailable.
+- B-002 implementation boundary: Linux nested write, Windows handle-relative read/write/delete; Android read/write direct-child only (nested fail-closed); macOS XNU nested read/write source candidate needs native run; POSIX delete remains unavailable. Do not use racy check-then-`unlinkat`.
+- Continue implementation-first from the single blocker register. Do not repeat the exact Ubuntu/Windows source suite absent a source/input change. Keep Issue #104/#105 OPEN / NOT ACCEPTED and preserve fixed ledger/DoD, protected pins, main, and release authorization boundaries.
