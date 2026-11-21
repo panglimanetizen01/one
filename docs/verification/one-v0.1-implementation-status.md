@@ -874,3 +874,8 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - macOS nested reads and writes remain fail-closed. Ordinary `openat` directory-descriptor walks cannot prevent a parent directory from being renamed outside the root; no unsafe traversal has been enabled. Direct-child operations remain unchanged.
 - Added Android source regression for a valid nested read and a symlinked-parent escape with outside-sentinel preservation. Existing Android expectations now distinguish missing nested files (`NotFound`) from symlink-parent denial (`ResolutionFailed`). Tests are NOT RUN.
 - Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran; no platform support or release approval is promoted.
+
+
+## Filesystem implementation refresh — 2026-11-21
+
+- Source candidate `9fe53815f83701a62536472f8a3c87cebac22e7a` adds Android nested writes using detached mount cloning, recursive `MOUNT_ATTR_NOSYMFOLLOW`, `openat2` resolution with `BENEATH | NO_SYMLINKS | NO_XDEV`, and atomic `renameat2`; unsupported or denied primitives fail closed. macOS nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` mount checks, while nested writes remain fail-closed until a no-cross-mount atomic publication primitive is proven. Source tests were updated but have not been run. Do not promote build/test/platform support.
