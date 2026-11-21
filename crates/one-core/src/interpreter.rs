@@ -5,7 +5,7 @@ use std::sync::Arc;
 use crate::filesystem::FilesystemAuthority;
 use crate::ast::BinaryOp;
 use crate::capability::{Capability, CapabilitySet};
-use crate::adapter::{AdapterArgument, FileReadAdapter, FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter};
+use crate::adapter::{AdapterArgument, FileDeleteAdapter, FileReadAdapter, FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter};
 use crate::database::SqliteAdapter;
 use crate::governance::ExecutionPolicy;
 use crate::ir::{IrExpr, IrLoopKind, IrNetworkOperation, IrProgram, IrStatement};
@@ -33,9 +33,11 @@ impl Interpreter {
   if let Some(authority) = authority {
    orchestrator.register(Box::new(FileReadAdapter::with_authority(Arc::clone(&authority))));
    orchestrator.register(Box::new(FileWriteAdapter::with_authority(authority)));
+    orchestrator.register(Box::new(FileDeleteAdapter::with_authority(Arc::clone(&authority))));
   } else {
    orchestrator.register(Box::new(FileReadAdapter::new()));
    orchestrator.register(Box::new(FileWriteAdapter::new()));
+    orchestrator.register(Box::new(FileDeleteAdapter::new()));
   }
   orchestrator.register(Box::new(ProcessAdapter::new()));
   orchestrator.register(Box::new(SqliteAdapter::new()));
