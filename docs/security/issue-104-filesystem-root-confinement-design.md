@@ -1,7 +1,7 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
-**Latest code-bearing source at 2026-11-21 checkpoint:** `0f5859426273a61174d6d1b08ed8771a6f4b136a` (NOT BUILT/TESTED)  
+**Latest code-bearing source at 2026-11-21 checkpoint:** `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT/TESTED; includes XNU nested-write candidate)  
 **Latest CircleCI-confirmed PR #113 HEAD:** `26a34efb6d0908bd02738a7b05090f96051a6dc7` (`ci/circleci: one-linux` SUCCESS; workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Later documentation-only commits are not credited with this result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
@@ -1055,7 +1055,7 @@ This section maps each platform backend to the Issue #104 invariants: retained h
 |---|---|---|---|---|
 | Linux | openat2 from retained root with RESOLVE_BENEATH, RESOLVE_NO_SYMLINKS, RESOLVE_NO_XDEV; nonblocking open then regular-file/link checks | Direct-child root-dirfd temp + sync + renameat2; nested candidate uses detached recursive mount, MOUNT_ATTR_NOSYMFOLLOW, and root-relative openat2 commit | Nested writes depend on open_tree / mount_setattr privileges and kernel support; otherwise fail closed | Not implemented. unlinkat is name-based, not bound to a previously validated object handle; do not add a precheck-then-unlink path as a race-free delete contract. |
 | Android | Direct-child retained-root openat with O_NOFOLLOW, O_NONBLOCK, statx(STATX_MNT_ID), device, regular-file and link checks. openat2 is blocked by observed Termux seccomp (SIGSYS). | Direct-child exclusive sibling temp, fsync, root-dirfd renameat and directory sync | Nested read/write fail closed. Component walks are rejected because opened POSIX parents can be renamed outside the root. | Not implemented. unlinkat cannot delete by validated fd; no anti-race primitive established. |
-| macOS | Direct-child openat; nested read uses XNU O_RESOLVE_BENEATH, O_NOFOLLOW_ANY, O_UNIQUE and fstatfs identity checks | Direct-child exclusive sibling temp, sync and root-relative renameat | Nested read is kernel-resolved; nested write remains fail closed because no root-bounded atomic publication primitive is proven. | Not implemented. unlinkat remains path/name-based and no handle-bound equivalent has been established in this backend. |
+| macOS | Direct-child openat; nested read uses XNU O_RESOLVE_BENEATH, O_NOFOLLOW_ANY, O_UNIQUE and fstatfs identity checks | Direct-child sibling-temp renameat; nested-write candidate stages at root and publishes with renameatx_np(RENAME_RESOLVE_BENEATH \| RENAME_NOFOLLOW_ANY), failing EXDEV across mounts | Nested write is source-only and requires XNU flags from current macOS SDK/runtime; unsupported kernels fail closed. | Not implemented: XNU unlinkat has beneath/no-symlink/unique flags but no atomic no-cross-mount flag; separate fstatfs precheck is not sufficient. |
 | Windows | Retained root and component handles; NtCreateFile with OBJ_DONT_REPARSE / FILE_OPEN_REPARSE_POINT, volume and file metadata checks | Retained parent handles deny FILE_SHARE_DELETE; exclusive temp handle and native handle-relative rename | Component traversal holds every parent handle without delete sharing; actual junction/reparse tests exist | Implemented in source, not yet built/tested: open leaf with DELETE_ACCESS, deny delete sharing, validate reparse/volume/type/link count, then apply NtSetInformationFile(FileDispositionInformation) to that exact handle. This avoids a second path lookup between validation and deletion. |
 
 ### Windows handle-bound deletion implementation
@@ -1117,3 +1117,26 @@ The language-level delete bridge at source SHA 0fa43eb0be53c8e79424597ece0551478
 - GitHub commit status context ci/circleci: one-linux is SUCCESS on the same exact SHA. The CircleCI job URL is not accessible through the available inspection channel; this records the provider status context, not independently inspected provider step logs.
 
 This verifies the narrow Windows-only delete capability bridge and the Linux policy/semantic path. It does not provide Linux/Android/macOS delete support. POSIX delete remains unavailable because no backend currently binds deletion to the validated object handle while preserving the full root/rename/hard-link contract. Issue #104 remains OPEN / NOT ACCEPTED pending all remaining E4 and host-root requirements.
+
+## 2026-11-21 — XNU nested-write primitive and platform correction
+
+Current source candidate: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT / NOT TESTED).
+
+### macOS nested write
+
+A native candidate now uses XNU path-resolution and rename primitives rather than a userspace parent-fd walk:
+
+- Existing target lookup uses `openat(root_fd, relative, O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE)`; it checks regular-file type, single-link policy, and `fstatfs` mount identity.
+- A unique temporary file is staged directly beneath the retained root, not in an untrusted nested parent.
+- After bounded write and file sync, `renameatx_np(root_fd, temp, root_fd, relative, RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)` performs final source and destination path resolution in the kernel. Both operands must resolve beneath the retained root and no symlink component may be traversed.
+- Since the temporary source is on the root mount, cross-mount publication fails with `EXDEV`; the destination parent is synced after successful rename.
+- A test hook and source regressions cover nested replacement, symlink-parent denial with outside sentinel preservation, hard-link rejection with both names unchanged, and moving the parent outside root immediately before publication. All are SOURCE ONLY / NOT BUILT / NOT RUN.
+- These flags are available in the recent XNU/macOS SDK line; older kernels that reject them map to fail-closed unsupported behavior. Do not claim macOS nested-write support until native macOS execution confirms the exact kernel/filesystem behavior.
+
+### Platform corrections and remaining gaps
+
+- Android's current source deliberately rejects all multi-component read/write targets before traversal. Direct-child operations remain available. The prior proposed Android nested `openat2`/detached-mount implementation is not the current checked-in implementation; observed Termux seccomp kills `openat2` with SIGSYS. No component-walk fallback is allowed.
+- macOS deletion remains fail-closed. XNU `unlinkat` exposes `AT_SYMLINK_NOFOLLOW_ANY`, `AT_RESOLVE_BENEATH`, and `AT_UNIQUE`, which improve path, symlink, and hard-link checks, but do not atomically enforce the Issue #104 no-cross-mount rule. A separate `fstatfs` check followed by `unlinkat` leaves a mount-race window. No delete adapter is enabled.
+- Linux and Android deletion remain fail-closed: no primitive binds unlink disposition to the validated object identity while preserving the full root/mount/race contract. Windows handle-bound deletion is preserved.
+- macOS process containment remains fail-closed. Seatbelt `process-fork` denial is a research direction, not an implementation: coverage of `posix_spawn`, other process creation APIs, and descendants must be demonstrated before enabling process execution.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. No verifier, platform matrix, build, or acceptance result is inferred from these source changes.
