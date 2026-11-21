@@ -814,3 +814,8 @@ Security constraints and next engineering action:
 - The trace only directly confirms the first named test's `openat2` termination. The other previously SIGSYS-terminated Android tests remain unverified until their syscall paths are independently confirmed or the shared path is changed and retested.
 - The hard-link regression remains blocked at fixture setup by `PermissionDenied`; do not weaken or skip it. Clippy PASS and the root-final-symlink test PASS remain evidence only for their recorded exact SHA.
 - No implementation fix, Android support, E4 verification, or acceptance is claimed by this trace. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android seccomp-safe direct-child boundary
+
+The Termux ARM64 trace confirmed `statx(STATX_MNT_ID)` succeeds and `openat2` terminates the process with `SIGSYS / SYS_SECCOMP`. The Android backend must not invoke `openat2` in this environment. Code candidate `e5c8a7d5d2075902ef4f027322e2e615908bac14` limits Android reads to a single direct child opened relative to the retained root with `openat(O_NOFOLLOW | O_NONBLOCK)`, followed by regular-file, single-link, device, and mount-ID checks. Nested reads and writes return `UnsupportedPlatform` before invoking `openat2`. A userspace parent walk is rejected because a retained parent descriptor does not prevent rename-out-of-root races. Direct-child atomic writes remain unchanged. Updated Android tests and this implementation are NOT BUILT / NOT TESTED. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
