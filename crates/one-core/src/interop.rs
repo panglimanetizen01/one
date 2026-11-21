@@ -1345,7 +1345,7 @@ mod tests {
         assert!(error.contains("embedded NUL"));
     }
 
-    #[cfg(any(target_os = "linux", target_os = "android", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", windows))]
     #[test]
     fn allowed_process_preserves_exit_status_and_streams() {
         let (program, args) = if cfg!(windows) {
@@ -1519,7 +1519,7 @@ mod tests {
         assert!(error.contains("output limit"), "unexpected overflow result: {error}");
     }
 
-    #[cfg(any(target_os = "linux", target_os = "android", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", windows))]
     #[test]
     fn subprocess_execution_is_bounded_by_a_deadline() {
         let (program, args) = if cfg!(windows) {
@@ -1528,7 +1528,7 @@ mod tests {
                 vec!["/C".into(), "ping -n 20 127.0.0.1 >NUL".into()],
             )
         } else {
-            ("sh".to_owned(), vec!["-c".into(), "sleep 20".into()])
+            ("sh".to_owned(), vec!["-c".into(), if cfg!(target_os = "macos") { "exec sleep 20".into() } else { "sleep 20".into() }])
         };
         let started = Instant::now();
         let error = run_process(
@@ -1544,7 +1544,7 @@ mod tests {
         assert!(started.elapsed() < Duration::from_secs(15));
     }
 
-    #[cfg(any(target_os = "linux", target_os = "android", windows))]
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", windows))]
     #[test]
     fn aggregate_output_limit_is_explicit_and_checked() {
         assert_eq!(MAX_OUTPUT_BYTES_TOTAL, 2 * MAX_OUTPUT_BYTES_PER_STREAM);
@@ -1637,6 +1637,203 @@ mod tests {
             error.contains("output limit"),
             "unexpected bounded stderr error: {error}"
         );
+    }
+
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "invoked only under the macOS Seatbelt process-containment wrapper"]
+    fn macos_process_creation_probe() {
+        let forked = unsafe { libc::fork() };
+        if forked == 0 {
+            unsafe { libc::_exit(0) };
+        }
+        if forked > 0 {
+            let mut status = 0;
+            unsafe { libc::waitpid(forked, &mut status, 0) };
+            panic!("fork unexpectedly created child PID {forked}");
+        }
+        assert_eq!(
+            io::Error::last_os_error().raw_os_error(),
+            Some(libc::EPERM),
+            "fork must be denied by the Seatbelt process-fork rule"
+        );
+
+        let vforked = unsafe { libc::vfork() };
+        if vforked == 0 {
+            unsafe { libc::_exit(0) };
+        }
+        if vforked > 0 {
+            let mut status = 0;
+            unsafe { libc::waitpid(vforked, &mut status, 0) };
+            panic!("vfork unexpectedly created child PID {vforked}");
+        }
+        assert_eq!(
+            io::Error::last_os_error().raw_os_error(),
+            Some(libc::EPERM),
+            "vfork must be denied by the Seatbelt process-fork rule"
+        );
+
+        let program = std::ffi::CString::new("/usr/bin/true").unwrap();
+        let mut argv = [program.as_ptr() as *mut libc::c_char, std::ptr::null_mut()];
+        let envp = [std::ptr::null_mut()];
+        let mut child_pid: libc::pid_t = 0;
+        let spawned = unsafe {
+            libc::posix_spawn(
+                &mut child_pid,
+                program.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                argv.as_mut_ptr(),
+                envp.as_ptr(),
+            )
+        };
+        if spawned == 0 {
+            let mut status = 0;
+            unsafe { libc::waitpid(child_pid, &mut status, 0) };
+            panic!("posix_spawn unexpectedly created child PID {child_pid}");
+        }
+        assert_eq!(
+            spawned,
+            libc::EPERM,
+            "posix_spawn must be denied by mac_proc_check_fork"
+        );
+
+        let mut child_pid: libc::pid_t = 0;
+        let spawned = unsafe {
+            libc::posix_spawnp(
+                &mut child_pid,
+                program.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                argv.as_mut_ptr(),
+                envp.as_ptr(),
+            )
+        };
+        if spawned == 0 {
+            let mut status = 0;
+            unsafe { libc::waitpid(child_pid, &mut status, 0) };
+            panic!("posix_spawnp unexpectedly created child PID {child_pid}");
+        }
+        assert_eq!(
+            spawned,
+            libc::EPERM,
+            "posix_spawnp must be denied by mac_proc_check_fork"
+        );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "invoked only under the macOS Seatbelt process-containment wrapper"]
+    fn macos_process_exec_replacement_probe() {
+        use std::os::unix::process::CommandExt;
+        let error = Command::new("/usr/bin/printf")
+            .arg("MACOS_EXEC_REPLACEMENT_OK")
+            .exec();
+        panic!("exec replacement unexpectedly returned: {error}");
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "invoked only by the macOS process deadline regression"]
+    fn macos_process_timeout_helper() {
+        thread::sleep(Duration::from_secs(30));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "invoked only by the macOS output overflow regression"]
+    fn macos_process_output_overflow_helper() {
+        let buffer = [b'x'; 8192];
+        for _ in 0..=MAX_OUTPUT_BYTES_PER_STREAM / buffer.len() {
+            let written = unsafe {
+                libc::write(
+                    libc::STDOUT_FILENO,
+                    buffer.as_ptr().cast(),
+                    buffer.len(),
+                )
+            };
+            if written <= 0 {
+                break;
+            }
+        }
+        thread::sleep(Duration::from_secs(30));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_seatbelt_blocks_fork_and_posix_spawn_but_allows_exec_replacement() {
+        let executable = std::env::current_exe().expect("current test executable");
+        let capabilities = CapabilitySet::none().allow(Capability::Process);
+        let run_helper = |name: &str| {
+            run_process_with_timeout(
+                &ProcessSpec {
+                    program: executable.to_string_lossy().into_owned(),
+                    args: vec![
+                        "--ignored".into(),
+                        "--exact".into(),
+                        format!("interop::tests::{name}"),
+                        "--nocapture".into(),
+                    ],
+                    working_directory: None,
+                },
+                &capabilities,
+                Duration::from_secs(5),
+            )
+        };
+
+        let denied = run_helper("macos_process_creation_probe")
+            .expect("Seatbelt must deny fork/vfork/posix_spawn without killing the wrapper");
+        assert!(denied.success, "process-creation probe failed: stdout={:?}, stderr={:?}", denied.stdout, denied.stderr);
+
+        let replaced = run_helper("macos_process_exec_replacement_probe")
+            .expect("exec replacement should remain available inside Seatbelt");
+        assert!(replaced.success);
+        assert!(replaced.stdout.contains("MACOS_EXEC_REPLACEMENT_OK"));
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_process_timeout_kills_seatbelt_child() {
+        let executable = std::env::current_exe().expect("current test executable");
+        let error = run_process_with_timeout(
+            &ProcessSpec {
+                program: executable.to_string_lossy().into_owned(),
+                args: vec![
+                    "--ignored".into(),
+                    "--exact".into(),
+                    "interop::tests::macos_process_timeout_helper".into(),
+                    "--nocapture".into(),
+                ],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+            Duration::from_millis(200),
+        )
+        .expect_err("the Seatbelt child must be killed at the deadline");
+        assert!(error.contains("deadline"), "unexpected timeout result: {error}");
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_process_output_overflow_kills_seatbelt_child() {
+        let executable = std::env::current_exe().expect("current test executable");
+        let error = run_process_with_timeout(
+            &ProcessSpec {
+                program: executable.to_string_lossy().into_owned(),
+                args: vec![
+                    "--ignored".into(),
+                    "--exact".into(),
+                    "interop::tests::macos_process_output_overflow_helper".into(),
+                    "--nocapture".into(),
+                ],
+                working_directory: None,
+            },
+            &CapabilitySet::none().allow(Capability::Process),
+            Duration::from_secs(5),
+        )
+        .expect_err("stdout beyond the configured cap must be rejected");
+        assert!(error.contains("output limit"), "unexpected overflow result: {error}");
     }
 
     #[cfg(windows)]
