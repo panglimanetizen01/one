@@ -840,3 +840,15 @@ Exact-SHA remote status readback for `0d197840d40c5e7045896497eb9e6ab5b8df7dfb`:
 - PR #113 remains OPEN and unmerged; retain DRAFT status. Issue #104 remains OPEN / NOT ACCEPTED. No main, protected verifier pin, acceptance criteria, merge, or release state changed.
 
 Classification at this exact SHA: workspace Clippy PASS; four selected Android tests PASS; CircleCI status FAILURE / cause UNKNOWN; GitHub Actions IN_PROGRESS; full Android suite, independent Windows verifier, complete E4, and Issue #104 acceptance NOT VERIFIED.
+
+
+## 2026-11-21 — GitHub Actions failure diagnosis and targeted test corrections
+
+Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b46a772c7a7e580f9fec096c7`.
+
+- Both Windows 2025 and Ubuntu jobs completed build and Clippy successfully, then failed in the workspace test step.
+- Windows job: `one-core --lib` reported 152 passed / 1 failed. The failing test was `adapter::tests::filesystem_write_adapter_rejects_oversized_content_without_side_effects`; Windows returned OS error 32 (sharing violation) while removing the temporary root because the test still held `FileWriteAdapter` / its retained `FilesystemAuthority` when calling `remove_dir_all`. The test already verified the target retained `KEEP`; cleanup ordering was the failing operation.
+- Ubuntu job: `tests/process_vertical_slice.rs` reported 7 passed / 1 failed. `process_adapter_failure_is_observed_and_audited` expected the registered ProcessAdapter to be invoked but passed `PlatformKind::Any`; the adapter advertises concrete supported platforms (Linux, Windows, Android), not the wildcard `Any`, so selection correctly returned `NoCompatibleAdapter` before invocation. The test must select `PlatformKind::current()` to test the host adapter path.
+- Targeted source/test corrections committed on PR branch: `b932e3ee3adc3a4b464704a57ac9b46cade4bbe8` drops the adapter before Windows temporary-directory cleanup; `3f40b4aa8324420d0f7083dab3b2d3db15f726f6` changes the process test to `PlatformKind::current()`. Both commits are NOT YET BUILT / TESTED. Do not claim these failures fixed until exact-SHA reruns pass on Windows and Linux.
+- CircleCI `one-linux` was FAILURE on `8156607a4f0fa95b46a772c7a7e580f9fec096c7`, but provider logs have not yet been retrieved; cause remains UNKNOWN. Use `tools/ci/diagnose_circleci.py` from the official worktree on the current exact HEAD, with local `CIRCLECI_TOKEN`; never paste the token into chat. Do not attribute CircleCI failure to the GitHub Actions test failures without CircleCI logs.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, test deletion, or acceptance criteria changed.
