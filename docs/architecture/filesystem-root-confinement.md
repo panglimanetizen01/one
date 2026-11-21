@@ -23,14 +23,14 @@ flowchart TB
     Openat2Read --> ReadPolicy["BENEATH · NO_SYMLINKS · NO_XDEV"]
     ReadPolicy --> ReadChecks["Regular-file check · read-size limit"]
 
-    ReadAdapter --> AndroidRead["Android read backend — direct root children only"]
-    AndroidRead --> AndroidOpen["openat(root_fd, leaf, O_NOFOLLOW)"]
-    AndroidOpen --> AndroidMount["statx(STATX_MNT_ID) · same mount · nlink = 1"]
+    ReadAdapter --> AndroidRead["Android read backend — kernel-bounded nested paths"]
+    AndroidRead --> AndroidOpen["openat2(root_fd, relative, BENEATH · NO_SYMLINKS · NO_XDEV)"]
+    AndroidOpen --> AndroidMount["regular file · same device · statx mount ID · nlink = 1"]
     AndroidMount --> ReadChecks
 
-    ReadAdapter --> MacosRead["macOS read backend — direct root children only"]
-    MacosRead --> MacosOpen["openat(root_fd, leaf, O_NOFOLLOW)"]
-    MacosOpen --> MacosVolume["fstatfs f_fsid + mount point · regular file · nlink = 1"]
+    ReadAdapter --> MacosRead["macOS read backend — XNU kernel-bounded path (supported kernels)"]
+    MacosRead --> MacosOpen["openat(root_fd, relative, O_RESOLVE_BENEATH · O_NOFOLLOW_ANY · O_UNIQUE)"]
+    MacosOpen --> MacosVolume["fstatfs f_fsid + mount point · regular file · nlink = 1; unsupported kernels fail closed"]
     MacosVolume --> ReadChecks
 
     ReadAdapter --> WindowsRead["Windows read backend"]
@@ -61,13 +61,21 @@ flowchart TB
     LinuxSync -->|failure| LinuxCleanup["unlinkat temporary sibling"]
     LinuxRename -->|failure| LinuxCleanup
 
-    WriteAdapter --> AndroidWrite["Android write backend — direct root children only"]
-    AndroidWrite --> AndroidLeaf["O_PATH · O_NOFOLLOW · statx mount-ID check"]
+    WriteAdapter --> AndroidWrite["Android write backend — direct + guarded nested"]
+    AndroidWrite --> AndroidNested{"Nested parent path?"}
+    AndroidNested -->|No| AndroidLeaf["O_PATH · O_NOFOLLOW · statx mount-ID check"]
     AndroidLeaf --> AndroidTemp["Exclusive temp sibling via root_fd"]
     AndroidTemp --> AndroidSync["write_all + sync_all"]
     AndroidSync --> AndroidRename["renameat(root_fd, temp, root_fd, leaf)"]
     AndroidSync -->|failure| AndroidCleanup["unlinkat temporary sibling"]
     AndroidRename -->|failure| AndroidCleanup
+    AndroidNested -->|Yes| AndroidMountClone["open_tree detached recursive mount clone"]
+    AndroidMountClone --> AndroidNoSymlink["mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)"]
+    AndroidNoSymlink --> AndroidBeneath["openat2 BENEATH · NO_SYMLINKS · NO_XDEV"]
+    AndroidBeneath --> AndroidAtomic["exclusive temp · sync · root-relative renameat2 · directory sync"]
+    AndroidMountClone -->|unsupported or denied| FailClosed
+    AndroidNoSymlink -->|unsupported or denied| FailClosed
+    AndroidBeneath -->|resolution failure| FailClosed
 
     WriteAdapter --> MacosWrite["macOS write backend — direct root children only"]
     MacosWrite --> MacosLeaf["openat O_NOFOLLOW · st_dev · nlink = 1"]
@@ -105,8 +113,8 @@ flowchart TB
 | Host-selected project root (process current working directory), authority injection, and target scope | `crates/one-cli/src/main.rs` |
 | Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
-| Android `openat` read and direct-child atomic write with statx mount ID | `crates/one-core/src/filesystem.rs` |
-| macOS `openat` read and direct-child atomic write with device identity | `crates/one-core/src/filesystem.rs` |
+| Android kernel `openat2` nested read and direct-child atomic write; nested write uses guarded detached-mount transaction | `crates/one-core/src/filesystem.rs` |
+| macOS XNU `O_RESOLVE_BENEATH` / `O_NOFOLLOW_ANY` / `O_UNIQUE` nested read (supported kernels); direct-child atomic write | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
@@ -116,7 +124,9 @@ flowchart TB
 
 - Linux nested writes use a guarded detached mount (`open_tree` + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2`) so parent movement cannot redirect the final write outside the retained root. The path fails closed when the required kernel/security primitives are unavailable; direct-child writes continue to use the retained root handle.
 - Historical Linux direct-child and Windows write evidence on source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` (protected push run #44519577693) does not verify the later detached-mount implementation. The native Windows probe is limited to Windows Server 2025 build 26100.
-- Android and macOS support is currently limited to direct children of the retained root. Android requires `statx(STATX_MNT_ID)`; macOS compares `fstatfs` filesystem ID and mount point. Nested paths fail closed. These implementations are code candidates only and have NOT been built or tested.
+- Android nested reads use kernel `openat2`; nested writes use the detached-mount + recursive `MOUNT_ATTR_NOSYMFOLLOW` + `openat2`/`renameat2` transaction shared with Linux. Android still fails closed when the kernel or SELinux policy denies any required primitive. Direct-child writes retain the existing statx mount-ID checks.
+- macOS nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` mount identity checks; kernels that reject the flags fail closed. macOS nested writes remain fail-closed because a race-safe atomic publication path that also excludes mount crossings has not yet been proven. Direct-child writes remain supported.
+- The new Android/macOS source changes and regressions have NOT been built or run.
 - Other platforms fail closed.
 - A successful artifact build or one passing platform job does not imply full platform support or Issue #104 acceptance.
 - The full architecture map in PR #97 is a separate non-normative overview image. This focused source diagram supplements it; it does not claim that the image itself has been visually inspected or reconciled.
@@ -199,3 +209,10 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - macOS nested reads and writes remain fail-closed. Ordinary `openat` directory-descriptor walks cannot prevent a parent directory from being renamed outside the root; no unsafe traversal has been enabled. Direct-child operations remain unchanged.
 - Added Android source regression for a valid nested read and a symlinked-parent escape with outside-sentinel preservation. Existing Android expectations now distinguish missing nested files (`NotFound`) from symlink-parent denial (`ResolutionFailed`). Tests are NOT RUN.
 - Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran; no platform support or release approval is promoted.
+
+
+## 2026-11-21 — guarded Android nested writes and macOS nested reads
+
+- Source candidate `9fe53815f83701a62536472f8a3c87cebac22e7a` adds Android nested writes through the detached-mount transaction already used by Linux. It requires `open_tree`, recursive `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, and `openat2`/`renameat2`; denied or unavailable primitives fail closed. The Linux write-stage hook is now forwarded into the nested helper rather than silently replaced with a no-op.
+- macOS nested reads now use XNU `O_RESOLVE_BENEATH`, `O_NOFOLLOW_ANY`, and `O_UNIQUE`, followed by file-type, link-count, and `fstatfs` mount identity checks. Kernels without the flags fail closed. macOS nested writes remain fail-closed pending an atomic no-cross-mount publication primitive.
+- Source regressions were adjusted for capability-gated Android nested writes and macOS nested reads. They are NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED.
