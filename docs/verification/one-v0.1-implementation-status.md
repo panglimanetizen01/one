@@ -955,3 +955,7 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 
 - Source/test commit `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the existing `process_adapter_advertises_only_platforms_with_non_escapable_containment` test to execute on macOS as well, asserting that `ProcessAdapter` continues to exclude `PlatformKind::Macos` while the Seatbelt single-process candidate and brokered-spawn gap remain unresolved.
 - Latest combined source/test candidate: `0408b92f6eafb12c18371d0079c6e73915e8e87c` (NOT BUILT / NOT TESTED). No platform support is promoted.
+
+## 2026-11-21 — latest combined source/test SHA
+
+- Latest candidate is `79593d2f225284eff841e67c8eb9a1e005611981`; it includes the ProcessAdapter macOS exclusion test and the direct-spawn-only Seatbelt comment clarification. No runtime behavior changed in this final comment-only commit. NOT BUILT / NOT TESTED.
