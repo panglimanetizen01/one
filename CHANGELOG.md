@@ -147,3 +147,8 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - GitHub Actions One CI #44900738968 passed on exact PR #113 SHA `7744e46849f97b5868a6a75ee365b6f72cca5609` for Ubuntu and Windows 2025, including Build, Clippy, Tests, and Complete job.
 - Ubuntu executed and passed six Linux process-group adversarial regressions for setsid/setpgid across normal completion, timeout, and output overflow.
 - CircleCI remains PENDING on this SHA; Android/Termux and full Issue #104/#105 acceptance remain open.
+
+### PR #113 CI refresh — 2026-11-21
+- GitHub Actions One CI #44901074701 passed on exact docs HEAD `48b8a3235d8b23653764ef005ca5946598182545` for Ubuntu and Windows 2025, including Build, Clippy, Tests, and Complete job.
+- Code-bearing source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609` passed One CI #44900738968 on both platforms; the eight commits between source and docs HEAD are documentation-only.
+- CircleCI remains PENDING on docs HEAD; Issue #104/#105 acceptance and release approval remain open.
