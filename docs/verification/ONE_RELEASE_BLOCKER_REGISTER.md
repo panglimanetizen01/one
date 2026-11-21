@@ -11,7 +11,7 @@
 
 | Item | Exact value |
 |---|---|
-| ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
+| ONE canonical `main` | `e518e4a47aedf2611ffd166e05dc4e45bed09917` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
 | PR #113 HEAD at latest live read | `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
@@ -71,6 +71,14 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 - CircleCI status on the same PR #115 SHA is FAILURE at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`; provider logs are inaccessible in this session, so root cause is not inferred. This does not change the separate B-001 mapping for PR #113 pipeline #1201.
 - PR #113 remains OPEN / DRAFT / UNMERGED at `509b7b197115adb1ba80d730342e9f6fbf981645`; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
 
+
+
+**Separate current-main provider observation — 2026-11-21**
+- Current `main` HEAD read from GitHub: `e518e4a47aedf2611ffd166e05dc4e45bed09917` (commit message: enable GitHub Actions for stacked PR #113). This commit already exists on `main`; it was not created by this continuation.
+- GitHub status context `CircleCI Pipeline = ERROR` points to pipeline #1323: [pipeline #1323](https://app.circleci.com/pipelines/gh/panglimanetizen01/one/1323).
+- Pipeline `vcs.revision`, workflow/job membership, job start time, and provider step logs are not available from the status context. Root cause remains UNKNOWN; do not attribute this to the config or source without provider evidence.
+- This is separate from PR #113's current `ci/circleci: one-linux` PENDING context and must not be conflated with it.
+
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
@@ -91,6 +99,11 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 - Renamed it to `macos_nested_write_is_confined_and_leaf_symlinks_are_rejected`. It now accepts a successful nested write only when bytes match, accepts `UnsupportedPlatform` only as fail-closed behavior with no target, asserts no root staging-temp leak, and rejects symlink-parent writes while preserving the outside sentinel.
 - Commit: `830a70e5c5d07fd87c5c1e792853e146be04a232`.
 - This is a source/test correction, NOT a macOS runtime result. The XNU candidate and its native tests remain NOT BUILT / NOT RUN on macOS.
+
+**Latest exact-HEAD CI observation — 2026-11-21**
+- PR #113 documentation HEAD `d6c3210d567ba34c4bdc6543a41091406679fcb7`: GitHub status `ci/circleci: one-linux = PENDING`, workflow UUID `55dc3c65-a6bb-4d77-a9f1-86d2b3939c98`, job UUID `9f874fea-68a2-4169-ba26-06e6a37eadb6`. Pipeline number/revision mapping and provider logs are not available; no cause or test result is inferred.
+- GitHub Actions One CI #44908789274 is IN_PROGRESS (Ubuntu job #136859931567, Windows job #136859931870). macOS Native Filesystem #44908789221 is SUCCESS on the same documentation HEAD (macOS 26 job #136859931719, macOS 15 job #136859932053).
+- The CircleCI privileged native-Linux test step is NOT VERIFIED until the provider logs show both exact test names executed and passed. Keep Issue #104 OPEN / NOT ACCEPTED.
 
 **Historical CI state for the macOS correction**
 - GitHub Actions One CI run #44901974950 on exact HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232` was IN_PROGRESS at last readback; no terminal result claimed.
