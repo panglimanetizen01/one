@@ -773,3 +773,13 @@ Security constraints and next engineering action:
 - The trace only directly confirms the first named test's `openat2` termination. The other previously SIGSYS-terminated Android tests remain unverified until their syscall paths are independently confirmed or the shared path is changed and retested.
 - The hard-link regression remains blocked at fixture setup by `PermissionDenied`; do not weaken or skip it. Clippy PASS and the root-final-symlink test PASS remain evidence only for their recorded exact SHA.
 - No implementation fix, Android support, E4 verification, or acceptance is claimed by this trace. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android seccomp-safe direct-child boundary
+
+- Exact code candidate: `e5c8a7d5d2075902ef4f027322e2e615908bac14`.
+- Trace evidence: `statx(STATX_MNT_ID)` returned success; `openat2` was killed by Android seccomp (`SIGSYS`, `SYS_SECCOMP`, AArch64).
+- Android reads now use `openat` only for a single direct child relative to the retained root handle, with no-follow/nonblocking flags and regular-file, single-link, device, and mount-ID validation. Nested reads and writes return `UnsupportedPlatform` without calling `openat2`.
+- A multi-component userspace `openat` walk remains rejected: directory handles do not pin descendants inside the root against rename-out-of-root races. Direct-child atomic writes remain unchanged.
+- Android regression expectations now explicitly test nested fail-closed behavior and outside-sentinel preservation. These source changes are NOT BUILT / NOT TESTED yet. No Android platform support or E4 acceptance is claimed.
+- Issue #104 OPEN / NOT ACCEPTED; PR #113 OPEN / DRAFT / UNMERGED.
