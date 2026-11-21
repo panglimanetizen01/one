@@ -435,3 +435,8 @@ Status fitur: Verified untuk penghapusan file melalui backend Windows saja. Belu
 - Koreksi Android: source saat ini hanya mendukung operasi direct-child. Semua target multi-komponen untuk read/write ditolak sebelum traversal. Proposal nested `openat2`/detached-mount dari checkpoint terdahulu bukan implementasi aktif; Termux seccomp yang diamati membunuh `openat2` dengan SIGSYS. Jangan memakai component-walk fallback.
 - Penghapusan macOS tetap tidak tersedia. XNU `unlinkat` menyediakan `AT_RESOLVE_BENEATH`, `AT_SYMLINK_NOFOLLOW_ANY`, dan `AT_UNIQUE`, tetapi tidak menyediakan flag no-cross-mount atomik. Precheck `fstatfs` terpisah tidak menutup race mount. Linux/Android juga tetap fail-closed; Windows handle-bound delete dipertahankan.
 - Issue #104 tetap OPEN / NOT ACCEPTED. Tidak ada hasil build/test/verifier yang diklaim.
+
+## 2026-11-21 — batas Process capability macOS
+
+- macOS memiliki kandidat internal berbasis Seatbelt yang menolak pembuatan proses langsung (`fork`, `vfork`, `posix_spawn`); ini adalah mode satu proses, bukan kemampuan menjalankan process tree dan membunuh seluruh descendant.
+- `ProcessAdapter` tetap tidak mengiklankan macOS. Jalur brokered melalui launchd/Mach service belum dibuktikan tertutup, dan seluruh regresi native masih SOURCE ONLY / NOT RUN. Jangan menganggap Process capability tersedia pada macOS sampai native acceptance menyetujui jaminan yang dipersempit atau backend tree-containment setara ditemukan.
