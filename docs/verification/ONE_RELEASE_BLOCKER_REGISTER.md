@@ -1138,3 +1138,14 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Scope is limited to the macOS native nested-write staging cleanup path. No filesystem security policy, acceptance criteria, verifier pin, or protected branch was changed.
 - This source change is NOT YET BUILT OR TESTED on macOS. The prior Termux `cargo check -p one-core --locked` was on parent SHA `bb6a42330633e111920b17634fecf028f94e7d6f` and does not validate this change.
 - PR #113 remains OPEN / DRAFT / UNMERGED; its implementation branch now includes this source change. Next: run the focused macOS native test on a real macOS runner, fix any compile/runtime issues, then continue remaining Issue #104 platform implementation. Do not mark Issue #104 accepted based on this change alone.
+
+## 2026-11-21 — Darwin fsid ABI correction and native mount-boundary regression
+
+- Corrected the macOS filesystem identity comparison. The pinned dependency is libc 0.2.191; its Darwin fsid_t has a private two-element [i32; 2] representation and does not expose .val or implement PartialEq. The implementation now reads exactly those two ABI words through a pointer cast, guarded by compile-time size and alignment assertions. It does not compare arbitrary struct padding.
+- verify_same_mount still rejects a descriptor when either the two-word filesystem identifier or f_mntonname differs. No mount-boundary check, symlink restriction, hard-link restriction, or fail-closed behavior was removed.
+- Added macos_filesystem_identity_matches_same_mount_and_rejects_devfs: it verifies acceptance for two directories on the same mount and rejection for /dev on the separate devfs mount. This directly exercises both branches of the filesystem identity check; it does not require mount privileges.
+- Exact tested source SHA: 37f515c90ed3b4bc0af0296997e611681103be3e.
+- Native workflow run #44904958803: both macos-15 (job #136848447908) and macos-26 (job #136848448104) completed SUCCESS on that exact SHA. The macos_ filter reports 13 passed, 0 failed, 4 ignored; the ignored tests are existing process-containment helper probes. The nested_write_ filter reports 6 passed, 0 failed, 0 ignored. The new mount identity regression and staging-cleanup regression both passed on both runners.
+- Earlier incorrect approaches are superseded: raw whole-struct memcmp was replaced to avoid comparing potential representation padding; direct .val field access and Rust != were rejected by the actual pinned target definition. Do not restore either.
+- This closes the compile/runtime blocker for accessing Darwin filesystem identity, but does not close Issue #104. macOS nested paths still fail closed when the native beneath/anti-move guarantees are unavailable; no claim is made that full nested-write support or all E4 platform requirements are complete. PR #113 remains OPEN / DRAFT / UNMERGED pending the remaining implementation work.
+
