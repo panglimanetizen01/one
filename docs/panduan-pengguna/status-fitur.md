@@ -463,7 +463,7 @@ Status berikut hanya berlaku untuk kandidat PR #113 dan **belum menjadi fitur ri
 
 **Bukti native macOS:** run #44906889694 pada SHA 6403592796b9827e4bffe26a982dfc66afc75d9d. Kedua runner macos-15 dan macos-26 masing-masing lulus 15 test macos_ (0 gagal, 4 ignored) dan 8 test nested_write_ (0 gagal).
 
-**Batas bukti saat ini:** One CI #44906889708 masih berjalan pada saat pencatatan; CircleCI ci/circleci: one-linux masih PENDING. Jangan menyebut keduanya lulus sebelum hasil terminal terlihat. Android statx test perlu dijalankan pada Termux asli.
+**Batas bukti saat ini:** One CI #44906889708 telah SUCCESS pada SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Ubuntu job #136854287546 dan Windows job #136854287276 sama-sama SUCCESS. CircleCI ci/circleci: one-linux masih PENDING. Jangan menyebut keduanya lulus sebelum hasil terminal terlihat. Android statx test perlu dijalankan pada Termux asli.
 
 Kemampuan filesystem ini masih Eksperimental dan bukan jaminan sandbox yang sudah diterima. Jangan gunakan status kandidat ini untuk mengubah klaim dukungan pada canonical main atau menyatakan Issue #104 selesai.
 
