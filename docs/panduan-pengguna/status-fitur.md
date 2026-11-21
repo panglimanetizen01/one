@@ -410,3 +410,11 @@ hapus berkas "target.txt"
 Operasi ini memakai izin terpisah `filesystem.delete`. Izin `filesystem` umum, `filesystem.read`, dan `filesystem.write` tidak otomatis memberi izin menghapus. Policy harus memberikan grant delete dan membatasi target path secara eksplisit.
 
 Adapter `filesystem.file.delete` hanya diiklankan pada Windows dan membutuhkan `FilesystemAuthority` dari host. Linux, Android, dan macOS belum menyediakan backend delete yang memenuhi kontrak race-resistant, sehingga tetap tidak tersedia. Jaminan native Windows sudah lulus CI pada SHA khusus sebelumnya; jembatan bahasa terbaru di SHA `0fa43eb0be53c8e79424597ece055147872b35c4` masih menunggu build dan tes. Jangan anggap perintah ini sudah terverifikasi atau didukung sebelum hasil exact-SHA tersedia.
+
+## Verifikasi perintah hapus berkas — 2026-11-21
+
+Jembatan bahasa untuk perintah hapus berkas "target.txt" sudah lulus GitHub Actions One CI pada SHA sumber/tes 0fa43eb0be53c8e79424597ece055147872b35c4 (run #44871756593). Ubuntu lulus Build, Clippy, dan Tests dengan 181 passed / 0 failed / 3 ignored; Windows Server 2025 lulus ketiganya dengan 167 passed / 0 failed.
+
+Di Windows, tes membuktikan grant eksplisit dari policy mencapai adapter native, sedangkan tanpa grant file tetap utuh. Tes junction direktori asli juga membuktikan file sentinel di luar root tidak berubah. Status CircleCI ci/circleci: one-linux pada SHA yang sama SUCCESS.
+
+Status fitur: Verified untuk penghapusan file melalui backend Windows saja. Belum didukung pada Linux, Android, atau macOS; platform tersebut tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED karena kontrak lintas platform, host-root integration, E4 adversarial matrix, dan release acceptance belum selesai.
