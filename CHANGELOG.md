@@ -152,3 +152,8 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - GitHub Actions One CI #44901074701 passed on exact docs HEAD `48b8a3235d8b23653764ef005ca5946598182545` for Ubuntu and Windows 2025, including Build, Clippy, Tests, and Complete job.
 - Code-bearing source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609` passed One CI #44900738968 on both platforms; the eight commits between source and docs HEAD are documentation-only.
 - CircleCI remains PENDING on docs HEAD; Issue #104/#105 acceptance and release approval remain open.
+
+### macOS nested-write candidate integration correction — 2026-11-21
+- Corrected the public-authority macOS regression that still expected nested writes to be unsupported after the XNU root-staged `renameatx_np` candidate was added.
+- The regression now checks nested-write bytes when supported, fail-closed behavior on unsupported kernels, no temp leak, symlink-parent denial, and outside-sentinel preservation.
+- Commit: `830a70e5c5d07fd87c5c1e792853e146be04a232`. Native macOS execution remains outstanding; no platform support or Issue #104 acceptance is claimed.
