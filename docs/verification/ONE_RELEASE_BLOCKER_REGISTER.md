@@ -1200,3 +1200,15 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Independent verifier PR #51 remains pinned to historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Its Windows filters must add the real junction-write, absolute-write, and volume-identity tests; Android runtime filter must include the statx mount-ID regression when the final candidate is frozen. Do not move canonical/protected pins before implementation scope is complete.
 - Issue #104 remains OPEN / NOT ACCEPTED. No acceptance ledger, DoD, protected pin, main branch, or release state changed.
 
+## 2026-11-21 — terminal One CI result on current code/test SHA
+
+- One CI run #44906889708 completed SUCCESS on exact code/test SHA 6403592796b9827e4bffe26a982dfc66afc75d9d.
+  - Windows 2025 job #136854287276: SUCCESS.
+  - Ubuntu latest job #136854287546: SUCCESS.
+- This includes the current Windows volume-serial helper/test, real directory-junction write rejection test, and absolute in-root write regression in the full workspace test run. The workflow logs did not print those individual test names, so record the evidence as full Windows/Ubuntu suite success, not as separate named E4 filter evidence.
+- macOS Native Filesystem run #44906889694 also completed SUCCESS on the same exact SHA: macOS 15 and 26 each 15 passed / 0 failed / 4 ignored in macos_ and 8 passed / 0 failed in nested_write_.
+- CircleCI context ci/circleci: one-linux remains PENDING on this exact SHA (workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9). Do not claim CircleCI PASS; provider logs and .vcs.revision mapping remain unavailable.
+- Android statx regression remains NOT RUN on real Termux. User must run the two Android test commands after syncing.
+- Independent E4 verifier PR #51 remains pinned to historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. The exact E4 filters still need updating and one final verifier run on the frozen source candidate.
+- Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
