@@ -2040,11 +2040,29 @@ mod android_filesystem_tests {
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
-        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.read("nested/file.txt"), Err(FilesystemError::NotFound));
         assert_eq!(authority.write("nested/file.txt", b"nested"), Err(FilesystemError::UnsupportedPlatform));
-        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::UnsupportedPlatform));
+        assert_eq!(authority.read("escape-dir/sentinel.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape-dir/sentinel.txt", b"changed"), Err(FilesystemError::UnsupportedPlatform));
         assert_eq!(std::fs::read(outside.join("sentinel.txt")).unwrap(), b"outside-sentinel");
+        drop(authority);
+        std::fs::remove_dir_all(root).unwrap();
+        std::fs::remove_dir_all(outside).unwrap();
+    }
+
+    #[test]
+    fn android_kernel_resolved_nested_reads_stay_beneath_root() {
+        let root = temp_dir("nested-read");
+        std::fs::create_dir_all(root.join("safe/subdir")).unwrap();
+        std::fs::write(root.join("safe/subdir/data.txt"), b"nested-data").unwrap();
+        let outside = root.with_extension("outside-read");
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(outside.join("secret.txt"), b"outside-secret").unwrap();
+        symlink(&outside, root.join("escape-dir")).unwrap();
+        let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+        assert_eq!(authority.read("safe/subdir/data.txt").unwrap(), b"nested-data");
+        assert_eq!(authority.read("escape-dir/secret.txt"), Err(FilesystemError::ResolutionFailed));
+        assert_eq!(std::fs::read(outside.join("secret.txt")).unwrap(), b"outside-secret");
         drop(authority);
         std::fs::remove_dir_all(root).unwrap();
         std::fs::remove_dir_all(outside).unwrap();
