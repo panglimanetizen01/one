@@ -99,3 +99,8 @@ Source commits: `ff60c7bd8a058f0950a0d67bb596d94feb8e6803` (runtime wrapper) and
 - Added macOS-only ignored helper probes for `fork`, `vfork`, `posix_spawn`, `posix_spawnp`, plus a positive `exec`-replacement probe, deadline termination, and stdout overflow. These tests are source-only and NOT RUN.
 - **Important limitation:** this is a single-process execution mode, not a descendant-tree backend. It denies the target's direct child creation rather than permitting children and later killing a tree. Brokered process launches through launchd or other Mach services are not yet proven blocked. `ProcessAdapter` metadata intentionally continues to exclude `PlatformKind::Macos`; do not advertise macOS process capability until native tests cover direct and brokered process creation and product semantics accept the narrowed mode.
 - Issue #105 remains OPEN / NOT ACCEPTED. Linux/Android inherited seccomp + process-group cleanup and Windows Job Objects remain the only advertised process-containment backends. No macOS native build/test/CI result is claimed.
+
+## 2026-11-21 — latest macOS Seatbelt source SHA
+
+- Latest combined source/test candidate is `79593d2f225284eff841e67c8eb9a1e005611981`. This commit only clarifies the direct fork/posix_spawn boundary and that brokered launchd/Mach-service launches remain unproven.
+- Runtime implementation and probes remain source-only / NOT BUILT / NOT TESTED. `ProcessAdapter` remains unadvertised on macOS. Issue #105 remains OPEN / NOT ACCEPTED.
