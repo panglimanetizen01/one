@@ -942,3 +942,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - macOS nested read/write source candidate uses XNU beneath/no-follow/unique flags and `renameatx_np`; its native tests are not yet run on macOS.
 - Delete is implemented/verified only on Windows; Linux/Android/macOS remain unavailable. A safe POSIX handle-bound delete primitive is still missing.
 - Issue #104 remains OPEN / NOT ACCEPTED. Hosted Ubuntu/Windows CI does not establish Android/macOS runtime or POSIX delete acceptance.
+
+## 2026-11-21 — XNU nested-write candidate integration correction
+
+- Runtime candidate: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`. Latest PR #113 source/test HEAD: `830a70e5c5d07fd87c5c1e792853e146be04a232`.
+- The macOS native module contains a nested atomic-write candidate: root-staged exclusive temporary file, bounded write + file sync, then `renameatx_np` with `RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY`; unsupported XNU flags and cross-mount publication fail closed. Native tests cover nested replacement, symlink parent, hard link, and parent moved outside root before publication.
+- Found and fixed a stale public-authority integration regression that still expected nested writes to always return UnsupportedPlatform. The updated test now checks successful bytes, fail-closed unsupported behavior, no staging-temp leak, symlink-parent denial, and outside-sentinel preservation. Commit `830a70e5...`.
+- Exact-SHA GitHub Actions run #44901974950 is IN_PROGRESS; CircleCI on this SHA is PENDING (workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2`). Neither provides native macOS execution.
+- Android nested read/write remain fail-closed because observed Termux seccomp kills `openat2` with SIGSYS; POSIX delete remains unavailable due lack of a safe handle-bound deletion primitive.
+- Issue #104 remains OPEN / NOT ACCEPTED. Do not mark macOS nested writes supported until exact-source native macOS build/tests and the remaining E4 contract pass.
