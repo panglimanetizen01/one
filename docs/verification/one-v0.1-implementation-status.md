@@ -943,3 +943,10 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 - macOS delete remains fail-closed: XNU `unlinkat` can enforce beneath/no-symlink/unique path checks, but no atomic no-cross-mount flag was found; a separate `fstatfs` precheck is raceable. Linux/Android delete remain fail-closed; Windows handle-bound delete unchanged.
 - macOS process containment research: Seatbelt `process-fork` denial may prevent fork/vfork, but `posix_spawn` and all descendant creation routes have not been proven blocked. No production backend added; macOS remains fail-closed.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. No test evidence or support claim is promoted.
+
+## 2026-11-21 — macOS Seatbelt process guard (not advertised)
+
+- Source candidate `3bad0196e9352871d09cb9b966cf6b393a866603` adds `run_process_macos` via `/usr/bin/sandbox-exec` and SBPL `(version 1) (allow default) (deny process-fork)`. XNU `fork1()` checks `mac_proc_check_fork()` for both fork and spawn process creation; `posix_spawn` enters `fork1` with `PROC_CREATE_SPAWN`. This should deny direct fork/vfork/posix_spawn while allowing exec replacement.
+- Added source-only probes for fork, vfork, posix_spawn, posix_spawnp, positive exec replacement, timeout, and stdout overflow. NOT BUILT / NOT RUN on macOS.
+- This is a deliberately narrowed single-process mode, not a process-tree-kill implementation. Brokered launchd/Mach-service process creation remains unproven. `ProcessAdapter` continues to exclude `PlatformKind::Macos`, so no macOS process support is advertised.
+- `sandbox-exec` is deprecated and may disappear; missing wrapper/profile failure must fail closed. Issue #105 remains OPEN / NOT ACCEPTED.
