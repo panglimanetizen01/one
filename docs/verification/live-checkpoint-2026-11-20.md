@@ -930,3 +930,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Added macOS-only source probes for fork/vfork/posix_spawn/posix_spawnp, exec replacement, timeout, and output overflow. No native macOS execution has occurred.
 - This is single-process mode, not full descendant-tree containment. Brokered launchd/Mach-service launches remain unproven. `ProcessAdapter` does not advertise macOS; leave it disabled until native acceptance and semantic review.
 - Issue #105 remains OPEN / NOT ACCEPTED. Linux/Android seccomp process-group and Windows Job Object implementations remain unchanged.
+
+## 2026-11-21 — macOS ProcessAdapter metadata guard
+
+- Source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the ProcessAdapter platform-metadata regression to macOS, ensuring the experimental Seatbelt runner is not advertised as a supported capability.
+- NOT BUILT / NOT TESTED. macOS ProcessAdapter remains unavailable pending native tests and brokered-launch containment proof.
