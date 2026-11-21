@@ -1004,3 +1004,10 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Updated existing `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `631fcb692a8944c84bc6af6134c781bfffed23d2` to reflect the filesystem.delete CLI integration, native delete primitive gaps, process containment primitive map, new adversarial test source, and implementation-first sequencing.
 - This is documentation-only; it does not change source/test evidence or acceptance state. Current branch checkpoint immediately after this update: `631fcb692a8944c84bc6af6134c781bfffed23d2`. Refresh live PR metadata before the next action.
 - Latest product source/test candidate remains unbuilt/unverified for the new CLI and process test changes. Issue #104 and #105 remain OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — implementation/evidence/changelog documentation synchronized
+
+- Updated existing `one-v0.1-implementation-status.md` (commit `78962ce3ed1a966ab083a6dbaf253c95e7cae140`) and `one-v0.1-evidence-matrix.md` (commit `e2b2554e5074a3399c519e9c51f0e6fcdb237e03`) to distinguish verified Windows host/language slices from unverified CLI integration and process test additions.
+- Updated existing `live-checkpoint-2026-11-20.md` (commit `762f14bd4076726be0215abb9847dd5d4603abfa`) and `CHANGELOG.md` (commit `e6bc9382124de0ac83c1f7f5db6768d255459b20c`) with the same source-only boundaries.
+- Branch HEAD immediately before this register update: `e6bc9382124de0ac83c1f7f5db6768d255459b20c`. Refresh live PR #113 metadata before any further work.
+- No tests/builds were run; no evidence, acceptance state, fixed ledger/DoD, verifier pin, or release state was promoted.
