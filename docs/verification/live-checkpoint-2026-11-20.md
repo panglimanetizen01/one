@@ -867,3 +867,10 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Scope limitation: these focused tests do not establish nested-path Android read/write support, mount-boundary adversarial coverage beyond the named cases, hard-link fixture execution, or complete Issue #104 E4 acceptance. Do not promote unsupported nested operations.
 - Combined exact-SHA evidence now includes Android Termux focused validation + Clippy at `7d2409a...`, main GitHub Actions Ubuntu/Windows success and CircleCI status-context success at code SHA `3a9badf...`, and the independent verifier non-acceptance candidate matrix at the same code SHA (Linux 279 passed/0 failed/4 ignored; Windows 257 passed/0 failed/1 ignored). Keep each result attached to its actual tested SHA and role.
 - PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 pin, ledger pin, acceptance contract, tests, and DoD remain unchanged.
+
+## 2026-11-21 — Issue #104 native deletion checkpoint
+
+- PR #113 exact source HEAD after implementation: ffa51679e998e97bca0730a182d8887a245e03d0; branch security/issue-104-root-confinement-20261118 remains OPEN / DRAFT / UNMERGED.
+- New Windows-only FilesystemAuthority::delete uses retained parent handles without FILE_SHARE_DELETE and NtSetInformationFile(FileDispositionInformation) against the checked leaf handle. It rejects reparse points, non-regular files, volume mismatches, and hard links. Two focused source tests were added; no build/test is claimed yet.
+- Linux/Android/macOS delete remains unsupported and returns UnsupportedPlatform; no unsafe name-based unlinkat fallback is enabled. Android nested paths remain fail-closed; macOS nested writes remain fail-closed; Linux nested writes remain dependent on detached-mount primitives and host privileges.
+- Capability/adapter expansion is deliberately deferred. Issue #104 remains OPEN / NOT ACCEPTED; E4, full platform/race matrix, host-root integration, and release gate are not promoted.
