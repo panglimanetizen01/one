@@ -74,20 +74,23 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED); PR #113 HEAD at this register update is recorded below.
+**Current code-bearing source SHA:** `7744e46849f97b5868a6a75ee365b6f72cca5609`  
+**Current PR #113 documentation HEAD:** `48b8a3235d8b23653764ef005ca5946598182545` (8 documentation commits after the code-bearing SHA; no runtime source changed in that delta).
 
-Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
+Current source implementation boundaries (source inspection; platform-specific acceptance remains separate):
+- Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + beneath-resolved `openat2` and `renameat2`, failing closed when required primitives are unavailable.
+- Windows retains native handle-relative read/write/delete with reparse-point, volume, link-count, and retained-parent protections.
+- Android read/write are direct-child-only. Multi-component paths return `UnsupportedPlatform` before traversal because Termux/app seccomp can terminate the process with SIGSYS on `openat2`; do not restore nested openat2 or use a racy component-walk fallback. Delete remains unavailable.
+- macOS nested reads use XNU beneath/no-follow/unique path flags and mount identity checks. Nested writes have a source candidate using root-staged temporary files and `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`; native tests exist but this candidate has not been built/run on macOS. Delete remains unavailable.
+- POSIX delete (Linux/Android/macOS) remains fail-closed. Do not substitute check-then-`unlinkat`: the API does not bind unlink to the previously validated file handle, so leaf identity can race.
+- The CLI host injects one `FilesystemAuthority` rooted at the host working directory; requested source/target does not select the authority. The read/write/delete capability gates remain distinct.
 
-Current implementation boundaries:
-- Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(NOSYMFOLLOW)` + `openat2`, failing closed when required kernel/security primitives are unavailable.
-- Windows retains the native handle-relative/reparse-point backend.
-- Android nested reads use kernel `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, followed by regular-file, single-link, device, and `STATX_MNT_ID` checks. Nested writes now route through the detached recursive mount transaction shared with Linux: `open_tree` + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2` + `renameat2`, with fail-closed behavior when kernel/SELinux policy denies required primitives. Direct-child writes retain the statx mount-ID checks.
-- macOS nested reads now use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE`, then verify regular-file, single-link, and `fstatfs` filesystem-ID + mount-point identity. Unsupported kernels fail closed. Direct-child atomic writes remain supported; nested writes remain fail-closed because a race-safe atomic publication primitive that also excludes mount crossings is not yet proven.
-- The Linux nested-write test hook is now forwarded to the detached-mount helper instead of being replaced by a no-op.
-- Android/macOS hard-link, nested-path, and side-effect regressions remain NOT RUN. No build or platform support is claimed.
-- Verifier success does not itself constitute Issue #104 acceptance.
+Exact-SHA build evidence:
+- GitHub Actions One CI #44900738968 passed Ubuntu #136835893296 and Windows 2025 #136835893110 on source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609`; Build, Clippy, Tests, and Complete job all SUCCESS.
+- The docs-only HEAD `48b8a3235d8b23653764ef005ca5946598182545` then passed One CI #44901074701 on Ubuntu #136836894258 and Windows 2025 #136836894522; Build, Clippy, Tests, and Complete job all SUCCESS. Compare confirms the 8-commit delta from source SHA changes verification docs only.
+- These are Ubuntu/Windows hosted results. They do not prove Android or macOS native compilation/runtime, POSIX delete, real Linux mount-boundary behavior, or full Issue #104 acceptance.
 
-**Next action:** continue closing implementation gaps against the unchanged Issue #104 contract. Keep Issue #104 OPEN / NOT ACCEPTED until exact-SHA Unix and Windows adversarial execution proves actual side effects and race confinement. Do not alter criteria, fixed ledger weights, protected verifier pin, or DoD checkboxes.
+**Next implementation work:** keep the current fail-closed boundaries; close the remaining production gaps against the unchanged contract, prioritizing a race-safe POSIX delete primitive (or a documented platform capability boundary), native macOS build/runtime for the XNU nested-write candidate, and Android's safe supported-path boundary. Do not change acceptance criteria, fixed ledger weights, protected verifier pin, or DoD checkboxes.
 
 ### B-003 — Formal v0.1 release gates
 
