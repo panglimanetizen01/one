@@ -1001,6 +1001,12 @@ mod macos_native {
         let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), flags, mode) };
         if fd < 0 {
             let error = std::io::Error::last_os_error();
+            #[cfg(test)]
+            eprintln!(
+                "macOS openat failed: path={:?} flags={flags:#x} errno={:?} error={error}",
+                name.to_string_lossy(),
+                error.raw_os_error()
+            );
             // XNU reports ENOTCAPABLE when O_UNIQUE rejects a multiply-linked
             // vnode. Preserve that as the strict hard-link policy result.
             if flags & O_UNIQUE != 0 && error.raw_os_error() == Some(93) {
@@ -1262,7 +1268,13 @@ mod macos_native {
                 )
             };
             if renamed != 0 {
-                return Err(map_error(std::io::Error::last_os_error()));
+                let error = std::io::Error::last_os_error();
+                #[cfg(test)]
+                eprintln!(
+                    "macOS renameatx_np failed: flags={RENAME_FLAGS:#x} errno={:?} error={error}",
+                    error.raw_os_error()
+                );
+                return Err(map_error(error));
             }
             temporary_guard.committed = true;
             parent.sync_all().map_err(|_| FilesystemError::IoFailure)?;
