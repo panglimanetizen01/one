@@ -74,16 +74,17 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `52fcfb2706fcb48e9599d75f9086578279f1bbac` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `c3037b0745a50f0d369926b8e1acda45611639ba`.
+**Latest source/test candidate:** `9fe53815f83701a62536472f8a3c87cebac22e7a` (NOT BUILT/TESTED); PR #113 documentation-sync HEAD at this checkpoint is recorded in the appended update.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
 Current implementation boundaries:
 - Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(NOSYMFOLLOW)` + `openat2`, failing closed when required kernel/security primitives are unavailable.
 - Windows retains the native handle-relative/reparse-point backend.
-- Android reads now use kernel `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, followed by regular-file, single-link, device, and `STATX_MNT_ID` checks; this enables safely resolved nested reads. Direct-child atomic writes remain. Nested writes still fail closed because a plain parent fd does not prevent parent rename-out.
-- macOS has direct-child read/atomic-replace support with `O_NOFOLLOW`, single-link checks, `fstatfs` filesystem-ID + mount-point equality, exclusive temporary files, file/root sync, and root-relative rename. Nested reads and writes remain fail-closed because POSIX directory descriptors do not prevent parent rename-out; no safe native anti-move primitive is currently implemented.
-- Android/macOS hard-link side-effect regressions were added. All newly added platform regressions remain NOT RUN.
+- Android nested reads use kernel `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, followed by regular-file, single-link, device, and `STATX_MNT_ID` checks. Nested writes now route through the detached recursive mount transaction shared with Linux: `open_tree` + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2` + `renameat2`, with fail-closed behavior when kernel/SELinux policy denies required primitives. Direct-child writes retain the statx mount-ID checks.
+- macOS nested reads now use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE`, then verify regular-file, single-link, and `fstatfs` filesystem-ID + mount-point identity. Unsupported kernels fail closed. Direct-child atomic writes remain supported; nested writes remain fail-closed because a race-safe atomic publication primitive that also excludes mount crossings is not yet proven.
+- The Linux nested-write test hook is now forwarded to the detached-mount helper instead of being replaced by a no-op.
+- Android/macOS hard-link, nested-path, and side-effect regressions remain NOT RUN. No build or platform support is claimed.
 - Verifier success does not itself constitute Issue #104 acceptance.
 
 **Next action:** continue closing implementation gaps against the unchanged Issue #104 contract. Keep Issue #104 OPEN / NOT ACCEPTED until exact-SHA Unix and Windows adversarial execution proves actual side effects and race confinement. Do not alter criteria, fixed ledger weights, protected verifier pin, or DoD checkboxes.
@@ -761,3 +762,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - The Android duplicate `create_temp` was already removed and macOS helper added; latest static inventory confirms one definition in each backend. No compiler was run.
 - Added Android nested-read + symlink-parent escape regression; NOT RUN. No build/test/CI/verifier/platform matrix ran. Issue #104 remains OPEN / NOT ACCEPTED.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `95c2513d793a4c82440099771d457615c6a6531e`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — guarded Android nested writes and macOS nested reads
+
+- Code-bearing source candidate: `9fe53815f83701a62536472f8a3c87cebac22e7a` (`crates/one-core/src/filesystem.rs`). NOT BUILT/TESTED.
+- Android nested writes now call the shared detached-mount transaction used by Linux. It clones the retained root mount, applies recursive `MOUNT_ATTR_NOSYMFOLLOW`, resolves under the clone with `openat2` (`BENEATH | NO_SYMLINKS | NO_XDEV`), writes an exclusive temporary file, and atomically publishes with `renameat2`; unsupported/denied primitives fail closed. Android nested reads remain kernel-resolved through `openat2`.
+- macOS nested reads now use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` identity checks. Unsupported kernels fail closed. macOS nested writes remain fail-closed pending a proven atomic no-cross-mount publication strategy.
+- Source tests were updated for capability-gated Android nested write behavior and supported-kernel macOS nested reads; NOT RUN. No compiler, Android device test, macOS test, CI run, or E4 verifier result is claimed.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Latest PR HEAD before this register update: `70a3fa7239a93738c0d70358e4287692fc5e0e09`. Base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Issue #104 remains OPEN / NOT ACCEPTED.
