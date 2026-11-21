@@ -1043,3 +1043,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - This is narrowed single-process mode, not descendant-tree termination. Brokered process creation via launchd/Mach services is not proven blocked. `ProcessAdapter` continues to exclude macOS; no support claim is promoted. `sandbox-exec` is deprecated and must fail closed if missing/rejected.
 - Updated existing docs: Issue #105 status, implementation status, evidence matrix, live checkpoint, changelog, architecture note, user feature status, master continuation prompt, and Notion Skill. No duplicate tracker created.
 - Issue #105 remains OPEN / NOT ACCEPTED. No main, merge, verifier pin, fixed ledger/DoD, or release state changed.
+
+## 2026-11-21 — master continuation prompt checkpoint corrected
+
+- Updated the existing master prompt in commit `52bf6986a726f4e874a1b679501969d347d6cb1c` to distinguish the latest combined code candidate `3bad0196e9352871d09cb9b966cf6b393a866603` from the filesystem-specific candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`.
+- Documentation-only; no source/test evidence, acceptance, fixed ledger/DoD, verifier pin, main, merge, or release state changed.
