@@ -137,3 +137,8 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - Candidate `3bad0196e9352871d09cb9b966cf6b393a866603` is NOT BUILT / NOT TESTED. Issue #105 remains OPEN / NOT ACCEPTED.
 
 - Extend the ProcessAdapter platform-metadata regression to macOS so the experimental Seatbelt single-process runner remains unadvertised until brokered process creation and native acceptance are resolved. Source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c` is NOT BUILT / NOT TESTED.
+
+### Build blocker correction — Project ONE (2026-11-21)
+- Fix Rust parser errors in the process escape probe by parenthesizing unsafe `setpgid` and `setsid` call expressions before comparisons.
+- Commit: `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`.
+- The pre-fix GitHub Actions Ubuntu and Windows Build jobs failed on exact SHA `168ff06e7a8d09e575e6ac71513399c9f1f4f994`; the fixed SHA has not yet been rebuilt. No verification or release status is promoted.
