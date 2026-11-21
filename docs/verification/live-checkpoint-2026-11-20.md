@@ -945,3 +945,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (NOT BUILT / NOT TESTED). Latest blocker-register checkpoint before this append: `5126d9ef894c4ccbd7b44868bc1408fbb91db956`.
 - No evidence, platform support, acceptance, or release state changed.
+
+## 2026-11-21 — live build failure and source fix
+
+- PR #113 exact pre-fix HEAD `168ff06e7a8d09e575e6ac71513399c9f1f4f994`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; OPEN / DRAFT / UNMERGED.
+- GitHub Actions run #44898144880 failed Build on Ubuntu #136828104281 and Windows 2025 #136828104468. Logs pinpoint unparenthesized unsafe expressions in `crates/one-core/src/interop.rs:1207,1209`.
+- Fixed in commit `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`. New HEAD is the fix commit. No post-fix workflow or status context was present at readback; no PASS is claimed.
+- CircleCI on the pre-fix SHA had FAILURE context with workflow `16c4f795-1bcb-4a24-9935-ffd0e553f30c` / job `b7e21b09-8205-4d29-a9c7-a2f555e5e913`; provider logs and exact pipeline revision mapping remain unavailable. CircleCI-specific root cause UNKNOWN.
+- Issue #104/#105 remain OPEN / NOT ACCEPTED. Continue implementation-first after obtaining the first fresh build signal; do not restart broad verification or promote release gates.
