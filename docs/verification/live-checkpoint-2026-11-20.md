@@ -940,3 +940,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Latest combined source/test candidate: `79593d2f225284eff841e67c8eb9a1e005611981` (NOT BUILT / NOT TESTED). Latest blocker register checkpoint before this live-checkpoint append: `ea94c47ef5bc6af1d683032d70254d25ea00fa73`.
 - This SHA refresh does not change the macOS single-process limitation, ProcessAdapter exclusion, Android nested fail-closed status, delete primitive gaps, or Issue #104/#105 acceptance state.
+
+## 2026-11-21 — exact source candidate refresh
+
+- Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (NOT BUILT / NOT TESTED). Latest blocker-register checkpoint before this append: `5126d9ef894c4ccbd7b44868bc1408fbb91db956`.
+- No evidence, platform support, acceptance, or release state changed.
