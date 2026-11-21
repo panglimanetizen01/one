@@ -473,3 +473,11 @@ For Termux continuation, read [TERMUX_WORKTREE_MAP.md](TERMUX_WORKTREE_MAP.md) f
 - Minimal fix committed on the PR branch as `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`: `(unsafe { libc::setpgid(0, 0) }) == 0` and `(unsafe { libc::setsid() }) >= 0`.
 - Post-fix exact-SHA status readback: no GitHub status contexts and no GitHub Actions workflow run yet associated with `502a888...`. This is NOT PASS and does not prove CircleCI triggered. The source fix is awaiting a fresh build.
 - Keep B-001 PARTIAL / NOT CLOSED. Do not attribute the CircleCI failure to the Rust syntax error until provider-side pipeline → workflow → job → revision/log evidence independently establishes that same failure.
+
+## 2026-11-21 — fresh CI status on exact PR #113 SHA
+
+- Exact PR #113 HEAD: `7744e46849f97b5868a6a75ee365b6f72cca5609`.
+- GitHub Actions One CI run #44900738968: Ubuntu job #136835893296 SUCCESS and Windows 2025 job #136835893110 SUCCESS. Both jobs report Build, Clippy, Tests, and Complete job SUCCESS on this exact SHA.
+- CircleCI status context remains PENDING on the same SHA: `ci/circleci: one-linux`, workflow `6e00388e-687e-497b-b95d-20a38a2cb535`, job `753aeb6f-e6cf-40d2-ada0-daef15471b88`. This session cannot retrieve provider pipeline details or step logs. Pipeline → workflow → job → `vcs.revision` mapping remains incomplete; do not mark B-001 closed based on this status.
+- Ubuntu job logs include the six Linux process-group adversarial regressions for `setsid` and `setpgid` under normal completion, timeout, and output overflow; all six report `ok`. The child-helper test cases are intentionally ignored when run standalone and are launched by the parent regressions.
+- This evidence is scoped to the exact GitHub Actions source SHA and Ubuntu/Windows jobs only. It is not CircleCI provider-log evidence, Android/Termux evidence, or complete Issue #105 acceptance.
