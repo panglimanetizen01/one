@@ -1026,3 +1026,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated the existing `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `fd6583901729c9b217a7c7ba56a2b3069f82613b` with the XNU nested-write candidate, Android direct-child-only correction, POSIX delete boundary, and Seatbelt process-containment research status.
 - This is documentation-only and does not alter the code-bearing candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`, test evidence, acceptance state, protected verifier pin, fixed ledger/DoD, or release status.
+
+## 2026-11-21 — macOS Seatbelt process-creation guard candidate
+
+- Source commits `ff60c7bd8a058f0950a0d67bb596d94feb8e6803` (runtime) and `ab799dd5faa5c50b5c75069c1d0b91a43511df93` + `3bad0196e9352871d09cb9b966cf6b393a866603` (adversarial source probes and pipe-failure cleanup). Latest code-bearing process candidate: `3bad0196e9352871d09cb9b966cf6b393a866603`, NOT BUILT / NOT TESTED.
+- macOS runtime source uses `/usr/bin/sandbox-exec` with `(version 1) (allow default) (deny process-fork)`. XNU `fork1()` applies `mac_proc_check_fork()` and its spawn path uses `PROC_CREATE_SPAWN`, so direct fork/vfork/posix_spawn should be denied while exec replacement remains allowed. Official source: `apple-oss-distributions/xnu/bsd/kern/kern_fork.c` and `kern_exec.c`.
+- Regression source covers fork, vfork, posix_spawn, posix_spawnp, exec replacement, deadline, and stdout overflow. No native macOS build/test was run.
+- Narrowed guarantee only: single-process execution, not tree-kill. Brokered launchd/Mach-service process creation is unproven. `ProcessAdapter` metadata intentionally excludes macOS. `sandbox-exec` is deprecated and must fail closed if missing/rejected.
+- No change to accepted platform support. Issue #105 remains OPEN / NOT ACCEPTED.
