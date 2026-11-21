@@ -770,3 +770,8 @@ Latest source candidate is `568d9360f0beec63c10fbeae9cac63f384bd082f` (NOT BUILT
 ## 2026-11-21 — Windows compile failure and correction
 
 Latest source candidate `74df3aa901732c8eb3adaac728162715fc3a4961` is NOT BUILT/TESTED. Run #2410 on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` ended Ubuntu Build PASS / Clippy FAIL / Tests SKIPPED and Windows Build FAIL. Windows failure came from Linux writer functions being compiled on Windows and unstable Windows `MetadataExt` methods. The latest source gates Linux-only functions correctly and uses native handle metadata for Windows root identity; no rerun evidence yet. Earlier Clippy errors were also corrected in descendants. Android Termux and macOS native tests remain NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — Termux Android compile blockers and correction
+
+User-confirmed Termux worktree fast-forwarded cleanly to 04143d1a9b11f55e1f2ae38960f35d32d2904a11 (Rust 1.99.1, aarch64-linux-android). Both workspace Clippy and focused Android filesystem tests failed before tests ran: std::io::Write was not imported on Android for write_all, and the Android Statx Default derive could not support [u8; 76]. Corrected on PR branch in ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4 by importing Write for Linux/Android and splitting reserved padding into 32+32+12 byte arrays while retaining the 256-byte ABI size assertion. This correction is NOT BUILT/TESTED yet. Re-run exact-SHA Clippy and Android tests after syncing. Issue #104 remains OPEN / NOT ACCEPTED.
