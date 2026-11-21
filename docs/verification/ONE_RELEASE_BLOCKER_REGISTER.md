@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `568d9360f0beec63c10fbeae9cac63f384bd082f` (NOT BUILT/TESTED); PR #113 HEAD at this register update is recorded below.
+**Latest source/test candidate:** `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED); PR #113 HEAD at this register update is recorded below.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -780,3 +780,11 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Exact-SHA GitHub Actions run #2410 (`44845255637`) ran on earlier source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build SUCCESS, Clippy FAILURE, Tests SKIPPED. Clippy reported a manual char-comparison lint in `adapter.rs` and ignored SQLite configuration `Result`s in `database.rs`. Descendant source commits `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab` correct these without weakening lint policy; macOS direct-child fallback was refined in `568d9360f0beec63c10fbeae9cac63f384bd082f`. These fixes have not yet been shown to pass CI.
 - Windows leg of run #2410 was still IN_PROGRESS at `Install Android NDK (Windows)` on last readback; no Windows result is claimed. CircleCI for the earlier source candidate remained PENDING; no CircleCI success is claimed for the latest candidate.
 - Android native tests, macOS native tests, focused platform builds, and adversarial nested-write race/mount tests remain outstanding. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED; no main, verifier pin, fixed ledger, or acceptance criteria changes.
+
+
+## 2026-11-21 — Windows build blocker correction after run #2410
+
+- Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED).
+- Exact-SHA run #2410 (`44845255637`) on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` ended with Ubuntu Build SUCCESS / Clippy FAILURE / Tests SKIPPED and Windows Build FAILURE. Windows errors showed Linux-only writer functions were compiled on Windows (missing Unix std APIs/libc/Linux helpers) and unstable `std::os::windows::fs::MetadataExt::{volume_serial_number,file_index}` calls.
+- Corrected in source descendants: `74df3aa901732c8eb3adaac728162715fc3a4961` gates Linux writer functions to Linux only and replaces unstable Windows metadata APIs with a no-reparse NT handle reopen plus `GetFileInformationByHandle` volume/file-index comparison. Earlier Clippy corrections remain in `82a90b41...` and `c23bd0e0...`.
+- No rerun on the corrected candidate is confirmed. Android native tests and macOS native tests remain outstanding; no platform support is promoted. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
