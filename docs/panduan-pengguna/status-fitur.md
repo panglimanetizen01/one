@@ -427,3 +427,11 @@ Status fitur: Verified untuk penghapusan file melalui backend Windows saja. Belu
 - CLI sekarang menerima `--izinkan filesystem.delete --target <path>` dan menghubungkannya ke host `FilesystemAuthority`. Implementasi dan tes CLI pada branch terbaru belum dibangun/diuji.
 - Linux, Android, dan macOS belum memiliki primitive delete yang terbukti setara dengan kontrak object-identity dan race confinement; adapter tetap tidak tersedia/fail-closed. Jangan gunakan check-then-`unlinkat` sebagai pengganti.
 - Issue #104 tetap OPEN / NOT ACCEPTED; status eksperimental ini hanya berlaku pada kandidat PR, bukan canonical `main` atau rilis.
+
+## 2026-11-21 — macOS nested filesystem write candidate (belum diverifikasi)
+
+- macOS nested write kini memiliki kandidat native berbasis XNU: temporary file eksklusif dibuat di root tepercaya, lalu dipublikasikan menggunakan `renameatx_np` dengan `RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY`. Parent target divalidasi dengan `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` dan `fstatfs`; staging pada root mount membuat rename lintas-mount gagal dengan `EXDEV`.
+- Regresi sumber mencakup nested replacement, parent symlink dengan sentinel luar root, hard-link, dan parent yang dipindahkan keluar root tepat sebelum rename. Commit kode terakhir `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`; semua perubahan ini SOURCE ONLY / NOT BUILT / NOT TESTED. Perlu macOS native run; kernel lama yang tidak mendukung flag harus fail-closed.
+- Koreksi Android: source saat ini hanya mendukung operasi direct-child. Semua target multi-komponen untuk read/write ditolak sebelum traversal. Proposal nested `openat2`/detached-mount dari checkpoint terdahulu bukan implementasi aktif; Termux seccomp yang diamati membunuh `openat2` dengan SIGSYS. Jangan memakai component-walk fallback.
+- Penghapusan macOS tetap tidak tersedia. XNU `unlinkat` menyediakan `AT_RESOLVE_BENEATH`, `AT_SYMLINK_NOFOLLOW_ANY`, dan `AT_UNIQUE`, tetapi tidak menyediakan flag no-cross-mount atomik. Precheck `fstatfs` terpisah tidak menutup race mount. Linux/Android juga tetap fail-closed; Windows handle-bound delete dipertahankan.
+- Issue #104 tetap OPEN / NOT ACCEPTED. Tidak ada hasil build/test/verifier yang diklaim.
