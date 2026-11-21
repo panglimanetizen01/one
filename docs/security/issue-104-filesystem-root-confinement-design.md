@@ -1,7 +1,7 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
-**Latest code-bearing source at 2026-11-21 checkpoint:** `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT/TESTED; includes XNU nested-write candidate)  
+**Latest code/test SHA at 2026-11-21 checkpoint:** `4f3266799bc900f24369b35386536f6567dcc7a5` (native macOS read/write regressions run; see section 14)  
 **Latest CircleCI-confirmed PR #113 HEAD:** `26a34efb6d0908bd02738a7b05090f96051a6dc7` (`ci/circleci: one-linux` SUCCESS; workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Later documentation-only commits are not credited with this result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
@@ -104,7 +104,7 @@ The test harness must assert side effects, not merely error codes or metadata sn
 
 ## 9. Explicit non-acceptance
 
-This design document is not an implementation, a test result, or a security certification. No source code has been changed by this checkpoint. Issue #104 remains OPEN. Do not close it, promote DoD/E4 evidence, or claim the filesystem sandbox is secure based on this document.
+This design document is not, by itself, an implementation, a test result, or a security certification. The original design checkpoint predates the implementation evidence in section 14. Issue #104 remains OPEN. Do not close it, promote DoD/E4 evidence, or claim the filesystem sandbox is secure based on this document.
 
 ## 10. Independent verifier's current exact test filters
 
@@ -1149,3 +1149,15 @@ The public `FilesystemAuthority` macOS regression previously still expected nest
 - A kernel that rejects the required XNU flags may return `UnsupportedPlatform`, but must leave no target and no `.one-write-*` root staging artifact.
 - A symlinked parent must be denied as `ResolutionFailed` or fail-closed `UnsupportedPlatform`, with the outside sentinel unchanged.
 - The test remains macOS-gated and has not been executed on a native macOS runner. Ubuntu/Windows CI cannot validate the XNU syscall/flag behavior. The candidate remains NOT VERIFIED; Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 14. Native macOS nested filesystem update — 2026-11-21
+
+- Exact current PR #113 source/test HEAD: 4f3266799bc900f24369b35386536f6567dcc7a5.
+- macOS native workflow run #44905624655 passed on this exact SHA on both ARM64 runners:
+  - macOS 15.8.2 / job #136850447001: 13 passed, 0 failed, 4 ignored in the macos_ filter; 6 passed, 0 failed in the nested_write_ filter.
+  - macOS 26.6 / job #136850447187: same counts. Nested reads and nested writes are required and pass on this runner.
+- The native nested-read test is mandatory on both runners. The macOS 15 runner returns UnsupportedPlatform for the atomic nested-write contract when forced to require it; this is deliberately treated as fail-closed, with the original target unchanged and no staging-file leak. The macOS 26 runner must and does complete the nested atomic write.
+- Nested write uses XNU O_RESOLVE_BENEATH | O_NOFOLLOW_ANY for safe target/parent resolution and renameatx_np with RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY for publication. verify_same_mount compares the Darwin filesystem identity and mountpoint before publication. Different mounts remain denied; EXDEV is not converted into copy fallback.
+- Cleanup hardening commit 74c12778ba3dd41df69503c452f416e54838a47b moves every post-staging fallible operation into the explicit cleanup result path. Follow-up typo correction commit 493fe45a240fe9ab100fe49d9ff9429d1f3a5eaf. Mandatory nested-read test commit be1b8f5a94d243e6063f2335f9f204fe802f8503. CI capability-gate commit 4f3266799bc900f24369b35386536f6567dcc7a5.
+- The macOS implementation intentionally stages its temporary file under the retained root so cleanup remains root-handle-relative even if a nested parent is moved. This differs from the generic same-directory-temp design statement in sections 4 and 6. Do not silently declare the contract satisfied: reconcile this design choice against the normative atomic-write contract before Issue #104 acceptance.
+- macOS delete remains UnsupportedPlatform. Issue #104 remains OPEN / NOT ACCEPTED. E4 Windows/Unix named filters are present in source but not yet rerun against this exact SHA; the independent verifier canonical pin must remain unchanged until the full implementation candidate is ready.
