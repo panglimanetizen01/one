@@ -935,3 +935,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the ProcessAdapter platform-metadata regression to macOS, ensuring the experimental Seatbelt runner is not advertised as a supported capability.
 - NOT BUILT / NOT TESTED. macOS ProcessAdapter remains unavailable pending native tests and brokered-launch containment proof.
+
+## 2026-11-21 — latest source/test candidate refresh
+
+- Latest combined source/test candidate: `79593d2f225284eff841e67c8eb9a1e005611981` (NOT BUILT / NOT TESTED). Latest blocker register checkpoint before this live-checkpoint append: `ea94c47ef5bc6af1d683032d70254d25ea00fa73`.
+- This SHA refresh does not change the macOS single-process limitation, ProcessAdapter exclusion, Android nested fail-closed status, delete primitive gaps, or Issue #104/#105 acceptance state.
