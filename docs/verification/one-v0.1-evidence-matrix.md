@@ -1017,3 +1017,22 @@ CircleCI on docs HEAD `48b8a323...` remains PENDING (workflow `1d5dbab5-d047-4bb
 | `830a70e5c5d07fd87c5c1e792853e146be04a232` | CircleCI `ci/circleci: one-linux` | Linux | PENDING | Workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2` |
 
 No native macOS result is claimed. Android nested paths and POSIX delete remain fail-closed; Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Issue #104 exact-SHA evidence refresh — 2026-11-21
+
+| Source SHA | Workflow / job | Platform | Result | Scope |
+|---|---|---|---|---|
+| 6403592796b9827e4bffe26a982dfc66afc75d9d | macOS Native Filesystem #44906889694 / #136854402729 | macOS 15 ARM64 | SUCCESS | 15 macos_ tests passed, 0 failed, 4 ignored; 8 nested_write_ tests passed, 0 failed. Nested writes remain fail-closed on this runner. |
+| 6403592796b9827e4bffe26a982dfc66afc75d9d | macOS Native Filesystem #44906889694 / #136854402906 | macOS 26 ARM64 | SUCCESS | 15 macos_ tests passed, 0 failed, 4 ignored; 8 nested_write_ tests passed, 0 failed. Native nested reads and writes required and passed. |
+| 6403592796b9827e4bffe26a982dfc66afc75d9d | One CI #44906889708 / Ubuntu + Windows 2025 | Linux + Windows | IN_PROGRESS at last read | Ubuntu and Windows were still installing cross-toolchains; no build/test result yet. |
+| 6403592796b9827e4bffe26a982dfc66afc75d9d | CircleCI ci/circleci: one-linux | Linux | PENDING at last read | Workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2; job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider page and .vcs.revision mapping unavailable. |
+
+### Newly added platform regression source inventory
+
+- Windows: windows_volume_identity_rejects_mismatch validates the shared volume-serial guard; filesystem_writer_rejects_directory_junction_escape_without_touching_outside_file uses a real directory junction and checks the outside sentinel and staging cleanup; filesystem_write_adapter_writes_absolute_target_inside_project_root validates positive absolute in-root write.
+- Android: android_statx_mount_id_matches_same_mount_and_rejects_devfs validates statx STATX_MNT_ID equality for root/nested and inequality for /dev. It has NOT been executed on a real Android/Termux process.
+- Existing Unix E4 filters remain 3 descriptor_relative_read_rejects_, 5 descriptor_relative_write_, and 1 descriptor_relative_walk_rejects_.
+- Independent verifier PR #51 still pins historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. The final E4 workflow must include the new Windows and Android test filters after the implementation candidate is frozen; do not promote the pin before that point.
+
+No release gate, fixed ledger, DoD, E1-E6 acceptance, or Issue #104 status is promoted by this evidence. Issue #104 and #105 remain OPEN / NOT ACCEPTED.
+
