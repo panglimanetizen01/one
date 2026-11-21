@@ -883,3 +883,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Windows logs confirm the three new delete tests and the existing parent-rename exclusion test passed; Windows one-core library summary was 156 passed / 0 failed.
 - Latest PR #113 HEAD after documentation sync is later than this code/test SHA; subsequent commits in this sync are documentation-only. Preserve the exact tested SHA in evidence.
 - The Windows delete source slice is validated on CI, but POSIX delete remains unsupported; Issue #104 remains OPEN / NOT ACCEPTED. E4 and complete platform/race acceptance remain open.
+
+## 2026-11-21 — filesystem.delete language bridge checkpoint
+
+- Latest code checkpoint: `0fa43eb0be53c8e79424597ece055147872b35c4` on PR #113 branch; PR remains OPEN / DRAFT / UNMERGED.
+- Added explicit delete capability, semantic ID/effect, Indonesian source grammar, semantic validation, IR lowering, Windows-only adapter, and interpreter registration.
+- The broad `filesystem` capability still implies read/write only. Delete requires its own explicit policy grant and target scope.
+- Added focused tests for parser, semantic typing, IR lowering, default policy denial with unchanged target, adapter platform metadata/authority requirements, and Windows explicit-grant deletion.
+- These language-bridge tests have NOT RUN on this SHA. Native Windows delete backend tests remain separately proven at `6f2d5e2...`; do not conflate the two exact-SHA evidence sets.
+- Linux/Android/macOS delete stays unavailable/fail-closed. Android nested paths remain unsupported in the observed Termux seccomp profile; macOS nested writes remain fail-closed; Linux nested writes remain privilege/kernel dependent.
+- Issue #104 remains OPEN / NOT ACCEPTED. No protected E4 pin, ledger, acceptance criteria, main, PR merge, or release state changed.
