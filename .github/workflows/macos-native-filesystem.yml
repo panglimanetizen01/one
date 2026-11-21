@@ -39,7 +39,7 @@ jobs:
             curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 20 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
           fi
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-          source "$HOME/.cargo/env"
+          export PATH="$HOME/.cargo/bin:$PATH"
           rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' rust-toolchain.toml)"
           if [[ ! "$rust_toolchain" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "rust-toolchain.toml must pin an exact x.y.z release" >&2
