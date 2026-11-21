@@ -1724,6 +1724,13 @@ mod windows_native {
         }
     }
 
+    pub(super) fn volume_serial_matches(
+        root: &BY_HANDLE_FILE_INFORMATION,
+        candidate: &BY_HANDLE_FILE_INFORMATION,
+    ) -> bool {
+        root.dwVolumeSerialNumber == candidate.dwVolumeSerialNumber
+    }
+
     fn file_info(file: &File) -> Result<BY_HANDLE_FILE_INFORMATION, FilesystemError> {
         let mut info: BY_HANDLE_FILE_INFORMATION = unsafe { std::mem::zeroed() };
         let ok = unsafe {
@@ -1840,7 +1847,7 @@ mod windows_native {
         )?;
         let root_info = file_info(root)?;
         let path_info = file_info(&path_handle)?;
-        Ok(path_info.dwVolumeSerialNumber == root_info.dwVolumeSerialNumber
+        Ok(volume_serial_matches(&root_info, &path_info)
             && path_info.nFileIndexHigh == root_info.nFileIndexHigh
             && path_info.nFileIndexLow == root_info.nFileIndexLow)
     }
@@ -1917,7 +1924,7 @@ mod windows_native {
                 eprintln!("opened component is a reparse point: attrs=0x{:08X}", info.dwFileAttributes);
                 return Err(FilesystemError::ResolutionFailed);
             }
-            if info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber {
+            if !volume_serial_matches(&root_info, &info) {
                 #[cfg(test)]
                 eprintln!("opened component volume mismatch: root=0x{:08X} child=0x{:08X}", root_info.dwVolumeSerialNumber, info.dwVolumeSerialNumber);
                 return Err(FilesystemError::ResolutionFailed);
@@ -2522,6 +2529,22 @@ mod windows_root_tests {
         std::fs::remove_dir(alias).unwrap();
         std::fs::remove_dir_all(base).unwrap();
     }
+    #[test]
+    fn windows_volume_identity_rejects_mismatch() {
+        use windows_sys::Win32::Storage::FileSystem::BY_HANDLE_FILE_INFORMATION;
+
+        let mut root: BY_HANDLE_FILE_INFORMATION = unsafe { std::mem::zeroed() };
+        let mut same_volume: BY_HANDLE_FILE_INFORMATION = unsafe { std::mem::zeroed() };
+        let mut different_volume: BY_HANDLE_FILE_INFORMATION = unsafe { std::mem::zeroed() };
+
+        root.dwVolumeSerialNumber = 0x1122_3344;
+        same_volume.dwVolumeSerialNumber = 0x1122_3344;
+        different_volume.dwVolumeSerialNumber = 0x5566_7788;
+
+        assert!(super::windows_native::volume_serial_matches(&root, &same_volume));
+        assert!(!super::windows_native::volume_serial_matches(&root, &different_volume));
+    }
+
 }
 
 #[cfg(all(test, target_os = "linux"))]
