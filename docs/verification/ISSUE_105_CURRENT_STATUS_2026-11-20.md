@@ -69,3 +69,15 @@ Latest source commit: `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (`crates/one-co
 - Replaced the no-argument `rustc` smoke target (which can exit nonzero when no input file is supplied) with `whoami`, a no-argument command that emits output on Linux, Android and Windows.
 - Cfg-gated the smoke test to the platforms where ProcessAdapter advertises native containment, and included Android in the process-platform metadata regression.
 - Test source only; NOT RUN. No build/CI/verifier evidence is claimed. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Process-containment primitive review and adversarial source update — 2026-11-21
+
+Native implementation boundary reviewed in `crates/one-core/src/interop.rs`:
+
+- Linux/Android: `CommandExt::process_group(0)` creates an invocation process group; child `pre_exec` installs `PR_SET_NO_NEW_PRIVS` plus inherited seccomp before `exec`. The filter denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 ABI entry; `clone3` returns `ENOSYS` so compatible runtimes may fall back to `clone`, whose namespace flags are filtered. Cleanup uses `waitid(WNOWAIT)` to retain the direct-child PID, sends SIGKILL to the invocation group on normal exit, timeout, or output overflow, then reaps the direct child.
+- Windows: `PROC_THREAD_ATTRIBUTE_JOB_LIST` assigns the job during `CreateProcessW` before child execution; `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` is configured; `IsProcessInJob` verifies assignment; `TerminateJobObject` terminates remaining members and cleanup waits for active process count to reach zero. Job close remains the final safety net.
+- macOS: no equivalent non-escapable descendant-containment backend is implemented; process execution remains fail-closed and must not be advertised as supported.
+
+Source/test commit `5e79f351b887f3dee7f77ae3a2e8dd86e5d108ea` isolates each Linux/Android escaped-descendant test in a unique working directory so parallel test cases cannot share or overwrite one PID fixture. Commit `18bd42f1eecb7ca40dcf88a5b8d6456d15361f2e` adds direct `setpgid(0, 0)` escape probes for normal completion, timeout, and output overflow, complementing the existing `setsid` cases. Commit `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` corrects test-attribute placement after source review.
+
+All these changes are source-only and NOT BUILT / NOT TESTED. No process containment PASS or Issue #105 acceptance is claimed. Next evidence must run the exact-SHA adversarial matrix on supported Linux architectures and real Android/Termux, and re-run Windows Job Object descendants tests on the same candidate. Keep macOS fail-closed unless a separately reviewed native primitive can provide equivalent guarantees.
