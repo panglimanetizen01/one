@@ -961,3 +961,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Ubuntu job #136744590581 and Windows Server 2025 job #136744590451 both passed Build, Clippy, Tests, and deterministic artifact steps.
 - Windows tests passed: delete_uses_validated_handle_and_removes_nested_regular_file; delete_rejects_hard_links_without_removing_either_name; retained_delete_handle_blocks_leaf_rename; retained_parent_handle_blocks_directory_rename. Windows one-core library summary: 156 passed / 0 failed.
 - This closes the focused implementation/test slice only, not B-002 as a whole. Issue #104 remains OPEN / NOT ACCEPTED pending full E4 adversarial acceptance, host-root integration, remaining platform primitive coverage, and release contract evidence.
+
+## B-002 update — filesystem.delete capability bridge — 2026-11-21
+
+- Added explicit `Capability::FilesystemDelete`, `SemanticCapabilityId::FilesystemDelete`, and `EffectClass::Delete`; broad filesystem/read/write grants do not imply delete.
+- Added source form `hapus berkas "path"`, parser/type validation/IR lowering, `FileDeleteAdapter`, and interpreter registration with the shared host authority. Adapter metadata advertises Windows only.
+- Code checkpoint SHA: `0fa43eb0be53c8e79424597ece055147872b35c4`. Language bridge tests are NOT YET BUILT / TESTED. The native Windows delete implementation remains separately verified at source/test SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` (One CI #44870781889 SUCCESS).
+- Next evidence must be exact-SHA CI for the current language bridge, including parser/semantic/IR tests, default-denial/no-side-effect, Windows explicit-grant deletion, and all existing workspace tests. Do not repeat the prior native-only test run; it does not cover these source changes.
+- B-002 / Issue #104 remains OPEN / NOT ACCEPTED. POSIX delete, Android/macOS nested path boundaries, Linux nested mount/privilege evidence, host-root integration, and full E4 remain outstanding.
