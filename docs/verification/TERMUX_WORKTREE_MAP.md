@@ -88,3 +88,10 @@ After safely synchronizing the existing worktree, continue the current B-001 evi
 - Both workspace Clippy and focused Android filesystem tests were attempted. Both stopped at compile time on missing Android std::io::Write import and Statx [u8; 76]: Default derive; no Android test body ran.
 - Corrected in source commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4. This SHA has not been built/tested yet.
 - Before the next build, re-check git status -sb and git status --porcelain=v1, then fetch and fast-forward only if clean. Do not assume the worktree is current. Read this map before any further Git commands; do not create another worktree.
+
+
+## Termux test results — 2026-11-21 (SHA 8b3cb521)
+
+- Clean worktree fast-forwarded to `8b3cb52168ed8d4961ce4e47bcc3410f9a0fd7ff`; Rust/Cargo 1.99.1, Android host.
+- `cargo clippy --workspace --all-targets -- -D warnings`: `one-core` checked, then failed because `run` helper in `crates/one-cli/tests/filesystem_write.rs` was unused on Android. Corrected with platform cfg in commit `f9dd400b21670fd07c5498307714a9b7ea931d18`; not yet tested.
+- Focused Android test binary compiled; 5 tests discovered. Root final symlink test passed. Hard-link test failed in fixture setup with `PermissionDenied` from `std::fs::hard_link`; process subsequently died with SIGSYS. Suite incomplete; do not count as pass. Next isolate each test individually after syncing new HEAD. Never remove/relax hard-link security assertion.
