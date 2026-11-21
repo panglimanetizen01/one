@@ -70,7 +70,8 @@ jobs:
       - name: Run macOS-specific filesystem regressions
         shell: bash
         env:
-          ONE_REQUIRE_NATIVE_MACOS_NESTED_WRITE: ${{ matrix.runner == 'macos-26' && '1' || '0' }}
+          ONE_REQUIRE_NATIVE_MACOS_NESTED_READ: "1"
+          ONE_REQUIRE_NATIVE_MACOS_NESTED_WRITE: "1"
         run: cargo test --locked -p one-core macos_ -- --nocapture
 
       - name: Run nested atomic-write and cleanup regressions
