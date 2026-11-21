@@ -722,3 +722,11 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Run #2410 on `9fe53815f83701a62536472f8a3c87cebac22e7a` ended Ubuntu Build PASS, Clippy FAIL, Tests SKIPPED, Windows Build FAIL. Windows errors came from un-gated Linux writer code and unstable Windows MetadataExt APIs.
 - Commit `74df3aa901732c8eb3adaac728162715fc3a4961` gates Linux-only writers and compares Windows root identity through native no-reparse handles and `GetFileInformationByHandle`. Clippy corrections remain in ancestors `82a90b41...` and `c23bd0e0...`. No rerun is yet confirmed.
 - Continue with focused native Termux Android tests after safe fast-forward; macOS native tests and Windows/Ubuntu CI rerun remain outstanding. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — Termux Android compiler feedback and fix
+
+- User synced the clean PR #113 worktree $HOME/one-pr113 to 04143d1a9b11f55e1f2ae38960f35d32d2904a11; Android host toolchain: rustc 1.99.1, Cargo 1.99.1, aarch64-linux-android.
+- Exact-SHA cargo clippy --workspace --all-targets -- -D warnings and cargo test -p one-core filesystem::android_filesystem_tests -- --nocapture both failed before tests ran with the same two compiler errors: missing Android-scoped std::io::Write import and unsupported Default derive for [u8; 76] in Statx.
+- Fixed in PR source commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4: Write is now imported for Linux/Android, and the 76-byte reserved Statx field is represented as 32+32+12 byte arrays. The compile-time size_of::<Statx>() == 256 assertion remains.
+- This is a source correction only. New SHA is NOT BUILT/TESTED. Re-run both commands on exact SHA after safe fast-forward. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
