@@ -74,15 +74,15 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `be5566435394cc27bbeb863b78c69b0fe52f774c` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `a2b98ba20ab6473a69698825457031178391c93c`.
+**Latest source/test candidate:** `52fcfb2706fcb48e9599d75f9086578279f1bbac` (NOT BUILT/TESTED); PR #113 HEAD at the start of this implementation checkpoint was `c3037b0745a50f0d369926b8e1acda45611639ba`.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
 Current implementation boundaries:
 - Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(NOSYMFOLLOW)` + `openat2`, failing closed when required kernel/security primitives are unavailable.
 - Windows retains the native handle-relative/reparse-point backend.
-- Android has direct-child read/atomic-replace support with `O_NOFOLLOW`, mandatory `statx(STATX_MNT_ID)` equality, single-link checks, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed because POSIX directory descriptors do not prevent parent rename-out.
-- macOS has direct-child read/atomic-replace support with `O_NOFOLLOW`, single-link checks, `fstatfs` filesystem-ID + mount-point equality, exclusive temporary files, file/root sync, and root-relative rename. Nested paths fail closed because POSIX directory descriptors do not prevent parent rename-out.
+- Android reads now use kernel `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`, followed by regular-file, single-link, device, and `STATX_MNT_ID` checks; this enables safely resolved nested reads. Direct-child atomic writes remain. Nested writes still fail closed because a plain parent fd does not prevent parent rename-out.
+- macOS has direct-child read/atomic-replace support with `O_NOFOLLOW`, single-link checks, `fstatfs` filesystem-ID + mount-point equality, exclusive temporary files, file/root sync, and root-relative rename. Nested reads and writes remain fail-closed because POSIX directory descriptors do not prevent parent rename-out; no safe native anti-move primitive is currently implemented.
 - Android/macOS hard-link side-effect regressions were added. All newly added platform regressions remain NOT RUN.
 - Verifier success does not itself constitute Issue #104 acceptance.
 
@@ -751,3 +751,13 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - SQLite per-connection resource profile now also caps parser depth at 1,000, VDBE instructions at 1,000,000, and trigger recursion at 0, in addition to the previously recorded SQL/value/row/output/parameter and execution-time bounds.
 - No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
 - PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `20d16862bc7f51d0a5122884eb31223fc1b7bc7d`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — Android nested-read source implementation
+
+- Latest source/test candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one-core/src/filesystem.rs`, NOT BUILT/TESTED).
+- Android `open_relative` now resolves the entire relative path through kernel `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`; it then enforces regular-file, single-link, device, and `STATX_MNT_ID` checks. This enables nested reads without relying on a racy userspace parent walk.
+- Android nested writes remain fail-closed until an anti-move atomic replacement backend exists. macOS nested reads and writes remain fail-closed; ordinary `openat` descriptors do not pin a parent beneath the root.
+- The Android duplicate `create_temp` was already removed and macOS helper added; latest static inventory confirms one definition in each backend. No compiler was run.
+- Added Android nested-read + symlink-parent escape regression; NOT RUN. No build/test/CI/verifier/platform matrix ran. Issue #104 remains OPEN / NOT ACCEPTED.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `95c2513d793a4c82440099771d457615c6a6531e`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
