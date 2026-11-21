@@ -32,6 +32,13 @@ impl PlatformKind {
 pub struct AdapterMetadata { id: AdapterId, status: AdapterStatus, capabilities: Vec<Capability>, platforms: Vec<PlatformKind> }
 impl AdapterMetadata { pub fn new(id: AdapterId, status: AdapterStatus, capabilities: Vec<Capability>, platforms: Vec<PlatformKind>) -> Self { Self { id, status, capabilities, platforms } } pub fn id(&self) -> &AdapterId { &self.id } pub const fn status(&self) -> AdapterStatus { self.status } pub fn declares(&self, capability: Capability) -> bool { self.capabilities.contains(&capability) } pub fn available_on(&self, platform: PlatformKind) -> bool { self.platforms.contains(&PlatformKind::Any) || self.platforms.contains(&platform) } pub fn validate_request(&self, request: &CapabilityRequest) -> Result<(), AdapterError> { request.validate().map_err(AdapterError::InvalidRequest)?; if !self.declares(request.capability) { return Err(AdapterError::UndeclaredCapability); } Ok(()) } }
 
+fn filesystem_delete_platforms() -> Vec<PlatformKind> {
+    #[cfg(windows)]
+    { vec![PlatformKind::Windows] }
+    #[cfg(not(windows))]
+    { Vec::new() }
+}
+
 fn filesystem_platforms() -> Vec<PlatformKind> {
     #[cfg(target_os = "linux")]
     { vec![PlatformKind::Linux] }
@@ -71,6 +78,31 @@ impl ToolAdapter for FileReadAdapter {
         let path = match &request.capability().scope { ExecutionScope::Target(value) if !value.is_empty() => value, _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)) };
         let authority = self.authority.as_ref().ok_or(AdapterError::UnsupportedPlatform)?;
         authority.read(path).map(|output| AdapterResult { success: true, output }).map_err(map_filesystem_error)
+    }
+}
+
+pub struct FileDeleteAdapter { metadata: AdapterMetadata, authority: Option<Arc<FilesystemAuthority>> }
+impl FileDeleteAdapter {
+    pub fn new() -> Self {
+        Self { metadata: AdapterMetadata::new(AdapterId::new("filesystem.file.delete"), AdapterStatus::Implemented, vec![Capability::FilesystemDelete], filesystem_delete_platforms()), authority: None }
+    }
+    pub fn with_authority(authority: Arc<FilesystemAuthority>) -> Self {
+        Self { authority: Some(authority), ..Self::new() }
+    }
+}
+impl Default for FileDeleteAdapter { fn default() -> Self { Self::new() } }
+impl ToolAdapter for FileDeleteAdapter {
+    fn metadata(&self) -> &AdapterMetadata { &self.metadata }
+    fn invoke(&self, request: &AdapterRequest) -> Result<AdapterResult, AdapterError> {
+        self.metadata.validate_request(request.capability())?;
+        if !request.arguments().is_empty() { return Err(AdapterError::InvalidArguments); }
+        let path = match &request.capability().scope {
+            ExecutionScope::Target(value) if !value.is_empty() => value,
+            _ => return Err(AdapterError::InvalidRequest(crate::orchestration::OrchestrationValidationError::EmptyScope)),
+        };
+        let authority = self.authority.as_ref().ok_or(AdapterError::UnsupportedPlatform)?;
+        authority.delete(path).map_err(map_filesystem_error)?;
+        Ok(AdapterResult { success: true, output: Vec::new() })
     }
 }
 
@@ -882,4 +914,62 @@ mod filesystem_platform_metadata_tests {
         assert!(parse_http_target("http://example.test/bad path").is_err());
     }
 
+}
+
+#[cfg(test)]
+mod filesystem_delete_adapter_tests {
+    use super::*;
+    use crate::orchestration::{EffectClass, SemanticCapabilityId};
+
+    fn request(path: &str) -> AdapterRequest {
+        AdapterRequest::new(CapabilityRequest::new(
+            SemanticCapabilityId::FilesystemDelete,
+            Capability::FilesystemDelete,
+            ExecutionScope::target(path),
+            EffectClass::Delete,
+        ))
+    }
+
+    #[test]
+    fn delete_adapter_is_advertised_only_on_windows() {
+        let adapter = FileDeleteAdapter::new();
+        assert_eq!(adapter.metadata().id().as_str(), "filesystem.file.delete");
+        assert!(adapter.metadata().declares(Capability::FilesystemDelete));
+        assert_eq!(adapter.metadata().available_on(PlatformKind::Windows), cfg!(windows));
+        assert!(!adapter.metadata().available_on(PlatformKind::Linux));
+        assert!(!adapter.metadata().available_on(PlatformKind::Android));
+        assert!(!adapter.metadata().available_on(PlatformKind::Macos));
+    }
+
+    #[test]
+    fn delete_adapter_requires_a_host_filesystem_authority() {
+        let adapter = FileDeleteAdapter::new();
+        assert_eq!(adapter.invoke(&request("target.txt")), Err(AdapterError::UnsupportedPlatform));
+    }
+
+    #[test]
+    fn delete_adapter_rejects_unexpected_arguments_before_backend_access() {
+        let adapter = FileDeleteAdapter::new();
+        assert_eq!(
+            adapter.invoke(&request("target.txt").with_argument(AdapterArgument::Text("extra".into()))),
+            Err(AdapterError::InvalidArguments)
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn delete_adapter_deletes_only_through_the_host_authority() {
+        let root = std::env::temp_dir().join(format!("one-delete-adapter-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"DELETE_ME").unwrap();
+        let authority = Arc::new(FilesystemAuthority::open(&root, 1024, 1024).unwrap());
+        let adapter = FileDeleteAdapter::with_authority(authority);
+        let result = adapter.invoke(&request("target.txt")).expect("Windows handle-bound delete should succeed");
+        assert!(result.success);
+        assert!(result.output.is_empty());
+        assert!(!target.exists());
+        drop(adapter);
+        std::fs::remove_dir_all(root).unwrap();
+    }
 }
