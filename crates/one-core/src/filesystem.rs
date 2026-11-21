@@ -1183,8 +1183,6 @@ mod macos_native {
     where
         F: FnMut(MacWriteStage) -> Result<(), FilesystemError>,
     {
-        use std::os::fd::AsRawFd;
-
         const RESOLVE_FLAGS: i32 = O_RESOLVE_BENEATH | O_NOFOLLOW_ANY;
         const RENAME_FLAGS: u32 = RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY;
 
@@ -2753,7 +2751,6 @@ mod tests {
         }
         assert_eq!(result, Err(FilesystemError::ResolutionFailed));
         assert!(!target.exists(), "mount-boundary denial must not create a target");
-        let _root_fd = root.as_raw_fd();
     }
 
     #[cfg(target_os = "linux")]
