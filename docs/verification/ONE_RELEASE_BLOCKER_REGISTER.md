@@ -998,3 +998,9 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Commit `18bd42f1eecb7ca40dcf88a5b8d6456d15361f2e` adds `setpgid(0, 0)` escape probes for normal completion, timeout, and output overflow; commit `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` corrects test-attribute placement.
 - Exact source/test candidate `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` is NOT BUILT / NOT TESTED. These additions strengthen test coverage only; they do not change the production seccomp policy or prove containment.
 - Issue #105 remains OPEN / NOT ACCEPTED. Exact-SHA Linux/Android adversarial execution and Windows Job Object descendant execution remain required; macOS remains unsupported/fail-closed.
+
+## 2026-11-21 — master continuation prompt synchronized
+
+- Updated existing `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `631fcb692a8944c84bc6af6134c781bfffed23d2` to reflect the filesystem.delete CLI integration, native delete primitive gaps, process containment primitive map, new adversarial test source, and implementation-first sequencing.
+- This is documentation-only; it does not change source/test evidence or acceptance state. Current branch checkpoint immediately after this update: `631fcb692a8944c84bc6af6134c781bfffed23d2`. Refresh live PR metadata before the next action.
+- Latest product source/test candidate remains unbuilt/unverified for the new CLI and process test changes. Issue #104 and #105 remain OPEN / NOT ACCEPTED.
