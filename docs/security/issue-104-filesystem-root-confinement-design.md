@@ -1,8 +1,8 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
-**Latest code/test SHA at 2026-11-21 checkpoint:** `6403592796b9827e4bffe26a982dfc66afc75d9d` (adds Windows volume-identity regression; see section 17)  
-**Latest CircleCI-confirmed PR #113 HEAD:** `26a34efb6d0908bd02738a7b05090f96051a6dc7` (`ci/circleci: one-linux` SUCCESS; workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Later documentation-only commits are not credited with this result.  
+**Latest code/test SHA at 2026-11-21 checkpoint:** `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` (requires native Linux nested-write execution in the privileged lane; see section 18)  
+**Last CircleCI-confirmed PR #113 HEAD before Linux native-lane changes:** `718f915c4585d91be6e4e10a9ceff7ec359dfe6e` (`ci/circleci: one-linux` SUCCESS; workflow `bdffaf66-7560-42b3-86da-b21fbfa7f740`, job `b4456e37-948a-4201-854c-b49303cd3a72`). The new source/config commits are not covered by that result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
 
@@ -1201,3 +1201,15 @@ This section supersedes section 14's earlier root-staging implementation note. T
 - CircleCI context ci/circleci: one-linux remains PENDING on this SHA. Workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. The provider page and .vcs.revision mapping are not accessible; do not claim CircleCI PASS.
 - Android statx mount-ID regression remains unexecuted on the actual Termux device. Issue #104 remains OPEN / NOT ACCEPTED.
 
+
+
+## 18. Linux nested-write native execution requirement — 2026-11-21
+
+- Source/test SHA: `671c63b1c6cbae0ad99630c554eb1300ce7f0d77`.
+- The Linux adversarial parent-move test previously returned successfully when the kernel reported `UnsupportedPlatform`. This was a weak test: it proved fail-closed behavior on restricted runners but did not prove native nested writes worked.
+- The test now checks `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1`; when set, `UnsupportedPlatform` is a hard failure after fixture cleanup.
+- Added `filesystem::tests::nested_write_rejects_mount_boundary_before_creating_staging_file`, which checks the `/dev` mount boundary is rejected before a target can be created.
+- CircleCI config commit: `f026a0241c1f9555f4123e1128e2a3fe173cd756`. The `one-linux` job runs the already-built `one_core` test binary as root for both exact adversarial tests. It does not rebuild the workspace under sudo.
+- The CircleCI step has not yet produced terminal evidence on this candidate. Until the provider log shows both tests executed (not skipped) and passed, Linux nested-write capability remains a candidate and Issue #104 remains OPEN / NOT ACCEPTED.
+- Prior One CI #44906889708 and macOS native run #44906889694 passed on older exact source `6403592796b9827e4bffe26a982dfc66afc75d9d`; they do not validate the new strict native-required test or privileged CircleCI lane.
+- No production filesystem algorithm, security boundary, release acceptance criterion, verifier pin, or fixed ledger was changed in this test/CI correction.
