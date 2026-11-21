@@ -598,6 +598,7 @@ where
     result
 }
 
+#[cfg(target_os = "linux")]
 fn linux_write_relative(
     root: &File,
     relative: &Path,
@@ -606,6 +607,7 @@ fn linux_write_relative(
     linux_write_relative_with_hook(root, relative, bytes, |_| Ok(()))
 }
 
+#[cfg(target_os = "linux")]
 fn linux_write_relative_with_hook<F>(
     root: &File,
     relative: &Path,
@@ -1315,14 +1317,24 @@ mod windows_native {
     }
 
     pub fn root_matches_path(root: &File, path: &Path) -> Result<bool, FilesystemError> {
-        use std::os::windows::fs::MetadataExt;
-
-        let handle_info = file_info(root)?;
-        let path_info = std::fs::metadata(path).map_err(|_| FilesystemError::InvalidRoot)?;
-        let handle_index = ((handle_info.nFileIndexHigh as u64) << 32)
-            | handle_info.nFileIndexLow as u64;
-        Ok(path_info.volume_serial_number() == Some(handle_info.dwVolumeSerialNumber)
-            && path_info.file_index() == Some(handle_index))
+        // Reopen the named directory through the same native no-reparse path
+        // used for root acquisition, then compare stable handle identities.
+        // This avoids unstable std::os::windows::fs::MetadataExt methods.
+        let name = absolute_nt_path(path)?;
+        let path_handle = open_named(
+            &name,
+            std::ptr::null_mut(),
+            OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+            FILE_LIST_DIRECTORY | FILE_TRAVERSE | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            FILE_OPEN,
+            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+        )?;
+        let root_info = file_info(root)?;
+        let path_info = file_info(&path_handle)?;
+        Ok(path_info.dwVolumeSerialNumber == root_info.dwVolumeSerialNumber
+            && path_info.nFileIndexHigh == root_info.nFileIndexHigh
+            && path_info.nFileIndexLow == root_info.nFileIndexLow)
     }
 
     pub fn open_root(path: &Path) -> Result<File, FilesystemError> {
