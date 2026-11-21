@@ -135,3 +135,5 @@ Process escape regressions use in-binary ignored helpers with direct `fork` + `s
 - XNU source inspection shows `fork1()` invokes `mac_proc_check_fork()` and the spawn path uses `PROC_CREATE_SPAWN`; this supports the direct process-creation denial hypothesis but is not native test evidence.
 - This is single-process mode, not descendant-tree termination. Brokered launchd/Mach-service launches remain unproven, and `ProcessAdapter` continues to exclude macOS. `sandbox-exec` is deprecated; absence or profile failure must fail closed.
 - Candidate `3bad0196e9352871d09cb9b966cf6b393a866603` is NOT BUILT / NOT TESTED. Issue #105 remains OPEN / NOT ACCEPTED.
+
+- Extend the ProcessAdapter platform-metadata regression to macOS so the experimental Seatbelt single-process runner remains unadvertised until brokered process creation and native acceptance are resolved. Source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c` is NOT BUILT / NOT TESTED.
