@@ -1,3 +1,5 @@
+> **HISTORICAL SNAPSHOT:** This 2026-11-17 long-form prompt is retained for historical context. For all new sessions, use [MASTER_CONTINUATION_PROMPT.md](MASTER_CONTINUATION_PROMPT.md) and [ONE_RELEASE_BLOCKER_REGISTER.md](ONE_RELEASE_BLOCKER_REGISTER.md). Refresh live SHAs/status before acting.
+
 # MASTER CONTINUATION PROMPT — PROJECT ONE
 
 **CONTINUOUS EXECUTION · NOTION-SKILL-FIRST · DOCUMENTATION-FIRST · GITHUB-FIRST · CIRCLECI-FIRST**
@@ -254,3 +256,472 @@ Runner gate: no authenticated CircleCI tool or GitHub Actions workflow-dispatch 
 - PR #110 remains OPEN/DRAFT/UNMERGED at `2ab82ea9cccb1c9aa0fef25c3591a1310ab84b5c`; CircleCI `one-linux` SUCCESS applies to that exact SHA. The independent Windows run above is pinned to PR #108 SHA `a20676be...`, not PR #110 SHA.
 - Issue #104 remains OPEN / NOT IMPLEMENTED. Do not claim root confinement, E4 acceptance, DoD completion, or release readiness. Continue with the next source implementation step only when the exact Rust runner and cross-platform validation path are available; retain fail-closed design requirements.
 
+
+
+## AUTHORITATIVE CONTINUATION OVERRIDE — 2026-11-19 (PR #44 promoted; E4 verified)
+
+This block supersedes older active PR/branch/pin/status instructions above. Preserve historical entries but never use their old PR #110, pre-promotion pin, or stale CircleCI SHA as current state.
+
+### Current project identity and boundaries
+
+- Main repo: `panglimanetizen01/one`.
+- Active PR #113: OPEN / DRAFT / UNMERGED; branch `security/issue-104-root-confinement-20261118`; base branch `fix/windows-process-verifier-timeouts-20261118`, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Latest known PR #113 HEAD at this checkpoint: `67d3c14c70fc43c1eae26c7f21fea8e7a4918b07`; CircleCI `ci/circleci: one-linux` PENDING (workflow `b3e62c78-3825-41a4-bfb5-b0f498bffcf0`, job `11de1f0c-6382-4f65-825c-d78adf5b4dbf`). Refresh PR metadata and status before continuing.
+- Issue #104 remains OPEN / NOT ACCEPTED. Do not merge PR #113, modify `main`, force-push, delete branches, or close the issue without explicit authorization.
+- Verifier repo: `panglimanetizen01/one-windows-verification`. PR #44 is CLOSED / MERGED into protected branch `verification`; merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected pin `722d662e7a81711ba3607d26571f4048a292b3ed`.
+
+### Verified protected E4 result
+
+- Post-merge protected push run #44519577693 is terminal SUCCESS: Unix no-follow/resource bounds, Windows reparse/handle checks, and Windows native `NtCreateFile + OBJ_DONT_REPARSE` probe all passed.
+- Windows native probe scope is Windows Server 2025 build 26100 only.
+- Linux nested writes remain fail-closed; unsupported platforms remain fail-closed; Android runtime evidence is API 35 ARM64 only.
+- Do not call the entire verifier push green: SEC-05 Linux failed at native cross-compiler installation step 5 (Windows passed), and separate E1/stdlib/provenance/health/artifact workflows also failed. Retrieve exact failing step logs before changing the Linux toolchain configuration.
+
+### Next execution order
+
+1. Refresh exact PR #113 HEAD and poll CircleCI for that SHA. Never transfer prior SHA status.
+2. Retrieve and classify the SEC-05 Linux cross-compiler install failure logs. Keep this separate from the passing E4 jobs.
+3. Reconcile the remaining Issue #104 acceptance/ledger gates and update derived artifacts; do not repeat the completed 14/14 diagnostic utility unit suite unless its source changes.
+4. Preserve fail-closed behavior and platform limits. Do not mark Issue #104 accepted based on E4 alone.
+5. Keep PR #113 draft/unmerged and `main` untouched.
+
+
+## FOLLOW-UP OVERRIDE — EXACT PROTECTED PUSH LOGS CLASSIFIED — 2026-11-19
+
+- Protected E4 run #44519577693 is PASS on merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; all three jobs passed. Do not re-audit those unchanged jobs.
+- SEC-05 Linux run #44519577571 / job `135544437757` failed before tests during APT install. The runner fetched 194 MB of a 277 MB MinGW/LLD package set, then failed to connect to `azure.archive.ubuntu.com` at `52.252.75.106:80`; APT exit 100. Windows job passed. Next: inspect runner apt mirror configuration and design a bounded, evidence-preserving mirror workaround. Do not change protected branch directly; use a reviewed PR.
+- E1 Windows job `135544437394`, E1 Linux job `135544437616`, and focused stdlib job `135544438572` all fail before tests because the workflow requests Cargo target `stdlib_builtins`, which does not exist in source SHA `722d662...`. Actual `one-core` integration targets include `conformance`, `core_pipeline`, `security`, `target_backend_foundation`, and `target_toolchain_foundation`. Do not substitute targets blindly: map intended cases or add the missing dedicated test target first.
+- These are separate harness/setup failures and do not invalidate E4. Do not claim the full verifier push green. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## FINAL LIVE CHECKPOINT — 2026-11-19 (protected E4 + release gate)
+
+- Protected PR #44 promotion is complete; merge commit `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`; protected pin `722d662e7a81711ba3607d26571f4048a292b3ed`.
+- Protected E4 run #44519577693 is fully verified from job logs: all 11 required Unix tests, all 7 required Windows tests, and the native `OBJ_DONT_REPARSE` junction probe executed and passed. The Unix helper validates exact expected matching test counts; the Windows helper requires exactly one pass for each test.
+- Separate SEC-05 Linux failure is an APT mirror/network retrieval issue (194/277 MB fetched, Azure mirror backend unreachable, exit 100); Windows passed. Separate E1/focused stdlib workflows fail before tests because Cargo target `stdlib_builtins` is absent. Do not blindly substitute test targets.
+- Fixed-weight final release gate run #44519577312 / job 135544436703 remains IN_PROGRESS. Ledger/DoD source SHA `d6c382a245c49a028bc60809f22ca956c7f894cc`; ledger currently 92/100 provisional, 0/100 verified, E6 0/4, 10 unchecked DoD items. The gate also requires terminal-success mirror workflows and a protected package-provenance release run. This is broader than Issue #104 E4; do not mark final release accepted.
+- Documentation updates most recently include Issue #104 report commit `85122f9ff2207798ea48f3d2e71f8328c7acda0e` and verification README commit `5ccb25abadd5edc298e13b76c2dbbc9f07fc984e`. Refresh PR #113 metadata after this prompt update and poll CircleCI on the resulting exact SHA.
+- Keep PR #113 OPEN / DRAFT / UNMERGED, Issue #104 OPEN / NOT ACCEPTED, and `main` untouched. Do not change the protected verifier again without explicit authorization. Do not rerun the already completed 14/14 diagnostic utility suite absent a source change.
+
+
+## SEC-05 LINUX FAILURE ROOT CAUSE — 2026-11-19
+
+- Protected verifier run #44519577571 attempt 1, Linux job 135544437757, exact candidate `722d662e7a81711ba3607d26571f4048a292b3ed`, failed at step 5 `Install Linux native cross-compilers`.
+- Exact log evidence: APT update succeeded; install fetched 194 MB over 11m 9s, then package downloads repeatedly timed out / could not connect to `azure.archive.ubuntu.com` at `52.252.75.106:80`. APT exit code 100, final message `Unable to fetch some archives`.
+- This is a hosted-runner Azure Ubuntu mirror/network failure, not a Rust/SEC-05 code/test failure. Windows SEC-05 job passed. E4 protected run #44519577693 passed independently.
+- Only failed Linux job rerun initiated, attempt 2, job 135581237093; it was still in the cross-compiler install step at last poll. Wait for terminal evidence.
+- Do not modify protected verifier branch without explicit authorization. If failure reproduces, make mirror source deterministic and add bounded download retries/diagnostics; do not remove compiler/architecture capabilities without proving they are unnecessary.
+- Separate CircleCI APT timeout incident remains unclassified; do not conflate the two incidents.
+- Latest PR #113 HEAD at this checkpoint: `5386e1048615524e6b6a6c079267b35a2367c484`; CircleCI `one-linux` PENDING (workflow `dfae6ca1-099d-4ea9-8fd1-1f9dd32c1a1c`, job `0f9dc451-d530-434d-98bb-b3e28f5b3c8f`). Refresh exact SHA and status after any documentation commits.
+
+
+## Mandatory live continuation — 2026-11-19 13:20Z
+
+1. PR #113 exact HEAD is `bc0070cbe6ea23b97ff814c145d68c24585a83c5`; CircleCI `ci/circleci: one-linux` is SUCCESS for this exact SHA (workflow `3d609b9a-fadc-4451-97fd-daf371ae0d4f`, job `8973d4dd-f38f-4bd1-9aa5-f098cfa3c7b0`). Do not transfer this result to later commits.
+2. SEC-05 protected-verifier run `44519577571`, attempt 2: Linux job `135581237093` remains IN_PROGRESS at step 5 `Install Linux native cross-compilers`; Windows job `135581239271` is SUCCESS. Linux job logs are unavailable until completion. Poll for terminal evidence before classifying the rerun.
+3. If the rerun fails, inspect exact logs and confirm whether Azure Ubuntu mirror connectivity recurred. If it passes, document a successful same-candidate retry only; do not claim a durable fix without a configuration change and repeatable validation.
+4. No protected verifier workflow change was made. Keep Issue #104 OPEN / NOT ACCEPTED, PR #113 OPEN / DRAFT / UNMERGED, and `main` untouched. Preserve full cross-compiler architecture coverage and fail-closed platform behavior.
+
+
+## Protected verifier multi-workflow failure reconciliation — 2026-11-19 13:30Z
+
+### PR #113 exact-SHA CircleCI
+
+- PR #113 remains OPEN / DRAFT / UNMERGED; exact HEAD at this checkpoint: `d3924152f2536492a3117e288f60572f3e97814a`; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Exact-HEAD CircleCI `ci/circleci: one-linux` = SUCCESS (workflow `21bd7a8f-d992-4b62-8250-a46295ca2ea6`, job `328ed531-0e4a-4160-a0bf-3fb50bbf2478`). This success applies only to `d3924152...`.
+
+### SEC-05 Linux rerun attempt 2 — failure reproduced
+
+- Protected verifier run #44519577571 attempt 2; Linux job `135581237093` FAILED at step 5 `Install Linux native cross-compilers`; Windows job `135581239271` SUCCESS.
+- Attempt 2 downloaded 277 MB in 15m19s, then received HTTP 503 Service Unavailable from `security.ubuntu.com` for two remaining MinGW packages. APT ended with exit code 100. This differs from attempt 1's connection/timeouts to Azure backend `azure.archive.ubuntu.com` / `52.252.75.106:80`, but both are package-fetch failures before Rust setup or Linux tests.
+- Classification remains hosted Ubuntu mirror/package-service availability failure, not a SEC-05 source/test failure. Two attempts now reproduce the package-fetch problem across distinct endpoints; no Linux test result exists for either attempt.
+- Draft PR #46: [SEC-05 bounded APT retry mitigation](https://github.com/panglimanetizen01/one-windows-verification/pull/46), head `8a880ad00225ed8a78a3fd58adfbc329f0df5b11`, base protected merge `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`. It records configured APT sources, applies bounded `Acquire::Retries=3` and 30-second HTTP/HTTPS timeouts to update/install, records package policy, and raises Linux job timeout 30→45 minutes. Full compiler set remains unchanged. No protected branch modification or merge.
+- PR #46 pull-request workflow run #44533999931 is IN_PROGRESS: Linux job `135594520678` at bounded APT installation step 5; Windows job `135594521270` at Windows toolchain installation step 2. Do not claim validation until terminal results and logs are read.
+
+### Package provenance verifier — false-positive probe corrected in PR #45
+
+- Original run #44519577562 / job `135544438096`: exact-SHA provenance/CLI tests passed 19/19, then the stale-lockfile probe failed because its `sed -i '/^sha2 = /a regex = "1"'` insertion matched no line in the pinned `crates/one-cli/Cargo.toml` (the manifest has only `one-core` under dependencies). Cargo therefore correctly accepted the unchanged lockfile; the probe had not mutated the manifest.
+- Draft PR #45: [fix package provenance and artifact verifier assumptions](https://github.com/panglimanetizen01/one-windows-verification/pull/45), head `dabccd46bb6549e36761a4fa3b02da5d7c84a42e`. The probe now inserts `regex = "1"` after the `[dependencies]` header and asserts that the mutation occurred. Workflow execution is NOT RUN; the workflow is push-triggered on protected `verification`, so PR remains draft pending review/authorized promotion.
+
+### Artifact integrity verifier — stale Rust version expectation corrected in PR #45
+
+- Original run #44519577533 / job `135544437263`: artifact discovery and archive digest verification passed, then embedded metadata validation rejected Rust/Cargo `1.100.0` because the verifier hardcoded `1.99.0`.
+- Exact pinned ONE source SHA `722d662e7a81711ba3607d26571f4048a292b3ed` has `rust-toolchain.toml` channel `1.100.0`; actual artifact metadata reports Rust/Cargo `1.100.0`. PR #45 updates the expectation to match the exact source toolchain. Workflow execution remains NOT RUN until authorized promotion to protected branch.
+
+### Health scanner workflow — implementation absent, not a scanner defect proven
+
+- Run #44519577289: Linux job `135544437333` and Windows job `135544437821` both failed at final outcome aggregation.
+- Each of three unittest discovery commands reported `Ran 0 tests` / `NO TESTS RAN` (exit code 5). The self-scan command could not open `one-source/tools/one_health.py`; recursive source-tree inspection at the pinned SHA found no health/scanner/collector/quality implementation paths.
+- The verifier repository's `docs/CONTINUOUS_REPOSITORY_HEALTH_AND_REPAIR_SYSTEM.md` explicitly labels the system a proposal / implementation plan, not an implemented tool. Do not fabricate implementation, change the workflow to green, or claim scanner tests passed. This is an unimplemented-scope / workflow-fixture alignment blocker requiring a separate design and implementation decision.
+
+### Final release gate
+
+- Fixed-weight ledger gate run #44519577312 / job `135544436703` remains IN_PROGRESS at the exact-SHA ledger/DoD enforcement step. It is not PASS or FAIL. Preserve ledger scores and unchecked DoD items; do not manufacture acceptance.
+- Protected E4 run #44519577693 remains independently SUCCESS. Do not call the entire protected verifier push green; E1/stdlib, SEC-05 Linux, provenance, artifact, health scanner, and release gate are distinct workflows/findings.
+- Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Protected branch `verification` and `main` remain unchanged absent explicit authorization.
+
+
+## Exact-SHA continuation refresh — 2026-11-19 13:40Z
+
+
+
+### PR #113 and CircleCI
+
+
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Exact HEAD before this documentation refresh: 09f043d44099c77ed2cb2d3496190571ab47795e; base 181ad350d8f0db53cda654c4d378425fbdd6ab24.
+
+- CircleCI ci/circleci: one-linux = SUCCESS for exact SHA 09f043d; workflow cffa57d9-b339-432c-8d3f-61a592fc531c; job 25e62c16-b0e2-4282-ae75-eb1f6810c234. This does not transfer to the next docs SHA.
+
+
+
+### Draft verifier remediation PRs
+
+
+
+- PR #45 — https://github.com/panglimanetizen01/one-windows-verification/pull/45, head dabccd46bb6549e36761a4fa3b02da5d7c84a42e, OPEN / DRAFT. Static diff/readback only; workflow execution NOT RUN. Corrects stale-lock probe that previously inserted after nonexistent sha2 dependency line, and aligns artifact Rust/Cargo expectation from 1.99.0 to exact source pin 1.100.0.
+
+- PR #46 — https://github.com/panglimanetizen01/one-windows-verification/pull/46, head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11, OPEN / DRAFT. Pull-request run #44533999931 COMPLETED / SUCCESS on exact PR head. Linux job 135594520678 SUCCESS; Windows job 135594521270 SUCCESS. Linux APT source diagnostics, bounded retries, complete compiler set, subprocess contract tests, full one-core suite, and static SEC-05 guards passed. Windows toolchain, exact source checkout, Rust 1.100.0, 10 subprocess contract tests, full one-core suite, and Windows descendant guard passed. This validates the mitigation on that runner run only; no permanent upstream mirror guarantee. Whole-repo fmt remains a non-blocking diagnostic with pre-existing diffs.
+
+- PR #47 — https://github.com/panglimanetizen01/one-windows-verification/pull/47, head bd100d10c12c7b0849f01e9481111b0b0c859dd1, OPEN / DRAFT. Pull-request run #44535174043 COMPLETED / SUCCESS. Windows Server 2025 job 135598544938 checked out exact source SHA 722d662e7a81711ba3607d26571f4048a292b3ed, read Rust 1.100.0 from source rust-toolchain.toml, installed MinGW clang, passed PE compiler probe, built and inspected PE32+ AMD64, executed with exit code 0 / output Budi, and wrote exact-SHA manifest. PR branch run is not yet protected-branch evidence.
+
+- All three PRs target protected branch verification but remain draft/unmerged. No protected branch mutation or merge was performed.
+
+
+
+### E1 / standard-library failure classification
+
+
+
+- E1 Windows run #44519577311, job 135544437394: failed at cargo --locked test -p one-core --test stdlib_builtins; Cargo reports no test target named stdlib_builtins and lists actual targets (conformance, core_pipeline, database_vertical_slice, etc.).
+
+- E1 cross-platform run #44519577315: Linux job 135544437616 and Windows job 135544437995 failed at the same nonexistent stdlib_builtins test target.
+
+- Focused standard-library/database run #44519577640, job 135544438572: several filtered --lib invocations returned success with 0 passed / 148 filtered out (no matching tests), then the UTC integration step failed because stdlib_builtins does not exist.
+
+- Exact source tree at 722d662 has no crates/one-core/tests/stdlib_builtins.rs target. crates/one-core/src/stdlib.rs currently implements only display/list append/list remove; expected UTC/JSON/text/integer standard-library tests and features are not present in that file/tree.
+
+- Do not change these workflows to --lib merely to make them green; that would mask missing acceptance coverage. The correct next step is to implement the required E1 APIs and tests in a separately scoped ONE source change, then update verifier tests to target real, named tests. Until then E1 is NOT accepted.
+
+
+
+### Windows native runtime exact-SHA gate blocker
+
+
+
+- Fixed-weight ledger gate run #44519577312 remains IN_PROGRESS at job 135544436703, timeout budget 180 minutes; its live evidence poll waits up to 10,200 seconds (170 minutes).
+
+- The required workflow ONE Windows Native Backend Runtime — Windows Server 2025 had no run for canonical source SHA 722d662: its old workflow read WINDOWS_SOURCE_COMMIT.txt = a10a69afdf8675e703f38f1620abc935d8361897 and triggered only on that file or its own workflow. The gate resolves evidence through CANONICAL_COMMIT.txt = 722d662, so this workflow could not satisfy the exact-SHA requirement and remained pending.
+
+- PR #47 changes the workflow to trigger/read CANONICAL_COMMIT.txt, adds PR validation, and derives Rust toolchain from the exact checked-out source. Its PR-run SUCCESS validates the fix but is not included in the protected branch's branch=verification run list. After authorized merge, the protected push should generate the exact-SHA run; then the gate must be rerun/evaluated on terminal evidence.
+
+- Other required exact-SHA mirror workflows on verifier commit a44c32e are terminal: E1 Windows #44519577311 FAILURE, E1 cross-platform #44519577315 FAILURE, focused stdlib #44519577640 FAILURE, artifact #44519577533 FAILURE, SEC-05 #44519577571 FAILURE; Linux distro #44519577570, Cargo lockfile #44519577555, subprocess resource guard #44519577526, E4 #44519577693, cross-platform #44519577496, and native ARM64 runtime #44519577666 SUCCESS. Thus even after the missing Windows native run becomes terminal, the gate cannot pass while the above failures and other acceptance requirements remain unresolved.
+
+
+
+### Unchanged acceptance boundaries
+
+
+
+- Protected E4 run #44519577693 remains SUCCESS, scoped to its stated threat boundary.
+
+- Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Main and protected verifier branch remain unchanged absent explicit authorization.
+
+- Preserve exact-SHA claims, fixed ledger weights, DoD unchecked items, fail-closed platform behavior, and full compiler architecture coverage. Do not transfer PR-branch success into protected-branch acceptance.
+
+
+## Correction and final scope reconciliation — 2026-11-19 13:52Z
+
+### Corrected E1 classification
+
+- The prior note that expected UTC/JSON/text/integer standard-library APIs were missing required E1 features is superseded. The normative docs/spec/one-v0.1-stdlib.md explicitly scopes v0.1 to display, greeting, empty-list creation, list append/remove, arithmetic, and comparison phrases; it warns against adding operations based only on helper signatures. UTC/JSON/text-prefix/suffix/checked-remainder are not required v0.1 APIs.
+- E1 verifier failures were stale test assumptions: stdlib_builtins target does not exist; focused --lib filters returned 0 tests matched. Correct action is align workflows to documented v0.1 behavior and existing test targets, not implement unapproved language features.
+- Draft PR #48 https://github.com/panglimanetizen01/one-windows-verification/pull/48 head 0fcbbd60e7c97a64cdcb1931b50e16c7cc00ff79. Focused Linux run #44536641377 SUCCESS: stdlib 6/6, core pipeline 6/6, conformance 5/5, DB unit 1/1, DB vertical slice 9/9, full one-core lib 148/148, contract checker PASS. E1 Windows run #44536641371 SUCCESS: stdlib 6/6, core pipeline 6/6, conformance 5/5, full one-core lib 133/133, contract checker and Clippy PASS. Cross-platform run #44536641375: Windows job 135603697996 SUCCESS; Ubuntu job 135603697243 still IN_PROGRESS at native cross-compiler installation. Keep PR draft until Linux terminal result.
+
+### Corrected PR #45 scope
+
+- PR #45 https://github.com/panglimanetizen01/one-windows-verification/pull/45 head 9a72e04b7e2992d655f8e3fc4e478892e91b7ae5 is artifact-integrity-only; current diff changes only candidate-artifact-inspection.yml. Exact-head run #44538012071 SUCCESS; job 135608513172 verified source SHA 722d662, Linux/Windows archive digests, embedded Rust/Cargo 1.100.0, ELF64 x86-64 and PE32+ x86-64.
+- The package-provenance signing lab is explicitly excluded from PR #45. The normative v0.1 package/build spec states the full provenance envelope is not implemented. The lab references nonexistent examples/package-release fixture and unsupported sign-package/verify-package commands; it is a future/experimental workflow and not an Issue #104 gate. The attempted stale-lock probe modification was reverted from PR #45. Do not claim package signing/provenance is implemented or validated.
+
+### PR #46 and PR #47 validation
+
+- PR #46 https://github.com/panglimanetizen01/one-windows-verification/pull/46 head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11: run #44533999931 SUCCESS on Linux and Windows; bounded APT retries, full compiler set, subprocess contract tests, full one-core suites, and static guards passed. Draft/unmerged.
+- PR #47 https://github.com/panglimanetizen01/one-windows-verification/pull/47 head bd100d10c12c7b0849f01e9481111b0b0c859dd1: run #44535174043 SUCCESS; exact canonical source SHA 722d662, Rust 1.100.0, MinGW clang, PE32+ AMD64, native Windows runtime exit 0/output Budi. Draft/unmerged; PR-branch run is not protected-branch evidence.
+
+### PR #113 and ledger gate
+
+- PR #113 remains OPEN / DRAFT / UNMERGED at pre-refresh HEAD f68246eefed45a45f78f0c43a29d9a55ca7dce99; CircleCI was PENDING immediately after that docs SHA and must be polled again after this documentation update.
+- Fixed-weight gate #44519577312 remains IN_PROGRESS waiting for a protected exact-SHA Windows Native Backend run. PR #47 fixes the trigger/source-pin mismatch, but its PR-branch SUCCESS is not visible to the gate's branch=verification query until authorized protected promotion. Other required workflows still include the SEC-05 and artifact/E1 failures addressed by PRs #45/#46/#48.
+- Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 #44519577693 is independently SUCCESS; do not claim the entire verifier push is green.
+
+### Current safe boundary
+
+- PRs #45–#48 remain OPEN / DRAFT / UNMERGED. No protected verification branch or main change has been made. No merge authorization inferred.
+- Preserve exact-SHA evidence, fixed ledger weights, unchecked DoD, fail-closed behavior, and full compiler target coverage.
+
+
+## Final validation checkpoint — 2026-11-19 14:03Z
+
+
+
+### Exact PR #113 / CircleCI state before this documentation refresh
+
+
+
+- PR #113 OPEN / DRAFT / UNMERGED; exact HEAD 2adb4308585e3815a5596e98feb2231a4dfaf80d; base 181ad350d8f0db53cda654c4d378425fbdd6ab24.
+
+- CircleCI ci/circleci: one-linux SUCCESS for exact SHA 2adb4308585e3815a5596e98feb2231a4dfaf80d; workflow 8a3f0ff9-a54b-4624-8b9a-d073d2c01c07; job 752530ca-1f13-413e-aed0-05f730fe0d54. This result does not transfer to the next docs SHA.
+
+
+
+### Remediation PRs current final validation
+
+
+
+- PR #45 artifact-only: https://github.com/panglimanetizen01/one-windows-verification/pull/45, head 9a72e04b7e2992d655f8e3fc4e478892e91b7ae5, OPEN / DRAFT. Exact-head run #44538012071 SUCCESS, job 135608513172; verified source SHA 722d662, archive digests, Rust/Cargo 1.100.0, Linux ELF64 x86-64 and Windows PE32+ x86-64. Package-provenance signing lab excluded; v0.1 package spec explicitly says full provenance envelope not implemented.
+
+- PR #46 SEC-05 APT mitigation: https://github.com/panglimanetizen01/one-windows-verification/pull/46, head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11, OPEN / DRAFT. Run #44533999931 SUCCESS on Linux and Windows. Bounded APT retries/source diagnostics and complete compiler set passed; subprocess contracts, full one-core suites, and static guards passed.
+
+- PR #47 Windows native canonical pin: https://github.com/panglimanetizen01/one-windows-verification/pull/47, head bd100d10c12c7b0849f01e9481111b0b0c859dd1, OPEN / DRAFT. Run #44535174043 SUCCESS on Windows Server 2025; exact source SHA 722d662; Rust 1.100.0; PE32+ AMD64; native execution exit 0/output Budi. This is PR-branch evidence, not protected-branch evidence.
+
+- PR #48 E1 workflow alignment: https://github.com/panglimanetizen01/one-windows-verification/pull/48, current head 06bf1d7cbd10adadb74c79d7296f951244ae9839, OPEN / DRAFT. Latest cross-platform run #44538540682 COMPLETED / SUCCESS: Linux job 135610376664 and Windows job 135610376991 SUCCESS. Linux bounded APT retries, full compiler set, Android API 35 clang, Rust 1.100.0, stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core lib 148/148, workspace integration suites, contract checker and Clippy passed. Windows toolchain/Android NDK, Rust 1.100.0, stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core lib 133/133, workspace integration suites, contract checker and Clippy passed. E1 Windows run #44538540631 also SUCCESS. Focused Linux run #44536641377 on prior head 0fcbbd60... passed stdlib/database non-zero tests; its workflow file and source pin were unchanged by the later APT-only commit.
+
+
+
+### E1 / standard-library scope correction
+
+
+
+- Normative docs/spec/one-v0.1-stdlib.md defines v0.1 operations as display, greeting, empty-list creation, list append/remove, arithmetic, and comparisons. UTC/JSON/text-prefix/suffix/checked-remainder are not required v0.1 APIs. Old E1 workflows incorrectly targeted nonexistent stdlib_builtins and had filters that matched zero tests.
+
+- PR #48 corrects the workflows to execute existing, documented targets. Do not implement unapproved future APIs just to satisfy stale verifier commands.
+
+
+
+### Package provenance lab scope
+
+
+
+- The package-provenance synthetic signing lab is not an Issue #104 gate and is outside executable v0.1 package/build scope. docs/spec/one-v0.1-package-build.md states the full provenance envelope is not implemented. The lab references missing examples/package-release and unsupported sign-package/verify-package commands. PR #45 restores this lab workflow to base content and only changes artifact integrity metadata validation.
+
+
+
+### Protected ledger gate / acceptance boundary
+
+
+
+- Fixed-weight gate #44519577312 remains IN_PROGRESS. It waits for a protected exact-SHA Windows Native Backend run; PR #47 has a successful PR-branch run but is not included in branch=verification until authorized promotion. Other protected workflow failures have candidate fixes in PRs #45, #46, and #48, but none has been merged.
+
+- Protected E4 #44519577693 remains independently SUCCESS. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. Main and protected verification remain unchanged.
+
+- All PRs #45–#48 remain OPEN / DRAFT / UNMERGED. No merge or protected-branch promotion was performed; no authorization inferred.
+
+- Preserve exact-SHA evidence, fixed ledger weights, unchecked DoD, fail-closed platform behavior, and full compiler target coverage.
+
+
+## Live continuation reconciliation — 2026-11-19 16:14Z
+
+### Exact source and CircleCI
+- PR #113 remains OPEN / DRAFT / UNMERGED at exact HEAD `519f0f6856e0ae6242746581b9579cce33fca8cd`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`, branch `security/issue-104-root-confinement-20261118`.
+- GitHub combined status on this exact HEAD: `ci/circleci: one-linux` = SUCCESS; workflow `a3e98250-83bd-4c4a-a72c-cc15b596267b`, job `8ef8576f-999c-4b09-954f-b52aa82f0dd3`. Job-level status only: provider logs are not exposed here, so no individual step output is claimed. Separate `circleci config validate .circleci/config.yml` remains NOT VERIFIED.
+- ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`, unchanged.
+
+### Protected verifier reconciliation
+- PR #44 merged at 2026-11-19T11:58:30Z as `a44c32e18f884212c4c9250c4e7a9b8ad1ed9ccd`. Protected `verification` now points to that merge commit; `CANONICAL_COMMIT.txt` pins `722d662e7a81711ba3607d26571f4048a292b3ed`. This supersedes older notes claiming PR #44 was draft and pin `e50748a...` was protected; preserve those as historical only.
+- Protected E4 run #44519577693 on source `722d662...` SUCCESS: Windows native OBJ_DONT_REPARSE probe, Windows reparse/handle checks, and Unix no-follow/resource-bound jobs all passed. Native Windows probe evidence is limited to Windows Server 2025 build 26100.
+
+### Draft verifier remediation PRs
+All remain OPEN / DRAFT / UNMERGED; their successful branch workflows are not protected-branch acceptance evidence:
+- PR #45 artifact integrity, head `9a72e04b7e2992d655f8e3fc4e478892e91b7ae5`, run #44538012071 SUCCESS.
+- PR #46 SEC-05 APT retry/diagnostics, head `8a880ad00225ed8a78a3fd58adfbc329f0df5b11`, run #44533999931 Linux + Windows SUCCESS.
+- PR #47 Windows native runtime pin alignment, head `bd100d10c12c7b0849f01e9481111b0b0c859dd1`, run #44535174043 SUCCESS; source `722d662...`, Rust 1.100.0, PE32+ AMD64, native output Budi / exit 0.
+- PR #48 E1 workflow alignment, head `06bf1d7cbd10adadb74c79d7296f951244ae9839`, run #44538540682 Ubuntu + Windows SUCCESS; stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core 148/148 Linux and 133/133 Windows, workspace tests, Clippy and contract checker passed.
+
+### Protected release gate
+- Fixed-weight gate #44519577312 is terminal FAILURE (job `135544436703`): timed out waiting 10,200 seconds for the exact-SHA verifier matrix and listed five failed protected workflows: SEC-05 #44519577571, artifact #44519577533, E1 Windows #44519577311, focused stdlib/database #44519577640, and E1 cross-platform #44519577315.
+- SEC-05 retry #44519577571 attempt 2: Linux APT install failed after 277 MB / 15m19s with HTTP 503 from `security.ubuntu.com`; Windows passed. Linux failed before Rust setup/tests. PR #46 is the separately validated branch mitigation, not yet promoted.
+- PR #45/#46/#48 provide branch-validated candidate corrections for the artifact, SEC-05 and E1 failures; PR #47 fixes the Windows native runtime canonical-pin trigger. Protected revalidation is still required after authorized integration.
+- Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 SUCCESS does not make the fixed-weight release gate pass.
+
+### Safety / next action
+Do not merge PR #113 or PR #45–#48, change ONE `main`, force-push, or alter protected verification without explicit authorization. After authorized verifier integration, rerun the protected exact-SHA matrix and fixed-weight gate. Until then preserve the current fail-closed behavior and all evidence boundaries.
+
+
+### Next-session anti-duplication instruction
+Use the exact PR #113 HEAD above. Do not rerun unchanged PR #45–#48 branch workflows or protected E4 run #44519577693. The remaining acceptance blocker is protected integration and a fresh complete fixed-weight matrix, subject to explicit merge authorization.
+
+
+## Fixed-weight gate log detail — 2026-11-19
+
+The complete GitHub Actions job log for run #44519577312 / job 135544436703 has now been retrieved. The failure is not an E4 regression. The verifier reported:
+
+- Exact candidate source SHA: 722d662e7a81711ba3607d26571f4048a292b3ed.
+- Fixed weights: 100 total; implementation 92/100; verified 0/100; 18 ledger rows checked.
+- Definition of Done: 10 unchecked acceptance items.
+- The independent evidence index did not contain the exact candidate SHA.
+- Every non-zero fixed-weight ledger row was still recorded as 0 verified points (F1–F6, C1–C5, E1–E6); no row acceptance points were promoted.
+- Exact-SHA matrix wait timed out after 10,200 seconds. The protected run list had failed SEC-05 #44519577571, artifact #44519577533, E1 Windows #44519577311, focused stdlib/database #44519577640, and E1 cross-platform #44519577315; no exact-source protected Windows Native Backend Runtime run was found.
+- No protected ONE Package Provenance Release run existed for the exact source SHA, so E2 could not be accepted from candidate bundles.
+
+This is the actual logged gate output, not a hypothesis. PR #45–#48 each validate a narrow fix on its own draft branch, but none is merged into protected verification; their successes cannot retroactively satisfy the failed protected run. Do not edit fixed weights, mark rows VERIFIED, check DoD items, or dispatch protected release merely to make the gate green. Issue #104 remains OPEN / NOT ACCEPTED and the overall release gate remains NOT PASSED.
+
+## Current PR #113 status after documentation sync
+
+- PR #113 HEAD: 3ebb877c5e2f5b97e2154a7b4643b478af940879, OPEN / DRAFT / UNMERGED.
+- CircleCI ci/circleci: one-linux on this exact SHA: PENDING at 2026-11-19T16:21:13Z; workflow abe252f3-c181-441c-a5f8-732d3bf9b785; job b233706c-6421-491b-8730-603443e4b196. Parent SHA 519f0f6856e0ae6242746581b9579cce33fca8cd had SUCCESS, which does not transfer.
+- ONE main remains d35db95153f6ddd79885494c72f5aee16c899751. No merge or protected-branch change was made.
+
+## Verifier remediation integration and latest exact-SHA evidence — 2026-11-19 16:28Z
+
+The user authorized integration of independent verifier PRs #45–#48. They were squash-merged into panglimanetizen01/one-windows-verification protected branch verification; the protected branch now points to b14abf0020472dc45842be30854e0a09317d6cb4. Exact merge commits:
+
+- PR #45 candidate artifact integrity; tested PR head 9a72e04b7e2992d655f8e3fc4e478892e91b7ae5; merge 42feff8bc11d9b17d04ac9cff4abea4e80a7a832.
+- PR #46 SEC-05 bounded APT retries; tested PR head 8a880ad00225ed8a78a3fd58adfbc329f0df5b11; merge d539a162aeed9d22988c7ffb0c7a893e8d33f571.
+- PR #47 Windows native runtime exact canonical pin/toolchain; tested PR head bd100d10c12c7b0849f01e9481111b0b0c859dd1; merge 4ae84bad84ddacf169b9f25fa4c78581ab2b4bc4.
+- PR #48 E1 v0.1 test-target alignment; tested PR head 06bf1d7cbd10adadb74c79d7296f951244ae9839; merge b14abf0020472dc45842be30854e0a09317d6cb4.
+
+Canonical source pin remains 722d662e7a81711ba3607d26571f4048a292b3ed. No pin, fixed-weight ledger, DoD checkbox, package-release dispatch, or source implementation was changed.
+
+### Protected-branch push runs (do not conflate with PR-branch runs)
+
+- Artifact integrity run #44566172841 on merge 42feff8: SUCCESS. Log verified Linux and Windows candidate metadata, including Rust/Cargo 1.100.0.
+- SEC-05 run #44566187162 on merge d539a16: IN PROGRESS; Linux job 135708430394 SUCCESS, Windows job 135708430883 IN PROGRESS.
+- Windows Native Backend Runtime #44566197814 on merge 4ae84ba: IN PROGRESS, Windows Server 2025 job 135708473420.
+- E1 cross-platform #44566212975 on final protected HEAD b14abf0: IN PROGRESS, Ubuntu job 135708526288 and Windows job 135708526901.
+- Focused stdlib/database #44566212982 on b14abf0: SUCCESS. Retrieved Linux log confirms source-pinned Rust/Cargo 1.100.0; stdlib 6/6, core pipeline 6/6, conformance 5/5, database unit 1/1, database vertical slice 9/9, full one-core library 148/148, and warnings-denied Clippy PASS.
+- E1 Windows #44566212997 on b14abf0: SUCCESS. Retrieved Windows log confirms Rust/Cargo 1.100.0; stdlib 6/6, core pipeline 6/6, conformance 5/5, full one-core library 133/133, and warnings-denied Clippy PASS.
+
+Only terminal runs above may be classified SUCCESS. In-progress scopes remain NOT VERIFIED until jobs finish and logs are inspected. Protected E4 run #44519577693 remains SUCCESS for its original declared scope and was not rerun because E4 source/test inputs did not change.
+
+### CircleCI exact-SHA correction
+
+ONE PR #113 HEAD 64c490e9045aa29506772f74e3697a63a66b9695 has now reached CircleCI ci/circleci: one-linux SUCCESS (workflow b16121d3-51f0-4297-bb05-16e15b0434ea, job 148c47ea-a1ac-4574-8a61-1980d6c5a55a, status updated 2026-11-19T16:28:21Z). This is exact-SHA status evidence; CircleCI provider step logs were not retrieved in this session. Any subsequent docs commit creates a new PR head and requires its own CircleCI result; this SUCCESS must not transfer.
+
+### Release/acceptance boundary
+
+The prior fixed-weight gate #44519577312 remains FAILURE with its retrieved log: 92/100 implementation, 0/100 verified, 18 ledger rows checked, 10 unchecked DoD items, exact-SHA wait timeout, missing protected workflow evidence and no protected ONE Package Provenance Release. Newly merged fixes do not make that historical gate green. Wait for protected runs above to become terminal, reconcile their exact-source evidence, then consider a new gate evaluation only when relevant prerequisites changed. Do not change weights or mark DoD items without their own evidence.
+
+Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes and unsupported platform adapters remain fail-closed. No universal filesystem sandbox or full release acceptance is claimed. ONE main remains d35db95153f6ddd79885494c72f5aee16c899751. PR #113 remains OPEN / DRAFT / UNMERGED; no merge to ONE main is authorized.
+
+Verifier documentation follow-up PR #50 is OPEN / DRAFT at head 8c1d4dad927397219be5c8803e214105fa99e30f, targeting protected verification; it records the integration and exact status boundaries.
+
+## Final protected verifier integration result — 2026-11-19 16:33Z
+
+All six protected-branch push workflows resulting from the authorized verifier PR #45–#48 integration are now terminal SUCCESS:
+
+- Artifact integrity #44566172841 on verifier merge 42feff8bc11d9b17d04ac9cff4abea4e80a7a832: SUCCESS; exact job log confirms Linux and Windows artifact metadata with Rust/Cargo 1.100.0.
+- SEC-05 #44566187162 on verifier merge d539a162aeed9d22988c7ffb0c7a893e8d33f571: SUCCESS; Linux and Windows jobs passed bounded APT setup, interop tests, full one-core suites (148 Linux / 133 Windows), and fail-closed static guards.
+- Windows Native Backend Runtime #44566197814 on verifier merge 4ae84bad84ddacf169b9f25fa4c78581ab2b4bc4: SUCCESS; Windows Server 2025 checked out canonical ONE source 722d662, Rust/Cargo 1.100.0, built PE32+ AMD64, executed with exit 0 and output Budi, and wrote exact-SHA manifest.
+- E1 cross-platform #44566212975 on verifier protected HEAD b14abf0020472dc45842be30854e0a09317d6cb4: SUCCESS; Ubuntu and Windows both terminal SUCCESS. Ubuntu: stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core 148/148, workspace tests, Clippy warnings denied, repository contract checker. Windows: stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core 133/133, workspace tests, Clippy warnings denied, repository contract checker.
+- Focused stdlib/database #44566212982 on b14abf0: SUCCESS; Linux stdlib 6/6, core pipeline 6/6, conformance 5/5, database unit 1/1, database vertical slice 9/9, one-core 148/148, Clippy PASS.
+- E1 Windows #44566212997 on b14abf0: SUCCESS; Windows stdlib 6/6, core pipeline 6/6, conformance 5/5, one-core 133/133, Clippy PASS.
+
+The protected verification branch remains at b14abf0020472dc45842be30854e0a09317d6cb4. Canonical source pin remains 722d662e7a81711ba3607d26571f4048a292b3ed. No ledger weight, verified-point score, DoD checkbox, or protected release state was changed. Protected E4 #44519577693 remains SUCCESS for its original declared scope and was not rerun.
+
+The fixed-weight gate #44519577312 remains historical FAILURE: 92/100 implementation, 0/100 verified, 18 rows checked, 10 unchecked DoD items, exact-SHA wait timeout, and missing protected source-bound Package Provenance Release. Do not treat the six remediation workflow successes as overall release acceptance. A new gate evaluation is deferred until the evidence index and all row-level/DoD requirements are legitimately reconciled. Do not change fixed weights or dispatch a release to force PASS.
+
+Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes and unsupported platform filesystem adapters remain fail-closed. No universal filesystem sandbox, complete E1–E6 acceptance, or overall release is claimed.
+
+ONE CircleCI status on previous PR #113 HEAD d20036c0ad7b00caf6b68e4807102c6ee3b895a4 remains PENDING at 2026-11-19T16:30:42Z (workflow fc7039a6-8cde-464b-8c06-387e291d6d67, job 1a030227-696e-490d-bb16-dd288947976d). No CircleCI CLI/provider action is exposed in this session; the direct CircleCI app URL is inaccessible here. The previous HEAD 64c490e... had SUCCESS, but status does not transfer to later docs commits. This new docs commit will require its own exact-SHA CircleCI result.
+
+Verifier docs follow-up PR #50 is OPEN / DRAFT, targeting verification, with latest docs head 046d356527040f0375d91fabcc9678c683d969e0. ONE PR #113 remains OPEN / DRAFT / UNMERGED; ONE main remains d35db95153f6ddd79885494c72f5aee16c899751.
+
+## CircleCI exact-HEAD terminal result — 2026-11-19 16:39Z
+
+The latest preceding ONE PR #113 documentation HEAD eeafcab579cebb762af34d1daf4830f95cba87e7 has now reached CircleCI ci/circleci: one-linux SUCCESS. GitHub commit status was updated 2026-11-19T16:38:52Z; workflow 0621c480-6054-4fc1-8c82-b9028f105735; job 49178c86-d311-49ac-835a-6fa49985a980. This is exact-SHA status evidence for eeafcab only. CircleCI provider step logs were not separately retrieved, so no detailed step/test-count claim is made from CircleCI. Any later commit must have its own status checked.
+
+The six protected verifier remediation workflows remain terminal SUCCESS on their exact verifier commits and pinned source SHA 722d662. E3 is VERIFIED 8/8 in draft ONE PR #103 ledger source 36bba2e45a629c4fa39677b0ea07a2489d37bc99; total is 92/100 implementation and 8/100 verified; DoD is 4 checked / 9 unchecked / 13. The corresponding verifier draft PR #50 updates LEDGER_SOURCE_COMMIT.txt to the exact ledger commit, but neither documentation PR has been merged to its base branch.
+
+Issue #104 remains OPEN / NOT ACCEPTED. E1, E2, E4, E5 and E6 are not fully verified; protected source-bound Package Provenance Release is still absent. The historical fixed-weight gate #44519577312 remains FAILURE and is not overwritten. No fixed weights, canonical source pin, E4 acceptance pin, ONE main, or protected release state changed.
+
+
+## Current checkpoint correction — 2026-11-19 16:44Z
+
+- PR #113 exact HEAD `54b92ab9703b9c3450cb33f5eb4f34861aae107b` now has CircleCI `ci/circleci: one-linux` terminal SUCCESS (workflow `f9bd8ac7-a741-4bf6-8536-37af4798f3a1`, job `77951c98-1242-4c47-b45b-90011ecebfd6`). This supersedes the earlier PENDING observation for the same SHA. CircleCI provider logs are not exposed; this is job-level exact-SHA evidence only. No separate CLI config-validation or per-step test-count claim is made.
+- Protected verifier branch `verification` remains `b14abf0020472dc45842be30854e0a09317d6cb4`, canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed`. All 12 required exact-source verifier workflow names plus Android runtime alternative have terminal SUCCESS.
+- Draft ONE ledger/DoD PR #103 head `36bba2e45a629c4fa39677b0ea07a2489d37bc99` records E3 VERIFIED 8/8; ledger totals 92/100 implementation and 8/100 verified; DoD 4 checked / 9 unchecked / 13. This is still a draft source.
+- Draft verifier PR #50 head `622637766b9fe7b673182e21faf6b2d8ce0a8767` proposes the exact-source evidence index and ledger source pointer to PR #103. It remains OPEN / DRAFT / UNMERGED. Protected `LEDGER_SOURCE_COMMIT.txt` remains `d6c382a245c49a028bc60809f22ca956c7f894cc`; the proposed pointer has not been applied.
+- Historical fixed-weight gate #44519577312 remains FAILURE on the old protected ledger source: 92/100 implementation, 0/100 verified, 18 rows checked, 10 DoD unchecked, and no protected source-bound ONE Package Provenance Release. No new gate run has been triggered. Do not alter fixed weights/DoD or merge PR #50 without explicit authorization.
+- Issue #104 remains OPEN / NOT ACCEPTED: Linux nested writes and unsupported filesystem adapters remain fail-closed. Issue #82 protected Android runtime #44519577666 succeeded (API 35 arm64-v8a, ELF exit 0), but PR #49 metadata runtime job #135708475823 remains IN_PROGRESS. Issue #105 escaped-descendant containment remains unresolved.
+- ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## Live exact-SHA refresh — 20 November 2026
+
+- ONE PR #113 is OPEN / DRAFT / UNMERGED at exact HEAD `b0d854124191587882705c832e1825ad2a46cc8f`; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`.
+- CircleCI `ci/circleci: one-linux` is terminal SUCCESS on this exact PR HEAD: workflow `ecd5d877-e5f5-429c-884c-426196fc7e78`, job `cc77e7cb-8daf-4d9c-845d-df991e0f68bf`. This updates the prior PENDING observation for the same SHA. Only the combined-status/job result is verified here; no provider step-log or test-count claim is made.
+- The last code-bearing candidate remains `722d662e7a81711ba3607d26571f4048a292b3ed`. GitHub's net tree comparison from that source pin to PR #113 HEAD shows no changed source or test paths; the net changes are CI configuration, diagnostics tooling, and documentation. Keep E4 and other independent results attributed to the exact source pin `722d662...`, not relabeled as runs on `b0d854124191587882705c832e1825ad2a46cc8f`.
+- Protected verifier branch `verification` is `b14abf0020472dc45842be30854e0a09317d6cb4`; `CANONICAL_COMMIT.txt` remains pinned to `722d662...`, and `LEDGER_SOURCE_COMMIT.txt` remains `d6c382a245c49a028bc60809f22ca956c7f894cc`.
+- Protected E4 run [#44519577693](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577693) is SUCCESS for its pinned source. The historical fixed-weight gate [#44519577312](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44519577312) remains FAILURE; it is not overwritten by E4 PASS.
+- Verifier PR #50 remains OPEN / DRAFT at `0c0d8563d28e1f70734ecf4d906be91f912472f3`, with no status contexts/check runs reported. PR #49 remains OPEN / DRAFT for Android runtime metadata. ONE PR #103 remains OPEN / DRAFT at `5f616ae08e303081666a5e0d6a4b8b63b9d69c16`; its CircleCI status is a separate config-fetch error and does not transfer to PR #113.
+- Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes and unsupported platform adapters remain fail-closed. No main update, merge, protected pin change, ledger promotion, or release action occurred.
+
+
+## Exact-SHA continuation update — 20 November 2026
+
+- Latest CircleCI-confirmed PR #113 HEAD at this checkpoint: `051c7815cc5cf3dbca840ac8cbb38e3e663da6b7`; `ci/circleci: one-linux` terminal SUCCESS, workflow `3b89115a-ff07-41ac-940e-fb78baccd7ac`, job `241f1d78-0aaf-4f47-8ea2-57fbd3b35a1c`. This is job-level evidence; provider step logs were not separately inspected.
+- PR #113 remains OPEN / DRAFT / UNMERGED; ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. This successful candidate result does not mean CircleCI has been integrated into `main`.
+- Android API 35 AArch64 runtime metadata evidence is now complete: verifier run #44565956781 SUCCESS on PR #49 exact head `fa0b5cffe52bf31fedef81ed945d6cc3a6dc2e19`; build job `135707610069` and runtime job `135708475823` SUCCESS. Inspected artifact #14553867982 records source pin `722d662e7a81711ba3607d26571f4048a292b3ed`, API 35, ABI `arm64-v8a`, host `aarch64`, exact ADB invocation, exit 0 and `ONE_NATIVE_BACKEND_OK`. ELF SHA-256 matched the metadata. ONE Issue #82 is CLOSED / COMPLETED for this runtime-evidence scope only.
+- Protected verifier branch `verification` remains `b14abf0020472dc45842be30854e0a09317d6cb4`; canonical source pin remains `722d662...`; protected ledger source pin remains `d6c382a245c49a028bc60809f22ca956c7f894cc`. No protected pin or ledger weight changed.
+- The fixed-weight gate #44519577312 remains historical FAILURE. Issue #104 remains OPEN / NOT ACCEPTED; Linux nested writes and unsupported platform filesystem adapters remain fail-closed. Issue #105 and the broader E1/E2/E4/E5/E6 release work remain unresolved.
+- This documentation synchronization itself creates a new PR #113 HEAD. Do not transfer the SUCCESS above to the new SHA; inspect the exact resulting commit status before any subsequent CircleCI claim.
+
+
+## CircleCI exact-HEAD terminal confirmation — 20 November 2026
+
+- Current PR #113 HEAD at this checkpoint: `26a34efb6d0908bd02738a7b05090f96051a6dc7`.
+- GitHub combined status: `ci/circleci: one-linux` = terminal SUCCESS.
+- Workflow: `a7016ead-ed2d-467f-9f1b-4d20c60a966f`; job: `6cc9778c-307c-48fc-9111-39c97d288393`.
+- This is a direct exact-SHA status read for `26a34efb6d0908bd02738a7b05090f96051a6dc7`; it is not transferred from parent commits. Provider step logs were not inspected, so no per-step or test-count claim is made.
+- PR #113 remains OPEN / DRAFT / UNMERGED; ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`. The CircleCI candidate has not been integrated into `main`.
+- Issue #82 is CLOSED / COMPLETED for Android API 35 AArch64 runtime evidence; artifact #14553867982 was downloaded and its metadata/ELF digest inspected. This does not establish Android filesystem adapter support.
+- Issue #104 remains OPEN / NOT ACCEPTED; fixed-weight gate #44519577312 remains historical FAILURE. Linux nested writes and unsupported platform filesystem adapters remain fail-closed.
+- This documentation-only synchronization creates a new PR #113 HEAD; check that resulting SHA independently before transferring any CI status.
+
+
+## Exact-SHA platform metadata and host-selection verification — 20 November 2026
+
+- Candidate source: `c7f460a4e38be61de635ad5af9f7ff987a941f01`. The code/test delta from protected E4 pin `722d662e7a81711ba3607d26571f4048a292b3ed` includes `adapter.rs`, `interpreter.rs`, and `filesystem_vertical_slice.rs`.
+- Filesystem adapter metadata now advertises Linux only on Linux and Windows only on Windows; Android/macOS/other unsupported targets advertise no filesystem backend. `PlatformKind::current_host()` supplies actual host identity to orchestration.
+- E4 run #44585270928 SUCCESS; the metadata regression explicitly passed on Linux and Windows. Linux distro run #44585282690 SUCCESS on Ubuntu 24.04 and Debian 12, including the corrected CLI integration test. E1 Windows acceptance #44585282432 SUCCESS.
+- Aggregate cross-platform, Windows native runtime, Android runtime, SEC-05, E1 milestone, and artifact integrity workflows remained in progress/pending. CircleCI on exact source `c7f460a...` remained PENDING; last terminal CircleCI SUCCESS was on parent docs SHA `26a34ef...` and does not transfer.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Verifier PR #51 remains OPEN / DRAFT with branch-local pin `c7f460a...`; protected verifier branch and pins remain unchanged. Issue #104 remains OPEN / NOT ACCEPTED; Issue #82 is CLOSED only for Android runtime evidence. No merge, main update, pin promotion, or release.
+
+## LIVE EXACT-SHA CHECKPOINT — 2026-11-20
+
+This checkpoint supersedes older live-status statements above where they conflict. Historical run outcomes remain preserved.
+
+### Exact source and repository state
+
+- ONE PR #113 remains OPEN / DRAFT / UNMERGED on `security/issue-104-root-confinement-20261118`.
+- Exact source HEAD: `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20`.
+- ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`; it was not modified.
+- Independent verifier PR #51 remains OPEN / DRAFT / UNMERGED; current verifier HEAD: `27207b85ed205d2cf12e6fd66b918193a215d8fd`.
+- Verifier PR #51 branch-local `CANONICAL_COMMIT.txt` is `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20`. Protected `verification` branch and its canonical source pin `722d662e7a81711ba3607d26571f4048a292b3ed` remain unchanged.
+
+### Exact-source verification
+
+- CircleCI `ci/circleci: one-linux`: SUCCESS on source `fb5c8bc...`; workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`. This is status-context evidence; provider step logs were not inspected.
+- E4 adversarial filesystem run [#44651796986](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796986): SUCCESS on verifier HEAD `27207b85...`, pinned source `fb5c8bc...`. Windows job #136008224371 explicitly passed the seven named E4 Windows filesystem regressions, the atomic-replacement failure-preservation regression, the hard-link regression, and the platform-metadata regression (9 selected tests, 0 failed). Unix job #136008224711 passed the no-follow, mount-boundary, traversal, race, direct-child write, hard-link, platform metadata, policy, and related resource-bound selected tests.
+- Linux distro run [#44651796952](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796952): SUCCESS on Ubuntu 24.04 and Debian 12, including contract checks, build, Clippy, workspace tests, and real-network tests.
+- Windows native backend runtime [#44651796852](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796852): SUCCESS.
+- E1 Windows acceptance [#44651797000](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651797000): SUCCESS.
+- Focused standard-library/database [#44651796941](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796941): SUCCESS.
+- SEC-05 subprocess timeout/output-limit [#44651796634](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796634): SUCCESS.
+- E4 subprocess resource guard [#44651796650](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796650): SUCCESS.
+- Artifact integrity [#44651796712](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796712): SUCCESS. Linux artifact #14563276002 SHA-256 `59aa04887ffa5c2cb66d65e4ef7936622c6e0a4f6164ea8ea458457d10b8a940`; Windows artifact #14561664789 SHA-256 `7d3c51123f73c398032ef0c636c018c12ea501340b822b8e3b4edc9777645a3a`. Embedded manifests both match source SHA `fb5c8bc...`; ELF64 x86-64 and PE32+ x86-64 checks passed.
+- Android AArch64 build artifact [#44651796635](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796635): SUCCESS. Android API 35 ARM64 runtime [#44651796976](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796976) remained IN_PROGRESS at this checkpoint.
+- Cross-platform aggregate [#44651796654](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796654) remained PENDING; E1 Milestone 1 aggregate [#44651796950](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44651796950) remained IN_PROGRESS. Do not infer completion from individual platform jobs.
+
+### Artifact-integrity historical failure reconciliation
+
+- Earlier artifact-integrity run [#44589012615](https://github.com/panglimanetizen01/one-windows-verification/actions/runs/44589012615) FAILED while waiting for a successful cross-platform bundle run for source `fb5c8bc...`; its log did not identify archive corruption.
+- Later exact-source run #44651796712 successfully discovered both artifacts, checked GitHub SHA-256 digests, verified embedded source manifests and toolchain metadata, and validated ELF/PE executable formats. Preserve the old failure as historical evidence; the later success is a separate terminal verification, not a deletion or rewrite of that failure.
+
+### Acceptance boundary
+
+- The hard-link test closes a previously missing regression-evidence gap: an in-root file with an outside hard link is rejected for both read and write, and both names retain their original bytes.
+- Linux mount-boundary, symlink, traversal, race, and direct-child write controls are exercised by the exact-source Unix E4 run. Linux nested writes remain fail-closed.
+- Windows junction/reparse-point and handle-relative checks are exercised by the exact-source Windows E4 run and native backend runtime.
+- Filesystem adapter metadata remains Linux-only on Linux and Windows-only on Windows; Android/macOS filesystem adapters remain unavailable. Android native runtime evidence does not imply Android filesystem adapter support.
+- Issue #104 remains OPEN / NOT ACCEPTED. Do not promote protected pins, ledger weights, or DoD items; do not merge PR #113 or PR #51; do not change `main` or protected `verification`.

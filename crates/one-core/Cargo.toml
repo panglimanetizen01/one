@@ -23,7 +23,7 @@ rcgen = { version = "0.13", optional = true }
 h2 = { version = "0.4", optional = true }
 bytes = { version = "1", optional = true }
 http = { version = "1", optional = true }
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite = { version = "0.40.2", features = ["bundled", "limits", "hooks"] }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
@@ -36,4 +36,7 @@ windows-sys = { version = "0.61", features = [
     "Win32_System_JobObjects",
     "Win32_System_Pipes",
     "Win32_System_Threading",
+    "Win32_System_IO",
+    "Wdk_Foundation",
+    "Wdk_Storage_FileSystem",
 ] }

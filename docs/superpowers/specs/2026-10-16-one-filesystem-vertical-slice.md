@@ -87,3 +87,22 @@ This slice does not claim general filesystem support, filesystem write support, 
 ## Success criteria
 
 Filesystem read is complete only when it is specified, implemented, tested, independently verified on the supported verification matrix, and documented without overstating its status. The implementation must preserve the existing DNS behavior and generic governance guarantees.
+
+## Extension: explicit file deletion effect — 2026-11-21
+
+A file-delete operation is a distinct destructive effect, not an alias for write or general filesystem access.
+
+- Semantic ID: `filesystem.delete`.
+- Runtime capability: `Capability::FilesystemDelete`.
+- Effect class: `EffectClass::Delete`.
+- Adapter: `filesystem.file.delete`.
+- Source form: `hapus berkas "path"`.
+- The coarse `filesystem` grant and the read/write grants do not imply delete.
+- The host must inject the same trusted root authority used by the other filesystem adapters; policy scope is evaluated before adapter invocation.
+- Current adapter metadata advertises Windows only. Other platforms stay unavailable/fail-closed until their native primitive meets the root, object-identity, hard-link, symlink/mount, and race requirements.
+
+The native Windows delete implementation passed its own exact-SHA CI slice, but the newly added language bridge remains unverified until its own build/test run completes. The feature is therefore implemented-in-source, not yet promoted to Verified.
+
+## Exact-SHA verification update — 2026-11-21
+
+The filesystem.delete language bridge passed One CI run #44871756593 on source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4. Ubuntu Build/Clippy/Tests passed (181/0/3 ignored); Windows Server 2025 Build/Clippy/Tests passed (167/0). The Windows explicit-grant interpreter path and actual junction escape sentinel-preservation regression passed. The adapter is Verified for Windows only; other platforms remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.

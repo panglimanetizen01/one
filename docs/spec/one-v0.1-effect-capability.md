@@ -193,3 +193,19 @@ Acceptance requires Unix and Windows adversarial tests on the same exact source 
 The design and implementation checkpoint is tracked in [Issue #104 filesystem root-confinement design](../security/issue-104-filesystem-root-confinement-design.md). This section defines requirements only; it is not evidence that the implementation exists or has passed verification.
 
 The host API MUST inject one immutable filesystem authority shared by read and write adapters. The authority is opened from an explicit trusted host root and carries explicit read/write byte limits. The CLI host MAY use its current project working directory as the root, but it MUST obtain that root independently of the program target; the target, source text, and ambient environment overrides MUST NOT select or widen root authority. Library users MUST explicitly inject the authority. Existing interpreter construction without an injected root MUST fail closed for filesystem adapter invocation and MUST NOT infer a root. Tests MUST inject a temporary trusted project root with fixtures beneath it; deriving the root from the target's parent is prohibited.
+
+## 2026-11-21 — filesystem.delete explicit capability
+
+The filesystem delete effect is a separate permission boundary. `filesystem.delete` maps to `Capability::FilesystemDelete`, `SemanticCapabilityId::FilesystemDelete`, and `EffectClass::Delete`. It is not implied by the coarse `filesystem` grant, `filesystem.write`, or `filesystem.read` grants. A policy must grant the delete capability explicitly and constrain its target scope.
+
+The initial host adapter ID is `filesystem.file.delete`. It is registered by the interpreter only with the host-injected `FilesystemAuthority`. Adapter metadata advertises only Windows, where the handle-bound native delete backend is implemented. Linux, Android, macOS, and unknown targets do not advertise the adapter and the host API remains fail-closed there.
+
+The source action syntax is `hapus berkas "path"` (English alias `delete file` is available to orchestration alias resolution). The action lowers to an explicit Delete effect and cannot route through filesystem.write. No ambient root is inferred; the target is evaluated only against the injected host root.
+
+The Windows backend is validated at source/test SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` by One CI run #44870781889, including hard-link, leaf-rename, parent-rename, and actual directory-junction escape regressions. The new parser/semantic/IR/policy/adapter bridge added after that native validation is NOT YET BUILT / TESTED at checkpoint SHA `0fa43eb0be53c8e79424597ece055147872b35c4`. Do not promote this language-level slice to Verified until its own exact-SHA CI passes.
+
+## 2026-11-21 — exact-SHA filesystem.delete verification
+
+The source bridge at 0fa43eb0be53c8e79424597ece055147872b35c4 passed One CI run #44871756593: Ubuntu Build/Clippy/Tests SUCCESS (one-core 181 passed / 0 failed / 3 ignored), Windows Server 2025 Build/Clippy/Tests SUCCESS (one-core 167 passed / 0 failed). CircleCI status context ci/circleci: one-linux is SUCCESS on the same SHA.
+
+This establishes Verified status only for the explicit Windows-only file-delete effect slice and its Linux policy/semantic denial path. It does not imply Linux/Android/macOS delete support or close Issue #104.

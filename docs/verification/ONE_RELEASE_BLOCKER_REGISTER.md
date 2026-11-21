@@ -1,0 +1,1236 @@
+# ONE RELEASE BLOCKER REGISTER
+
+**Status:** ACTIVE — single release-sprint work queue  
+**Last verified:** 2026-11-21 (implementation-first refresh)  
+**ONE PR:** [#113](https://github.com/panglimanetizen01/one/pull/113)  
+**Verifier PR:** [#51](https://github.com/panglimanetizen01/one-windows-verification/pull/51)
+
+> This register controls priority only. It does not replace or modify the release contract, specifications, fixed acceptance ledger, Definition of Done, or evidence matrix. Those remain authoritative for acceptance. Update this register instead of creating another blocker list or duplicate roadmap.
+
+## 1. Last verified identity — refresh before acting
+
+| Item | Exact value |
+|---|---|
+| ONE canonical `main` | `e518e4a47aedf2611ffd166e05dc4e45bed09917` |
+| PR #113 branch | `security/issue-104-root-confinement-20261118` |
+| PR #113 HEAD at latest live read (before this register-only sync) | `e44ed612b67af01ec5ec6e37dcee354b7f23e113` |
+| PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
+| Code-bearing source/test SHA | `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` |
+| Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
+| Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
+| Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
+
+PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all live refs, issue states, status contexts, and provider results before using this snapshot.
+
+## 2. Active blockers
+
+### B-001 — CircleCI pre-execution termination
+
+**Priority:** P2 · **State:** PARTIAL — exact-SHA workflow/job success on `979973cd...`; historical pipeline #1201 root cause UNKNOWN; retain as non-active follow-up  
+**Affected candidate:** PR #113 exact HEAD `509b7b197115adb1ba80d730342e9f6fbf981645`
+
+| Run | Pipeline | Workflow | Job | Pipeline revision | Job start |
+|---|---:|---|---|---|---|
+| Current | #1201 | `41becc6d-b56e-45e8-b273-629ba08c4390` | #836 / `9dbc05b4-a601-4fbc-b6a4-61f64ecc8e9a` | `509b7b197115adb1ba80d730342e9f6fbf981645` | `started_at=null` |
+| Previous | #1199 | `916983e9-dbde-4db2-a967-438a666ebb19` | #834 / `a130c5d9-c078-4c18-8ae5-571470f46d60` | `a0d94bc...` | `started_at=null` |
+| Earlier | #1198 | `5ed6d9e7-976e-4322-b7ba-6deea915e1a9` | #833 / `8d2d756e-9297-4a00-9a7d-a0c9bd734cba` | `5daf333...` | `started_at=null` |
+
+**Exact #1201 mapping and observations**
+- Webhook trigger: `2026-11-20T09:47:02.580Z`; pipeline created `09:47:02.849Z`; pipeline state `created`.
+- Workflow `one-ci` created `09:47:03.040Z`, stopped `09:47:03.544Z`, status `failed` (about 0.5 seconds).
+- Job `one-linux` #836 status `failed`; `started_at=null`, stopped `09:47:03.544Z`, no duration, no dependencies.
+- API v3 exposes step #101 `CANCELED` / `Error: Task information unavailable`; stdout/stderr are empty.
+- Pipeline config endpoint returns source and compiled configuration strings; setup-config fields are absent. Source config SHA-256: `b7827cd95925851482b833a5f45033e1b26ef0f731857b29e2df0821e08fd155`; compiled config SHA-256: `9f3f77d48351a10c3222a4a1b79634d30de29038c562c9c0e548046026b85aee`.
+- Compiled config includes `one-linux`, machine image `android:default`, resource class `large`. Config payload presence does not prove executor provisioning or job start.
+- Diagnostic script classifier has a false positive: it scans the report's own explanatory phrase `failed/timed_out`, then labels it `TIMEOUT / NO-OUTPUT`. This is not timeout evidence; actual evidence remains canceled step/no job start.
+
+**CircleCI account/settings evidence — 2026-11-20**
+- Project Advanced screenshot: **Free and Open Source ON**, **Block all new work OFF**, **Only build pull requests OFF**, dynamic config ON.
+- Plan screenshot: Free plan; usage snapshot shows 110,089 of 30,000 regular credits used. The page explicitly states OS project contributions are not subject to the 30,000-credit limit and advertises up to 400,000 monthly credits for Linux open-source builds.
+- Screenshot does not show remaining/consumed balance for the separate 400,000 OSS allocation. An earlier provider error was recorded as `free-plan-no-credits-available`; screenshots do not prove whether the OSS allocation was exhausted or whether that error still applies.
+- Personal API token authentication is valid (`/api/v2/me` HTTP 200); project metadata read is HTTP 200. Project settings API returns HTTP 403 Permission denied for both `gh` and `github` slugs. Do not interpret this as OSS OFF.
+- Do not buy credits, upgrade, toggle settings, or retry CircleCI while the recorded no-credit provider block remains unresolved.
+
+**Classification:** confirmed pre-execution termination / no job start. It is NOT a test timeout, test assertion failure, compiler failure, or source regression. Root cause remains UNKNOWN; credit eligibility/allocation remains unresolved.
+
+**Resolution evidence — 2026-11-20**
+- Exact tested source SHA `6ef875291b599ef144dba5333e9a40c455f3e013` has GitHub combined status `ci/circleci: one-linux = success`, target workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`.
+- Compare from original failed SHA `509b7b197115adb1ba80d730342e9f6fbf981645` to tested SHA shows changes only in the three existing verification documents; no runtime source or CI workflow files changed. Thus the same code/workflow state subsequently received a successful CircleCI status.
+- The pre-execution failure is resolved operationally for this candidate code/workflow state. The provider's internal cause for historical pipeline #1201 remains UNKNOWN.
+- Latest PR #113 HEAD `7a9ac7ae720eba3b8f64c1bfa46feda3927dd410` adds only further changes to the same three docs beyond the tested SHA. CircleCI has no status entry for that newer docs-only HEAD.
+- GitHub Actions run #2247: Windows job SUCCESS; Ubuntu job remains IN_PROGRESS at `Install cross-compilers (Ubuntu)`; all subsequent Ubuntu steps pending. No full matrix PASS is claimed.
+- Free and Open Source remains ON per user's confirmed UI observation. Settings API 403 is an access limitation, not evidence of OFF.
+
+**Next action:** retain historical #1201 evidence; do not rerun or change CircleCI config for this operationally resolved blocker. Continue tracking the separate Ubuntu GitHub Actions job and remaining Issue #104 acceptance blockers.
+
+**Separate GitHub Actions bootstrap route**
+- PR #115 `ci/bootstrap-actions-on-fix-windows-verifier-20261120` is OPEN / NOT MERGED; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Initial run #2243 failed on both OS jobs because the PR #113 contract checker rejected the newly introduced `.github/workflows/ci.yml`; Build/Clippy/Tests did not run.
+- Corrective workflow commit on PR #115: `3b684acd1f3e68f1b40dd6d600fad0e013044495`, blob `35015ded4f7635ea37ec2b035f2ba0c33d7d4bf5`. It preserves merge-result checkout for normal PRs, uses exact PR head checkout for the stacked base branch, and skips only the contract check on the bootstrap PR itself. Full contract check remains enabled for PR #113.
+- GitHub Actions run #2244 (`44748865610`) is terminal SUCCESS on exact PR #115 HEAD `3b684acd1f3e68f1b40dd6d600fad0e013044495`. Ubuntu and Windows jobs both completed SUCCESS; Build, Clippy, workspace tests, and all focused tests passed. The bootstrap PR's Contract artifacts step was intentionally skipped; it is not claimed as executed on this bootstrap branch. [Run #2244](https://github.com/panglimanetizen01/one/actions/runs/44748865610).
+- CircleCI status on the same PR #115 SHA is FAILURE at workflow `e6e6a97c-2cda-4a7a-a5ff-3b0c9129d9ec`, job `667d82b1-c817-41f3-91f2-5bd09b55e879`; provider logs are inaccessible in this session, so root cause is not inferred. This does not change the separate B-001 mapping for PR #113 pipeline #1201.
+- PR #113 remains OPEN / DRAFT / UNMERGED at `509b7b197115adb1ba80d730342e9f6fbf981645`; base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+
+
+
+**Separate current-main provider observation — 2026-11-21**
+- Current `main` HEAD read from GitHub: `e518e4a47aedf2611ffd166e05dc4e45bed09917` (commit message: enable GitHub Actions for stacked PR #113). This commit already exists on `main`; it was not created by this continuation.
+- GitHub status context `CircleCI Pipeline = ERROR` points to pipeline #1323: [pipeline #1323](https://app.circleci.com/pipelines/gh/panglimanetizen01/one/1323).
+- Pipeline `vcs.revision`, workflow/job membership, job start time, and provider step logs are not available from the status context. Root cause remains UNKNOWN; do not attribute this to the config or source without provider evidence.
+- This is separate from PR #113's current `ci/circleci: one-linux` PENDING context and must not be conflated with it.
+
+### B-002 — Issue #104 security acceptance
+
+**Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
+**PR #113:** OPEN / DRAFT / UNMERGED · base `181ad350d8f0db53cda654c4d378425fbdd6ab24`  
+**Runtime candidate:** `671c63b1c6cbae0ad99630c554eb1300ce7f0d77`  
+**Latest source/test HEAD:** `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` (adds a mandatory native-Linux nested-write test mode and a mount-boundary regression; CircleCI privileged-lane wiring is `f026a0241c1f9555f4123e1128e2a3fe173cd756`; PR #113 remains OPEN / DRAFT / UNMERGED).
+
+**Current concrete implementation**
+- Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing. The previous adversarial test treated `UnsupportedPlatform` as a passing skip, so ordinary CI could be green without exercising native nested writes. Source SHA `38eb048...` now fails when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1` and the native path is unavailable; CircleCI config commit `f026a024...` adds a root-executed lane for parent-move and mount-boundary tests.
+- Windows: native handle-relative read/write/delete; directory/leaf handles retain anti-reparse and anti-rename protections. Windows handle-bound delete has exact-source GitHub Actions evidence from #44871756593 (source `0fa43eb0be53c8e79424597ece055147872b35c4`), but this does not close the full Issue #104 contract.
+- Android: direct-child read/write only using retained-root `openat`, `O_NOFOLLOW`, `O_NONBLOCK`, `statx(STATX_MNT_ID)`, device/type/link checks, and atomic sibling-temp publication. Observed Termux seccomp kills `openat2` with SIGSYS. Nested paths fail closed; no component-walk fallback.
+- macOS: direct-child read/write plus nested read using XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` identity checks. A nested atomic-write candidate now stages a unique temp under the retained root and publishes with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`; cross-mount publication fails closed with `EXDEV`. Source regressions cover replacement, symlink-parent denial, hard-link rejection, and moving a parent outside root before publication.
+- POSIX delete (Linux/Android/macOS) remains unavailable. `unlinkat` is name-based and cannot atomically bind deletion to the validated object handle under the required mount/rename contract. Do not implement check-then-unlink.
+- Host authority remains injected by CLI cwd; requested target/source cannot select or widen root. Read/write/delete are separate capabilities.
+
+**Historical macOS integration correction — earlier checkpoint**
+- Corrected stale macOS public-authority integration regression `macos_leaf_symlink_and_nested_paths_fail_closed`, which still expected all nested writes to be unsupported after the XNU nested-write candidate was added.
+- Renamed it to `macos_nested_write_is_confined_and_leaf_symlinks_are_rejected`. It now accepts a successful nested write only when bytes match, accepts `UnsupportedPlatform` only as fail-closed behavior with no target, asserts no root staging-temp leak, and rejects symlink-parent writes while preserving the outside sentinel.
+- Commit: `830a70e5c5d07fd87c5c1e792853e146be04a232`.
+- This is a source/test correction, NOT a macOS runtime result. The XNU candidate and its native tests remain NOT BUILT / NOT RUN on macOS.
+
+**Latest exact-HEAD CI observation — 2026-11-21**
+- PR #113 documentation HEAD `d6c3210d567ba34c4bdc6543a41091406679fcb7`: GitHub status `ci/circleci: one-linux = PENDING`, workflow UUID `55dc3c65-a6bb-4d77-a9f1-86d2b3939c98`, job UUID `9f874fea-68a2-4169-ba26-06e6a37eadb6`. Pipeline number/revision mapping and provider logs are not available; no cause or test result is inferred.
+- GitHub Actions One CI #44908789274 is IN_PROGRESS (Ubuntu job #136859931567, Windows job #136859931870). macOS Native Filesystem #44908789221 is SUCCESS on the same documentation HEAD (macOS 26 job #136859931719, macOS 15 job #136859932053).
+- The CircleCI privileged native-Linux test step is NOT VERIFIED until the provider logs show both exact test names executed and passed. Keep Issue #104 OPEN / NOT ACCEPTED.
+
+**Historical CI state for the macOS correction**
+- GitHub Actions One CI run #44901974950 on exact HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232` was IN_PROGRESS at last readback; no terminal result claimed.
+- CircleCI `ci/circleci: one-linux` is PENDING on this exact HEAD: workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2`.
+- Existing successful Ubuntu/Windows runs on older exact SHAs do not prove this new source/test commit. Linux/Windows CI also does not compile the macOS cfg module or execute XNU tests.
+
+**Latest implementation delta — Linux nested-write native enforcement (2026-11-21)**
+
+- Source/test commit: `671c63b1c6cbae0ad99630c554eb1300ce7f0d77`. The Linux parent-move regression no longer silently counts `UnsupportedPlatform` as sufficient when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1`.
+- Added `nested_write_rejects_mount_boundary_before_creating_staging_file`, using `/` as the retained root and `/dev` as a separate mount; it requires `ResolutionFailed` and verifies no target is created.
+- CircleCI config commit: `f026a0241c1f9555f4123e1128e2a3fe173cd756`. After the normal workspace test binary is built, a dedicated step executes the two Linux adversarial tests as root with the native-required environment variable. This avoids recompiling the workspace under sudo and keeps the test binary/build artifacts unchanged.
+- The new source/config commits used `[skip ci]` to avoid testing an intermediate state. The following documentation-sync commit will trigger the combined candidate pipeline. Until terminal job logs show both exact named tests executing successfully, native Linux nested-write support remains NOT VERIFIED.
+- Existing One CI run #44906889708 on prior source `6403592796b9827e4bffe26a982dfc66afc75d9d` was SUCCESS on Ubuntu and Windows; however, its test allowed unsupported native primitives and is not proof of successful nested writes. Existing macOS native run #44906889694 remains valid for its exact prior source only.
+- Issue #104 remains OPEN / NOT ACCEPTED. No verifier pin, fixed ledger, DoD, acceptance criteria, main branch, or release state changed.
+
+**Next implementation actions:** obtain terminal CircleCI evidence for the privileged Linux nested-write lane; then continue Android nested filesystem implementation without falling back to `openat2` in Termux, and evaluate a safe native POSIX delete primitive. Keep unsupported operations fail-closed. Do not alter acceptance criteria, fixed ledger weights, protected verifier pin, or DoD.
+ 
+### B-003 — Formal v0.1 release gates
+
+**Priority:** P1 · **State:** OPEN / NOT RELEASE-APPROVED**
+
+The v0.1 release contract, completion addendum, fixed ledger/DoD, and E1–E6 evidence remain authoritative. Reconcile every remaining gate against its exact-SHA evidence. Do not infer release readiness from a subset of green workflows or documentation completion. Issue #105 remains an open engineering item; classify it as release-blocking only if the normative contract/ledger says so.
+
+**Next action:** produce a gate-by-gate closeout from existing records. Do not change gate weights or acceptance rules.
+
+### B-004 — Architecture and documentation traceability
+
+**Priority:** P2 · **State:** PARTIALLY VERIFIED**
+
+- Existing Mermaid source: [filesystem-root-confinement.md](../architecture/filesystem-root-confinement.md).
+- Full overview image remains in draft [PR #97](https://github.com/panglimanetizen01/one/blob/docs/system-architecture-diagram-20261115/docs/architecture/one-full-architecture-map.png); its binary has not been visually inspected in this session.
+- Do not recreate/re-upload a duplicate diagram. Update existing Mermaid source only if architecture changes, then synchronize links and evidence.
+
+### B-005 — Issue #105 non-escapable process containment
+
+**Priority:** P1 · **State:** OPEN / NOT ACCEPTED
+**Latest code-bearing source/test candidate:** `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (NOT BUILT/TESTED); it includes the prior `waitid(WNOWAIT)` cleanup hardening from `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` and adds explicit 2 MiB aggregate stdout/stderr capture enforcement alongside 1 MiB per-stream limits. PR #113 HEAD before this register sync: `d5ddd7f39bbc54a7c0e88db907dfae5f8c49afc5`.
+
+- Linux and Android process startup now install a child-inherited seccomp filter before exec. It denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` to permit compatible fallback. Process-group cleanup is intended to cover descendants on normal completion, timeout, and output overflow.
+- Filter setup failure is fail-closed. Windows Job Object containment is unchanged. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed until equivalent containment exists.
+- Three adversarial `setsid` tests and bounded-reader regression are target-gated for Linux and Android, covering normal completion, timeout, and output overflow. They have NOT been run.
+- Acceptance requires reviewing the seccomp architecture/syscall policy and executing the adversarial cases on supported Linux architectures and a real Android/Termux target, proving no descendant survives all three paths. Reconcile existing Windows Job Object evidence. Do not claim process-tree containment or close Issue #105 before that evidence.
+
+## 3. Release sprint execution order
+
+1. **P0:** Complete Issue #104 production filesystem implementation against its unchanged acceptance contract; preserve fail-closed behavior for unsupported nested operations.
+2. **P1:** Complete Issue #105 Linux/Android/Windows process containment implementation; macOS process execution remains fail-closed until equivalent containment exists.
+3. **P1:** Reconcile every remaining formal v0.1 product/release gate from the existing contract and fixed ledger. Do not reopen B-001 absent a new relevant provider failure.
+4. **P2:** After implementation scope is complete, freeze one release-candidate SHA and run the required integrated platform matrix. Inspect terminal job results/logs. Parent-SHA evidence never transfers.
+5. **P2:** Synchronize only affected existing docs and Notion Skill; preserve historical evidence and exact-SHA boundaries.
+6. **P3:** Prepare release artifacts/notes. Merge, tag, publish, and distribute only after all gates pass and the owner explicitly authorizes it.
+
+## 4. Connected documentation ecosystem
+
+- [Agent operating contract](../../AGENTS.md)
+- [Documentation map](../README.md)
+- [v0.1 release contract](../release/one-v0.1.md)
+- [Completion roadmap/addendum](../superpowers/plans/2026-10-15-one-v0-1-completion-addendum.md)
+- [Implementation plan](../superpowers/plans/2026-10-15-one-v0-1-implementation.md)
+- [Evidence matrix](one-v0.1-evidence-matrix.md)
+- [Implementation status](one-v0.1-implementation-status.md)
+- [Verification index](README.md)
+- [Live checkpoint](live-checkpoint-2026-11-20.md)
+- [CircleCI diagnostics](CIRCLECI_DIAGNOSTICS.md)
+- [Existing Mermaid architecture](../architecture/filesystem-root-confinement.md)
+- [Changelog](../../CHANGELOG.md)
+- [Compact master prompt](MASTER_CONTINUATION_PROMPT.md)
+- [Notion continuity Skill](https://app.notion.com/p/407a9d23afaa813cb942d4d6a4d1c5ce)
+
+The register is the one work queue; the linked documents remain their own authorities. Do not fork their responsibilities into duplicate files.
+
+## 5. Closure and safety rules
+
+Close a blocker only when its acceptance condition has direct evidence, exact source/verifier SHA and platform/job references are recorded, affected docs are synchronized, and the Notion Skill is refreshed. A plan, queued workflow, job that never started, or parent-SHA PASS is not closure.
+
+Never merge PRs, modify `main`, force-push, delete branches, promote protected pins, alter fixed ledger/DoD/acceptance criteria, weaken security boundaries, claim unsupported platform support, expose tokens/secrets, purchase hosted CI capacity, or publish a release without explicit authorization.
+
+
+## 2026-11-20 — Authorized CI bootstrap merge and follow-through
+
+- User authorized continuation after being asked whether PR #115 could be merged.
+- PR #115 was re-read immediately before merge: OPEN, ready-for-review (not draft), mergeable=true, exact head `3b684acd1f3e68f1b40dd6d600fad0e013044495`, base branch `fix/windows-process-verifier-timeouts-20261118` at `181ad350d8f0db53cda654c4d378425fbdd6ab24`; Ubuntu and Windows GitHub Actions jobs both terminal SUCCESS. CircleCI status on PR #115 was FAILURE, provider logs unavailable; this limitation was visible before the authorized merge.
+- PR #115 successfully merged using a merge commit with expected-head-SHA guard. Merge commit: `3adace165890bb69de346880e3c612c5cd6c2ff8`. The merge adds only `.github/workflows/ci.yml` (87 lines); no runtime source or verifier pin changes. [Merge commit](https://github.com/panglimanetizen01/one/commit/3adace165890bb69de346880e3c612c5cd6c2ff8).
+- Base branch now contains the workflow; comparing its previous base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24` to the branch shows exactly one changed file, `.github/workflows/ci.yml`, and three commits ahead (bootstrap implementation, correction, merge commit).
+- PR #113 remains OPEN / DRAFT / UNMERGED. Its previously recorded head before follow-up documentation sync was `673c057421ad3a3293dab990563e7f83cd7f3681`; its base is the same verifier branch. After this merge, no GitHub Actions PR run was yet returned for PR #113's recorded head or the merge commit at the immediate readback. CircleCI on the merge commit is PENDING at `https://app.circleci.com/workflow/509828d0-3d7d-434a-8f00-a58645eabe9e/job/83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`.
+- PR #113's previous CircleCI status remains PENDING at `https://app.circleci.com/workflow/97d5e3d0-c7ff-4668-a5ee-569e4726febc/job/5c1135d8-d3dd-4d7c-a564-14478bc2508a`. Do not claim B-001 resolved until a job starts and exact-SHA evidence verifies the run.
+- Next: update only the existing verification docs on PR #113 branch (which should now trigger the newly installed PR workflow), then inspect exact run and require the full Contract artifacts, Build, Clippy, workspace tests, and focused tests on both Ubuntu and Windows. Keep PR #113 draft/open and do not merge it. CircleCI root cause remains unknown; no blind rerun or credit purchase.
+
+
+## Post-merge verification checkpoint — 2026-11-20
+
+- PR #115 is MERGED; merge commit `3adace165890bb69de346880e3c612c5cd6c2ff8`. Its diff adds only `.github/workflows/ci.yml`.
+- Follow-up documentation commits on PR #113 branch:
+  - register update `02fafe353a6a57627037d4d88df8966ba0c0e916`
+  - live checkpoint update `ff0d3ded5233b819e66375ff14471d8baa320171`
+  - CircleCI diagnostics update / latest PR #113 HEAD at last readback `9d9e4ac785c18194f9821156c0c56e9b0c08a3da`.
+- PR #113 remains OPEN / DRAFT / UNMERGED at exact HEAD `9d9e4ac785c18194f9821156c0c56e9b0c08a3da`. The workflow file is now present on its base branch. The GitHub connector's exact-commit workflow-run lookup returned no PR-triggered Actions run for this SHA; do not claim GitHub Actions verification started or passed.
+- CircleCI on PR #113 latest HEAD is PENDING: workflow `418906bd-0e0e-4f86-aac5-df6042c21e61`, job `c6073561-4718-49be-afe7-aa686cf3589a`. CircleCI on base merge commit is also PENDING: workflow `509828d0-3d7d-434a-8f00-a58645eabe9e`, job `83e5ce02-f0ee-4d30-a0df-5dbfe5c77fc6`.
+- B-001 is NOT CLOSED. The earlier pre-execution failure on pipeline #1201 remains historically valid; the current pending statuses are not proof of job start or resolution. The 400,000 OSS allocation balance remains unknown.
+- No PR #113 merge, no main update, no protected verifier pin change, and no fixed ledger/DoD/acceptance change.
+
+
+## PR #113 GitHub Actions run #2247 — 2026-11-20
+
+- Exact candidate HEAD: `6ef875291b599ef144dba5333e9a40c455f3e013`. GitHub Actions run #2247 / `44750302610` is QUEUED then RUNNING on this exact SHA; [run #2247](https://github.com/panglimanetizen01/one/actions/runs/44750302610).
+- Ubuntu job `136336114373`: runner started, correct exact-head checkout succeeded, Android SDK setup succeeded; currently in `Install cross-compilers (Ubuntu)`. Contract artifacts, Build, Clippy, workspace tests, and focused tests have not yet started.
+- Windows 2025 job `136336114808`: runner started, correct exact-head checkout succeeded, Android SDK setup succeeded; currently in `Install cross-compilers (Windows)`. Contract artifacts, Build, Clippy, workspace tests, and focused tests have not yet started.
+- Both jobs are still IN_PROGRESS with no failed steps at latest readback. Do not claim any test pass yet.
+- CircleCI on this same PR #113 SHA remains PENDING: workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. B-001 remains open until exact CircleCI job start/outcome and cause are established.
+- PR #113 remains OPEN / DRAFT / UNMERGED. PR #115 remains merged at `3adace165890bb69de346880e3c612c5cd6c2ff8`.
+
+
+## Run #2247 progress refresh — 2026-11-20 (latest readback)
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Current PR HEAD: `796831e9636c4aa322b4d30c4e96796f62bb45ff`. The exact source SHA being executed by GitHub Actions run #2247 / `44750302610` is `6ef875291b599ef144dba5333e9a40c455f3e013`; comparison confirms the three commits between these SHAs modify only the three existing verification documents (10 insertions each), no source or workflow files.
+- Ubuntu job `136336114373`: exact checkout and Android SDK setup PASS; `Install cross-compilers (Ubuntu)` remains IN_PROGRESS. Contract artifacts, Build, Clippy, and Tests have not started on Ubuntu.
+- Windows 2025 job `136336114808`: exact checkout, Android SDK setup, Windows cross-compilers, Android NDK, and Toolchain PASS; `Contract artifacts` PASS; Build IN_PROGRESS. Clippy and Tests are pending. No failed steps at latest readback.
+- Run #2247 remains IN_PROGRESS; do not claim overall PASS. [Run #2247](https://github.com/panglimanetizen01/one/actions/runs/44750302610).
+- CircleCI on exact run SHA `6ef875291b599ef144dba5333e9a40c455f3e013` remains PENDING at workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. CircleCI job page is inaccessible via current browser session; no job start, result, or root cause can be inferred. B-001 remains OPEN / ROOT CAUSE UNKNOWN.
+- PR #115 is MERGED at `3adace165890bb69de346880e3c612c5cd6c2ff8`. The merge added only `.github/workflows/ci.yml` to the verifier base branch.
+- Prior historical snapshots above are not current status; this progress refresh supersedes them. No PR #113 merge, main change, verifier pin change, or acceptance/ledger/DoD change.
+
+
+## Run #2247 progress update — Windows build/clippy passed — 2026-11-20
+
+- Run #2247 / `44750302610` remains IN_PROGRESS on source SHA `6ef875291b599ef144dba5333e9a40c455f3e013`.
+- Windows 2025 job `136336114808`: checkout, Android SDK, Windows cross-compilers, Android NDK, Toolchain, Contract artifacts, Build, and Clippy are SUCCESS; Tests are IN_PROGRESS. All focused tests are pending. No failed step.
+- Ubuntu job `136336114373`: checkout and Android SDK are SUCCESS; `Install cross-compilers (Ubuntu)` remains IN_PROGRESS. Contract artifacts, Build, Clippy, and Tests are pending. No failed step.
+- The job log-download endpoint returned BlobNotFound/404 for both running jobs; this is a log retrieval limitation, not evidence that the jobs failed. Step summaries remain available and show the states above.
+- Exact current PR #113 HEAD is `07745db32bb1051cc02e602c64f27bc14649238b`. Comparing from tested SHA `6ef875291b599ef144dba5333e9a40c455f3e013` shows six commits ahead, with only the three verification documentation files modified (21 insertions each; no source/workflow changes). The run therefore covers the same source/workflow state as the current PR head.
+- CircleCI on tested SHA remains PENDING: workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. B-001 remains OPEN / ROOT CAUSE UNKNOWN.
+- PR #115 remains MERGED; PR #113 remains OPEN / DRAFT / UNMERGED. No source change, main change, verifier pin change, or acceptance/ledger/DoD change.
+
+
+## Run #2247 — Windows matrix leg terminal PASS — 2026-11-20
+
+- Windows Server 2025 job `136336114808` is terminal SUCCESS. All workflow steps succeeded: checkout, Android SDK, Windows cross-compilers, Android NDK, Toolchain, Contract artifacts, Build, Clippy, workspace Tests, deterministic .oneir/.onepkg, DNS classification, orchestration policy, database vertical slice, HTTP GET vertical slice, HTTP GET CLI vertical slice, and cleanup. Job logs were retrieved and show the focused database tests (9/9), HTTP GET vertical slice tests (3/3), and HTTP GET CLI tests (3/3) passing.
+- Ubuntu job `136336114373` remains IN_PROGRESS in `Install cross-compilers (Ubuntu)`; all later stages are pending. No failure is recorded. Its log download currently returns BlobNotFound/404 while the job is active, so no cause for the long-running step is inferred.
+- Run #2247 / `44750302610` remains IN_PROGRESS overall until Ubuntu completes. [Run #2247](https://github.com/panglimanetizen01/one/actions/runs/44750302610).
+- Tested source SHA remains `6ef875291b599ef144dba5333e9a40c455f3e013`; latest PR #113 HEAD `70409c742d2707b1f277b5185787e2e7bdb7184f` differs only in the three existing verification docs (21 insertions each, no source/workflow changes).
+- CircleCI on tested SHA remains PENDING at workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. B-001 remains OPEN / ROOT CAUSE UNKNOWN.
+- PR #115 MERGED; PR #113 OPEN / DRAFT / UNMERGED. No main/source/verifier pin/acceptance/ledger/DoD change.
+
+
+## CircleCI status correction — exact tested SHA success — 2026-11-20 21:17 WIB
+
+- Fresh GitHub combined-status readback for exact source SHA `6ef875291b599ef144dba5333e9a40c455f3e013` now reports context `ci/circleci: one-linux` = `success`, target workflow `c8cddd6a-caa3-49df-81c5-c5c52cc9d578`, job `7f12cc56-4a76-4255-8992-cd7ed984cf9a`. This supersedes the earlier PENDING observation for that exact SHA. The CircleCI status check is successful; detailed CircleCI pipeline/job metadata and underlying log were not independently retrieved in this session, so do not infer details beyond the successful check.
+- Current PR #113 HEAD at readback: `441df4590ba6d356671408371a5fc5b87739f4a7`. Comparing tested SHA to current HEAD shows 12 documentation-only commits touching only the existing `ONE_RELEASE_BLOCKER_REGISTER.md`, `live-checkpoint-2026-11-20.md`, and `CIRCLECI_DIAGNOSTICS.md` (42 insertions each; no runtime source or workflow files). GitHub combined-status query for current docs HEAD returned no status entries. Therefore CircleCI success is proven for tested source SHA, not a new CircleCI check on latest docs-only HEAD.
+- GitHub Actions run #2247 / `44750302610`: Windows job `136336114808` terminal SUCCESS; Ubuntu job `136336114373` remains IN_PROGRESS at `Install cross-compilers (Ubuntu)`; all following Ubuntu steps pending. Run remains IN_PROGRESS overall, with no recorded failure. Do not claim full matrix success.
+- PR #113 remains OPEN / DRAFT / UNMERGED. PR #115 remains MERGED at `3adace165890bb69de346880e3c612c5cd6c2ff8`. No merge, main change, source/workflow modification, verifier pin change, or acceptance/ledger/DoD change.
+
+
+## Live exact-SHA refresh — 2026-11-20 (B-001 / B-002 / release-gate reconciliation)
+
+This is the newest readback. Preserve all earlier snapshots as history; this block supersedes only conflicting live-state claims.
+
+### Repository and pull requests
+- ONE PR #113: OPEN / DRAFT / UNMERGED; exact HEAD `7296c573cbd7eab4a1d7ff08bced2b397a5c555f`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Compare from code-bearing source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` shows 48 commits and documentation-only changes across 18 existing docs paths; no runtime source, test, or CI workflow path changed.
+- PR #115 is MERGED at `3adace165890bb69de346880e3c612c5cd6c2ff8`.
+- Verifier PR #51: OPEN / DRAFT / UNMERGED; HEAD `6c0979e62eb01e4b929c48b4224a3d4f742bc8af`; branch-local `CANONICAL_COMMIT.txt` pins ONE source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20`. Compare from verifier HEAD `226360d00bc26f858128d3127591fce13ecd52d9` is three documentation-only commits (CANDIDATE_VERIFICATION.md, MIRROR_STATUS.md, README.md, Android evidence note); no workflow/source implementation change.
+- Protected verifier branch remains `verification` at `b14abf0020472dc45842be30854e0a09317d6cb4`; protected canonical source pin remains `722d662e7a81711ba3607d26571f4048a292b3ed`. Protected `LEDGER_SOURCE_COMMIT.txt` remains `d6c382a245c49a028bc60809f22ca956c7f894cc`. No protected pin was changed.
+- ONE `main` remains `d35db95153f6ddd79885494c72f5aee16c899751`; no main mutation.
+
+### B-001 — CircleCI pre-execution termination
+- Historical pipeline #1201 on `509b7b197115adb1ba80d730342e9f6fbf981645` remains a confirmed pre-execution termination; provider root cause UNKNOWN.
+- Code-bearing ONE source `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` has GitHub combined status `ci/circleci: one-linux = SUCCESS`, workflow `3a9c0613-a1bc-43ae-b2d6-319841061048`, job `c4faf162-80e9-4f17-a83a-a72634bb592f`. Provider step logs were not inspected; claim only exact-SHA status success.
+- Current PR #113 HEAD `7296c573...` has no combined-status entries. Its predecessor docs SHA `a0d94bc9a26cf9effd4b202f29af50f81c8e4ee5` had FAILURE at workflow `916983e9-dbde-4db2-a967-438a666ebb19`, job `a130c5d9-c078-4c18-8ae5-571470f46d60`; available step #101 was CANCELED with unavailable task information and empty logs. Do not call it a test timeout or source failure.
+- Exact main SHA `d35db951...` separately shows context `CircleCI Pipeline = ERROR`, target pipeline #1202. Pipeline-to-workflow/job/revision attribution and provider logs remain unavailable. Do not conflate this with the PR context or the source-SHA SUCCESS.
+- B-001 is operationally resolved only for the tested code-bearing source/workflow state; provider root cause remains UNKNOWN and the latest docs HEAD has no new CircleCI result.
+
+### B-002 — Issue #104 exact-source verification and remaining product gap
+- Twelve PR-triggered verifier workflows associated with verifier HEAD `6c0979e62eb01e4b929c48b4224a3d4f742bc8af` are terminal SUCCESS, all using branch-local source pin `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20`:
+  - E4 adversarial #44658361321: Unix job #136030099861; Windows reparse/handle job #136030099812; Windows native probe #136030099584 — all SUCCESS.
+  - Linux distro #44658361778: Ubuntu 24.04 job #136030102055; Debian 12 job #136030102321 — SUCCESS.
+  - Windows native runtime #44658361296: job #136030100371 — SUCCESS.
+  - E1 Windows #44658361571: job #136030101715 — SUCCESS.
+  - E1 Milestone 1 #44658361518: Windows job #136030101394 and Ubuntu job #136030101588 — SUCCESS.
+  - SEC-05 #44658361512: Linux job #136030100674 and Windows job #136030100987 — SUCCESS.
+  - Cross-platform #44658361514: Windows job #136030101518 and Ubuntu job #136030101784 — SUCCESS.
+  - Artifact integrity #44658361320: job #136030099580 — SUCCESS.
+  - Resource guard #44658361457: job #136030100840 — SUCCESS.
+  - Android AArch64 build #44658361365: job #136030100171 — SUCCESS.
+  - Focused stdlib/database #44658361557: job #136030101561 — SUCCESS.
+  - Android API 35 ARM64 runtime #44658361350: build job #136030099698 and runtime job #136030558684 — SUCCESS.
+- E4 job logs were inspected, not just run summaries. Linux executed 31 named tests (3 read, 5 write, 1 walk, race, mount-boundary, hard-link, database, 11 governance, 5 network, policy-denial, platform metadata), 0 failed. Windows executed 9 named regressions, 0 failed. The Linux write suite explicitly includes `descriptor_relative_write_fails_closed_for_nested_parent`; this is proof of fail-closed behavior, not positive nested-write support.
+- Android API 35 ARM64 runtime is native-backend execution evidence only; it does not establish an Android filesystem adapter.
+- Issue #104 remains OPEN / NOT ACCEPTED: Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Do not promote full filesystem support from the scoped E4 pass.
+
+### Release gate / B-003 boundary
+- The protected ledger document pin remains `d6c382a245c49a028bc60809f22ca956c7f894cc`; the protected ledger gate #44519577312 remains historical FAILURE (92/100 provisional implementation, 0/100 verified at that gate's ledger source, 18 rows checked, 10 DoD items unchecked, no protected exact-source ONE Package Provenance Release).
+- ONE PR #103 remains OPEN / DRAFT / UNMERGED at HEAD `5f616ae08e303081666a5e0d6a4b8b63b9d69c16`. Its branch does not replace the protected ledger source pin. Keep fixed weights, verified points, DoD checkboxes, canonical pins, and release criteria unchanged. No new gate evaluation is justified until relevant acceptance/evidence inputs change.
+- No source code, CI configuration, main branch, protected verifier branch/pin, ledger weights, DoD checkbox, merge, or release was changed in this refresh.
+
+### Next executable work
+1. Continue B-002 from the remaining Linux nested-write acceptance gap. Keep the current fail-closed behavior; do not weaken it. Any implementation proposal must prove parent-directory move/race confinement with real Linux and Windows runners before changing security-sensitive code.
+2. Keep unsupported Android/macOS filesystem adapters explicitly unavailable unless native backends and their own adversarial matrices are implemented and verified.
+3. Continue B-003 only after the exact release-candidate SHA, complete E1–E6 evidence, source-bound package provenance, and ledger/DoD reconciliation are genuinely available. Do not rerun the unchanged historical gate or promote scores.
+
+
+## B-003 exact-head refresh — PR #103 ledger draft (2026-11-20)
+
+- ONE PR #103 remains OPEN / DRAFT / UNMERGED at HEAD `5f616ae08e303081666a5e0d6a4b8b63b9d69c16`. It is 7 commits ahead of protected ledger source pin `d6c382a245c49a028bc60809f22ca956c7f894cc`, and 2 commits ahead of prior CI-verified docs commit `e053b5ffae46a7e1d696bea5eb5a13999c722ee0`. The 2-commit delta changes only `docs/verification/one-completion-ledger.md` and `docs/verification/DEFINITION_OF_DONE.md`.
+- GitHub Actions run #44573696031 is COMPLETED / SUCCESS on exact PR #103 HEAD `5f616ae...`: Ubuntu job #135735331182 and Windows Server 2025 job #135735332010 both terminal SUCCESS. This is documentation-branch CI evidence, not a release gate or E1–E6 acceptance promotion.
+- CircleCI combined status for exact PR #103 HEAD is `CircleCI Pipeline = ERROR`, target pipeline #1168. Provider logs and pipeline-to-workflow/job/revision mapping are not available; classify the CircleCI cause as UNKNOWN, not a source/test failure.
+- The unmerged PR #103 draft ledger records 92/100 IMPLEMENTED, 8/100 VERIFIED (E3 8/8), and DoD 4 checked / 9 unchecked / 13. These are draft values only. The protected verifier ledger source pin remains `d6c382a...`; the protected snapshot at that pin remains 92/100 implementation, 0/100 verified, DoD 3 checked / 10 unchecked / 13.
+- Historical protected fixed-weight gate #44519577312 remains FAILURE. Do not treat PR #103's GHA success as a protected ledger-gate pass, and do not merge PR #103, move the ledger source pin, change weights, or check DoD boxes without explicit authorization and full acceptance evidence.
+- No product source, CI configuration, main branch, protected verifier branch/pin, ledger weights, or acceptance criteria changed in this refresh.
+
+
+## B-001 classification correction — 2026-11-20 (pipeline mapping not verified)
+
+This correction supersedes any earlier wording in this document that called B-001 fully or operationally resolved. Do not delete the historical notes.
+
+- Exact ONE source SHA `fb5c8bc66a5cbdf8a6670d9d1e9dbe0caa631a20` has GitHub combined status `ci/circleci: one-linux = success`. The status target URL identifies workflow `3a9c0613-a1bc-43ae-b2d6-319841061048` and job `c4faf162-80e9-4f17-a83a-a72634bb592f`.
+- The CircleCI pipeline UUID/number for that job, pipeline `vcs.revision`, and independent proof that the job belongs to that pipeline/workflow were not retrieved. The GitHub status is exact-SHA context evidence, but it does not complete the required job → workflow → pipeline → `vcs.revision` chain.
+- The historical #1201 pre-execution termination remains documented; its provider root cause remains UNKNOWN. Current PR #113 docs HEAD `abfae2b95c179650b362426a001a47e164f7ac20` has no CircleCI status context. Main pipeline #1202 and PR #103 pipeline #1168 show separate ERROR contexts, but their `vcs.revision`, job mapping, and provider logs are unavailable.
+- CircleCI UI pipeline pages #1202, #1168, and #1199 were not accessible through the available web session. No authenticated CircleCI API/CLI provider-log access was available. Do not infer timeout, test failure, source regression, or root cause.
+- **B-001 status: PARTIAL / NOT CLOSED.** The exact-source GitHub status is SUCCESS, but pipeline mapping and provider diagnostics are still required before claiming full operational resolution. Do not trigger blind retries or change CI configuration to hide the gap.
+
+
+## Exact-SHA Windows parent-rename regression — 2026-11-20
+
+- New code-bearing test SHA: `c4f3800bc12b70a4d59d72fbc5a80029cb053cea`; the only source change relative to the prior candidate is a Windows-only test in `crates/one-core/src/filesystem.rs`, not production behavior.
+- Verifier PR #51 exact HEAD: `7c3ded0d811fe71bd14034880b24b0f8e396349e`; branch-local canonical source pin: `c4f3800...`. Protected verifier branch and canonical pin remain unchanged.
+- New test: `filesystem::windows_native::tests::retained_parent_handle_blocks_directory_rename`. It opens a nested parent with the same `FILE_SHARE_READ | FILE_SHARE_WRITE` share flags used by `write_relative` (no `FILE_SHARE_DELETE`), proves rename fails while the handle is retained, then proves rename succeeds after handle close.
+- E4 push run #44760172674 is terminal SUCCESS on exact source `c4f3800...` / verifier `7c3ded0...`: Unix job #136370280796 SUCCESS; Windows reparse/handle job #136370280317 SUCCESS; Windows native probe job #136370280733 SUCCESS. Windows log shows the new test executed exactly once and passed (1 passed, 0 failed).
+- Duplicate E4 pull-request run #44760180858 is also terminal SUCCESS on the same exact source/verifier pair; Unix job #136370312121, Windows reparse/handle job #136370312012, and native probe job #136370311602 all SUCCESS. Count the duplicate event as confirmation, not a second acceptance point.
+- Other exact-verifier-SHA PR workflows: SUCCESS — E4 resource guard #44760181208, focused stdlib/database #44760180912, Android AArch64 artifact build #44760180867, Linux distro #44760180826, E1 Windows #44760181124. IN_PROGRESS — Windows native runtime #44760181204, candidate artifact integrity #44760180923, SEC-05 #44760180951, E1 Milestone 1 #44760180919 (Ubuntu job #136370312623 SUCCESS; Windows job #136370313083 IN_PROGRESS), cross-platform #44760181947, Android API35 runtime #44760180953. Do not call the complete verifier matrix green yet.
+- ONE source PR #113 GitHub Actions run #44760138732 is IN_PROGRESS on exact source `c4f3800...`: Ubuntu job #136370164396 SUCCESS; Windows job #136370165192 IN_PROGRESS. CircleCI `ci/circleci: one-linux` is PENDING on this exact SHA, workflow `cdb2cc27-ced0-4b88-ab5a-3b656e173151`, job `bbb3abb8-7272-483a-9708-18f5573ee2fd`. Pipeline UUID/number, `vcs.revision`, and job→workflow→pipeline membership remain unverified.
+- B-001 remains PARTIAL / NOT CLOSED pending CircleCI pipeline mapping/provider logs. Issue #104 remains OPEN / NOT ACCEPTED: Linux nested writes fail-closed; Android/macOS filesystem adapters unavailable. This test verifies one Windows parent-handle exclusion primitive, not complete E4/Issue #104 acceptance.
+- No production runtime code, CI configuration, main, protected verifier branch/pin, ledger/DoD, acceptance criteria, merge, or release changed.
+
+
+## Exact-SHA verification refresh — 2026-11-20 15:14Z
+
+### Candidate identity
+- Code-bearing source: `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` (only source delta from `fb5c8bc...` is the Windows-only parent-handle rename regression test).
+- Verifier PR #51 HEAD: `7c3ded0d811fe71bd14034880b24b0f8e396349e`; branch-local source pin: `c4f3800...`.
+- ONE PR #113 current docs-only HEAD before this sync: `043390cf0673247524ffb44c444cbbe4745be91f`. This sync changes existing docs only and uses `[skip ci]`; no CI result transfers to the resulting docs HEAD.
+
+### Terminal results on exact source/verifier pair
+- ONE GitHub Actions run #44760138732 on source `c4f3800...`: Ubuntu job #136370164396 SUCCESS; Windows Server 2025 job #136370165192 SUCCESS. Windows log explicitly ran and passed `interop::tests::subprocess_execution_is_bounded_by_a_deadline`, `subprocess_stdout_capture_has_a_hard_limit`, `subprocess_stderr_capture_has_a_hard_limit`, and `windows_job_object_terminates_descendants_when_parent_exits`.
+- Verifier PR matrix on verifier SHA `7c3ded0...` / source pin `c4f3800...`: 11 of 12 named workflows are terminal SUCCESS:
+  - E4 adversarial #44760180858: Unix #136370312121, Windows #136370312012, native probe #136370311602 — SUCCESS. New `retained_parent_handle_blocks_directory_rename` test executed once and passed.
+  - E4 subprocess resource guard #44760181208 / job #136370313217 — SUCCESS.
+  - Focused stdlib/database #44760180912 / job #136370312551 — SUCCESS.
+  - Android AArch64 artifact build #44760180867 / job #136370311618 — SUCCESS.
+  - Linux distro #44760180826: Debian #136370312102 and Ubuntu #136370312874 — SUCCESS.
+  - Windows native runtime #44760181204 / job #136370312887 — SUCCESS; Windows Server 2025, Rust 1.100.0, runtime exit 0, output `Budi`.
+  - SEC-05 #44760180951: Linux #136370311990 and Windows #136370312357 — SUCCESS. Source PR Windows GHA also proves the dynamic deadline/stdout/stderr/Job Object tests executed and passed.
+  - E1 Windows #44760181124 / job #136370313677 — SUCCESS.
+  - E1 Milestone 1 #44760180919: Ubuntu #136370312623 and Windows #136370313083 — SUCCESS.
+  - Cross-platform #44760181947: Windows #136370329101 and Ubuntu #136370329521 — SUCCESS.
+  - Candidate artifact integrity #44760180923 / job #136370311819 — SUCCESS.
+- E4 push event #44760172674 is also SUCCESS on the same exact source/verifier pair (Unix #136370280796, Windows #136370280317, native probe #136370280733); it is a duplicate trigger and is not a second acceptance point.
+
+### Artifact provenance and remaining runtime
+- Artifact integrity selected cross-platform run #44760181947 at verifier SHA `7c3ded0...` for exact source `c4f3800...`.
+- Linux artifact #14640868829, SHA-256 `7e8e443e2ae7c736f18243043f355840801afebdddca46a5efe41c159bac5732`; metadata target `x86_64-unknown-linux-gnu`, Rust/Cargo 1.100.0, ONE CLI 0.1.0, ELF64 little-endian EM_X86_64 PASS.
+- Windows artifact #14641018247, SHA-256 `f68c7325ff39ae33b2cfadf0b896896c0ba4c3eeb581b033f8e1a75974900846`; metadata target `x86_64-pc-windows-msvc`, Rust/Cargo 1.100.0, ONE CLI 0.1.0, PE32+ x86-64 PASS.
+- The only verifier workflow not terminal is Android API 35 ARM64 runtime #44760180953. ELF build job #136370311867 is SUCCESS; runtime job #136371143664 is still executing the “Boot Android API 35 AArch64 on ARM64 host” step. Workflow timeout is 150 minutes; no timeout/failure is claimed.
+- Do not claim Android filesystem adapter support from this native-backend runtime. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+### CircleCI and release gate
+- CircleCI `ci/circleci: one-linux` on source `c4f3800...` remains PENDING; workflow `cdb2cc27-ced0-4b88-ab5a-3b656e173151`, job `bbb3abb8-7272-483a-9708-18f5573ee2fd`. Pipeline ID/`vcs.revision` mapping and provider logs remain unavailable. B-001 remains PARTIAL / NOT CLOSED.
+- Protected verifier branch/pin, protected ledger pin `d6c382a...`, fixed weights, DoD, main, acceptance criteria, merge, and release state remain unchanged. Historical fixed-weight gate #44519577312 remains FAILURE.
+
+
+## CircleCI diagnostic utility correction — 2026-11-20 (exact source SHA refresh)
+
+This entry supersedes earlier live diagnostic-utility conclusions where they conflict; retain prior incident records as history.
+
+- Exact ONE PR #113 HEAD: `36c0abff77d20016dc0afc11e8428a6c3fb1248d` (OPEN / DRAFT / UNMERGED; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`). The diagnostic code/test delta adds no product runtime or CircleCI configuration changes.
+- CircleCI combined status for this exact SHA: `ci/circleci: one-linux = PENDING`; status target workflow UUID `376028bf-901b-42b1-bd3e-0d93b64350ce`, job UUID `553f3bfc-8bd6-457d-8656-6a65837b1725`. This GitHub status does not establish that the provider job has started. Pipeline UUID/number, pipeline `vcs.revision`, workflow membership, provider start timestamp, and provider logs remain unverified. Do not label this a timeout or failure.
+- Earlier exact source `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` separately had CircleCI `ci/circleci: one-linux = SUCCESS`, target workflow `cdb2cc27-ced0-4b88-ab5a-3b656e173151`, job `bbb3abb8-7272-483a-9708-18f5573ee2fd`. Do not transfer that result to the new diagnostic SHA.
+- Static review found a false-positive classifier path: the utility passed its entire rendered report to `classify_failure()`; its own explanatory text `failed/timed_out` could therefore turn a canceled/no-output step into a false TIMEOUT label. Corrected to classify captured stdout/stderr only, while using explicit provider step outcomes separately. A timed-out outcome remains TIMEOUT; explicitly null job start plus empty logs becomes `PRE-EXECUTION TERMINATION / ROOT CAUSE UNKNOWN`; missing start-time metadata remains inconclusive; a started job with no logs becomes `NO-OUTPUT / ROOT CAUSE UNKNOWN`.
+- Static review also found exact-SHA discovery selected only the newest matching pipeline, potentially hiding an earlier failed pipeline for the same commit. It now inspects every pipeline whose `vcs.revision` equals the requested SHA and reports pipeline number/UUID/status/revision, workflow UUID/status, job UUID/number, and job start metadata. Direct `--job-id` mode continues to mark source identity UNVERIFIED.
+- Added six unit tests (suite count 14 → 20) for classifier self-text false positives, canceled pre-start vs started/no-output vs missing-start metadata, explicit timed-out outcomes, and multiple pipelines for one exact SHA. **These tests have not yet been observed executing on this exact SHA**; CircleCI currently reports PENDING. Do not claim test PASS until the exact job reaches a terminal result and its step log proves the test step ran.
+- Historical pipeline #1201 remains confirmed pre-execution termination (`started_at=null`, canceled step, empty logs) with provider root cause UNKNOWN. Historical account-credit/provider eligibility ambiguity remains unresolved; no credit purchase, plan change, settings toggle, retry, or trigger was performed.
+- **B-001 remains PARTIAL / NOT CLOSED.** No root cause has been established for #1201, and the new diagnostic candidate has not yet produced a terminal CircleCI result or complete pipeline → workflow → job → revision provenance.
+
+
+## CircleCI diagnostic follow-up — 2026-11-20 (job visibility and current provider status)
+
+This is the latest diagnostic checkpoint; earlier incident history remains intact.
+
+- Latest diagnostic source/test SHA: `3db852f68d8bb12fb655524c7133c4cfa4002ca2`; PR #113 remains OPEN / DRAFT / UNMERGED. Changes are limited to `tools/ci/diagnose_circleci.py` and `tools/ci/test_diagnose_circleci.py`; `.circleci/config.yml` is unchanged.
+- The diagnostic now discovers **all jobs from every pipeline whose `vcs.revision` exactly matches the requested SHA**, not only failed jobs from the newest matching pipeline. This keeps pending/running jobs visible and reports pipeline number/UUID/status/revision, workflow UUID/status, job number/UUID/status, and start-time metadata. Direct `--job-id` mode continues to mark source SHA as UNVERIFIED.
+- The classifier now uses captured provider stdout/stderr and explicit step outcomes, never its own explanatory report text. It distinguishes explicit timed-out outcomes, explicit null start time with no output, known-start/no-output, and missing start-time metadata without inventing a timeout/root cause.
+- Diagnostic unit suite now contains 20 test methods (14 baseline + 6 targeted regression tests). These tests have **not yet been verified as executed successfully on SHA `3db852f...`**.
+- Exact-SHA CircleCI status readbacks:
+  - `36c0abff77d20016dc0afc11e8428a6c3fb1248d`: `ci/circleci: one-linux = FAILURE`; workflow `376028bf-901b-42b1-bd3e-0d93b64350ce`, job `553f3bfc-8bd6-457d-8656-6a65837b1725`.
+  - `2bcf397474019cd4415f6506d8dac83a3c5c4010`: `ci/circleci: one-linux = FAILURE`; workflow `fa1500e3-c2e2-42c7-a8c1-dc932bd439ab`, job `3fd1b528-f2a4-42f5-85e3-1d1716d8ad72`.
+  - Latest code/test SHA `3db852f...`: `ci/circleci: one-linux = PENDING`; workflow `92fd294f-c8d5-480c-af6f-9ddbb7ffe479`, job `5666c0ea-e06e-475b-8967-5ccb24ccb383`.
+  - Earlier source SHA `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` remains a separate historical `SUCCESS` (workflow `cdb2cc27-ced0-4b88-ab5a-3b656e173151`, job `bbb3abb8-7272-483a-9708-18f5573ee2fd)); it does not validate the diagnostic changes.
+- The CircleCI app job pages remain inaccessible in this connected session, and no authenticated CircleCI CLI/MCP action is available. Pipeline UUID/number, `vcs.revision` readback, job membership readback, step logs, and terminal provider outcomes are not available for the new jobs. GitHub status FAILURE alone does not reveal whether the cause is the new test, configuration, provider setup, or another condition.
+- **B-001 remains PARTIAL / NOT CLOSED.** Do not infer test failure, timeout, or provider root cause from the status labels alone. No blind retry, configuration edit, plan purchase, or settings change was performed. Required next evidence: a redacted exact-SHA diagnostic report/provider step log for the failed workflow/job above, plus the latest pending job's terminal status and full pipeline → workflow → job → `vcs.revision` mapping.
+
+
+## CircleCI terminal-status correction — 2026-11-20
+
+A fresh exact-SHA status readback supersedes the PENDING observation above for diagnostic SHA `3db852f68d8bb12fb655524c7133c4cfa4002ca2`:
+
+- `ci/circleci: one-linux = FAILURE`; workflow UUID `92fd294f-c8d5-480c-af6f-9ddbb7ffe479`; job UUID `5666c0ea-e06e-475b-8967-5ccb24ccb383`.
+- The earlier diagnostic SHAs remain FAILURE: `36c0abf...` (workflow `376028bf-901b-42b1-bd3e-0d93b64350ce`, job `553f3bfc-8bd6-457d-8656-6a65837b1725`) and `2bcf397...` (workflow `fa1500e3-c2e2-42c7-a8c1-dc932bd439ab`, job `3fd1b528-f2a4-42f5-85e3-1d1716d8ad72`).
+- The status target URLs still expose workflow/job UUIDs only. The CircleCI app pages remain inaccessible here; no provider step output, pipeline UUID/number, `vcs.revision`, job membership, or `started_at` has been independently read. Therefore the three FAILURE labels do **not** establish a test failure, timeout, or root cause.
+- The diagnostic tests on SHA `3db852f...` must be treated as **NOT VERIFIED** until the actual CircleCI step log is obtained. B-001 remains PARTIAL / NOT CLOSED.
+- Next safe evidence collection: run the repository's updated exact-SHA diagnostic locally for `3db852f...` using an already-configured local `CIRCLECI_TOKEN`; do not paste the token. Share only the redacted report. The utility now discovers every matching pipeline and lists all jobs, including pending/running, while preserving exact revision and job-start evidence.
+
+## Implementation-first continuation — 2026-11-20
+
+Owner direction: complete the actual v0.1 product implementation before spending another cycle on broad test/verification runs. Add or update necessary regression tests as part of implementation, but defer the full matrix and repetitive audits until the implementation scope is complete. Do not claim a feature complete merely because tests or docs are green.
+
+### Current Issue #104 implementation delta
+
+- PR #113 exact HEAD at this checkpoint: `7cbcb1bf575defe03a2d9991dc5094569de95f03` (OPEN / DRAFT / UNMERGED; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`).
+- CLI filesystem authority now derives only from the host process current working directory; source-file location and program-controlled `--target` no longer select or widen the root.
+- Linux root acquisition now opens the supplied directory with `O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC` and checks canonical-path device/inode identity against the retained handle; a mismatch fails closed.
+- CLI regression fixture updated to place the source file outside the working directory while targeting an in-root file.
+- Implementation commits: `8b1d13e02c181fc06b97fb7f147e1ccd013d3aa1`, `5e39430a341629eb9fda11ee4e11b0f6f40487ab`, `7cbcb1bf575defe03a2d9991dc5094569de95f03`.
+- These changes are NOT BUILT OR TESTED yet. Existing prior-SHA results do not transfer. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+### B-001 operational status
+
+- Exact SHA `979973cd6fb6f76802e13dbbbe21530d68b4cf53` has a terminal successful CircleCI workflow/job mapping: pipeline #1233 revision matches the SHA; workflow `934cd811-3a44-4737-bb62-943e677d979b` SUCCESS; job #865 `4b9419f9-9b1a-4823-902e-dcd872073e39` SUCCESS, started `2026-11-20T15:49:44.969Z`.
+- The diagnostic classifier correction is locally 20/20 on that source. Historical pipeline #1201 cause remains UNKNOWN, but no longer blocks the current implementation queue. Do not rerun it without a new relevant failure.
+
+### Next implementation priority
+
+Continue Issue #104 production work and reconcile the normative contract against the current source. Preserve fail-closed behavior where a race-resistant primitive is not available; do not weaken the boundary to make nested Linux writes appear supported. Then continue remaining v0.1 product implementation gaps. Only after implementation is complete should the integrated final platform/security/release matrix run.
+
+## Linux root no-follow regression — 2026-11-20
+
+- Added `filesystem::tests::authority_rejects_symlink_root_without_following_final_component` in commit `ab72ec5d65a5e237cdc1b10e40ea209149f42e74` to prove that a symlink cannot be supplied as the final trusted-root component.
+- This test has NOT been run. Latest code-bearing candidate is `ab72ec5d65a5e237cdc1b10e40ea209149f42e74`; current PR #113 HEAD is documentation-only `b8f5569333723cf916ad918735934b9b5d774095` (OPEN / DRAFT / UNMERGED). No exact-SHA test result is claimed.
+- The current implementation delta comprises CLI cwd-only root selection, Linux no-follow root-handle acquisition with identity check, and the two new CLI/filesystem regression fixtures. Linux nested writes remain fail-closed; Android/macOS adapters remain unavailable; Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Windows root no-reparse implementation — 2026-11-20
+
+- Windows root acquisition no longer canonicalizes through the final component before opening it. It canonicalizes only the parent, preserves the final name, opens it with the existing `OBJ_DONT_REPARSE` / `FILE_OPEN_REPARSE_POINT` native path, then compares volume serial and file index against the path identity.
+- Added `filesystem::windows_root_tests::authority_rejects_reparse_root_without_following_final_component` in commit `8dd92aebc033a94abb14a8d7ec498f6933d4ba8e`; it creates a directory junction and requires root acquisition to fail closed.
+- Windows implementation commit: `b208a1a5bdf4a9ffb00a7c17aa4a401ed4a237ce`. This and the Linux/CLI root changes are NOT BUILT OR TESTED. Latest code-bearing candidate: `8dd92aebc033a94abb14a8d7ec498f6933d4ba8e`.
+- Preserve Issue #104 OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable.
+
+## CLI root-widening negative regression — 2026-11-20
+
+- Added `run_command_does_not_allow_source_location_to_widen_filesystem_root` in test commit `ea376531e99f37b874d3d3a8edd4e8b4d656095f`. It places both the `.one` source and target under a parent outside the host working directory and asserts that the filesystem read is denied.
+- Together with `run_command_uses_working_directory_as_filesystem_root_not_source_location`, the CLI regressions cover both positive in-root access from an external source file and denial of source-parent widening.
+- These tests have NOT been run. Latest candidate source/test SHA: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; prior-SHA results do not transfer.
+
+## Preserve host CWD path through root open — 2026-11-20
+
+- Follow-up review found that the CLI was canonicalizing `cwd` before passing it to `FilesystemAuthority::open`, which could bypass the new final-component no-follow check on hosts where `current_dir()` preserves a reparse/junction path.
+- Fixed in `crates/one-cli/src/main.rs` commit `56bd643571f8a371c5d3cabb5175113672d9198f`: pass the host `cwd` path directly to `FilesystemAuthority::open`; platform authority code performs safe parent normalization and final-component no-follow/identity validation itself.
+- This source change is NOT BUILT OR TESTED. Latest source/test candidate is `56bd643571f8a371c5d3cabb5175113672d9198f`. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Linux atomic-write adversarial coverage added — 2026-11-20
+
+- Added `descriptor_relative_write_race_never_modifies_outside_symlink_target` in `crates/one-core/src/adapter.rs` (commits `7ca8e84230383cc84684539ee87dc2d27e72d4fa` and `ab772225832c8b3cacc1772e9b384b974c1a2884`). It repeatedly races leaf symlink/regular-entry replacement against atomic writes and asserts the outside sentinel remains unchanged and no `.one-write-*` temp entry leaks.
+- Refactored the Linux atomic writer with internal deterministic failure checkpoints (`TempCreated`, `Written`, `Synced`, `BeforeRename`) in `c7235ab925f2aff7d248b54f9ea74686236b4668`; added `authority_atomic_write_failures_cleanup_temp_and_preserve_target` in `8b95e3bb8b739083eb4e6f52b6aee81ed4cc088a` to assert cleanup and target preservation at every stage.
+- These tests have NOT been run. Latest source/test candidate: `8b95e3bb8b739083eb4e6f52b6aee81ed4cc088a`; current PR #113 HEAD at readback: `8b95e3bb8b739083eb4e6f52b6aee81ed4cc088a`. No prior exact-SHA evidence transfers.
+- Linux nested writes remain fail-closed; Android/macOS filesystem adapters remain unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Android host identity — 2026-11-20
+
+- `crates/one-core/src/platform.rs` now exposes `Platform::Android` and returns it for `target_os = "android"` instead of collapsing Android into `Platform::Other` (`f8e46856803c9f45f54402e71d7e19853bdf46bc`).
+- This is host identity only; it does NOT enable Android filesystem operations. The filesystem adapter remains fail-closed on Android until a safe resolver is available that avoids process-killing seccomp behavior and preserves root/symlink/mount/race guarantees.
+- The platform unit test was updated but has NOT been run.
+
+## Explicit desktop/mobile host identity — 2026-11-20
+
+- `Platform` now identifies Windows, Linux, Android, and macOS explicitly rather than collapsing Android/macOS into `Other`; the platform unit test covers all four target cfgs (`5846eb70f2a462331873cc0023d1f1ab1106f86a`).
+- This is platform identification only. It does not imply filesystem adapter support on Android/macOS; those adapters remain fail-closed pending platform-safe resolver implementations.
+- The platform test has NOT been run.
+
+## Rejected Linux nested-write workaround: Landlock-only worker
+
+Do not treat a Landlock ruleset in a helper process as sufficient proof for nested writes. The Linux `landlock(7)` contract states that file descriptors opened before sandboxing are not subject to the restrictions, and `LANDLOCK_ACCESS_FS_WRITE_FILE` is checked when opening a file, not on subsequent `write(2)` calls. A parent directory can therefore be moved after a temporary file is opened; the already-open descriptor may still be writable. See the [Linux Landlock manual](https://man7.org/linux/man-pages/man7/Landlock.7.html).
+
+Until a different kernel-enforced primitive or threat-model change is proven on real Linux and Windows runners, keep nested Linux writes fail-closed. Do not replace this limitation with a Landlock-only helper, post-open ancestry check, advisory lock, or userspace watcher.
+
+## Candidate for safe Linux nested writes — NOT APPROVED FOR PRODUCTION
+
+Research identified a possible kernel-enforced path-resolution approach that must be proven before production changes:
+
+1. Clone the retained root mount as a detached mount tree with `open_tree(root_fd, "", AT_EMPTY_PATH | OPEN_TREE_CLONE | AT_RECURSIVE | OPEN_TREE_CLOEXEC)`.
+2. Apply `MOUNT_ATTR_NOSYMFOLLOW` recursively with `mount_setattr(mount_fd, "", AT_EMPTY_PATH | AT_RECURSIVE, ...)`.
+3. Use the detached mount fd as the `dirfd` for `*at()` operations (the `open_tree(2)` contract explicitly permits this). Create the temporary file at the clone root, then commit with a full relative destination path rooted at the same mount fd. Do not retain a nested parent fd for the final rename.
+4. If a parent is moved out, the destination path should no longer resolve from the cloned root; if an intermediate symlink is substituted, the mount's no-symlink attribute should reject traversal; cross-mount rename should fail with `EXDEV`.
+
+Hard limitation: `OPEN_TREE_CLONE` requires `CAP_SYS_ADMIN`; unsupported kernels/hosts must remain fail-closed. References: [open_tree(2)](https://man7.org/linux/man-pages/man2/open_tree.2.html), [mount_setattr(2)](https://man7.org/linux/man-pages/man2/mount_setattr.2.html).
+
+Status: design hypothesis only. No production code changed for this approach. Before adoption, a dedicated adversarial prototype must demonstrate parent move-out, symlink substitution, mount-boundary, temp cleanup, and outside-sentinel preservation on the actual Linux runner; Windows behavior must remain green. Do not claim this solves the gap until those results exist.
+
+## Android filesystem adapter implementation candidate — 2026-11-20
+
+- Source/test candidate: `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT OR TESTED).
+- Android now has a native `FilesystemAuthority` root open and a handle-relative direct-child read/atomic-replace backend. Root and leaf are opened without following final symlinks; `statx(STATX_MNT_ID)` is required to reject mount crossings; reads reject non-regular and hard-linked files; writes use an exclusive temporary sibling, `fsync`, and root-relative `renameat`.
+- The backend deliberately avoids `openat2` because Android seccomp may terminate the process with `SIGSYS` for that syscall. It requires kernel `statx` mount-ID support; if unavailable it fails closed.
+- Scope is intentionally limited to direct children of the trusted root. Nested Android paths return `UnsupportedPlatform`; no claim of full Android filesystem support or Issue #104 acceptance is made.
+- Three Android-targeted regression tests cover direct-child read/write, leaf-symlink and nested-path denial, and final-component root-symlink rejection. They have NOT been run. Actual Termux/device execution is still required.
+- Linux nested writes remain fail-closed; macOS filesystem adapter remains unavailable. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## IMPLEMENTATION-FIRST LIVE OVERRIDE — 2026-11-20 (Android filesystem)
+
+- Current PR #113 HEAD before this register refresh: `d2aaa345717fcd86f4998a603f2756c1a58317ed`; branch remains OPEN / DRAFT / UNMERGED; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Latest code-bearing source/test candidate: `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec` (NOT BUILT/TESTED).
+- Implemented Android native root acquisition and direct-child file read/atomic replace using a retained root fd, O_NOFOLLOW, statx mount-ID checks, hard-link rejection, exclusive temp creation, fsync, and root-relative renameat. Android nested paths remain fail-closed; statx MNT_ID is mandatory; macOS adapter remains unavailable.
+- Added three Android-only regression tests. No build, test, device run, or verifier result is claimed for this candidate.
+- Continue implementation work; do not run the broad matrix until implementation scope is complete. Issue #104 remains OPEN / NOT ACCEPTED. Linux nested writes remain fail-closed. Preserve fixed acceptance, ledger/DoD, verifier pins, main, and release controls.
+
+
+- Documentation-only follow-up after the Android source candidate: current PR #113 HEAD is `9aa16bfcc641e5e1608669b440c88f8ea6dd2fee`; Android source/test candidate remains `7dd7b0049a7f5d71ac8a3d59570c2975fed835ec`. No build/test/device evidence is claimed.
+
+## macOS filesystem adapter implementation candidate — 2026-11-20
+
+- Source/test candidate: `4be1b8fd579092d8195c3fb775b7c765f6221814` (NOT BUILT OR TESTED).
+- macOS now has a native retained-root open and direct-child read/atomic-replace backend. Root and leaf operations use directory/file descriptors with `O_NOFOLLOW`; file and root device identity are compared; hard-linked and non-regular targets are rejected; writes use an exclusive temporary sibling, `fsync`, and root-relative `renameat`.
+- The macOS adapter is deliberately limited to direct children of the trusted root. Nested paths return `UnsupportedPlatform`. This implementation has no target-host execution evidence yet; its mount/device and race behavior still require platform-specific review.
+- Three macOS-only regression tests cover direct-child read/write, symlink/nested-path denial, and final-component root-symlink rejection. They have NOT been run.
+- Android direct-child backend remains statx-mount-ID dependent; Linux nested writes remain fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+- Current PR #113 HEAD `d14a679f20cf49bb408a5b72ddaf9ecc9155d254` includes the macOS adapter source candidate `4be1b8fd579092d8195c3fb775b7c765f6221814` plus documentation synchronization. No build/test/device evidence is claimed for either new Android/macOS backend.
+
+- Live readback after Android/macOS implementation documentation: PR #113 HEAD `5f5b0db544a5d54b856e0708417b8e4e3c1cbd28`, OPEN / DRAFT / UNMERGED. Code-bearing source candidate remains `4be1b8fd579092d8195c3fb775b7c765f6221814`; docs-only descendants do not change its unverified status.
+
+## Issue #105 — Linux process-group containment implementation candidate — 2026-11-20
+
+- Latest code-bearing candidate: `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT OR TESTED).
+- Linux subprocess startup now installs an inherited seccomp filter in the child before `exec`. It denies `setsid`, `setpgid`, `unshare`, `setns`, clone namespace flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` so compatible runtimes can fall back to `clone`. The existing dedicated process group is therefore intended to remain non-escapable for descendants; group cleanup still runs on normal return, timeout, and output overflow.
+- If the kernel refuses `PR_SET_NO_NEW_PRIVS` or filter installation, process spawn fails closed. Windows Job Object containment remains unchanged.
+- Process execution is now explicitly unavailable on Android and macOS until equivalent non-escapable containment exists; `ProcessAdapter` advertises only Linux and Windows.
+- Replaced the old escaped-session reader-only probes with three Linux adversarial regressions for attempted `setsid` on normal completion, timeout, and output overflow. These tests have NOT been run.
+- This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
+
+- Live implementation refresh: PR #113 HEAD `412d87f6e05d2d996538093623bcb52412216553`; latest code-bearing source/test candidate `0a9685bded788ae46596227bd61457d10db1179c` adds Linux seccomp process-group containment and fail-closed Android/macOS process execution. No build/test evidence is claimed.
+
+- Live PR identity refresh: #113 HEAD `955d37489e44c4b638d047477283160db62dc609`, OPEN / DRAFT / UNMERGED. Current code-bearing source/test candidate remains `0a9685bded788ae46596227bd61457d10db1179c`; no build/test evidence is claimed.
+
+- Architecture source updated for Android/macOS direct-child backends in commit `b023e6df94db416224a22211aa466fb854cabca0`; current PR #113 HEAD is now that SHA. Latest code-bearing source remains `0a9685bded788ae46596227bd61457d10db1179c`.
+
+
+## 2026-11-21 implementation refresh
+
+- PR #113 was OPEN / DRAFT / UNMERGED at code-bearing candidate `4c46a41fe45baa7627557a2a25b9c71812840479`; current candidate has not been built or tested.
+- Issue #104: Android/macOS direct-child filesystem backends are implemented; Android verifies statx mount ID; macOS verifies `fstatfs` filesystem ID and mount point; both add hard-link regressions, exclusive temp replacement, and directory sync. Linux nested writes use a guarded detached-mount backend and fail closed when unsupported. Windows backend remains unchanged. Issue #104 remains OPEN / NOT ACCEPTED.
+- Issue #105: Linux/Android inherited seccomp process-group containment candidate and Windows Job Object remain in scope; macOS process execution fails closed. Adversarial tests are present but unrun. Issue #105 remains OPEN / NOT ACCEPTED.
+- Keep broad matrix deferred until product implementation scope is complete. B-001 is not reopened absent a new provider failure.
+
+- Latest implementation refresh: source/test candidate and PR #113 HEAD `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (OPEN / DRAFT / UNMERGED). Process containment regressions now invoke ignored helper tests from the current Rust test binary and exercise `fork` + direct `setsid(2)` rather than depending on an external `setsid` executable; the helper records any escaped PID so the parent test can clean it up before failing. These regressions remain NOT RUN.
+
+- Issue #105 follow-up source `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` adds `waitid(WNOWAIT)` observation of the direct child. The process-group leader remains unreaped until SIGKILL is sent to its group, preventing the group ID from being recycled before cleanup. The existing syscall-level adversarial tests remain unrun.
+
+- Documentation synchronization after code-bearing source `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` places PR #113 at HEAD `b91e8965b90270b3da4175df807043206a434b9a`; subsequent commits are documentation-only. PR remains OPEN / DRAFT / UNMERGED.
+
+
+## IMPLEMENTATION-FIRST CONTINUATION — 2026-11-21
+
+This checkpoint follows the owner's explicit instruction to finish the in-scope implementation before starting broad tests, verification, or release-gate reruns. It does not change any acceptance criteria or protected state.
+
+### Exact candidate identity
+- ONE PR #113 remains OPEN / DRAFT / UNMERGED; branch `security/issue-104-root-confinement-20261118`; base `fix/windows-process-verifier-timeouts-20261118` at `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- Latest code-bearing implementation source: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (Issue #105 Linux/Android child-PID retention using `waitid(WNOWAIT)`).
+- Test-fixture correction commits: `46c777e70f396cfee6d796d0667769dabe2d7208` and `2600ec18d4e3fb05558ca50d7cf466638e1ab015`; both affect only `crates/one-cli/tests/filesystem_write.rs`.
+- PR #113 HEAD after those commits: `2600ec18d4e3fb05558ca50d7cf466638e1ab015`. No source implementation or CI config changed in those two commits.
+
+### Implementation/source inventory — presence is not execution evidence
+- Issue #104 source contains Linux retained-root `openat2` reads, atomic direct-child writes, guarded detached-mount nested writes with fail-closed fallback; Windows native handle-relative/reparse-point backend; Android direct-child read/write with no-follow and `statx(STATX_MNT_ID)`; macOS direct-child read/write with no-follow and filesystem identity checks; exclusive temporary files, sync/rename paths, and hard-link rejection.
+- Issue #105 source contains inherited Linux/Android seccomp process-group containment, Windows Job Object containment, macOS process execution fail-closed, and Linux/Android `waitid(WNOWAIT)` so the direct child PID is retained until process-group cleanup.
+- Source contains three direct-`fork` + `setsid` adversarial regressions for normal completion, timeout, and output overflow, with escaped-PID recording/cleanup. These tests have NOT been run on source `72eae...`.
+- Android/macOS nested filesystem paths and macOS process execution remain fail-closed. Do not claim broader support.
+
+### Test-fixture implementation corrections
+- Replaced the incorrect “nearest manifest selects root” expectation with the contract-compliant host working-directory root test.
+- Added an explicit CLI test runner working-directory helper and used it where the trusted host root must be controlled by the fixture.
+- Updated Linux nested-write integration expectations: success is accepted only when the detached-mount backend works; otherwise only `UnsupportedPlatform` with unchanged target bytes and no leaked temp file is accepted.
+- Restricted the unsupported-platform fixture to targets without native filesystem backends; Android and macOS are no longer incorrectly classified as unsupported.
+- Commits use `[skip ci]` by design. No tests/builds/verifier workflows were run as part of this implementation-first checkpoint.
+
+### CI and acceptance boundary
+- Exact PR HEAD `64cea5895d930b8621a7e31209676057d275fdb3` had GitHub status `ci/circleci: one-linux = FAILURE` (workflow `b7b0bbab-06dc-4cbc-88cf-f54624594d8f`, job `6e1d368b-8055-4cfe-a64e-858f9bd2fcdd`). Provider pipeline revision, job membership, logs, and root cause were not obtained; no cause is inferred.
+- The newer commits `46c777e...` and `2600ec1...` intentionally skip CI and have no status contexts. No PASS is claimed for the new HEAD.
+- Issue #104 and Issue #105 remain OPEN / NOT ACCEPTED until the required exact-SHA evidence is produced. This checkpoint records implementation/source state only; it does not promote ledger points, DoD, verifier pins, or release status.
+
+### Next implementation work
+Continue contract-to-source integration review of the existing v0.1 implementation scope and close any remaining production-code gaps before the broad test matrix. Do not rerun B-001 diagnostics, existing exact-SHA verifier suites, or historical gates without a relevant input change. Preserve fail-closed behavior and all protected state.
+
+
+> The PR #113 HEAD in the table is the exact live HEAD read immediately before this register refresh. This documentation update itself advances the PR branch; refresh the branch HEAD before the next action. The code-bearing source SHA is unchanged by this documentation-only update.
+
+
+## Scope reconciliation — fixed milestone ledger vs v0.1 release — 2026-11-21
+
+The protected verifier's `LEDGER_SOURCE_COMMIT.txt` pins documentation SHA `d6c382a245c49a028bc60809f22ca956c7f894cc`, which contains the fixed 100-point milestone ledger and Definition of Done. Its 92/100 implementation subtotal (E1 7/10, E2 7/8, E3 8/8, E4 6/6, E5 4/4, E6 0/4) is PROVISIONAL and belongs to the separate milestone-100 workstream; it is not a completion score for PR #113's current v0.1 candidate. The current PR #113 source branch is `security/issue-104-root-confinement-20261118`, with code-bearing candidate `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. The separate `milestone/100-ecosystem-20261023` branch is not safe to merge as-is and is not the current PR #113 integration base.
+
+The approved v0.1 package/build contract explicitly scopes the executable subset to an empty external dependency set and deterministic debug/intermediate `.oneir` / `.onepkg` artifacts; it does not claim a full external package registry or complete signed provenance envelope. Do not import future vNext/milestone-100 scope into v0.1 merely to chase ledger points, and do not alter the protected ledger, fixed weights, DoD, or release acceptance. Finish implementation against the approved v0.1 contract, then perform the required exact-SHA verification and gate reconciliation.
+
+
+### Related Issue #81 resource-bound implementation refresh — 2026-11-21
+
+The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` explicitly enforces a 10-second process deadline, 1 MiB stdout cap, 1 MiB stderr cap, and 2 MiB aggregate capture ceiling. Existing source tests cover stdout overflow, stderr overflow, deadline, normal status/stream preservation, and cleanup. Issue #81 remains OPEN pending exact-SHA Linux/Windows execution; Issue #105 remains OPEN / NOT ACCEPTED pending Linux and real Android/Termux adversarial execution. Do not start broad tests before the implementation scope is complete.
+
+
+## Linux FIFO blocking-read implementation fix — 2026-11-21
+
+- Code commit `50923b545f2c804b24aa773ea5bb60129d1e0ff2` changes Linux `FilesystemAuthority::open_relative` to include `O_NONBLOCK` in the `openat2` read flags. Previously a FIFO target could block during open before the post-open regular-file check. Android/macOS read backends already use nonblocking open flags.
+- Added Linux regression `authority_rejects_fifo_without_blocking`: creates a FIFO without a writer and expects `NotRegularFile`. It is NOT RUN.
+- Documentation sync commits: `8f091944...`, `bfead1a4...`, `0bfd7f48...`, `24e6ba24...`, `d48dbf19...`, `ac3e6037...`, `f805752d...`, `6fc86c68...`. These record the implementation delta only; no test/build/CI evidence is claimed.
+- PR #113 was OPEN / DRAFT / UNMERGED at the last live read. Base SHA remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table's HEAD is the exact read immediately before this register refresh; this register commit itself advances the branch. Refresh live HEAD before the next operation.
+- Issue #104 remains OPEN / NOT ACCEPTED. The fix removes a blocking-I/O hazard but does not close race, mount, hard-link, platform, or acceptance requirements.
+
+
+## Filesystem read allocation and resource-limit hardening — 2026-11-21
+
+- Latest code-bearing source: `8792f7a1f707f444d00026d916fa8c18b7f3e7f1`.
+- The Linux `openat2` read path includes `O_NONBLOCK` (commit `50923b545f2c804b24aa773ea5bb60129d1e0ff2`) so FIFO reads cannot block before regular-file rejection; regression `authority_rejects_fifo_without_blocking` is present, NOT RUN.
+- Read-buffer capacity now uses checked `usize::try_from` and fallible `Vec::try_reserve_exact` rather than unchecked `u64 as usize`/infallible preallocation (commit `8792f7a1f707f444d00026d916fa8c18b7f3e7f1`). Added `authority_enforces_read_and_write_limits_without_partial_replacement`, NOT RUN.
+- Commit `68d39100980474e71f78e4f9c079d8bc2c603fbe` also corrected the stale Linux nested-write comment to describe the detached-mount path and fail-closed fallback accurately.
+- No build, test, CircleCI, verifier, or platform matrix has run on this candidate. Issue #104 remains OPEN / NOT ACCEPTED. These are implementation changes and test additions, not acceptance evidence.
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update itself advances the branch, so refresh before next action.
+
+
+## Linux nested-write implementation and verifier inventory alignment — 2026-11-21
+
+- Latest code-bearing source: `858a5da09fe2ea74ebd17b0798f13fac848c7a28`.
+- Commit `0fd434ad46e6b8e93c3b9ed887447baf10d0f697` maps Linux `EOPNOTSUPP` from required detached-mount primitives to `UnsupportedPlatform`, preserving fail-closed behavior for filesystems/kernels without the required operation.
+- Commit `858a5da09fe2ea74ebd17b0798f13fac848c7a28` replaces the obsolete Linux nested-write test that unconditionally expected denial. The new `nested_write_uses_native_backend_or_fails_closed_without_side_effects` accepts native detached-mount success or explicit unsupported fallback and checks target integrity/temp cleanup.
+- Current `adapter.rs` source inventory exactly matches the protected E4 workflow's nonzero test filters: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, 1 `descriptor_relative_walk_rejects_`. This was checked by source-name inventory only, not by running the tests.
+- No build, test, CircleCI, verifier, or platform matrix was run. Issue #104 remains OPEN / NOT ACCEPTED. No acceptance, verifier pin, ledger, DoD, or release state was promoted.
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update advances the branch, so refresh live HEAD before next action.
+
+
+## Duplicate subprocess-test helper compile blocker removed — 2026-11-21
+
+- Source commit: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`).
+- Removed the second identical `cleanup_test_escaped_group` definition from the `interop.rs` test module. The duplicate would produce a Rust duplicate-definition error when compiling the test module; only one definition remains in source.
+- This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
+
+- PR #113 remains OPEN / DRAFT / UNMERGED; base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances the branch; refresh live HEAD before the next operation.
+
+
+## Current source/documentation reconciliation — 2026-11-21
+
+- Source compile-blocker correction: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` removes the duplicate `cleanup_test_escaped_group` definition in `interop.rs` test module. Exactly one definition remains in the current source. No build/test has been run.
+- Release contract reconciliation: `da5b007fe1dcfc7caa3c14c69b500866d5edbb75` corrects stale platform statements. Current source exposes filesystem adapters on Linux, Windows, Android, and macOS (with Android/macOS nested paths fail-closed; Linux nested writes require detached-mount support); process adapters on Linux, Android, and Windows (macOS fail-closed). These are source capabilities, not acceptance or support claims.
+- PR #113 remains OPEN / DRAFT / UNMERGED, base SHA `181ad350d8f0db53cda654c4d378425fbdd6ab24`. The table HEAD is the exact pre-register read; this register update itself advances branch HEAD. Refresh live PR metadata before the next action.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Broad build/test/verification remains deferred until implementation scope is complete.
+
+
+## Evidence/documentation sync after subprocess helper correction — 2026-11-21
+
+- The evidence matrix and v0.1 completion addendum now record source commit `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` as a duplicate-test-helper compile-blocker correction only. They explicitly do not promote build/test/verification status.
+- Release contract platform-boundary reconciliation is commit `da5b007fe1dcfc7caa3c14c69b500866d5edbb75`.
+- PR #113 live HEAD at pre-register refresh: `ad29bda44f571f70106b1531ef1913534e3ce938`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; state OPEN / DRAFT / UNMERGED. This register update advances the branch; refresh before the next operation.
+- Issue #104/#105 remain OPEN / NOT ACCEPTED. Implementation-first order unchanged.
+
+
+## 2026-11-21 — Android/macOS helper repair and fail-closed nested-path boundary
+
+- Latest code-bearing source: `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (`crates/one-core/src/filesystem.rs`).
+- Removed duplicate Android `create_temp` definition and added missing macOS `create_temp` implementation. These are source-visible compile-blocker corrections; no build was run.
+- Android/macOS retain direct-child no-follow read and atomic replacement. Android checks mandatory `statx(STATX_MNT_ID)`; macOS checks `fstatfs` filesystem ID + mount point; both enforce regular-file/single-link policy.
+- Nested Android/macOS paths remain fail-closed. A descriptor-relative parent walk was not retained as supported because ordinary POSIX directory handles do not prevent an opened parent directory from being renamed outside the retained root. The current resolver rejects multi-component paths with `UnsupportedPlatform` until an anti-move primitive exists.
+- Android/macOS tests now explicitly preserve nested-path denial and outside-sentinel integrity. They are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran. Preserve acceptance criteria, fixed ledger/DoD, and protected verifier pins.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register refresh HEAD `6c4601d7930f23f8676a7d8f29b3b0f216b0daa1`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — Android/macOS filesystem source repair and confinement boundary
+
+- Latest code-bearing source: `0f5859426273a61174d6d1b08ed8771a6f4b136a` (`crates/one-core/src/filesystem.rs`).
+- Removed duplicate Android `create_temp` and added missing macOS `create_temp`; static inventory shows one helper definition in each native module. No compiler was run.
+- Android/macOS direct-child no-follow reads and same-directory atomic replacement remain. Android requires `statx(STATX_MNT_ID)`; macOS checks `f_fsid` + mount point using `fstatfs`; both enforce regular-file/single-link policy.
+- Nested Android/macOS paths remain fail-closed. Ordinary POSIX directory descriptors do not prevent parent rename-out; multi-component traversal is explicitly rejected with `UnsupportedPlatform` until an anti-move primitive is implemented. The attempted generic openat parent walk was not left enabled.
+- Android/macOS regressions cover direct-child paths, symlink rejection, nested fail-closed behavior, root symlinks, and hard-link side effects. NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. No build/test/CI/verifier/platform matrix ran; no acceptance or release state promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `69e863f9a1238650e14c367cb5036e38d473b3bb`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register commit advances the branch; refresh before next action.
+
+
+## 2026-11-21 — HTTP response and filesystem payload resource bounds
+
+- Latest relevant source candidate: `5fe958cad798b3d05c3ceb21f875f1f90074cb35` (NOT BUILT/TESTED).
+- `FileWriteAdapter` no longer eagerly clones arbitrary text before the filesystem authority enforces `max_write_bytes`; it passes a borrowed slice to the authority and only makes the bounded response copy after successful write. Added oversized-content/no-side-effect regression; NOT RUN.
+- HTTP/1.1 response ingestion now caps headers at 64 KiB and wire body at 32 MiB while receiving data, uses fallible vector growth, and retains a 16 MiB decoded-body cap. Parser rejects duplicate Content-Length, unsupported/duplicate Transfer-Encoding, conflicting Content-Length + chunked framing, and chunk-size overflow. Added bounded-reader/parser regressions; NOT RUN.
+- No build/test/CI/verifier/platform matrix was run. These changes are implementation/resource-boundary hardening only; no exact-SHA evidence or release status is promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `39741b5b90f6326a7b3991ee9d48521ea52f74bd`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — bounded HTTP request serialization follow-up
+
+- Latest source candidate: `198fbf4ccdbb7e219efbe3e296e98462a385c384` (NOT BUILT/TESTED).
+- HTTP request bodies are limited to 16 MiB before serialization; request line/headers to 64 KiB with checked arithmetic and fallible preallocation. Content-Length must match body length; duplicate Content-Length and unsupported Transfer-Encoding are rejected. Added request-limit/framing regressions; NOT RUN.
+- This complements the previously recorded bounded HTTP response ingestion (64 KiB headers, 32 MiB wire body, 16 MiB decoded body) and filesystem write payload allocation hardening.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register refresh HEAD `ff6b66088a0dadecb2adca1847f0642be544c04b`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — HTTP request syntax validation follow-up
+
+- Latest source candidate: `b0a3379a1fb49feb18dcf61a2521446f199a8e2b` (NOT BUILT/TESTED).
+- HTTP request method/header names now require valid token syntax; authority and request-target reject whitespace/control bytes and fragments; header values reject control bytes other than HTAB. This complements request/response resource limits and framing checks already recorded.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `bcfeadb61d79bfe09476cd47bdd9d9c20be92e28`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — HTTP exact framing and chunk trailer validation
+
+- Latest source candidate: `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (NOT BUILT/TESTED).
+- Content-Length bodies require exact declared length; chunked parsing bounds size lines, validates trailer syntax and termination, rejects framing/Host trailers, and rejects trailing bytes. Regressions added for valid/forbidden trailers and extra bytes; NOT RUN.
+- This extends the existing request/response size limits, token validation, ambiguous-framing rejection, and fallible buffer growth.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `4016691abe2ab3ba1d7b497b1c81b7102e8a2e56`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — HTTP header token/control validation
+
+- Latest source candidate: `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (NOT BUILT/TESTED).
+- HTTP response header names are validated as tokens and values reject control bytes except HTAB. Request header names/values and request-target syntax have equivalent validation. Added regressions for invalid response header names/values and invalid request header names/targets; NOT RUN.
+- This builds on bounded request/response bodies, strict Content-Length/Transfer-Encoding framing, chunk trailer validation, and checked/fallible allocations.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `c501032e86cf9487ecbeeaacf6328b6cf95d7af8`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — exact fallible HTTP buffer reservations
+
+- Latest source candidate: `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (NOT BUILT/TESTED).
+- HTTP request serialization, response ingestion and chunk-body decoding use `try_reserve_exact` under the explicit 16 MiB/64 KiB/32 MiB ceilings, avoiding geometric capacity growth beyond intended limits.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `a2b98ba20ab6473a69698825457031178391c93c`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — IPv6 HTTP authority and query-only target support
+
+- Latest source candidate: `be5566435394cc27bbeb863b78c69b0fe52f774c` (NOT BUILT/TESTED).
+- Shared HTTP authority parsing supports bracketed IPv6 with default/explicit ports; generic DNS/socket resolution now brackets IPv6 socket addresses correctly.
+- HTTP GET target parsing supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace paths. Source regressions added, NOT RUN.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `2ac38936eef9500cee6bf40f49778efd84ca9c54`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — process adapter smoke fixture correction
+
+- Latest source/test candidate: `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (NOT BUILT/TESTED).
+- The process adapter no-argument smoke fixture now uses `whoami` instead of `rustc` (which can return nonzero without an input file); it is cfg-gated to Linux/Android/Windows. Android is included in process-platform metadata coverage.
+- Test source only; NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `dda1428ecb4cfabdecc8eb419d98965fa1a2ac39`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — SQLite query resource boundaries
+
+- Latest source/test candidate: `76f76c9a7a5884c08d851afc203cb1cae7a5827a` (NOT BUILT/TESTED).
+- SQLite adapter limits SQL to 64 KiB, parameters to 128 / 1 MiB total, rows to 100,000, serialized output to 16 MiB; SQLite's own per-connection limits now cap value/row size, SQL size, columns, variables, compound SELECTs, expression depth, function args, LIKE patterns, attached databases, and worker threads.
+- Output serialization uses bounded fallible exact allocation; BLOB hex output is size-checked before copy, and text conversion is streamed through the same cap. Oversized SQL/BLOB regressions added; NOT RUN.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `edd51a01b955ace5caeb993595d6e27bd8c940fe`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — SQLite execution deadline and busy timeout
+
+- Latest source candidate: `91d2a6c3a49041284944a4dd12ae090bb783bd0d` (NOT BUILT/TESTED); rusqlite hooks feature enabled by `f6716d2c9dc83208de695c699804da7ccde9aec0`.
+- Each SQLite query connection now has a 5-second VM progress-handler deadline and a 250 ms busy/lock wait timeout, in addition to the previously recorded SQL/parameter/row/output caps and SQLite engine limits.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `7260f992c298668ee6c83b253c016167cb7ea4ec`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — SQLite deadline includes result serialization
+
+- Latest source candidate: `75bf347d7bbb9cce89a488b02cc285c7f605e984` (NOT BUILT/TESTED).
+- The 5-second SQLite deadline now covers both SQLite VM execution through the progress handler and Rust-side row/result serialization; busy/lock waits remain capped at 250 ms.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `0039ee6cd4a969ee264dad365b819f187d919d38`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — additional SQLite parser and VM limits
+
+- Latest source candidate: `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` (NOT BUILT/TESTED).
+- SQLite per-connection resource profile now also caps parser depth at 1,000, VDBE instructions at 1,000,000, and trigger recursion at 0, in addition to the previously recorded SQL/value/row/output/parameter and execution-time bounds.
+- No build/test/CI/verifier/platform matrix ran. No exact-SHA evidence or release status promoted.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `20d16862bc7f51d0a5122884eb31223fc1b7bc7d`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — Android nested-read source implementation
+
+- Latest source/test candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one-core/src/filesystem.rs`, NOT BUILT/TESTED).
+- Android `open_relative` now resolves the entire relative path through kernel `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`; it then enforces regular-file, single-link, device, and `STATX_MNT_ID` checks. This enables nested reads without relying on a racy userspace parent walk.
+- Android nested writes remain fail-closed until an anti-move atomic replacement backend exists. macOS nested reads and writes remain fail-closed; ordinary `openat` descriptors do not pin a parent beneath the root.
+- The Android duplicate `create_temp` was already removed and macOS helper added; latest static inventory confirms one definition in each backend. No compiler was run.
+- Added Android nested-read + symlink-parent escape regression; NOT RUN. No build/test/CI/verifier/platform matrix ran. Issue #104 remains OPEN / NOT ACCEPTED.
+- PR #113 was OPEN / DRAFT / UNMERGED at pre-register read HEAD `95c2513d793a4c82440099771d457615c6a6531e`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`. This register update advances branch HEAD; refresh before next action.
+
+
+## 2026-11-21 — guarded Android nested writes and macOS nested reads
+
+- Code-bearing source candidate: `9fe53815f83701a62536472f8a3c87cebac22e7a` (`crates/one-core/src/filesystem.rs`). NOT BUILT/TESTED.
+- Android nested writes now call the shared detached-mount transaction used by Linux. It clones the retained root mount, applies recursive `MOUNT_ATTR_NOSYMFOLLOW`, resolves under the clone with `openat2` (`BENEATH | NO_SYMLINKS | NO_XDEV`), writes an exclusive temporary file, and atomically publishes with `renameat2`; unsupported/denied primitives fail closed. Android nested reads remain kernel-resolved through `openat2`.
+- macOS nested reads now use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` identity checks. Unsupported kernels fail closed. macOS nested writes remain fail-closed pending a proven atomic no-cross-mount publication strategy.
+- Source tests were updated for capability-gated Android nested write behavior and supported-kernel macOS nested reads; NOT RUN. No compiler, Android device test, macOS test, CI run, or E4 verifier result is claimed.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Latest PR HEAD before this register update: `70a3fa7239a93738c0d70358e4287692fc5e0e09`. Base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — filesystem implementation and first exact-SHA CI feedback
+
+- Latest source candidate: `568d9360f0beec63c10fbeae9cac63f384bd082f` (`crates/one-core/src/filesystem.rs` plus Clippy corrections in `adapter.rs` and `database.rs`). NOT BUILT/TESTED on the updated candidate.
+- Android nested read remains kernel `openat2`; nested write now uses the guarded detached-mount transaction with recursive `MOUNT_ATTR_NOSYMFOLLOW`, `openat2` and `renameat2`. Unsupported/SELinux-denied primitives fail closed. macOS direct-child read compatibility is preserved; nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` plus `fstatfs` checks on supported kernels; nested writes remain fail-closed pending a proven atomic no-cross-mount publication path.
+- Exact-SHA GitHub Actions run #2410 (`44845255637`) ran on earlier source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build SUCCESS, Clippy FAILURE, Tests SKIPPED. Clippy reported a manual char-comparison lint in `adapter.rs` and ignored SQLite configuration `Result`s in `database.rs`. Descendant source commits `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab` correct these without weakening lint policy; macOS direct-child fallback was refined in `568d9360f0beec63c10fbeae9cac63f384bd082f`. These fixes have not yet been shown to pass CI.
+- Windows leg of run #2410 was still IN_PROGRESS at `Install Android NDK (Windows)` on last readback; no Windows result is claimed. CircleCI for the earlier source candidate remained PENDING; no CircleCI success is claimed for the latest candidate.
+- Android native tests, macOS native tests, focused platform builds, and adversarial nested-write race/mount tests remain outstanding. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED; no main, verifier pin, fixed ledger, or acceptance criteria changes.
+
+
+## 2026-11-21 — Windows build blocker correction after run #2410
+
+- Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED).
+- Exact-SHA run #2410 (`44845255637`) on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` ended with Ubuntu Build SUCCESS / Clippy FAILURE / Tests SKIPPED and Windows Build FAILURE. Windows errors showed Linux-only writer functions were compiled on Windows (missing Unix std APIs/libc/Linux helpers) and unstable `std::os::windows::fs::MetadataExt::{volume_serial_number,file_index}` calls.
+- Corrected in source descendants: `74df3aa901732c8eb3adaac728162715fc3a4961` gates Linux writer functions to Linux only and replaces unstable Windows metadata APIs with a no-reparse NT handle reopen plus `GetFileInformationByHandle` volume/file-index comparison. Earlier Clippy corrections remain in `82a90b41...` and `c23bd0e0...`.
+- No rerun on the corrected candidate is confirmed. Android native tests and macOS native tests remain outstanding; no platform support is promoted. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — corrected candidate queued for fresh CI
+
+- PR #113 HEAD before this register update: `8248d9d7ffd2dcf15b0708c6cf6383f943ec5e38`; base: `181ad350d8f0db53cda654c4d378425fbdd6ab24`; OPEN / DRAFT / UNMERGED.
+- Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED locally). The seven commits after it at this point are documentation-only.
+- GitHub Actions run #2425 (`44845652963`) is IN_PROGRESS on the corrected source candidate; Ubuntu and Windows jobs were both still in progress at last readback. No result claimed.
+- CircleCI context `ci/circleci: one-linux` for source SHA `74df3aa901732c8eb3adaac728162715fc3a4961` is PENDING. No CircleCI result claimed.
+- User-confirmed Termux worktree last reached `1e8e19dcf3833aaff7169427350fa50b7df1f545`; it must safely fast-forward to the current remote before building. Do not overwrite changes.
+- Issue #104 remains OPEN / NOT ACCEPTED. No broad verification or release acceptance is promoted.
+
+
+## 2026-11-21 — Termux Android compile blockers on exact SHA and source correction
+
+- User-confirmed clean $HOME/one-pr113 worktree was fast-forwarded to PR #113 HEAD 04143d1a9b11f55e1f2ae38960f35d32d2904a11; Rust 1.99.1, host aarch64-linux-android.
+- On exact SHA 04143d1a9b11f55e1f2ae38960f35d32d2904a11, both cargo clippy --workspace --all-targets -- -D warnings and cargo test -p one-core filesystem::android_filesystem_tests -- --nocapture stopped at compilation with two errors: Android nested writer called File::write_all without importing std::io::Write for Android; Android Statx derived Default with [u8; 76], unsupported by this Android standard-library toolchain.
+- Corrected source on PR branch in commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4: scope std::io::Write to Linux + Android, and split the 76-byte Statx reserved ABI padding into [u8; 32] + [u8; 32] + [u8; 12]. The total padding and 256-byte Statx layout are preserved; compile-time size assertion remains.
+- Commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4 is NOT YET BUILT/TESTED. User must fast-forward the clean Termux worktree and rerun both commands on this exact new SHA. No test, Clippy, platform-support, or E4 acceptance claim is made.
+- Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. No main, verifier pin, tests, or acceptance criteria changed.
+
+
+## 2026-11-21 — Android Termux rerun on exact SHA 8b3cb521
+
+- User-confirmed clean `$HOME/one-pr113` fast-forwarded to `8b3cb52168ed8d4961ce4e47bcc3410f9a0fd7ff`; rustc/Cargo 1.99.1, host `aarch64-linux-android`.
+- Workspace Clippy progressed through `one-core` and failed in `crates/one-cli/tests/filesystem_write.rs`: helper `run` is unused on Android because its only caller is Linux/Windows cfg-gated. Corrected by cfg-gating the helper itself to Linux/Windows in commit `f9dd400b21670fd07c5498307714a9b7ea931d18`. NOT YET BUILT/TESTED.
+- Focused Android test binary compiled successfully and started five tests. `android_root_final_symlink_is_rejected` and another test shown in output passed; `android_hard_link_targets_are_rejected_without_modifying_either_name` failed at fixture setup because `std::fs::hard_link` returned `PermissionDenied` (code 13). The test body never reached the authority assertions. The process was then terminated with `SIGSYS` (signal 31, bad system call), so remaining tests are NOT VERIFIED. Do not weaken or delete the hard-link test. Investigate Android/Termux syscall restrictions and rerun tests individually to identify which operation triggers SIGSYS.
+- This demonstrates Android compilation is now possible on this toolchain, but the focused Android suite is NOT PASS. No claim of Android filesystem support or E4 acceptance.
+- Next exact-SHA run after safe sync: workspace Clippy, then each Android test individually (especially hard-link fixture, nested read, nested write) to isolate permission and SIGSYS. Preserve test assertions and record capability limitations separately from implementation correctness.
+- Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Termux exact-SHA Android test isolation and syscall investigation
+
+User-provided Termux evidence on exact PR #113 SHA `4e831bf51e4c9f4e4075e30d3d1e4fc72eeded0b` (host previously identified as `aarch64-linux-android`):
+
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS; completed successfully in 2.37s with no warnings.
+- The test filters were corrected by removing `--exact`; each selected unit test then ran (1 test selected, not zero).
+- `filesystem::android_filesystem_tests::android_root_final_symlink_is_rejected`: PASS (1 passed).
+- `android_direct_child_read_and_atomic_write_work_with_root_handle`, `android_leaf_symlinks_and_nested_paths_fail_closed`, and `android_kernel_resolved_nested_reads_stay_beneath_root`: each process terminated with signal 31 / `SIGSYS: bad system call`. These are runtime terminations, not assertion failures; their security assertions did not complete.
+- `android_hard_link_targets_are_rejected_without_modifying_either_name`: failed before authority assertions because fixture setup `std::fs::hard_link` returned `PermissionDenied` (errno 13). Do not weaken, skip, or delete the security test to manufacture a pass.
+
+Source-path investigation at this exact branch source: successful `FilesystemAuthority::open` on Android calls `android_native::mount_id(&root)`, which directly invokes `SYS_statx` with `AT_EMPTY_PATH | STATX_MNT_ID`. The three SIGSYS tests all proceed through successful authority construction; the passing root-final-symlink test rejects the symlink before this call. This makes Android `statx` the leading syscall suspect, but the signal alone does not prove the kernel/seccomp cause. Obtain syscall-level evidence (e.g. `strace`, if available and permitted) before changing the backend.
+
+Do not silently fall back to device/inode identity or omit mount identity: mount-boundary confinement is part of the security contract. Investigate a kernel-derived mount-ID source compatible with Android restrictions (for example, `/proc/self/fdinfo/<fd>` `mnt_id`, subject to explicit robustness/security review and tests) before proposing code. Any fallback must fail closed if the kernel source is unavailable or malformed.
+
+Exact-SHA classification: Clippy PASS; one Android test PASS; three Android tests SIGSYS/NOT VERIFIED; hard-link test BLOCKED at fixture setup; Android filesystem backend NOT VERIFIED / NOT ACCEPTED. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. No acceptance or platform support is promoted.
+
+
+## 2026-11-21 — syscall trace correction: Android seccomp blocks openat2
+
+This entry supersedes the earlier statx-suspect hypothesis recorded immediately above. User supplied a Termux ARM64 `strace` trace for exact test `filesystem::android_filesystem_tests::android_direct_child_read_and_atomic_write_work_with_root_handle` on source/test SHA `4e831bf51e4c9f4e4075e30d3d1e4fc72eeded0b`:
+
+- `statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_MNT_ID, ...) = 0`: the kernel successfully returns `STATX_MNT_ID`; the prior hypothesis that `statx` caused SIGSYS is disproven for this invocation.
+- `openat2(3, "data.txt", ..., resolve=RESOLVE_NO_XDEV|RESOLVE_NO_SYMLINKS|RESOLVE_BENEATH, ...) ` is invoked.
+- Immediately afterward, the process receives `SIGSYS` with `si_code=SYS_SECCOMP`, `si_syscall=__NR_openat2`, `si_arch=AUDIT_ARCH_AARCH64`; the process is killed by SIGSYS.
+- Confirmed cause for this traced test: Android/Termux seccomp policy blocks `openat2`. This is not a Rust assertion failure and not a `statx` failure.
+
+Security constraints and next engineering action:
+- Do not replace `openat2` with an unchecked `openat`, lexical path validation, device/inode-only checks, or omission of `RESOLVE_BENEATH` / symlink / mount-boundary protections.
+- Perform a design review for a safe Android fallback using retained directory handles and component-by-component `openat` with no-follow semantics, validating every opened descriptor's kernel mount identity before reading or writing. Prove resistance to symlink swaps, mount-point crossings, directory replacement, and race/manipulation; fail closed if any required kernel identity or primitive is unavailable.
+- The trace only directly confirms the first named test's `openat2` termination. The other previously SIGSYS-terminated Android tests remain unverified until their syscall paths are independently confirmed or the shared path is changed and retested.
+- The hard-link regression remains blocked at fixture setup by `PermissionDenied`; do not weaken or skip it. Clippy PASS and the root-final-symlink test PASS remain evidence only for their recorded exact SHA.
+- No implementation fix, Android support, E4 verification, or acceptance is claimed by this trace. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android seccomp-safe capability boundary (code candidate)
+
+- User-provided Termux ARM64 syscall trace proves `statx(STATX_MNT_ID)` succeeds and `openat2` is killed by seccomp with `SIGSYS / SYS_SECCOMP`. Do not probe `openat2` in-process on Android.
+- Code candidate commit: `e5c8a7d5d2075902ef4f027322e2e615908bac14` (source `crates/one-core/src/filesystem.rs`). Android reads now use root-handle-relative `openat` only for a single direct child, with `O_NOFOLLOW | O_NONBLOCK`, regular-file/single-link checks, device identity, and `statx(STATX_MNT_ID)` equality. Nested reads return `UnsupportedPlatform` before any syscall that may trigger seccomp.
+- Android nested writes now return `UnsupportedPlatform` before invoking the Linux detached-mount/`openat2` transaction. Direct-child atomic writes remain root-dirfd-relative and retain the existing no-follow, regular-file, hard-link, device, mount-ID, exclusive-temp, sync, and atomic-rename checks.
+- Android tests were updated: direct-child read/write remains positive; nested reads (including symlink-parent paths) and nested writes assert fail-closed behavior; outside sentinel bytes remain unchanged. The old nested-read test name was replaced with `android_nested_reads_fail_closed_without_openat2`.
+- Rationale: a component-by-component `openat` walk is not an acceptable nested fallback because an opened parent directory can be renamed outside the retained root before the leaf operation. This preserves the security boundary at the cost of nested Android functionality.
+- **NOT YET BUILT OR TESTED** on this code SHA. Termux test execution, full target builds, CI, and independent verifier checks remain outstanding. Do not promote Android support or E4 acceptance. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android Termux validation and exact-SHA CI readback
+
+User-provided Termux evidence on exact PR #113 HEAD `0d197840d40c5e7045896497eb9e6ab5b8df7dfb` (clean official worktree `$HOME/one-pr113`, branch `security/issue-104-root-confinement-20261118`):
+
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS; completed successfully in 5.55s with no warnings.
+- `android_direct_child_read_and_atomic_write_work_with_root_handle`: PASS (1 passed, 0 failed).
+- `android_leaf_symlinks_and_nested_paths_fail_closed`: PASS (1 passed, 0 failed).
+- `android_nested_reads_fail_closed_without_openat2`: PASS (1 passed, 0 failed).
+- `android_root_final_symlink_is_rejected`: PASS (1 passed, 0 failed).
+- These are four individually selected Android tests, not the complete Android filesystem/security suite. The hard-link fixture test and full platform/E4 matrix are not established by this run. Nested paths remain intentionally unsupported/fail-closed on this Android environment; passing the fail-closed tests is not proof of nested-path support.
+
+Exact-SHA remote status readback for `0d197840d40c5e7045896497eb9e6ab5b8df7dfb`:
+
+- GitHub commit status context `ci/circleci: one-linux`: FAILURE. Status target: https://app.circleci.com/workflow/cf6395a6-d5a0-448b-868f-1089e0153c08/job/cc43be9e-09ce-4499-8d3a-a603fdb533cf
+- The CircleCI job page could not be opened through the available inspection channel; provider logs, failing step, pipeline revision mapping, and root cause are UNKNOWN. Do not classify this as a source/test failure or timeout without provider logs.
+- GitHub Actions One CI run #44853076199: IN_PROGRESS at readback; no terminal result claimed.
+- PR #113 remains OPEN and unmerged; retain DRAFT status. Issue #104 remains OPEN / NOT ACCEPTED. No main, protected verifier pin, acceptance criteria, merge, or release state changed.
+
+Classification at this exact SHA: workspace Clippy PASS; four selected Android tests PASS; CircleCI status FAILURE / cause UNKNOWN; GitHub Actions IN_PROGRESS; full Android suite, independent Windows verifier, complete E4, and Issue #104 acceptance NOT VERIFIED.
+
+
+## 2026-11-21 — GitHub Actions failure diagnosis and targeted test corrections
+
+Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b46a772c7a7e580f9fec096c7`.
+
+- Both Windows 2025 and Ubuntu jobs completed build and Clippy successfully, then failed in the workspace test step.
+- Windows job: `one-core --lib` reported 152 passed / 1 failed. The failing test was `adapter::tests::filesystem_write_adapter_rejects_oversized_content_without_side_effects`; Windows returned OS error 32 (sharing violation) while removing the temporary root because the test still held `FileWriteAdapter` / its retained `FilesystemAuthority` when calling `remove_dir_all`. The test already verified the target retained `KEEP`; cleanup ordering was the failing operation.
+- Ubuntu job: `tests/process_vertical_slice.rs` reported 7 passed / 1 failed. `process_adapter_failure_is_observed_and_audited` expected the registered ProcessAdapter to be invoked but passed `PlatformKind::Any`; the adapter advertises concrete supported platforms (Linux, Windows, Android), not the wildcard `Any`, so selection correctly returned `NoCompatibleAdapter` before invocation. The test must select `PlatformKind::current()` to test the host adapter path.
+- Targeted source/test corrections committed on PR branch: `b932e3ee3adc3a4b464704a57ac9b46cade4bbe8` drops the adapter before Windows temporary-directory cleanup; `3f40b4aa8324420d0f7083dab3b2d3db15f726f6` changes the process test to `PlatformKind::current()`. Both commits are NOT YET BUILT / TESTED. Do not claim these failures fixed until exact-SHA reruns pass on Windows and Linux.
+- CircleCI `one-linux` was FAILURE on `8156607a4f0fa95b46a772c7a7e580f9fec096c7`, but provider logs have not yet been retrieved; cause remains UNKNOWN. Use `tools/ci/diagnose_circleci.py` from the official worktree on the current exact HEAD, with local `CIRCLECI_TOKEN`; never paste the token into chat. Do not attribute CircleCI failure to the GitHub Actions test failures without CircleCI logs.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, test deletion, or acceptance criteria changed.
+
+
+## 2026-11-21 — Follow-up: invalid integration-test platform API corrected
+
+- User synced the prior branch updates to exact SHA `259bf345fbcd435a3b5d804669cd707c30c60aa9`; worktree was clean before fast-forward.
+- Both targeted test commands failed before running because `crates/one-core/tests/process_vertical_slice.rs` called `PlatformKind::current()`, which does not exist. Source inspection confirmed the only related helper is `PlatformKind::current_host()`, but it is `pub(crate)` and cannot be called from an integration-test crate.
+- Corrected in commit `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7`: the test now selects the concrete supported host variant (`Linux`, `Windows`, or `Android`) and is cfg-gated to those supported process platforms. This preserves the intended adapter invocation/audit assertion and does not change production API or weaken the test.
+- Commit `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7` is NOT BUILT / NOT TESTED. The Windows adapter cleanup fix from `b932e3ee3adc3a4b464704a57ac9b46cade4bbe8` is also not yet proven by a Windows rerun. Re-run both focused tests on the new exact SHA; then require fresh Ubuntu and Windows CI results.
+- Earlier note proposing `PlatformKind::current()` is superseded by this correction. CircleCI failure on the earlier SHA remains independently UNKNOWN until its provider diagnostic output is obtained.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, tests/DoD, or acceptance criteria changed.
+
+
+## 2026-11-21 — Exact-SHA validation and CI terminal evidence
+
+- User-provided Termux validation was completed on exact checked-out SHA `fd727e8d2d1045d8563eb6acfdd870059ca602bd` after a clean worktree fast-forward from `259bf345...`.
+- `cargo test -p one-core filesystem_write_adapter_rejects_oversized_content_without_side_effects -- --nocapture --test-threads=1`: PASS (1 passed, 0 failed).
+- `cargo test -p one-core --test process_vertical_slice process_adapter_failure_is_observed_and_audited -- --nocapture --test-threads=1`: PASS (1 passed, 0 failed).
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS.
+- GitHub Actions run #44854216828 on exact SHA `fd727e8...` is terminal SUCCESS. Ubuntu job #136692460353 and Windows Server 2025 job #136692460634 both completed SUCCESS; Build, Clippy, and Tests steps all SUCCESS. This supplies Windows CI evidence for the oversized-write adapter test in the workspace test step; do not overstate as full E4 acceptance.
+- CircleCI status context `ci/circleci: one-linux` on exact SHA `fd727e8...` is SUCCESS (status target workflow `8983db9c-aabc-4d48-af5b-f8e20d8a77be`, job `8f6f369f-31a8-4e72-b402-8669fc402fe6`). This is GitHub status evidence only; provider logs and pipeline revision/job membership were not independently inspected.
+- The earlier compile regression at `259bf345...` from nonexistent `PlatformKind::current()` is superseded by the explicit supported-platform selection correction at `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7`, now covered by the exact-SHA focused test and green workspace CI.
+- These results establish selected test + Clippy success and green GitHub Actions/CircleCI status for this SHA. They do NOT close Issue #104 or establish all E4 requirements: other-platform backends, mount-boundary/race evidence, host integration, and full adversarial acceptance remain tracked separately.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, acceptance criteria, test contracts, or DoD were changed.
+
+
+## 2026-11-21 — Independent Windows verifier exact-SHA result for PR #113
+
+- Exact source SHA: `3a9badf1aa281a6dbe37de2338776caa90288cdd` (PR #113 current HEAD at verification time).
+- Independent verifier commit `1e3116c90904e1cabcee838cb1806a14dd3cb720` advanced only the non-acceptance `CANDIDATE_BUILD_COMMIT.txt` pin to this source SHA. Protected `CANONICAL_COMMIT.txt` (E4 acceptance) and `LEDGER_SOURCE_COMMIT.txt` were not changed.
+- Independent verifier run #44855478984: Linux job #136696541594 SUCCESS (279 passed, 0 failed, 4 ignored across 27 test-result summaries); Windows Server 2025 job #136696541787 SUCCESS (257 passed, 0 failed, 1 ignored across 27 summaries). Both jobs completed the full `cargo test --locked -p one-core -- --nocapture` suite.
+- Windows log confirms seven `filesystem_windows_tests` cases executed and passed, including `filesystem_reader_rejects_directory_junction_escape`, absolute in-root read, absolute out-of-root read/write with unchanged sentinels, parent traversal rejection, text write, oversized-write rejection, and atomic-replace-denied preservation. The junction fixture uses an actual Windows `mklink /J` directory junction.
+- Main repository GitHub Actions run #44854675780 on the same exact source SHA: Ubuntu job #136693963917 and Windows Server 2025 job #136693964189 SUCCESS; Build, Clippy, and Tests steps all SUCCESS.
+- CircleCI status context `ci/circleci: one-linux` on the same exact SHA is SUCCESS (workflow `3f147cc4-82fa-4b0b-a2d5-69cc487b4555`, job `a83dbb0c-1ade-47a5-970d-28d8d2b901d6`). This remains status-context evidence; provider pipeline revision and step logs were not independently inspected.
+- This is strong exact-SHA Windows filesystem test evidence, but the mirror candidate matrix is non-acceptance only. The full E4 adversarial workflow still reads the unchanged protected E4 pin and was not re-run against this candidate. Windows native runtime workflow also uses that E4 pin. Do not claim complete E4 acceptance from this matrix.
+- Source SHA `3a9badf...` includes Android correction `ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4`; Termux tests on older SHA `fd727e8...` do not validate this later Android change. Current-SHA Android focused tests and Clippy remain required.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, protected E4 pin, ledger pin, acceptance criteria, test contracts, or DoD changed.
+
+
+## 2026-11-21 — Android/Termux current-SHA validation completed
+
+- User confirmed the official Termux worktree `$HOME/one-pr113` was clean before synchronization and fast-forwarded to exact branch HEAD `7d2409a9237ee2a7e5dfd34558533787e83b4528`.
+- On that exact SHA, `cargo clippy --workspace --all-targets -- -D warnings` completed successfully.
+- Four Android-focused tests each passed 1/1:
+  - `android_direct_child_read_and_atomic_write_work_with_root_handle`
+  - `android_leaf_symlinks_and_nested_paths_fail_closed`
+  - `android_nested_reads_fail_closed_without_openat2`
+  - `android_root_final_symlink_is_rejected`
+- This validates the Android direct-child read/atomic-write path and the tested fail-closed behavior for leaf symlinks, nested paths, and a final-component root symlink on the user's Termux/Android environment. The code-bearing source is unchanged from `3a9badf1aa281a6dbe37de2338776caa90288cdd`; `7d2409a...` is three documentation-only commits ahead.
+- Scope limitation: these focused tests do not establish nested-path Android read/write support, mount-boundary adversarial coverage beyond the named cases, hard-link fixture execution, or complete Issue #104 E4 acceptance. Do not promote unsupported nested operations.
+- Combined exact-SHA evidence now includes Android Termux focused validation + Clippy at `7d2409a...`, main GitHub Actions Ubuntu/Windows success and CircleCI status-context success at code SHA `3a9badf...`, and the independent verifier non-acceptance candidate matrix at the same code SHA (Linux 279 passed/0 failed/4 ignored; Windows 257 passed/0 failed/1 ignored). Keep each result attached to its actual tested SHA and role.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 pin, ledger pin, acceptance contract, tests, and DoD remain unchanged.
+
+## B-002 implementation update — 2026-11-21 (Windows handle-bound delete slice)
+
+- Source commit: ffa51679e998e97bca0730a182d8887a245e03d0 (PR #113 branch only).
+- Implemented a Windows-only FilesystemAuthority::delete path using retained no-delete-share parent handles and NtSetInformationFile(FileDispositionInformation) on the exact validated leaf handle. Reparse points, cross-volume targets, non-regular files, and hard-linked files are rejected.
+- Non-Windows platforms remain fail-closed with UnsupportedPlatform; no POSIX preflight-plus-unlinkat race workaround was introduced. Windows tests were added but are NOT BUILT / NOT RUN.
+- B-002 remains OPEN / NOT ACCEPTED. The code slice does not close E4, prove all parent/leaf race cases, complete host-root integration, or establish platform matrix support. Capability and adapter exposure intentionally deferred until native implementation evidence and cross-platform contract review.
+- Required next focused evidence: compile and run the two new Windows delete tests on the exact source SHA; inspect failures rather than weakening tests; then add any missing adversarial case (especially parent rename exclusion during nested delete) before expanding language capability. Preserve existing Linux/Android/macOS fail-closed boundaries.
+- Added leaf identity race regression retained_delete_handle_blocks_leaf_rename: source-only proof that the no-delete-share leaf handle blocks rename until closed. It is NOT RUN; B-002 remains OPEN / NOT ACCEPTED.
+
+## B-002 exact-SHA implementation evidence — 2026-11-21
+
+- Windows handle-bound delete source/test SHA 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0: GitHub Actions One CI run #44870781889 terminal SUCCESS.
+- Ubuntu job #136744590581 and Windows Server 2025 job #136744590451 both passed Build, Clippy, Tests, and deterministic artifact steps.
+- Windows tests passed: delete_uses_validated_handle_and_removes_nested_regular_file; delete_rejects_hard_links_without_removing_either_name; retained_delete_handle_blocks_leaf_rename; retained_parent_handle_blocks_directory_rename. Windows one-core library summary: 156 passed / 0 failed.
+- This closes the focused implementation/test slice only, not B-002 as a whole. Issue #104 remains OPEN / NOT ACCEPTED pending full E4 adversarial acceptance, host-root integration, remaining platform primitive coverage, and release contract evidence.
+
+## B-002 update — filesystem.delete capability bridge — 2026-11-21
+
+- Added explicit `Capability::FilesystemDelete`, `SemanticCapabilityId::FilesystemDelete`, and `EffectClass::Delete`; broad filesystem/read/write grants do not imply delete.
+- Added source form `hapus berkas "path"`, parser/type validation/IR lowering, `FileDeleteAdapter`, and interpreter registration with the shared host authority. Adapter metadata advertises Windows only.
+- Code checkpoint SHA: `0fa43eb0be53c8e79424597ece055147872b35c4`. Language bridge tests are NOT YET BUILT / TESTED. The native Windows delete implementation remains separately verified at source/test SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` (One CI #44870781889 SUCCESS).
+- Next evidence must be exact-SHA CI for the current language bridge, including parser/semantic/IR tests, default-denial/no-side-effect, Windows explicit-grant deletion, and all existing workspace tests. Do not repeat the prior native-only test run; it does not cover these source changes.
+- B-002 / Issue #104 remains OPEN / NOT ACCEPTED. POSIX delete, Android/macOS nested path boundaries, Linux nested mount/privilege evidence, host-root integration, and full E4 remain outstanding.
+
+## B-002 exact-SHA language bridge evidence — 2026-11-21
+
+- Source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4: GitHub Actions One CI run #44871756593 terminal SUCCESS.
+- Ubuntu job #136747608726: Build/Clippy/Tests SUCCESS; one-core 181 passed / 0 failed / 3 ignored.
+- Windows Server 2025 job #136747608925: Build/Clippy/Tests SUCCESS; one-core 167 passed / 0 failed.
+- Windows log confirms explicit-grant interpreter execution, parser/IR mapping, default denial without side effects, adapter availability/authority checks, and actual junction escape rejection with unchanged outside sentinel.
+- GitHub commit status ci/circleci: one-linux SUCCESS on the same exact SHA; CircleCI provider logs were not independently inspected because the job URL was inaccessible.
+- PR #113 documentation-only descendants through 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9 do not change the tested source.
+- This closes the narrow Windows-only delete language bridge test slice, not B-002 or Issue #104 as a whole. POSIX delete remains unsupported; E4, host-root integration, and full adversarial platform acceptance remain outstanding.
+
+## 2026-11-21 — filesystem.delete CLI capability integration
+
+- PR #113 source commits: `48e87fd511a631dc121fd5190c68050cb9baadcb` adds explicit `filesystem.delete` to CLI capability parsing/usage and dispatches it through a host-created `FilesystemAuthority`, an explicit `Capability::FilesystemDelete` grant, and an exact `ScopeRule::Target`; `17a64b22378d931ef96b9ab5e976c485c4a0555e` adds CLI regression tests for read-grant isolation, Windows explicit deletion, and non-Windows fail-closed behavior.
+- Documentation commits: `63e463df8fed2b798bfc512f0cf0f1ea55c32464` updates CLI user instructions; `8d2ced9dc70f437ba137a2cd61fb8990154d94d1` updates the existing Mermaid architecture source with the delete adapter and platform boundary.
+- Current branch HEAD after these sequential source/documentation commits: `8d2ced9dc70f437ba137a2cd61fb8990154d94d1` (refresh live PR metadata before relying on this value).
+- Windows native handle-bound delete remains implemented and tested on source SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0`; this evidence is retained and is not repeated by the CLI change.
+- Primitive gap: Linux `unlinkat`, Android `unlinkat`, and macOS `unlinkat` are name-based and do not apply disposition to the exact validated file handle. No safe fd-bound delete implementation has been proven for these platforms under the unchanged Issue #104 race/mount contract. Do not introduce check-then-unlink or a userspace parent walk; keep these adapters fail-closed.
+- New CLI tests and the CLI bridge are NOT BUILT / NOT TESTED at HEAD `8d2ced9...`. Next implementation step is to continue closing only operations for which an equivalent native primitive can be justified; then run focused CLI and adapter tests on exact SHA before integrated platform acceptance.
+- Issue #104 remains OPEN / NOT ACCEPTED. No main, protected verifier pin, acceptance criteria, fixed ledger/DoD, merge, or release state changed.
+
+## 2026-11-21 — process containment adversarial coverage hardening
+
+- Reviewed the existing native process containment source: Linux/Android use `process_group(0)`, `PR_SET_NO_NEW_PRIVS`, inherited seccomp denial of `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone`, and x32 ABI; `clone3` returns `ENOSYS` for compatible fallback. Cleanup observes direct-child exit with `waitid(WNOWAIT)`, kills the invocation group before reaping, and applies the same cleanup on normal exit, timeout, and output overflow.
+- Windows uses `PROC_THREAD_ATTRIBUTE_JOB_LIST` during `CreateProcessW`, `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, `IsProcessInJob` verification, `TerminateJobObject`, and active-process-zero cleanup. macOS remains fail-closed; no equivalent backend is implemented.
+- Commit `5e79f351b887f3dee7f77ae3a2e8dd86e5d108ea` gives each existing setsid adversarial test a unique working-directory fixture to prevent parallel-test PID-file collisions.
+- Commit `18bd42f1eecb7ca40dcf88a5b8d6456d15361f2e` adds `setpgid(0, 0)` escape probes for normal completion, timeout, and output overflow; commit `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` corrects test-attribute placement.
+- Exact source/test candidate `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` is NOT BUILT / NOT TESTED. These additions strengthen test coverage only; they do not change the production seccomp policy or prove containment.
+- Issue #105 remains OPEN / NOT ACCEPTED. Exact-SHA Linux/Android adversarial execution and Windows Job Object descendant execution remain required; macOS remains unsupported/fail-closed.
+
+## 2026-11-21 — master continuation prompt synchronized
+
+- Updated existing `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `631fcb692a8944c84bc6af6134c781bfffed23d2` to reflect the filesystem.delete CLI integration, native delete primitive gaps, process containment primitive map, new adversarial test source, and implementation-first sequencing.
+- This is documentation-only; it does not change source/test evidence or acceptance state. Current branch checkpoint immediately after this update: `631fcb692a8944c84bc6af6134c781bfffed23d2`. Refresh live PR metadata before the next action.
+- Latest product source/test candidate remains unbuilt/unverified for the new CLI and process test changes. Issue #104 and #105 remain OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — implementation/evidence/changelog documentation synchronized
+
+- Updated existing `one-v0.1-implementation-status.md` (commit `78962ce3ed1a966ab083a6dbaf253c95e7cae140`) and `one-v0.1-evidence-matrix.md` (commit `e2b2554e5074a3399c519e9c51f0e6fcdb237e03`) to distinguish verified Windows host/language slices from unverified CLI integration and process test additions.
+- Updated existing `live-checkpoint-2026-11-20.md` (commit `762f14bd4076726be0215abb9847dd5d4603abfa`) and `CHANGELOG.md` (commit `e6bc9382124de0ac83c1f7f5db6768d255459b20c`) with the same source-only boundaries.
+- Branch HEAD immediately before this register update: `e6bc9382124de0ac83c1f7f5db6768d255459b20c`. Refresh live PR #113 metadata before any further work.
+- No tests/builds were run; no evidence, acceptance state, fixed ledger/DoD, verifier pin, or release state was promoted.
+
+## 2026-11-21 — XNU nested-write candidate and platform-source reconciliation
+
+- Latest code-bearing source candidate: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT / NOT TESTED). Source changes are in `crates/one-core/src/filesystem.rs`.
+- macOS nested write now has a native candidate: stage an exclusive temporary file under the retained root; validate nested target/parent with `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs`; publish with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)` using root fd for both operands; cross-mount rename fails `EXDEV`; sync containing parent. A parent-move hook exercises the window immediately before kernel publication. Added tests for positive nested replacement, symlink parent/outside sentinel, hard-link rejection, and parent moved outside root. All are source-only; native macOS build/test remains required.
+- Corrected Android status against the checked-in source: `android_native::open_relative` and `write_relative` reject multi-component paths. Android is direct-child-only. The earlier candidate notes describing nested Android `openat2`/detached-mount support are stale; the observed Termux seccomp profile kills `openat2` with SIGSYS. No userspace parent-walk fallback is allowed.
+- macOS deletion remains unavailable. XNU `unlinkat` flags can enforce beneath, no-symlink, and unique-link path resolution, but there is no atomic no-cross-mount flag in the inspected API. A separate `fstatfs` precheck leaves a mount race; do not enable it. Linux/Android delete remain fail-closed; Windows handle-bound deletion remains intact.
+- macOS process containment remains fail-closed. Seatbelt `process-fork` denial is only a research candidate until `posix_spawn` and every descendant creation route are proven blocked on native macOS.
+- Updated existing docs: architecture Mermaid, Issue #104 design, user feature status, implementation status, evidence matrix, live checkpoint, changelog, Issue #105 status, master prompt, and Notion Skill. No duplicate work queue created.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. No build/test/CI/verifier evidence or platform support is promoted.
+
+## 2026-11-21 — master continuation prompt refreshed for XNU work
+
+- Updated the existing `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `fd6583901729c9b217a7c7ba56a2b3069f82613b` with the XNU nested-write candidate, Android direct-child-only correction, POSIX delete boundary, and Seatbelt process-containment research status.
+- This is documentation-only and does not alter the code-bearing candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`, test evidence, acceptance state, protected verifier pin, fixed ledger/DoD, or release status.
+
+## 2026-11-21 — macOS Seatbelt process-creation guard candidate
+
+- Source commits `ff60c7bd8a058f0950a0d67bb596d94feb8e6803` (runtime) and `ab799dd5faa5c50b5c75069c1d0b91a43511df93` + `3bad0196e9352871d09cb9b966cf6b393a866603` (adversarial source probes and pipe-failure cleanup). Latest code-bearing process candidate: `3bad0196e9352871d09cb9b966cf6b393a866603`, NOT BUILT / NOT TESTED.
+- macOS runtime source uses `/usr/bin/sandbox-exec` with `(version 1) (allow default) (deny process-fork)`. XNU `fork1()` applies `mac_proc_check_fork()` and its spawn path uses `PROC_CREATE_SPAWN`, so direct fork/vfork/posix_spawn should be denied while exec replacement remains allowed. Official source: `apple-oss-distributions/xnu/bsd/kern/kern_fork.c` and `kern_exec.c`.
+- Regression source covers fork, vfork, posix_spawn, posix_spawnp, exec replacement, deadline, and stdout overflow. No native macOS build/test was run.
+- Narrowed guarantee only: single-process execution, not tree-kill. Brokered launchd/Mach-service process creation is unproven. `ProcessAdapter` metadata intentionally excludes macOS. `sandbox-exec` is deprecated and must fail closed if missing/rejected.
+- No change to accepted platform support. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — macOS process guard and documentation synchronization
+
+- Added macOS Seatbelt source candidate in `interop.rs`: `/usr/bin/sandbox-exec` with `(version 1) (allow default) (deny process-fork)`. Source commit `ff60c7bd8a058f0950a0d67bb596d94feb8e6803`; adversarial test source commits `ab799dd5faa5c50b5c75069c1d0b91a43511df93` and `3bad0196e9352871d09cb9b966cf6b393a866603`.
+- XNU source inspection: `fork1()` invokes `mac_proc_check_fork()` for process creation, and the spawn creation kind is `PROC_CREATE_SPAWN`; `posix_spawn` routes through `fork1`. This supports denying direct fork/vfork/posix_spawn with Seatbelt. It is design evidence only, not native macOS execution.
+- Candidate probes cover fork, vfork, posix_spawn, posix_spawnp, exec replacement, timeout, and output overflow. NOT BUILT / NOT RUN.
+- This is narrowed single-process mode, not descendant-tree termination. Brokered process creation via launchd/Mach services is not proven blocked. `ProcessAdapter` continues to exclude macOS; no support claim is promoted. `sandbox-exec` is deprecated and must fail closed if missing/rejected.
+- Updated existing docs: Issue #105 status, implementation status, evidence matrix, live checkpoint, changelog, architecture note, user feature status, master continuation prompt, and Notion Skill. No duplicate tracker created.
+- Issue #105 remains OPEN / NOT ACCEPTED. No main, merge, verifier pin, fixed ledger/DoD, or release state changed.
+
+## 2026-11-21 — master continuation prompt checkpoint corrected
+
+- Updated the existing master prompt in commit `52bf6986a726f4e874a1b679501969d347d6cb1c` to distinguish the latest combined code candidate `3bad0196e9352871d09cb9b966cf6b393a866603` from the filesystem-specific candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`.
+- Documentation-only; no source/test evidence, acceptance, fixed ledger/DoD, verifier pin, main, merge, or release state changed.
+
+## 2026-11-21 — ProcessAdapter macOS exclusion regression
+
+- Source/test commit `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the existing ProcessAdapter metadata test to run on macOS, asserting that `PlatformKind::Macos` remains unadvertised while Seatbelt is only a single-process candidate and brokered launches are unproven.
+- Latest combined source/test candidate: `0408b92f6eafb12c18371d0079c6e73915e8e87c` (NOT BUILT / NOT TESTED). Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — master prompt updated to latest source/test candidate
+
+- Updated `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `d7e174d0e7e39ba311dce81cacc79891a040cdff` to distinguish the latest combined source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c`, filesystem-specific source `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`, and macOS Seatbelt runtime/probe source `3bad0196e9352871d09cb9b966cf6b393a866603`.
+- Documentation-only; no evidence or acceptance state changed.
+
+## 2026-11-21 — macOS Seatbelt comment precision
+
+- Source commit `79593d2f225284eff841e67c8eb9a1e005611981` clarifies that Seatbelt blocks direct fork/posix_spawn creation; brokered launchd/Mach-service routes remain unproven. No runtime behavior changed.
+- Latest combined source/test candidate is now `79593d2f225284eff841e67c8eb9a1e005611981` (NOT BUILT / NOT TESTED). ProcessAdapter remains unavailable on macOS.
+
+## 2026-11-21 — master prompt latest source sync
+
+- Updated `MASTER_CONTINUATION_PROMPT.md` in commit `a1eca94cd7a949e009a2e0ea4e11d516abc08409` to use the latest combined source/test candidate `79593d2f225284eff841e67c8eb9a1e005611981` and preserve the direct-spawn-only/brokered-launch caveat.
+- Documentation-only; no source/test evidence or acceptance state changed.
+
+## 2026-11-21 — latest candidate and status documents synchronized
+
+- Updated existing Issue #105 status (`ba228c147225bc8d5cede3499d94daca4aa9de47`), implementation status (`80fbad45a2aef8e782f99d7d0ce22949a067d9da`), evidence matrix (`0e82346b3722ee419cafa3aa8115ca857f5c4e06`), and live checkpoint (`144c7f200b534cf733182b6de5773df05ce48dd2`) to record the latest combined source/test candidate `79593d2f225284eff841e67c8eb9a1e005611981`.
+- These are documentation-only updates. Latest candidate remains NOT BUILT / NOT TESTED; no acceptance or platform support state changed.
+
+## 2026-11-21 — Seatbelt cannot be assumed to lock process-group membership
+
+- XNU `kern_prot.c` implements `setsid()` and `setpgid()` through `setsid_internal()` / `enterpgrp()` without a `mac_proc_check_setpgid` / `mac_proc_check_setsid` hook; `kern_proc.c::enterpgrp` likewise contains no such MAC check.
+- Therefore Seatbelt `deny process-fork` is a narrow no-descendants strategy, not a way to allow child processes while guaranteeing they cannot escape a process group. Do not enable a macOS process-tree backend on this basis.
+- The current macOS runtime candidate blocks direct fork/vfork/posix_spawn, permits exec replacement, and remains unadvertised. Brokered launchd/Mach-service spawn is still unresolved. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — master prompt synchronized with XNU process-group hook findings
+
+- Updated `MASTER_CONTINUATION_PROMPT.md` in commit `021a583a9c0281b86b3c6ccaf3a5081c32680269` to state that XNU `setsid`/`setpgid` paths do not expose an equivalent MAC policy hook, so Seatbelt cannot safely allow descendants and rely on process-group confinement.
+- Documentation-only. The macOS Seatbelt candidate remains unadvertised; no source/test evidence or acceptance state changed.
+
+## 2026-11-21 — filesystem write backend comment synchronized
+
+- Source commit `618db752953eff4672787453b0a8877405f4ebe8` corrects the `FilesystemAuthority::write` API comment to reflect the macOS XNU nested-write path and Android direct-child-only boundary. No runtime behavior changed.
+- Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (NOT BUILT / NOT TESTED).
+
+## 2026-11-21 — master prompt source checkpoint synchronized
+
+- Updated `MASTER_CONTINUATION_PROMPT.md` in commit `f040450b6845a7460a89d0cbd92935f09b590166` to identify `618db752953eff4672787453b0a8877405f4ebe8` as the latest combined source/test candidate.
+- Documentation-only; no evidence or acceptance state changed.
+
+## 2026-11-21 — latest candidate checkpoint docs synchronized
+
+- Updated implementation status (`680fd8a56bb1b301d42514384637a183cb6d3da5`), evidence matrix (`d5acd54b632e014aad029fe725f44433b4f276e6`), and live checkpoint (`b1dd6d8334a96da1fd17f2913abd8265bdf9cdf7`) with latest combined source/test candidate `618db752953eff4672787453b0a8877405f4ebe8`.
+- These are documentation-only. All newly added macOS source/test candidates remain unbuilt and untested.
+
+## 2026-11-21 — exact build failure diagnosis and syntax fix
+
+- Refreshed PR #113 exact HEAD before the fix: `168ff06e7a8d09e575e6ac71513399c9f1f4f994`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; PR OPEN / DRAFT / UNMERGED.
+- GitHub Actions run #44898144880 failed on both Ubuntu job #136828104281 and Windows 2025 job #136828104468. Both reached the `Build` step; Clippy and Tests were skipped.
+- Provider logs identify a deterministic Rust parse/type error in `crates/one-core/src/interop.rs`: unparenthesized unsafe block expressions before `== 0` and `>= 0` at lines 1207 and 1209. This is the confirmed root cause of the GitHub Actions build failure on the exact pre-fix SHA; it is not inferred from a CircleCI status label.
+- Minimal source fix committed as `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`: parenthesize the `libc::setpgid(0, 0)` and `libc::setsid()` unsafe expressions before comparison. No process-containment behavior or security boundary changed.
+- The same pre-fix SHA had CircleCI context `ci/circleci: one-linux = FAILURE` (workflow `16c4f795-1bcb-4a24-9935-ffd0e553f30c`, job `b7e21b09-8205-4d29-a9c7-a2f555e5e913`). CircleCI pipeline/revision/job membership and provider step logs were not available, so the CircleCI-specific root cause remains UNKNOWN; do not conflate it with the independently observed GitHub Actions compiler failure.
+- At post-fix readback, PR #113 HEAD is `502a888...`; GitHub combined status has no contexts and no new GitHub Actions run is yet associated with this SHA. The fix is committed, not yet rebuilt. No test, Clippy, verifier, or platform PASS is claimed.
+- Next: obtain a fresh build on `502a888...`; if no automatic workflow starts, use an authorized branch-scoped CI trigger. Preserve the implementation-first queue; continue remaining product implementation after the compile blocker is cleared. B-001 remains PARTIAL / NOT CLOSED; Issue #104/#105 remain OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — fresh exact-SHA GitHub Actions and Linux adversarial evidence
+
+- PR #113 remains OPEN / DRAFT / UNMERGED at exact HEAD `7744e46849f97b5868a6a75ee365b6f72cca5609`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- GitHub Actions One CI run #44900738968 reached terminal SUCCESS for both Ubuntu job #136835893296 and Windows 2025 job #136835893110. Build, Clippy, Tests, and Complete job all report SUCCESS on this exact source SHA. No source changes were made during this refresh.
+- Ubuntu job logs explicitly show all six Issue #105 Linux adversarial regressions passed: setsid and setpgid escape attempts under normal completion, timeout, and output overflow. The six ignored helper tests are intentionally invoked by these parent regressions; their ignored status is expected and is not a skipped adversarial case.
+- This is Ubuntu-hosted evidence only. It does not establish real Android/Termux execution, nor does it transfer Windows Job Object evidence from historical source revisions to this SHA unless the corresponding tests/logs are explicitly shown.
+- CircleCI status context on the same SHA remains PENDING: workflow `6e00388e-687e-497b-b95d-20a38a2cb535`, job `753aeb6f-e6cf-40d2-ada0-daef15471b88`. Provider pipeline `vcs.revision` mapping and step logs remain unavailable. Do not claim CircleCI success or a CircleCI root cause.
+- Issue #105 remains OPEN / NOT ACCEPTED pending real Android/Termux adversarial execution and exact-source reconciliation of Windows Job Object behavior. Issue #104 remains OPEN / NOT ACCEPTED; its platform-specific native gaps and E4 requirements are unchanged.
+- Implementation-first queue remains B-002 (Issue #104 P0), then B-005 (Issue #105 P1), then formal v0.1 release gates. Do not start a duplicate broad audit; proceed with the next unimplemented production capability that can be implemented without weakening the fixed security contract.
+
+
+## 2026-11-21 — macOS nested-write cleanup implementation
+
+- Source change committed as `33bde6f3abbdbf7dae5ca248db68404a195fa843` on the Issue #104 implementation branch. The change adds an explicit `RootTempFileGuard::cleanup()` path for nested macOS writes: successful unlink or an already-absent staging name is treated as cleaned; other unlink failures are surfaced as `FilesystemError::IoFailure`. The existing Drop implementation remains a best-effort fallback and is not treated as evidence that cleanup succeeded.
+- Added `nested_write_cleans_staging_file_after_each_injected_failure`, covering failures at TempCreated, Written, Synced, and BeforeRename. It asserts original target bytes remain unchanged and no root staging entry remains.
+- Scope is limited to the macOS native nested-write staging cleanup path. No filesystem security policy, acceptance criteria, verifier pin, or protected branch was changed.
+- This source change is NOT YET BUILT OR TESTED on macOS. The prior Termux `cargo check -p one-core --locked` was on parent SHA `bb6a42330633e111920b17634fecf028f94e7d6f` and does not validate this change.
+- PR #113 remains OPEN / DRAFT / UNMERGED; its implementation branch now includes this source change. Next: run the focused macOS native test on a real macOS runner, fix any compile/runtime issues, then continue remaining Issue #104 platform implementation. Do not mark Issue #104 accepted based on this change alone.
+
+## 2026-11-21 — Darwin fsid ABI correction and native mount-boundary regression
+
+- Corrected the macOS filesystem identity comparison. The pinned dependency is libc 0.2.191; its Darwin fsid_t has a private two-element [i32; 2] representation and does not expose .val or implement PartialEq. The implementation now reads exactly those two ABI words through a pointer cast, guarded by compile-time size and alignment assertions. It does not compare arbitrary struct padding.
+- verify_same_mount still rejects a descriptor when either the two-word filesystem identifier or f_mntonname differs. No mount-boundary check, symlink restriction, hard-link restriction, or fail-closed behavior was removed.
+- Added macos_filesystem_identity_matches_same_mount_and_rejects_devfs: it verifies acceptance for two directories on the same mount and rejection for /dev on the separate devfs mount. This directly exercises both branches of the filesystem identity check; it does not require mount privileges.
+- Exact tested source SHA: 37f515c90ed3b4bc0af0296997e611681103be3e.
+- Native workflow run #44904958803: both macos-15 (job #136848447908) and macos-26 (job #136848448104) completed SUCCESS on that exact SHA. The macos_ filter reports 13 passed, 0 failed, 4 ignored; the ignored tests are existing process-containment helper probes. The nested_write_ filter reports 6 passed, 0 failed, 0 ignored. The new mount identity regression and staging-cleanup regression both passed on both runners.
+- Earlier incorrect approaches are superseded: raw whole-struct memcmp was replaced to avoid comparing potential representation padding; direct .val field access and Rust != were rejected by the actual pinned target definition. Do not restore either.
+- This closes the compile/runtime blocker for accessing Darwin filesystem identity, but does not close Issue #104. macOS nested paths still fail closed when the native beneath/anti-move guarantees are unavailable; no claim is made that full nested-write support or all E4 platform requirements are complete. PR #113 remains OPEN / DRAFT / UNMERGED pending the remaining implementation work.
+
+## 2026-11-21 — macOS nested filesystem capability and cleanup follow-up
+
+- Current exact PR #113 HEAD: 4f3266799bc900f24369b35386536f6567dcc7a5. PR remains OPEN / DRAFT / UNMERGED; no merge or protected-branch change.
+- Reworked macOS nested-write post-staging flow so every failure after staging creation—including temporary-file metadata validation, TempCreated hook, parent open, mount identity validation, write, sync, and pre-rename hook—passes through explicit RootTempFileGuard::cleanup(). Cleanup failure is surfaced as IoFailure; Drop remains only a best-effort retry.
+- The mount contract remains enforced: the destination parent is checked with verify_same_mount(root,parent); existing destination handles are checked against root identity; publication uses renameatx_np with RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY. Root-staged temporary files are deliberately retained as a cleanup strategy anchored to the trusted root handle. The target parent must be on the same mount; a mount-crossing rename is not retried or copied.
+- Tightened native regression expectations: nested reads are mandatory on both macos-15 and macos-26 runners. Native nested writes are mandatory on macos-26; macos-15 is allowed only to return UnsupportedPlatform with original bytes unchanged and no staging leak. An earlier intentionally strict run at SHA 231fbb18247f12b011d669071d7fd54697d68988 exposed that macos-15 does not provide the required atomic beneath-rename behavior in this runner; the test failed rather than silently accepting it as supported. The workflow now encodes the fail-closed compatibility boundary.
+- Exact native workflow run #44905624655 SUCCESS on SHA 4f3266799bc900f24369b35386536f6567dcc7a5: macos-15 job #136850447001 and macos-26 job #136850447187 both pass. Each runner: macos_ filter 13 passed / 0 failed / 4 ignored; nested_write_ filter 6 passed / 0 failed. On macos-26 the nested read and write paths are required and pass. On macos-15 nested read is required and passes; nested write remains fail-closed.
+- This does not close Issue #104. macOS delete remains unsupported. The macOS implementation's root-anchored temporary staging is not the same-directory temporary strategy stated in the generic Unix design section; retain this as an explicit design/acceptance reconciliation item rather than silently rewriting the contract. No claim of full E4 or platform parity.
+- E4 independent verifier PR #51 still pins historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not move its canonical pin until the implementation queue is complete and the exact E4 suite is ready to run. The current source contains the expected Unix filters (3 read rejects, 5 write cases, 1 walk reject) and Windows named regressions, but those have not yet been rerun against this new exact SHA.
+- Next: reconcile the macOS root-staging vs same-directory design contract without weakening root-anchored cleanup or mount checks; then execute the current E4 Windows/Unix named suite on the final source SHA, and continue Android/other-platform fail-closed gaps. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — macOS same-directory nested staging and Windows E4 extension
+
+- Current PR #113 HEAD at live read: 44fed1a9b9e3b6adfca31f14fa8e01e9f3219ef9. Code/test commit: fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff. Native workflow configuration commit: 41fd03451cac51639db3b46049d7d7ad5724b460. PR remains OPEN / DRAFT / UNMERGED.
+- Supersedes the earlier root-staged macOS nested-write design note: the temporary file is now created as an exclusive sibling in the already-opened destination parent after verify_same_mount(root,parent). Publication resolves both the sibling source path and target path from the retained root fd with renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY). Cleanup uses unlinkat on the retained parent handle. The parent-moved-outside-root test confirms publication fails and cleanup removes the operation's own temporary sibling; the target sentinel remains unchanged.
+- A mount-crossing nested write is rejected before creating any temporary file: the regression opens / as the trusted root and attempts a target under /dev (separate devfs mount), expecting ResolutionFailed and no target. Existing target and parent identities remain checked with fstatfs f_fsid + f_mntonname; no mount-boundary check was removed.
+- Native macOS run #44906200616 SUCCESS on exact tested source/config SHA 41fd03451cac51639db3b46049d7d7ad5724b460. macos-15 job #136852277737 and macos-26 job #136852277920: each reports 15 passed / 0 failed / 4 ignored in macos_ filter and 8 passed / 0 failed in nested_write_ filter. Nested reads are required on both. Nested writes are required on macos-26; macos-15 is explicitly allowed only to fail closed with UnsupportedPlatform, unchanged target, and no temp leak. A strict probe at d93479f010e0e00edefa7d438d584f5500c809aa confirmed macos-15 does not support the required atomic nested-write path even after same-directory staging; do not weaken flags or use unsafe fallback to make it pass.
+- macOS cleanup regressions include an explicit forced unlinkat failure (must surface IoFailure) plus injected failures at TempCreated, Written, Synced, and BeforeRename. Same-directory staging, mount preflight, root-relative rename, and retained-parent cleanup are covered.
+- Added Windows E4-adjacent tests in fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff: filesystem_writer_rejects_directory_junction_escape_without_touching_outside_file and filesystem_write_adapter_writes_absolute_target_inside_project_root. The junction is a real Windows directory junction; the test asserts the outside sentinel remains unchanged and no staging entry is created. These additions still need terminal Windows CI evidence.
+- One CI run #44906200602 on exact SHA 41fd03451cac51639db3b46049d7d7ad5724b460 was IN_PROGRESS at last read (Windows installing Android NDK; Ubuntu Build). Do not claim full One CI PASS until terminal result. The subsequent documentation-only commit 44fed1a9b9e3b6adfca31f14fa8e01e9f3219ef9 does not change source/test content.
+- E4 source inventory at fa01: Unix filters remain 3 descriptor_relative_read_rejects_, 5 descriptor_relative_write_, 1 descriptor_relative_walk_rejects_. Existing Windows tests cover junction read, absolute read, absolute escape side effects, atomic write, denied atomic replacement, oversized content, parent traversal, and retained-parent rename prevention; the two new tests above extend write-junction and positive absolute-write coverage. The independent verifier PR #51 still pins c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not move canonical/protected pins until implementation scope is complete and the full E4 suite is ready for one exact-SHA run.
+- Remaining platform gaps: macOS 15 nested writes fail closed; macOS delete unsupported. Android nested paths remain fail-closed under the observed Termux seccomp/openat2 constraint; direct-child backend only. Linux nested writes depend on detached-mount primitives and fail closed if unavailable. POSIX delete remains unsupported. Windows is the only platform with handle-bound delete. Issue #104 remains OPEN / NOT ACCEPTED.
+- Next implementation work: finish remaining cross-platform/E4 gaps without weakening the mount/volume, symlink/reparse, hard-link, root-confinement, or cleanup contracts. Then update verifier filters/pin only when the source candidate is frozen, run the exact E4 Windows/Unix suite, and reconcile all docs/Notion evidence.
+
+## 2026-11-21 — Android statx mount-identity regression
+
+- Exact source/test SHA and PR #113 HEAD at this read: f5a0bff593035b4ba9be92ae883a36386b12176b. PR remains OPEN / DRAFT / UNMERGED.
+- Added android_statx_mount_id_matches_same_mount_and_rejects_devfs. It opens a temporary project root, a nested directory on that same filesystem, and /dev; it requires statx STATX_MNT_ID to match root/nested and differ for devfs. This exercises the Android mount-ID ABI directly without invoking openat2 (which can SIGSYS under the app seccomp policy).
+- Android direct-child read/write and existing symlink, hard-link, nested-path fail-closed, root-symlink tests remain unchanged. No nested path fallback was introduced.
+- This Android-specific test has NOT YET RUN on a real Android/Termux process. Required device command after syncing the exact branch head:
+  cargo test -p one-core --locked android_statx_mount_id_matches_same_mount_and_rejects_devfs -- --nocapture
+  Then run the complete Android filesystem test group:
+  cargo test -p one-core --locked android_ -- --nocapture
+- Native macOS run #44906550034 SUCCESS on exact SHA f5a0bff593035b4ba9be92ae883a36386b12176b. Both macos-15 job #136853268604 and macos-26 job #136853268421: 15 passed / 0 failed / 4 ignored in macos_ filter; 8 passed / 0 failed in nested_write_ filter.
+- One CI run #44906550001 on exact SHA f5a0bff593035b4ba9be92ae883a36386b12176b was IN_PROGRESS at last read: Ubuntu Build; Windows Android NDK installation. Refresh terminal result before claiming pass.
+- GitHub commit status for this exact SHA reports CircleCI context ci/circleci: one-linux PENDING; workflow b1e496eb-4d30-4827-b76f-4cc52482ac53, job 554efe35-ba73-40ae-8486-c7319c3f6929. CircleCI page is not accessible through available tools, so pipeline .vcs.revision and provider logs remain unverified. Do not claim CircleCI PASS.
+- This test improves evidence for Android's statx mount-ID guard but does not add nested support. Android multi-component reads/writes remain UnsupportedPlatform. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — Windows volume-identity guard and exact CI refresh
+
+- Latest code/test SHA: 6403592796b9827e4bffe26a982dfc66afc75d9d. Latest PR/documentation HEAD after docs synchronization: a722ad321d45ef614d5e03461b23aa20cb7f2d15. PR #113 remains OPEN / DRAFT / UNMERGED.
+- Windows native volume-serial comparisons are centralized in volume_serial_matches and used by root_matches_path, read, write, and delete traversal checks. Added windows_volume_identity_rejects_mismatch, which exercises same-volume acceptance and distinct-volume rejection using synthetic BY_HANDLE_FILE_INFORMATION values. This is a unit regression for the volume-ID policy, not a real second-volume mount test.
+- macOS Native Filesystem run #44906889694 SUCCESS on exact code/test SHA 6403592796b9827e4bffe26a982dfc66afc75d9d. macOS 15 and 26 each passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
+- One CI run #44906889708 on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Ubuntu job #136854287546 completed SUCCESS; Windows 2025 job #136854287276 was still in Build at last read. Refresh until terminal before claiming Windows PASS.
+- CircleCI context ci/circleci: one-linux on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d remains PENDING, workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider job page and .vcs.revision/log mapping remain inaccessible; no CircleCI PASS claim.
+- Android statx regression is implemented at the same source SHA but not executed on real Termux. User device commands remain:
+  cargo test -p one-core --locked android_statx_mount_id_matches_same_mount_and_rejects_devfs -- --nocapture
+  cargo test -p one-core --locked android_ -- --nocapture
+- Independent verifier PR #51 remains pinned to historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Its Windows filters must add the real junction-write, absolute-write, and volume-identity tests; Android runtime filter must include the statx mount-ID regression when the final candidate is frozen. Do not move canonical/protected pins before implementation scope is complete.
+- Issue #104 remains OPEN / NOT ACCEPTED. No acceptance ledger, DoD, protected pin, main branch, or release state changed.
+
+## 2026-11-21 — terminal One CI result on current code/test SHA
+
+- One CI run #44906889708 completed SUCCESS on exact code/test SHA 6403592796b9827e4bffe26a982dfc66afc75d9d.
+  - Windows 2025 job #136854287276: SUCCESS.
+  - Ubuntu latest job #136854287546: SUCCESS.
+- This includes the current Windows volume-serial helper/test, real directory-junction write rejection test, and absolute in-root write regression in the full workspace test run. The workflow logs did not print those individual test names, so record the evidence as full Windows/Ubuntu suite success, not as separate named E4 filter evidence.
+- macOS Native Filesystem run #44906889694 also completed SUCCESS on the same exact SHA: macOS 15 and 26 each 15 passed / 0 failed / 4 ignored in macos_ and 8 passed / 0 failed in nested_write_.
+- CircleCI context ci/circleci: one-linux remains PENDING on this exact SHA (workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9). Do not claim CircleCI PASS; provider logs and .vcs.revision mapping remain unavailable.
+- Android statx regression remains NOT RUN on real Termux. User must run the two Android test commands after syncing.
+- Independent E4 verifier PR #51 remains pinned to historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. The exact E4 filters still need updating and one final verifier run on the frozen source candidate.
+- Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+

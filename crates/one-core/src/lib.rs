@@ -3,6 +3,7 @@ pub mod ast;
 pub mod capability;
 pub mod database;
 pub mod diagnostic;
+pub mod filesystem;
 pub mod governance;
 pub mod interop;
 pub mod interpreter;
@@ -35,7 +36,7 @@ pub mod token;
 pub mod types;
 
 pub use adapter::{
-    AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileReadAdapter,
+    AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileDeleteAdapter, FileReadAdapter,
     FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter, ToolAdapter,
 };
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
@@ -43,6 +44,7 @@ pub use capability::{Capability, CapabilitySet};
 pub use database::SqliteAdapter;
 pub use diagnostic::{Diagnostic, DiagnosticBundle, Severity};
 pub use governance::{DenyReason, ExecutionPolicy, PolicyDecision, ScopeRule};
+pub use filesystem::{FilesystemAuthority, FilesystemError};
 pub use interop::{ProcessResult, ProcessSpec, run_process};
 pub use interpreter::{ExecutionResult, Interpreter, NetworkExecutionResult, RuntimeError};
 pub use ir::{

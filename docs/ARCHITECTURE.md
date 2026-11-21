@@ -111,3 +111,20 @@ One source
 ```
 
 This pattern is the preferred template for future real-world capabilities.
+
+
+## Filesystem root-confinement candidate
+
+The focused [filesystem root-confinement architecture diagram](architecture/filesystem-root-confinement.md) documents the host-injected authority, adapter boundary, Linux, Windows, Android, and macOS native candidate backends, guarded Linux nested writes, fail-closed platform behavior, and atomic-write failure cleanup for Issue #104. It is a candidate implementation view for draft PR #113, not a claim of release support.
+
+The full architecture map in PR #97 remains a non-normative overview. The focused diagram is based on inspected source files and the normative Issue #104 design record. Update it whenever the filesystem authority or platform backend changes.
+
+
+## Host-selected filesystem authority root
+
+The CLI selects the filesystem authority root exclusively from the host process current working directory (`std::env::current_dir()`), independently of the source-file location and requested target. The host opens and retains this root authority; source path and `--target` cannot select or widen it. Relative and absolute targets are resolved against that fixed root and rejected when outside it. See `crates/one-cli/src/main.rs` and the focused Mermaid diagram.
+
+
+## Filesystem backend implementation refresh — 2026-11-21
+
+The focused Mermaid source now reflects the guarded Linux detached-mount nested writer and the direct-child Android/macOS native adapters. The host-owned root remains exclusively the process current working directory. Current code-bearing candidate `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` is NOT BUILT/TESTED; Issue #104 remains OPEN / NOT ACCEPTED. Keep the diagram descriptive of source, not of verification status.

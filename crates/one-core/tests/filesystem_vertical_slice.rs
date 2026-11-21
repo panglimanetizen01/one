@@ -4,8 +4,13 @@ use one_core::{
     NormalizationExpectation, NormalizedValue, OrchestrationError, Orchestrator, PlatformKind,
     ScopeRule, SemanticCapabilityId, ToolAdapter,
 };
+#[cfg(any(target_os = "linux", windows))]
 use one_core::adapter::AdapterError;
 use one_core::orchestration_audit::{AuditEvidence, AuditEvent};
+#[cfg(target_os = "linux")]
+use one_core::FilesystemAuthority;
+#[cfg(target_os = "linux")]
+use std::sync::Arc;
 
 fn compile(source: &str) -> one_core::IrProgram {
     let program = parse(source).expect("source should parse");
@@ -22,15 +27,31 @@ fn filesystem_read_request(path: &str) -> CapabilityRequest {
     )
 }
 
+fn test_host_platform() -> PlatformKind {
+    #[cfg(target_os = "linux")]
+    { PlatformKind::Linux }
+    #[cfg(windows)]
+    { PlatformKind::Windows }
+    #[cfg(target_os = "android")]
+    { PlatformKind::Android }
+    #[cfg(target_os = "macos")]
+    { PlatformKind::Macos }
+    #[cfg(not(any(target_os = "linux", windows, target_os = "android", target_os = "macos")))]
+    { PlatformKind::Any }
+}
+
+#[cfg(target_os = "linux")]
 #[test]
 fn source_to_runtime_filesystem_read_succeeds_with_explicit_capability_and_scope() {
     let path = std::env::current_dir().unwrap().join("Cargo.toml");
     let path = path.to_string_lossy().replace('\\', "/");
     let ir = compile(&format!("baca berkas \"{path}\"\n"));
-    let mut interpreter = Interpreter::with_orchestration_policy(
+    let authority = Arc::new(FilesystemAuthority::open(std::env::current_dir().unwrap(), 1024 * 1024, 1024 * 1024).unwrap());
+    let mut interpreter = Interpreter::with_orchestration_policy_and_filesystem_authority(
         ExecutionPolicy::default()
             .grant(Capability::FilesystemRead)
             .allow_scope(Capability::FilesystemRead, ScopeRule::Target(path.clone())),
+        authority,
     );
 
     let result = interpreter.execute(&ir).expect("filesystem read should execute");
@@ -92,6 +113,7 @@ fn filesystem_orchestrator_reports_unavailable_adapter_without_invocation() {
     assert!(!audit[0].attempted_execution());
 }
 
+#[cfg(any(target_os = "linux", windows))]
 #[test]
 fn filesystem_orchestrator_reports_adapter_failure_and_records_observed_failure() {
     let path = "one-filesystem-vertical-slice-must-not-exist.one";
@@ -104,14 +126,37 @@ fn filesystem_orchestrator_reports_adapter_failure_and_records_observed_failure(
     let mut audit = Vec::new();
 
     let error = orchestrator
-        .execute_with_audit(&request, PlatformKind::Any, &mut audit)
+        .execute_with_audit(&request, test_host_platform(), &mut audit)
         .expect_err("missing file must reach the adapter and fail");
 
-    assert_eq!(error, OrchestrationError::Adapter(AdapterError::BackendFailure));
+    assert_eq!(error, OrchestrationError::Adapter(AdapterError::UnsupportedPlatform));
     assert_eq!(audit.len(), 1);
     assert_eq!(audit[0].event(), AuditEvent::InvocationFinished);
     assert_eq!(audit[0].evidence(), AuditEvidence::ObservedFailure);
     assert!(audit[0].attempted_execution());
+}
+
+#[cfg(not(any(target_os = "linux", windows)))]
+#[test]
+fn filesystem_orchestrator_rejects_unsupported_host_without_invocation() {
+    let path = "one-filesystem-vertical-slice-must-not-exist.one";
+    let request = filesystem_read_request(path);
+    let policy = ExecutionPolicy::default()
+        .grant(Capability::FilesystemRead)
+        .allow_scope(Capability::FilesystemRead, ScopeRule::Target(path.into()));
+    let mut orchestrator = Orchestrator::new(policy);
+    orchestrator.register(Box::new(FileReadAdapter::new()));
+    let mut audit = Vec::new();
+
+    let error = orchestrator
+        .execute_with_audit(&request, test_host_platform(), &mut audit)
+        .expect_err("unsupported host must not select a filesystem adapter");
+
+    assert_eq!(error, OrchestrationError::NoCompatibleAdapter);
+    assert_eq!(audit.len(), 1);
+    assert_eq!(audit[0].event(), AuditEvent::Denied);
+    assert_eq!(audit[0].evidence(), AuditEvidence::DecisionOnly);
+    assert!(!audit[0].attempted_execution());
 }
 
 #[test]

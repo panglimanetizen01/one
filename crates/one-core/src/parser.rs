@@ -21,7 +21,7 @@ impl Parser {
             self.advance();
             args.push(self.parse_primary_with_boundary(None, true)?);
         }
-    } else if name == "buat" && self.lexeme_is("daftar") { self.advance(); args.push(self.parse_name_reference()?); } else if name == "tambahkan" { args.push(self.parse_expression_until_boundary("ke")?); if !self.lexeme_is("ke") { return Err(self.error("E1017", "'tambahkan' membutuhkan kata 'ke' sebelum nama daftar.")); } self.advance(); args.push(self.parse_name_reference()?); } else if name == "hapus" { args.push(self.parse_expression_until_boundary("dari")?); if !self.lexeme_is("dari") { return Err(self.error("E1018", "'hapus' membutuhkan kata 'dari' sebelum nama daftar.")); } self.advance(); args.push(self.parse_name_reference()?); } else { return Err(self.error("E1016", format!("Aksi '{}' tidak termasuk grammar One v0.1.", name))); } self.expect_newline()?; let action_name = if name == "buat" { "buat daftar".into() } else if name == "cari" { "cari alamat".into() } else if name == "baca" { "baca berkas".into() } else if name == "tulis" { "tulis ke berkas".into() } else if name == "jalankan" { "jalankan proses".into() } else if name == "ambil" { "ambil dari".into() } else if name == "kueri" { "kueri database".into() } else { name }; Ok(Statement::Action { name: action_name, args, span: first.span }) }
+    } else if name == "hapus" && self.lexeme_is("berkas") { self.advance(); args.push(self.parse_expression_until_newline()?); } else if name == "buat" && self.lexeme_is("daftar") { self.advance(); args.push(self.parse_name_reference()?); } else if name == "tambahkan" { args.push(self.parse_expression_until_boundary("ke")?); if !self.lexeme_is("ke") { return Err(self.error("E1017", "'tambahkan' membutuhkan kata 'ke' sebelum nama daftar.")); } self.advance(); args.push(self.parse_name_reference()?); } else if name == "hapus" { args.push(self.parse_expression_until_boundary("dari")?); if !self.lexeme_is("dari") { return Err(self.error("E1018", "'hapus' membutuhkan kata 'dari' sebelum nama daftar.")); } self.advance(); args.push(self.parse_name_reference()?); } else { return Err(self.error("E1016", format!("Aksi '{}' tidak termasuk grammar One v0.1.", name))); } self.expect_newline()?; let action_name = if name == "buat" { "buat daftar".into() } else if name == "cari" { "cari alamat".into() } else if name == "baca" { "baca berkas".into() } else if name == "tulis" { "tulis ke berkas".into() } else if name == "jalankan" { "jalankan proses".into() } else if name == "ambil" { "ambil dari".into() } else if name == "kueri" { "kueri database".into() } else if name == "hapus" && args.len() == 1 { "hapus berkas".into() } else { name }; Ok(Statement::Action { name: action_name, args, span: first.span }) }
     fn parse_name_reference(&mut self) -> Result<Expr, DiagnosticBundle> { if !self.is_word() { return Err(self.error("E1016", "Nama harus berupa kata atau nama gabungan.")); } let mut words = Vec::new(); while self.is_word() { words.push(self.advance().lexeme); } Ok(Expr::Identifier(words.join(" "))) }
     fn parse_conditional(&mut self) -> Result<Statement, DiagnosticBundle> { let start = self.advance().span; let condition = self.parse_expression_until_newline()?; self.expect_newline()?; self.expect_indent()?; let then_block = self.parse_block()?; self.expect_dedent()?; let mut else_block = Vec::new(); if self.lexeme_is("kalau") && self.peek_lexeme(1) == Some("tidak") { self.advance(); self.advance(); self.expect_newline()?; self.expect_indent()?; else_block = self.parse_block()?; self.expect_dedent()?; } Ok(Statement::Conditional { condition, then_block, else_block, span: start }) }
     fn parse_for_each(&mut self) -> Result<Statement, DiagnosticBundle> { let start = self.advance().span; if !self.lexeme_is("setiap") { return Err(self.error("E1005", "Loop harus menggunakan 'untuk setiap'.")); } self.advance(); let mut variable_words = Vec::new(); while self.is_word() && !self.lexeme_is("di") { variable_words.push(self.advance().lexeme); } if variable_words.is_empty() { return Err(self.error("E1006", "Loop membutuhkan nama variabel.")); } let variable = variable_words.join(" "); if !self.lexeme_is("di") { return Err(self.error("E1007", "Loop membutuhkan kata 'di'.")); } self.advance(); let iterable = self.parse_name_reference()?; self.expect_newline()?; self.expect_indent()?; let body = self.parse_block()?; self.expect_dedent()?; Ok(Statement::Loop { kind: LoopKind::ForEach { variable, iterable }, body, span: start }) }
@@ -78,6 +78,19 @@ mod ast_contract_tests {
                     Expr::Identifier("apel".into()),
                     Expr::Identifier("daftar buah".into()),
                 ]);
+            }
+            other => panic!("unexpected AST: {other:?}"),
+        }
+    }
+
+
+    #[test]
+    fn file_delete_action_parses_as_a_single_target() {
+        let program = parse("hapus berkas \"target.txt\"\n").expect("valid file delete action");
+        match &program.statements[0] {
+            Statement::Action { name, args, .. } => {
+                assert_eq!(name, "hapus berkas");
+                assert_eq!(args, &vec![Expr::Text("target.txt".into())]);
             }
             other => panic!("unexpected AST: {other:?}"),
         }

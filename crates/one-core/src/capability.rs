@@ -3,6 +3,7 @@ pub enum Capability {
     Filesystem,
     FilesystemRead,
     FilesystemWrite,
+    FilesystemDelete,
     Process,
     DatabaseQuery,
     Network,
@@ -71,6 +72,17 @@ mod tests {
         let capabilities = CapabilitySet::none().allow(Capability::Filesystem);
         assert!(capabilities.permits(Capability::FilesystemRead));
         assert!(capabilities.permits(Capability::FilesystemWrite));
+    }
+
+
+    #[test]
+    fn filesystem_delete_requires_an_explicit_grant() {
+        let coarse = CapabilitySet::none().allow(Capability::Filesystem);
+        let write = CapabilitySet::none().allow(Capability::FilesystemWrite);
+        let delete = CapabilitySet::none().allow(Capability::FilesystemDelete);
+        assert!(!coarse.permits(Capability::FilesystemDelete));
+        assert!(!write.permits(Capability::FilesystemDelete));
+        assert!(delete.permits(Capability::FilesystemDelete));
     }
 
     #[test]

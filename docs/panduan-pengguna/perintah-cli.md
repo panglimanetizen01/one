@@ -69,6 +69,21 @@ Aturan boundary:
 
 Latest exact-SHA executable evidence: `a7aa94cb1f8ef778dc9c1a24e61cf714622567c8`, Termux/Android. Contract check, build, Clippy `-D warnings`, targeted CLI filesystem-write test, seluruh workspace tests, dan offline verification lulus. Belum ada exact-SHA Ubuntu/Windows evidence untuk executable revision ini.
 
+
+## Menghapus berkas melalui orchestration filesystem — eksperimental
+
+Source One: `hapus berkas "data/lama.txt"`.
+
+Jalankan dengan grant eksplisit dan target yang sama: `one jalankan main.one --izinkan filesystem.delete --target data/lama.txt`.
+
+Boundary keamanan:
+- `filesystem.delete` adalah grant terpisah; `filesystem` atau `filesystem.write` tidak memberinya secara implisit.
+- Target harus cocok persis dengan scope CLI dan tetap berada di root yang dipilih host.
+- Backend native handle-bound delete saat ini hanya tersedia pada Windows.
+- Linux, Android, macOS, dan platform lain tetap fail-closed sampai tersedia primitive delete yang setara dalam object identity dan race confinement.
+- CLI bridge dan regresinya baru ditambahkan pada PR #113; belum dibangun/diuji pada exact SHA `17a64b22378d931ef96b9ab5e976c485c4a0555e`.
+- Fitur ini eksperimental dan bukan klaim bahwa Issue #104 telah diterima.
+
 ## Menjalankan proses — eksperimental
 
 Source-level process execution yang telah diverifikasi lintas platform:
@@ -163,3 +178,8 @@ Perintah dan capability di atas tetap bersifat eksperimental sesuai batasnya. Ja
 - Runtime scope dan policy: PR #100 dan #101 memperbaiki pemulihan scope setelah error serta inheritance deny/approval; keduanya lulus pada branch masing-masing tetapi belum terintegrasi ke main.
 
 Semua PASS tersebut adalah bukti GitHub Actions pada SHA kandidat masing-masing, bukan bukti CircleCI dan bukan persetujuan rilis. CircleCI migration masih draft pada PR #108; main belum berpindah provider.
+
+## Root filesystem untuk izin berkas
+
+Saat program memakai `filesystem.read`, `filesystem.write`, atau `filesystem.delete`, root tepercaya adalah direktori kerja proses One (`cwd`) ketika perintah dijalankan. Jalankan perintah dari folder proyek yang ingin dijadikan batas akses. Lokasi file `.one` dan nilai `--target` tidak dapat memperluas root tersebut; `--target` hanya membatasi izin ke target yang diminta. Target di luar root akan ditolak.
+

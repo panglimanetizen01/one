@@ -1,0 +1,97 @@
+# Termux Git worktree map — Project ONE
+
+## Why this file exists
+
+Do not rediscover the repository layout or try to switch to a branch that is already checked out in another worktree. Git permits a branch to be checked out in only one worktree at a time.
+
+## Known worktree map
+
+These paths were confirmed from the user's Termux output on 2026-11-20:
+
+| Termux path | Checked-out branch | Purpose / handling |
+| --- | --- | --- |
+| `$HOME/one` | `docs/system-architecture-diagram-20261115` | Separate architecture-documentation checkout. Do not use it to switch to the PR #113 branch while that branch is active elsewhere. |
+| `$HOME/one-pr113` | `security/issue-104-root-confinement-20261118` | Canonical existing worktree for ONE PR #113 and B-001 continuation. Enter this directory directly. |
+| `$HOME/one-ci-worktree` | `tooling/python-local-ci` | Separate worktree for local CI tooling. Preserve it; do not repurpose it. |
+
+The branch-to-worktree association was confirmed by `git branch -vv`. In particular, the fatal message from `git switch security/issue-104-root-confinement-20261118` inside `$HOME/one` is expected because that branch is already checked out at `$HOME/one-pr113`; it is not a repository corruption or a reason to create another worktree.
+
+## Mandatory continuation procedure
+
+Start with the existing PR #113 worktree:
+
+```bash
+cd "$HOME/one-pr113"
+pwd
+git status -sb
+git branch -vv
+git rev-parse HEAD
+git rev-parse origin/security/issue-104-root-confinement-20261118
+```
+
+Then verify the diagnostic utility and tests exist:
+
+```bash
+ls -l tools/ci/diagnose_circleci.py
+ls -l tools/ci/test_diagnose_circleci.py
+```
+
+Interpretation and safety:
+
+1. Confirm `pwd` is `$HOME/one-pr113` and the current branch is `security/issue-104-root-confinement-20261118`.
+2. Review `git status -sb` before any synchronization. Preserve all user changes and untracked evidence.
+3. Compare local HEAD with the remote-tracking SHA. If the worktree is clean and local HEAD is an ancestor of the fetched remote-tracking branch, a fast-forward-only update is the only permitted sync:
+   ```bash
+   git fetch origin
+   git merge --ff-only origin/security/issue-104-root-confinement-20261118
+   ```
+   Run the ancestry/status checks again after fetch and before the merge. If the worktree is dirty, diverged, or the ancestry is unclear, stop before modifying it and inspect/preserve the changes.
+4. Never use `git reset --hard`, force-push, branch deletion, or worktree removal as a shortcut. Do not create a duplicate worktree for this already-checked-out branch.
+5. Do not switch branches in `$HOME/one` to access PR #113. Use `cd "$HOME/one-pr113"`.
+6. Keep `$HOME/one`'s untracked evidence files and the separate `$HOME/one-ci-worktree` intact.
+
+## Recorded checkpoint — 2026-11-20
+
+Observed from the user's Termux session:
+
+- PR #113 worktree: `$HOME/one-pr113`.
+- Local HEAD: `70ae27cd9dab4429c528d6f01a42377f474c725c`.
+- Remote-tracking branch SHA at readback: `2341fdabef712f400e5bd13288ef058996d4d36c`.
+- Local PR #113 worktree was clean and reported `[behind 138]`.
+- Both `tools/ci/diagnose_circleci.py` and `tools/ci/test_diagnose_circleci.py` existed in that worktree.
+- The remote-tracking SHA is a historical checkpoint, not a permanent pin. Always fetch and read the current remote SHA before syncing.
+
+This checkpoint does not authorize an automatic sync. Follow the clean-status and fast-forward-only checks above.
+
+## B-001 continuation handoff
+
+After safely synchronizing the existing worktree, continue the current B-001 evidence task; do not restart repository discovery or repeat already-proven work. Use the exact diagnostic target and instructions in [CIRCLECI_DIAGNOSTICS.md](CIRCLECI_DIAGNOSTICS.md). Keep B-001 `PARTIAL / NOT CLOSED` until the exact pipeline → workflow → job → `vcs.revision` evidence and provider diagnostics required by that document are available. Never request, paste, or print the CircleCI token.
+
+
+## Observed fast-forward and follow-up source checkpoint — 2026-11-21
+
+- User-confirmed clean local worktree before synchronization: `$HOME/one-pr113`, branch `security/issue-104-root-confinement-20261118`, local SHA `979973cd6fb6f76802e13dbbbe21530d68b4cf53`, remote-tracking SHA before fetch identical. `git fetch origin` then fast-forward-only merge succeeded to `1e8e19dcf3833aaff7169427350fa50b7df1f545`; user output showed clean status afterward.
+- Subsequent GitHub source/documentation commits advanced PR #113 beyond that local SHA. Current code-bearing candidate is `9fe53815f83701a62536472f8a3c87cebac22e7a`; documentation sync continued after it. Local Termux must fetch and fast-forward again before building or editing; repeat `git status -sb`, `git status --porcelain=v1`, and `git rev-parse HEAD` first.
+- Never assume the local worktree is current merely because the prior fast-forward succeeded. Preserve the existing worktree and use `git merge --ff-only` only when clean and ancestor relationship is confirmed.
+
+
+## Follow-up source commits after the observed fast-forward — 2026-11-21
+
+- Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961`. PR #113 has additional documentation-only commits after this source candidate; fetch the current remote-tracking branch before local builds.
+- The source candidate includes Android nested-write detached-mount routing, macOS kernel-bounded nested reads with direct-child compatibility, Clippy fixes, and Windows native root-identity/Linux cfg corrections. It has NOT been built/tested locally or rerun in CI.
+- The earlier GitHub Actions run #2410 used parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` and failed Clippy/Windows Build; fixes are descendants and need fresh exact-SHA evidence.
+
+
+## Observed Termux Android compile attempt and follow-up — 2026-11-21
+
+- User-confirmed $HOME/one-pr113 was clean and fast-forwarded from 1e8e19dcf3833aaff7169427350fa50b7df1f545 to 04143d1a9b11f55e1f2ae38960f35d32d2904a11; Rust/Cargo 1.99.1 on aarch64-linux-android.
+- Both workspace Clippy and focused Android filesystem tests were attempted. Both stopped at compile time on missing Android std::io::Write import and Statx [u8; 76]: Default derive; no Android test body ran.
+- Corrected in source commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4. This SHA has not been built/tested yet.
+- Before the next build, re-check git status -sb and git status --porcelain=v1, then fetch and fast-forward only if clean. Do not assume the worktree is current. Read this map before any further Git commands; do not create another worktree.
+
+
+## Termux test results — 2026-11-21 (SHA 8b3cb521)
+
+- Clean worktree fast-forwarded to `8b3cb52168ed8d4961ce4e47bcc3410f9a0fd7ff`; Rust/Cargo 1.99.1, Android host.
+- `cargo clippy --workspace --all-targets -- -D warnings`: `one-core` checked, then failed because `run` helper in `crates/one-cli/tests/filesystem_write.rs` was unused on Android. Corrected with platform cfg in commit `f9dd400b21670fd07c5498307714a9b7ea931d18`; not yet tested.
+- Focused Android test binary compiled; 5 tests discovered. Root final symlink test passed. Hard-link test failed in fixture setup with `PermissionDenied` from `std::fs::hard_link`; process subsequently died with SIGSYS. Suite incomplete; do not count as pass. Next isolate each test individually after syncing new HEAD. Never remove/relax hard-link security assertion.

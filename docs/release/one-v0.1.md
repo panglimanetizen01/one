@@ -96,7 +96,7 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 - The existing `build` command emits a deterministic `.oneir` IR/debug artifact; the native backend slice does not replace it with a general-purpose native compiler claim.
 - `.onepkg` is a deterministic intermediate/debug package boundary; it is not a platform installer or signed distribution package.
 - The language-level orchestration catalog is not complete.
-- Filesystem write is experimental only within the single-text-payload/single-target boundary and its currently verified Android/Termux platform boundary.
+- Filesystem read/write remains experimental and limited to one explicitly scoped target and one text payload. The current Issue #104 candidate exposes filesystem adapters on Linux, Windows, Android, and macOS: Linux supports direct-child operations plus a detached-mount nested-write path when required kernel/filesystem primitives are available (otherwise it fails closed); Windows uses its native handle-relative backend; Android and macOS currently support direct-child operations while nested paths remain fail-closed because POSIX directory handles do not prevent an opened parent directory from being renamed outside the retained root. These source capabilities are not platform acceptance or a `SUPPORTED` claim until the fixed Issue #104 adversarial acceptance evidence exists. Historical Termux evidence applies only to its recorded older source revision and must not be used to claim current Android acceptance.
 - Process execution is experimental only within the explicitly targeted single-program/no-arguments boundary.
 - Database query remains a read-only parameterized SQLite SELECT slice; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
 - HTTP GET remains limited to explicit `http://` HTTP/1.1 GET, exact target scope, and response-body normalization; its tested source-level path has exact-SHA Ubuntu/Windows evidence at `77a89a6552c4d4306bd1a97752789b04ae1bbb0c` and historical Termux evidence.
@@ -114,3 +114,277 @@ The last code-bearing source revision has passed the exact-SHA build/test matrix
 ## Verification infrastructure rule
 
 No paid GitHub upgrade is required or authorized merely to obtain hosted CI execution. **Do not purchase an upgrade** merely to obtain hosted runner execution; use the independent verification path when the canonical hosted runner is unavailable.
+
+## Issue #104 implementation continuation — Android + macOS adapters — 2026-11-20
+
+- Latest code-bearing candidate: `4be1b8fd579092d8195c3fb775b7c765f6221814`; current PR #113 HEAD before this documentation update: `0bed293163aee8d398e1894811ef1ece17b78ff5`. PR remains OPEN / DRAFT / UNMERGED; no source build/test/device evidence is claimed.
+- Added Android direct-child filesystem support using retained root handles, no-follow opens, mandatory `statx(STATX_MNT_ID)` checks, hard-link rejection, and atomic temp-file replacement. Android nested paths remain fail-closed because directory descriptors alone do not prevent parent rename-out.
+- Added macOS direct-child filesystem support using retained root handles, no-follow opens, device-identity checks, hard-link rejection, and atomic temp-file replacement. macOS nested paths remain fail-closed because directory descriptors alone do not prevent parent rename-out.
+- Added three target-gated regression tests per platform. They are implementation coverage only until compiled and executed on the respective targets.
+- Linux nested writes use the detached-mount/root-relative backend when the kernel and backing filesystem provide the required operations; the implementation fails closed with `UnsupportedPlatform` when they do not. Windows retains the native handle-relative backend. Android and macOS currently provide direct-child filesystem operations; nested paths remain fail-closed until a native anti-move primitive is implemented.
+- These changes advance platform implementation but do NOT close Issue #104. Remaining work includes adversarial review of parent/root movement, platform-specific execution evidence, and any acceptance gaps in the fixed Issue #104 contract. Do not run the broad release matrix until implementation scope is complete.
+
+## Issue #105 — Linux process-group containment implementation candidate — 2026-11-20
+
+- Latest code-bearing candidate: `0a9685bded788ae46596227bd61457d10db1179c` (NOT BUILT OR TESTED).
+- Linux subprocess startup now installs an inherited seccomp filter in the child before `exec`. It denies `setsid`, `setpgid`, `unshare`, `setns`, clone namespace flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` so compatible runtimes can fall back to `clone`. The existing dedicated process group is therefore intended to remain non-escapable for descendants; group cleanup still runs on normal return, timeout, and output overflow.
+- If the kernel refuses `PR_SET_NO_NEW_PRIVS` or filter installation, process spawn fails closed. Windows Job Object containment remains unchanged.
+- At this checkpoint, process execution was unavailable on Android and macOS pending equivalent containment. The subsequent Android process-containment extension below supersedes the Android portion: the current source advertises Linux, Android, and Windows, while macOS remains fail-closed.
+- Replaced the old escaped-session reader-only probes with three Linux adversarial regressions for attempted `setsid` on normal completion, timeout, and output overflow. These tests have NOT been run.
+- This is an implementation candidate, not Issue #105 acceptance. Exact-SHA build/execution and adversarial evidence are still required. Preserve bounded reader shutdown and all existing process limits.
+
+## Android process containment extension — 2026-11-20
+
+- Code candidate `58ae7831c7d17e60e53fa6a933dc2f170196c585` enables the same inherited Linux seccomp process-group filter on Android as on Linux and advertises `ProcessAdapter` on Android. It denies session/group changes and namespace escapes; filter setup failure is fail-closed.
+- macOS process execution remains unavailable until equivalent containment exists. Windows Job Object behavior is unchanged.
+- This Android extension is NOT BUILT OR TESTED. Android seccomp policy compatibility and the three adversarial process tests still require execution on an actual Android/Termux target. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Android process containment regression coverage — 2026-11-20
+
+- Latest code-bearing candidate: `418d9642778d975440b81df2bdb5e1bf9aa1d8a5` (NOT BUILT/TESTED).
+- The inherited seccomp pre-exec filter is now installed on both Linux and Android. ProcessAdapter advertises Linux, Android, and Windows; macOS remains fail-closed. Android uses the same `setsid`/`setpgid`/namespace restrictions and fails closed if the child cannot install the filter.
+- The three adversarial `setsid` regression tests and bounded-reader test are now target-gated for Linux and Android, so they can run in Termux as well as Linux CI. No Android/Termux execution evidence is claimed.
+- Issue #105 remains OPEN / NOT ACCEPTED pending exact-SHA build and adversarial execution on Linux and a real Android/Termux target, plus Windows Job Object evidence reconciliation.
+
+## IMPLEMENTATION CHECKPOINT — 2026-11-21 (supersedes older platform-status bullets)
+
+Code-bearing source/test candidate: `4c46a41fe45baa7627557a2a25b9c71812840479`. PR #113 was OPEN / DRAFT / UNMERGED at this exact SHA before documentation synchronization. This candidate has NOT been built or tested; no previous exact-SHA result transfers.
+
+### Issue #104 — filesystem implementation
+- Linux: retained root handle, `openat2` no-follow/beneath/no-cross-device reads; atomic direct-child replacement; nested writes use the detached-mount + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + `openat2` path and fail closed when the kernel/security profile cannot provide those primitives.
+- Windows: existing native handle-relative/reparse-point backend and retained-parent rename protection remain unchanged.
+- Android: direct-child reads and atomic replacement use retained root `dirfd`, `O_NOFOLLOW`, mandatory `statx(STATX_MNT_ID)` equality, regular-file/single-link checks, exclusive temporary sibling, file sync, root-directory sync, and `renameat`. Nested paths remain fail-closed.
+- macOS: direct-child reads and atomic replacement use retained root `dirfd`, `O_NOFOLLOW`, regular-file/single-link checks, `fstatfs` filesystem-ID plus mount-point comparison, exclusive temporary sibling, file sync, root-directory sync, and `renameat`. Nested paths remain fail-closed.
+- Android/macOS hard-link side-effect regressions were added. Existing Android/macOS direct-child, symlink, and root-symlink regressions remain in source. These tests are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED until the fixed acceptance criteria have exact-SHA Unix and Windows execution evidence, including race/side-effect proof.
+
+### Issue #105 — process containment implementation
+- Linux and Android subprocess startup install an inherited seccomp filter before `exec`; it denies `setsid`, `setpgid`, `unshare`, `setns`, namespace-bearing `clone` flags, and x32 syscall ABI entry; `clone3` returns `ENOSYS` for compatible fallback. Filter setup failure is fail-closed.
+- Windows Job Object containment is unchanged. macOS process execution remains fail-closed until equivalent non-escapable containment exists.
+- Three adversarial `setsid` regressions cover normal completion, timeout, and output overflow on Linux/Android; they are NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED pending Linux + real Android/Termux execution and reconciliation of Windows Job Object evidence.
+
+### Execution priority
+- Continue production implementation against the existing v0.1 contract and release blockers. Add regression coverage with each code change, but do not launch broad matrix/audit cycles until the implementation scope is complete.
+- Preserve B-001's prior exact-SHA success; do not repeat its investigation without a new relevant provider failure.
+- Preserve `main`, protected verifier pins, fixed ledger weights, DoD, acceptance criteria, and release authorization boundaries.
+
+
+## Implementation continuation refresh — 2026-11-21
+
+Latest code-bearing candidate and PR #113 HEAD at this checkpoint: `fd1ccc5ca56f48a306ac8f8c551189f46b8fe44c` (OPEN / DRAFT / UNMERGED; NOT BUILT/TESTED). This supersedes the previous 2026-11-21 candidate pointer.
+
+Issue #105 regression coverage now uses ignored helper tests in the same Rust test binary. The helper forks a descendant and calls `setsid(2)` directly, avoiding dependence on an external `setsid` utility on Android/Termux. The parent tests cover normal completion, timeout, and output overflow, record any escaped PID, and clean up the escaped group before reporting failure. The tests are NOT RUN.
+
+Issue #104 implementation changes from the previous checkpoint remain: Linux guarded detached-mount nested writer; Android direct-child `statx(STATX_MNT_ID)` backend; macOS direct-child `fstatfs` filesystem-ID/mount-point backend; exclusive temp replacement with file and directory sync; hard-link regressions. Windows native backend remains unchanged. Nested Android/macOS operations fail closed.
+
+Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broad verification is claimed. Continue implementation-first and preserve all release/security gates.
+
+## Process-group cleanup hardening — 2026-11-21
+
+Latest code-bearing source/test candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). Linux/Android process supervision now observes direct-child exit using `waitid(P_PID, WEXITED | WNOHANG | WNOWAIT)` rather than reaping via `try_wait()` before process-group cleanup. The child remains a zombie (its PID/PGID cannot be recycled) while the wrapper sends SIGKILL to the invocation process group; only then does `Child::wait()` reap it. The redundant post-reap group kill was removed. All timeout, output-overflow, wait-error and normal-completion paths terminate the group before reaping.
+
+Process escape regressions use in-binary ignored helpers with direct `fork` + `setsid(2)` syscalls, record any escaped PID and clean up before failing. Three paths: normal completion, timeout, output overflow. NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Scope reconciliation — fixed milestone ledger vs v0.1 release — 2026-11-21
+
+The protected verifier's `LEDGER_SOURCE_COMMIT.txt` pins documentation SHA `d6c382a245c49a028bc60809f22ca956c7f894cc`, which contains the fixed 100-point milestone ledger and Definition of Done. Its 92/100 implementation subtotal (E1 7/10, E2 7/8, E3 8/8, E4 6/6, E5 4/4, E6 0/4) is PROVISIONAL and belongs to the separate milestone-100 workstream; it is not a completion score for PR #113's current v0.1 candidate. The current PR #113 source branch is `security/issue-104-root-confinement-20261118`, with code-bearing candidate `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. The separate `milestone/100-ecosystem-20261023` branch is not safe to merge as-is and is not the current PR #113 integration base.
+
+The approved v0.1 package/build contract explicitly scopes the executable subset to an empty external dependency set and deterministic debug/intermediate `.oneir` / `.onepkg` artifacts; it does not claim a full external package registry or complete signed provenance envelope. Do not import future vNext/milestone-100 scope into v0.1 merely to chase ledger points, and do not alter the protected ledger, fixed weights, DoD, or release acceptance. Finish implementation against the approved v0.1 contract, then perform the required exact-SHA verification and gate reconciliation.
+
+
+## Subprocess resource-bound implementation refresh — 2026-11-21
+
+The latest code-bearing source for Issue #81/#105 is `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed`. It explicitly enforces a 10-second deadline, 1 MiB stdout cap, 1 MiB stderr cap, and 2 MiB aggregate output ceiling before returning a process result. Source tests cover stdout overflow, stderr overflow, timeout, normal exit/status/stream preservation, and Linux/Android direct-fork + `setsid` escape attempts for normal completion, timeout, and output overflow. No build or test was run on this source. Issues #81 and #105 remain OPEN; no security or release acceptance is claimed.
+
+
+## Linux special-file read hardening — 2026-11-21
+
+Code change: `50923b545f2c804b24aa773ea5bb60129d1e0ff2` updates the Linux `openat2` read flags to include `O_NONBLOCK` before the opened object is checked with `fstat` for regular-file type. This prevents opening a FIFO with blocking semantics while retaining the existing handle-relative `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV` policy. A Linux regression `authority_rejects_fifo_without_blocking` creates a FIFO with no writer and requires `FilesystemError::NotRegularFile`. The regression has NOT RUN; this is source/test presence only, not execution evidence or Issue #104 acceptance.
+
+
+## Filesystem read-allocation and resource-limit hardening — 2026-11-21
+
+Code commit: `8792f7a1f707f444d00026d916fa8c18b7f3e7f1`.
+
+- Replaced the unchecked `u64 as usize` conversion used to preallocate filesystem read buffers with `usize::try_from` and `Vec::try_reserve_exact`. Oversized capacities now fail with a defined filesystem error instead of truncating on 32-bit hosts or panicking on reservation failure.
+- Added focused Linux regression `authority_enforces_read_and_write_limits_without_partial_replacement`; it verifies an oversized read is rejected, an oversized write is rejected, and the existing target bytes remain unchanged.
+- This regression is NOT RUN. No build, test, CI, verifier, or platform matrix is claimed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Linux nested-write fallback and verifier-inventory alignment — 2026-11-21
+
+Code commits:
+- `0fd434ad46e6b8e93c3b9ed887447baf10d0f697`: classify Linux `EOPNOTSUPP` from required detached-mount primitives as `FilesystemError::UnsupportedPlatform`, preserving fail-closed behavior when the backing filesystem/kernel cannot provide the required operation.
+- `858a5da09fe2ea74ebd17b0798f13fac848c7a28`: replace the stale test that required every Linux nested write to fail with `nested_write_uses_native_backend_or_fails_closed_without_side_effects`. It accepts a successful native detached-mount write or an explicit `UnsupportedPlatform` fallback, and checks target integrity and temp-file cleanup.
+
+The independent verifier's expected source test-filter inventory is now structurally matched in `adapter.rs`: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, and 1 `descriptor_relative_walk_rejects_` tests. This is a source inventory check only; no tests were run and no verifier PASS is claimed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Duplicate subprocess-test helper compile blocker removed — 2026-11-21
+
+- Source commit: `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830` (`crates/one-core/src/interop.rs`).
+- Removed the second identical `cleanup_test_escaped_group` definition from the `interop.rs` test module. The duplicate would produce a Rust duplicate-definition error when compiling the test module; only one definition remains in source.
+- This is a source-level compile-blocker correction, not a compile/test result. No build, test, CI, verifier, or platform matrix was run. Issue #105 remains OPEN / NOT ACCEPTED.
+
+
+## Current platform capability reconciliation — 2026-11-21
+
+This section supersedes earlier broad platform summaries where they conflict with the latest source inventory; it does not promote any platform to accepted or supported status.
+
+- Filesystem adapter metadata currently includes Linux, Windows, Android, and macOS. Linux has a detached-mount nested-write backend with explicit fail-closed fallback; Android/macOS nested filesystem paths remain fail-closed until native anti-move primitives are implemented. Windows retains its handle-relative backend. Direct-child implementation presence is not Issue #104 acceptance.
+- Process adapter metadata currently includes Linux, Android, and Windows. Linux/Android use the inherited seccomp process-group filter; Windows uses Job Objects. macOS process execution remains fail-closed. Issue #105 remains OPEN / NOT ACCEPTED.
+- The current PR #113 source also had a duplicate subprocess-test helper removed in commit `0cceeb447fbe2ae59b8e3da78dee3ce8d9959830`. This is a source compile-blocker correction, not build/test evidence.
+- No broad build, test, CI, verifier, or platform matrix has been run on the latest candidate. Do not claim a verified/accepted/supported release state.
+
+
+## Current Issue #104 platform-boundary correction — 2026-11-21
+
+Latest source commit: `5f98db9f70d28a0d5a206a3e6e37f986efc3574b` (`crates/one-core/src/filesystem.rs`).
+
+- Removed a duplicate Android `create_temp` definition and added the missing macOS `create_temp` implementation. The duplicate Android definition and missing macOS helper were source-visible compile blockers; no build was run.
+- Android and macOS retain direct-child no-follow read and atomic replacement paths. Nested paths remain explicitly fail-closed. A first attempt to generalize traversal using ordinary POSIX directory handles was not retained as supported: an opened parent directory can be renamed outside the trusted root while its descriptor remains usable. Mount identity and `O_NOFOLLOW` checks alone do not close that parent-move race.
+- The Android/macOS parent resolver now rejects any multi-component target with `UnsupportedPlatform` before opening a nested parent. Direct-child operations continue to use the retained root handle and existing mount/filesystem identity checks.
+- Android/macOS regression fixtures assert nested-path denial and preserve an outside sentinel. They are NOT RUN.
+- This is implementation hardening and capability-boundary correction only. Issue #104 remains OPEN / NOT ACCEPTED; no platform is promoted to accepted or supported. Do not run broad verification until implementation scope is complete.
+
+
+## 2026-11-21 — Android/macOS filesystem source repair and confinement boundary
+
+Latest code-bearing source: `0f5859426273a61174d6d1b08ed8771a6f4b136a` (`crates/one-core/src/filesystem.rs`).
+
+- Android's duplicate `create_temp` definition has been removed; macOS now has its missing exclusive `create_temp` helper. Static source inventory shows one helper definition in each native module. No compiler was run.
+- Android/macOS direct-child operations retain root-handle-relative no-follow reads and same-directory exclusive-temp atomic replacement; Android requires `statx(STATX_MNT_ID)`, while macOS compares `f_fsid` and mount point with `fstatfs`. Regular-file and hard-link checks remain.
+- Nested paths on both POSIX backends explicitly return `UnsupportedPlatform`. Ordinary POSIX directory descriptors do not prevent a parent directory from being renamed outside the retained root, so a multi-component openat walk would not satisfy the root-confinement race contract. No such unsafe nested support is enabled.
+- Android/macOS source regressions cover direct-child operation, leaf symlink rejection, nested-path fail-closed behavior, root symlink rejection, and hard-link side-effect preservation. These tests are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. This source correction is not a build/test/verifier result; no platform support or release approval is promoted.
+
+
+## 2026-11-21 — bounded HTTP response ingestion and filesystem payload allocation
+
+Latest relevant source commits:
+- `d32bb207f8ea6f24740560f374a4f698c687e172` — `FileWriteAdapter` now passes a borrowed text slice to `FilesystemAuthority::write`, so the configured write-byte limit is enforced before an owned output copy is made. The bounded echo copy happens only after a successful write. Added `filesystem_write_adapter_rejects_oversized_content_without_side_effects` (NOT RUN).
+- `ce39630fc9abdc9ba7c6accdf8db161a5cb002fa`, `8c219882aa37ee271874f58de172072531d80ddc`, `b636f0bc1e22008fc62dafe46a378cc2fb2b599b`, and `5fe958cad798b3d05c3ceb21f875f1f90074cb35` — HTTP/1.1 response ingestion now enforces a 64 KiB header ceiling and 32 MiB wire-body ceiling while reading, with fallible buffer growth; decoded response bodies remain capped at 16 MiB. The parser rejects duplicate Content-Length, unsupported/duplicate Transfer-Encoding, and simultaneous Content-Length + chunked framing; chunk-size arithmetic is checked and chunk allocation is fallible.
+- Added source regressions for oversized headers, ambiguous framing, duplicate lengths, chunk-size overflow, and bounded socket reads. NOT RUN.
+
+These are implementation/resource-boundary changes only. No build, test, CI, verifier, or platform matrix was run. No prior exact-SHA result transfers to this candidate.
+
+
+## HTTP request serialization resource bounds — 2026-11-21
+
+Latest source commit: `198fbf4ccdbb7e219efbe3e296e98462a385c384` (`crates/one-core/src/network_runtime.rs`).
+
+- HTTP request bodies are capped at 16 MiB before serialization; request line + headers are capped at 64 KiB with checked size arithmetic and fallible preallocation.
+- Explicit Content-Length must parse and exactly match the body size; duplicate Content-Length and request Transfer-Encoding are rejected (chunked request serialization is not implemented).
+- Added source regressions for oversized request bodies, mismatched Content-Length, and unsupported Transfer-Encoding. NOT RUN.
+- No build, test, CI, verifier, or platform matrix was run. This remains an implementation candidate, not verification evidence.
+
+
+## HTTP request syntax validation — 2026-11-21
+
+Latest source commit: `b0a3379a1fb49feb18dcf61a2521446f199a8e2b` (`crates/one-core/src/network_runtime.rs`).
+
+- Request method and header names must be valid HTTP tokens.
+- Authority rejects whitespace/control bytes, user-info separators and fragments; request-target must use origin-form or `*`, and rejects whitespace/control bytes and fragments.
+- Header values reject control bytes other than horizontal tab.
+- These checks complement the 16 MiB request-body / 64 KiB header caps, Content-Length consistency checks, and response framing limits. Source-only change; no build or tests run.
+
+
+## HTTP exact framing and trailer validation — 2026-11-21
+
+Latest source commit: `eea3115ba5e70ff83f8ed78a01dc70d95e012ff0` (`crates/one-core/src/network_runtime.rs`).
+
+- Content-Length response bodies must now match the declared length exactly; trailing bytes are rejected.
+- Chunked responses bound chunk-size lines, require valid terminating CRLF, validate trailer syntax, reject framing/Host fields in trailers, and reject trailing bytes after the trailer terminator.
+- Added regressions for valid trailers, forbidden Content-Length trailers, and extra bytes after Content-Length. NOT RUN.
+- No build/test/CI/verifier/platform matrix was run; source-only candidate, no acceptance promoted.
+
+
+## HTTP header token/control validation regressions — 2026-11-21
+
+Latest source commit: `11bf5172ed060818dbd55d2ecee3cddf3cd99875` (`crates/one-core/src/network_runtime.rs`).
+
+- Response header names are validated as HTTP tokens and values reject control bytes except HTAB. Request header names/values and request-target syntax have equivalent validation.
+- Added regressions for invalid response header names/values and invalid request header names/targets. NOT RUN.
+- No build/test/CI/verifier/platform matrix was run; this remains source-only implementation work.
+
+
+## Exact fallible HTTP buffer reservations — 2026-11-21
+
+Latest source commit: `bbd4febbac3a4ba2a19195582e7e5992d1953b1c` (`crates/one-core/src/network_runtime.rs`).
+
+- HTTP request serialization, response ingestion, and chunk-body decoding now use `try_reserve_exact` within the explicit request/response size ceilings, avoiding geometric capacity growth beyond the intended bounds.
+- This is source-only resource hardening. No build/test/CI/verifier/platform matrix ran.
+
+
+## IPv6 HTTP authority and query-only target support — 2026-11-21
+
+Latest source commits:
+- `f8631323b7c987c69f2ab8072bbf081deb626fb9` — shared HTTP authority parser accepts bracketed IPv6 literals with default/explicit ports; generic network resolution now formats IPv6 socket addresses correctly.
+- `4b0749fbd413233ee45259942a334190474ac89e` and `5bc86f6110145074cbee96942ad7942e25318b9c` — HTTP GET target parsing uses the shared authority parser, supports bracketed IPv6 and query-only paths, and rejects malformed/whitespace request paths.
+- `b0e034b3c98248e6f33823bd1ff9f2242c89fa8f` and `be5566435394cc27bbeb863b78c69b0fe52f774c` add source regressions for IPv6 authorities, query-only paths, and invalid paths. NOT RUN.
+- No build/test/CI/verifier/platform matrix was run.
+
+
+## Process adapter smoke-fixture correction — 2026-11-21
+
+Latest source commit: `b4b4b3ee82e013eb3c001606820deaa76d50a9df` (`crates/one-core/src/adapter.rs`).
+
+- Replaced the no-argument `rustc` smoke target (which can exit nonzero when no input file is supplied) with `whoami`, a no-argument command that emits output on Linux, Android and Windows.
+- Cfg-gated the smoke test to the platforms where ProcessAdapter advertises native containment, and included Android in the process-platform metadata regression.
+- Test source only; NOT RUN. No build/CI/verifier evidence is claimed. Issue #105 remains OPEN / NOT ACCEPTED.
+
+
+## SQLite query resource boundaries — 2026-11-21
+
+Latest source/test candidate: `76f76c9a7a5884c08d851afc203cb1cae7a5827a` (NOT BUILT/TESTED).
+
+- SQL text is capped at 64 KiB; parameters at 128 values / 1 MiB total; result rows at 100,000; serialized output at 16 MiB.
+- SQLite engine limits are now configured per connection through rusqlite's `limits` feature: 16 MiB value/row length, 64 KiB SQL, 256 columns, 128 variables, bounded compound SELECT/function args/expression depth/LIKE pattern, zero attached databases, and zero auxiliary worker threads.
+- Result serialization uses fallible exact growth; BLOB hex size is checked before allocating/copying, and invalid UTF-8 text is streamed through bounded lossy conversion.
+- Added regressions for oversized SQL and BLOB hex output. NOT RUN. No build/test/CI/verifier/platform matrix was run.
+
+
+## SQLite query execution-time and lock-wait limits — 2026-11-21
+
+Latest source/dependency commits:
+- `f6716d2c9dc83208de695c699804da7ccde9aec0` enables rusqlite `hooks` alongside `limits`.
+- `91d2a6c3a49041284944a4dd12ae090bb783bd0d` sets a 5-second SQLite VM progress deadline and a 250 ms busy/lock wait timeout for each query connection.
+
+These controls complement the SQL/parameter/row/output caps and per-connection SQLite engine limits. Source-only change; no build/test/CI/verifier/platform matrix was run.
+
+
+## SQLite deadline covers output serialization — 2026-11-21
+
+Latest source commit: `75bf347d7bbb9cce89a488b02cc285c7f605e984` (`crates/one-core/src/database.rs`).
+
+- The 5-second query deadline now applies both to SQLite VM execution (progress handler) and to Rust-side row/result serialization, so time spent formatting large result sets is also bounded.
+- Source-only change; no build/test/CI/verifier/platform matrix ran.
+
+
+## Additional SQLite parser/VM limits — 2026-11-21
+
+Latest source commit: `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` (`crates/one-core/src/database.rs`).
+
+- Added per-connection SQLite limits for parser depth (1,000), VDBE instruction count (1,000,000), and trigger recursion depth (0), complementing the previously recorded length, SQL, column, variable, expression, compound-select, function, LIKE, attachment, and worker-thread limits.
+- Source-only hardening; no build/test/CI/verifier/platform matrix ran.
+
+
+## Absolute HTTP response read deadline — 2026-11-21
+
+Latest source commits: `981467252a95198adfc72872db2dc652fa9f505e` and `a911431be5a1dad31dc2344e09a357e2d5e91212` (`crates/one-core/src/network_runtime.rs`).
+
+- Bounded response ingestion now uses one absolute deadline across all socket reads, updating the socket timeout to the remaining budget each iteration. This prevents a slow-trickle peer from resetting the full per-read timeout indefinitely.
+- The bounded-reader regression fixture now supplies its explicit deadline. NOT RUN.
+- No build/test/CI/verifier/platform matrix ran.
+
+
+## 2026-11-21 — Android nested-read implementation with kernel-enforced confinement
+
+Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one-core/src/filesystem.rs`, NOT BUILT/TESTED).
+
+- Static source inventory at this candidate finds exactly one `create_temp` definition in `android_native` and exactly one in `macos_native`. The earlier duplicate Android helper was already removed; macOS's missing helper was added. This is source inspection only, not Android/macOS compile evidence.
+- Android nested reads now use Linux/Android `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`. The kernel performs the complete path resolution relative to the retained root descriptor and rejects symlink, mount-crossing, escape, and unsafe rename-race outcomes. The opened leaf is still checked for regular-file type, single hard-link, device identity, and `STATX_MNT_ID` equality.
+- Android nested writes remain fail-closed (`UnsupportedPlatform`) until an anti-move atomic replacement backend is implemented. Direct-child atomic writes remain unchanged.
+- macOS nested reads and writes remain fail-closed. Ordinary `openat` directory-descriptor walks cannot prevent a parent directory from being renamed outside the root; no unsafe traversal has been enabled. Direct-child operations remain unchanged.
+- Added Android source regression for a valid nested read and a symlinked-parent escape with outside-sentinel preservation. Existing Android expectations now distinguish missing nested files (`NotFound`) from symlink-parent denial (`ResolutionFailed`). Tests are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran; no platform support or release approval is promoted.
