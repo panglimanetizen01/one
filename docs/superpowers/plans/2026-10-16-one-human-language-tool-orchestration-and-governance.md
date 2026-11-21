@@ -264,3 +264,7 @@ Security invariants:
 - Tests must prove default denial leaves the target unchanged and explicit Windows grant deletes only the in-root target.
 
 Current checkpoint source SHA `0fa43eb0be53c8e79424597ece055147872b35c4` has source additions but the language bridge has not yet passed CI. Keep status `Implemented` pending exact-SHA build/test evidence; do not mark `Verified` or `Supported`.
+
+## 2026-11-21 — filesystem.delete verification outcome
+
+The narrow Windows-only filesystem.delete language bridge is now Verified on exact source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4. One CI #44871756593 passed Build, Clippy, and Tests on Ubuntu and Windows Server 2025; CircleCI status context ci/circleci: one-linux is SUCCESS. The Windows explicit-grant path, default denial/no-side-effect, parser/IR mapping, adapter metadata, and actual junction escape sentinel-preservation test passed. Do not promote to Supported cross-platform; POSIX deletion and full Issue #104 remain open.
