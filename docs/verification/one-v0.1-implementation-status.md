@@ -969,3 +969,10 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 - GitHub Actions run #44898144880 on pre-fix SHA `168ff06e7a8d09e575e6ac71513399c9f1f4f994` failed at Build on Ubuntu and Windows 2025. Both provider logs identify Rust parsing errors in `crates/one-core/src/interop.rs` lines 1207/1209: unsafe syscall blocks were compared without parentheses.
 - Minimal source correction: `502a888da46e3d4be4ac80b3a2ffc3233dbabc12` parenthesizes the `setpgid` and `setsid` unsafe expressions. No runtime semantics or containment boundary changed.
 - The fixed SHA has not yet been rebuilt; status contexts and workflow runs were absent at readback. This is IMPLEMENTED / NOT BUILT, not verified. Issue #104/#105 acceptance and platform support remain unchanged.
+
+## 2026-11-21 — fresh exact-SHA build and process evidence
+
+- PR #113 exact source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609`: GitHub Actions One CI run #44900738968 completed Ubuntu job #136835893296 and Windows 2025 job #136835893110 successfully. Build, Clippy, Tests, and Complete job all SUCCESS.
+- Ubuntu logs prove six Linux process-group adversarial regressions passed: setsid/setpgid escape attempts across normal completion, timeout, and output overflow. Child helper tests are intentionally ignored standalone and invoked by the parent tests.
+- Android/Termux adversarial execution remains outstanding. Windows Job Object acceptance remains bounded to the exact revisions and logs already recorded; do not transfer historical evidence without matching source.
+- This updates build/test evidence only. Issue #104/#105 remain OPEN / NOT ACCEPTED; no platform support, fixed ledger, DoD, or release approval is promoted.
