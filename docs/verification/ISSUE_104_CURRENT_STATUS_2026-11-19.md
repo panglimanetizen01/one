@@ -922,3 +922,14 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Windows Server 2025 job #136744590451: Build, Clippy, Tests, and deterministic .oneir/.onepkg artifacts SUCCESS.
 - Windows logs prove these new tests passed: delete_uses_validated_handle_and_removes_nested_regular_file; delete_rejects_hard_links_without_removing_either_name; retained_delete_handle_blocks_leaf_rename. Existing retained_parent_handle_blocks_directory_rename also passed. The Windows one-core library summary was 156 passed / 0 failed.
 - Exact-SHA result applies to source/test SHA 6f2d5e2...; later documentation-only commits do not change source behavior. This is not POSIX delete support, complete E4 acceptance, or Issue #104 closure. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — filesystem.delete language bridge exact-SHA result
+
+- Source/test SHA: 0fa43eb0be53c8e79424597ece055147872b35c4.
+- GitHub Actions One CI run #44871756593 terminal SUCCESS.
+- Ubuntu job #136747608726: Build/Clippy/Tests SUCCESS; one-core 181 passed, 0 failed, 3 ignored.
+- Windows Server 2025 job #136747608925: Build/Clippy/Tests SUCCESS; one-core 167 passed, 0 failed.
+- Confirmed passing tests include parser target parsing, semantic/IR delete mapping, default policy denial with unchanged target, Windows explicit grant through interpreter, adapter metadata/authority checks, Windows hard-link and rename guards, and actual directory-junction escape rejection with outside sentinel unchanged.
+- GitHub status context ci/circleci: one-linux is SUCCESS on this exact SHA. CircleCI provider page/logs were inaccessible to the inspection channel; no claim is made about independently reviewed step logs.
+- Subsequent PR #113 commits are documentation-only through HEAD 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9; compare confirms no source changes after tested SHA.
+- This verifies the narrow Windows-only language bridge and Linux policy path. POSIX deletion remains UnsupportedPlatform. Issue #104 remains OPEN / NOT ACCEPTED; E4, host-root integration, and remaining platform primitive gaps remain open.
