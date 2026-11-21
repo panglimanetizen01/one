@@ -130,3 +130,10 @@ Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8
 - Linux/Android process containment remains inherited seccomp + process-group cleanup; Windows remains Job Object based. Recent `setpgid(0,0)` adversarial test source is NOT BUILT / NOT TESTED.
 - Updated existing docs and blocker register. No duplicate register or roadmap. Issue #104 and #105 remain OPEN / NOT ACCEPTED. Do not promote support, test evidence, E4, fixed ledger/DoD, verifier pin, merge, main, or release state.
 - Next: continue safe product implementation; native macOS execution is required for the new nested writer. Keep Android nested paths fail-closed. Continue researching macOS process containment and POSIX delete only when an equivalent native primitive can meet every part of the unchanged security contract.
+
+## Latest build-failure handoff — 2026-11-21
+
+- PR #113 source fix HEAD: `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`.
+- The previous exact SHA `168ff06e7a8d09e575e6ac71513399c9f1f4f994` failed GitHub Actions Build on Ubuntu and Windows due to missing parentheses around unsafe `setpgid` / `setsid` expressions in `interop.rs:1207,1209`. Fixed in `502a888...`.
+- Post-fix SHA has no status context/workflow run yet; do not call it built or passed. CircleCI FAILURE on the previous SHA has no provider logs or pipeline revision mapping; its root cause remains UNKNOWN.
+- Keep implementation-first priority; complete the remaining production capability gaps before broad release verification. Read the blocker register and Termux worktree map before further repository/Termux actions.
