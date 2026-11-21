@@ -743,3 +743,15 @@ Latest code-bearing source: `0f5859426273a61174d6d1b08ed8771a6f4b136a` (`crates/
 - Nested paths on both POSIX backends explicitly return `UnsupportedPlatform`. Ordinary POSIX directory descriptors do not prevent a parent directory from being renamed outside the retained root, so a multi-component openat walk would not satisfy the root-confinement race contract. No such unsafe nested support is enabled.
 - Android/macOS source regressions cover direct-child operation, leaf symlink rejection, nested-path fail-closed behavior, root symlink rejection, and hard-link side-effect preservation. These tests are NOT RUN.
 - Issue #104 remains OPEN / NOT ACCEPTED. This source correction is not a build/test/verifier result; no platform support or release approval is promoted.
+
+
+## 2026-11-21 — Android nested-read implementation with kernel-enforced confinement
+
+Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one-core/src/filesystem.rs`, NOT BUILT/TESTED).
+
+- Static source inventory at this candidate finds exactly one `create_temp` definition in `android_native` and exactly one in `macos_native`. The earlier duplicate Android helper was already removed; macOS's missing helper was added. This is source inspection only, not Android/macOS compile evidence.
+- Android nested reads now use Linux/Android `openat2` with `RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV`. The kernel performs the complete path resolution relative to the retained root descriptor and rejects symlink, mount-crossing, escape, and unsafe rename-race outcomes. The opened leaf is still checked for regular-file type, single hard-link, device identity, and `STATX_MNT_ID` equality.
+- Android nested writes remain fail-closed (`UnsupportedPlatform`) until an anti-move atomic replacement backend is implemented. Direct-child atomic writes remain unchanged.
+- macOS nested reads and writes remain fail-closed. Ordinary `openat` directory-descriptor walks cannot prevent a parent directory from being renamed outside the root; no unsafe traversal has been enabled. Direct-child operations remain unchanged.
+- Added Android source regression for a valid nested read and a symlinked-parent escape with outside-sentinel preservation. Existing Android expectations now distinguish missing nested files (`NotFound`) from symlink-parent denial (`ResolutionFailed`). Tests are NOT RUN.
+- Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran; no platform support or release approval is promoted.
