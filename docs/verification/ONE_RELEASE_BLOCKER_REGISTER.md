@@ -1129,3 +1129,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - CircleCI status context on the same SHA remains PENDING: workflow `6e00388e-687e-497b-b95d-20a38a2cb535`, job `753aeb6f-e6cf-40d2-ada0-daef15471b88`. Provider pipeline `vcs.revision` mapping and step logs remain unavailable. Do not claim CircleCI success or a CircleCI root cause.
 - Issue #105 remains OPEN / NOT ACCEPTED pending real Android/Termux adversarial execution and exact-source reconciliation of Windows Job Object behavior. Issue #104 remains OPEN / NOT ACCEPTED; its platform-specific native gaps and E4 requirements are unchanged.
 - Implementation-first queue remains B-002 (Issue #104 P0), then B-005 (Issue #105 P1), then formal v0.1 release gates. Do not start a duplicate broad audit; proceed with the next unimplemented production capability that can be implemented without weakening the fixed security contract.
+
+
+## 2026-11-21 — macOS nested-write cleanup implementation
+
+- Source change committed as `33bde6f3abbdbf7dae5ca248db68404a195fa843` on the Issue #104 implementation branch. The change adds an explicit `RootTempFileGuard::cleanup()` path for nested macOS writes: successful unlink or an already-absent staging name is treated as cleaned; other unlink failures are surfaced as `FilesystemError::IoFailure`. The existing Drop implementation remains a best-effort fallback and is not treated as evidence that cleanup succeeded.
+- Added `nested_write_cleans_staging_file_after_each_injected_failure`, covering failures at TempCreated, Written, Synced, and BeforeRename. It asserts original target bytes remain unchanged and no root staging entry remains.
+- Scope is limited to the macOS native nested-write staging cleanup path. No filesystem security policy, acceptance criteria, verifier pin, or protected branch was changed.
+- This source change is NOT YET BUILT OR TESTED on macOS. The prior Termux `cargo check -p one-core --locked` was on parent SHA `bb6a42330633e111920b17634fecf028f94e7d6f` and does not validate this change.
+- PR #113 remains OPEN / DRAFT / UNMERGED; its implementation branch now includes this source change. Next: run the focused macOS native test on a real macOS runner, fix any compile/runtime issues, then continue remaining Issue #104 platform implementation. Do not mark Issue #104 accepted based on this change alone.
