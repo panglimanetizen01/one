@@ -471,9 +471,12 @@ fn run_process_macos(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessRes
 
     const SANDBOX_EXEC: &str = "/usr/bin/sandbox-exec";
     // XNU fork1() applies mac_proc_check_fork() to both PROC_CREATE_FORK
-    // and PROC_CREATE_SPAWN. The profile therefore denies fork/vfork and
-    // posix_spawn-family process creation while leaving exec replacement
-    // available. If Seatbelt is missing or rejects this profile, fail closed.
+    // and PROC_CREATE_SPAWN. The profile therefore denies direct fork/vfork
+    // and posix_spawn-family process creation while leaving exec replacement
+    // available. Brokered launches through external services (for example,
+    // launchd) are a separate threat surface and keep ProcessAdapter disabled
+    // on macOS until native acceptance covers or blocks them. If Seatbelt is
+    // missing or rejects this profile, fail closed.
     const PROCESS_PROFILE: &str = "(version 1) (allow default) (deny process-fork)";
 
     if !Path::new(SANDBOX_EXEC).is_file() {
@@ -496,14 +499,23 @@ fn run_process_macos(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessRes
     let mut child = command.spawn().map_err(|error| {
         format!("Failed to start the macOS Seatbelt process wrapper: {error}")
     })?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| "Subprocess stdout pipe was not created.".to_owned())?;
-    let stderr = child
-        .stderr
-        .take()
-        .ok_or_else(|| "Subprocess stderr pipe was not created.".to_owned())?;
+    let stdout = match child.stdout.take() {
+        Some(stdout) => stdout,
+        None => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err("Subprocess stdout pipe was not created.".into());
+        }
+    };
+    let stderr = match child.stderr.take() {
+        Some(stderr) => stderr,
+        None => {
+            let _ = child.kill();
+            let _ = child.wait();
+            drop(stdout);
+            return Err("Subprocess stderr pipe was not created.".into());
+        }
+    };
 
     let output_limit_exceeded = Arc::new(AtomicBool::new(false));
     let stdout_reader = spawn_bounded_reader(
@@ -1641,6 +1653,11 @@ mod tests {
 
 
     #[cfg(target_os = "macos")]
+    unsafe extern "C" {
+        fn vfork() -> libc::pid_t;
+    }
+
+    #[cfg(target_os = "macos")]
     #[test]
     #[ignore = "invoked only under the macOS Seatbelt process-containment wrapper"]
     fn macos_process_creation_probe() {
@@ -1659,7 +1676,7 @@ mod tests {
             "fork must be denied by the Seatbelt process-fork rule"
         );
 
-        let vforked = unsafe { libc::vfork() };
+        let vforked = unsafe { vfork() };
         if vforked == 0 {
             unsafe { libc::_exit(0) };
         }
