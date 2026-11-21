@@ -392,3 +392,9 @@ Lapisan host FilesystemAuthority sekarang memiliki implementasi sumber untuk pen
 
 Fitur ini belum tersedia sebagai perintah bahasa atau adapter ONE. Linux, Android, dan macOS masih mengembalikan UnsupportedPlatform untuk API penghapusan; kita tidak memakai fallback unlinkat yang hanya memeriksa file lalu menghapus berdasarkan nama karena rentan race. Dua tes Windows baru belum dijalankan. Issue #104 tetap OPEN / NOT ACCEPTED.
 Tes sumber tambahan retained_delete_handle_blocks_leaf_rename memeriksa bahwa target tidak dapat dipindahkan saat handle delete tervalidasi masih terbuka. Tes ini belum dijalankan.
+
+## Validasi CI penghapusan berkas Windows — 2026-11-21
+
+GitHub Actions One CI run #44870781889 pada SHA sumber/tes 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0 selesai SUCCESS. Job Ubuntu dan Windows Server 2025 sama-sama lulus Build, Clippy, Tests, dan pemeriksaan artefak deterministik. Di Windows, tiga tes penghapusan baru serta tes penguncian rename direktori induk lulus; ringkasan tes library one-core Windows adalah 156 passed / 0 failed.
+
+Ini membuktikan backend native Windows pada SHA tersebut saja. Penghapusan berkas belum diekspos sebagai fitur bahasa/adapter ONE; Linux, Android, dan macOS tetap fail-closed. Issue #104 belum diterima.
