@@ -306,14 +306,14 @@ impl FilesystemAuthority {
 
 
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 struct LinuxTempFileGuard {
     parent_fd: std::os::fd::RawFd,
     name: std::ffi::CString,
     committed: bool,
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 impl LinuxTempFileGuard {
     fn cleanup(&mut self) -> Result<(), FilesystemError> {
         if self.committed {
@@ -331,7 +331,7 @@ impl LinuxTempFileGuard {
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 impl Drop for LinuxTempFileGuard {
     fn drop(&mut self) {
         if !self.committed {
@@ -342,7 +342,7 @@ impl Drop for LinuxTempFileGuard {
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 fn linux_openat2(
     directory_fd: std::os::fd::RawFd,
     path: &std::ffi::CString,
@@ -380,7 +380,7 @@ fn linux_openat2(
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
     match error.raw_os_error() {
         Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) | Some(libc::EBUSY) => {
@@ -394,7 +394,7 @@ fn linux_filesystem_error(error: std::io::Error) -> FilesystemError {
     }
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum LinuxWriteStage {
     TempCreated,
@@ -403,7 +403,7 @@ enum LinuxWriteStage {
     BeforeRename,
 }
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 fn linux_write_nested_relative_with_hook<F>(
     root: &File,
     relative: &Path,
