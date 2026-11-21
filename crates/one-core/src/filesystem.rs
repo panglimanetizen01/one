@@ -1302,7 +1302,7 @@ mod macos_native {
         if result.is_err() {
             temporary_guard.cleanup()?;
         }
-        resultt
+        result
     }
 
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
