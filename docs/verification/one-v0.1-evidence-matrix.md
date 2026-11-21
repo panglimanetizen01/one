@@ -913,3 +913,11 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 ## Filesystem platform source candidate — 2026-11-21
 
 - Candidate source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: Android nested-write backend now reuses the guarded detached-mount transaction; macOS nested reads use XNU beneath/no-follow/unique resolution flags and mount identity validation. Evidence state: SOURCE IMPLEMENTED / NOT BUILT / NOT TESTED / NOT VERIFIED. No parent-SHA evidence transfers. Android device execution, macOS native execution, adversarial rename/mount tests, and independent E4 verification remain outstanding.
+
+
+## Latest filesystem candidate and CI evidence — 2026-11-21
+
+- Latest source SHA: `568d9360f0beec63c10fbeae9cac63f384bd082f` — NOT BUILT/TESTED.
+- Earlier source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: GitHub Actions run #2410 Ubuntu Build PASS; Clippy FAIL; Tests SKIPPED. The failure was a manual char-comparison lint and unhandled SQLite `Result`s; fixes are present only in later commits and have not yet passed CI.
+- Windows job from run #2410 was still IN_PROGRESS at last readback. CircleCI status for the earlier candidate was PENDING. No latest-SHA CI or E4 verification PASS is established.
+- Android native Termux tests, macOS native tests, and adversarial nested-write race/mount-boundary evidence remain NOT RUN.
