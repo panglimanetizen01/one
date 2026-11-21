@@ -1011,3 +1011,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Updated existing `live-checkpoint-2026-11-20.md` (commit `762f14bd4076726be0215abb9847dd5d4603abfa`) and `CHANGELOG.md` (commit `e6bc9382124de0ac83c1f7f5db6768d255459b20c`) with the same source-only boundaries.
 - Branch HEAD immediately before this register update: `e6bc9382124de0ac83c1f7f5db6768d255459b20c`. Refresh live PR #113 metadata before any further work.
 - No tests/builds were run; no evidence, acceptance state, fixed ledger/DoD, verifier pin, or release state was promoted.
+
+## 2026-11-21 — XNU nested-write candidate and platform-source reconciliation
+
+- Latest code-bearing source candidate: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT / NOT TESTED). Source changes are in `crates/one-core/src/filesystem.rs`.
+- macOS nested write now has a native candidate: stage an exclusive temporary file under the retained root; validate nested target/parent with `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs`; publish with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)` using root fd for both operands; cross-mount rename fails `EXDEV`; sync containing parent. A parent-move hook exercises the window immediately before kernel publication. Added tests for positive nested replacement, symlink parent/outside sentinel, hard-link rejection, and parent moved outside root. All are source-only; native macOS build/test remains required.
+- Corrected Android status against the checked-in source: `android_native::open_relative` and `write_relative` reject multi-component paths. Android is direct-child-only. The earlier candidate notes describing nested Android `openat2`/detached-mount support are stale; the observed Termux seccomp profile kills `openat2` with SIGSYS. No userspace parent-walk fallback is allowed.
+- macOS deletion remains unavailable. XNU `unlinkat` flags can enforce beneath, no-symlink, and unique-link path resolution, but there is no atomic no-cross-mount flag in the inspected API. A separate `fstatfs` precheck leaves a mount race; do not enable it. Linux/Android delete remain fail-closed; Windows handle-bound deletion remains intact.
+- macOS process containment remains fail-closed. Seatbelt `process-fork` denial is only a research candidate until `posix_spawn` and every descendant creation route are proven blocked on native macOS.
+- Updated existing docs: architecture Mermaid, Issue #104 design, user feature status, implementation status, evidence matrix, live checkpoint, changelog, Issue #105 status, master prompt, and Notion Skill. No duplicate work queue created.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. No build/test/CI/verifier evidence or platform support is promoted.
