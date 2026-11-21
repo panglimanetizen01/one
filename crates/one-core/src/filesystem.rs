@@ -990,6 +990,7 @@ mod macos_native {
         match error.raw_os_error() {
             Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EBUSY) | Some(libc::ENOTDIR) | Some(93) => FilesystemError::ResolutionFailed,
             Some(libc::ENOENT) => FilesystemError::NotFound,
+            Some(libc::EMLINK) => FilesystemError::HardLinkedFile,
             Some(libc::EINVAL) | Some(libc::ENOSYS) | Some(libc::ENOTSUP) => FilesystemError::UnsupportedPlatform,
             _ => FilesystemError::IoFailure,
         }
@@ -1077,6 +1078,22 @@ mod macos_native {
         Ok(file)
     }
 
+    struct RootTempFileGuard {
+        root_fd: std::os::fd::RawFd,
+        name: CString,
+        committed: bool,
+    }
+
+    impl Drop for RootTempFileGuard {
+        fn drop(&mut self) {
+            if !self.committed {
+                unsafe {
+                    libc::unlinkat(self.root_fd, self.name.as_ptr(), 0);
+                }
+            }
+        }
+    }
+
     fn write_nested_relative(
         root: &File,
         relative: &Path,
@@ -1147,12 +1164,16 @@ mod macos_native {
         }
         let (mut temporary, temporary_name) =
             created.ok_or(FilesystemError::IoFailure)?;
+        let mut temporary_guard = RootTempFileGuard {
+            root_fd,
+            name: temporary_name,
+            committed: false,
+        };
         let temp_metadata = temporary.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !temp_metadata.is_file()
             || temp_metadata.nlink() != 1
             || temp_metadata.dev() != root_metadata.dev()
         {
-            let _ = unsafe { libc::unlinkat(root_fd, temporary_name.as_ptr(), 0) };
             return Err(FilesystemError::ResolutionFailed);
         }
 
@@ -1174,7 +1195,7 @@ mod macos_native {
             let renamed = unsafe {
                 renameatx_np(
                     root_fd,
-                    temporary_name.as_ptr(),
+                    temporary_guard.name.as_ptr(),
                     root_fd,
                     target_name.as_ptr(),
                     RENAME_FLAGS,
@@ -1183,19 +1204,11 @@ mod macos_native {
             if renamed != 0 {
                 return Err(map_error(std::io::Error::last_os_error()));
             }
-            committed = true;
+            temporary_guard.committed = true;
             parent.sync_all().map_err(|_| FilesystemError::IoFailure)?;
             Ok(())
         })();
 
-        if !committed {
-            let removed = unsafe { libc::unlinkat(root_fd, temporary_name.as_ptr(), 0) };
-            if removed != 0
-                && std::io::Error::last_os_error().raw_os_error() != Some(libc::ENOENT)
-            {
-                return Err(FilesystemError::IoFailure);
-            }
-        }
         result
     }
 
