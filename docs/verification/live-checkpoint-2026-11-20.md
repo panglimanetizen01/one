@@ -922,3 +922,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - macOS delete remains fail-closed: XNU `unlinkat` supports beneath/no-symlink/unique checks but lacks an atomic no-cross-mount constraint; a separate mount check is insufficient. Linux/Android delete remain fail-closed; Windows handle-bound delete remains unchanged.
 - macOS process containment remains fail-closed. Seatbelt `process-fork` denial is only a research candidate until `posix_spawn`, vfork/fork, and all descendant paths are demonstrated blocked.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. No builds/tests, CI, verifier, or acceptance result is claimed.
+
+## 2026-11-21 — macOS Seatbelt process guard candidate
+
+- Latest code-bearing candidate: `3bad0196e9352871d09cb9b966cf6b393a866603` (NOT BUILT / NOT TESTED).
+- macOS runtime source now wraps a direct target using `/usr/bin/sandbox-exec` with SBPL `(version 1) (allow default) (deny process-fork)`. XNU `fork1()` checks `mac_proc_check_fork()` for `PROC_CREATE_FORK` and `PROC_CREATE_SPAWN`, so direct fork/vfork/posix_spawn should be denied while exec replacement remains allowed.
+- Added macOS-only source probes for fork/vfork/posix_spawn/posix_spawnp, exec replacement, timeout, and output overflow. No native macOS execution has occurred.
+- This is single-process mode, not full descendant-tree containment. Brokered launchd/Mach-service launches remain unproven. `ProcessAdapter` does not advertise macOS; leave it disabled until native acceptance and semantic review.
+- Issue #105 remains OPEN / NOT ACCEPTED. Linux/Android seccomp process-group and Windows Job Object implementations remain unchanged.
