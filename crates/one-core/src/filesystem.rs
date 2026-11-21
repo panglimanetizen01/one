@@ -1020,7 +1020,7 @@ mod macos_native {
             || unsafe { libc::fstatfs(file.as_raw_fd(), &mut file_info) } != 0 {
             return Err(FilesystemError::IoFailure);
         }
-        if root_info.f_fsid.val != file_info.f_fsid.val
+        if root_info.f_fsid != file_info.f_fsid
             || root_info.f_mntonname != file_info.f_mntonname {
             return Err(FilesystemError::ResolutionFailed);
         }
