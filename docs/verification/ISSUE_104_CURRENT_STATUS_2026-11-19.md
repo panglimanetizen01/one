@@ -775,3 +775,8 @@ Latest source candidate `74df3aa901732c8eb3adaac728162715fc3a4961` is NOT BUILT/
 ## 2026-11-21 — Termux Android compile blockers and correction
 
 User-confirmed Termux worktree fast-forwarded cleanly to 04143d1a9b11f55e1f2ae38960f35d32d2904a11 (Rust 1.99.1, aarch64-linux-android). Both workspace Clippy and focused Android filesystem tests failed before tests ran: std::io::Write was not imported on Android for write_all, and the Android Statx Default derive could not support [u8; 76]. Corrected on PR branch in ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4 by importing Write for Linux/Android and splitting reserved padding into 32+32+12 byte arrays while retaining the 256-byte ABI size assertion. This correction is NOT BUILT/TESTED yet. Re-run exact-SHA Clippy and Android tests after syncing. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — Termux rerun: compilation progressed, runtime restrictions remain
+
+On exact SHA `8b3cb52168ed8d4961ce4e47bcc3410f9a0fd7ff` (Rust/Cargo 1.99.1, `aarch64-linux-android`), workspace Clippy passed `one-core` but failed on an unused Linux/Windows-only `run` helper in `one-cli` integration tests. Fixed by cfg-gating the helper to the platforms that call it in commit `f9dd400b21670fd07c5498307714a9b7ea931d18` (not yet built/tested). The focused Android test binary compiled and began five tests; root-final-symlink test passed, hard-link fixture setup failed because Android temp filesystem returned `PermissionDenied` for `hard_link`, and the process ended with `SIGSYS` (signal 31). Remaining tests are not verified. Preserve the hard-link security test; investigate environment syscall restrictions and isolate tests individually. Issue #104 remains OPEN / NOT ACCEPTED.
