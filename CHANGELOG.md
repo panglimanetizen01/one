@@ -6,6 +6,8 @@
 - Open Linux project roots with directory/no-follow/close-on-exec flags and validate path identity against the retained root handle.
 - Open Windows project roots without following a final reparse point; validate volume/file identity against the retained native handle.
 - Add a CLI regression fixture for a source file outside the working directory accessing an in-root target.
+- Add the experimental `hapus berkas` language/CLI path with an explicit `filesystem.delete` grant and exact target scope; native handle-bound deletion is Windows-only, while Linux/Android/macOS remain fail-closed.
+- Add Linux/Android process-containment adversarial source coverage for `setsid` and `setpgid` escape attempts across normal exit, timeout, and output overflow, with isolated per-test working directories. These new regressions are not yet verified on the latest candidate.
 
 
 ## Unreleased — One v0.1
