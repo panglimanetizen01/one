@@ -440,3 +440,10 @@ Status fitur: Verified untuk penghapusan file melalui backend Windows saja. Belu
 
 - macOS memiliki kandidat internal berbasis Seatbelt yang menolak pembuatan proses langsung (`fork`, `vfork`, `posix_spawn`); ini adalah mode satu proses, bukan kemampuan menjalankan process tree dan membunuh seluruh descendant.
 - `ProcessAdapter` tetap tidak mengiklankan macOS. Jalur brokered melalui launchd/Mach service belum dibuktikan tertutup, dan seluruh regresi native masih SOURCE ONLY / NOT RUN. Jangan menganggap Process capability tersedia pada macOS sampai native acceptance menyetujui jaminan yang dipersempit atau backend tree-containment setara ditemukan.
+
+## Pembaruan implementasi filesystem macOS — 2026-11-21
+
+- Kandidat nested atomic write macOS memakai temporary file di root yang dipertahankan, lalu publikasi melalui `renameatx_np` dengan resolusi beneath dan no-follow di kernel XNU.
+- Regresi integrasi publik diperbaiki pada commit `830a70e5c5d07fd87c5c1e792853e146be04a232`: menguji byte hasil saat primitive tersedia, fail-closed tanpa efek samping pada kernel yang tidak mendukung, penolakan parent symlink, dan sentinel di luar root.
+- Kandidat masih SOURCE ONLY sampai dibangun dan dijalankan pada macOS asli. Jangan menganggap nested write macOS sudah menjadi fitur stabil.
+- Android nested path dan POSIX delete tetap tidak tersedia; Issue #104 masih OPEN / NOT ACCEPTED.
