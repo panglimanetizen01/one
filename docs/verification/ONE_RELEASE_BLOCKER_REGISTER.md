@@ -1084,3 +1084,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated `MASTER_CONTINUATION_PROMPT.md` in commit `021a583a9c0281b86b3c6ccaf3a5081c32680269` to state that XNU `setsid`/`setpgid` paths do not expose an equivalent MAC policy hook, so Seatbelt cannot safely allow descendants and rely on process-group confinement.
 - Documentation-only. The macOS Seatbelt candidate remains unadvertised; no source/test evidence or acceptance state changed.
+
+## 2026-11-21 — filesystem write backend comment synchronized
+
+- Source commit `618db752953eff4672787453b0a8877405f4ebe8` corrects the `FilesystemAuthority::write` API comment to reflect the macOS XNU nested-write path and Android direct-child-only boundary. No runtime behavior changed.
+- Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (NOT BUILT / NOT TESTED).
