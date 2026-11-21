@@ -98,3 +98,11 @@ The independent verifier's expected source test-filter inventory is now structur
 - macOS nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` identity checks on supported kernels; unsupported kernels fail closed. macOS nested writes remain fail-closed until a race-safe atomic no-cross-mount publication design is proven.
 - Android/macOS source regressions are NOT RUN. Next execution: safely fast-forward `$HOME/one-pr113` to current remote, compile and run focused Android tests on Termux, fix any failures, then obtain macOS native build/test evidence. Do not start broad verification or claim support/acceptance before implementation and focused tests are sound.
 - The existing architecture diagram, blocker register, Issue #104 status, evidence matrix, implementation status, live checkpoint, Termux worktree map and Notion Skill are being kept in sync. Do not create duplicate tracking documents. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Latest correction after CI run #2410 — 2026-11-21
+
+- Latest source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED). Run #2410 on earlier source `9fe53815f83701a62536472f8a3c87cebac22e7a` exposed Ubuntu Clippy failures and Windows Build failures. Do not treat these as failures of the latest source; also do not claim they are fixed until rerun evidence exists.
+- Clippy fixes: `82a90b41fec74bd3829da89ff2b4cb872d451c83` uses array char-pattern matching; `c23bd0e09186254aade3f8665e622bc9d2846eab` propagates SQLite `set_limit`/`progress_handler` errors as fail-closed backend failures.
+- Windows build fixes in `74df3aa901732c8eb3adaac728162715fc3a4961`: gate Linux writer functions to Linux only; replace unstable Windows `MetadataExt` identity APIs with native no-reparse handle reopen and `GetFileInformationByHandle` identity comparison.
+- Next: sync existing `$HOME/one-pr113` safely to current remote; run `cargo clippy --workspace --all-targets -- -D warnings` and focused Android filesystem tests on Termux. Then rerun the exact Ubuntu/Windows CI matrix and obtain macOS native tests. Keep Issue #104 OPEN / NOT ACCEPTED until exact-SHA evidence and adversarial acceptance are complete.
