@@ -706,3 +706,11 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 ## 2026-11-21 filesystem implementation continuation
 
 - Worktree `$HOME/one-pr113` was safely fast-forwarded from `979973cd6fb6f76802e13dbbbe21530d68b4cf53` to PR #113 checkpoint `1e8e19dcf3833aaff7169427350fa50b7df1f545` with a clean status. Source commit `9fe53815f83701a62536472f8a3c87cebac22e7a` now adds guarded Android nested writes and macOS nested reads. Architecture diagram and release blocker register were synchronized afterward. These changes are source-only and NOT BUILT/TESTED; Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains draft/open/unmerged; no main or verifier pin changes.
+
+
+## 2026-11-21 — exact-SHA Clippy failure and corrective source commits
+
+- Source implementation candidate advanced to `568d9360f0beec63c10fbeae9cac63f384bd082f`; Android nested write and macOS nested read changes remain NOT BUILT/TESTED on this exact SHA.
+- GitHub Actions run #2410 (`44845255637`) on parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build SUCCESS, Clippy FAILURE, Tests SKIPPED. The failure was unrelated to filesystem code: one manual char-comparison lint in `adapter.rs` and unhandled `Result`s from SQLite resource-limit/progress-handler configuration in `database.rs`.
+- Corrected in descendants `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab`; no successful rerun yet. Windows leg of run #2410 was still running at last readback. CircleCI earlier candidate PENDING.
+- Issue #104 remains OPEN / NOT ACCEPTED. Do not claim Clippy, tests, Android/macOS support, or E4 acceptance until exact-SHA evidence exists.
