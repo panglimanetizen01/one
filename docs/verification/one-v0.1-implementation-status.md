@@ -886,3 +886,10 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Source candidate `568d9360f0beec63c10fbeae9cac63f384bd082f` contains Android detached-mount nested writes and macOS kernel-bounded nested reads (supported XNU kernels), preserving the old direct-child macOS read path. macOS nested writes remain fail-closed.
 - Follow-up Clippy fixes propagate every SQLite `set_limit` and `progress_handler` error as `AdapterError::BackendFailure` and use `str::find(['/', '?'])` for the HTTP authority delimiter. They preserve fail-closed resource policy and `-D warnings`.
 - Run #2410 on parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` had Ubuntu Build PASS / Clippy FAIL / Tests SKIPPED. Descendant fixes have NOT been re-run successfully. Latest candidate NOT BUILT/TESTED.
+
+
+## 2026-11-21 — cross-platform compile correction
+
+- Source candidate `74df3aa901732c8eb3adaac728162715fc3a4961` gates the Linux direct/nested write wrapper to Linux, preventing Unix-only APIs and `libc` from compiling on Windows. Android uses only the shared nested helper where intended.
+- Windows root path identity now reopens the candidate path through the native no-reparse `NtCreateFile` path and compares `BY_HANDLE_FILE_INFORMATION` volume serial/file index; unstable `MetadataExt` APIs were removed.
+- Run #2410 on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` failed Clippy on Ubuntu and Build on Windows. Corrections are source-only; no rerun on `74df3aa...` is available. NOT BUILT/TESTED.
