@@ -116,3 +116,13 @@ GitHub `main` is the canonical source. Local/Termux copies are verification envi
 - `verification/ONE_RELEASE_BLOCKER_REGISTER.md` — single prioritized release blocker queue.
 - `verification/MASTER_CONTINUATION_PROMPT.md` — compact copy/paste entry point for every new session.
 - The register links the existing release contract, completion roadmap, evidence matrix, implementation status, verification records, Mermaid architecture source, and changelog. It controls priority only; those linked documents remain authoritative for acceptance.
+
+## Superseding PR #113 filesystem checkpoint — 2026-11-21
+
+The canonical-rule snapshot above is historical. Current PR #113 remains OPEN / DRAFT / UNMERGED on branch security/issue-104-root-confinement-20261118. Language-bridge source SHA is 0fa43eb0be53c8e79424597ece055147872b35c4; subsequent commits in the branch update documentation only. The Windows native delete implementation is separately verified at 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0 (One CI #44870781889 SUCCESS). The language bridge adds the explicit filesystem.delete permission and Indonesian source form "hapus berkas \"path\"", but remains pending exact-SHA Windows and CircleCI results at the time of this note. Issue #104 remains OPEN / NOT ACCEPTED.
+
+The current filesystem design and language effect path are documented in:
+- security/issue-104-filesystem-root-confinement-design.md
+- architecture/filesystem-root-confinement.md
+- spec/one-v0.1-effect-capability.md
+- verification/ONE_RELEASE_BLOCKER_REGISTER.md
