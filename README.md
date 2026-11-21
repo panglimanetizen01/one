@@ -229,3 +229,7 @@ The Windows native file-delete backend is implemented and its native tests passe
     hapus berkas "target.txt"
 
 Delete is not implied by general filesystem/read/write grants. The adapter requires host-injected FilesystemAuthority and is advertised on Windows only. Linux, Android, and macOS remain fail-closed for delete. At source bridge SHA 0fa43eb0be53c8e79424597ece055147872b35c4, Ubuntu Build/Clippy/Tests passed; Windows and CircleCI were still pending at last exact-SHA readback. Do not claim the language bridge verified until both are terminal. Issue #104 remains OPEN / NOT ACCEPTED; see the security design and single release blocker register.
+
+## Exact-SHA filesystem.delete verification — 2026-11-21
+
+The Windows-only filesystem.delete language bridge passed One CI run #44871756593 on exact source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4: Ubuntu Build/Clippy/Tests SUCCESS (181 passed / 0 failed / 3 ignored); Windows Server 2025 Build/Clippy/Tests SUCCESS (167 passed / 0 failed). CircleCI status context ci/circleci: one-linux is SUCCESS on the same SHA. The Windows explicit-grant path and actual junction escape sentinel-preservation test passed. Linux, Android, and macOS delete remain unavailable/fail-closed. Issue #104 remains OPEN / NOT ACCEPTED.
