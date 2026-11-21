@@ -817,3 +817,20 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - This demonstrates Android compilation is now possible on this toolchain, but the focused Android suite is NOT PASS. No claim of Android filesystem support or E4 acceptance.
 - Next exact-SHA run after safe sync: workspace Clippy, then each Android test individually (especially hard-link fixture, nested read, nested write) to isolate permission and SIGSYS. Preserve test assertions and record capability limitations separately from implementation correctness.
 - Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Termux exact-SHA Android test isolation and syscall investigation
+
+User-provided Termux evidence on exact PR #113 SHA `4e831bf51e4c9f4e4075e30d3d1e4fc72eeded0b` (host previously identified as `aarch64-linux-android`):
+
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS; completed successfully in 2.37s with no warnings.
+- The test filters were corrected by removing `--exact`; each selected unit test then ran (1 test selected, not zero).
+- `filesystem::android_filesystem_tests::android_root_final_symlink_is_rejected`: PASS (1 passed).
+- `android_direct_child_read_and_atomic_write_work_with_root_handle`, `android_leaf_symlinks_and_nested_paths_fail_closed`, and `android_kernel_resolved_nested_reads_stay_beneath_root`: each process terminated with signal 31 / `SIGSYS: bad system call`. These are runtime terminations, not assertion failures; their security assertions did not complete.
+- `android_hard_link_targets_are_rejected_without_modifying_either_name`: failed before authority assertions because fixture setup `std::fs::hard_link` returned `PermissionDenied` (errno 13). Do not weaken, skip, or delete the security test to manufacture a pass.
+
+Source-path investigation at this exact branch source: successful `FilesystemAuthority::open` on Android calls `android_native::mount_id(&root)`, which directly invokes `SYS_statx` with `AT_EMPTY_PATH | STATX_MNT_ID`. The three SIGSYS tests all proceed through successful authority construction; the passing root-final-symlink test rejects the symlink before this call. This makes Android `statx` the leading syscall suspect, but the signal alone does not prove the kernel/seccomp cause. Obtain syscall-level evidence (e.g. `strace`, if available and permitted) before changing the backend.
+
+Do not silently fall back to device/inode identity or omit mount identity: mount-boundary confinement is part of the security contract. Investigate a kernel-derived mount-ID source compatible with Android restrictions (for example, `/proc/self/fdinfo/<fd>` `mnt_id`, subject to explicit robustness/security review and tests) before proposing code. Any fallback must fail closed if the kernel source is unavailable or malformed.
+
+Exact-SHA classification: Clippy PASS; one Android test PASS; three Android tests SIGSYS/NOT VERIFIED; hard-link test BLOCKED at fixture setup; Android filesystem backend NOT VERIFIED / NOT ACCEPTED. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. No acceptance or platform support is promoted.
