@@ -66,3 +66,10 @@ This checkpoint does not authorize an automatic sync. Follow the clean-status an
 ## B-001 continuation handoff
 
 After safely synchronizing the existing worktree, continue the current B-001 evidence task; do not restart repository discovery or repeat already-proven work. Use the exact diagnostic target and instructions in [CIRCLECI_DIAGNOSTICS.md](CIRCLECI_DIAGNOSTICS.md). Keep B-001 `PARTIAL / NOT CLOSED` until the exact pipeline → workflow → job → `vcs.revision` evidence and provider diagnostics required by that document are available. Never request, paste, or print the CircleCI token.
+
+
+## Observed fast-forward and follow-up source checkpoint — 2026-11-21
+
+- User-confirmed clean local worktree before synchronization: `$HOME/one-pr113`, branch `security/issue-104-root-confinement-20261118`, local SHA `979973cd6fb6f76802e13dbbbe21530d68b4cf53`, remote-tracking SHA before fetch identical. `git fetch origin` then fast-forward-only merge succeeded to `1e8e19dcf3833aaff7169427350fa50b7df1f545`; user output showed clean status afterward.
+- Subsequent GitHub source/documentation commits advanced PR #113 beyond that local SHA. Current code-bearing candidate is `9fe53815f83701a62536472f8a3c87cebac22e7a`; documentation sync continued after it. Local Termux must fetch and fast-forward again before building or editing; repeat `git status -sb`, `git status --porcelain=v1`, and `git rev-parse HEAD` first.
+- Never assume the local worktree is current merely because the prior fast-forward succeeded. Preserve the existing worktree and use `git merge --ff-only` only when clean and ancestor relationship is confirmed.
