@@ -875,3 +875,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Linux/Android/macOS delete remains unsupported and returns UnsupportedPlatform; no unsafe name-based unlinkat fallback is enabled. Android nested paths remain fail-closed; macOS nested writes remain fail-closed; Linux nested writes remain dependent on detached-mount primitives and host privileges.
 - Capability/adapter expansion is deliberately deferred. Issue #104 remains OPEN / NOT ACCEPTED; E4, full platform/race matrix, host-root integration, and release gate are not promoted.
 - Added Windows test retained_delete_handle_blocks_leaf_rename for the leaf-handle rename exclusion primitive; it is source-only and NOT RUN.
+
+## 2026-11-21 — Windows delete slice CI terminal result
+
+- Exact source/test SHA: 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0.
+- GitHub Actions One CI run #44870781889 is terminal SUCCESS. Ubuntu job #136744590581 and Windows Server 2025 job #136744590451 passed Build, Clippy, Tests, and deterministic artifact steps.
+- Windows logs confirm the three new delete tests and the existing parent-rename exclusion test passed; Windows one-core library summary was 156 passed / 0 failed.
+- Latest PR #113 HEAD after documentation sync is later than this code/test SHA; subsequent commits in this sync are documentation-only. Preserve the exact tested SHA in evidence.
+- The Windows delete source slice is validated on CI, but POSIX delete remains unsupported; Issue #104 remains OPEN / NOT ACCEPTED. E4 and complete platform/race acceptance remain open.
