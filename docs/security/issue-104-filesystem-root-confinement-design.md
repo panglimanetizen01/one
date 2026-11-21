@@ -1,7 +1,7 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
-**Latest code/test SHA at 2026-11-21 checkpoint:** `f5a0bff593035b4ba9be92ae883a36386b12176b` (adds Android statx mount-ID regression; see section 16)  
+**Latest code/test SHA at 2026-11-21 checkpoint:** `6403592796b9827e4bffe26a982dfc66afc75d9d` (adds Windows volume-identity regression; see section 17)  
 **Latest CircleCI-confirmed PR #113 HEAD:** `26a34efb6d0908bd02738a7b05090f96051a6dc7` (`ci/circleci: one-linux` SUCCESS; workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Later documentation-only commits are not credited with this result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
@@ -1189,4 +1189,15 @@ This section supersedes section 14's earlier root-staging implementation note. T
 - macOS native run #44906550034 passed on this exact SHA: both macOS 15 and 26 each passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
 - One CI #44906550001 and CircleCI context were still in progress/pending at the latest read; see the single release blocker register for exact job IDs and refresh before making claims.
 - Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 17. Windows volume identity and terminal One CI — 2026-11-21
+
+- Exact code/test SHA: 6403592796b9827e4bffe26a982dfc66afc75d9d.
+- Centralized volume serial comparison in volume_serial_matches and used it for root/path identity checks in Windows native read/write/delete operations.
+- Added windows_volume_identity_rejects_mismatch using synthetic BY_HANDLE_FILE_INFORMATION values. It proves same-volume acceptance and different-volume rejection at the helper boundary; it is not a real second-volume mount test.
+- The source also includes real directory-junction write escape rejection with unchanged outside sentinel/no staging leak and positive absolute in-root write coverage.
+- One CI run #44906889708 SUCCESS on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Windows 2025 job #136854287276 and Ubuntu job #136854287546 both terminal SUCCESS.
+- macOS Native Filesystem run #44906889694 SUCCESS on the same exact SHA: macOS 15 and macOS 26 each passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
+- CircleCI context ci/circleci: one-linux remains PENDING on this SHA. Workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. The provider page and .vcs.revision mapping are not accessible; do not claim CircleCI PASS.
+- Android statx mount-ID regression remains unexecuted on the actual Termux device. Issue #104 remains OPEN / NOT ACCEPTED.
 
