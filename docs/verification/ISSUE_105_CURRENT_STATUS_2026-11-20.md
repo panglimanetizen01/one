@@ -119,3 +119,10 @@ The resulting guarantee is deliberately narrower: one target process may execute
 - The six helper tests remain intentionally `#[ignore]` because parent tests invoke them as child processes using the test binary's `--ignored --exact` arguments. This is expected helper behavior, not missing execution of the parent adversarial cases.
 - This establishes the Linux-hosted adversarial slice for this exact source SHA. It does not establish Android/Termux execution, nor does it independently reconcile Windows Job Object descendant cleanup at this SHA.
 - Issue #105 remains OPEN / NOT ACCEPTED. Do not promote support or acceptance until the remaining platform-specific requirements are proven on the exact candidate.
+
+## 2026-11-21 — latest PR #113 CI refresh
+
+- Code-bearing source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609`: GitHub Actions One CI #44900738968 passed Ubuntu #136835893296 and Windows 2025 #136835893110; Build, Clippy, Tests, and Complete job SUCCESS.
+- Ubuntu logs explicitly show six Linux `setsid`/`setpgid` adversarial regressions passed across normal completion, timeout, and output overflow.
+- Documentation-only HEAD `48b8a3235d8b23653764ef005ca5946598182545` passed One CI #44901074701 on Ubuntu #136836894258 and Windows #136836894522.
+- This does not provide Android/Termux adversarial execution. Issue #105 remains OPEN / NOT ACCEPTED; Windows evidence is limited to exact-source job logs already recorded.
