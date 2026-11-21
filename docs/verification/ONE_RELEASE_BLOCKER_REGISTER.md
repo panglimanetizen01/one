@@ -1034,3 +1034,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Regression source covers fork, vfork, posix_spawn, posix_spawnp, exec replacement, deadline, and stdout overflow. No native macOS build/test was run.
 - Narrowed guarantee only: single-process execution, not tree-kill. Brokered launchd/Mach-service process creation is unproven. `ProcessAdapter` metadata intentionally excludes macOS. `sandbox-exec` is deprecated and must fail closed if missing/rejected.
 - No change to accepted platform support. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — macOS process guard and documentation synchronization
+
+- Added macOS Seatbelt source candidate in `interop.rs`: `/usr/bin/sandbox-exec` with `(version 1) (allow default) (deny process-fork)`. Source commit `ff60c7bd8a058f0950a0d67bb596d94feb8e6803`; adversarial test source commits `ab799dd5faa5c50b5c75069c1d0b91a43511df93` and `3bad0196e9352871d09cb9b966cf6b393a866603`.
+- XNU source inspection: `fork1()` invokes `mac_proc_check_fork()` for process creation, and the spawn creation kind is `PROC_CREATE_SPAWN`; `posix_spawn` routes through `fork1`. This supports denying direct fork/vfork/posix_spawn with Seatbelt. It is design evidence only, not native macOS execution.
+- Candidate probes cover fork, vfork, posix_spawn, posix_spawnp, exec replacement, timeout, and output overflow. NOT BUILT / NOT RUN.
+- This is narrowed single-process mode, not descendant-tree termination. Brokered process creation via launchd/Mach services is not proven blocked. `ProcessAdapter` continues to exclude macOS; no support claim is promoted. `sandbox-exec` is deprecated and must fail closed if missing/rejected.
+- Updated existing docs: Issue #105 status, implementation status, evidence matrix, live checkpoint, changelog, architecture note, user feature status, master continuation prompt, and Notion Skill. No duplicate tracker created.
+- Issue #105 remains OPEN / NOT ACCEPTED. No main, merge, verifier pin, fixed ledger/DoD, or release state changed.
