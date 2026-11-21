@@ -933,3 +933,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - GitHub status context ci/circleci: one-linux is SUCCESS on this exact SHA. CircleCI provider page/logs were inaccessible to the inspection channel; no claim is made about independently reviewed step logs.
 - Subsequent PR #113 commits are documentation-only through HEAD 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9; compare confirms no source changes after tested SHA.
 - This verifies the narrow Windows-only language bridge and Linux policy path. POSIX deletion remains UnsupportedPlatform. Issue #104 remains OPEN / NOT ACCEPTED; E4, host-root integration, and remaining platform primitive gaps remain open.
+
+## 2026-11-21 — current source and native-platform boundary
+
+- Current code-bearing PR #113 SHA: `7744e46849f97b5868a6a75ee365b6f72cca5609`. Documentation-only PR HEAD: `48b8a3235d8b23653764ef005ca5946598182545`.
+- Linux nested writes use detached-mount/no-symlink/beneath-resolution and atomic rename; Windows uses native handle-relative operations. GitHub Actions One CI #44900738968 passed Ubuntu #136835893296 and Windows 2025 #136835893110 (Build/Clippy/Tests/Complete job).
+- Android read/write remain direct-child-only. Multi-component paths fail closed because Termux/app seccomp may SIGSYS on `openat2`; no userspace component-walk fallback is acceptable.
+- macOS nested read/write source candidate uses XNU beneath/no-follow/unique flags and `renameatx_np`; its native tests are not yet run on macOS.
+- Delete is implemented/verified only on Windows; Linux/Android/macOS remain unavailable. A safe POSIX handle-bound delete primitive is still missing.
+- Issue #104 remains OPEN / NOT ACCEPTED. Hosted Ubuntu/Windows CI does not establish Android/macOS runtime or POSIX delete acceptance.
