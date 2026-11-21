@@ -959,3 +959,7 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 ## 2026-11-21 — latest combined source/test SHA
 
 - Latest candidate is `79593d2f225284eff841e67c8eb9a1e005611981`; it includes the ProcessAdapter macOS exclusion test and the direct-spawn-only Seatbelt comment clarification. No runtime behavior changed in this final comment-only commit. NOT BUILT / NOT TESTED.
+
+## 2026-11-21 — latest candidate refresh
+
+- Latest combined source/test candidate is `618db752953eff4672787453b0a8877405f4ebe8`; the final source change only corrects the `FilesystemAuthority::write` platform-contract comment. All macOS nested-write and Seatbelt source changes remain NOT BUILT / NOT TESTED.
