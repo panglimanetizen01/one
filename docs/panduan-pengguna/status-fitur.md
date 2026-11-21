@@ -418,3 +418,12 @@ Jembatan bahasa untuk perintah hapus berkas "target.txt" sudah lulus GitHub Acti
 Di Windows, tes membuktikan grant eksplisit dari policy mencapai adapter native, sedangkan tanpa grant file tetap utuh. Tes junction direktori asli juga membuktikan file sentinel di luar root tidak berubah. Status CircleCI ci/circleci: one-linux pada SHA yang sama SUCCESS.
 
 Status fitur: Verified untuk penghapusan file melalui backend Windows saja. Belum didukung pada Linux, Android, atau macOS; platform tersebut tetap fail-closed. Issue #104 masih OPEN / NOT ACCEPTED karena kontrak lintas platform, host-root integration, E4 adversarial matrix, dan release acceptance belum selesai.
+
+## Filesystem delete — kandidat PR #113 (21 November 2026)
+
+- Source bahasa `hapus berkas`, semantic capability `filesystem.delete`, `FileDeleteAdapter`, dan policy `EffectClass::Delete` tersedia pada kandidat PR #113.
+- Capability delete harus diberikan secara eksplisit. Grant `filesystem.read`, `filesystem.write`, dan capability filesystem coarse tidak menyiratkan izin delete.
+- Backend native handle-bound delete hanya tersedia pada Windows: parent handles ditahan tanpa `FILE_SHARE_DELETE`; leaf dibuka dengan `DELETE_ACCESS`, diperiksa reparse/volume/jenis file/link count, lalu disposition diterapkan ke handle tervalidasi.
+- CLI sekarang menerima `--izinkan filesystem.delete --target <path>` dan menghubungkannya ke host `FilesystemAuthority`. Implementasi dan tes CLI pada branch terbaru belum dibangun/diuji.
+- Linux, Android, dan macOS belum memiliki primitive delete yang terbukti setara dengan kontrak object-identity dan race confinement; adapter tetap tidak tersedia/fail-closed. Jangan gunakan check-then-`unlinkat` sebagai pengganti.
+- Issue #104 tetap OPEN / NOT ACCEPTED; status eksperimental ini hanya berlaku pada kandidat PR, bukan canonical `main` atau rilis.
