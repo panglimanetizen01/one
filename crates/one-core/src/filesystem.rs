@@ -1094,11 +1094,31 @@ mod macos_native {
         }
     }
 
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    enum MacWriteStage {
+        TempCreated,
+        Written,
+        Synced,
+        BeforeRename,
+    }
+
     fn write_nested_relative(
         root: &File,
         relative: &Path,
         bytes: &[u8],
     ) -> Result<(), FilesystemError> {
+        write_nested_relative_with_hook(root, relative, bytes, |_| Ok(()))
+    }
+
+    fn write_nested_relative_with_hook<F>(
+        root: &File,
+        relative: &Path,
+        bytes: &[u8],
+        mut hook: F,
+    ) -> Result<(), FilesystemError>
+    where
+        F: FnMut(MacWriteStage) -> Result<(), FilesystemError>,
+    {
         use std::os::fd::AsRawFd;
 
         const RESOLVE_FLAGS: i32 = O_RESOLVE_BENEATH | O_NOFOLLOW_ANY;
@@ -1176,6 +1196,7 @@ mod macos_native {
         {
             return Err(FilesystemError::ResolutionFailed);
         }
+        hook(MacWriteStage::TempCreated)?;
 
         let parent_path = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
         let parent_name = CString::new(parent_path.as_os_str().as_bytes())
@@ -1190,7 +1211,10 @@ mod macos_native {
 
         let result = (|| {
             temporary.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
+            hook(MacWriteStage::Written)?;
             temporary.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+            hook(MacWriteStage::Synced)?;
+            hook(MacWriteStage::BeforeRename)?;
             let renamed = unsafe {
                 renameatx_np(
                     root_fd,
@@ -1312,6 +1336,44 @@ mod macos_native {
                 Err(FilesystemError::ResolutionFailed)
             );
             assert_eq!(std::fs::read(&sentinel).unwrap(), b"outside");
+
+            drop(authority);
+            std::fs::remove_dir_all(root).unwrap();
+            std::fs::remove_dir_all(outside).unwrap();
+        }
+
+        #[test]
+        fn nested_write_parent_moved_outside_root_before_publish_fails_closed() {
+            let root = unique_root("nested-parent-race");
+            let outside = unique_root("nested-parent-race-outside");
+            let nested = root.join("nested");
+            let moved = outside.join("nested");
+            std::fs::create_dir_all(&nested).unwrap();
+            std::fs::create_dir_all(&outside).unwrap();
+            let target = nested.join("target.txt");
+            std::fs::write(&target, b"outside-safe").unwrap();
+
+            let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            let result = super::write_nested_relative_with_hook(
+                &authority.root,
+                std::path::Path::new("nested/target.txt"),
+                b"must-not-escape",
+                |stage| {
+                    if stage == super::MacWriteStage::BeforeRename {
+                        std::fs::rename(&nested, &moved)
+                            .expect("move parent outside root before final path resolution");
+                    }
+                    Ok(())
+                },
+            );
+            assert!(result.is_err(), "publication must fail once its parent leaves the root");
+            assert_eq!(std::fs::read(moved.join("target.txt")).unwrap(), b"outside-safe");
+            assert!(
+                std::fs::read_dir(&root).unwrap().all(|entry| {
+                    !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
+                }),
+                "failed publication must clean up its root staging file"
+            );
 
             drop(authority);
             std::fs::remove_dir_all(root).unwrap();
