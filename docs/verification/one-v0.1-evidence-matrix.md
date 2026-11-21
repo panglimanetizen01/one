@@ -1007,3 +1007,13 @@ The six Ubuntu process regressions cover setsid and setpgid escape attempts duri
 | `48b8a3235d8b23653764ef005ca5946598182545` | One CI #44901074701 / #136836894522 | Windows 2025 | SUCCESS | Docs-only descendant; Build, Clippy, Tests, Complete job |
 
 CircleCI on docs HEAD `48b8a323...` remains PENDING (workflow `1d5dbab5-d047-4bbf-b5b5-a394707d2289`, job `826b2a25-a1a2-4c06-a011-aa56a1bc6c0f)); no CircleCI PASS is claimed.
+
+## 2026-11-21 — macOS nested-write candidate and pending exact HEAD
+
+| SHA | Evidence | Platform | Result | Scope |
+|---|---|---|---|---|
+| `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` | Source inspection | macOS/XNU candidate | IMPLEMENTED / NOT BUILT | Nested atomic-write candidate uses root-staged temp + beneath/no-follow `renameatx_np`; native tests are source-only |
+| `830a70e5c5d07fd87c5c1e792853e146be04a232` | One CI #44901974950 | Ubuntu + Windows matrix | IN_PROGRESS at readback | Includes correction of stale macOS public-authority integration assertions; does not compile/run macOS cfg tests |
+| `830a70e5c5d07fd87c5c1e792853e146be04a232` | CircleCI `ci/circleci: one-linux` | Linux | PENDING | Workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2` |
+
+No native macOS result is claimed. Android nested paths and POSIX delete remain fail-closed; Issue #104 remains OPEN / NOT ACCEPTED.
