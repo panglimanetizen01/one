@@ -969,3 +969,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Code checkpoint SHA: `0fa43eb0be53c8e79424597ece055147872b35c4`. Language bridge tests are NOT YET BUILT / TESTED. The native Windows delete implementation remains separately verified at source/test SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` (One CI #44870781889 SUCCESS).
 - Next evidence must be exact-SHA CI for the current language bridge, including parser/semantic/IR tests, default-denial/no-side-effect, Windows explicit-grant deletion, and all existing workspace tests. Do not repeat the prior native-only test run; it does not cover these source changes.
 - B-002 / Issue #104 remains OPEN / NOT ACCEPTED. POSIX delete, Android/macOS nested path boundaries, Linux nested mount/privilege evidence, host-root integration, and full E4 remain outstanding.
+
+## B-002 exact-SHA language bridge evidence — 2026-11-21
+
+- Source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4: GitHub Actions One CI run #44871756593 terminal SUCCESS.
+- Ubuntu job #136747608726: Build/Clippy/Tests SUCCESS; one-core 181 passed / 0 failed / 3 ignored.
+- Windows Server 2025 job #136747608925: Build/Clippy/Tests SUCCESS; one-core 167 passed / 0 failed.
+- Windows log confirms explicit-grant interpreter execution, parser/IR mapping, default denial without side effects, adapter availability/authority checks, and actual junction escape rejection with unchanged outside sentinel.
+- GitHub commit status ci/circleci: one-linux SUCCESS on the same exact SHA; CircleCI provider logs were not independently inspected because the job URL was inaccessible.
+- PR #113 documentation-only descendants through 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9 do not change the tested source.
+- This closes the narrow Windows-only delete language bridge test slice, not B-002 or Issue #104 as a whole. POSIX delete remains unsupported; E4, host-root integration, and full adversarial platform acceptance remain outstanding.
