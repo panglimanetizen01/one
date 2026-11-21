@@ -222,3 +222,24 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 
 - Source candidate `568d9360f0beec63c10fbeae9cac63f384bd082f` preserves macOS direct-child reads with the original `O_NOFOLLOW` path on older kernels; only nested reads require the newer XNU beneath/no-follow/unique flags. Nested writes remain fail-closed.
 - Clippy issues surfaced on earlier source candidate `9fe53815f83701a62536472f8a3c87cebac22e7a` were corrected in descendant commits: HTTP authority delimiter search uses a character array; SQLite limit/progress-handler `Result`s are propagated as `BackendFailure` so resource controls fail closed. The failing Clippy run does not verify these fixes.
+
+## filesystem.delete effect path — 2026-11-21
+
+The Windows-native deletion slice now has a user-language bridge. The following Mermaid flow is the canonical narrow path; the Windows-only adapter availability gate is intentional.
+
+```mermaid
+flowchart TD
+    A[Source: hapus berkas path] --> B[Parser and semantic text-target validation]
+    B --> C[IR: filesystem.delete / Delete]
+    C --> D[Runtime policy: explicit FilesystemDelete grant]
+    D -->|Denied| E[No adapter call; no side effect]
+    D -->|Allowed| F[filesystem.file.delete adapter]
+    F --> G[Injected FilesystemAuthority]
+    G --> H[Windows handle-relative traversal]
+    H --> I[Validate reparse, volume, file type, link count]
+    I --> J[NtSetInformationFile on validated leaf handle]
+    J --> K[Success]
+    F -->|Non-Windows| L[Unavailable / fail closed]
+```
+
+The source bridge at `0fa43eb0be53c8e79424597ece055147872b35c4` is NOT YET BUILT / TESTED. Native Windows backend evidence remains attached to earlier exact SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` only. Issue #104 remains OPEN / NOT ACCEPTED.
