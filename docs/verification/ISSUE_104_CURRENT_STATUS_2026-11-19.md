@@ -903,3 +903,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Scope limitation: these focused tests do not establish nested-path Android read/write support, mount-boundary adversarial coverage beyond the named cases, hard-link fixture execution, or complete Issue #104 E4 acceptance. Do not promote unsupported nested operations.
 - Combined exact-SHA evidence now includes Android Termux focused validation + Clippy at `7d2409a...`, main GitHub Actions Ubuntu/Windows success and CircleCI status-context success at code SHA `3a9badf...`, and the independent verifier non-acceptance candidate matrix at the same code SHA (Linux 279 passed/0 failed/4 ignored; Windows 257 passed/0 failed/1 ignored). Keep each result attached to its actual tested SHA and role.
 - PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 pin, ledger pin, acceptance contract, tests, and DoD remain unchanged.
+
+## 2026-11-21 — Windows handle-bound delete implementation slice
+
+- Exact source commit: ffa51679e998e97bca0730a182d8887a245e03d0 on PR #113 branch security/issue-104-root-confinement-20261118.
+- Added FilesystemAuthority::delete and Windows delete_relative using retained component handles and NtSetInformationFile(FileDispositionInformation) on the validated leaf handle.
+- Parent directory handles omit FILE_SHARE_DELETE, blocking parent rename while the operation is active. The leaf is opened with DELETE_ACCESS and no delete sharing, then checked for reparse point, volume, regular-file type, and exactly one link before disposition is applied.
+- Only Windows dispatches to the native implementation. Linux, Android, macOS, and other platforms return UnsupportedPlatform without attempting path-based deletion. Directory deletion is not part of this slice.
+- Added tests delete_uses_validated_handle_and_removes_nested_regular_file and delete_rejects_hard_links_without_removing_either_name. They are NOT BUILT / NOT RUN at this checkpoint.
+- Primitive map: Linux unlinkat is name-based and no fd-bound delete is implemented; Android nested resolution is constrained by observed openat2 seccomp termination and unlinkat is still name-based; macOS has kernel-bounded nested reads but no proven nested atomic write or handle-bound delete primitive; Windows now has a source implementation for handle-bound deletion.
+- This is a Windows source implementation slice, not platform acceptance. Issue #104 remains OPEN / NOT ACCEPTED; E4, host-root integration, race/manipulation evidence, and cross-platform validation remain outstanding. No capability or language adapter was added.
