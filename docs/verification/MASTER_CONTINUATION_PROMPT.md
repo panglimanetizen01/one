@@ -137,3 +137,11 @@ Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8
 - The previous exact SHA `168ff06e7a8d09e575e6ac71513399c9f1f4f994` failed GitHub Actions Build on Ubuntu and Windows due to missing parentheses around unsafe `setpgid` / `setsid` expressions in `interop.rs:1207,1209`. Fixed in `502a888...`.
 - Post-fix SHA has no status context/workflow run yet; do not call it built or passed. CircleCI FAILURE on the previous SHA has no provider logs or pipeline revision mapping; its root cause remains UNKNOWN.
 - Keep implementation-first priority; complete the remaining production capability gaps before broad release verification. Read the blocker register and Termux worktree map before further repository/Termux actions.
+
+## Exact-SHA CI handoff — 2026-11-21
+
+- PR #113 HEAD: `7744e46849f97b5868a6a75ee365b6f72cca5609`, base `181ad350d8f0db53cda654c4d378425fbdd6ab24`, OPEN / DRAFT / UNMERGED.
+- GitHub Actions One CI #44900738968: Ubuntu #136835893296 and Windows 2025 #136835893110 terminal SUCCESS; Build/Clippy/Tests/Complete job all SUCCESS.
+- Ubuntu executed six Linux setsid/setpgid adversarial regressions across normal completion, timeout, and output overflow; all passed. Android/Termux remains outstanding.
+- CircleCI on this SHA is PENDING (workflow `6e00388e-687e-497b-b95d-20a38a2cb535`, job `753aeb6f-e6cf-40d2-ada0-daef15471b88`); provider revision/log evidence unavailable.
+- Continue implementation-first from B-002 Issue #104 P0; keep Issue #104/#105 OPEN / NOT ACCEPTED and do not repeat the already-passed Ubuntu/Windows GitHub Actions suite absent a source/input change.
