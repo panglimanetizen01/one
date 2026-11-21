@@ -973,3 +973,7 @@ XNU source inspection supports that `fork1()` applies `mac_proc_check_fork()` to
 ## 2026-11-21 — latest combined source/test candidate
 
 - Latest exact candidate `79593d2f225284eff841e67c8eb9a1e005611981` includes the macOS ProcessAdapter exclusion regression and direct-spawn boundary clarification. It remains SOURCE ONLY / NOT BUILT / NOT TESTED. No evidence state is promoted.
+
+## 2026-11-21 — exact source candidate refresh
+
+- Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (comment-only correction after the source/test changes). All newly added macOS nested-write and Seatbelt tests remain SOURCE ONLY / NOT BUILT / NOT RUN.
