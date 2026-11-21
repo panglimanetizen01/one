@@ -1094,3 +1094,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated `MASTER_CONTINUATION_PROMPT.md` in commit `f040450b6845a7460a89d0cbd92935f09b590166` to identify `618db752953eff4672787453b0a8877405f4ebe8` as the latest combined source/test candidate.
 - Documentation-only; no evidence or acceptance state changed.
+
+## 2026-11-21 — latest candidate checkpoint docs synchronized
+
+- Updated implementation status (`680fd8a56bb1b301d42514384637a183cb6d3da5`), evidence matrix (`d5acd54b632e014aad029fe725f44433b4f276e6`), and live checkpoint (`b1dd6d8334a96da1fd17f2913abd8265bdf9cdf7`) with latest combined source/test candidate `618db752953eff4672787453b0a8877405f4ebe8`.
+- These are documentation-only. All newly added macOS source/test candidates remain unbuilt and untested.
