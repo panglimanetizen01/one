@@ -1099,3 +1099,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated implementation status (`680fd8a56bb1b301d42514384637a183cb6d3da5`), evidence matrix (`d5acd54b632e014aad029fe725f44433b4f276e6`), and live checkpoint (`b1dd6d8334a96da1fd17f2913abd8265bdf9cdf7`) with latest combined source/test candidate `618db752953eff4672787453b0a8877405f4ebe8`.
 - These are documentation-only. All newly added macOS source/test candidates remain unbuilt and untested.
+
+## 2026-11-21 — exact build failure diagnosis and syntax fix
+
+- Refreshed PR #113 exact HEAD before the fix: `168ff06e7a8d09e575e6ac71513399c9f1f4f994`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; PR OPEN / DRAFT / UNMERGED.
+- GitHub Actions run #44898144880 failed on both Ubuntu job #136828104281 and Windows 2025 job #136828104468. Both reached the `Build` step; Clippy and Tests were skipped.
+- Provider logs identify a deterministic Rust parse/type error in `crates/one-core/src/interop.rs`: unparenthesized unsafe block expressions before `== 0` and `>= 0` at lines 1207 and 1209. This is the confirmed root cause of the GitHub Actions build failure on the exact pre-fix SHA; it is not inferred from a CircleCI status label.
+- Minimal source fix committed as `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`: parenthesize the `libc::setpgid(0, 0)` and `libc::setsid()` unsafe expressions before comparison. No process-containment behavior or security boundary changed.
+- The same pre-fix SHA had CircleCI context `ci/circleci: one-linux = FAILURE` (workflow `16c4f795-1bcb-4a24-9935-ffd0e553f30c`, job `b7e21b09-8205-4d29-a9c7-a2f555e5e913`). CircleCI pipeline/revision/job membership and provider step logs were not available, so the CircleCI-specific root cause remains UNKNOWN; do not conflate it with the independently observed GitHub Actions compiler failure.
+- At post-fix readback, PR #113 HEAD is `502a888...`; GitHub combined status has no contexts and no new GitHub Actions run is yet associated with this SHA. The fix is committed, not yet rebuilt. No test, Clippy, verifier, or platform PASS is claimed.
+- Next: obtain a fresh build on `502a888...`; if no automatic workflow starts, use an authorized branch-scoped CI trigger. Preserve the implementation-first queue; continue remaining product implementation after the compile blocker is cleared. B-001 remains PARTIAL / NOT CLOSED; Issue #104/#105 remain OPEN / NOT ACCEPTED.
