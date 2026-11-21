@@ -1204,9 +1204,9 @@ mod tests {
         assert!(child >= 0, "fork failed: {}", std::io::Error::last_os_error());
         if child == 0 {
             let escaped = if use_setpgid {
-                unsafe { libc::setpgid(0, 0) } == 0
+                (unsafe { libc::setpgid(0, 0) }) == 0
             } else {
-                unsafe { libc::setsid() } >= 0
+                (unsafe { libc::setsid() }) >= 0
             };
             if escaped {
                 let mut pid = unsafe { libc::getpid() } as u32;
