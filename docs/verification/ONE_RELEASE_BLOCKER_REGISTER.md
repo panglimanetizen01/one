@@ -930,3 +930,18 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - This is strong exact-SHA Windows filesystem test evidence, but the mirror candidate matrix is non-acceptance only. The full E4 adversarial workflow still reads the unchanged protected E4 pin and was not re-run against this candidate. Windows native runtime workflow also uses that E4 pin. Do not claim complete E4 acceptance from this matrix.
 - Source SHA `3a9badf...` includes Android correction `ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4`; Termux tests on older SHA `fd727e8...` do not validate this later Android change. Current-SHA Android focused tests and Clippy remain required.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, protected E4 pin, ledger pin, acceptance criteria, test contracts, or DoD changed.
+
+
+## 2026-11-21 — Android/Termux current-SHA validation completed
+
+- User confirmed the official Termux worktree `$HOME/one-pr113` was clean before synchronization and fast-forwarded to exact branch HEAD `7d2409a9237ee2a7e5dfd34558533787e83b4528`.
+- On that exact SHA, `cargo clippy --workspace --all-targets -- -D warnings` completed successfully.
+- Four Android-focused tests each passed 1/1:
+  - `android_direct_child_read_and_atomic_write_work_with_root_handle`
+  - `android_leaf_symlinks_and_nested_paths_fail_closed`
+  - `android_nested_reads_fail_closed_without_openat2`
+  - `android_root_final_symlink_is_rejected`
+- This validates the Android direct-child read/atomic-write path and the tested fail-closed behavior for leaf symlinks, nested paths, and a final-component root symlink on the user's Termux/Android environment. The code-bearing source is unchanged from `3a9badf1aa281a6dbe37de2338776caa90288cdd`; `7d2409a...` is three documentation-only commits ahead.
+- Scope limitation: these focused tests do not establish nested-path Android read/write support, mount-boundary adversarial coverage beyond the named cases, hard-link fixture execution, or complete Issue #104 E4 acceptance. Do not promote unsupported nested operations.
+- Combined exact-SHA evidence now includes Android Termux focused validation + Clippy at `7d2409a...`, main GitHub Actions Ubuntu/Windows success and CircleCI status-context success at code SHA `3a9badf...`, and the independent verifier non-acceptance candidate matrix at the same code SHA (Linux 279 passed/0 failed/4 ignored; Windows 257 passed/0 failed/1 ignored). Keep each result attached to its actual tested SHA and role.
+- PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 pin, ledger pin, acceptance contract, tests, and DoD remain unchanged.
