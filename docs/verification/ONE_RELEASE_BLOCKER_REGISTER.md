@@ -798,3 +798,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - CircleCI context `ci/circleci: one-linux` for source SHA `74df3aa901732c8eb3adaac728162715fc3a4961` is PENDING. No CircleCI result claimed.
 - User-confirmed Termux worktree last reached `1e8e19dcf3833aaff7169427350fa50b7df1f545`; it must safely fast-forward to the current remote before building. Do not overwrite changes.
 - Issue #104 remains OPEN / NOT ACCEPTED. No broad verification or release acceptance is promoted.
+
+
+## 2026-11-21 — Termux Android compile blockers on exact SHA and source correction
+
+- User-confirmed clean $HOME/one-pr113 worktree was fast-forwarded to PR #113 HEAD 04143d1a9b11f55e1f2ae38960f35d32d2904a11; Rust 1.99.1, host aarch64-linux-android.
+- On exact SHA 04143d1a9b11f55e1f2ae38960f35d32d2904a11, both cargo clippy --workspace --all-targets -- -D warnings and cargo test -p one-core filesystem::android_filesystem_tests -- --nocapture stopped at compilation with two errors: Android nested writer called File::write_all without importing std::io::Write for Android; Android Statx derived Default with [u8; 76], unsupported by this Android standard-library toolchain.
+- Corrected source on PR branch in commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4: scope std::io::Write to Linux + Android, and split the 76-byte Statx reserved ABI padding into [u8; 32] + [u8; 32] + [u8; 12]. The total padding and 256-byte Statx layout are preserved; compile-time size assertion remains.
+- Commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4 is NOT YET BUILT/TESTED. User must fast-forward the clean Termux worktree and rerun both commands on this exact new SHA. No test, Clippy, platform-support, or E4 acceptance claim is made.
+- Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. No main, verifier pin, tests, or acceptance criteria changed.
