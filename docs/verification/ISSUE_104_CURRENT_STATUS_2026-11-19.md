@@ -875,3 +875,16 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - The earlier compile regression at `259bf345...` from nonexistent `PlatformKind::current()` is superseded by the explicit supported-platform selection correction at `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7`, now covered by the exact-SHA focused test and green workspace CI.
 - These results establish selected test + Clippy success and green GitHub Actions/CircleCI status for this SHA. They do NOT close Issue #104 or establish all E4 requirements: other-platform backends, mount-boundary/race evidence, host integration, and full adversarial acceptance remain tracked separately.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, acceptance criteria, test contracts, or DoD were changed.
+
+
+## 2026-11-21 — Independent Windows verifier exact-SHA result for PR #113
+
+- Exact source SHA: `3a9badf1aa281a6dbe37de2338776caa90288cdd` (PR #113 current HEAD at verification time).
+- Independent verifier commit `1e3116c90904e1cabcee838cb1806a14dd3cb720` advanced only the non-acceptance `CANDIDATE_BUILD_COMMIT.txt` pin to this source SHA. Protected `CANONICAL_COMMIT.txt` (E4 acceptance) and `LEDGER_SOURCE_COMMIT.txt` were not changed.
+- Independent verifier run #44855478984: Linux job #136696541594 SUCCESS (279 passed, 0 failed, 4 ignored across 27 test-result summaries); Windows Server 2025 job #136696541787 SUCCESS (257 passed, 0 failed, 1 ignored across 27 summaries). Both jobs completed the full `cargo test --locked -p one-core -- --nocapture` suite.
+- Windows log confirms seven `filesystem_windows_tests` cases executed and passed, including `filesystem_reader_rejects_directory_junction_escape`, absolute in-root read, absolute out-of-root read/write with unchanged sentinels, parent traversal rejection, text write, oversized-write rejection, and atomic-replace-denied preservation. The junction fixture uses an actual Windows `mklink /J` directory junction.
+- Main repository GitHub Actions run #44854675780 on the same exact source SHA: Ubuntu job #136693963917 and Windows Server 2025 job #136693964189 SUCCESS; Build, Clippy, and Tests steps all SUCCESS.
+- CircleCI status context `ci/circleci: one-linux` on the same exact SHA is SUCCESS (workflow `3f147cc4-82fa-4b0b-a2d5-69cc487b4555`, job `a83dbb0c-1ade-47a5-970d-28d8d2b901d6`). This remains status-context evidence; provider pipeline revision and step logs were not independently inspected.
+- This is strong exact-SHA Windows filesystem test evidence, but the mirror candidate matrix is non-acceptance only. The full E4 adversarial workflow still reads the unchanged protected E4 pin and was not re-run against this candidate. Windows native runtime workflow also uses that E4 pin. Do not claim complete E4 acceptance from this matrix.
+- Source SHA `3a9badf...` includes Android correction `ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4`; Termux tests on older SHA `fd727e8...` do not validate this later Android change. Current-SHA Android focused tests and Clippy remain required.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, protected E4 pin, ledger pin, acceptance criteria, test contracts, or DoD changed.
