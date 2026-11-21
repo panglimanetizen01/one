@@ -893,3 +893,14 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - These language-bridge tests have NOT RUN on this SHA. Native Windows delete backend tests remain separately proven at `6f2d5e2...`; do not conflate the two exact-SHA evidence sets.
 - Linux/Android/macOS delete stays unavailable/fail-closed. Android nested paths remain unsupported in the observed Termux seccomp profile; macOS nested writes remain fail-closed; Linux nested writes remain privilege/kernel dependent.
 - Issue #104 remains OPEN / NOT ACCEPTED. No protected E4 pin, ledger, acceptance criteria, main, PR merge, or release state changed.
+
+## 2026-11-21 — filesystem.delete language bridge CI terminal
+
+- Exact source/test SHA: 0fa43eb0be53c8e79424597ece055147872b35c4.
+- GitHub Actions One CI run #44871756593 terminal SUCCESS.
+- Ubuntu job #136747608726: Build, Clippy, Tests SUCCESS; one-core 181 passed / 0 failed / 3 ignored.
+- Windows Server 2025 job #136747608925: Build, Clippy, Tests SUCCESS; one-core 167 passed / 0 failed.
+- Windows logs explicitly show parser action, IR mapping, explicit-grant interpreter deletion, default-denial/no-side-effect, adapter checks, and actual directory-junction escape sentinel-preservation tests passing.
+- GitHub status context ci/circleci: one-linux SUCCESS on the same SHA. Provider job URL/logs could not be opened by the available inspection path; retain status-context-only wording.
+- Current PR #113 HEAD is 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9, 12 commits ahead of the tested source SHA; compare confirms all 12 commits are documentation-only.
+- Narrow Windows-only filesystem.delete bridge is Verified. POSIX deletion remains unsupported; Issue #104 remains OPEN / NOT ACCEPTED.
