@@ -1839,6 +1839,54 @@ mod windows_native {
             std::fs::remove_dir_all(base).unwrap();
         }
 
+        fn create_junction(link: &std::path::Path, target: &std::path::Path) {
+            use std::os::windows::process::CommandExt;
+
+            let command = format!("/C mklink /J \"{}\" \"{}\"", link.display(), target.display());
+            let output = std::process::Command::new("cmd.exe")
+                .raw_arg(command)
+                .output()
+                .expect("cmd.exe must be available on Windows");
+            assert!(
+                output.status.success(),
+                "junction creation failed: {}; stdout={}; stderr={}",
+                output.status,
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+
+        #[test]
+        fn delete_rejects_directory_junction_escape_without_touching_outside_file() {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock must be after Unix epoch")
+                .as_nanos();
+            let root = std::env::temp_dir().join(format!(
+                "one-win-delete-junction-{}-{nonce}",
+                std::process::id()
+            ));
+            let outside = root.with_extension("outside");
+            std::fs::create_dir_all(&root).unwrap();
+            std::fs::create_dir_all(&outside).unwrap();
+            let sentinel = outside.join("sentinel.txt");
+            std::fs::write(&sentinel, b"OUTSIDE_SENTINEL").unwrap();
+            let junction = root.join("junction");
+            create_junction(&junction, &outside);
+
+            let authority = super::super::FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            assert_eq!(
+                authority.delete("junction\\sentinel.txt"),
+                Err(FilesystemError::ResolutionFailed)
+            );
+            assert_eq!(std::fs::read(&sentinel).unwrap(), b"OUTSIDE_SENTINEL");
+
+            drop(authority);
+            std::fs::remove_dir(&junction).unwrap();
+            std::fs::remove_dir_all(root).unwrap();
+            std::fs::remove_dir_all(outside).unwrap();
+        }
+
         #[test]
         fn retained_delete_handle_blocks_leaf_rename() {
             let nonce = SystemTime::now()
