@@ -21,8 +21,16 @@ concurrency:
 
 jobs:
   macos-native-filesystem:
-    name: macOS native filesystem tests (Apple Silicon)
-    runs-on: macos-15
+    name: macOS native filesystem tests (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-26
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
       - name: Checkout exact source
@@ -55,7 +63,7 @@ jobs:
           uname -a
           sw_vers
           test "$(uname -s)" = "Darwin"
-          test "$(uname -m)" = "arm64"
+          test "$(uname -m)" = "${{ matrix.arch }}"
 
       - name: Run macOS-specific filesystem regressions
         shell: bash
