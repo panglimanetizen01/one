@@ -32,8 +32,8 @@ impl Interpreter {
   orchestrator.register(Box::new(DnsResolveAdapter::new()));
   if let Some(authority) = authority {
    orchestrator.register(Box::new(FileReadAdapter::with_authority(Arc::clone(&authority))));
-   orchestrator.register(Box::new(FileWriteAdapter::with_authority(authority)));
-    orchestrator.register(Box::new(FileDeleteAdapter::with_authority(Arc::clone(&authority))));
+   orchestrator.register(Box::new(FileWriteAdapter::with_authority(Arc::clone(&authority))));
+    orchestrator.register(Box::new(FileDeleteAdapter::with_authority(authority)));
   } else {
    orchestrator.register(Box::new(FileReadAdapter::new()));
    orchestrator.register(Box::new(FileWriteAdapter::new()));
@@ -120,5 +120,51 @@ mod scope_cleanup_tests {
         let environment = interpreter.environment.as_ref().expect("event environment should be retained");
         assert_eq!(environment.get("root"), Some(Value::Text("retained".into())));
         assert_eq!(environment.get("temporary"), None);
+    }
+}
+
+#[cfg(test)]
+mod filesystem_delete_language_tests {
+    use super::*;
+    use crate::governance::ScopeRule;
+
+    fn delete_program() -> IrProgram {
+        let program = crate::parse("hapus berkas \"target.txt\"\n").expect("delete source should parse");
+        let typed = crate::analyze(&program).expect("delete source should analyze");
+        crate::lower(&typed).expect("delete source should lower")
+    }
+
+    #[cfg(any(target_os = "linux", windows, target_os = "android", target_os = "macos"))]
+    #[test]
+    fn file_delete_is_denied_without_an_explicit_delete_grant_and_has_no_side_effect() {
+        let root = std::env::temp_dir().join(format!("one-delete-denied-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"KEEP").unwrap();
+        let authority = Arc::new(FilesystemAuthority::open(&root, 1024, 1024).unwrap());
+        let mut interpreter = Interpreter::with_orchestration_policy_and_filesystem_authority(ExecutionPolicy::default(), authority);
+        let error = interpreter.execute(&delete_program()).expect_err("delete must be denied by default");
+        assert_eq!(error.code, "N3209");
+        assert_eq!(std::fs::read(&target).unwrap(), b"KEEP");
+        drop(interpreter);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn explicit_delete_grant_reaches_the_windows_native_adapter() {
+        let root = std::env::temp_dir().join(format!("one-delete-allowed-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let target = root.join("target.txt");
+        std::fs::write(&target, b"DELETE_ME").unwrap();
+        let authority = Arc::new(FilesystemAuthority::open(&root, 1024, 1024).unwrap());
+        let policy = ExecutionPolicy::default()
+            .grant(Capability::FilesystemDelete)
+            .allow_scope(Capability::FilesystemDelete, ScopeRule::Target("target.txt".into()));
+        let mut interpreter = Interpreter::with_orchestration_policy_and_filesystem_authority(policy, authority);
+        interpreter.execute(&delete_program()).expect("explicitly granted delete should execute on Windows");
+        assert!(!target.exists());
+        drop(interpreter);
+        std::fs::remove_dir_all(root).unwrap();
     }
 }
