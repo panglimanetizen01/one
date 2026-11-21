@@ -1079,3 +1079,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - XNU `kern_prot.c` implements `setsid()` and `setpgid()` through `setsid_internal()` / `enterpgrp()` without a `mac_proc_check_setpgid` / `mac_proc_check_setsid` hook; `kern_proc.c::enterpgrp` likewise contains no such MAC check.
 - Therefore Seatbelt `deny process-fork` is a narrow no-descendants strategy, not a way to allow child processes while guaranteeing they cannot escape a process group. Do not enable a macOS process-tree backend on this basis.
 - The current macOS runtime candidate blocks direct fork/vfork/posix_spawn, permits exec replacement, and remains unadvertised. Brokered launchd/Mach-service spawn is still unresolved. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — master prompt synchronized with XNU process-group hook findings
+
+- Updated `MASTER_CONTINUATION_PROMPT.md` in commit `021a583a9c0281b86b3c6ccaf3a5081c32680269` to state that XNU `setsid`/`setpgid` paths do not expose an equivalent MAC policy hook, so Seatbelt cannot safely allow descendants and rely on process-group confinement.
+- Documentation-only. The macOS Seatbelt candidate remains unadvertised; no source/test evidence or acceptance state changed.
