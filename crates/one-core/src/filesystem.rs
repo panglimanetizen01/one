@@ -1093,6 +1093,24 @@ mod macos_native {
         committed: bool,
     }
 
+    impl RootTempFileGuard {
+        // Surface cleanup failures to the caller instead of silently leaving a
+        // staging entry behind. Drop remains a best-effort final safety net.
+        fn cleanup(&mut self) -> Result<(), FilesystemError> {
+            if self.committed {
+                return Ok(());
+            }
+            let result = unsafe { libc::unlinkat(self.root_fd, self.name.as_ptr(), 0) };
+            if result == 0
+                || std::io::Error::last_os_error().raw_os_error() == Some(libc::ENOENT)
+            {
+                self.committed = true;
+                return Ok(());
+            }
+            Err(FilesystemError::IoFailure)
+        }
+    }
+
     impl Drop for RootTempFileGuard {
         fn drop(&mut self) {
             if !self.committed {
@@ -1241,6 +1259,9 @@ mod macos_native {
             Ok(())
         })();
 
+        if result.is_err() {
+            temporary_guard.cleanup()?;
+        }
         result
     }
 
@@ -1387,6 +1408,47 @@ mod macos_native {
             drop(authority);
             std::fs::remove_dir_all(root).unwrap();
             std::fs::remove_dir_all(outside).unwrap();
+        }
+
+        #[test]
+        fn nested_write_cleans_staging_file_after_each_injected_failure() {
+            for stage in [
+                super::MacWriteStage::TempCreated,
+                super::MacWriteStage::Written,
+                super::MacWriteStage::Synced,
+                super::MacWriteStage::BeforeRename,
+            ] {
+                let root = unique_root("nested-cleanup");
+                let nested = root.join("nested");
+                std::fs::create_dir_all(&nested).unwrap();
+                let target = nested.join("target.txt");
+                std::fs::write(&target, b"before").unwrap();
+
+                let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+                let result = super::write_nested_relative_with_hook(
+                    &authority.root,
+                    std::path::Path::new("nested/target.txt"),
+                    b"must-not-publish",
+                    |current| {
+                        if current == stage {
+                            Err(FilesystemError::IoFailure)
+                        } else {
+                            Ok(())
+                        }
+                    },
+                );
+                assert_eq!(result, Err(FilesystemError::IoFailure));
+                assert_eq!(std::fs::read(&target).unwrap(), b"before");
+                assert!(
+                    std::fs::read_dir(&root).unwrap().all(|entry| {
+                        !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
+                    }),
+                    "staging file must be removed after failure at {stage:?}"
+                );
+
+                drop(authority);
+                std::fs::remove_dir_all(root).unwrap();
+            }
         }
 
         #[test]
