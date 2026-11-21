@@ -447,3 +447,23 @@ Status fitur: Verified untuk penghapusan file melalui backend Windows saja. Belu
 - Regresi integrasi publik diperbaiki pada commit `830a70e5c5d07fd87c5c1e792853e146be04a232`: menguji byte hasil saat primitive tersedia, fail-closed tanpa efek samping pada kernel yang tidak mendukung, penolakan parent symlink, dan sentinel di luar root.
 - Kandidat masih SOURCE ONLY sampai dibangun dan dijalankan pada macOS asli. Jangan menganggap nested write macOS sudah menjadi fitur stabil.
 - Android nested path dan POSIX delete tetap tidak tersedia; Issue #104 masih OPEN / NOT ACCEPTED.
+
+## Pembaruan keamanan filesystem — 2026-11-21
+
+Status berikut hanya berlaku untuk kandidat PR #113 dan **belum menjadi fitur rilis di main**. PR #113 masih OPEN / DRAFT / UNMERGED dan Issue #104 masih OPEN / NOT ACCEPTED.
+
+| Platform | Batas kemampuan kandidat | Status keamanan |
+|---|---|---|
+| Linux | Read memakai openat2 dengan BENEATH, NO_SYMLINKS, NO_XDEV. Write direct-child didukung; nested write bergantung pada detached-mount primitive. | Fail-closed jika primitive nested tidak tersedia. |
+| Windows | Read/write/delete menggunakan native handle-relative backend, pemeriksaan reparse point dan volume serial, serta parent handle yang dipertahankan. | Regression junction nyata, absolute target di dalam root, volume-ID mismatch, hard-link, dan parent-rename tersedia; CI terbaru masih harus terminal. |
+| macOS 26 | Nested read dan atomic nested write menggunakan temporary sibling pada parent yang sudah divalidasi same-mount; publikasi root-relative dengan beneath/no-follow. | Native test 2026-11-21 lulus pada macOS 26. |
+| macOS 15 | Nested read tersedia. Nested atomic write mengembalikan UnsupportedPlatform. | Tetap fail-closed; jangan gunakan rename biasa atau fallback berbasis path. |
+| Android / Termux | Read/write direct-child memakai statx STATX_MNT_ID dan st_dev. | Nested path tetap ditolak karena openat2 dapat dihentikan seccomp dengan SIGSYS. Test mount-ID baru belum dijalankan pada perangkat Android nyata. |
+| POSIX delete | Belum tersedia selain Windows. | Tetap fail-closed; jangan mengganti dengan check-then-unlinkat yang rentan race. |
+
+**Bukti native macOS:** run #44906889694 pada SHA 6403592796b9827e4bffe26a982dfc66afc75d9d. Kedua runner macos-15 dan macos-26 masing-masing lulus 15 test macos_ (0 gagal, 4 ignored) dan 8 test nested_write_ (0 gagal).
+
+**Batas bukti saat ini:** One CI #44906889708 masih berjalan pada saat pencatatan; CircleCI ci/circleci: one-linux masih PENDING. Jangan menyebut keduanya lulus sebelum hasil terminal terlihat. Android statx test perlu dijalankan pada Termux asli.
+
+Kemampuan filesystem ini masih Eksperimental dan bukan jaminan sandbox yang sudah diterima. Jangan gunakan status kandidat ini untuk mengubah klaim dukungan pada canonical main atau menyatakan Issue #104 selesai.
+
