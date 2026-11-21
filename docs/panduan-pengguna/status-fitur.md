@@ -398,3 +398,15 @@ Tes sumber tambahan retained_delete_handle_blocks_leaf_rename memeriksa bahwa ta
 GitHub Actions One CI run #44870781889 pada SHA sumber/tes 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0 selesai SUCCESS. Job Ubuntu dan Windows Server 2025 sama-sama lulus Build, Clippy, Tests, dan pemeriksaan artefak deterministik. Di Windows, tiga tes penghapusan baru serta tes penguncian rename direktori induk lulus; ringkasan tes library one-core Windows adalah 156 passed / 0 failed.
 
 Ini membuktikan backend native Windows pada SHA tersebut saja. Penghapusan berkas belum diekspos sebagai fitur bahasa/adapter ONE; Linux, Android, dan macOS tetap fail-closed. Issue #104 belum diterima.
+
+## Perintah hapus berkas — 2026-11-21 (belum diverifikasi)
+
+Sintaks sumber yang ditambahkan:
+
+```one
+hapus berkas "target.txt"
+```
+
+Operasi ini memakai izin terpisah `filesystem.delete`. Izin `filesystem` umum, `filesystem.read`, dan `filesystem.write` tidak otomatis memberi izin menghapus. Policy harus memberikan grant delete dan membatasi target path secara eksplisit.
+
+Adapter `filesystem.file.delete` hanya diiklankan pada Windows dan membutuhkan `FilesystemAuthority` dari host. Linux, Android, dan macOS belum menyediakan backend delete yang memenuhi kontrak race-resistant, sehingga tetap tidak tersedia. Jaminan native Windows sudah lulus CI pada SHA khusus sebelumnya; jembatan bahasa terbaru di SHA `0fa43eb0be53c8e79424597ece055147872b35c4` masih menunggu build dan tes. Jangan anggap perintah ini sudah terverifikasi atau didukung sebelum hasil exact-SHA tersedia.
