@@ -904,3 +904,12 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - GitHub status context ci/circleci: one-linux SUCCESS on the same SHA. Provider job URL/logs could not be opened by the available inspection path; retain status-context-only wording.
 - Current PR #113 HEAD is 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9, 12 commits ahead of the tested source SHA; compare confirms all 12 commits are documentation-only.
 - Narrow Windows-only filesystem.delete bridge is Verified. POSIX deletion remains unsupported; Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — capability-first continuation checkpoint
+
+- Latest repository documentation/source-test checkpoint before this live-checkpoint update: `0de3b9d64b77f3b63f42b02a4ebd1456568cf24b`; this append itself will advance branch HEAD. Refresh live PR #113 state and exact HEAD before the next action.
+- Windows handle-bound deletion remains preserved. The explicit `filesystem.delete` language bridge has prior exact-SHA CI evidence at `0fa43eb...`; new CLI `--izinkan filesystem.delete --target` integration and its tests are source-only / NOT BUILT / NOT TESTED.
+- Linux, Android, and macOS deletion remain fail-closed; `unlinkat` is name-based and no equivalent validated-handle disposition primitive has been established. No path-based fallback is permitted.
+- Linux/Android process containment source blocks `setsid` and `setpgid` via inherited seccomp and kills the invocation process group before reaping. Windows uses Job Objects; macOS remains fail-closed. New unique working-directory fixtures and setpgid adversarial cases are source-only / NOT BUILT / NOT TESTED.
+- Documentation updated in this continuation: CLI guide, user feature status, existing filesystem Mermaid architecture, Issue #105 status, implementation status, evidence matrix, master continuation prompt, blocker register, and Notion Skill. No duplicate tracking document created.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Do not treat source additions as test evidence; do not change main, protected verifier pins, fixed ledger/DoD, acceptance criteria, or release state.
