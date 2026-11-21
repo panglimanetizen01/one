@@ -921,3 +921,10 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Earlier source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: GitHub Actions run #2410 Ubuntu Build PASS; Clippy FAIL; Tests SKIPPED. The failure was a manual char-comparison lint and unhandled SQLite `Result`s; fixes are present only in later commits and have not yet passed CI.
 - Windows job from run #2410 was still IN_PROGRESS at last readback. CircleCI status for the earlier candidate was PENDING. No latest-SHA CI or E4 verification PASS is established.
 - Android native Termux tests, macOS native tests, and adversarial nested-write race/mount-boundary evidence remain NOT RUN.
+
+
+## Windows compile blocker follow-up — 2026-11-21
+
+- Corrective source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` — NOT BUILT/TESTED.
+- Run #2410 on `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build PASS, Clippy FAIL, Tests SKIPPED; Windows Build FAIL. Windows errors were Linux-only writer helpers compiled under Windows plus unstable Windows metadata extension methods.
+- Corrected in `74df3aa901732c8eb3adaac728162715fc3a4961`: Linux-only writer gating and Windows root identity through native handle metadata. Clippy fixes are in ancestors `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab`. No passing rerun evidence yet.
