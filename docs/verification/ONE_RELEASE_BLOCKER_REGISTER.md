@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at latest live read | `f026a0241c1f9555f4123e1128e2a3fe173cd756` |
+| PR #113 HEAD at latest live read | `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source/test SHA | `38eb04832ac70c7df179de1594cbdbafc0a37150` |
+| Code-bearing source/test SHA | `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -75,8 +75,8 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
 **PR #113:** OPEN / DRAFT / UNMERGED · base `181ad350d8f0db53cda654c4d378425fbdd6ab24`  
-**Runtime candidate:** `38eb04832ac70c7df179de1594cbdbafc0a37150`  
-**Latest source/test HEAD:** `38eb04832ac70c7df179de1594cbdbafc0a37150` (adds a mandatory native-Linux nested-write test mode and a mount-boundary regression; CircleCI privileged-lane wiring is `f026a0241c1f9555f4123e1128e2a3fe173cd756`; PR #113 remains OPEN / DRAFT / UNMERGED).
+**Runtime candidate:** `671c63b1c6cbae0ad99630c554eb1300ce7f0d77`  
+**Latest source/test HEAD:** `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` (adds a mandatory native-Linux nested-write test mode and a mount-boundary regression; CircleCI privileged-lane wiring is `f026a0241c1f9555f4123e1128e2a3fe173cd756`; PR #113 remains OPEN / DRAFT / UNMERGED).
 
 **Current concrete implementation**
 - Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing. The previous adversarial test treated `UnsupportedPlatform` as a passing skip, so ordinary CI could be green without exercising native nested writes. Source SHA `38eb048...` now fails when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1` and the native path is unavailable; CircleCI config commit `f026a024...` adds a root-executed lane for parent-move and mount-boundary tests.
@@ -99,7 +99,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 **Latest implementation delta — Linux nested-write native enforcement (2026-11-21)**
 
-- Source/test commit: `38eb04832ac70c7df179de1594cbdbafc0a37150`. The Linux parent-move regression no longer silently counts `UnsupportedPlatform` as sufficient when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1`.
+- Source/test commit: `671c63b1c6cbae0ad99630c554eb1300ce7f0d77`. The Linux parent-move regression no longer silently counts `UnsupportedPlatform` as sufficient when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1`.
 - Added `nested_write_rejects_mount_boundary_before_creating_staging_file`, using `/` as the retained root and `/dev` as a separate mount; it requires `ResolutionFailed` and verifies no target is created.
 - CircleCI config commit: `f026a0241c1f9555f4123e1128e2a3fe173cd756`. After the normal workspace test binary is built, a dedicated step executes the two Linux adversarial tests as root with the native-required environment variable. This avoids recompiling the workspace under sudo and keeps the test binary/build artifacts unchanged.
 - The new source/config commits used `[skip ci]` to avoid testing an intermediate state. The following documentation-sync commit will trigger the combined candidate pipeline. Until terminal job logs show both exact named tests executing successfully, native Linux nested-write support remains NOT VERIFIED.
