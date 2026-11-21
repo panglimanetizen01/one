@@ -977,3 +977,13 @@ XNU source inspection supports that `fork1()` applies `mac_proc_check_fork()` to
 ## 2026-11-21 — exact source candidate refresh
 
 - Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8` (comment-only correction after the source/test changes). All newly added macOS nested-write and Seatbelt tests remain SOURCE ONLY / NOT BUILT / NOT RUN.
+
+## 2026-11-21 — compiler failure and fix provenance
+
+| Source SHA | Environment / run | Result | Evidence |
+|---|---|---|---|
+| `168ff06e7a8d09e575e6ac71513399c9f1f4f994` | GitHub Actions #44898144880, Ubuntu job #136828104281 | BUILD FAILURE | Rust parse error in `interop.rs:1207,1209` |
+| `168ff06e7a8d09e575e6ac71513399c9f1f4f994` | GitHub Actions #44898144880, Windows 2025 job #136828104468 | BUILD FAILURE | Same Rust parse error in `interop.rs:1207,1209` |
+| `502a888da46e3d4be4ac80b3a2ffc3233dbabc12` | Post-fix status readback | NOT BUILT / NOT VERIFIED | No status contexts or workflow run yet |
+
+The source fix parenthesizes unsafe `setpgid` and `setsid` call expressions before comparisons. CircleCI on the pre-fix SHA separately reported FAILURE, but its provider pipeline/log mapping is unavailable; do not reuse GitHub Actions logs as CircleCI provider evidence. No test, Clippy, E4, platform, or release gate is promoted.
