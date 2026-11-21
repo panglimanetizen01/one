@@ -984,8 +984,8 @@ This section supersedes earlier current-state snapshots in this file. Historical
 
 ### Latest CI state at last read
 
-- One CI run #44906889708 on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Ubuntu and Windows jobs still in cross-toolchain installation; terminal result not yet available.
-- CircleCI context ci/circleci: one-linux on the same SHA was PENDING: workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider job page, pipeline revision and logs were inaccessible; do not claim CircleCI PASS.
+- One CI run #44906889708 completed SUCCESS on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Ubuntu job #136854287546 and Windows job #136854287276 both SUCCESS.
+- CircleCI context ci/circleci: one-linux on the same SHA remains PENDING: workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider job page, pipeline revision and logs were inaccessible; do not claim CircleCI PASS.
 - Independent verifier PR #51 still pins historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. The E4 filter must be extended for the new Windows and Android tests after implementation scope is frozen. Protected verifier pin unchanged.
 
 ### Remaining boundaries
