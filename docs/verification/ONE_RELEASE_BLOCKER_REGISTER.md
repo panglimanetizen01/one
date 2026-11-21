@@ -851,3 +851,13 @@ Security constraints and next engineering action:
 - The trace only directly confirms the first named test's `openat2` termination. The other previously SIGSYS-terminated Android tests remain unverified until their syscall paths are independently confirmed or the shared path is changed and retested.
 - The hard-link regression remains blocked at fixture setup by `PermissionDenied`; do not weaken or skip it. Clippy PASS and the root-final-symlink test PASS remain evidence only for their recorded exact SHA.
 - No implementation fix, Android support, E4 verification, or acceptance is claimed by this trace. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android seccomp-safe capability boundary (code candidate)
+
+- User-provided Termux ARM64 syscall trace proves `statx(STATX_MNT_ID)` succeeds and `openat2` is killed by seccomp with `SIGSYS / SYS_SECCOMP`. Do not probe `openat2` in-process on Android.
+- Code candidate commit: `e5c8a7d5d2075902ef4f027322e2e615908bac14` (source `crates/one-core/src/filesystem.rs`). Android reads now use root-handle-relative `openat` only for a single direct child, with `O_NOFOLLOW | O_NONBLOCK`, regular-file/single-link checks, device identity, and `statx(STATX_MNT_ID)` equality. Nested reads return `UnsupportedPlatform` before any syscall that may trigger seccomp.
+- Android nested writes now return `UnsupportedPlatform` before invoking the Linux detached-mount/`openat2` transaction. Direct-child atomic writes remain root-dirfd-relative and retain the existing no-follow, regular-file, hard-link, device, mount-ID, exclusive-temp, sync, and atomic-rename checks.
+- Android tests were updated: direct-child read/write remains positive; nested reads (including symlink-parent paths) and nested writes assert fail-closed behavior; outside sentinel bytes remain unchanged. The old nested-read test name was replaced with `android_nested_reads_fail_closed_without_openat2`.
+- Rationale: a component-by-component `openat` walk is not an acceptable nested fallback because an opened parent directory can be renamed outside the retained root before the leaf operation. This preserves the security boundary at the cost of nested Android functionality.
+- **NOT YET BUILT OR TESTED** on this code SHA. Termux test execution, full target builds, CI, and independent verifier checks remain outstanding. Do not promote Android support or E4 acceptance. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
