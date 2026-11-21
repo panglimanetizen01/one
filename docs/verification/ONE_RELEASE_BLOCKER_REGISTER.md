@@ -945,3 +945,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Scope limitation: these focused tests do not establish nested-path Android read/write support, mount-boundary adversarial coverage beyond the named cases, hard-link fixture execution, or complete Issue #104 E4 acceptance. Do not promote unsupported nested operations.
 - Combined exact-SHA evidence now includes Android Termux focused validation + Clippy at `7d2409a...`, main GitHub Actions Ubuntu/Windows success and CircleCI status-context success at code SHA `3a9badf...`, and the independent verifier non-acceptance candidate matrix at the same code SHA (Linux 279 passed/0 failed/4 ignored; Windows 257 passed/0 failed/1 ignored). Keep each result attached to its actual tested SHA and role.
 - PR #113 remains OPEN / DRAFT / UNMERGED. Issue #104 remains OPEN / NOT ACCEPTED. Protected E4 pin, ledger pin, acceptance contract, tests, and DoD remain unchanged.
+
+## B-002 implementation update — 2026-11-21 (Windows handle-bound delete slice)
+
+- Source commit: ffa51679e998e97bca0730a182d8887a245e03d0 (PR #113 branch only).
+- Implemented a Windows-only FilesystemAuthority::delete path using retained no-delete-share parent handles and NtSetInformationFile(FileDispositionInformation) on the exact validated leaf handle. Reparse points, cross-volume targets, non-regular files, and hard-linked files are rejected.
+- Non-Windows platforms remain fail-closed with UnsupportedPlatform; no POSIX preflight-plus-unlinkat race workaround was introduced. Windows tests were added but are NOT BUILT / NOT RUN.
+- B-002 remains OPEN / NOT ACCEPTED. The code slice does not close E4, prove all parent/leaf race cases, complete host-root integration, or establish platform matrix support. Capability and adapter exposure intentionally deferred until native implementation evidence and cross-platform contract review.
+- Required next focused evidence: compile and run the two new Windows delete tests on the exact source SHA; inspect failures rather than weakening tests; then add any missing adversarial case (especially parent rename exclusion during nested delete) before expanding language capability. Preserve existing Linux/Android/macOS fail-closed boundaries.
