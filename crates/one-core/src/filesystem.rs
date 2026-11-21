@@ -1518,6 +1518,22 @@ mod macos_native {
         }
 
         #[test]
+        fn nested_write_cleanup_surfaces_unlink_failure() {
+            use std::ffi::CString;
+
+            // An invalid directory descriptor forces unlinkat to fail with
+            // EBADF. Cleanup must report the failure instead of marking the
+            // staging entry as successfully removed.
+            let mut guard = super::RootTempFileGuard {
+                root_fd: -1,
+                name: CString::new(".one-write-cleanup-failure.tmp").unwrap(),
+                committed: false,
+            };
+            assert_eq!(guard.cleanup(), Err(FilesystemError::IoFailure));
+            assert!(!guard.committed, "failed cleanup must not mark the guard committed");
+        }
+
+        #[test]
         fn nested_write_cleans_staging_file_after_each_injected_failure() {
             for stage in [
                 super::MacWriteStage::TempCreated,
