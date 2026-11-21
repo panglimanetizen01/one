@@ -89,3 +89,12 @@ Code commits:
 - `858a5da09fe2ea74ebd17b0798f13fac848c7a28`: replace the stale test that required every Linux nested write to fail with `nested_write_uses_native_backend_or_fails_closed_without_side_effects`. It accepts a successful native detached-mount write or an explicit `UnsupportedPlatform` fallback, and checks target integrity and temp-file cleanup.
 
 The independent verifier's expected source test-filter inventory is now structurally matched in `adapter.rs`: 3 `descriptor_relative_read_rejects_`, 5 `descriptor_relative_write_`, and 1 `descriptor_relative_walk_rejects_` tests. This is a source inventory check only; no tests were run and no verifier PASS is claimed. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## Latest implementation-first override — 2026-11-21
+
+- PR #113 remains OPEN / DRAFT / UNMERGED. Latest code-bearing source candidate: `9fe53815f83701a62536472f8a3c87cebac22e7a` (NOT BUILT/TESTED); documentation commits may advance branch HEAD without changing this source SHA.
+- Android nested reads use kernel `openat2`; Android nested writes now use detached mount clone + recursive `MOUNT_ATTR_NOSYMFOLLOW` + `openat2`/atomic `renameat2`. Unsupported or SELinux-denied primitives fail closed. Linux nested-write hook forwarding was corrected.
+- macOS nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` identity checks on supported kernels; unsupported kernels fail closed. macOS nested writes remain fail-closed until a race-safe atomic no-cross-mount publication design is proven.
+- Android/macOS source regressions are NOT RUN. Next execution: safely fast-forward `$HOME/one-pr113` to current remote, compile and run focused Android tests on Termux, fix any failures, then obtain macOS native build/test evidence. Do not start broad verification or claim support/acceptance before implementation and focused tests are sound.
+- The existing architecture diagram, blocker register, Issue #104 status, evidence matrix, implementation status, live checkpoint, Termux worktree map and Notion Skill are being kept in sync. Do not create duplicate tracking documents. Issue #104 remains OPEN / NOT ACCEPTED.
