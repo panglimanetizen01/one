@@ -2882,9 +2882,14 @@ mod macos_filesystem_tests {
         let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
         assert_eq!(authority.read("escape.txt"), Err(FilesystemError::ResolutionFailed));
         assert_eq!(authority.write("escape.txt", b"changed"), Err(FilesystemError::ResolutionFailed));
+        let require_native_nested_read =
+            std::env::var("ONE_REQUIRE_NATIVE_MACOS_NESTED_READ").as_deref() == Ok("1");
         match authority.read("nested/data.txt") {
             Ok(bytes) => assert_eq!(bytes, b"nested-data"),
-            Err(FilesystemError::UnsupportedPlatform) => {},
+            Err(FilesystemError::UnsupportedPlatform) => assert!(
+                !require_native_nested_read,
+                "the macOS native runner must support confined nested reads"
+            ),
             other => panic!("unexpected nested macOS read result: {other:?}"),
         }
         assert!(matches!(authority.read("escape-dir/sentinel.txt"),
