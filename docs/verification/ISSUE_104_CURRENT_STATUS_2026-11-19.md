@@ -760,3 +760,8 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 ## Issue #104 source implementation update — 2026-11-21
 
 - The current PR #113 code-bearing candidate is `9fe53815f83701a62536472f8a3c87cebac22e7a` (NOT BUILT/TESTED). Android nested reads use `openat2`; Android nested writes now use the detached-mount + recursive `MOUNT_ATTR_NOSYMFOLLOW` + `openat2`/`renameat2` transaction shared with Linux and fail closed when required kernel/SELinux primitives are unavailable. macOS nested reads now use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` plus post-open `fstatfs` mount identity checks; unsupported kernels fail closed. macOS nested writes remain fail-closed pending a proven atomic no-cross-mount publication primitive. Source regressions are NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — latest source and CI feedback
+
+Latest source candidate is `568d9360f0beec63c10fbeae9cac63f384bd082f` (NOT BUILT/TESTED). It adds Android guarded nested writes, macOS nested reads with XNU beneath/no-follow/unique flags on supported kernels, and preserves legacy macOS direct-child reads on older kernels. macOS nested writes remain fail-closed. Clippy errors found on prior source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` were corrected in descendants `82a90b41...` and `c23bd0e0...`, but those corrections have no passing CI evidence yet. Run #2410: Ubuntu Build PASS, Clippy FAIL, Tests SKIPPED on the earlier SHA; Windows still running at last readback. Android Termux and macOS native runs remain required. Issue #104 remains OPEN / NOT ACCEPTED.
