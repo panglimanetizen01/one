@@ -1,5 +1,6 @@
 use std::{fs, process::Command, time::{SystemTime, UNIX_EPOCH}};
 
+#[cfg(any(windows, target_os = "linux"))]
 fn run(args: &[&str]) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_one")).args(args).output().unwrap()
 }
