@@ -110,3 +110,12 @@ Source commits: `ff60c7bd8a058f0950a0d67bb596d94feb8e6803` (runtime wrapper) and
 Inspection of XNU `bsd/kern/kern_prot.c` shows `setsid()` and `setpgid()` call `setsid_internal()` / `enterpgrp()` directly; the corresponding paths do not invoke a `mac_proc_check_setpgid` or `mac_proc_check_setsid` hook. `bsd/kern/kern_proc.c::enterpgrp` also performs the process-group transition without such a MAC policy hook. Therefore a Seatbelt profile cannot be assumed to prevent a child from escaping its process group while still allowing child creation. This is why the macOS candidate denies `process-fork` entirely instead of pretending to provide tree containment.
 
 The resulting guarantee is deliberately narrower: one target process may execute and replace itself, but it cannot create direct fork/vfork/posix_spawn children. Brokered launchd/Mach-service creation remains a separate unresolved route. `ProcessAdapter` remains unavailable on macOS. Sources: `https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_prot.c` and `https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_proc.c`.
+
+## 2026-11-21 — exact-SHA Linux adversarial regressions executed
+
+- Source SHA: `7744e46849f97b5868a6a75ee365b6f72cca5609`.
+- GitHub Actions One CI run #44900738968 Ubuntu job #136835893296 completed SUCCESS; Build, Clippy, Tests, and Complete job SUCCESS. Windows 2025 job #136835893110 also completed SUCCESS for the same exact SHA.
+- Ubuntu test log explicitly reports six adversarial parent regressions as `ok`: `linux_process_cannot_escape_its_invocation_group_with_setsid`, `linux_process_cannot_escape_its_invocation_group_with_setpgid`, `linux_process_timeout_cannot_leave_an_escaped_session_descendant`, `linux_process_timeout_cannot_leave_a_setpgid_descendant`, `linux_output_overflow_cannot_leave_an_escaped_session_writer`, and `linux_output_overflow_cannot_leave_a_setpgid_writer`.
+- The six helper tests remain intentionally `#[ignore]` because parent tests invoke them as child processes using the test binary's `--ignored --exact` arguments. This is expected helper behavior, not missing execution of the parent adversarial cases.
+- This establishes the Linux-hosted adversarial slice for this exact source SHA. It does not establish Android/Termux execution, nor does it independently reconcile Windows Job Object descendant cleanup at this SHA.
+- Issue #105 remains OPEN / NOT ACCEPTED. Do not promote support or acceptance until the remaining platform-specific requirements are proven on the exact candidate.
