@@ -36,7 +36,7 @@ pub mod token;
 pub mod types;
 
 pub use adapter::{
-    AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileReadAdapter,
+    AdapterArgument, AdapterError, AdapterMetadata, AdapterRequest, AdapterResult, FileDeleteAdapter, FileReadAdapter,
     FileWriteAdapter, HttpGetAdapter, PlatformKind, ProcessAdapter, ToolAdapter,
 };
 pub use ast::{BinaryOp, Expr, LoopKind, Program, Statement};
