@@ -77,7 +77,7 @@ fn process_adapter_failure_is_observed_and_audited() {
     let mut orchestrator = Orchestrator::new(policy);
     orchestrator.register(Box::new(ProcessAdapter::new()));
     let mut audit = Vec::new();
-    let error = orchestrator.execute_with_audit(&request, PlatformKind::Any, &mut audit)
+    let error = orchestrator.execute_with_audit(&request, PlatformKind::current(), &mut audit)
         .expect_err("missing executable must reach adapter and fail");
     assert_eq!(error, OrchestrationError::Adapter(AdapterError::BackendFailure));
     assert_eq!(audit[0].event(), AuditEvent::InvocationFinished);
