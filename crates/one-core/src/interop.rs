@@ -1,7 +1,7 @@
 use std::io::{self, Read};
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use std::os::fd::AsRawFd;
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -12,10 +12,10 @@ use crate::capability::{Capability, CapabilitySet};
 
 const PROCESS_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_OUTPUT_BYTES_PER_STREAM: usize = 1024 * 1024;
-#[cfg(any(target_os = "linux", target_os = "android", windows))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", windows))]
 const MAX_OUTPUT_BYTES_TOTAL: usize = 2 * MAX_OUTPUT_BYTES_PER_STREAM;
 
-#[cfg(any(target_os = "linux", target_os = "android", windows))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", windows))]
 fn validate_total_output_limit(stdout_bytes: usize, stderr_bytes: usize) -> Result<(), String> {
     let total = stdout_bytes.saturating_add(stderr_bytes);
     if total > MAX_OUTPUT_BYTES_TOTAL {
@@ -26,7 +26,7 @@ fn validate_total_output_limit(stdout_bytes: usize, stderr_bytes: usize) -> Resu
     }
     Ok(())
 }
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "macos"))]
 const PROCESS_POLL_INTERVAL: Duration = Duration::from_millis(10);
 #[cfg(any(target_os = "linux", target_os = "android"))]
 const READER_SHUTDOWN_GRACE: Duration = Duration::from_millis(100);
@@ -106,16 +106,16 @@ fn spawn_bounded_reader<R: Read + Send + 'static>(
     })
 }
 
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "macos"))]
 fn spawn_bounded_reader<R: Read + Send + 'static>(
     mut reader: R,
     output_limit_exceeded: Arc<AtomicBool>,
     _shutdown_requested: Arc<AtomicBool>,
 ) -> JoinHandle<io::Result<Vec<u8>>> {
-    // Windows reader threads remain blocking: closing the invocation's Job
-    // Object terminates its descendants and closes inherited pipe writers.
-    // The shutdown flag is intentionally not used to interrupt a blocking
-    // Read; Job Object teardown remains the Windows reader termination path.
+    // Windows reader threads remain blocking until Job Object teardown closes
+    // inherited writers. macOS uses the same bounded reader because Seatbelt
+    // denies process creation, so only the direct child can own pipe writers.
+    // The shutdown flag is intentionally unused on these blocking backends.
     thread::spawn(move || {
         let mut captured = Vec::with_capacity(MAX_OUTPUT_BYTES_PER_STREAM.min(16 * 1024));
         let mut buffer = [0_u8; 8192];
@@ -283,8 +283,7 @@ fn run_process_with_timeout(
     }
     #[cfg(target_os = "macos")]
     {
-        let _ = (spec, timeout);
-        Err("Process execution is unavailable on macOS until non-escapable descendant containment is implemented.".into())
+        run_process_macos(spec, timeout)
     }
     #[cfg(not(any(target_os = "linux", windows, target_os = "android", target_os = "macos")))]
     {
@@ -463,6 +462,113 @@ fn kill_process_group(process_group: i32) {
     unsafe {
         libc::kill(-process_group, libc::SIGKILL);
     }
+}
+
+
+#[cfg(target_os = "macos")]
+fn run_process_macos(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessResult, String> {
+    use std::path::Path;
+
+    const SANDBOX_EXEC: &str = "/usr/bin/sandbox-exec";
+    // XNU fork1() applies mac_proc_check_fork() to both PROC_CREATE_FORK
+    // and PROC_CREATE_SPAWN. The profile therefore denies fork/vfork and
+    // posix_spawn-family process creation while leaving exec replacement
+    // available. If Seatbelt is missing or rejects this profile, fail closed.
+    const PROCESS_PROFILE: &str = "(version 1) (allow default) (deny process-fork)";
+
+    if !Path::new(SANDBOX_EXEC).is_file() {
+        return Err("Process execution is unavailable: macOS sandbox-exec is missing.".into());
+    }
+
+    let mut command = Command::new(SANDBOX_EXEC);
+    command
+        .arg("-p")
+        .arg(PROCESS_PROFILE)
+        .arg("--")
+        .arg(&spec.program)
+        .args(&spec.args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(directory) = &spec.working_directory {
+        command.current_dir(directory);
+    }
+
+    let mut child = command.spawn().map_err(|error| {
+        format!("Failed to start the macOS Seatbelt process wrapper: {error}")
+    })?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| "Subprocess stdout pipe was not created.".to_owned())?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| "Subprocess stderr pipe was not created.".to_owned())?;
+
+    let output_limit_exceeded = Arc::new(AtomicBool::new(false));
+    let stdout_reader = spawn_bounded_reader(
+        stdout,
+        Arc::clone(&output_limit_exceeded),
+        Arc::new(AtomicBool::new(false)),
+    );
+    let stderr_reader = spawn_bounded_reader(
+        stderr,
+        Arc::clone(&output_limit_exceeded),
+        Arc::new(AtomicBool::new(false)),
+    );
+
+    let deadline = Instant::now() + timeout;
+    let mut timed_out = false;
+    let status = loop {
+        if output_limit_exceeded.load(Ordering::Acquire) {
+            let _ = child.kill();
+            break child.wait();
+        }
+        match child.try_wait() {
+            Ok(Some(status)) => break Ok(status),
+            Ok(None) => {}
+            Err(error) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                let _ = join_reader(stdout_reader);
+                let _ = join_reader(stderr_reader);
+                return Err(format!("Failed while waiting for macOS subprocess: {error}"));
+            }
+        }
+        if Instant::now() >= deadline {
+            timed_out = true;
+            let _ = child.kill();
+            break child.wait();
+        }
+        thread::sleep(PROCESS_POLL_INTERVAL);
+    };
+
+    // The Seatbelt profile denies all process creation by the target. Once the
+    // wrapper exits, no forked/posix_spawn descendant can retain either pipe.
+    let stdout = join_reader(stdout_reader)?;
+    let stderr = join_reader(stderr_reader)?;
+    let status = status.map_err(|error| format!("Failed to reap macOS subprocess: {error}"))?;
+
+    if timed_out {
+        return Err(format!(
+            "Subprocess exceeded the {} second execution deadline.",
+            timeout.as_secs()
+        ));
+    }
+    if output_limit_exceeded.load(Ordering::Acquire) {
+        return Err(format!(
+            "Subprocess exceeded the {} byte per-stream output limit.",
+            MAX_OUTPUT_BYTES_PER_STREAM
+        ));
+    }
+    validate_total_output_limit(stdout.len(), stderr.len())?;
+
+    Ok(ProcessResult {
+        status_code: status.code(),
+        success: status.success(),
+        stdout: String::from_utf8_lossy(&stdout).into_owned(),
+        stderr: String::from_utf8_lossy(&stderr).into_owned(),
+    })
 }
 
 #[cfg(windows)]
