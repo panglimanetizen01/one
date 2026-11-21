@@ -927,3 +927,10 @@ Source/test SHA 0fa43eb0be53c8e79424597ece055147872b35c4 passed GitHub Actions O
 The exact-SHA tests prove the Indonesian action parses and lowers to filesystem.delete/Delete, default policy denies deletion without changing the file, an explicit scoped grant reaches the Windows native adapter, and Windows adapter metadata is Windows-only. Windows logs also prove the actual directory-junction escape test rejects the target and preserves the outside sentinel. GitHub status context ci/circleci: one-linux is SUCCESS on the same SHA; provider logs were not independently reviewed.
 
 Status: Implemented and Verified for the narrow Windows-only file-delete slice. Not Supported cross-platform. Linux, Android, and macOS remain unavailable/fail-closed. Issue #104 remains OPEN / NOT ACCEPTED because POSIX delete, host-root integration, remaining E4 adversarial matrix, and release acceptance are still outstanding.
+
+## 2026-11-21 — filesystem.delete CLI and process containment source update
+
+- The Windows handle-bound delete host API and the one-core language bridge retain their prior exact-SHA PASS evidence (`6f2d5e2...` / run #44870781889; `0fa43eb...` / run #44871756593). Those results do not verify the newer CLI integration.
+- CLI now exposes an explicit `filesystem.delete` grant and exact `--target` scope through the host-created `FilesystemAuthority`. Source/test commits `48e87fd...` and `17a64b2...`; CLI integration is NOT BUILT / NOT TESTED. Linux, Android, and macOS remain fail-closed for delete because no handle-bound native primitive equivalent to Windows disposition has been proven.
+- Linux/Android process containment remains inherited seccomp plus invocation process-group cleanup; Windows uses Job Objects; macOS remains fail-closed. The source adds unique per-test working directories and `setpgid(0,0)` adversarial probes across normal completion, timeout, and output overflow (`5e79f35...`, `18bd42f...`, `477537c...`). These tests are NOT BUILT / NOT TESTED.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Do not promote the feature state, evidence scores, or DoD based on source-only additions.
