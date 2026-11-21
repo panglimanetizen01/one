@@ -998,7 +998,15 @@ mod macos_native {
 
     fn openat(directory: &File, name: &CString, flags: i32, mode: u32) -> Result<File, FilesystemError> {
         let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), flags, mode) };
-        if fd < 0 { return Err(map_error(std::io::Error::last_os_error())); }
+        if fd < 0 {
+            let error = std::io::Error::last_os_error();
+            // XNU reports ENOTCAPABLE when O_UNIQUE rejects a multiply-linked
+            // vnode. Preserve that as the strict hard-link policy result.
+            if flags & O_UNIQUE != 0 && error.raw_os_error() == Some(93) {
+                return Err(FilesystemError::HardLinkedFile);
+            }
+            return Err(map_error(error));
+        }
         Ok(unsafe { File::from_raw_fd(fd) })
     }
 
