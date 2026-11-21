@@ -219,3 +219,13 @@ Latest source/test candidate: `ea376531e99f37b874d3d3a8edd4e8b4d656095f`; curren
 ## Latest filesystem implementation candidate — 2026-11-21
 
 The current unmerged PR #113 code-bearing source is `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. Its host-owned filesystem root is the process working directory, never a source-file path, manifest lookup, or program-supplied target. Linux includes a guarded detached-mount nested writer; Windows retains native handle-relative operations; Android/macOS include direct-child native read/write candidates and fail closed for nested paths. The CLI fixture corrections are test-only commits `46c777e...` and `2600ec1...`. No tests/builds were run on this candidate. Issue #104 remains OPEN / NOT ACCEPTED, and canonical `main` is unchanged.
+
+## Superseding Issue #104 / filesystem.delete checkpoint — 2026-11-21
+
+PR #113 remains OPEN / DRAFT / UNMERGED. The current language-bridge source checkpoint is 0fa43eb0be53c8e79424597ece055147872b35c4; the current documentation-only PR descendant at this update is tracked in the live checkpoint. This supersedes the older PR HEAD and test-status snapshots above.
+
+The Windows native file-delete backend is implemented and its native tests passed at exact source/test SHA 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0 (One CI #44870781889). The subsequent ONE language bridge adds the explicit filesystem.delete capability, Delete effect, and source form:
+
+    hapus berkas "target.txt"
+
+Delete is not implied by general filesystem/read/write grants. The adapter requires host-injected FilesystemAuthority and is advertised on Windows only. Linux, Android, and macOS remain fail-closed for delete. At source bridge SHA 0fa43eb0be53c8e79424597ece055147872b35c4, Ubuntu Build/Clippy/Tests passed; Windows and CircleCI were still pending at last exact-SHA readback. Do not claim the language bridge verified until both are terminal. Issue #104 remains OPEN / NOT ACCEPTED; see the security design and single release blocker register.
