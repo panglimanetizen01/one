@@ -893,3 +893,9 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Source candidate `74df3aa901732c8eb3adaac728162715fc3a4961` gates the Linux direct/nested write wrapper to Linux, preventing Unix-only APIs and `libc` from compiling on Windows. Android uses only the shared nested helper where intended.
 - Windows root path identity now reopens the candidate path through the native no-reparse `NtCreateFile` path and compares `BY_HANDLE_FILE_INFORMATION` volume serial/file index; unstable `MetadataExt` APIs were removed.
 - Run #2410 on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` failed Clippy on Ubuntu and Build on Windows. Corrections are source-only; no rerun on `74df3aa...` is available. NOT BUILT/TESTED.
+
+## 2026-11-21 — Filesystem delete native implementation boundary
+
+Source commit ffa51679e998e97bca0730a182d8887a245e03d0 adds a Windows-only host API FilesystemAuthority::delete. Windows opens every parent component relative to the retained root with no delete sharing, opens the leaf with DELETE_ACCESS without following reparse points, verifies volume/type/link count, and applies FileDispositionInformation to the opened handle. It does not perform a second path lookup after validation.
+
+The API intentionally returns UnsupportedPlatform on Linux, Android, and macOS. POSIX unlinkat remains name-based and is not treated as an equivalent handle-bound primitive. No language semantic capability or adapter is exposed yet. Two Windows tests were added but are NOT BUILT / NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED; this is not v0.1 completion evidence.
