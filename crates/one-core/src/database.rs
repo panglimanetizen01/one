@@ -133,23 +133,23 @@ impl ToolAdapter for SqliteAdapter {
         };
 
         let connection = if path == ":memory:" { Connection::open_in_memory() } else { Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY) }.map_err(|_| AdapterError::BackendFailure)?;
-        connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, Self::MAX_QUERY_OUTPUT_BYTES as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, Self::MAX_SQL_BYTES as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_COLUMN, 256);
-        connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, Self::MAX_PARAMETERS as i32);
-        connection.set_limit(Limit::SQLITE_LIMIT_COMPOUND_SELECT, 128);
-        connection.set_limit(Limit::SQLITE_LIMIT_EXPR_DEPTH, 1000);
-        connection.set_limit(Limit::SQLITE_LIMIT_PARSER_DEPTH, 1000);
-        connection.set_limit(Limit::SQLITE_LIMIT_VDBE_OP, 1_000_000);
-        connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 128);
-        connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 64 * 1024);
-        connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0);
-        connection.set_limit(Limit::SQLITE_LIMIT_TRIGGER_DEPTH, 0);
-        connection.set_limit(Limit::SQLITE_LIMIT_WORKER_THREADS, 0);
+        connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, Self::MAX_QUERY_OUTPUT_BYTES as i32).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, Self::MAX_SQL_BYTES as i32).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_COLUMN, 256).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER, Self::MAX_PARAMETERS as i32).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_COMPOUND_SELECT, 128).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_EXPR_DEPTH, 1000).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_PARSER_DEPTH, 1000).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_VDBE_OP, 1_000_000).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_FUNCTION_ARG, 128).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_LIKE_PATTERN_LENGTH, 64 * 1024).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_TRIGGER_DEPTH, 0).map_err(|_| AdapterError::BackendFailure)?;
+        connection.set_limit(Limit::SQLITE_LIMIT_WORKER_THREADS, 0).map_err(|_| AdapterError::BackendFailure)?;
         connection.busy_timeout(Duration::from_millis(250)).map_err(|_| AdapterError::BackendFailure)?;
         let deadline = Instant::now() + Self::MAX_QUERY_DURATION;
         let progress_deadline = deadline;
-        connection.progress_handler(1_000, Some(move || Instant::now() >= progress_deadline));
+        connection.progress_handler(1_000, Some(move || Instant::now() >= progress_deadline)).map_err(|_| AdapterError::BackendFailure)?;
         let mut statement = connection
             .prepare(sql)
             .map_err(|_| AdapterError::BackendFailure)?;
