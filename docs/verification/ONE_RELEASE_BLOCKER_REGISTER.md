@@ -1058,3 +1058,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `d7e174d0e7e39ba311dce81cacc79891a040cdff` to distinguish the latest combined source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c`, filesystem-specific source `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`, and macOS Seatbelt runtime/probe source `3bad0196e9352871d09cb9b966cf6b393a866603`.
 - Documentation-only; no evidence or acceptance state changed.
+
+## 2026-11-21 — macOS Seatbelt comment precision
+
+- Source commit `79593d2f225284eff841e67c8eb9a1e005611981` clarifies that Seatbelt blocks direct fork/posix_spawn creation; brokered launchd/Mach-service routes remain unproven. No runtime behavior changed.
+- Latest combined source/test candidate is now `79593d2f225284eff841e67c8eb9a1e005611981` (NOT BUILT / NOT TESTED). ProcessAdapter remains unavailable on macOS.
