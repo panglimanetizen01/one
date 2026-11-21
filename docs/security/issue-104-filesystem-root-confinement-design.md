@@ -1078,3 +1078,14 @@ These tests are source additions only until a build and Windows execution report
 
 Issue #104 remains OPEN / NOT ACCEPTED.
 Additional Windows source regression: delete_leaf_rename_guard is covered by retained_delete_handle_blocks_leaf_rename. It verifies that the same DELETE-access/no-delete-share open mode used by the delete backend blocks a concurrent rename while the validated leaf handle is retained, then permits rename after close. This test is also NOT BUILT / NOT RUN at this checkpoint.
+
+## Exact-SHA Windows delete validation — run 44870781889
+
+GitHub Actions One CI run #44870781889 completed SUCCESS on exact source/test SHA 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0. Ubuntu job #136744590581 and Windows Server 2025 job #136744590451 both completed Build, Clippy, Tests, and deterministic .oneir/.onepkg artifact steps successfully.
+
+Windows logs explicitly show all three new tests passed:
+- filesystem::windows_native::tests::delete_uses_validated_handle_and_removes_nested_regular_file
+- filesystem::windows_native::tests::delete_rejects_hard_links_without_removing_either_name
+- filesystem::windows_native::tests::retained_delete_handle_blocks_leaf_rename
+
+The existing filesystem::windows_native::tests::retained_parent_handle_blocks_directory_rename also passed. The Windows one-core library test summary reported 156 passed / 0 failed. This is exact-SHA CI evidence for the Windows implementation slice; it does not establish POSIX delete support, complete E4 acceptance, or Issue #104 closure.
