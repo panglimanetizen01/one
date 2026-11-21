@@ -1068,3 +1068,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Updated `MASTER_CONTINUATION_PROMPT.md` in commit `a1eca94cd7a949e009a2e0ea4e11d516abc08409` to use the latest combined source/test candidate `79593d2f225284eff841e67c8eb9a1e005611981` and preserve the direct-spawn-only/brokered-launch caveat.
 - Documentation-only; no source/test evidence or acceptance state changed.
+
+## 2026-11-21 — latest candidate and status documents synchronized
+
+- Updated existing Issue #105 status (`ba228c147225bc8d5cede3499d94daca4aa9de47`), implementation status (`80fbad45a2aef8e782f99d7d0ce22949a067d9da`), evidence matrix (`0e82346b3722ee419cafa3aa8115ca857f5c4e06`), and live checkpoint (`144c7f200b534cf733182b6de5773df05ce48dd2`) to record the latest combined source/test candidate `79593d2f225284eff841e67c8eb9a1e005611981`.
+- These are documentation-only updates. Latest candidate remains NOT BUILT / NOT TESTED; no acceptance or platform support state changed.
