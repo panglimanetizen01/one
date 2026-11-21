@@ -1074,7 +1074,7 @@ mod tests {
     }
 
     #[cfg(any(target_os = "linux", target_os = "android"))]
-    fn spawn_escape_probe(mode: u8) {
+    fn spawn_escape_probe(mode: u8, use_setpgid: bool) {
         use std::ffi::CString;
         use std::os::unix::ffi::OsStrExt;
         let path = std::env::current_dir()
@@ -1085,8 +1085,12 @@ mod tests {
         let child = unsafe { libc::fork() };
         assert!(child >= 0, "fork failed: {}", std::io::Error::last_os_error());
         if child == 0 {
-            let session = unsafe { libc::setsid() };
-            if session >= 0 {
+            let escaped = if use_setpgid {
+                unsafe { libc::setpgid(0, 0) } == 0
+            } else {
+                unsafe { libc::setsid() } >= 0
+            };
+            if escaped {
                 let mut pid = unsafe { libc::getpid() } as u32;
                 let mut digits = [0u8; 16];
                 let mut cursor = digits.len();
@@ -1125,22 +1129,44 @@ mod tests {
     #[test]
     #[ignore = "invoked only as a child helper by process containment regressions"]
     fn process_group_escape_helper_exit() {
-        spawn_escape_probe(0);
+        spawn_escape_probe(0, false);
     }
 
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     #[ignore = "invoked only as a child helper by process containment regressions"]
     fn process_group_escape_helper_timeout() {
-        spawn_escape_probe(1);
+        spawn_escape_probe(1, false);
     }
 
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     #[ignore = "invoked only as a child helper by process containment regressions"]
     fn process_group_escape_helper_output() {
-        spawn_escape_probe(2);
+        spawn_escape_probe(2, false);
     }
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    #[ignore = "invoked only as a child helper by process containment regressions"]
+    fn process_group_setpgid_helper_exit() {
+        spawn_escape_probe(0, true);
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    #[ignore = "invoked only as a child helper by process containment regressions"]
+    fn process_group_setpgid_helper_timeout() {
+        spawn_escape_probe(1, true);
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    #[ignore = "invoked only as a child helper by process containment regressions"]
+    fn process_group_setpgid_helper_output() {
+        spawn_escape_probe(2, true);
+    }
+
 
 
 
@@ -1304,6 +1330,58 @@ mod tests {
 
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    fn linux_process_cannot_escape_its_invocation_group_with_setpgid() {
+        let (working_directory, pid_file) = test_escape_fixture("setpgid-normal");
+        let executable = std::env::current_exe().expect("current test executable");
+        let result = run_process(&ProcessSpec {
+            program: executable.to_string_lossy().into_owned(),
+            args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_setpgid_helper_exit".into(), "--nocapture".into()],
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
+        }, &CapabilitySet::none().allow(Capability::Process));
+        let escaped_pid = cleanup_test_escaped_group(&pid_file);
+        let _ = std::fs::remove_dir_all(&working_directory);
+        assert!(escaped_pid.is_none(), "a descendant entered a new process group; escaped PID: {escaped_pid:?}");
+        let result = result.expect("the helper should exit after its descendant is contained");
+        assert!(result.success, "helper failed: stdout={:?}, stderr={:?}", result.stdout, result.stderr);
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    fn linux_process_timeout_cannot_leave_a_setpgid_descendant() {
+        let (working_directory, pid_file) = test_escape_fixture("setpgid-timeout");
+        let executable = std::env::current_exe().expect("current test executable");
+        let result = run_process_with_timeout(&ProcessSpec {
+            program: executable.to_string_lossy().into_owned(),
+            args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_setpgid_helper_timeout".into(), "--nocapture".into()],
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
+        }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(1));
+        let escaped_pid = cleanup_test_escaped_group(&pid_file);
+        let _ = std::fs::remove_dir_all(&working_directory);
+        assert!(escaped_pid.is_none(), "a descendant survived timeout in another process group; PID: {escaped_pid:?}");
+        let error = result.expect_err("the helper parent must hit the configured deadline");
+        assert!(error.contains("deadline"), "unexpected timeout result: {error}");
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[test]
+    fn linux_output_overflow_cannot_leave_a_setpgid_writer() {
+        let (working_directory, pid_file) = test_escape_fixture("setpgid-output");
+        let executable = std::env::current_exe().expect("current test executable");
+        let result = run_process_with_timeout(&ProcessSpec {
+            program: executable.to_string_lossy().into_owned(),
+            args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_setpgid_helper_output".into(), "--nocapture".into()],
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
+        }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(5));
+        let escaped_pid = cleanup_test_escaped_group(&pid_file);
+        let _ = std::fs::remove_dir_all(&working_directory);
+        assert!(escaped_pid.is_none(), "a descendant survived output overflow in another process group; PID: {escaped_pid:?}");
+        let error = result.expect_err("stdout overflow must terminate the invocation group");
+        assert!(error.contains("output limit"), "unexpected overflow result: {error}");
+    }
+
     fn linux_process_timeout_cannot_leave_an_escaped_session_descendant() {
         let (working_directory, pid_file) = test_escape_fixture("setsid-timeout");
         let executable = std::env::current_exe().expect("current test executable");
