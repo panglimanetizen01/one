@@ -963,3 +963,9 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 ## 2026-11-21 — latest candidate refresh
 
 - Latest combined source/test candidate is `618db752953eff4672787453b0a8877405f4ebe8`; the final source change only corrects the `FilesystemAuthority::write` platform-contract comment. All macOS nested-write and Seatbelt source changes remain NOT BUILT / NOT TESTED.
+
+## 2026-11-21 — build blocker source correction
+
+- GitHub Actions run #44898144880 on pre-fix SHA `168ff06e7a8d09e575e6ac71513399c9f1f4f994` failed at Build on Ubuntu and Windows 2025. Both provider logs identify Rust parsing errors in `crates/one-core/src/interop.rs` lines 1207/1209: unsafe syscall blocks were compared without parentheses.
+- Minimal source correction: `502a888da46e3d4be4ac80b3a2ffc3233dbabc12` parenthesizes the `setpgid` and `setsid` unsafe expressions. No runtime semantics or containment boundary changed.
+- The fixed SHA has not yet been rebuilt; status contexts and workflow runs were absent at readback. This is IMPLEMENTED / NOT BUILT, not verified. Issue #104/#105 acceptance and platform support remain unchanged.
