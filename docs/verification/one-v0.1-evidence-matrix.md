@@ -928,3 +928,16 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Corrective source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` — NOT BUILT/TESTED.
 - Run #2410 on `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build PASS, Clippy FAIL, Tests SKIPPED; Windows Build FAIL. Windows errors were Linux-only writer helpers compiled under Windows plus unstable Windows metadata extension methods.
 - Corrected in `74df3aa901732c8eb3adaac728162715fc3a4961`: Linux-only writer gating and Windows root identity through native handle metadata. Clippy fixes are in ancestors `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab`. No passing rerun evidence yet.
+
+## 2026-11-21 — filesystem.delete CLI and process containment evidence boundary
+
+| Claim | Candidate/source | Evidence state |
+|---|---|---|
+| Windows handle-bound delete host API | `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` | Verified by One CI #44870781889; Windows native slice only |
+| `filesystem.delete` language bridge | `0fa43eb0be53c8e79424597ece055147872b35c4` | Verified by One CI #44871756593; does not verify later CLI integration |
+| CLI `--izinkan filesystem.delete --target` bridge and regression tests | `17a64b22378d931ef96b9ab5e976c485c4a0555e` and descendants | SOURCE ONLY / NOT BUILT / NOT TESTED |
+| Linux/Android `setsid` + `setpgid` descendant escape tests and unique fixtures | `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` | SOURCE ONLY / NOT BUILT / NOT TESTED |
+| Windows Job Object descendant containment | existing `interop.rs` source and prior exact-SHA tests | Must be reconciled against current exact source before acceptance; no transfer to newer candidate |
+| macOS process descendant containment | unsupported | FAIL-CLOSED / NOT IMPLEMENTED |
+
+No evidence is promoted by these source changes. Issue #104 and #105 remain OPEN / NOT ACCEPTED; full platform matrix, adversarial side-effect proof, and fixed release gates remain outstanding.
