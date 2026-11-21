@@ -129,7 +129,7 @@ fn parse_http_target(target: &str) -> Result<(String, String), AdapterError> {
     if rest.contains('#') || rest.contains('\r') || rest.contains('\n') {
         return Err(AdapterError::InvalidArguments);
     }
-    let authority_end = rest.find(|character| character == '/' || character == '?').unwrap_or(rest.len());
+    let authority_end = rest.find(['/', '?']).unwrap_or(rest.len());
     let authority = &rest[..authority_end];
     if authority.is_empty() {
         return Err(AdapterError::InvalidArguments);
