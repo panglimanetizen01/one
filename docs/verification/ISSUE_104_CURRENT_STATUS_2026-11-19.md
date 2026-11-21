@@ -862,3 +862,16 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Commit `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7` is NOT BUILT / NOT TESTED. The Windows adapter cleanup fix from `b932e3ee3adc3a4b464704a57ac9b46cade4bbe8` is also not yet proven by a Windows rerun. Re-run both focused tests on the new exact SHA; then require fresh Ubuntu and Windows CI results.
 - Earlier note proposing `PlatformKind::current()` is superseded by this correction. CircleCI failure on the earlier SHA remains independently UNKNOWN until its provider diagnostic output is obtained.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, tests/DoD, or acceptance criteria changed.
+
+
+## 2026-11-21 — Exact-SHA validation and CI terminal evidence
+
+- User-provided Termux validation was completed on exact checked-out SHA `fd727e8d2d1045d8563eb6acfdd870059ca602bd` after a clean worktree fast-forward from `259bf345...`.
+- `cargo test -p one-core filesystem_write_adapter_rejects_oversized_content_without_side_effects -- --nocapture --test-threads=1`: PASS (1 passed, 0 failed).
+- `cargo test -p one-core --test process_vertical_slice process_adapter_failure_is_observed_and_audited -- --nocapture --test-threads=1`: PASS (1 passed, 0 failed).
+- `cargo clippy --workspace --all-targets -- -D warnings`: PASS.
+- GitHub Actions run #44854216828 on exact SHA `fd727e8...` is terminal SUCCESS. Ubuntu job #136692460353 and Windows Server 2025 job #136692460634 both completed SUCCESS; Build, Clippy, and Tests steps all SUCCESS. This supplies Windows CI evidence for the oversized-write adapter test in the workspace test step; do not overstate as full E4 acceptance.
+- CircleCI status context `ci/circleci: one-linux` on exact SHA `fd727e8...` is SUCCESS (status target workflow `8983db9c-aabc-4d48-af5b-f8e20d8a77be`, job `8f6f369f-31a8-4e72-b402-8669fc402fe6`). This is GitHub status evidence only; provider logs and pipeline revision/job membership were not independently inspected.
+- The earlier compile regression at `259bf345...` from nonexistent `PlatformKind::current()` is superseded by the explicit supported-platform selection correction at `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7`, now covered by the exact-SHA focused test and green workspace CI.
+- These results establish selected test + Clippy success and green GitHub Actions/CircleCI status for this SHA. They do NOT close Issue #104 or establish all E4 requirements: other-platform backends, mount-boundary/race evidence, host integration, and full adversarial acceptance remain tracked separately.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, acceptance criteria, test contracts, or DoD were changed.
