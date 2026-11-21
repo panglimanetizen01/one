@@ -1024,7 +1024,7 @@ No native macOS result is claimed. Android nested paths and POSIX delete remain 
 |---|---|---|---|---|
 | 6403592796b9827e4bffe26a982dfc66afc75d9d | macOS Native Filesystem #44906889694 / #136854402729 | macOS 15 ARM64 | SUCCESS | 15 macos_ tests passed, 0 failed, 4 ignored; 8 nested_write_ tests passed, 0 failed. Nested writes remain fail-closed on this runner. |
 | 6403592796b9827e4bffe26a982dfc66afc75d9d | macOS Native Filesystem #44906889694 / #136854402906 | macOS 26 ARM64 | SUCCESS | 15 macos_ tests passed, 0 failed, 4 ignored; 8 nested_write_ tests passed, 0 failed. Native nested reads and writes required and passed. |
-| 6403592796b9827e4bffe26a982dfc66afc75d9d | One CI #44906889708 / Ubuntu + Windows 2025 | Linux + Windows | IN_PROGRESS at last read | Ubuntu and Windows were still installing cross-toolchains; no build/test result yet. |
+| 6403592796b9827e4bffe26a982dfc66afc75d9d | One CI #44906889708 / Ubuntu + Windows 2025 | Linux + Windows | SUCCESS | Ubuntu job #136854287546 and Windows job #136854287276 both terminal SUCCESS. |
 | 6403592796b9827e4bffe26a982dfc66afc75d9d | CircleCI ci/circleci: one-linux | Linux | PENDING at last read | Workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2; job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider page and .vcs.revision mapping unavailable. |
 
 ### Newly added platform regression source inventory
