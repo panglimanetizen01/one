@@ -1039,17 +1039,11 @@ mod macos_native {
             || unsafe { libc::fstatfs(file.as_raw_fd(), &mut file_info) } != 0 {
             return Err(FilesystemError::IoFailure);
         }
-        // libc intentionally exposes macOS fsid_t as an opaque ABI type.
-        // Compare its initialized C representation instead of accessing private
-        // fields or assuming Rust-level equality is implemented.
-        let same_filesystem = unsafe {
-            libc::memcmp(
-                std::ptr::addr_of!(root_info.f_fsid).cast::<libc::c_void>(),
-                std::ptr::addr_of!(file_info.f_fsid).cast::<libc::c_void>(),
-                std::mem::size_of::<libc::fsid_t>(),
-            ) == 0
-        };
-        if !same_filesystem
+        // libc 0.2.191 models Darwin fsid_t as an opaque ABI type but
+        // implements Eq for it. Compare the typed identifiers rather than
+        // reading private fields or comparing raw bytes (which could include
+        // representation padding).
+        if root_info.f_fsid != file_info.f_fsid
             || root_info.f_mntonname != file_info.f_mntonname {
             return Err(FilesystemError::ResolutionFailed);
         }
