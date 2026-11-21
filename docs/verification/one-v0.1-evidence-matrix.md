@@ -996,3 +996,14 @@ The source fix parenthesizes unsafe `setpgid` and `setsid` call expressions befo
 | `7744e46849f97b5868a6a75ee365b6f72cca5609` | One CI #44900738968 / #136835893110 | Windows 2025 | SUCCESS | Build, Clippy, Tests, Complete job |
 
 The six Ubuntu process regressions cover setsid and setpgid escape attempts during normal completion, timeout, and output overflow. This is Linux-hosted evidence only. Android/Termux runtime and exact-source Windows Job Object acceptance remain separate requirements. CircleCI on this SHA is PENDING and is not a PASS.
+
+## 2026-11-21 — exact docs-head CI evidence
+
+| Source SHA | Workflow/job | Platform | Result | Scope |
+|---|---|---|---|---|
+| `7744e46849f97b5868a6a75ee365b6f72cca5609` | One CI #44900738968 / #136835893296 | Ubuntu hosted | SUCCESS | Build, Clippy, Tests, Complete job; six Linux process-group adversarial regressions passed |
+| `7744e46849f97b5868a6a75ee365b6f72cca5609` | One CI #44900738968 / #136835893110 | Windows 2025 | SUCCESS | Build, Clippy, Tests, Complete job |
+| `48b8a3235d8b23653764ef005ca5946598182545` | One CI #44901074701 / #136836894258 | Ubuntu hosted | SUCCESS | Docs-only descendant; Build, Clippy, Tests, Complete job |
+| `48b8a3235d8b23653764ef005ca5946598182545` | One CI #44901074701 / #136836894522 | Windows 2025 | SUCCESS | Docs-only descendant; Build, Clippy, Tests, Complete job |
+
+CircleCI on docs HEAD `48b8a323...` remains PENDING (workflow `1d5dbab5-d047-4bbf-b5b5-a394707d2289`, job `826b2a25-a1a2-4c06-a011-aa56a1bc6c0f)); no CircleCI PASS is claimed.
