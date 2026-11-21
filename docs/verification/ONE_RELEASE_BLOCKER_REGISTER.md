@@ -74,24 +74,31 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Current code-bearing source SHA:** `7744e46849f97b5868a6a75ee365b6f72cca5609`  
-**Current PR #113 documentation HEAD:** `48b8a3235d8b23653764ef005ca5946598182545` (8 documentation commits after the code-bearing SHA; no runtime source changed in that delta).
+**PR #113:** OPEN / DRAFT / UNMERGED · base `181ad350d8f0db53cda654c4d378425fbdd6ab24`  
+**Runtime candidate:** `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`  
+**Latest source/test HEAD:** `830a70e5c5d07fd87c5c1e792853e146be04a232` (macOS integration-test expectation correction; runtime implementation unchanged from the candidate).
 
-Current source implementation boundaries (source inspection; platform-specific acceptance remains separate):
-- Linux reads use retained-root `openat2`; direct-child writes use atomic replacement; nested writes use detached-mount + `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)` + beneath-resolved `openat2` and `renameat2`, failing closed when required primitives are unavailable.
-- Windows retains native handle-relative read/write/delete with reparse-point, volume, link-count, and retained-parent protections.
-- Android read/write are direct-child-only. Multi-component paths return `UnsupportedPlatform` before traversal because Termux/app seccomp can terminate the process with SIGSYS on `openat2`; do not restore nested openat2 or use a racy component-walk fallback. Delete remains unavailable.
-- macOS nested reads use XNU beneath/no-follow/unique path flags and mount identity checks. Nested writes have a source candidate using root-staged temporary files and `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`; native tests exist but this candidate has not been built/run on macOS. Delete remains unavailable.
-- POSIX delete (Linux/Android/macOS) remains fail-closed. Do not substitute check-then-`unlinkat`: the API does not bind unlink to the previously validated file handle, so leaf identity can race.
-- The CLI host injects one `FilesystemAuthority` rooted at the host working directory; requested source/target does not select the authority. The read/write/delete capability gates remain distinct.
+**Current concrete implementation**
+- Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing.
+- Windows: native handle-relative read/write/delete; directory/leaf handles retain anti-reparse and anti-rename protections. Windows handle-bound delete has exact-source GitHub Actions evidence from #44871756593 (source `0fa43eb0be53c8e79424597ece055147872b35c4`), but this does not close the full Issue #104 contract.
+- Android: direct-child read/write only using retained-root `openat`, `O_NOFOLLOW`, `O_NONBLOCK`, `statx(STATX_MNT_ID)`, device/type/link checks, and atomic sibling-temp publication. Observed Termux seccomp kills `openat2` with SIGSYS. Nested paths fail closed; no component-walk fallback.
+- macOS: direct-child read/write plus nested read using XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` identity checks. A nested atomic-write candidate now stages a unique temp under the retained root and publishes with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`; cross-mount publication fails closed with `EXDEV`. Source regressions cover replacement, symlink-parent denial, hard-link rejection, and moving a parent outside root before publication.
+- POSIX delete (Linux/Android/macOS) remains unavailable. `unlinkat` is name-based and cannot atomically bind deletion to the validated object handle under the required mount/rename contract. Do not implement check-then-unlink.
+- Host authority remains injected by CLI cwd; requested target/source cannot select or widen root. Read/write/delete are separate capabilities.
 
-Exact-SHA build evidence:
-- GitHub Actions One CI #44900738968 passed Ubuntu #136835893296 and Windows 2025 #136835893110 on source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609`; Build, Clippy, Tests, and Complete job all SUCCESS.
-- The docs-only HEAD `48b8a3235d8b23653764ef005ca5946598182545` then passed One CI #44901074701 on Ubuntu #136836894258 and Windows 2025 #136836894522; Build, Clippy, Tests, and Complete job all SUCCESS. Compare confirms the 8-commit delta from source SHA changes verification docs only.
-- These are Ubuntu/Windows hosted results. They do not prove Android or macOS native compilation/runtime, POSIX delete, real Linux mount-boundary behavior, or full Issue #104 acceptance.
+**Concrete implementation completed in this continuation**
+- Corrected stale macOS public-authority integration regression `macos_leaf_symlink_and_nested_paths_fail_closed`, which still expected all nested writes to be unsupported after the XNU nested-write candidate was added.
+- Renamed it to `macos_nested_write_is_confined_and_leaf_symlinks_are_rejected`. It now accepts a successful nested write only when bytes match, accepts `UnsupportedPlatform` only as fail-closed behavior with no target, asserts no root staging-temp leak, and rejects symlink-parent writes while preserving the outside sentinel.
+- Commit: `830a70e5c5d07fd87c5c1e792853e146be04a232`.
+- This is a source/test correction, NOT a macOS runtime result. The XNU candidate and its native tests remain NOT BUILT / NOT RUN on macOS.
 
-**Next implementation work:** keep the current fail-closed boundaries; close the remaining production gaps against the unchanged contract, prioritizing a race-safe POSIX delete primitive (or a documented platform capability boundary), native macOS build/runtime for the XNU nested-write candidate, and Android's safe supported-path boundary. Do not change acceptance criteria, fixed ledger weights, protected verifier pin, or DoD checkboxes.
+**Current exact-SHA CI**
+- GitHub Actions One CI run #44901974950 on exact HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232` was IN_PROGRESS at last readback; no terminal result claimed.
+- CircleCI `ci/circleci: one-linux` is PENDING on this exact HEAD: workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2`.
+- Existing successful Ubuntu/Windows runs on older exact SHAs do not prove this new source/test commit. Linux/Windows CI also does not compile the macOS cfg module or execute XNU tests.
 
+**Next implementation actions:** obtain a native macOS compile/test lane for this XNU candidate; implement the exact E4 Unix/Windows named adversarial filters through the public host-authority path without changing verifier contracts; retain fail-closed Android nested and POSIX delete boundaries unless a proven kernel primitive is available. Do not alter acceptance criteria, fixed ledger weights, protected verifier pin, or DoD.
+ 
 ### B-003 — Formal v0.1 release gates
 
 **Priority:** P1 · **State:** OPEN / NOT RELEASE-APPROVED**
