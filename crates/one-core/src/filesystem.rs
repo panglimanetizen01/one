@@ -1188,7 +1188,6 @@ mod macos_native {
         )?;
         verify_same_mount(root, &parent)?;
 
-        let mut committed = false;
         let result = (|| {
             temporary.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             temporary.sync_all().map_err(|_| FilesystemError::IoFailure)?;
@@ -1262,6 +1261,89 @@ mod macos_native {
         }
         result
     }
+    #[cfg(test)]
+    mod tests {
+        use super::super::FilesystemAuthority;
+        use super::FilesystemError;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        fn unique_root(label: &str) -> std::path::PathBuf {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("clock after epoch")
+                .as_nanos();
+            std::env::temp_dir().join(format!(
+                "one-macos-{label}-{}-{nonce}",
+                std::process::id()
+            ))
+        }
+
+        #[test]
+        fn nested_write_atomically_replaces_file_beneath_root() {
+            let root = unique_root("nested-write");
+            let nested = root.join("nested");
+            std::fs::create_dir_all(&nested).unwrap();
+            let target = nested.join("target.txt");
+            std::fs::write(&target, b"before").unwrap();
+
+            let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            authority.write("nested/target.txt", b"after").unwrap();
+            assert_eq!(std::fs::read(&target).unwrap(), b"after");
+
+            drop(authority);
+            std::fs::remove_dir_all(root).unwrap();
+        }
+
+        #[test]
+        fn nested_write_rejects_symlink_parent_without_touching_outside_file() {
+            use std::os::unix::fs::symlink;
+
+            let root = unique_root("nested-symlink");
+            let outside = unique_root("nested-symlink-outside");
+            std::fs::create_dir_all(&root).unwrap();
+            std::fs::create_dir_all(&outside).unwrap();
+            let sentinel = outside.join("sentinel.txt");
+            std::fs::write(&sentinel, b"outside").unwrap();
+            symlink(&outside, root.join("escape")).unwrap();
+
+            let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            assert_eq!(
+                authority.write("escape/sentinel.txt", b"modified"),
+                Err(FilesystemError::ResolutionFailed)
+            );
+            assert_eq!(std::fs::read(&sentinel).unwrap(), b"outside");
+
+            drop(authority);
+            std::fs::remove_dir_all(root).unwrap();
+            std::fs::remove_dir_all(outside).unwrap();
+        }
+
+        #[test]
+        fn nested_write_rejects_hard_link_without_changing_external_name() {
+            let root = unique_root("nested-hardlink");
+            let outside = unique_root("nested-hardlink-outside");
+            let nested = root.join("nested");
+            std::fs::create_dir_all(&nested).unwrap();
+            std::fs::create_dir_all(&outside).unwrap();
+            let target = nested.join("target.txt");
+            let external = outside.join("external.txt");
+            std::fs::write(&target, b"shared").unwrap();
+            std::fs::hard_link(&target, &external).unwrap();
+
+            let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            assert_eq!(
+                authority.write("nested/target.txt", b"modified"),
+                Err(FilesystemError::HardLinkedFile)
+            );
+            assert_eq!(std::fs::read(&target).unwrap(), b"shared");
+            assert_eq!(std::fs::read(&external).unwrap(), b"shared");
+
+            drop(authority);
+            std::fs::remove_dir_all(root).unwrap();
+            std::fs::remove_dir_all(outside).unwrap();
+        }
+    }
+
 }
 #[cfg(windows)]
 mod windows_native {
