@@ -976,3 +976,9 @@ Status: Implemented and Verified for the narrow Windows-only file-delete slice. 
 - Ubuntu logs prove six Linux process-group adversarial regressions passed: setsid/setpgid escape attempts across normal completion, timeout, and output overflow. Child helper tests are intentionally ignored standalone and invoked by the parent tests.
 - Android/Termux adversarial execution remains outstanding. Windows Job Object acceptance remains bounded to the exact revisions and logs already recorded; do not transfer historical evidence without matching source.
 - This updates build/test evidence only. Issue #104/#105 remain OPEN / NOT ACCEPTED; no platform support, fixed ledger, DoD, or release approval is promoted.
+
+## 2026-11-21 — latest PR #113 CI refresh
+
+- Code-bearing source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609`: One CI #44900738968 passed Ubuntu #136835893296 and Windows 2025 #136835893110, including Build, Clippy, Tests, and Complete job.
+- Docs-only HEAD `48b8a3235d8b23653764ef005ca5946598182545`: One CI #44901074701 passed Ubuntu #136836894258 and Windows 2025 #136836894522, including Build, Clippy, Tests, and Complete job. The intervening 8 commits changed documentation only.
+- These results do not promote Issue #104/#105 acceptance, Android/macOS runtime support, POSIX delete, E1–E6, fixed ledger, DoD, or release approval.
