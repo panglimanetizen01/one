@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at latest live read | `a722ad321d45ef614d5e03461b23aa20cb7f2d15` |
+| PR #113 HEAD at latest live read | `f026a0241c1f9555f4123e1128e2a3fe173cd756` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source/test SHA | `6403592796b9827e4bffe26a982dfc66afc75d9d` |
+| Code-bearing source/test SHA | `38eb04832ac70c7df179de1594cbdbafc0a37150` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -75,29 +75,38 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
 **PR #113:** OPEN / DRAFT / UNMERGED · base `181ad350d8f0db53cda654c4d378425fbdd6ab24`  
-**Runtime candidate:** `6403592796b9827e4bffe26a982dfc66afc75d9d`  
-**Latest source/test HEAD:** `6403592796b9827e4bffe26a982dfc66afc75d9d` (adds Android statx and Windows volume-identity regressions; PR #113 remains OPEN / DRAFT / UNMERGED).
+**Runtime candidate:** `38eb04832ac70c7df179de1594cbdbafc0a37150`  
+**Latest source/test HEAD:** `38eb04832ac70c7df179de1594cbdbafc0a37150` (adds a mandatory native-Linux nested-write test mode and a mount-boundary regression; CircleCI privileged-lane wiring is `f026a0241c1f9555f4123e1128e2a3fe173cd756`; PR #113 remains OPEN / DRAFT / UNMERGED).
 
 **Current concrete implementation**
-- Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing.
+- Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing. The previous adversarial test treated `UnsupportedPlatform` as a passing skip, so ordinary CI could be green without exercising native nested writes. Source SHA `38eb048...` now fails when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1` and the native path is unavailable; CircleCI config commit `f026a024...` adds a root-executed lane for parent-move and mount-boundary tests.
 - Windows: native handle-relative read/write/delete; directory/leaf handles retain anti-reparse and anti-rename protections. Windows handle-bound delete has exact-source GitHub Actions evidence from #44871756593 (source `0fa43eb0be53c8e79424597ece055147872b35c4`), but this does not close the full Issue #104 contract.
 - Android: direct-child read/write only using retained-root `openat`, `O_NOFOLLOW`, `O_NONBLOCK`, `statx(STATX_MNT_ID)`, device/type/link checks, and atomic sibling-temp publication. Observed Termux seccomp kills `openat2` with SIGSYS. Nested paths fail closed; no component-walk fallback.
 - macOS: direct-child read/write plus nested read using XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and `fstatfs` identity checks. A nested atomic-write candidate now stages a unique temp under the retained root and publishes with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`; cross-mount publication fails closed with `EXDEV`. Source regressions cover replacement, symlink-parent denial, hard-link rejection, and moving a parent outside root before publication.
 - POSIX delete (Linux/Android/macOS) remains unavailable. `unlinkat` is name-based and cannot atomically bind deletion to the validated object handle under the required mount/rename contract. Do not implement check-then-unlink.
 - Host authority remains injected by CLI cwd; requested target/source cannot select or widen root. Read/write/delete are separate capabilities.
 
-**Concrete implementation completed in this continuation**
+**Historical macOS integration correction — earlier checkpoint**
 - Corrected stale macOS public-authority integration regression `macos_leaf_symlink_and_nested_paths_fail_closed`, which still expected all nested writes to be unsupported after the XNU nested-write candidate was added.
 - Renamed it to `macos_nested_write_is_confined_and_leaf_symlinks_are_rejected`. It now accepts a successful nested write only when bytes match, accepts `UnsupportedPlatform` only as fail-closed behavior with no target, asserts no root staging-temp leak, and rejects symlink-parent writes while preserving the outside sentinel.
 - Commit: `830a70e5c5d07fd87c5c1e792853e146be04a232`.
 - This is a source/test correction, NOT a macOS runtime result. The XNU candidate and its native tests remain NOT BUILT / NOT RUN on macOS.
 
-**Current exact-SHA CI**
+**Historical CI state for the macOS correction**
 - GitHub Actions One CI run #44901974950 on exact HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232` was IN_PROGRESS at last readback; no terminal result claimed.
 - CircleCI `ci/circleci: one-linux` is PENDING on this exact HEAD: workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2`.
 - Existing successful Ubuntu/Windows runs on older exact SHAs do not prove this new source/test commit. Linux/Windows CI also does not compile the macOS cfg module or execute XNU tests.
 
-**Next implementation actions:** obtain a native macOS compile/test lane for this XNU candidate; implement the exact E4 Unix/Windows named adversarial filters through the public host-authority path without changing verifier contracts; retain fail-closed Android nested and POSIX delete boundaries unless a proven kernel primitive is available. Do not alter acceptance criteria, fixed ledger weights, protected verifier pin, or DoD.
+**Latest implementation delta — Linux nested-write native enforcement (2026-11-21)**
+
+- Source/test commit: `38eb04832ac70c7df179de1594cbdbafc0a37150`. The Linux parent-move regression no longer silently counts `UnsupportedPlatform` as sufficient when `ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1`.
+- Added `nested_write_rejects_mount_boundary_before_creating_staging_file`, using `/` as the retained root and `/dev` as a separate mount; it requires `ResolutionFailed` and verifies no target is created.
+- CircleCI config commit: `f026a0241c1f9555f4123e1128e2a3fe173cd756`. After the normal workspace test binary is built, a dedicated step executes the two Linux adversarial tests as root with the native-required environment variable. This avoids recompiling the workspace under sudo and keeps the test binary/build artifacts unchanged.
+- The new source/config commits used `[skip ci]` to avoid testing an intermediate state. The following documentation-sync commit will trigger the combined candidate pipeline. Until terminal job logs show both exact named tests executing successfully, native Linux nested-write support remains NOT VERIFIED.
+- Existing One CI run #44906889708 on prior source `6403592796b9827e4bffe26a982dfc66afc75d9d` was SUCCESS on Ubuntu and Windows; however, its test allowed unsupported native primitives and is not proof of successful nested writes. Existing macOS native run #44906889694 remains valid for its exact prior source only.
+- Issue #104 remains OPEN / NOT ACCEPTED. No verifier pin, fixed ledger, DoD, acceptance criteria, main branch, or release state changed.
+
+**Next implementation actions:** obtain terminal CircleCI evidence for the privileged Linux nested-write lane; then continue Android nested filesystem implementation without falling back to `openat2` in Termux, and evaluate a safe native POSIX delete primitive. Keep unsupported operations fail-closed. Do not alter acceptance criteria, fixed ledger weights, protected verifier pin, or DoD.
  
 ### B-003 — Formal v0.1 release gates
 
