@@ -153,3 +153,10 @@ Latest combined source/test candidate: `618db752953eff4672787453b0a8877405f4ebe8
 - CircleCI on docs HEAD remains PENDING (workflow `1d5dbab5-d047-4bbf-b5b5-a394707d2289`, job `826b2a25-a1a2-4c06-a011-aa56a1bc6c0f)); provider revision/log evidence unavailable.
 - B-002 implementation boundary: Linux nested write, Windows handle-relative read/write/delete; Android read/write direct-child only (nested fail-closed); macOS XNU nested read/write source candidate needs native run; POSIX delete remains unavailable. Do not use racy check-then-`unlinkat`.
 - Continue implementation-first from the single blocker register. Do not repeat the exact Ubuntu/Windows source suite absent a source/input change. Keep Issue #104/#105 OPEN / NOT ACCEPTED and preserve fixed ledger/DoD, protected pins, main, and release authorization boundaries.
+
+## Implementation handoff — 2026-11-21 (XNU nested-write candidate)
+
+- PR #113 HEAD `830a70e5c5d07fd87c5c1e792853e146be04a232`, OPEN / DRAFT / UNMERGED.
+- Runtime candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` adds macOS nested atomic write using root-staged temp + `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`. Commit `830a70e...` fixes the stale public-authority integration regression to match this candidate; no native macOS execution has occurred.
+- GitHub Actions #44901974950 is IN_PROGRESS; CircleCI is PENDING (workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2`). Do not infer macOS pass from Ubuntu/Windows jobs.
+- Next: obtain native macOS compile/test evidence; continue exact E4 public-authority adversarial test implementation. Keep Android nested paths and POSIX delete fail-closed. Issue #104/#105 remain OPEN / NOT ACCEPTED; preserve protected verifier pins, fixed ledger/DoD, main, and release authorization boundaries.
