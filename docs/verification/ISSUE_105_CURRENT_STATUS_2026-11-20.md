@@ -81,3 +81,11 @@ Native implementation boundary reviewed in `crates/one-core/src/interop.rs`:
 Source/test commit `5e79f351b887f3dee7f77ae3a2e8dd86e5d108ea` isolates each Linux/Android escaped-descendant test in a unique working directory so parallel test cases cannot share or overwrite one PID fixture. Commit `18bd42f1eecb7ca40dcf88a5b8d6456d15361f2e` adds direct `setpgid(0, 0)` escape probes for normal completion, timeout, and output overflow, complementing the existing `setsid` cases. Commit `477537c3e6ceabc79ff56ef04a3983cd3bae29ea` corrects test-attribute placement after source review.
 
 All these changes are source-only and NOT BUILT / NOT TESTED. No process containment PASS or Issue #105 acceptance is claimed. Next evidence must run the exact-SHA adversarial matrix on supported Linux architectures and real Android/Termux, and re-run Windows Job Object descendants tests on the same candidate. Keep macOS fail-closed unless a separately reviewed native primitive can provide equivalent guarantees.
+
+## 2026-11-21 — macOS process containment primitive research
+
+Seatbelt/Sandbox Policy Language exposes a `process-fork` operation that can deny `fork`/`vfork`. This is a plausible way to prevent descendants rather than trying to kill an escaped process tree. It is NOT yet a production implementation: the current evidence does not prove whether `posix_spawn`, `posix_spawnp`, Foundation `NSTask`/Process, shell helpers, or other process-creation paths are denied by the same rule, nor does it prove the exact wrapper/profile inheritance behavior on supported macOS versions.
+
+Do not enable macOS process execution on this basis. A native proof must launch an untrusted child under a Seatbelt profile, verify the initial `exec` still works, then attempt fork, vfork, posix_spawn, posix_spawnp, system/popen, Python/Node subprocess APIs, setsid/setpgid, and descendant cleanup under normal exit, timeout, and output overflow. The host must verify no child or grandchild survives. Until that exact native matrix passes, macOS remains fail-closed and Issue #105 remains OPEN / NOT ACCEPTED.
+
+Linux/Android inherited seccomp + process-group cleanup and Windows Job Object containment remain the only implemented production backends. Recent setpgid adversarial source tests remain NOT BUILT / NOT TESTED.
