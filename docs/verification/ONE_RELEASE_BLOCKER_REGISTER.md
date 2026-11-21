@@ -1053,3 +1053,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 
 - Source/test commit `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the existing ProcessAdapter metadata test to run on macOS, asserting that `PlatformKind::Macos` remains unadvertised while Seatbelt is only a single-process candidate and brokered launches are unproven.
 - Latest combined source/test candidate: `0408b92f6eafb12c18371d0079c6e73915e8e87c` (NOT BUILT / NOT TESTED). Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — master prompt updated to latest source/test candidate
+
+- Updated `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `d7e174d0e7e39ba311dce81cacc79891a040cdff` to distinguish the latest combined source/test candidate `0408b92f6eafb12c18371d0079c6e73915e8e87c`, filesystem-specific source `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`, and macOS Seatbelt runtime/probe source `3bad0196e9352871d09cb9b966cf6b393a866603`.
+- Documentation-only; no evidence or acceptance state changed.
