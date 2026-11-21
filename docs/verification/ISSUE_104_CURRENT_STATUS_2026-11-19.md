@@ -951,3 +951,48 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Exact-SHA GitHub Actions run #44901974950 is IN_PROGRESS; CircleCI on this SHA is PENDING (workflow `abbb09df-4337-4c53-ba91-a59a834b57db`, job `6fd8871c-eaf5-491a-b212-01ddedfb5fb2`). Neither provides native macOS execution.
 - Android nested read/write remain fail-closed because observed Termux seccomp kills `openat2` with SIGSYS; POSIX delete remains unavailable due lack of a safe handle-bound deletion primitive.
 - Issue #104 remains OPEN / NOT ACCEPTED. Do not mark macOS nested writes supported until exact-source native macOS build/tests and the remaining E4 contract pass.
+
+## Live Issue #104 continuation — 2026-11-21
+
+This section supersedes earlier current-state snapshots in this file. Historical E4 runs and source pins remain historical and are not transferred to the current candidate.
+
+### Current exact candidate
+
+- PR #113: OPEN / DRAFT / UNMERGED.
+- Branch: security/issue-104-root-confinement-20261118.
+- Latest source/test SHA at this checkpoint: 6403592796b9827e4bffe26a982dfc66afc75d9d.
+- Base SHA: 181ad350d8f0db53cda654c4d378425fbdd6ab24.
+- Issue #104 remains OPEN / NOT ACCEPTED.
+
+### Native macOS nested filesystem
+
+- The nested write now stages an exclusive temporary sibling in the validated target parent. The parent is opened beneath the retained root, checked with fstatfs filesystem ID + mountpoint identity, and retained.
+- Final publication resolves both source and target from the root descriptor with renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY). If the parent moves outside root, publication fails closed; cleanup uses unlinkat through the retained parent descriptor.
+- Mount crossing is rejected before staging; a regression opens / as root and attempts a write beneath /dev, requiring ResolutionFailed and no target/temp.
+- Cleanup errors surface as IoFailure. Tests inject failures at TempCreated, Written, Synced, and BeforeRename and explicitly force unlinkat failure.
+- macOS native run #44906889694 passed on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d. macOS 15 and 26 each passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
+- macOS 26 nested writes are required and pass. macOS 15 nested writes remain UnsupportedPlatform and fail closed; do not remove beneath/no-follow flags or use a path-based fallback.
+
+### Windows and Android regression additions
+
+- Windows volume serial checks are centralized in volume_serial_matches and used by native root-relative operations. Synthetic mismatch regression: windows_volume_identity_rejects_mismatch.
+- Added real-junction write rejection with outside sentinel/no-temp assertions and positive absolute in-root write regression.
+- Android direct-child backend uses statx STATX_MNT_ID. Added android_statx_mount_id_matches_same_mount_and_rejects_devfs. This is NOT YET RUN on the real Termux device. After syncing the branch, execute:
+  cargo test -p one-core --locked android_statx_mount_id_matches_same_mount_and_rejects_devfs -- --nocapture
+  cargo test -p one-core --locked android_ -- --nocapture
+- Android multi-component paths remain UnsupportedPlatform. No openat2 call or userspace component-walk fallback was added.
+
+### Latest CI state at last read
+
+- One CI run #44906889708 on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Ubuntu and Windows jobs still in cross-toolchain installation; terminal result not yet available.
+- CircleCI context ci/circleci: one-linux on the same SHA was PENDING: workflow 2ba5af51-82f5-4bee-9865-fa842200c9a2, job 39275e15-8d19-4c6e-ac0d-9ad9b03332d9. Provider job page, pipeline revision and logs were inaccessible; do not claim CircleCI PASS.
+- Independent verifier PR #51 still pins historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. The E4 filter must be extended for the new Windows and Android tests after implementation scope is frozen. Protected verifier pin unchanged.
+
+### Remaining boundaries
+
+- Linux nested writes still require detached-mount primitives and fail closed when unavailable.
+- Android nested paths remain fail-closed.
+- macOS 15 nested writes remain fail-closed; macOS delete unsupported.
+- POSIX delete remains unavailable; Windows is the only platform advertising handle-bound delete.
+- Issue #104 remains OPEN / NOT ACCEPTED. No merge, main update, protected verifier pin promotion, fixed ledger/DoD change, or release approval.
+
