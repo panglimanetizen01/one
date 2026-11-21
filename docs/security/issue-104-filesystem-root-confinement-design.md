@@ -1046,3 +1046,34 @@ A user-provided Termux ARM64 `strace` trace on the candidate environment shows `
 The Android candidate now avoids `openat2` entirely. Single-component direct-child reads use retained-root-relative `openat` with `O_NOFOLLOW | O_NONBLOCK`, followed by regular-file, single-link, device, and `STATX_MNT_ID` validation. Direct-child atomic writes continue using the retained root descriptor. Multi-component reads and writes return `UnsupportedPlatform` before filesystem traversal.
 
 Do not implement a component-by-component `openat` nested fallback. An attacker can rename an opened parent outside the root while the process continues using that directory descriptor; the descriptor does not establish that the directory remains beneath the original root. Nested Android support requires a different kernel-enforced containment primitive proven available under the target seccomp policy, plus adversarial rename, symlink, and mount-boundary tests. The updated code candidate `e5c8a7d5d2075902ef4f027322e2e615908bac14` is NOT BUILT / NOT TESTED. This limitation is deliberate and does not constitute Android support or Issue #104 acceptance.
+
+## Native primitive coverage and safe deletion boundary — 2026-11-21
+
+This section maps each platform backend to the Issue #104 invariants: retained host-selected root authority; no symlink/reparse traversal; no mount/volume escape; regular-file and single-link policy; and resistance to parent/leaf rename or replacement races. A platform is supported only for the operation whose complete primitive chain is available.
+
+| Platform | Read primitive | Atomic write primitive | Nested-path boundary | Delete primitive |
+|---|---|---|---|---|
+| Linux | openat2 from retained root with RESOLVE_BENEATH, RESOLVE_NO_SYMLINKS, RESOLVE_NO_XDEV; nonblocking open then regular-file/link checks | Direct-child root-dirfd temp + sync + renameat2; nested candidate uses detached recursive mount, MOUNT_ATTR_NOSYMFOLLOW, and root-relative openat2 commit | Nested writes depend on open_tree / mount_setattr privileges and kernel support; otherwise fail closed | Not implemented. unlinkat is name-based, not bound to a previously validated object handle; do not add a precheck-then-unlink path as a race-free delete contract. |
+| Android | Direct-child retained-root openat with O_NOFOLLOW, O_NONBLOCK, statx(STATX_MNT_ID), device, regular-file and link checks. openat2 is blocked by observed Termux seccomp (SIGSYS). | Direct-child exclusive sibling temp, fsync, root-dirfd renameat and directory sync | Nested read/write fail closed. Component walks are rejected because opened POSIX parents can be renamed outside the root. | Not implemented. unlinkat cannot delete by validated fd; no anti-race primitive established. |
+| macOS | Direct-child openat; nested read uses XNU O_RESOLVE_BENEATH, O_NOFOLLOW_ANY, O_UNIQUE and fstatfs identity checks | Direct-child exclusive sibling temp, sync and root-relative renameat | Nested read is kernel-resolved; nested write remains fail closed because no root-bounded atomic publication primitive is proven. | Not implemented. unlinkat remains path/name-based and no handle-bound equivalent has been established in this backend. |
+| Windows | Retained root and component handles; NtCreateFile with OBJ_DONT_REPARSE / FILE_OPEN_REPARSE_POINT, volume and file metadata checks | Retained parent handles deny FILE_SHARE_DELETE; exclusive temp handle and native handle-relative rename | Component traversal holds every parent handle without delete sharing; actual junction/reparse tests exist | Implemented in source, not yet built/tested: open leaf with DELETE_ACCESS, deny delete sharing, validate reparse/volume/type/link count, then apply NtSetInformationFile(FileDispositionInformation) to that exact handle. This avoids a second path lookup between validation and deletion. |
+
+### Windows handle-bound deletion implementation
+
+Source commit ffa51679e998e97bca0730a182d8887a245e03d0 adds FilesystemAuthority::delete and windows_native::delete_relative. The operation is intentionally Windows-only for now; Linux, Android, macOS, and other targets return UnsupportedPlatform before any deletion syscall. It accepts regular files only (not directories), rejects reparse points, volume mismatches, and hard links, retains non-delete-share parent handles during nested traversal, and applies NT file disposition to the validated leaf handle.
+
+Added source tests:
+- delete_uses_validated_handle_and_removes_nested_regular_file
+- delete_rejects_hard_links_without_removing_either_name
+
+These tests are source additions only until a build and Windows execution report exists. This slice does not close Issue #104, establish the complete E4 matrix, or authorize enabling a language-level delete capability. The capability/adapter layer remains deliberately unchanged until this native backend and its evidence are reviewed.
+
+### Remaining native primitive gaps
+
+1. Linux nested writes: prove detached-mount behavior on the actual unprivileged/CI profiles; CAP_SYS_ADMIN or unavailable open_tree/mount_setattr means fail closed. No Landlock-only or parent-dirfd fallback.
+2. Android nested reads/writes: no openat2 probing in the observed Termux seccomp profile; no component-walk fallback. A different kernel-enforced beneath resolver must be proven safe and permitted.
+3. macOS nested writes: a kernel-enforced root-bounded atomic replacement operation is still missing; O_RESOLVE_BENEATH for open does not itself constrain a later renameat path operation.
+4. POSIX deletion (Linux/Android/macOS): no backend currently applies delete disposition to the exact validated object handle while preserving root confinement and replacement-race guarantees. A preflight fstat followed by unlinkat is not equivalent and must not be used as a claimed fix.
+5. Host-root integration and complete adversarial evidence remain separately tracked in the release blocker register.
+
+Issue #104 remains OPEN / NOT ACCEPTED.
