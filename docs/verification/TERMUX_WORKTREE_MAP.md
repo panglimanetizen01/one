@@ -80,3 +80,11 @@ After safely synchronizing the existing worktree, continue the current B-001 evi
 - Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961`. PR #113 has additional documentation-only commits after this source candidate; fetch the current remote-tracking branch before local builds.
 - The source candidate includes Android nested-write detached-mount routing, macOS kernel-bounded nested reads with direct-child compatibility, Clippy fixes, and Windows native root-identity/Linux cfg corrections. It has NOT been built/tested locally or rerun in CI.
 - The earlier GitHub Actions run #2410 used parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` and failed Clippy/Windows Build; fixes are descendants and need fresh exact-SHA evidence.
+
+
+## Observed Termux Android compile attempt and follow-up — 2026-11-21
+
+- User-confirmed $HOME/one-pr113 was clean and fast-forwarded from 1e8e19dcf3833aaff7169427350fa50b7df1f545 to 04143d1a9b11f55e1f2ae38960f35d32d2904a11; Rust/Cargo 1.99.1 on aarch64-linux-android.
+- Both workspace Clippy and focused Android filesystem tests were attempted. Both stopped at compile time on missing Android std::io::Write import and Statx [u8; 76]: Default derive; no Android test body ran.
+- Corrected in source commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4. This SHA has not been built/tested yet.
+- Before the next build, re-check git status -sb and git status --porcelain=v1, then fetch and fast-forward only if clean. Do not assume the worktree is current. Read this map before any further Git commands; do not create another worktree.
