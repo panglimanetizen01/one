@@ -1029,14 +1029,23 @@ mod macos_native {
     }
 
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
-        let path = CString::new(relative.as_os_str().as_bytes())
-            .map_err(|_| FilesystemError::InvalidTarget)?;
-        // XNU resolves the entire path beneath root in-kernel. O_NOFOLLOW_ANY
-        // rejects symlinks in every component; O_UNIQUE enforces single-link.
-        // Unsupported kernels return an error; never fall back to a userspace walk.
-        let file = openat(root, &path,
-            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NONBLOCK
-                | O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE, 0)?;
+        let file = if relative.components().count() == 1 {
+            // Preserve the legacy safe direct-child path on older macOS kernels.
+            // Only the final component is opened with O_NOFOLLOW; there are no
+            // intermediate path components to race.
+            let (parent, leaf) = parent_and_leaf(root, relative)?;
+            openat(&parent, &leaf,
+                libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?
+        } else {
+            let path = CString::new(relative.as_os_str().as_bytes())
+                .map_err(|_| FilesystemError::InvalidTarget)?;
+            // XNU resolves the entire nested path beneath root in-kernel.
+            // O_NOFOLLOW_ANY rejects symlinks in every component; O_UNIQUE
+            // enforces single-link. Unsupported kernels fail closed.
+            openat(root, &path,
+                libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NONBLOCK
+                    | O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE, 0)?
+        };
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
