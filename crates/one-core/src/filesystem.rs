@@ -1236,9 +1236,9 @@ mod macos_native {
         )?;
         verify_same_mount(root, &parent)?;
 
-        // Stage on the root mount. Publishing into a nested mount then fails
-        // with EXDEV. XNU resolves both operands beneath root and rejects
-        // symlinks in the final rename operation itself.
+        // Stage beside the destination on its already-validated mount.
+        // The final rename still resolves both names from the retained root
+        // handle, so a moved parent cannot redirect publication outside root.
         let mut created = None;
         for _ in 0..16 {
             let nonce = SystemTime::now()
