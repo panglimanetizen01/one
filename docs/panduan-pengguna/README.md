@@ -61,3 +61,7 @@ Lihat [cara memperbarui dokumentasi](memperbarui-dokumentasi.md).
 Panduan pengguna menjelaskan cara menggunakan kemampuan One yang sudah ada. Panduan ini **bukan** sumber kebenaran semantik bahasa. Grammar, CLI contract, implementation status, dan verification evidence tetap menjadi sumber normatif sesuai area masing-masing.
 
 One juga tidak mengubah kalimat bebas menjadi perintah executable secara otomatis. Sintaks yang digunakan harus sesuai grammar yang didukung.
+
+## Penghapusan berkas
+
+Sintaks awal dan batas platform untuk operasi hapus berkas dijelaskan di [status fitur](status-fitur.md). Operasi ini memerlukan grant eksplisit filesystem.delete dan saat ini hanya memiliki adapter native Windows; jangan menganggapnya tersedia di Linux, Android, atau macOS sebelum status fitur menyatakan dukungan terverifikasi.
