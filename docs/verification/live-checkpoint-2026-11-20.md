@@ -730,3 +730,12 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - Exact-SHA cargo clippy --workspace --all-targets -- -D warnings and cargo test -p one-core filesystem::android_filesystem_tests -- --nocapture both failed before tests ran with the same two compiler errors: missing Android-scoped std::io::Write import and unsupported Default derive for [u8; 76] in Statx.
 - Fixed in PR source commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4: Write is now imported for Linux/Android, and the 76-byte reserved Statx field is represented as 32+32+12 byte arrays. The compile-time size_of::<Statx>() == 256 assertion remains.
 - This is a source correction only. New SHA is NOT BUILT/TESTED. Re-run both commands on exact SHA after safe fast-forward. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
+
+
+## 2026-11-21 — Android Termux build/runtime checkpoint
+
+- User-confirmed SHA `8b3cb52168ed8d4961ce4e47bcc3410f9a0fd7ff`, clean fast-forward, Rust/Cargo 1.99.1 on `aarch64-linux-android`.
+- The prior Android compile errors are resolved: focused test binary compiled and started five tests.
+- Clippy now gets past `one-core` but fails on unused helper `run` in `one-cli` Android integration-test compilation. Fixed by cfg-gating helper to Linux/Windows in `f9dd400b21670fd07c5498307714a9b7ea931d18`; not yet built/tested.
+- Android tests are not green: hard-link fixture setup returns PermissionDenied (code 13); process subsequently exits with SIGSYS. Root-final-symlink test passed; remaining tests are unverified. Keep security tests unchanged and isolate each test to identify the syscall causing SIGSYS.
+- Latest source fix commit `f9dd400b21670fd07c5498307714a9b7ea931d18` is not yet built/tested. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
