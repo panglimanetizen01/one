@@ -973,6 +973,18 @@ mod macos_native {
     const O_RESOLVE_BENEATH: i32 = 0x0000_1000;
     const O_UNIQUE: i32 = 0x0000_2000;
     const O_NOFOLLOW_ANY: i32 = 0x2000_0000;
+    const RENAME_NOFOLLOW_ANY: u32 = 0x0000_0010;
+    const RENAME_RESOLVE_BENEATH: u32 = 0x0000_0020;
+
+    unsafe extern "C" {
+        fn renameatx_np(
+            from_directory: libc::c_int,
+            from_path: *const libc::c_char,
+            to_directory: libc::c_int,
+            to_path: *const libc::c_char,
+            flags: u32,
+        ) -> libc::c_int;
+    }
 
     fn map_error(error: std::io::Error) -> FilesystemError {
         match error.raw_os_error() {
@@ -1065,7 +1077,132 @@ mod macos_native {
         Ok(file)
     }
 
+    fn write_nested_relative(
+        root: &File,
+        relative: &Path,
+        bytes: &[u8],
+    ) -> Result<(), FilesystemError> {
+        use std::os::fd::AsRawFd;
+
+        const RESOLVE_FLAGS: i32 = O_RESOLVE_BENEATH | O_NOFOLLOW_ANY;
+        const RENAME_FLAGS: u32 = RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY;
+
+        if relative.is_absolute()
+            || relative.components().any(|component| {
+                !matches!(component, Component::Normal(_))
+            })
+        {
+            return Err(FilesystemError::InvalidTarget);
+        }
+
+        let root_fd = root.as_raw_fd();
+        let root_metadata = root.metadata().map_err(|_| FilesystemError::IoFailure)?;
+        let target_name = CString::new(relative.as_os_str().as_bytes())
+            .map_err(|_| FilesystemError::InvalidTarget)?;
+
+        match openat(
+            root,
+            &target_name,
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NONBLOCK
+                | RESOLVE_FLAGS | O_UNIQUE,
+            0,
+        ) {
+            Ok(existing) => {
+                let metadata = existing.metadata().map_err(|_| FilesystemError::IoFailure)?;
+                if !metadata.is_file() {
+                    return Err(FilesystemError::NotRegularFile);
+                }
+                if metadata.nlink() != 1 {
+                    return Err(FilesystemError::HardLinkedFile);
+                }
+                verify_same_mount(root, &existing)?;
+            }
+            Err(FilesystemError::NotFound) => {}
+            Err(error) => return Err(error),
+        }
+
+        // Stage on the root mount. Publishing into a nested mount then fails
+        // with EXDEV. XNU resolves both operands beneath root and rejects
+        // symlinks in the final rename operation itself.
+        let mut created = None;
+        for _ in 0..16 {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos();
+            let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+            let name = CString::new(format!(
+                ".one-write-{}-{nonce}-{counter}.tmp",
+                std::process::id()
+            ))
+            .map_err(|_| FilesystemError::InvalidTarget)?;
+            match create_temp(root, &name) {
+                Ok(file) => {
+                    created = Some((file, name));
+                    break;
+                }
+                Err(error) if error.raw_os_error() == Some(libc::EEXIST) => continue,
+                Err(error) => return Err(map_error(error)),
+            }
+        }
+        let (mut temporary, temporary_name) =
+            created.ok_or(FilesystemError::IoFailure)?;
+        let temp_metadata = temporary.metadata().map_err(|_| FilesystemError::IoFailure)?;
+        if !temp_metadata.is_file()
+            || temp_metadata.nlink() != 1
+            || temp_metadata.dev() != root_metadata.dev()
+        {
+            let _ = unsafe { libc::unlinkat(root_fd, temporary_name.as_ptr(), 0) };
+            return Err(FilesystemError::ResolutionFailed);
+        }
+
+        let parent_path = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
+        let parent_name = CString::new(parent_path.as_os_str().as_bytes())
+            .map_err(|_| FilesystemError::InvalidTarget)?;
+        let parent = openat(
+            root,
+            &parent_name,
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | RESOLVE_FLAGS,
+            0,
+        )?;
+        verify_same_mount(root, &parent)?;
+
+        let mut committed = false;
+        let result = (|| {
+            temporary.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
+            temporary.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+            let renamed = unsafe {
+                renameatx_np(
+                    root_fd,
+                    temporary_name.as_ptr(),
+                    root_fd,
+                    target_name.as_ptr(),
+                    RENAME_FLAGS,
+                )
+            };
+            if renamed != 0 {
+                return Err(map_error(std::io::Error::last_os_error()));
+            }
+            committed = true;
+            parent.sync_all().map_err(|_| FilesystemError::IoFailure)?;
+            Ok(())
+        })();
+
+        if !committed {
+            let removed = unsafe { libc::unlinkat(root_fd, temporary_name.as_ptr(), 0) };
+            if removed != 0
+                && std::io::Error::last_os_error().raw_os_error() != Some(libc::ENOENT)
+            {
+                return Err(FilesystemError::IoFailure);
+            }
+        }
+        result
+    }
+
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
+        if relative.components().count() > 1 {
+            return write_nested_relative(root, relative, bytes);
+        }
         let (parent, leaf) = parent_and_leaf(root, relative)?;
         match openat(&parent, &leaf,
             libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0) {
