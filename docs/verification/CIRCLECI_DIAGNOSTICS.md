@@ -464,3 +464,12 @@ A fresh exact-SHA status readback supersedes the PENDING observation above for d
 ## Termux worktree map and continuation entrypoint
 
 For Termux continuation, read [TERMUX_WORKTREE_MAP.md](TERMUX_WORKTREE_MAP.md) first. The PR #113 branch `security/issue-104-root-confinement-20261118` is already checked out in `$HOME/one-pr113`; do not try to switch to it from `$HOME/one` or create a duplicate worktree. The map records the confirmed directory/branch layout, safe fast-forward-only synchronization procedure, and current B-001 handoff. Always re-check status and exact SHAs before syncing; preserve all local and untracked evidence.
+
+## 2026-11-21 — exact build failure diagnosis and source fix
+
+- PR #113 pre-fix exact HEAD: `168ff06e7a8d09e575e6ac71513399c9f1f4f994`.
+- CircleCI status context on that SHA: `ci/circleci: one-linux = FAILURE`; target workflow `16c4f795-1bcb-4a24-9935-ffd0e553f30c`, job `b7e21b09-8205-4d29-a9c7-a2f555e5e913`. This session could not retrieve CircleCI pipeline number/UUID, `vcs.revision`, workflow/job membership, `started_at`, or provider step logs. CircleCI root cause therefore remains UNKNOWN.
+- Independently, GitHub Actions `One CI` run #44898144880 on the same exact source failed deterministically in Build on Ubuntu job #136828104281 and Windows 2025 job #136828104468. Both logs show Rust parser errors in `crates/one-core/src/interop.rs` lines 1207 and 1209: unsafe block expressions were compared directly using `== 0` and `>= 0` without parentheses. Clippy and Tests were skipped.
+- Minimal fix committed on the PR branch as `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`: `(unsafe { libc::setpgid(0, 0) }) == 0` and `(unsafe { libc::setsid() }) >= 0`.
+- Post-fix exact-SHA status readback: no GitHub status contexts and no GitHub Actions workflow run yet associated with `502a888...`. This is NOT PASS and does not prove CircleCI triggered. The source fix is awaiting a fresh build.
+- Keep B-001 PARTIAL / NOT CLOSED. Do not attribute the CircleCI failure to the Rust syntax error until provider-side pipeline → workflow → job → revision/log evidence independently establishes that same failure.
