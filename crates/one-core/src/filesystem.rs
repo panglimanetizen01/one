@@ -842,40 +842,28 @@ mod android_native {
         Ok(unsafe { File::from_raw_fd(fd) })
     }
 
-    // Android uses the Linux openat2 resolution contract for reads. Unlike
-    // a userspace openat walk, RESOLVE_BENEATH is enforced by the kernel for
-    // the complete path lookup and denies rename races it cannot prove safe.
-    #[repr(C)]
-    struct OpenHow { flags: u64, mode: u64, resolve: u64 }
-
+    // Android's app seccomp policy can terminate the process with SIGSYS
+    // when openat2 is invoked, so never probe that syscall in-process.
+    // A single-component openat is safe relative to the retained root handle:
+    // there is no intermediate directory that can be renamed out of the root.
+    // Multi-component paths remain unavailable until a kernel-enforced
+    // beneath resolver that is permitted by the target seccomp policy exists.
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
-        const RESOLVE_NO_XDEV: u64 = 0x01;
-        const RESOLVE_NO_SYMLINKS: u64 = 0x04;
-        const RESOLVE_BENEATH: u64 = 0x08;
         let components: Vec<_> = relative.components().collect();
         if components.is_empty() || components.iter().any(|part| !matches!(part, Component::Normal(_))) {
             return Err(FilesystemError::InvalidTarget);
         }
+        if components.len() != 1 {
+            return Err(FilesystemError::UnsupportedPlatform);
+        }
         let path = CString::new(relative.as_os_str().as_bytes())
             .map_err(|_| FilesystemError::InvalidTarget)?;
-        let how = OpenHow {
-            flags: (libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK) as u64,
-            mode: 0,
-            resolve: RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV,
-        };
-        let fd = unsafe {
-            libc::syscall(libc::SYS_openat2, root.as_raw_fd(), path.as_ptr(),
-                &how as *const OpenHow, std::mem::size_of::<OpenHow>()) as libc::c_int
-        };
-        if fd < 0 {
-            return match std::io::Error::last_os_error().raw_os_error() {
-                Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) => Err(FilesystemError::ResolutionFailed),
-                Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => Err(FilesystemError::UnsupportedPlatform),
-                Some(libc::ENOENT) => Err(FilesystemError::NotFound),
-                _ => Err(FilesystemError::IoFailure),
-            };
-        }
-        let file = unsafe { File::from_raw_fd(fd) };
+        let file = openat(
+            root,
+            &path,
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK,
+            0,
+        )?;
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
@@ -887,10 +875,11 @@ mod android_native {
     }
 
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
-        if relative.parent().is_some_and(|parent| !parent.as_os_str().is_empty()) {
-            // Use the detached-mount transaction shared with Linux. Android
-            // kernels/SELinux profiles denying these syscalls remain fail-closed.
-            return super::linux_write_nested_relative_with_hook(root, relative, bytes, |_| Ok(()));
+        if relative.components().count() != 1 {
+            // A nested parent can be renamed outside the retained root between
+            // traversal and publication. Do not invoke openat2 here: Android
+            // seccomp may kill the process with SIGSYS instead of returning.
+            return Err(FilesystemError::UnsupportedPlatform);
         }
         let (parent, leaf) = parent_and_leaf(root, relative)?;
         let root_mount = mount_id(root)?;
