@@ -1369,6 +1369,32 @@ mod macos_native {
         }
 
         #[test]
+        fn macos_filesystem_identity_matches_same_mount_and_rejects_devfs() {
+            let root = unique_root("mount-identity");
+            let nested = root.join("nested");
+            std::fs::create_dir_all(&nested).unwrap();
+
+            let root_handle = std::fs::File::open(&root).unwrap();
+            let nested_handle = std::fs::File::open(&nested).unwrap();
+            super::verify_same_mount(&root_handle, &nested_handle)
+                .expect("directories on the same APFS mount must match");
+
+            // /dev is a separate devfs mount on macOS. This assertion exercises
+            // the negative path without requiring mount privileges or a fixture.
+            let devfs_handle = std::fs::File::open("/dev").unwrap();
+            assert_eq!(
+                super::verify_same_mount(&root_handle, &devfs_handle),
+                Err(FilesystemError::ResolutionFailed),
+                "a descriptor on devfs must not be treated as beneath the root mount"
+            );
+
+            drop(devfs_handle);
+            drop(nested_handle);
+            drop(root_handle);
+            std::fs::remove_dir_all(root).unwrap();
+        }
+
+        #[test]
         fn nested_write_publishes_atomically_or_fails_closed_when_kernel_flags_are_unavailable() {
             let root = unique_root("nested-write");
             let nested = root.join("nested");
