@@ -1021,3 +1021,8 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - macOS process containment remains fail-closed. Seatbelt `process-fork` denial is only a research candidate until `posix_spawn` and every descendant creation route are proven blocked on native macOS.
 - Updated existing docs: architecture Mermaid, Issue #104 design, user feature status, implementation status, evidence matrix, live checkpoint, changelog, Issue #105 status, master prompt, and Notion Skill. No duplicate work queue created.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. No build/test/CI/verifier evidence or platform support is promoted.
+
+## 2026-11-21 — master continuation prompt refreshed for XNU work
+
+- Updated the existing `docs/verification/MASTER_CONTINUATION_PROMPT.md` in commit `fd6583901729c9b217a7c7ba56a2b3069f82613b` with the XNU nested-write candidate, Android direct-child-only correction, POSIX delete boundary, and Seatbelt process-containment research status.
+- This is documentation-only and does not alter the code-bearing candidate `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`, test evidence, acceptance state, protected verifier pin, fixed ledger/DoD, or release status.
