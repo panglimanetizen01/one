@@ -118,3 +118,15 @@ The priority remains product implementation, not CI optimization. Preserve Windo
 - Updated existing docs: CLI guide, feature status, filesystem architecture Mermaid, Issue #105 status, blocker register, and this master prompt. Notion Skill page is also refreshed.
 - Latest branch checkpoint after the current documentation sync: `9ee0e15250b66d06997ce08a165db5eb28e6eead`; refresh live PR #113 HEAD/base/state before acting. Issue #104 and #105 remain OPEN / NOT ACCEPTED. No main, merge, protected verifier pin, fixed ledger/DoD, or acceptance criteria changes.
 - Next: continue closing real product implementation gaps, preserve fail-closed unsupported platforms, then run targeted build/test on exact source SHA and broad integrated acceptance only after implementation scope is complete. Read `TERMUX_WORKTREE_MAP.md` before any Termux Git command; use the existing `$HOME/one-pr113` worktree and clean/ancestry/ff-only procedure.
+
+## Native filesystem/process-containment continuation — 2026-11-21
+
+Latest code-bearing source candidate: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e` (NOT BUILT / NOT TESTED).
+
+- macOS nested write now has a source candidate using XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE`, `fstatfs`, root-level exclusive staging, and `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`. Cross-mount publication from the root mount fails `EXDEV`. Added source regressions for nested replacement, symlink parent, hardlink, and parent moved outside root before publication. Require native macOS build/test before support.
+- Android current source is direct-child-only for read/write. All multi-component targets fail closed. Do not rely on older notes that claimed nested Android `openat2`/detached-mount support; observed Termux seccomp kills `openat2` with SIGSYS. No component-walk fallback.
+- macOS delete remains fail-closed: XNU `unlinkat` has beneath/no-symlink/unique flags, but no atomic no-cross-mount flag; separate `fstatfs` precheck is insufficient. Linux/Android delete also remain fail-closed. Windows handle-bound delete is preserved.
+- macOS process containment remains fail-closed. Seatbelt `process-fork` denial is a research lead only until `posix_spawn`, `posix_spawnp`, fork/vfork and all descendant creation APIs are proven blocked on real macOS.
+- Linux/Android process containment remains inherited seccomp + process-group cleanup; Windows remains Job Object based. Recent `setpgid(0,0)` adversarial test source is NOT BUILT / NOT TESTED.
+- Updated existing docs and blocker register. No duplicate register or roadmap. Issue #104 and #105 remain OPEN / NOT ACCEPTED. Do not promote support, test evidence, E4, fixed ledger/DoD, verifier pin, merge, main, or release state.
+- Next: continue safe product implementation; native macOS execution is required for the new nested writer. Keep Android nested paths fail-closed. Continue researching macOS process containment and POSIX delete only when an equivalent native primitive can meet every part of the unchanged security contract.
