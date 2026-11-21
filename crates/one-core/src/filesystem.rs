@@ -2816,6 +2816,34 @@ mod android_filesystem_tests {
     }
 
     #[test]
+    fn android_statx_mount_id_matches_same_mount_and_rejects_devfs() {
+        use std::fs::File;
+
+        let root = temp_dir("mount-id");
+        let nested = root.join("nested");
+        std::fs::create_dir_all(&nested).unwrap();
+
+        let root_handle = File::open(&root).unwrap();
+        let nested_handle = File::open(&nested).unwrap();
+        let devfs_handle = File::open("/dev").unwrap();
+
+        let root_mount = super::android_native::mount_id(&root_handle)
+            .expect("Android statx must expose STATX_MNT_ID for the project root");
+        let nested_mount = super::android_native::mount_id(&nested_handle)
+            .expect("nested directory must expose its mount ID");
+        let devfs_mount = super::android_native::mount_id(&devfs_handle)
+            .expect("/dev must expose its devfs mount ID");
+
+        assert_eq!(root_mount, nested_mount, "directories on the project filesystem must share a mount ID");
+        assert_ne!(root_mount, devfs_mount, "devfs must not be treated as the project-root mount");
+
+        drop(devfs_handle);
+        drop(nested_handle);
+        drop(root_handle);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn android_direct_child_read_and_atomic_write_work_with_root_handle() {
         let root = temp_dir("rw");
         let target = root.join("data.txt");
