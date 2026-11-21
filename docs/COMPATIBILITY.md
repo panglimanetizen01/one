@@ -236,3 +236,26 @@ Issues #104 and #105 remain OPEN / NOT ACCEPTED. No exact-SHA build/test or broa
 Latest code-bearing source/test candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4` (NOT BUILT/TESTED). Linux/Android process supervision now observes direct-child exit using `waitid(P_PID, WEXITED | WNOHANG | WNOWAIT)` rather than reaping via `try_wait()` before process-group cleanup. The child remains a zombie (its PID/PGID cannot be recycled) while the wrapper sends SIGKILL to the invocation process group; only then does `Child::wait()` reap it. The redundant post-reap group kill was removed. All timeout, output-overflow, wait-error and normal-completion paths terminate the group before reaping.
 
 Process escape regressions use in-binary ignored helpers with direct `fork` + `setsid(2)` syscalls, record any escaped PID and clean up before failing. Three paths: normal completion, timeout, output overflow. NOT RUN. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## Issue #104 platform capability status — 2026-11-21
+
+The following is a draft-PR capability matrix, not a claim about canonical main or a released sandbox. PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED.
+
+| Host | Current candidate behavior | Security boundary |
+|---|---|---|
+| Linux | openat2 read path with BENEATH, NO_SYMLINKS, NO_XDEV; direct-child atomic writes; nested writes use detached-mount primitives where available | Nested writes fail closed when detached-mount operations are unavailable; no path-walk fallback |
+| Windows | Native NtCreateFile handle-relative read/write/delete; OBJ_DONT_REPARSE; volume serial and file identity checks; retained parent handles prevent rename; same-directory atomic replacement | Real junction and outside-sentinel regressions; volume-serial mismatch unit regression; Windows Server 2025 CI still required on the latest candidate |
+| macOS | Native nested reads; same-directory temporary sibling under a parent checked with fstatfs; root-relative renameatx_np with RENAME_RESOLVE_BENEATH and RENAME_NOFOLLOW_ANY; same-mount identity checks | macOS 26 native nested writes required and verified; macOS 15 nested writes return UnsupportedPlatform and must remain fail-closed; POSIX delete remains unsupported |
+| Android / Termux | Direct-child read/write with statx STATX_MNT_ID and st_dev checks | Multi-component paths remain UnsupportedPlatform because openat2 may be killed by app seccomp; no racy userspace traversal; statx mount-ID regression added but not yet run on a real Termux process |
+| Other Unix-like hosts | No broad support claim | Unsupported primitives fail closed |
+
+**Exact evidence at 2026-11-21**
+- Latest source/test SHA at this entry: 6403592796b9827e4bffe26a982dfc66afc75d9d.
+- macOS Native Filesystem run #44906889694 on this exact SHA: both macos-15 and macos-26 passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
+- One CI run #44906889708 was still in progress at last read (Ubuntu and Windows cross-toolchain installation); refresh its terminal state.
+- CircleCI context ci/circleci: one-linux on this SHA was PENDING at last read. Provider job page/logs and .vcs.revision mapping were not accessible; do not claim CircleCI PASS.
+- Windows E4-adjacent tests include real directory-junction write escape rejection, positive absolute in-root write, and a synthetic volume-serial mismatch regression. The latest Windows CI result must be terminal before claiming those tests pass.
+- Android statx test must be executed on the actual Termux device. Hosted Ubuntu/Windows/macOS jobs do not execute Android-gated test code.
+
+Do not change the canonical support labels, release contract, or fixed acceptance ledger based on this draft candidate. Keep Issue #104 OPEN / NOT ACCEPTED until the exact E4 verifier suite and required platform/device evidence pass.
+
