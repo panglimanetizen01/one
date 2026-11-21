@@ -1370,12 +1370,18 @@ mod macos_native {
             std::fs::write(&target, b"before").unwrap();
 
             let authority = FilesystemAuthority::open(&root, 4096, 4096).unwrap();
+            let require_native_nested_write =
+                std::env::var("ONE_REQUIRE_NATIVE_MACOS_NESTED_WRITE").as_deref() == Ok("1");
             match authority.write("nested/target.txt", b"after") {
                 Ok(()) => assert_eq!(std::fs::read(&target).unwrap(), b"after"),
                 Err(FilesystemError::UnsupportedPlatform) => {
                     // Older XNU releases may reject the atomic beneath/no-follow
                     // rename flags. Unsupported must leave the target unchanged.
                     assert_eq!(std::fs::read(&target).unwrap(), b"before");
+                    assert!(
+                        !require_native_nested_write,
+                        "the macOS 26 runner must support native atomic nested writes"
+                    );
                 }
                 Err(error) => panic!("unexpected nested-write result: {error:?}"),
             }
