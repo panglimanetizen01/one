@@ -1105,3 +1105,15 @@ Implementation commits: capability `eacb4e471048c1f7fdf7755d46a7a8ceee4481cd`; o
 Focused tests added for parser AST, semantic target typing, IR lowering, explicit-grant denial/no-side-effect, and Windows allowed deletion. These language-level additions are NOT YET BUILT / TESTED at the checkpoint. Existing Windows native CI evidence at `6f2d5e2...` does not automatically verify these later source changes.
 
 Issue #104 remains OPEN / NOT ACCEPTED. This is a deliberately narrow Windows-only delete capability slice, not full cross-platform filesystem completion.
+
+## Exact-SHA language bridge verification — 2026-11-21
+
+The language-level delete bridge at source SHA 0fa43eb0be53c8e79424597ece055147872b35c4 completed GitHub Actions One CI run #44871756593 with terminal SUCCESS:
+
+- Ubuntu job #136747608726: Build, Clippy, Tests SUCCESS; one-core library 181 passed / 0 failed / 3 ignored.
+- Windows Server 2025 job #136747608925: Build, Clippy, Tests SUCCESS; one-core library 167 passed / 0 failed.
+- Windows log confirms parser file_delete_action_parses_as_a_single_target; IR hapus_berkas_lowers_to_explicit_delete_orchestration; interpreter explicit_delete_grant_reaches_the_windows_native_adapter; default-denial/no-side-effect; adapter metadata/authority/argument checks; and delete_rejects_directory_junction_escape_without_touching_outside_file all passed.
+- The actual directory junction regression left the outside sentinel unchanged.
+- GitHub commit status context ci/circleci: one-linux is SUCCESS on the same exact SHA. The CircleCI job URL is not accessible through the available inspection channel; this records the provider status context, not independently inspected provider step logs.
+
+This verifies the narrow Windows-only delete capability bridge and the Linux policy/semantic path. It does not provide Linux/Android/macOS delete support. POSIX delete remains unavailable because no backend currently binds deletion to the validated object handle while preserving the full root/rename/hard-link contract. Issue #104 remains OPEN / NOT ACCEPTED pending all remaining E4 and host-root requirements.
