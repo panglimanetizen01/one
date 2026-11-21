@@ -816,3 +816,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Targeted source/test corrections committed on PR branch: `b932e3ee3adc3a4b464704a57ac9b46cade4bbe8` drops the adapter before Windows temporary-directory cleanup; `3f40b4aa8324420d0f7083dab3b2d3db15f726f6` changes the process test to `PlatformKind::current()`. Both commits are NOT YET BUILT / TESTED. Do not claim these failures fixed until exact-SHA reruns pass on Windows and Linux.
 - CircleCI `one-linux` was FAILURE on `8156607a4f0fa95b46a772c7a7e580f9fec096c7`, but provider logs have not yet been retrieved; cause remains UNKNOWN. Use `tools/ci/diagnose_circleci.py` from the official worktree on the current exact HEAD, with local `CIRCLECI_TOKEN`; never paste the token into chat. Do not attribute CircleCI failure to the GitHub Actions test failures without CircleCI logs.
 - PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, test deletion, or acceptance criteria changed.
+
+
+## 2026-11-21 — Follow-up: invalid integration-test platform API corrected
+
+- User synced the prior branch updates to exact SHA `259bf345fbcd435a3b5d804669cd707c30c60aa9`; worktree was clean before fast-forward.
+- Both targeted test commands failed before running because `crates/one-core/tests/process_vertical_slice.rs` called `PlatformKind::current()`, which does not exist. Source inspection confirmed the only related helper is `PlatformKind::current_host()`, but it is `pub(crate)` and cannot be called from an integration-test crate.
+- Corrected in commit `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7`: the test now selects the concrete supported host variant (`Linux`, `Windows`, or `Android`) and is cfg-gated to those supported process platforms. This preserves the intended adapter invocation/audit assertion and does not change production API or weaken the test.
+- Commit `afbd2c460a4ea0c2221f5f04f8dd536cde91dcc7` is NOT BUILT / NOT TESTED. The Windows adapter cleanup fix from `b932e3ee3adc3a4b464704a57ac9b46cade4bbe8` is also not yet proven by a Windows rerun. Re-run both focused tests on the new exact SHA; then require fresh Ubuntu and Windows CI results.
+- Earlier note proposing `PlatformKind::current()` is superseded by this correction. CircleCI failure on the earlier SHA remains independently UNKNOWN until its provider diagnostic output is obtained.
+- PR #113 remains OPEN / DRAFT / UNMERGED; Issue #104 remains OPEN / NOT ACCEPTED. No main, verifier pin, tests/DoD, or acceptance criteria changed.
