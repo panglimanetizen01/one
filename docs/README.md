@@ -126,3 +126,7 @@ The current filesystem design and language effect path are documented in:
 - architecture/filesystem-root-confinement.md
 - spec/one-v0.1-effect-capability.md
 - verification/ONE_RELEASE_BLOCKER_REGISTER.md
+
+## Exact-SHA filesystem.delete evidence — 2026-11-21
+
+The Windows-only filesystem.delete source bridge passed One CI #44871756593 on exact SHA 0fa43eb0be53c8e79424597ece055147872b35c4 (Ubuntu 181 passed/0 failed/3 ignored; Windows 167 passed/0 failed; Build/Clippy/Tests all SUCCESS). CircleCI status context ci/circleci: one-linux is SUCCESS on that SHA. Provider logs were not independently inspected. The current PR #113 HEAD is documentation-only descendant 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9. Issue #104 remains OPEN / NOT ACCEPTED.
