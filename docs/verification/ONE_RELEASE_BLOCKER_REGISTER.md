@@ -807,3 +807,13 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - Corrected source on PR branch in commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4: scope std::io::Write to Linux + Android, and split the 76-byte Statx reserved ABI padding into [u8; 32] + [u8; 32] + [u8; 12]. The total padding and 256-byte Statx layout are preserved; compile-time size assertion remains.
 - Commit ed30f41fb9e69392c926a83dd9a8b6ac2e61efc4 is NOT YET BUILT/TESTED. User must fast-forward the clean Termux worktree and rerun both commands on this exact new SHA. No test, Clippy, platform-support, or E4 acceptance claim is made.
 - Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. No main, verifier pin, tests, or acceptance criteria changed.
+
+
+## 2026-11-21 — Android Termux rerun on exact SHA 8b3cb521
+
+- User-confirmed clean `$HOME/one-pr113` fast-forwarded to `8b3cb52168ed8d4961ce4e47bcc3410f9a0fd7ff`; rustc/Cargo 1.99.1, host `aarch64-linux-android`.
+- Workspace Clippy progressed through `one-core` and failed in `crates/one-cli/tests/filesystem_write.rs`: helper `run` is unused on Android because its only caller is Linux/Windows cfg-gated. Corrected by cfg-gating the helper itself to Linux/Windows in commit `f9dd400b21670fd07c5498307714a9b7ea931d18`. NOT YET BUILT/TESTED.
+- Focused Android test binary compiled successfully and started five tests. `android_root_final_symlink_is_rejected` and another test shown in output passed; `android_hard_link_targets_are_rejected_without_modifying_either_name` failed at fixture setup because `std::fs::hard_link` returned `PermissionDenied` (code 13). The test body never reached the authority assertions. The process was then terminated with `SIGSYS` (signal 31, bad system call), so remaining tests are NOT VERIFIED. Do not weaken or delete the hard-link test. Investigate Android/Termux syscall restrictions and rerun tests individually to identify which operation triggers SIGSYS.
+- This demonstrates Android compilation is now possible on this toolchain, but the focused Android suite is NOT PASS. No claim of Android filesystem support or E4 acceptance.
+- Next exact-SHA run after safe sync: workspace Clippy, then each Android test individually (especially hard-link fixture, nested read, nested write) to isolate permission and SIGSYS. Preserve test assertions and record capability limitations separately from implementation correctness.
+- Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
