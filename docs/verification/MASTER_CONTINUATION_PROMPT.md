@@ -121,7 +121,7 @@ The priority remains product implementation, not CI optimization. Preserve Windo
 
 ## Native filesystem/process-containment continuation — 2026-11-21
 
-Latest combined source/test candidate: `0408b92f6eafb12c18371d0079c6e73915e8e87c` (NOT BUILT / NOT TESTED); it includes the macOS ProcessAdapter exclusion regression. The latest filesystem-specific candidate is `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`; macOS Seatbelt runtime/probe source is in `3bad0196e9352871d09cb9b966cf6b393a866603`.
+Latest combined source/test candidate: `79593d2f225284eff841e67c8eb9a1e005611981` (NOT BUILT / NOT TESTED); it includes the macOS ProcessAdapter exclusion regression and clarifies the direct-spawn-only Seatbelt boundary. The latest filesystem-specific candidate is `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`; macOS Seatbelt runtime/probe source is in `3bad0196e9352871d09cb9b966cf6b393a866603`.
 
 - macOS nested write now has a source candidate using XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE`, `fstatfs`, root-level exclusive staging, and `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)`. Cross-mount publication from the root mount fails `EXDEV`. Added source regressions for nested replacement, symlink parent, hardlink, and parent moved outside root before publication. Require native macOS build/test before support.
 - Android current source is direct-child-only for read/write. All multi-component targets fail closed. Do not rely on older notes that claimed nested Android `openat2`/detached-mount support; observed Termux seccomp kills `openat2` with SIGSYS. No component-walk fallback.
