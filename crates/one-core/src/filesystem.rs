@@ -839,10 +839,40 @@ mod android_native {
         Ok(unsafe { File::from_raw_fd(fd) })
     }
 
+    // Android uses the Linux openat2 resolution contract for reads. Unlike
+    // a userspace openat walk, RESOLVE_BENEATH is enforced by the kernel for
+    // the complete path lookup and denies rename races it cannot prove safe.
+    #[repr(C)]
+    struct OpenHow { flags: u64, mode: u64, resolve: u64 }
+
     pub(super) fn open_relative(root: &File, relative: &Path) -> Result<File, FilesystemError> {
-        let (parent, leaf) = parent_and_leaf(root, relative)?;
-        let file = openat(&parent, &leaf,
-            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK, 0)?;
+        const RESOLVE_NO_XDEV: u64 = 0x01;
+        const RESOLVE_NO_SYMLINKS: u64 = 0x04;
+        const RESOLVE_BENEATH: u64 = 0x08;
+        let components: Vec<_> = relative.components().collect();
+        if components.is_empty() || components.iter().any(|part| !matches!(part, Component::Normal(_))) {
+            return Err(FilesystemError::InvalidTarget);
+        }
+        let path = CString::new(relative.as_os_str().as_bytes())
+            .map_err(|_| FilesystemError::InvalidTarget)?;
+        let how = OpenHow {
+            flags: (libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK) as u64,
+            mode: 0,
+            resolve: RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV,
+        };
+        let fd = unsafe {
+            libc::syscall(libc::SYS_openat2, root.as_raw_fd(), path.as_ptr(),
+                &how as *const OpenHow, std::mem::size_of::<OpenHow>()) as libc::c_int
+        };
+        if fd < 0 {
+            return match std::io::Error::last_os_error().raw_os_error() {
+                Some(libc::ELOOP) | Some(libc::EXDEV) | Some(libc::EAGAIN) => Err(FilesystemError::ResolutionFailed),
+                Some(libc::ENOSYS) | Some(libc::EPERM) | Some(libc::EINVAL) => Err(FilesystemError::UnsupportedPlatform),
+                Some(libc::ENOENT) => Err(FilesystemError::NotFound),
+                _ => Err(FilesystemError::IoFailure),
+            };
+        }
+        let file = unsafe { File::from_raw_fd(fd) };
         let metadata = file.metadata().map_err(|_| FilesystemError::IoFailure)?;
         if !metadata.is_file() { return Err(FilesystemError::NotRegularFile); }
         if metadata.nlink() != 1 { return Err(FilesystemError::HardLinkedFile); }
