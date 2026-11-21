@@ -953,3 +953,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Fixed in commit `502a888da46e3d4be4ac80b3a2ffc3233dbabc12`. New HEAD is the fix commit. No post-fix workflow or status context was present at readback; no PASS is claimed.
 - CircleCI on the pre-fix SHA had FAILURE context with workflow `16c4f795-1bcb-4a24-9935-ffd0e553f30c` / job `b7e21b09-8205-4d29-a9c7-a2f555e5e913`; provider logs and exact pipeline revision mapping remain unavailable. CircleCI-specific root cause UNKNOWN.
 - Issue #104/#105 remain OPEN / NOT ACCEPTED. Continue implementation-first after obtaining the first fresh build signal; do not restart broad verification or promote release gates.
+
+## 2026-11-21 — current exact-SHA CI and Linux adversarial result
+
+- PR #113 HEAD `7744e46849f97b5868a6a75ee365b6f72cca5609`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; OPEN / DRAFT / UNMERGED.
+- GitHub Actions One CI #44900738968 terminal SUCCESS: Ubuntu #136835893296 and Windows 2025 #136835893110. Build, Clippy, Tests, and Complete job SUCCESS on this exact SHA.
+- Ubuntu logs show all six Linux setsid/setpgid adversarial regressions passed across normal completion, timeout, and output overflow.
+- CircleCI `ci/circleci: one-linux` remains PENDING on workflow `6e00388e-687e-497b-b95d-20a38a2cb535` / job `753aeb6f-e6cf-40d2-ada0-daef15471b88`; provider logs and pipeline revision mapping remain unavailable.
+- Issue #104 and #105 remain OPEN / NOT ACCEPTED. Android/Termux process adversarial execution and remaining filesystem platform gaps are not closed by this GitHub Actions run.
