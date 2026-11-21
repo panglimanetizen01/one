@@ -979,3 +979,13 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - GitHub commit status ci/circleci: one-linux SUCCESS on the same exact SHA; CircleCI provider logs were not independently inspected because the job URL was inaccessible.
 - PR #113 documentation-only descendants through 5c7ba6eb6691d536f281f35d8663c43fb4aa17a9 do not change the tested source.
 - This closes the narrow Windows-only delete language bridge test slice, not B-002 or Issue #104 as a whole. POSIX delete remains unsupported; E4, host-root integration, and full adversarial platform acceptance remain outstanding.
+
+## 2026-11-21 — filesystem.delete CLI capability integration
+
+- PR #113 source commits: `48e87fd511a631dc121fd5190c68050cb9baadcb` adds explicit `filesystem.delete` to CLI capability parsing/usage and dispatches it through a host-created `FilesystemAuthority`, an explicit `Capability::FilesystemDelete` grant, and an exact `ScopeRule::Target`; `17a64b22378d931ef96b9ab5e976c485c4a0555e` adds CLI regression tests for read-grant isolation, Windows explicit deletion, and non-Windows fail-closed behavior.
+- Documentation commits: `63e463df8fed2b798bfc512f0cf0f1ea55c32464` updates CLI user instructions; `8d2ced9dc70f437ba137a2cd61fb8990154d94d1` updates the existing Mermaid architecture source with the delete adapter and platform boundary.
+- Current branch HEAD after these sequential source/documentation commits: `8d2ced9dc70f437ba137a2cd61fb8990154d94d1` (refresh live PR metadata before relying on this value).
+- Windows native handle-bound delete remains implemented and tested on source SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0`; this evidence is retained and is not repeated by the CLI change.
+- Primitive gap: Linux `unlinkat`, Android `unlinkat`, and macOS `unlinkat` are name-based and do not apply disposition to the exact validated file handle. No safe fd-bound delete implementation has been proven for these platforms under the unchanged Issue #104 race/mount contract. Do not introduce check-then-unlink or a userspace parent walk; keep these adapters fail-closed.
+- New CLI tests and the CLI bridge are NOT BUILT / NOT TESTED at HEAD `8d2ced9...`. Next implementation step is to continue closing only operations for which an equivalent native primitive can be justified; then run focused CLI and adapter tests on exact SHA before integrated platform acceptance.
+- Issue #104 remains OPEN / NOT ACCEPTED. No main, protected verifier pin, acceptance criteria, fixed ledger/DoD, merge, or release state changed.
