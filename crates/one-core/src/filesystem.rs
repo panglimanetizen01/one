@@ -2097,7 +2097,7 @@ mod windows_native {
             )?;
             let info = file_info(&directory)?;
             if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
-                || info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber
+                || !volume_serial_matches(&root_info, &info)
                 || info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0
             {
                 return Err(FilesystemError::ResolutionFailed);
@@ -2123,7 +2123,7 @@ mod windows_native {
         if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
             return Err(FilesystemError::ResolutionFailed);
         }
-        if info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber {
+        if !volume_serial_matches(&root_info, &info) {
             return Err(FilesystemError::ResolutionFailed);
         }
         if info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE) != 0 {
@@ -2204,7 +2204,7 @@ mod windows_native {
             )?;
             let info = file_info(&directory)?;
             if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
-                || info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber
+                || !volume_serial_matches(&root_info, &info)
                 || info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0
             {
                 return Err(FilesystemError::ResolutionFailed);
@@ -2232,7 +2232,7 @@ mod windows_native {
                 if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
                     return Err(FilesystemError::ResolutionFailed);
                 }
-                if info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber {
+                if !volume_serial_matches(&root_info, &info) {
                     return Err(FilesystemError::ResolutionFailed);
                 }
                 if info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE) != 0 {
@@ -2273,7 +2273,7 @@ mod windows_native {
         let result = (|| {
             let info = file_info(&temporary.file)?;
             if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0
-                || info.dwVolumeSerialNumber != root_info.dwVolumeSerialNumber
+                || !volume_serial_matches(&root_info, &info)
                 || info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE) != 0
                 || info.nNumberOfLinks != 1
             {
