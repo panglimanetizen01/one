@@ -953,3 +953,14 @@ No evidence is promoted by these source changes. Issue #104 and #105 remain OPEN
 | macOS process containment via Seatbelt `process-fork` denial | research only | NOT IMPLEMENTED; `posix_spawn` and other descendant routes unproven |
 
 No evidence is promoted. Issue #104 and #105 remain OPEN / NOT ACCEPTED. Prior exact-SHA Windows/Linux evidence is not transferred to this candidate.
+
+## 2026-11-21 — macOS Seatbelt process guard evidence boundary
+
+| Claim | Candidate/source | Evidence state |
+|---|---|---|
+| macOS direct process creation denied through Seatbelt `process-fork` | `3bad0196e9352871d09cb9b966cf6b393a866603` | SOURCE ONLY / NOT BUILT / NOT TESTED |
+| macOS fork/vfork/posix_spawn/posix_spawnp denial and exec replacement probes | same source candidate | SOURCE ONLY / NOT RUN |
+| macOS deadline and stdout overflow under Seatbelt | same source candidate | SOURCE ONLY / NOT RUN |
+| macOS full descendant-tree containment and brokered launchd spawn denial | not implemented/proven | NOT ACCEPTED; `ProcessAdapter` intentionally excludes macOS |
+
+XNU source inspection supports that `fork1()` applies `mac_proc_check_fork()` to `PROC_CREATE_FORK` and `PROC_CREATE_SPAWN`; this is design evidence, not native execution evidence. Issue #105 remains OPEN / NOT ACCEPTED.
