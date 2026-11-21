@@ -7,7 +7,7 @@
 
 use std::fs::File;
 use std::io::Read;
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 
