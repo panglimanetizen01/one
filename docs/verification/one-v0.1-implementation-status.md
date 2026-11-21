@@ -900,3 +900,9 @@ Source commit ffa51679e998e97bca0730a182d8887a245e03d0 adds a Windows-only host 
 
 The API intentionally returns UnsupportedPlatform on Linux, Android, and macOS. POSIX unlinkat remains name-based and is not treated as an equivalent handle-bound primitive. No language semantic capability or adapter is exposed yet. Two Windows tests were added but are NOT BUILT / NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED; this is not v0.1 completion evidence.
 Additional source test retained_delete_handle_blocks_leaf_rename checks that the Windows DELETE-access/no-delete-share leaf handle blocks rename while retained. NOT BUILT / NOT RUN.
+
+## 2026-11-21 — Windows delete implementation verified on CI
+
+Windows handle-bound file deletion is implemented and has exact-SHA GitHub Actions evidence. Run #44870781889 on source/test SHA 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0 completed SUCCESS on Ubuntu and Windows Server 2025. Both jobs passed Build, Clippy, Tests, and deterministic artifact steps. Windows tests delete_uses_validated_handle_and_removes_nested_regular_file, delete_rejects_hard_links_without_removing_either_name, and retained_delete_handle_blocks_leaf_rename passed; the existing retained_parent_handle_blocks_directory_rename passed too. Windows one-core library summary: 156 passed / 0 failed.
+
+This verifies only the Windows native host API slice. Linux, Android, and macOS delete still return UnsupportedPlatform; no semantic capability or adapter has been added. Issue #104 remains OPEN / NOT ACCEPTED.
