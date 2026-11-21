@@ -252,8 +252,8 @@ The following is a draft-PR capability matrix, not a claim about canonical main 
 **Exact evidence at 2026-11-21**
 - Latest source/test SHA at this entry: 6403592796b9827e4bffe26a982dfc66afc75d9d.
 - macOS Native Filesystem run #44906889694 on this exact SHA: both macos-15 and macos-26 passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
-- One CI run #44906889708 was still in progress at last read (Ubuntu and Windows cross-toolchain installation); refresh its terminal state.
-- CircleCI context ci/circleci: one-linux on this SHA was PENDING at last read. Provider job page/logs and .vcs.revision mapping were not accessible; do not claim CircleCI PASS.
+- One CI run #44906889708 completed SUCCESS on exact SHA 6403592796b9827e4bffe26a982dfc66afc75d9d: Ubuntu job #136854287546 and Windows job #136854287276 both SUCCESS.
+- CircleCI context ci/circleci: one-linux on this SHA remains PENDING. Provider job page/logs and .vcs.revision mapping were not accessible; do not claim CircleCI PASS.
 - Windows E4-adjacent tests include real directory-junction write escape rejection, positive absolute in-root write, and a synthetic volume-serial mismatch regression. The latest Windows CI result must be terminal before claiming those tests pass.
 - Android statx test must be executed on the actual Termux device. Hosted Ubuntu/Windows/macOS jobs do not execute Android-gated test code.
 
