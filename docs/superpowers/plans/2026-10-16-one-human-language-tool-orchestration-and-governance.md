@@ -251,3 +251,16 @@ For every capability family:
 - `Didukung` is reserved for a stronger support claim.
 
 DNS, filesystem-read, process execution, filesystem write, database query, and HTTP GET have executable evidence at their individually recorded exact-SHA boundaries. Database query and HTTP GET are verified by the Ubuntu/Windows Server 2025 matrix for source SHA `77a89a6552c4d4306bd1a97752789b04ae1bbb0c`, but remain **Eksperimental** because their semantic and operation boundaries are intentionally narrow. Broader language-level orchestration remains **Dalam pengembangan**.
+
+## 2026-11-21 — filesystem.delete vertical slice
+
+The first destructive filesystem effect is now implemented as a narrow Windows-only slice: explicit `FilesystemDelete` capability, `filesystem.delete` semantic ID, `Delete` effect class, `hapus berkas "path"` source syntax, IR lowering, and `filesystem.file.delete` adapter. The adapter is registered only with the interpreter's host-injected filesystem authority and its metadata advertises Windows only.
+
+Security invariants:
+- Delete is never implied by the coarse filesystem/read/write grants.
+- The existing orchestrator evaluates explicit capability and target scope before the adapter runs.
+- Windows deletion applies disposition to the exact validated leaf handle while retained parent handles deny delete sharing.
+- Linux/Android/macOS remain fail-closed; no path-based `unlinkat` substitute.
+- Tests must prove default denial leaves the target unchanged and explicit Windows grant deletes only the in-root target.
+
+Current checkpoint source SHA `0fa43eb0be53c8e79424597ece055147872b35c4` has source additions but the language bridge has not yet passed CI. Keep status `Implemented` pending exact-SHA build/test evidence; do not mark `Verified` or `Supported`.
