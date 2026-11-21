@@ -1037,3 +1037,12 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - macOS nested reads and writes remain fail-closed. Ordinary `openat` directory-descriptor walks cannot prevent a parent directory from being renamed outside the root; no unsafe traversal has been enabled. Direct-child operations remain unchanged.
 - Added Android source regression for a valid nested read and a symlinked-parent escape with outside-sentinel preservation. Existing Android expectations now distinguish missing nested files (`NotFound`) from symlink-parent denial (`ResolutionFailed`). Tests are NOT RUN.
 - Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran; no platform support or release approval is promoted.
+
+
+## 2026-11-21 — Android seccomp constraint and supported path boundary
+
+A user-provided Termux ARM64 `strace` trace on the candidate environment shows `statx(... STATX_MNT_ID ...)=0`, followed by `openat2(... RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS | RESOLVE_NO_XDEV ...)` and immediate `SIGSYS` (`si_code=SYS_SECCOMP`, `si_syscall=__NR_openat2`). Therefore `openat2` cannot be treated as a safely probeable Android capability: the process can be killed before Rust receives an errno.
+
+The Android candidate now avoids `openat2` entirely. Single-component direct-child reads use retained-root-relative `openat` with `O_NOFOLLOW | O_NONBLOCK`, followed by regular-file, single-link, device, and `STATX_MNT_ID` validation. Direct-child atomic writes continue using the retained root descriptor. Multi-component reads and writes return `UnsupportedPlatform` before filesystem traversal.
+
+Do not implement a component-by-component `openat` nested fallback. An attacker can rename an opened parent outside the root while the process continues using that directory descriptor; the descriptor does not establish that the directory remains beneath the original root. Nested Android support requires a different kernel-enforced containment primitive proven available under the target seccomp policy, plus adversarial rename, symlink, and mount-boundary tests. The updated code candidate `e5c8a7d5d2075902ef4f027322e2e615908bac14` is NOT BUILT / NOT TESTED. This limitation is deliberate and does not constitute Android support or Issue #104 acceptance.
