@@ -25,10 +25,11 @@ flowchart TB
     Openat2Read --> ReadPolicy["BENEATH · NO_SYMLINKS · NO_XDEV"]
     ReadPolicy --> ReadChecks["Regular-file check · read-size limit"]
 
-    ReadAdapter --> AndroidRead["Android read backend — kernel-bounded nested paths"]
-    AndroidRead --> AndroidOpen["openat2(root_fd, relative, BENEATH · NO_SYMLINKS · NO_XDEV)"]
+    ReadAdapter --> AndroidRead["Android read backend — direct child only"]
+    AndroidRead --> AndroidOpen["openat(root_fd, leaf, O_NOFOLLOW · O_NONBLOCK)"]
     AndroidOpen --> AndroidMount["regular file · same device · statx mount ID · nlink = 1"]
     AndroidMount --> ReadChecks
+    AndroidRead -->|Nested path| FailClosed
 
     ReadAdapter --> MacosRead["macOS read backend — direct-child legacy + XNU-bounded nested path"]
     MacosRead --> MacosOpen["openat(root_fd, relative, O_RESOLVE_BENEATH · O_NOFOLLOW_ANY · O_UNIQUE)"]
@@ -63,29 +64,31 @@ flowchart TB
     LinuxSync -->|failure| LinuxCleanup["unlinkat temporary sibling"]
     LinuxRename -->|failure| LinuxCleanup
 
-    WriteAdapter --> AndroidWrite["Android write backend — direct + guarded nested"]
-    AndroidWrite --> AndroidNested{"Nested parent path?"}
-    AndroidNested -->|No| AndroidLeaf["O_PATH · O_NOFOLLOW · statx mount-ID check"]
+    WriteAdapter --> AndroidWrite["Android write backend — direct child only"]
+    AndroidWrite --> AndroidLeaf["O_PATH · O_NOFOLLOW · statx mount-ID check"]
     AndroidLeaf --> AndroidTemp["Exclusive temp sibling via root_fd"]
     AndroidTemp --> AndroidSync["write_all + sync_all"]
     AndroidSync --> AndroidRename["renameat(root_fd, temp, root_fd, leaf)"]
     AndroidSync -->|failure| AndroidCleanup["unlinkat temporary sibling"]
     AndroidRename -->|failure| AndroidCleanup
-    AndroidNested -->|Yes| AndroidMountClone["open_tree detached recursive mount clone"]
-    AndroidMountClone --> AndroidNoSymlink["mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)"]
-    AndroidNoSymlink --> AndroidBeneath["openat2 BENEATH · NO_SYMLINKS · NO_XDEV"]
-    AndroidBeneath --> AndroidAtomic["exclusive temp · sync · root-relative renameat2 · directory sync"]
-    AndroidMountClone -->|unsupported or denied| FailClosed
-    AndroidNoSymlink -->|unsupported or denied| FailClosed
-    AndroidBeneath -->|resolution failure| FailClosed
+    AndroidWrite -->|Nested parent path| FailClosed
 
-    WriteAdapter --> MacosWrite["macOS write backend — direct root children only"]
-    MacosWrite --> MacosLeaf["openat O_NOFOLLOW · st_dev · nlink = 1"]
+    WriteAdapter --> MacosWrite["macOS write backend — direct + XNU-bounded nested candidate"]
+    MacosWrite --> MacosNested{"Nested parent path?"}
+    MacosNested -->|No| MacosLeaf["openat O_NOFOLLOW · fstatfs identity · nlink = 1"]
     MacosLeaf --> MacosTemp["Exclusive temp sibling via root_fd"]
     MacosTemp --> MacosSync["write_all + sync_all"]
     MacosSync --> MacosRename["renameat(root_fd, temp, root_fd, leaf)"]
+    MacosNested -->|Yes| MacosNestedValidate["openat O_RESOLVE_BENEATH · O_NOFOLLOW_ANY · O_UNIQUE + fstatfs parent check"]
+    MacosNestedValidate --> MacosRootTemp["Exclusive temp staged on root mount"]
+    MacosRootTemp --> MacosNestedSync["write_all + sync_all"]
+    MacosNestedSync --> MacosNestedRename["renameatx_np with RENAME_RESOLVE_BENEATH · RENAME_NOFOLLOW_ANY"]
+    MacosNestedRename --> MacosParentSync["sync containing directory; cross-mount rename fails EXDEV"]
+    MacosNestedSync -->|failure| MacosNestedCleanup["unlinkat root staging sibling"]
+    MacosNestedRename -->|failure| MacosNestedCleanup
     MacosSync -->|failure| MacosCleanup["unlinkat temporary sibling"]
     MacosRename -->|failure| MacosCleanup
+    MacosNestedValidate -->|unsupported flags or mount mismatch| FailClosed
 
     WriteAdapter --> WindowsWrite["Windows write backend"]
     WindowsWrite --> WinWalk["Handle-relative parent traversal"]
@@ -122,8 +125,8 @@ flowchart TB
 | Host-selected project root (process current working directory), authority injection, and target scope | `crates/one-cli/src/main.rs` |
 | Retained root handle, size limits, target normalization | `crates/one-core/src/filesystem.rs` |
 | Linux `openat2` read and direct-child atomic write | `crates/one-core/src/filesystem.rs` |
-| Android kernel `openat2` nested read and direct-child atomic write; nested write uses guarded detached-mount transaction | `crates/one-core/src/filesystem.rs` |
-| macOS XNU `O_RESOLVE_BENEATH` / `O_NOFOLLOW_ANY` / `O_UNIQUE` nested read (supported kernels); direct-child atomic write | `crates/one-core/src/filesystem.rs` |
+| Android direct-child read/write only; multi-component paths fail closed because observed Termux seccomp kills `openat2` with SIGSYS and userspace parent walks permit rename races | `crates/one-core/src/filesystem.rs` |
+| macOS XNU beneath/no-symlink/unique nested read; direct-child write; nested write candidate stages at root and publishes with `renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY)` | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
 | Adapter injection, explicit delete capability, and adversarial filesystem tests | `crates/one-core/src/adapter.rs`, `crates/one-core/src/capability.rs`, `crates/one-core/src/interpreter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
@@ -254,3 +257,15 @@ flowchart TD
 ```
 
 The source bridge at `0fa43eb0be53c8e79424597ece055147872b35c4` is NOT YET BUILT / TESTED. Native Windows backend evidence remains attached to earlier exact SHA `6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0` only. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## Native primitive correction — 2026-11-21
+
+The Mermaid source above reflects the current source implementation, not the older Android/macOS nested-path proposals retained in the historical notes below.
+
+- Android: the checked-in `android_native::open_relative` and `write_relative` reject multi-component targets before traversal. Direct-child operations use retained-root `openat` and statx mount-ID checks. The observed Termux seccomp profile kills `openat2` with SIGSYS; the detached-mount/openat2 nested-write route described in an earlier candidate was not retained in the current source. Android nested read/write remain fail-closed.
+- macOS: nested reads use XNU beneath/no-symlink/unique path resolution. A new nested-write source candidate stages an exclusive temporary file directly under the retained root, validates the nested parent with XNU resolution flags and `fstatfs`, then publishes using `renameatx_np` with `RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY`. Because the staging file is on the root mount, cross-mount publication fails with `EXDEV`. The kernel performs final source/destination path resolution during rename; the source includes a parent-move-before-publish regression. This candidate is NOT BUILT / NOT TESTED and requires a kernel exposing these XNU flags (older kernels fail closed).
+- macOS delete remains unavailable. XNU `unlinkat` supports `AT_SYMLINK_NOFOLLOW_ANY`, `AT_RESOLVE_BENEATH`, and `AT_UNIQUE`, but the current contract also requires atomic no-cross-mount enforcement. A separate `fstatfs` precheck cannot prove that constraint across a concurrent mount change, and no equivalent `AT_NO_XDEV` flag was found in the inspected XNU API. Do not enable a weaker delete path.
+- Linux/Android delete remain unavailable because `unlinkat` acts on a name, not the validated object handle. Windows handle-bound deletion remains unchanged.
+- Process containment: Linux/Android seccomp + process-group cleanup and Windows Job Objects remain the production implementations. macOS Seatbelt's `process-fork` denial is a research candidate only; `posix_spawn` and all descendant-creation routes have not been proven blocked, so macOS process execution remains fail-closed.
+
+Current code-bearing candidate after the source correction: `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`. It is source-only; no build, tests, CI, or acceptance evidence is claimed. Issue #104 and #105 remain OPEN / NOT ACCEPTED.
