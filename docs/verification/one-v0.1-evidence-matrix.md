@@ -987,3 +987,12 @@ XNU source inspection supports that `fork1()` applies `mac_proc_check_fork()` to
 | `502a888da46e3d4be4ac80b3a2ffc3233dbabc12` | Post-fix status readback | NOT BUILT / NOT VERIFIED | No status contexts or workflow run yet |
 
 The source fix parenthesizes unsafe `setpgid` and `setsid` call expressions before comparisons. CircleCI on the pre-fix SHA separately reported FAILURE, but its provider pipeline/log mapping is unavailable; do not reuse GitHub Actions logs as CircleCI provider evidence. No test, Clippy, E4, platform, or release gate is promoted.
+
+## 2026-11-21 — GitHub Actions and Linux process containment evidence
+
+| Source SHA | Workflow/job | Platform | Result | Scope |
+|---|---|---|---|---|
+| `7744e46849f97b5868a6a75ee365b6f72cca5609` | One CI #44900738968 / #136835893296 | Ubuntu hosted runner | SUCCESS | Build, Clippy, Tests, Complete job; six setsid/setpgid adversarial regressions passed |
+| `7744e46849f97b5868a6a75ee365b6f72cca5609` | One CI #44900738968 / #136835893110 | Windows 2025 | SUCCESS | Build, Clippy, Tests, Complete job |
+
+The six Ubuntu process regressions cover setsid and setpgid escape attempts during normal completion, timeout, and output overflow. This is Linux-hosted evidence only. Android/Termux runtime and exact-source Windows Job Object acceptance remain separate requirements. CircleCI on this SHA is PENDING and is not a PASS.
