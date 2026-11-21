@@ -1455,10 +1455,10 @@ mod macos_native {
                 Err(error) => panic!("unexpected nested-write result: {error:?}"),
             }
             assert!(
-                std::fs::read_dir(&root).unwrap().all(|entry| {
+                std::fs::read_dir(&nested).unwrap().all(|entry| {
                     !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
                 }),
-                "nested write must not leak a root staging file"
+                "nested write must not leak a same-directory staging file"
             );
 
             drop(authority);
@@ -1516,10 +1516,10 @@ mod macos_native {
             assert!(result.is_err(), "publication must fail once its parent leaves the root");
             assert_eq!(std::fs::read(moved.join("target.txt")).unwrap(), b"outside-safe");
             assert!(
-                std::fs::read_dir(&root).unwrap().all(|entry| {
+                std::fs::read_dir(&moved).unwrap().all(|entry| {
                     !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
                 }),
-                "failed publication must clean up its root staging file"
+                "failed publication must clean its staging file through the retained parent handle"
             );
 
             drop(authority);
@@ -1573,10 +1573,10 @@ mod macos_native {
                 assert_eq!(result, Err(FilesystemError::IoFailure));
                 assert_eq!(std::fs::read(&target).unwrap(), b"before");
                 assert!(
-                    std::fs::read_dir(&root).unwrap().all(|entry| {
+                    std::fs::read_dir(&nested).unwrap().all(|entry| {
                         !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
                     }),
-                    "staging file must be removed after failure at {stage:?}"
+                    "same-directory staging file must be removed after failure at {stage:?}"
                 );
 
                 drop(authority);
@@ -2942,10 +2942,10 @@ mod macos_filesystem_tests {
         }
         assert!(matches!(authority.read("escape-dir/sentinel.txt"),
             Err(FilesystemError::ResolutionFailed | FilesystemError::UnsupportedPlatform)));
-        // The XNU candidate stages at the retained root and publishes with
-        // kernel-enforced beneath/no-follow rename. Older kernels may reject
-        // the required flags; that path must remain fail-closed and leave no
-        // destination or staging artifact behind.
+        // The XNU candidate stages in the validated target parent and
+        // publishes through a root-relative beneath/no-follow rename. Older
+        // kernels may reject the required flags; that path must remain
+        // fail-closed and leave no destination or staging artifact behind.
         match authority.write("nested/file.txt", b"nested-write") {
             Ok(()) => assert_eq!(std::fs::read(root.join("nested/file.txt")).unwrap(), b"nested-write"),
             Err(FilesystemError::UnsupportedPlatform) => {
@@ -2954,10 +2954,10 @@ mod macos_filesystem_tests {
             other => panic!("unexpected confined nested-write result: {other:?}"),
         }
         assert!(
-            std::fs::read_dir(&root).unwrap().all(|entry| {
+            std::fs::read_dir(root.join("nested")).unwrap().all(|entry| {
                 !entry.unwrap().file_name().to_string_lossy().starts_with(".one-write-")
             }),
-            "nested write must not leak root-staged temporary files"
+            "nested write must not leak same-directory temporary files"
         );
         assert!(matches!(
             authority.write("escape-dir/sentinel.txt", b"changed"),
