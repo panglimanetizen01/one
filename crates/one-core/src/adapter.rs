@@ -686,6 +686,33 @@ mod filesystem_windows_tests {
     }
 
     #[test]
+    fn filesystem_writer_rejects_directory_junction_escape_without_touching_outside_file() {
+        let root = test_root("junction-write");
+        let outside = root.with_extension("outside");
+        std::fs::create_dir_all(&outside).unwrap();
+        let sentinel = outside.join("sentinel.txt");
+        std::fs::write(&sentinel, b"OUTSIDE_SENTINEL").unwrap();
+        let junction = root.join("junction");
+        create_junction(&junction, &outside);
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+        let result = adapter.invoke(&write_request("junction\\sentinel.txt", "ATTACK"));
+
+        assert_eq!(result, Err(AdapterError::ResolutionFailed));
+        assert_eq!(std::fs::read(&sentinel).unwrap(), b"OUTSIDE_SENTINEL");
+        let entries = std::fs::read_dir(&root)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<Vec<_>>();
+        assert_eq!(entries, vec![std::ffi::OsString::from("junction")]);
+        drop(adapter);
+        std::fs::remove_dir(&junction).unwrap();
+        std::fs::remove_dir_all(&root).unwrap();
+        std::fs::remove_dir_all(outside).unwrap();
+    }
+
+    #[test]
     fn filesystem_adapter_reads_absolute_target_inside_project_root() {
         let root = test_root("absolute-read");
         let target = root.join("inside.txt");
@@ -697,6 +724,22 @@ mod filesystem_windows_tests {
 
         assert!(result.success);
         assert_eq!(result.output, b"INSIDE_SENTINEL");
+        drop(adapter);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn filesystem_write_adapter_writes_absolute_target_inside_project_root() {
+        let root = test_root("absolute-write");
+        let target = root.join("inside.txt");
+        std::fs::write(&target, b"before").unwrap();
+
+        let authority = Arc::new(FilesystemAuthority::open(&root, 4096, 4096).unwrap());
+        let adapter = FileWriteAdapter::with_authority(authority);
+        let result = adapter.invoke(&write_request(target.to_str().unwrap(), "absolute content")).unwrap();
+
+        assert!(result.success);
+        assert_eq!(std::fs::read(&target).unwrap(), b"absolute content");
         drop(adapter);
         std::fs::remove_dir_all(root).unwrap();
     }
