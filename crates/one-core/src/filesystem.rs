@@ -1840,6 +1840,50 @@ mod windows_native {
         }
 
         #[test]
+        fn retained_delete_handle_blocks_leaf_rename() {
+            let nonce = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock must be after Unix epoch")
+                .as_nanos();
+            let root = std::env::temp_dir().join(format!(
+                "one-win-delete-leaf-rename-{}-{nonce}",
+                std::process::id()
+            ));
+            std::fs::create_dir_all(&root).unwrap();
+            let target = root.join("target.txt");
+            let renamed = root.join("renamed.txt");
+            std::fs::write(&target, b"KEEP").unwrap();
+
+            let root_handle = open_root(&root).unwrap();
+            let leaf_name: Vec<u16> = "target.txt".encode_utf16().collect();
+            let retained_leaf = open_named(
+                &leaf_name,
+                root_handle.as_raw_handle() as HANDLE,
+                OBJ_CASE_INSENSITIVE | OBJ_DONT_REPARSE,
+                DELETE_ACCESS | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                FILE_OPEN,
+                FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_REPARSE_POINT,
+            )
+            .unwrap();
+            drop(root_handle);
+
+            let rename_while_retained = std::fs::rename(&target, &renamed);
+            assert!(
+                rename_while_retained.is_err(),
+                "Windows allowed the validated leaf to be renamed while its no-delete-share handle was open"
+            );
+            assert_eq!(std::fs::read(&target).unwrap(), b"KEEP");
+            assert!(!renamed.exists());
+
+            drop(retained_leaf);
+            std::fs::rename(&target, &renamed)
+                .expect("leaf rename should succeed after the retained handle closes");
+            assert_eq!(std::fs::read(&renamed).unwrap(), b"KEEP");
+            std::fs::remove_dir_all(root).unwrap();
+        }
+
+        #[test]
         fn retained_parent_handle_blocks_directory_rename() {
             let nonce = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
