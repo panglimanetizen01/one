@@ -481,3 +481,11 @@ For Termux continuation, read [TERMUX_WORKTREE_MAP.md](TERMUX_WORKTREE_MAP.md) f
 - CircleCI status context remains PENDING on the same SHA: `ci/circleci: one-linux`, workflow `6e00388e-687e-497b-b95d-20a38a2cb535`, job `753aeb6f-e6cf-40d2-ada0-daef15471b88`. This session cannot retrieve provider pipeline details or step logs. Pipeline → workflow → job → `vcs.revision` mapping remains incomplete; do not mark B-001 closed based on this status.
 - Ubuntu job logs include the six Linux process-group adversarial regressions for `setsid` and `setpgid` under normal completion, timeout, and output overflow; all six report `ok`. The child-helper test cases are intentionally ignored when run standalone and are launched by the parent regressions.
 - This evidence is scoped to the exact GitHub Actions source SHA and Ubuntu/Windows jobs only. It is not CircleCI provider-log evidence, Android/Termux evidence, or complete Issue #105 acceptance.
+
+## 2026-11-21 — latest PR #113 docs HEAD CI result
+
+- PR #113 exact documentation HEAD: `48b8a3235d8b23653764ef005ca5946598182545`; base `181ad350d8f0db53cda654c4d378425fbdd6ab24`; OPEN / DRAFT / UNMERGED.
+- GitHub Actions One CI run #44901074701 completed terminal SUCCESS: Ubuntu job #136836894258 and Windows 2025 job #136836894522. Build, Clippy, Tests, and Complete job all SUCCESS on this exact documentation HEAD.
+- Compare confirms the 8 commits from code-bearing source SHA `7744e46849f97b5868a6a75ee365b6f72cca5609` to this HEAD change verification documentation only; no runtime source or tests changed in that delta. Source SHA #44900738968 had already passed Ubuntu #136835893296 and Windows #136835893110.
+- CircleCI status on exact docs HEAD remains PENDING: workflow `1d5dbab5-d047-4bbf-b5b5-a394707d2289`, job `826b2a25-a1a2-4c06-a011-aa56a1bc6c0f`. Provider pipeline number/UUID, `vcs.revision`, job membership, and provider step logs remain unavailable in this session. Do not infer failure or root cause.
+- No retry or CircleCI configuration change was made. B-001 remains PARTIAL / NOT CLOSED until provider evidence is complete.
