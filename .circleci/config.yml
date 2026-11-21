@@ -209,6 +209,19 @@ jobs:
             printf '%s\n' 'nama adalah "Budi"' 'tampilkan nama' > "$temp_dir/halo.one"
             output=$("$binary" jalankan "$temp_dir/halo.one")
             test "$output" = "Budi"
+      - run:
+          name: Require native Linux nested filesystem confinement
+          command: |
+            set -euo pipefail
+            test_binary="$(find target/debug/build/one-core -type f -name 'one_core-*' -perm -u+x -print -quit)"
+            if [[ -z "$test_binary" || ! -x "$test_binary" ]]; then
+              echo "The one-core unit-test binary was not produced by the workspace test step." >&2
+              exit 1
+            fi
+            echo "Running native nested-write adversarial tests as root: $test_binary"
+            sudo -n env ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1 "$test_binary" --exact filesystem::tests::nested_atomic_write_uses_detached_mount_and_rejects_parent_move --nocapture
+            sudo -n env ONE_REQUIRE_NATIVE_LINUX_NESTED_WRITE=1 "$test_binary" --exact filesystem::tests::nested_write_rejects_mount_boundary_before_creating_staging_file --nocapture
+
       - when:
           condition: << pipeline.parameters.run_release_checks >>
           steps:
