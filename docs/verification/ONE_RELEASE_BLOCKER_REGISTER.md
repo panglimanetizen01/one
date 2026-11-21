@@ -74,7 +74,7 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 ### B-002 — Issue #104 security acceptance
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
-**Latest source/test candidate:** `9fe53815f83701a62536472f8a3c87cebac22e7a` (NOT BUILT/TESTED); PR #113 documentation-sync HEAD at this checkpoint is recorded in the appended update.
+**Latest source/test candidate:** `568d9360f0beec63c10fbeae9cac63f384bd082f` (NOT BUILT/TESTED); PR #113 HEAD at this register update is recorded below.
 
 Exact-source verifier evidence remains bound to its own historical source revisions; none transfers to this candidate.
 
@@ -771,3 +771,12 @@ The same current code-bearing source `cd95e5ec2234a2909ef79bf8b25fe65296fab5ed` 
 - macOS nested reads now use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` identity checks. Unsupported kernels fail closed. macOS nested writes remain fail-closed pending a proven atomic no-cross-mount publication strategy.
 - Source tests were updated for capability-gated Android nested write behavior and supported-kernel macOS nested reads; NOT RUN. No compiler, Android device test, macOS test, CI run, or E4 verifier result is claimed.
 - PR #113 remains OPEN / DRAFT / UNMERGED. Latest PR HEAD before this register update: `70a3fa7239a93738c0d70358e4287692fc5e0e09`. Base remains `181ad350d8f0db53cda654c4d378425fbdd6ab24`. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — filesystem implementation and first exact-SHA CI feedback
+
+- Latest source candidate: `568d9360f0beec63c10fbeae9cac63f384bd082f` (`crates/one-core/src/filesystem.rs` plus Clippy corrections in `adapter.rs` and `database.rs`). NOT BUILT/TESTED on the updated candidate.
+- Android nested read remains kernel `openat2`; nested write now uses the guarded detached-mount transaction with recursive `MOUNT_ATTR_NOSYMFOLLOW`, `openat2` and `renameat2`. Unsupported/SELinux-denied primitives fail closed. macOS direct-child read compatibility is preserved; nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` plus `fstatfs` checks on supported kernels; nested writes remain fail-closed pending a proven atomic no-cross-mount publication path.
+- Exact-SHA GitHub Actions run #2410 (`44845255637`) ran on earlier source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build SUCCESS, Clippy FAILURE, Tests SKIPPED. Clippy reported a manual char-comparison lint in `adapter.rs` and ignored SQLite configuration `Result`s in `database.rs`. Descendant source commits `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab` correct these without weakening lint policy; macOS direct-child fallback was refined in `568d9360f0beec63c10fbeae9cac63f384bd082f`. These fixes have not yet been shown to pass CI.
+- Windows leg of run #2410 was still IN_PROGRESS at `Install Android NDK (Windows)` on last readback; no Windows result is claimed. CircleCI for the earlier source candidate remained PENDING; no CircleCI success is claimed for the latest candidate.
+- Android native tests, macOS native tests, focused platform builds, and adversarial nested-write race/mount tests remain outstanding. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED; no main, verifier pin, fixed ledger, or acceptance criteria changes.
