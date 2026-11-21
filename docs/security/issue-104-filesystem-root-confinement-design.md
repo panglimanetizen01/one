@@ -1077,3 +1077,4 @@ These tests are source additions only until a build and Windows execution report
 5. Host-root integration and complete adversarial evidence remain separately tracked in the release blocker register.
 
 Issue #104 remains OPEN / NOT ACCEPTED.
+Additional Windows source regression: delete_leaf_rename_guard is covered by retained_delete_handle_blocks_leaf_rename. It verifies that the same DELETE-access/no-delete-share open mode used by the delete backend blocks a concurrent rename while the validated leaf handle is retained, then permits rename after close. This test is also NOT BUILT / NOT RUN at this checkpoint.
