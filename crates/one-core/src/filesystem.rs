@@ -1221,6 +1221,20 @@ mod macos_native {
             Err(error) => return Err(error),
         }
 
+        // Resolve and validate the destination parent before creating any
+        // staging entry. A parent on another mount is rejected without even
+        // creating a temporary file on the trusted root.
+        let parent_path = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
+        let parent_name = CString::new(parent_path.as_os_str().as_bytes())
+            .map_err(|_| FilesystemError::InvalidTarget)?;
+        let parent = openat(
+            root,
+            &parent_name,
+            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | RESOLVE_FLAGS,
+            0,
+        )?;
+        verify_same_mount(root, &parent)?;
+
         // Stage on the root mount. Publishing into a nested mount then fails
         // with EXDEV. XNU resolves both operands beneath root and rejects
         // symlinks in the final rename operation itself.
@@ -1261,21 +1275,6 @@ mod macos_native {
                 return Err(FilesystemError::ResolutionFailed);
             }
             hook(MacWriteStage::TempCreated)?;
-
-            let parent_path = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
-            let parent_name = CString::new(parent_path.as_os_str().as_bytes())
-                .map_err(|_| FilesystemError::InvalidTarget)?;
-            let parent = openat(
-                root,
-                &parent_name,
-                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | RESOLVE_FLAGS,
-                0,
-            )?;
-            // Keep the explicit mount identity check. The root-staged source
-            // and destination parent must belong to the same filesystem;
-            // renameatx_np would reject EXDEV too, but checking before writing
-            // avoids staging data for a destination on another mount.
-            verify_same_mount(root, &parent)?;
 
             temporary.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             hook(MacWriteStage::Written)?;
@@ -1396,6 +1395,29 @@ mod macos_native {
             drop(nested_handle);
             drop(root_handle);
             std::fs::remove_dir_all(root).unwrap();
+        }
+
+        #[test]
+        fn nested_write_rejects_mount_boundary_before_creating_staging_file() {
+            use std::path::Path;
+
+            // /dev is a distinct devfs mount. Opening the trusted root as /
+            // lets this test exercise the actual nested-write preflight without
+            // needing permission to create files on either mount.
+            let root = std::fs::File::open("/").unwrap();
+            let relative = Path::new(&format!(
+                "dev/one-macos-mount-boundary-{}-{}.tmp",
+                std::process::id(),
+                SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+            )).to_path_buf();
+            let absolute = Path::new("/").join(&relative);
+            assert!(!absolute.exists());
+
+            assert_eq!(
+                super::write_nested_relative(&root, &relative, b"MUST_NOT_CROSS_MOUNT"),
+                Err(FilesystemError::ResolutionFailed)
+            );
+            assert!(!absolute.exists(), "mount-boundary denial must not create a target");
         }
 
         #[test]
