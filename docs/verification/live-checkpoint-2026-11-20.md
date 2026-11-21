@@ -701,3 +701,8 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - macOS nested reads and writes remain fail-closed. Ordinary `openat` directory-descriptor walks cannot prevent a parent directory from being renamed outside the root; no unsafe traversal has been enabled. Direct-child operations remain unchanged.
 - Added Android source regression for a valid nested read and a symlinked-parent escape with outside-sentinel preservation. Existing Android expectations now distinguish missing nested files (`NotFound`) from symlink-parent denial (`ResolutionFailed`). Tests are NOT RUN.
 - Issue #104 remains OPEN / NOT ACCEPTED. No build, test, CI, verifier, or platform matrix ran; no platform support or release approval is promoted.
+
+
+## 2026-11-21 filesystem implementation continuation
+
+- Worktree `$HOME/one-pr113` was safely fast-forwarded from `979973cd6fb6f76802e13dbbbe21530d68b4cf53` to PR #113 checkpoint `1e8e19dcf3833aaff7169427350fa50b7df1f545` with a clean status. Source commit `9fe53815f83701a62536472f8a3c87cebac22e7a` now adds guarded Android nested writes and macOS nested reads. Architecture diagram and release blocker register were synchronized afterward. These changes are source-only and NOT BUILT/TESTED; Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains draft/open/unmerged; no main or verifier pin changes.
