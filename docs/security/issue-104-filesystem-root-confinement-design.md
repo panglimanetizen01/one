@@ -1,7 +1,7 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
-**Latest code/test SHA at 2026-11-21 checkpoint:** `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff` (native macOS regressions and Windows E4-adjacent tests; see section 15)  
+**Latest code/test SHA at 2026-11-21 checkpoint:** `f5a0bff593035b4ba9be92ae883a36386b12176b` (adds Android statx mount-ID regression; see section 16)  
 **Latest CircleCI-confirmed PR #113 HEAD:** `26a34efb6d0908bd02738a7b05090f96051a6dc7` (`ci/circleci: one-linux` SUCCESS; workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Later documentation-only commits are not credited with this result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
@@ -1176,4 +1176,17 @@ This section supersedes section 14's earlier root-staging implementation note. T
 - Windows tests added at fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff: real directory-junction write escape rejection with outside sentinel/no-temp assertions, and positive absolute target write inside the project root. They are not accepted until exact Windows CI/E4 evidence is terminal.
 - The independent E4 verifier remains pinned to historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not update its canonical pin or protected pin before the implementation candidate is frozen and the full exact-SHA E4 suite is ready.
 - macOS delete remains fail-closed. Android nested paths remain fail-closed under the observed Termux seccomp/openat2 constraint. Linux nested writes remain dependent on detached-mount primitives. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 16. Android statx mount-ID regression — 2026-11-21
+
+- Exact source/test SHA: f5a0bff593035b4ba9be92ae883a36386b12176b.
+- Added android_statx_mount_id_matches_same_mount_and_rejects_devfs. It opens a temporary project root and nested directory, then /dev. The test requires STATX_MNT_ID to be present, equal for root/nested, and different for devfs.
+- The test deliberately calls statx on already-open descriptors using AT_EMPTY_PATH. It does not call openat2, because the observed Android app/Termux seccomp policy may terminate the process with SIGSYS on that syscall.
+- This test is implemented but NOT YET EXECUTED on a real Android/Termux process. It must be run on the device after syncing this exact source SHA:
+  cargo test -p one-core --locked android_statx_mount_id_matches_same_mount_and_rejects_devfs -- --nocapture
+  cargo test -p one-core --locked android_ -- --nocapture
+- Android remains direct-child-only for read/write. Multi-component paths return UnsupportedPlatform; no racy userspace parent walk is permitted.
+- macOS native run #44906550034 passed on this exact SHA: both macOS 15 and 26 each passed 15 macos_ tests (0 failed, 4 ignored) and 8 nested_write_ tests (0 failed).
+- One CI #44906550001 and CircleCI context were still in progress/pending at the latest read; see the single release blocker register for exact job IDs and refresh before making claims.
+- Issue #104 remains OPEN / NOT ACCEPTED.
 
