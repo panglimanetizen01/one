@@ -14,8 +14,10 @@ flowchart TB
     Authority --> Confine
     Confine --> ReadAdapter["FileReadAdapter"]
     Confine --> WriteAdapter["FileWriteAdapter"]
+    Confine --> DeleteAdapter["FileDeleteAdapter — explicit filesystem.delete grant"]
     AdapterMetadata --> ReadAdapter
     AdapterMetadata --> WriteAdapter
+    AdapterMetadata --> DeleteAdapter
     SelectAdapter -->|No matching native backend| FailClosed
 
     ReadAdapter --> LinuxRead["Linux read backend"]
@@ -95,6 +97,13 @@ flowchart TB
     WinSync -->|failure| WinCleanup["Delete temporary sibling"]
     WinRename -->|failure| WinCleanup
 
+    DeleteAdapter --> WindowsDelete["Windows handle-bound delete"]
+    WindowsDelete --> WinDeleteParent["Retained parent handles · no FILE_SHARE_DELETE"]
+    WinDeleteParent --> WinDeleteLeaf["DELETE_ACCESS · no reparse · same volume · regular · nlink = 1"]
+    WinDeleteLeaf --> WinDisposition["NtSetInformationFile(FileDispositionInformation) on validated leaf handle"]
+    DeleteAdapter -->|Linux · Android · macOS| DeleteUnsupported["UnsupportedPlatform — no path-based unlink fallback"]
+    DeleteUnsupported --> FailClosed
+
     WriteAdapter --> Other["Other platforms"]
     Other --> FailClosed
 
@@ -116,7 +125,7 @@ flowchart TB
 | Android kernel `openat2` nested read and direct-child atomic write; nested write uses guarded detached-mount transaction | `crates/one-core/src/filesystem.rs` |
 | macOS XNU `O_RESOLVE_BENEATH` / `O_NOFOLLOW_ANY` / `O_UNIQUE` nested read (supported kernels); direct-child atomic write | `crates/one-core/src/filesystem.rs` |
 | Windows handle-relative traversal, no-delete-share parent handles, and atomic replacement | `crates/one-core/src/filesystem.rs` |
-| Adapter injection and adversarial filesystem tests | `crates/one-core/src/adapter.rs` |
+| Adapter injection, explicit delete capability, and adversarial filesystem tests | `crates/one-core/src/adapter.rs`, `crates/one-core/src/capability.rs`, `crates/one-core/src/interpreter.rs` |
 | Normative security and acceptance requirements | `docs/security/issue-104-filesystem-root-confinement-design.md` |
 | Exact-SHA adversarial test contract | [`.github/workflows/e4-adversarial-regression.yml`](https://github.com/panglimanetizen01/one-windows-verification/blob/probe/issue-104-platform-metadata-20261120/.github/workflows/e4-adversarial-regression.yml) in the independent verifier repository |
 
@@ -127,6 +136,8 @@ flowchart TB
 - Android nested reads use kernel `openat2`; nested writes use the detached-mount + recursive `MOUNT_ATTR_NOSYMFOLLOW` + `openat2`/`renameat2` transaction shared with Linux. Android still fails closed when the kernel or SELinux policy denies any required primitive. Direct-child writes retain the existing statx mount-ID checks.
 - macOS direct-child reads retain the legacy `O_NOFOLLOW` path; nested reads use XNU `O_RESOLVE_BENEATH | O_NOFOLLOW_ANY | O_UNIQUE` and post-open `fstatfs` mount identity checks. Kernels that reject the nested-path flags fail closed. macOS nested writes remain fail-closed because a race-safe atomic publication path that also excludes mount crossings has not yet been proven. Direct-child writes remain supported.
 - The new Android/macOS source changes and regressions have NOT been built or run.
+- Handle-bound delete is currently implemented only on Windows. Linux `unlinkat`, Android `unlinkat`, and macOS `unlinkat` are name-based operations; no equivalent fd-bound disposition primitive has been proven for the current contract. Do not substitute check-then-unlink by name.
+- The CLI now exposes `filesystem.delete` as an explicit scoped grant; the CLI bridge and its regression tests are source-only until exact-SHA build/test evidence is recorded.
 - Other platforms fail closed.
 - A successful artifact build or one passing platform job does not imply full platform support or Issue #104 acceptance.
 - The full architecture map in PR #97 is a separate non-normative overview image. This focused source diagram supplements it; it does not claim that the image itself has been visually inspected or reconciled.
