@@ -1,7 +1,7 @@
 # Issue #104 — Filesystem Root-Confinement Implementation Design
 
 **Status:** Candidate implementation PARTIAL; protected post-merge E4 verification CONFIRMED; Issue #104 acceptance remains OPEN / NOT ACCEPTED  
-**Latest code/test SHA at 2026-11-21 checkpoint:** `4f3266799bc900f24369b35386536f6567dcc7a5` (native macOS read/write regressions run; see section 14)  
+**Latest code/test SHA at 2026-11-21 checkpoint:** `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff` (native macOS regressions and Windows E4-adjacent tests; see section 15)  
 **Latest CircleCI-confirmed PR #113 HEAD:** `26a34efb6d0908bd02738a7b05090f96051a6dc7` (`ci/circleci: one-linux` SUCCESS; workflow `a7016ead-ed2d-467f-9f1b-4d20c60a966f`, job `6cc9778c-307c-48fc-9111-39c97d288393`). Later documentation-only commits are not credited with this result.  
 **Branch:** security/issue-104-root-confinement-20261118  
 **Issue:** https://github.com/panglimanetizen01/one/issues/104
@@ -1161,3 +1161,19 @@ The public `FilesystemAuthority` macOS regression previously still expected nest
 - Cleanup hardening commit 74c12778ba3dd41df69503c452f416e54838a47b moves every post-staging fallible operation into the explicit cleanup result path. Follow-up typo correction commit 493fe45a240fe9ab100fe49d9ff9429d1f3a5eaf. Mandatory nested-read test commit be1b8f5a94d243e6063f2335f9f204fe802f8503. CI capability-gate commit 4f3266799bc900f24369b35386536f6567dcc7a5.
 - The macOS implementation intentionally stages its temporary file under the retained root so cleanup remains root-handle-relative even if a nested parent is moved. This differs from the generic same-directory-temp design statement in sections 4 and 6. Do not silently declare the contract satisfied: reconcile this design choice against the normative atomic-write contract before Issue #104 acceptance.
 - macOS delete remains UnsupportedPlatform. Issue #104 remains OPEN / NOT ACCEPTED. E4 Windows/Unix named filters are present in source but not yet rerun against this exact SHA; the independent verifier canonical pin must remain unchanged until the full implementation candidate is ready.
+
+## 15. Same-directory macOS nested-write refinement — 2026-11-21
+
+This section supersedes section 14's earlier root-staging implementation note. The current implementation now follows the same-directory temporary-file requirement while preserving root-relative final path resolution.
+
+- Code/test SHA: fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff. Native workflow configuration SHA: 41fd03451cac51639db3b46049d7d7ad5724b460.
+- The nested target parent is opened relative to the retained root using O_RESOLVE_BENEATH and O_NOFOLLOW_ANY, then checked with verify_same_mount(root,parent) before a staging entry is created.
+- The temporary sibling is created exclusively through the retained parent descriptor. Its opened file metadata is checked as a regular single-link file on the same filesystem as root, and verify_same_mount(root,temp) is retained.
+- Final publication uses renameatx_np with both source and target names resolved from the retained root descriptor and flags RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY. If the parent is moved outside root, the root-relative source lookup fails. No ordinary rename, path-based copy, or cross-mount fallback is permitted.
+- Cleanup uses unlinkat through the retained parent descriptor and explicitly surfaces failures as IoFailure; Drop remains only a best-effort retry. This cleans only the operation's own staging sibling, including when the parent directory object is moved before the final root-relative publication attempt.
+- The mount-boundary test uses / as root and a target beneath /dev; it must reject the different devfs mount before creating any temporary entry or target. The existing Darwin f_fsid and f_mntonname identity comparison remains unchanged.
+- Native run #44906200616 SUCCESS on exact tested SHA 41fd03451cac51639db3b46049d7d7ad5724b460. macos-15 and macos-26 each: 15 passed, 0 failed, 4 ignored for the macos_ filter; 8 passed, 0 failed for nested_write_. macos-26 is required to perform nested writes; macos-15 is required to support nested reads and must fail closed for nested writes. Strict probe #44906128064 at SHA d93479f010e0e00edefa7d438d584f5500c809aa confirmed the macos-15 nested-write path returns UnsupportedPlatform; do not remove atomic beneath/no-follow flags to make it pass.
+- Windows tests added at fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff: real directory-junction write escape rejection with outside sentinel/no-temp assertions, and positive absolute target write inside the project root. They are not accepted until exact Windows CI/E4 evidence is terminal.
+- The independent E4 verifier remains pinned to historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not update its canonical pin or protected pin before the implementation candidate is frozen and the full exact-SHA E4 suite is ready.
+- macOS delete remains fail-closed. Android nested paths remain fail-closed under the observed Termux seccomp/openat2 constraint. Linux nested writes remain dependent on detached-mount primitives. Issue #104 remains OPEN / NOT ACCEPTED.
+
