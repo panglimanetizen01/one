@@ -964,3 +964,8 @@ No evidence is promoted. Issue #104 and #105 remain OPEN / NOT ACCEPTED. Prior e
 | macOS full descendant-tree containment and brokered launchd spawn denial | not implemented/proven | NOT ACCEPTED; `ProcessAdapter` intentionally excludes macOS |
 
 XNU source inspection supports that `fork1()` applies `mac_proc_check_fork()` to `PROC_CREATE_FORK` and `PROC_CREATE_SPAWN`; this is design evidence, not native execution evidence. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — ProcessAdapter macOS exclusion test source
+
+- `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the platform metadata regression so it also runs on macOS and asserts that `ProcessAdapter` does not advertise `PlatformKind::Macos`.
+- SOURCE ONLY / NOT BUILT / NOT RUN. This preserves the fail-closed product boundary; it is not a macOS process support claim.
