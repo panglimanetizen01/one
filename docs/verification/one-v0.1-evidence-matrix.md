@@ -969,3 +969,7 @@ XNU source inspection supports that `fork1()` applies `mac_proc_check_fork()` to
 
 - `0408b92f6eafb12c18371d0079c6e73915e8e87c` widens the platform metadata regression so it also runs on macOS and asserts that `ProcessAdapter` does not advertise `PlatformKind::Macos`.
 - SOURCE ONLY / NOT BUILT / NOT RUN. This preserves the fail-closed product boundary; it is not a macOS process support claim.
+
+## 2026-11-21 — latest combined source/test candidate
+
+- Latest exact candidate `79593d2f225284eff841e67c8eb9a1e005611981` includes the macOS ProcessAdapter exclusion regression and direct-spawn boundary clarification. It remains SOURCE ONLY / NOT BUILT / NOT TESTED. No evidence state is promoted.
