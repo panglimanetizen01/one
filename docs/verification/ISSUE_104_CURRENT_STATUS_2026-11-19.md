@@ -765,3 +765,8 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 ## 2026-11-21 — latest source and CI feedback
 
 Latest source candidate is `568d9360f0beec63c10fbeae9cac63f384bd082f` (NOT BUILT/TESTED). It adds Android guarded nested writes, macOS nested reads with XNU beneath/no-follow/unique flags on supported kernels, and preserves legacy macOS direct-child reads on older kernels. macOS nested writes remain fail-closed. Clippy errors found on prior source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` were corrected in descendants `82a90b41...` and `c23bd0e0...`, but those corrections have no passing CI evidence yet. Run #2410: Ubuntu Build PASS, Clippy FAIL, Tests SKIPPED on the earlier SHA; Windows still running at last readback. Android Termux and macOS native runs remain required. Issue #104 remains OPEN / NOT ACCEPTED.
+
+
+## 2026-11-21 — Windows compile failure and correction
+
+Latest source candidate `74df3aa901732c8eb3adaac728162715fc3a4961` is NOT BUILT/TESTED. Run #2410 on parent source `9fe53815f83701a62536472f8a3c87cebac22e7a` ended Ubuntu Build PASS / Clippy FAIL / Tests SKIPPED and Windows Build FAIL. Windows failure came from Linux writer functions being compiled on Windows and unstable Windows `MetadataExt` methods. The latest source gates Linux-only functions correctly and uses native handle metadata for Windows root identity; no rerun evidence yet. Earlier Clippy errors were also corrected in descendants. Android Termux and macOS native tests remain NOT RUN. Issue #104 remains OPEN / NOT ACCEPTED.
