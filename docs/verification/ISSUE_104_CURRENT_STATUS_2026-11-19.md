@@ -914,3 +914,11 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - Primitive map: Linux unlinkat is name-based and no fd-bound delete is implemented; Android nested resolution is constrained by observed openat2 seccomp termination and unlinkat is still name-based; macOS has kernel-bounded nested reads but no proven nested atomic write or handle-bound delete primitive; Windows now has a source implementation for handle-bound deletion.
 - This is a Windows source implementation slice, not platform acceptance. Issue #104 remains OPEN / NOT ACCEPTED; E4, host-root integration, race/manipulation evidence, and cross-platform validation remain outstanding. No capability or language adapter was added.
 - Added test retained_delete_handle_blocks_leaf_rename to verify the validated Windows leaf cannot be renamed while the DELETE-access/no-delete-share handle is retained. This test is NOT BUILT / NOT RUN.
+
+## 2026-11-21 — exact-SHA Windows delete CI result
+
+- GitHub Actions One CI run #44870781889: terminal SUCCESS on exact source/test SHA 6f2d5e2d0b02d6aed6c692a8a7b7fa184a70fcb0.
+- Ubuntu job #136744590581: Build, Clippy, Tests, and deterministic .oneir/.onepkg artifacts SUCCESS.
+- Windows Server 2025 job #136744590451: Build, Clippy, Tests, and deterministic .oneir/.onepkg artifacts SUCCESS.
+- Windows logs prove these new tests passed: delete_uses_validated_handle_and_removes_nested_regular_file; delete_rejects_hard_links_without_removing_either_name; retained_delete_handle_blocks_leaf_rename. Existing retained_parent_handle_blocks_directory_rename also passed. The Windows one-core library summary was 156 passed / 0 failed.
+- Exact-SHA result applies to source/test SHA 6f2d5e2...; later documentation-only commits do not change source behavior. This is not POSIX delete support, complete E4 acceptance, or Issue #104 closure. Issue #104 remains OPEN / NOT ACCEPTED.
