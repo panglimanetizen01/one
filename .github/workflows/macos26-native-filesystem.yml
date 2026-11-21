@@ -1,0 +1,60 @@
+name: macOS 26 Native Filesystem
+
+on:
+  push:
+    branches:
+      - security/issue-104-root-confinement-20261118
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-26-native-filesystem-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  macos-26-native-filesystem:
+    name: macOS 26 native filesystem tests (Apple Silicon)
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Install repository-pinned Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 20 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal
+          fi
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.cargo/bin:$PATH"
+          rust_toolchain="$(sed -nE 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' rust-toolchain.toml)"
+          if [[ ! "$rust_toolchain" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "rust-toolchain.toml must pin an exact x.y.z release" >&2
+            exit 1
+          fi
+          rustup toolchain install "$rust_toolchain" --profile minimal --component rustfmt --component clippy
+          rustup default "$rust_toolchain"
+          rustc --version
+          cargo --version
+
+      - name: Record native host and exact source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "SOURCE_SHA=$(git rev-parse HEAD)"
+          uname -a
+          sw_vers
+          test "$(uname -s)" = "Darwin"
+          test "$(uname -m)" = "arm64"
+          test "$(sw_vers -productVersion | cut -d. -f1)" = "26"
+
+      - name: Run macOS-specific filesystem regressions
+        shell: bash
+        run: cargo test --locked -p one-core macos_ -- --nocapture
+
+      - name: Run nested atomic-write and cleanup regressions
+        shell: bash
+        run: cargo test --locked -p one-core nested_write_ -- --nocapture
