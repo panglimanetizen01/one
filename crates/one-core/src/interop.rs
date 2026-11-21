@@ -1048,8 +1048,17 @@ fn run_process_windows(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessR
 mod tests {
     use super::*;
 #[cfg(any(target_os = "linux", target_os = "android"))]
-    fn test_escape_pid_file() -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("one-process-escape-{}.pid", std::process::id()))
+    fn test_escape_fixture(label: &str) -> (std::path::PathBuf, std::path::PathBuf) {
+        static NEXT_FIXTURE: std::sync::atomic::AtomicU64 =
+            std::sync::atomic::AtomicU64::new(0);
+        let nonce = NEXT_FIXTURE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let directory = std::env::temp_dir().join(format!(
+            "one-process-escape-{}-{label}-{nonce}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&directory).expect("unique process fixture directory");
+        let pid_file = directory.join("escaped.pid");
+        (directory, pid_file)
     }
 
     #[cfg(any(target_os = "linux", target_os = "android"))]
@@ -1068,8 +1077,9 @@ mod tests {
     fn spawn_escape_probe(mode: u8) {
         use std::ffi::CString;
         use std::os::unix::ffi::OsStrExt;
-        let parent_pid = unsafe { libc::getppid() };
-        let path = std::env::temp_dir().join(format!("one-process-escape-{parent_pid}.pid"));
+        let path = std::env::current_dir()
+            .expect("process fixture working directory")
+            .join("escaped.pid");
         let path = CString::new(path.as_os_str().as_bytes()).expect("temporary path has no NUL");
         // SAFETY: the child uses only async-signal-safe libc calls after fork.
         let child = unsafe { libc::fork() };
@@ -1278,16 +1288,15 @@ mod tests {
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn linux_process_cannot_escape_its_invocation_group_with_setsid() {
-        let pid_file = test_escape_pid_file();
-        let _ = std::fs::remove_file(&pid_file);
+        let (working_directory, pid_file) = test_escape_fixture("setsid-normal");
         let executable = std::env::current_exe().expect("current test executable");
         let result = run_process(&ProcessSpec {
             program: executable.to_string_lossy().into_owned(),
             args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_escape_helper_exit".into(), "--nocapture".into()],
-            working_directory: None,
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
         }, &CapabilitySet::none().allow(Capability::Process));
         let escaped_pid = cleanup_test_escaped_group(&pid_file);
-        let _ = std::fs::remove_file(&pid_file);
+        let _ = std::fs::remove_dir_all(&working_directory);
         assert!(escaped_pid.is_none(), "a descendant entered a new session; escaped PID: {escaped_pid:?}");
         let result = result.expect("the helper should exit after its descendant is contained");
         assert!(result.success, "helper failed: stdout={:?}, stderr={:?}", result.stdout, result.stderr);
@@ -1296,16 +1305,15 @@ mod tests {
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn linux_process_timeout_cannot_leave_an_escaped_session_descendant() {
-        let pid_file = test_escape_pid_file();
-        let _ = std::fs::remove_file(&pid_file);
+        let (working_directory, pid_file) = test_escape_fixture("setsid-timeout");
         let executable = std::env::current_exe().expect("current test executable");
         let result = run_process_with_timeout(&ProcessSpec {
             program: executable.to_string_lossy().into_owned(),
             args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_escape_helper_timeout".into(), "--nocapture".into()],
-            working_directory: None,
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
         }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(1));
         let escaped_pid = cleanup_test_escaped_group(&pid_file);
-        let _ = std::fs::remove_file(&pid_file);
+        let _ = std::fs::remove_dir_all(&working_directory);
         assert!(escaped_pid.is_none(), "a descendant survived timeout outside the invocation group; PID: {escaped_pid:?}");
         let error = result.expect_err("the helper parent must hit the configured deadline");
         assert!(error.contains("deadline"), "unexpected timeout result: {error}");
@@ -1314,16 +1322,15 @@ mod tests {
     #[cfg(any(target_os = "linux", target_os = "android"))]
     #[test]
     fn linux_output_overflow_cannot_leave_an_escaped_session_writer() {
-        let pid_file = test_escape_pid_file();
-        let _ = std::fs::remove_file(&pid_file);
+        let (working_directory, pid_file) = test_escape_fixture("setsid-output");
         let executable = std::env::current_exe().expect("current test executable");
         let result = run_process_with_timeout(&ProcessSpec {
             program: executable.to_string_lossy().into_owned(),
             args: vec!["--ignored".into(), "--exact".into(), "interop::tests::process_group_escape_helper_output".into(), "--nocapture".into()],
-            working_directory: None,
+            working_directory: Some(working_directory.to_string_lossy().into_owned()),
         }, &CapabilitySet::none().allow(Capability::Process), Duration::from_secs(5));
         let escaped_pid = cleanup_test_escaped_group(&pid_file);
-        let _ = std::fs::remove_file(&pid_file);
+        let _ = std::fs::remove_dir_all(&working_directory);
         assert!(escaped_pid.is_none(), "a descendant survived output overflow outside the invocation group; PID: {escaped_pid:?}");
         let error = result.expect_err("stdout overflow must terminate the invocation group");
         assert!(error.contains("output limit"), "unexpected overflow result: {error}");
