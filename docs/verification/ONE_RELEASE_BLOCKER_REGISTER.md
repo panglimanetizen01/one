@@ -13,9 +13,9 @@
 |---|---|
 | ONE canonical `main` | `d35db95153f6ddd79885494c72f5aee16c899751` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at pre-register refresh read | `20d16862bc7f51d0a5122884eb31223fc1b7bc7d` |
+| PR #113 HEAD at latest live read | `44fed1a9b9e3b6adfca31f14fa8e01e9f3219ef9` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
-| Code-bearing source | `4c01b6eb2b8ba2d75a316a1a792352657a74c73a` |
+| Code-bearing source/test SHA | `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
 | Verifier branch-local source pin | `c4f3800bc12b70a4d59d72fbc5a80029cb053cea` |
 | Protected verifier source pin | `722d662e7a81711ba3607d26571f4048a292b3ed` |
@@ -75,8 +75,8 @@ PR #113 and #51 were OPEN / DRAFT / UNMERGED at the last readback. Refresh all l
 
 **Priority:** P0 · **State:** OPEN / NOT ACCEPTED  
 **PR #113:** OPEN / DRAFT / UNMERGED · base `181ad350d8f0db53cda654c4d378425fbdd6ab24`  
-**Runtime candidate:** `c7a2d45a0e218c7e26a3f4b2dad0a206e024307e`  
-**Latest source/test HEAD:** `4f3266799bc900f24369b35386536f6567dcc7a5` (macOS nested-write cleanup and native capability-gate regression; PR #113 remains OPEN / DRAFT / UNMERGED).
+**Runtime candidate:** `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff`  
+**Latest source/test HEAD:** `fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff` (macOS same-directory nested staging plus Windows junction/absolute-write regressions; PR #113 remains OPEN / DRAFT / UNMERGED).
 
 **Current concrete implementation**
 - Linux: retained-root `openat2` reads; atomic direct-child writes; nested-write candidate uses detached recursive mount, `MOUNT_ATTR_NOSYMFOLLOW`, beneath-resolved `openat2`, and `renameat2`; fail closed when kernel/privilege prerequisites are missing.
@@ -1159,4 +1159,17 @@ Exact source SHA under failed GitHub Actions run #44853395121: `8156607a4f0fa95b
 - This does not close Issue #104. macOS delete remains unsupported. The macOS implementation's root-anchored temporary staging is not the same-directory temporary strategy stated in the generic Unix design section; retain this as an explicit design/acceptance reconciliation item rather than silently rewriting the contract. No claim of full E4 or platform parity.
 - E4 independent verifier PR #51 still pins historical source c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not move its canonical pin until the implementation queue is complete and the exact E4 suite is ready to run. The current source contains the expected Unix filters (3 read rejects, 5 write cases, 1 walk reject) and Windows named regressions, but those have not yet been rerun against this new exact SHA.
 - Next: reconcile the macOS root-staging vs same-directory design contract without weakening root-anchored cleanup or mount checks; then execute the current E4 Windows/Unix named suite on the final source SHA, and continue Android/other-platform fail-closed gaps. Issue #104 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — macOS same-directory nested staging and Windows E4 extension
+
+- Current PR #113 HEAD at live read: 44fed1a9b9e3b6adfca31f14fa8e01e9f3219ef9. Code/test commit: fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff. Native workflow configuration commit: 41fd03451cac51639db3b46049d7d7ad5724b460. PR remains OPEN / DRAFT / UNMERGED.
+- Supersedes the earlier root-staged macOS nested-write design note: the temporary file is now created as an exclusive sibling in the already-opened destination parent after verify_same_mount(root,parent). Publication resolves both the sibling source path and target path from the retained root fd with renameatx_np(RENAME_RESOLVE_BENEATH | RENAME_NOFOLLOW_ANY). Cleanup uses unlinkat on the retained parent handle. The parent-moved-outside-root test confirms publication fails and cleanup removes the operation's own temporary sibling; the target sentinel remains unchanged.
+- A mount-crossing nested write is rejected before creating any temporary file: the regression opens / as the trusted root and attempts a target under /dev (separate devfs mount), expecting ResolutionFailed and no target. Existing target and parent identities remain checked with fstatfs f_fsid + f_mntonname; no mount-boundary check was removed.
+- Native macOS run #44906200616 SUCCESS on exact tested source/config SHA 41fd03451cac51639db3b46049d7d7ad5724b460. macos-15 job #136852277737 and macos-26 job #136852277920: each reports 15 passed / 0 failed / 4 ignored in macos_ filter and 8 passed / 0 failed in nested_write_ filter. Nested reads are required on both. Nested writes are required on macos-26; macos-15 is explicitly allowed only to fail closed with UnsupportedPlatform, unchanged target, and no temp leak. A strict probe at d93479f010e0e00edefa7d438d584f5500c809aa confirmed macos-15 does not support the required atomic nested-write path even after same-directory staging; do not weaken flags or use unsafe fallback to make it pass.
+- macOS cleanup regressions include an explicit forced unlinkat failure (must surface IoFailure) plus injected failures at TempCreated, Written, Synced, and BeforeRename. Same-directory staging, mount preflight, root-relative rename, and retained-parent cleanup are covered.
+- Added Windows E4-adjacent tests in fa01f8df9b6aa281f075ef6dccdd480c6ac3a8ff: filesystem_writer_rejects_directory_junction_escape_without_touching_outside_file and filesystem_write_adapter_writes_absolute_target_inside_project_root. The junction is a real Windows directory junction; the test asserts the outside sentinel remains unchanged and no staging entry is created. These additions still need terminal Windows CI evidence.
+- One CI run #44906200602 on exact SHA 41fd03451cac51639db3b46049d7d7ad5724b460 was IN_PROGRESS at last read (Windows installing Android NDK; Ubuntu Build). Do not claim full One CI PASS until terminal result. The subsequent documentation-only commit 44fed1a9b9e3b6adfca31f14fa8e01e9f3219ef9 does not change source/test content.
+- E4 source inventory at fa01: Unix filters remain 3 descriptor_relative_read_rejects_, 5 descriptor_relative_write_, 1 descriptor_relative_walk_rejects_. Existing Windows tests cover junction read, absolute read, absolute escape side effects, atomic write, denied atomic replacement, oversized content, parent traversal, and retained-parent rename prevention; the two new tests above extend write-junction and positive absolute-write coverage. The independent verifier PR #51 still pins c4f3800bc12b70a4d59d72fbc5a80029cb053cea. Do not move canonical/protected pins until implementation scope is complete and the full E4 suite is ready for one exact-SHA run.
+- Remaining platform gaps: macOS 15 nested writes fail closed; macOS delete unsupported. Android nested paths remain fail-closed under the observed Termux seccomp/openat2 constraint; direct-child backend only. Linux nested writes depend on detached-mount primitives and fail closed if unavailable. POSIX delete remains unsupported. Windows is the only platform with handle-bound delete. Issue #104 remains OPEN / NOT ACCEPTED.
+- Next implementation work: finish remaining cross-platform/E4 gaps without weakening the mount/volume, symlink/reparse, hard-link, root-confinement, or cleanup contracts. Then update verifier filters/pin only when the source candidate is frozen, run the exact E4 Windows/Unix suite, and reconcile all docs/Notion evidence.
 
