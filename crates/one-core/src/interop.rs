@@ -555,8 +555,8 @@ fn run_process_macos(spec: &ProcessSpec, timeout: Duration) -> Result<ProcessRes
         thread::sleep(PROCESS_POLL_INTERVAL);
     };
 
-    // The Seatbelt profile denies all process creation by the target. Once the
-    // wrapper exits, no forked/posix_spawn descendant can retain either pipe.
+    // Seatbelt denies direct fork/posix_spawn creation. Brokered launches
+    // remain unproven, so ProcessAdapter does not advertise this macOS path.
     let stdout = join_reader(stdout_reader)?;
     let stderr = join_reader(stderr_reader)?;
     let status = status.map_err(|error| format!("Failed to reap macOS subprocess: {error}"))?;
