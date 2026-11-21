@@ -13,7 +13,7 @@
 |---|---|
 | ONE canonical `main` | `e518e4a47aedf2611ffd166e05dc4e45bed09917` |
 | PR #113 branch | `security/issue-104-root-confinement-20261118` |
-| PR #113 HEAD at latest live read | `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` |
+| PR #113 HEAD at latest live read (before this register-only sync) | `e44ed612b67af01ec5ec6e37dcee354b7f23e113` |
 | PR #113 base SHA | `181ad350d8f0db53cda654c4d378425fbdd6ab24` |
 | Code-bearing source/test SHA | `671c63b1c6cbae0ad99630c554eb1300ce7f0d77` |
 | Verifier PR #51 HEAD | `7c3ded0d811fe71bd14034880b24b0f8e396349e` |
