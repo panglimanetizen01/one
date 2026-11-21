@@ -385,3 +385,9 @@ The historical source-context/manifest-root notes above are superseded. The curr
 The Linux writer is no longer limited to direct children in every environment: it uses a guarded detached-mount path for nested targets, and fails closed when the kernel/security profile cannot provide the required `open_tree`, `mount_setattr(MOUNT_ATTR_NOSYMFOLLOW)`, and `openat2` primitives. Android and macOS have native direct-child read/atomic-replacement candidates; nested Android/macOS paths remain fail-closed. Windows retains the native handle-relative backend.
 
 Latest code-bearing candidate: `72eae103bc3304b0961c66a0cf61f716ddfa9ac4`. CLI integration fixtures were aligned with the host-cwd authority and conditional Linux nested-write contract in test-only commits `46c777e70f396cfee6d796d0667769dabe2d7208` and `2600ec18d4e3fb05558ca50d7cf466638e1ab015`. These commits intentionally skip CI; no build/test result is claimed. Issue #104 remains OPEN / NOT ACCEPTED, and this candidate is not part of canonical `main`.
+
+## Batas penghapusan berkas — 2026-11-21
+
+Lapisan host FilesystemAuthority sekarang memiliki implementasi sumber untuk penghapusan berkas **khusus Windows**. Operasi membuka target melalui handle relatif terhadap root tepercaya, menahan handle direktori induk agar tidak bisa dipindahkan selama operasi, memeriksa reparse point/volume/jenis berkas/jumlah hard link, lalu menerapkan disposition pada handle target yang sama.
+
+Fitur ini belum tersedia sebagai perintah bahasa atau adapter ONE. Linux, Android, dan macOS masih mengembalikan UnsupportedPlatform untuk API penghapusan; kita tidak memakai fallback unlinkat yang hanya memeriksa file lalu menghapus berdasarkan nama karena rentan race. Dua tes Windows baru belum dijalankan. Issue #104 tetap OPEN / NOT ACCEPTED.
