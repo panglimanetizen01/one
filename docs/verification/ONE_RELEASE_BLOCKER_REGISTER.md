@@ -834,3 +834,20 @@ Source-path investigation at this exact branch source: successful `FilesystemAut
 Do not silently fall back to device/inode identity or omit mount identity: mount-boundary confinement is part of the security contract. Investigate a kernel-derived mount-ID source compatible with Android restrictions (for example, `/proc/self/fdinfo/<fd>` `mnt_id`, subject to explicit robustness/security review and tests) before proposing code. Any fallback must fail closed if the kernel source is unavailable or malformed.
 
 Exact-SHA classification: Clippy PASS; one Android test PASS; three Android tests SIGSYS/NOT VERIFIED; hard-link test BLOCKED at fixture setup; Android filesystem backend NOT VERIFIED / NOT ACCEPTED. Issue #104 remains OPEN / NOT ACCEPTED. PR #113 remains OPEN / DRAFT / UNMERGED. No acceptance or platform support is promoted.
+
+
+## 2026-11-21 — syscall trace correction: Android seccomp blocks openat2
+
+This entry supersedes the earlier statx-suspect hypothesis recorded immediately above. User supplied a Termux ARM64 `strace` trace for exact test `filesystem::android_filesystem_tests::android_direct_child_read_and_atomic_write_work_with_root_handle` on source/test SHA `4e831bf51e4c9f4e4075e30d3d1e4fc72eeded0b`:
+
+- `statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_MNT_ID, ...) = 0`: the kernel successfully returns `STATX_MNT_ID`; the prior hypothesis that `statx` caused SIGSYS is disproven for this invocation.
+- `openat2(3, "data.txt", ..., resolve=RESOLVE_NO_XDEV|RESOLVE_NO_SYMLINKS|RESOLVE_BENEATH, ...) ` is invoked.
+- Immediately afterward, the process receives `SIGSYS` with `si_code=SYS_SECCOMP`, `si_syscall=__NR_openat2`, `si_arch=AUDIT_ARCH_AARCH64`; the process is killed by SIGSYS.
+- Confirmed cause for this traced test: Android/Termux seccomp policy blocks `openat2`. This is not a Rust assertion failure and not a `statx` failure.
+
+Security constraints and next engineering action:
+- Do not replace `openat2` with an unchecked `openat`, lexical path validation, device/inode-only checks, or omission of `RESOLVE_BENEATH` / symlink / mount-boundary protections.
+- Perform a design review for a safe Android fallback using retained directory handles and component-by-component `openat` with no-follow semantics, validating every opened descriptor's kernel mount identity before reading or writing. Prove resistance to symlink swaps, mount-point crossings, directory replacement, and race/manipulation; fail closed if any required kernel identity or primitive is unavailable.
+- The trace only directly confirms the first named test's `openat2` termination. The other previously SIGSYS-terminated Android tests remain unverified until their syscall paths are independently confirmed or the shared path is changed and retested.
+- The hard-link regression remains blocked at fixture setup by `PermissionDenied`; do not weaken or skip it. Clippy PASS and the root-final-symlink test PASS remain evidence only for their recorded exact SHA.
+- No implementation fix, Android support, E4 verification, or acceptance is claimed by this trace. Issue #104 remains OPEN / NOT ACCEPTED; PR #113 remains OPEN / DRAFT / UNMERGED.
