@@ -714,3 +714,11 @@ Latest source candidate: `52fcfb2706fcb48e9599d75f9086578279f1bbac` (`crates/one
 - GitHub Actions run #2410 (`44845255637`) on parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a`: Ubuntu Build SUCCESS, Clippy FAILURE, Tests SKIPPED. The failure was unrelated to filesystem code: one manual char-comparison lint in `adapter.rs` and unhandled `Result`s from SQLite resource-limit/progress-handler configuration in `database.rs`.
 - Corrected in descendants `82a90b41fec74bd3829da89ff2b4cb872d451c83` and `c23bd0e09186254aade3f8665e622bc9d2846eab`; no successful rerun yet. Windows leg of run #2410 was still running at last readback. CircleCI earlier candidate PENDING.
 - Issue #104 remains OPEN / NOT ACCEPTED. Do not claim Clippy, tests, Android/macOS support, or E4 acceptance until exact-SHA evidence exists.
+
+
+## 2026-11-21 — exact-SHA Windows build blocker correction
+
+- Latest source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961` (NOT BUILT/TESTED).
+- Run #2410 on `9fe53815f83701a62536472f8a3c87cebac22e7a` ended Ubuntu Build PASS, Clippy FAIL, Tests SKIPPED, Windows Build FAIL. Windows errors came from un-gated Linux writer code and unstable Windows MetadataExt APIs.
+- Commit `74df3aa901732c8eb3adaac728162715fc3a4961` gates Linux-only writers and compares Windows root identity through native no-reparse handles and `GetFileInformationByHandle`. Clippy corrections remain in ancestors `82a90b41...` and `c23bd0e0...`. No rerun is yet confirmed.
+- Continue with focused native Termux Android tests after safe fast-forward; macOS native tests and Windows/Ubuntu CI rerun remain outstanding. Issue #104 remains OPEN / NOT ACCEPTED.
