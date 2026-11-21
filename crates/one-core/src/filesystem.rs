@@ -192,8 +192,9 @@ impl FilesystemAuthority {
     }
 
     /// Atomically replace a regular, single-link file beneath the retained
-    /// root handle. Linux and Windows use platform-native handle-relative
-    /// operations; unsupported platforms remain fail-closed.
+    /// root handle. Linux/Windows use their native confined publication paths;
+    /// macOS uses XNU beneath-resolved rename for nested targets. Android
+    /// remains direct-child-only and rejects nested targets.
     pub fn write(&self, target: impl AsRef<Path>, bytes: &[u8]) -> Result<(), FilesystemError> {
         let relative = self.relative_target(target.as_ref())?;
         if bytes.len() as u64 > self.max_write_bytes {
