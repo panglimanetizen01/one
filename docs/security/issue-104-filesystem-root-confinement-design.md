@@ -1140,3 +1140,12 @@ A native candidate now uses XNU path-resolution and rename primitives rather tha
 - Linux and Android deletion remain fail-closed: no primitive binds unlink disposition to the validated object identity while preserving the full root/mount/race contract. Windows handle-bound deletion is preserved.
 - macOS process containment remains fail-closed. Seatbelt `process-fork` denial is a research direction, not an implementation: coverage of `posix_spawn`, other process creation APIs, and descendants must be demonstrated before enabling process execution.
 - Issue #104 and #105 remain OPEN / NOT ACCEPTED. No verifier, platform matrix, build, or acceptance result is inferred from these source changes.
+
+## 2026-11-21 — macOS integration-test alignment
+
+The public `FilesystemAuthority` macOS regression previously still expected nested writes to return `UnsupportedPlatform`, which contradicted the XNU candidate implemented in `macos_native::write_nested_relative`. Commit `830a70e5c5d07fd87c5c1e792853e146be04a232` aligns that integration test with the candidate:
+
+- A nested write may succeed only if the resulting file bytes match the requested content.
+- A kernel that rejects the required XNU flags may return `UnsupportedPlatform`, but must leave no target and no `.one-write-*` root staging artifact.
+- A symlinked parent must be denied as `ResolutionFailed` or fail-closed `UnsupportedPlatform`, with the outside sentinel unchanged.
+- The test remains macOS-gated and has not been executed on a native macOS runner. Ubuntu/Windows CI cannot validate the XNU syscall/flag behavior. The candidate remains NOT VERIFIED; Issue #104 remains OPEN / NOT ACCEPTED.
