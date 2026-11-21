@@ -1252,27 +1252,31 @@ mod macos_native {
             name: temporary_name,
             committed: false,
         };
-        let temp_metadata = temporary.metadata().map_err(|_| FilesystemError::IoFailure)?;
-        if !temp_metadata.is_file()
-            || temp_metadata.nlink() != 1
-            || temp_metadata.dev() != root_metadata.dev()
-        {
-            return Err(FilesystemError::ResolutionFailed);
-        }
-        hook(MacWriteStage::TempCreated)?;
-
-        let parent_path = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
-        let parent_name = CString::new(parent_path.as_os_str().as_bytes())
-            .map_err(|_| FilesystemError::InvalidTarget)?;
-        let parent = openat(
-            root,
-            &parent_name,
-            libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | RESOLVE_FLAGS,
-            0,
-        )?;
-        verify_same_mount(root, &parent)?;
-
         let result = (|| {
+            let temp_metadata = temporary.metadata().map_err(|_| FilesystemError::IoFailure)?;
+            if !temp_metadata.is_file()
+                || temp_metadata.nlink() != 1
+                || temp_metadata.dev() != root_metadata.dev()
+            {
+                return Err(FilesystemError::ResolutionFailed);
+            }
+            hook(MacWriteStage::TempCreated)?;
+
+            let parent_path = relative.parent().ok_or(FilesystemError::InvalidTarget)?;
+            let parent_name = CString::new(parent_path.as_os_str().as_bytes())
+                .map_err(|_| FilesystemError::InvalidTarget)?;
+            let parent = openat(
+                root,
+                &parent_name,
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | RESOLVE_FLAGS,
+                0,
+            )?;
+            // Keep the explicit mount identity check. The root-staged source
+            // and destination parent must belong to the same filesystem;
+            // renameatx_np would reject EXDEV too, but checking before writing
+            // avoids staging data for a destination on another mount.
+            verify_same_mount(root, &parent)?;
+
             temporary.write_all(bytes).map_err(|_| FilesystemError::IoFailure)?;
             hook(MacWriteStage::Written)?;
             temporary.sync_all().map_err(|_| FilesystemError::IoFailure)?;
@@ -1298,7 +1302,7 @@ mod macos_native {
         if result.is_err() {
             temporary_guard.cleanup()?;
         }
-        result
+        resultt
     }
 
     pub(super) fn write_relative(root: &File, relative: &Path, bytes: &[u8]) -> Result<(), FilesystemError> {
