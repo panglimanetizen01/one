@@ -73,3 +73,10 @@ After safely synchronizing the existing worktree, continue the current B-001 evi
 - User-confirmed clean local worktree before synchronization: `$HOME/one-pr113`, branch `security/issue-104-root-confinement-20261118`, local SHA `979973cd6fb6f76802e13dbbbe21530d68b4cf53`, remote-tracking SHA before fetch identical. `git fetch origin` then fast-forward-only merge succeeded to `1e8e19dcf3833aaff7169427350fa50b7df1f545`; user output showed clean status afterward.
 - Subsequent GitHub source/documentation commits advanced PR #113 beyond that local SHA. Current code-bearing candidate is `9fe53815f83701a62536472f8a3c87cebac22e7a`; documentation sync continued after it. Local Termux must fetch and fast-forward again before building or editing; repeat `git status -sb`, `git status --porcelain=v1`, and `git rev-parse HEAD` first.
 - Never assume the local worktree is current merely because the prior fast-forward succeeded. Preserve the existing worktree and use `git merge --ff-only` only when clean and ancestor relationship is confirmed.
+
+
+## Follow-up source commits after the observed fast-forward — 2026-11-21
+
+- Latest code-bearing source candidate: `74df3aa901732c8eb3adaac728162715fc3a4961`. PR #113 has additional documentation-only commits after this source candidate; fetch the current remote-tracking branch before local builds.
+- The source candidate includes Android nested-write detached-mount routing, macOS kernel-bounded nested reads with direct-child compatibility, Clippy fixes, and Windows native root-identity/Linux cfg corrections. It has NOT been built/tested locally or rerun in CI.
+- The earlier GitHub Actions run #2410 used parent source SHA `9fe53815f83701a62536472f8a3c87cebac22e7a` and failed Clippy/Windows Build; fixes are descendants and need fresh exact-SHA evidence.
