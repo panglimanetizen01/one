@@ -1089,3 +1089,19 @@ Windows logs explicitly show all three new tests passed:
 - filesystem::windows_native::tests::retained_delete_handle_blocks_leaf_rename
 
 The existing filesystem::windows_native::tests::retained_parent_handle_blocks_directory_rename also passed. The Windows one-core library test summary reported 156 passed / 0 failed. This is exact-SHA CI evidence for the Windows implementation slice; it does not establish POSIX delete support, complete E4 acceptance, or Issue #104 closure.
+
+## 2026-11-21 — explicit delete capability and language adapter
+
+After the Windows native `FilesystemAuthority::delete` implementation passed its focused Windows CI tests, the language bridge was added on the PR #113 branch:
+
+- `Capability::FilesystemDelete` is independent; the coarse `Capability::Filesystem` grant continues to imply only read/write and never delete.
+- `SemanticCapabilityId::FilesystemDelete` has stable name `filesystem.delete` and requires `EffectClass::Delete`.
+- Source action `hapus berkas "path"` is parsed, type-checked as a single text target, and lowered to adapter `filesystem.file.delete`.
+- `FileDeleteAdapter` requires the injected shared `FilesystemAuthority` and advertises Windows only. The interpreter registers it alongside read/write adapters; policy scope and explicit grant are still evaluated by the existing orchestrator before invocation.
+- No adapter is advertised on Linux, Android, or macOS. Their native delete API continues to return `UnsupportedPlatform`; the language bridge does not create a POSIX fallback.
+
+Implementation commits: capability `eacb4e471048c1f7fdf7755d46a7a8ceee4481cd`; orchestration `7d0da8e490f123e453be4aef3035ae38ba610800`; adapter `8307a762f8c73dc6bc9aed2bfd8b743917727807`; interpreter registration `4742ec22676efabfc383ecbe47fe722f2c13eab5`; source grammar `18377df139a0b221c04a93044cf4e0a9ef003513`; semantic validation `47250cba94ebcb1d8ce2654c9749c1a60bbcffd7`; IR lowering `cf2983b57166715b64485678cae2fdb581333bf6`; interpreter policy bridge `0fa43eb0be53c8e79424597ece055147872b35c4`.
+
+Focused tests added for parser AST, semantic target typing, IR lowering, explicit-grant denial/no-side-effect, and Windows allowed deletion. These language-level additions are NOT YET BUILT / TESTED at the checkpoint. Existing Windows native CI evidence at `6f2d5e2...` does not automatically verify these later source changes.
+
+Issue #104 remains OPEN / NOT ACCEPTED. This is a deliberately narrow Windows-only delete capability slice, not full cross-platform filesystem completion.
