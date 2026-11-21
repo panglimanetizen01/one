@@ -104,3 +104,9 @@ Source commits: `ff60c7bd8a058f0950a0d67bb596d94feb8e6803` (runtime wrapper) and
 
 - Latest combined source/test candidate is `79593d2f225284eff841e67c8eb9a1e005611981`. This commit only clarifies the direct fork/posix_spawn boundary and that brokered launchd/Mach-service launches remain unproven.
 - Runtime implementation and probes remain source-only / NOT BUILT / NOT TESTED. `ProcessAdapter` remains unadvertised on macOS. Issue #105 remains OPEN / NOT ACCEPTED.
+
+## 2026-11-21 — XNU process-group escape policy boundary
+
+Inspection of XNU `bsd/kern/kern_prot.c` shows `setsid()` and `setpgid()` call `setsid_internal()` / `enterpgrp()` directly; the corresponding paths do not invoke a `mac_proc_check_setpgid` or `mac_proc_check_setsid` hook. `bsd/kern/kern_proc.c::enterpgrp` also performs the process-group transition without such a MAC policy hook. Therefore a Seatbelt profile cannot be assumed to prevent a child from escaping its process group while still allowing child creation. This is why the macOS candidate denies `process-fork` entirely instead of pretending to provide tree containment.
+
+The resulting guarantee is deliberately narrower: one target process may execute and replace itself, but it cannot create direct fork/vfork/posix_spawn children. Brokered launchd/Mach-service creation remains a separate unresolved route. `ProcessAdapter` remains unavailable on macOS. Sources: `https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_prot.c` and `https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_proc.c`.
